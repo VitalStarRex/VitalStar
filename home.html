@@ -3,130 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VitalStar - Home</title>
+<title>VitalStar</title>
 
 <style>
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
 }
 
 body{
-background:#f0f2f5;
+    background:#eef2ff;
 }
 
+/* Header */
 header{
-background:#667eea;
-color:#fff;
-padding:15px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-position:sticky;
-top:0;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:60px;
+    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    color:#fff;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 15px;
+    box-shadow:0 3px 10px rgba(0,0,0,.2);
+    z-index:1000;
 }
 
 .logo{
-font-size:28px;
-font-weight:bold;
+    font-size:24px;
+    font-weight:bold;
 }
 
-.search{
-padding:10px;
-border:none;
-border-radius:20px;
-width:40%;
+.menu{
+    font-size:28px;
+    cursor:pointer;
 }
 
-.profile{
-background:white;
-margin:15px;
-padding:20px;
-border-radius:15px;
-text-align:center;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
+.icons{
+    display:flex;
+    gap:15px;
+    font-size:22px;
 }
 
-.avatar{
-width:100px;
-height:100px;
-border-radius:50%;
-background:#667eea;
-margin:auto;
-display:flex;
-justify-content:center;
-align-items:center;
-font-size:40px;
-color:white;
+/* Side Menu */
+.sidebar{
+    position:fixed;
+    top:0;
+    left:-260px;
+    width:250px;
+    height:100%;
+    background:white;
+    transition:.3s;
+    box-shadow:2px 0 10px rgba(0,0,0,.2);
+    padding-top:70px;
+    z-index:999;
 }
 
-.name{
-font-size:24px;
-font-weight:bold;
-margin-top:10px;
+.sidebar a{
+    display:block;
+    padding:15px 20px;
+    color:#333;
+    text-decoration:none;
+    font-weight:bold;
 }
 
+.sidebar a:hover{
+    background:#1877f2;
+    color:white;
+}
+
+/* Content */
+.container{
+    margin-top:80px;
+    padding:15px;
+}
+
+/* Create Post */
 .post-box{
-background:white;
-margin:15px;
-padding:20px;
-border-radius:15px;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
+    background:white;
+    border-radius:15px;
+    padding:15px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 
-textarea{
-width:100%;
-height:100px;
-padding:10px;
-border-radius:10px;
-border:1px solid #ccc;
-resize:none;
+.post-box input{
+    width:100%;
+    padding:12px;
+    border:none;
+    background:#f2f2f2;
+    border-radius:25px;
+    font-size:16px;
+    outline:none;
 }
 
-button{
-margin-top:10px;
-padding:12px 20px;
-background:#667eea;
-color:white;
-border:none;
-border-radius:10px;
-font-size:16px;
-cursor:pointer;
+/* Stories */
+.stories{
+    display:flex;
+    overflow-x:auto;
+    gap:10px;
+    margin:20px 0;
 }
 
-.feed{
-margin:15px;
-}
-
-.post{
-background:white;
-padding:20px;
-margin-bottom:15px;
-border-radius:15px;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
-
-.post h3{
-color:#667eea;
-margin-bottom:10px;
-}
-
-.bottom{
-position:fixed;
-bottom:0;
-width:100%;
-background:white;
-display:flex;
-justify-content:space-around;
-padding:15px;
-box-shadow:0 -2px 10px rgba(0,0,0,.1);
-}
-
-.bottom a{
-text-decoration:none;
-font-size:24px;
+.story{
+    min-width:90px;
+    height:150px;
+    border-radius:15px;
+    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    box-shadow:0 3px 8px rgba(0,0,0,.2);
 }
 </style>
 </head>
@@ -134,43 +127,53 @@ font-size:24px;
 <body>
 
 <header>
+<div class="menu" onclick="openMenu()">☰</div>
+
 <div class="logo">⭐ VitalStar</div>
-<input class="search" placeholder="Search users..."> <a href="menu.html"><div class="logo">⋯</div></div>
+
+<div class="icons">
+<span>🔔</span>
+<span>💬</span>
+</div>
 </header>
 
-<div class="profile">
-<div class="avatar">👤</div>
-<div class="name">Welcome Back!</div>
-<p>Share your thoughts with the world.</p>
+<div class="sidebar" id="sidebar">
+<a href="#">🏠 Home</a>
+<a href="#">👤 Profile</a>
+<a href="#">👥 Friends</a>
+<a href="#">💬 Messages</a>
+<a href="#">📸 Photos</a>
+<a href="#">⚙️ Settings</a>
+<a href="#">🚪 Logout</a>
 </div>
+
+<div class="container">
 
 <div class="post-box">
-<h3>Create Post</h3>
-<textarea placeholder="What's on your mind?"></textarea>
-<button>Post</button>
+<input type="text" placeholder="What's happening on VitalStar?">
 </div>
 
-<div class="feed">
-
-<div class="post">
-<h3>VitalStar</h3>
-<p>🎉 Welcome to VitalStar! Your new social media platform is now live.</p>
-</div>
-
-<div class="post">
-<h3>News</h3>
-<p>✨ Connect with friends, upload photos and share your amazing moments.</p>
+<div class="stories">
+<div class="story">Story</div>
+<div class="story">Story</div>
+<div class="story">Story</div>
+<div class="story">Story</div>
+<div class="story">Story</div>
 </div>
 
 </div>
 
-<div class="bottom">
-<a href="#">🏠</a>
-<a href="#">🔍</a>
-<a href="#">➕</a>
-<a href="#">💬</a>
-<a href="#">👤</a>
-</div>
+<script>
+function openMenu(){
+    const menu=document.getElementById("sidebar");
+
+    if(menu.style.left=="0px"){
+        menu.style.left="-260px";
+    }else{
+        menu.style.left="0";
+    }
+}
+</script>
 
 </body>
 </html>
