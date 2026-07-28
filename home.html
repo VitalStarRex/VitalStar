@@ -1,1 +1,13 @@
-welcome 😊😊😊🤔🤔🤔✴️💀💀👋🧮👑🤔
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+const auth = getAuth();
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // User is already signed in
+    console.log("Welcome back, " + user.displayName);
+  } else {
+    // No user is signed in
+    window.location.href = "login.html";
+  }
+});
