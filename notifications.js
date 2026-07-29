@@ -14,3 +14,5 @@ try {
 onMessage(messaging, (payload) => {
     console.log("New notification:", payload);
 });
+
+alert("notification.js is running");
