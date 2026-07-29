@@ -1,16 +1,37 @@
-function sendMessage() {
+import { db } from "./firebase.js";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+window.sendMessage = async function () {
+
     const input = document.getElementById("messageInput");
-    const messages = document.getElementById("messages");
 
-    if (input.value.trim() === "") return;
+    const text = input.value.trim();
 
-    const message = document.createElement("div");
-    message.className = "message sent";
-    message.textContent = input.value;
+    if (text === "") return;
 
-    messages.appendChild(message);
+    try{
 
-    input.value = "";
+        await addDoc(collection(db,"messages"),{
 
-    messages.scrollTop = messages.scrollHeight;
-}
+            text:text,
+            type:"text",
+            time:serverTimestamp()
+
+        });
+
+        input.value="";
+
+    }catch(error){
+
+        console.log(error);
+
+        alert("Message failed to send");
+
+    }
+
+};
