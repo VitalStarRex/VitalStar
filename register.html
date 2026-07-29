@@ -40,11 +40,23 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    alert("Registration successful!");
-    window.location.href = "login.html";
-  } catch (error) {
-    alert(error.message);
-  }
+
+  const fullname = document.getElementById("fullname").value;
+  const username = document.getElementById("username").value;
+
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+  await setDoc(doc(db, "users", userCredential.user.uid), {
+    fullname: fullname,
+    username: username,
+    email: email
+  });
+
+  alert("Registration successful!");
+  window.location.href = "login.html";
+
+} catch (error) {
+  alert(error.message);
+}
 });
          </script>
