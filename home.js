@@ -1,4 +1,4 @@
- import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
 
 import {
   collection,
@@ -8,24 +8,31 @@ import {
   doc,
   updateDoc,
   increment,
-  getDoc
+  getDoc,
+  setDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
 const feed = document.getElementById("feed");
+
 
 const q = query(
   collection(db, "posts"),
   orderBy("createdAt", "desc")
 );
 
+
 onSnapshot(q, (snapshot) => {
 
   feed.innerHTML = "";
 
-  snapshot.forEach((doc) => {
 
-    const post = doc.data();
-    const postId = doc.id;
+  snapshot.forEach((docSnap) => {
+
+    const post = docSnap.data();
+    const postId = docSnap.id;
+
 
     feed.innerHTML += `
 
@@ -37,7 +44,9 @@ onSnapshot(q, (snapshot) => {
         box-shadow:0 2px 8px rgba(0,0,0,.15);
       ">
 
+
         <div style="display:flex;align-items:center;gap:10px;">
+
 
           <div style="
             width:45px;
@@ -53,29 +62,45 @@ onSnapshot(q, (snapshot) => {
             👤
           </div>
 
-          <div>
-    <h3 style="margin:0;">
-        <a href="profile.html?uid=${post.uid}" style="text-decoration:none;color:black;">
-            ${post.username || "VitalStar User"}
-        </a>
-    </h3>
 
-    <small>
-        ${
-          post.createdAt
-            ? post.createdAt.toDate().toLocaleString()
-            : "Just now"
-        }
-    </small>
-</div>
+          <div>
+
+            <h3 style="margin:0;">
+
+              <a href="profile.html?uid=${post.uid}"
+              style="text-decoration:none;color:black;">
+
+              ${post.username || "VitalStar User"}
+
+              </a>
+
+            </h3>
+
+
+            <small>
+
+            ${
+              post.createdAt
+              ? post.createdAt.toDate().toLocaleString()
+              : "Just now"
+            }
+
+            </small>
+
+
+          </div>
+
 
         </div>
+
 
         <p style="margin-top:15px;font-size:16px;">
           ${post.text || ""}
         </p>
 
+
         <hr>
+
 
         <div style="
           display:flex;
@@ -84,33 +109,115 @@ onSnapshot(q, (snapshot) => {
           font-size:17px;
         ">
 
+
           <button onclick="likePost('${postId}')">
-❤️ ${post.likes || 0}
-</button> 
+          ❤️ ${post.likes || 0}
+          </button>
 
-          <button>💬 ${post.comments || 0}</button>
 
-          <button>🔁 ${post.reposts || 0}</button>
+          <button>
+          💬 ${post.comments || 0}
+          </button>
 
-          <button>🔗 ${post.shares || 0}</button>
+
+          <button>
+          🔁 ${post.reposts || 0}
+          </button>
+
+
+          <button>
+          🔗 ${post.shares || 0}
+          </button>
+
 
         </div>
+
 
       </div>
 
     `;
 
+
   });
+
 
 });
 
 
+
+// LIKE SYSTEM
+
 window.likePost = async function(postId){
 
-    const postRef = doc(db, "posts", postId);
 
-    await updateDoc(postRef, {
-        likes: increment(1)
+  const user = auth.currentUser;
+
+
+  if(!user){
+
+    alert("Please login first");
+
+    return;
+
+  }
+
+
+
+  const likeId = postId + "_" + user.uid;
+
+
+  const likeRef = doc(db,"likes",likeId);
+
+
+  const likeSnap = await getDoc(likeRef);
+
+
+
+  const postRef = doc(db,"posts",postId);
+
+
+
+  if(likeSnap.exists()){
+
+
+    // REMOVE LIKE
+
+    await deleteDoc(likeRef);
+
+
+    await updateDoc(postRef,{
+
+      likes: increment(-1)
+
     });
+
+
+  }
+
+  else{
+
+
+    // ADD LIKE
+
+    await setDoc(likeRef,{
+
+      postId:postId,
+
+      uid:user.uid,
+
+      createdAt:new Date()
+
+    });
+
+
+    await updateDoc(postRef,{
+
+      likes:increment(1)
+
+    });
+
+
+  }
+
 
 };
