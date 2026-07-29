@@ -23,7 +23,7 @@ onSnapshot(q, (snapshot) => {
     const user = doc.data();
 
     usersList.innerHTML += `
-      <div class="user" onclick="location.href='chat.html?uid=${doc.id}'">
+      <div class="user" onclick="location.href='profile.html?uid=${doc.id}'">
         <div class="avatar">
           ${user.username.charAt(0).toUpperCase()}
         </div>
