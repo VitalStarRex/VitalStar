@@ -10,8 +10,12 @@ import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/
       return;
     }
 
+    // Wait for the service worker you already registered
+    const registration = await navigator.serviceWorker.ready;
+
     const token = await getToken(messaging, {
-      vapidKey: "BEkwoctvtqjDmybrhAY-gGrG8_aBxTBmxDUoqq5w43H8MW6z0IwvOzmCLI3AZKY1KLqc5YuTFrt2cL-952QjV7o"
+      vapidKey: "BEkwoctvtqjDmybrhAY-gGrG8_aBxTBmxDUoqq5w43H8MW6z0IwvOzmCLI3AZKY1KLqc5YuTFrt2cL-952QjV7o",
+      serviceWorkerRegistration: registration
     });
 
     alert("Token: " + token);
