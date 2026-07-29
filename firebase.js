@@ -29,3 +29,18 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);    
 
 export const messaging = getMessaging(app);
+
+
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+
+const messaging = getMessaging();
+
+const permission = await Notification.requestPermission();
+
+if (permission === "granted") {
+    const token = await getToken(messaging, {
+        vapidKey: "YOUR_VAPID_KEY_HERE"
+    });
+
+    console.log("Notification Token:", token);
+}
