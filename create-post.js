@@ -1,34 +1,51 @@
 import { db, auth } from "./firebase.js";
 
 import {
- addDoc,
- collection,
- serverTimestamp
+    addDoc,
+    collection,
+    serverTimestamp,
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+window.createPost = async function () {
 
-window.createPost = async function(){
+    const text = document.getElementById("postText").value.trim();
 
-const text = document.getElementById("postText").value;
+    if (!text) {
+        alert("Write something first.");
+        return;
+    }
 
-const user = auth.currentUser;
+    const user = auth.currentUser;
 
+    if (!user) {
+        alert("Please login first.");
+        return;
+    }
 
-if(!user){
- alert("Please login first");
- return;
-}
+    // Get user's profile
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
 
+    let username = "VitalStar User";
 
-await addDoc(collection(db,"posts"),{
+    if (userSnap.exists()) {
+        username = userSnap.data().username || "VitalStar User";
+    }
 
-uid:user.uid,
-text:text,
-createdAt:serverTimestamp()
+    await addDoc(collection(db, "posts"), {
+        uid: user.uid,
+        username: username,
+        text: text,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        reposts: 0,
+        createdAt: serverTimestamp()
+    });
 
-});
+    document.getElementById("postText").value = "";
 
-
-alert("Post created!");
-
+    alert("Post created successfully!");
 };
