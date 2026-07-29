@@ -290,6 +290,59 @@ function openMenu(){
 
 
 
+<h2 id="username">Loading username...</h2>
+
+<script type="module">
+import { db } from "./firebase.js";
+
+import { 
+    doc, 
+    getDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { 
+    getAuth, 
+    onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+const auth = getAuth();
+
+const username = document.getElementById("username");
+
+
+onAuthStateChanged(auth, async (user)=>{
+
+    if(user){
+
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if(userSnap.exists()){
+
+            const data = userSnap.data();
+
+            username.innerHTML = "@" + data.username;
+
+        }else{
+
+            username.innerHTML = "Username not found";
+
+        }
+
+    }else{
+
+        username.innerHTML = "Not logged in";
+
+    }
+
+});
+</script>
+
+
+
+
+
 
 
 
