@@ -16,3 +16,8 @@ if (userSnap.exists()) {
     const user = userSnap.data();
 
 }
+
+document.getElementById("name").textContent = user.username;
+
+document.getElementById("bio").textContent =
+    user.bio || "No bio yet.";
