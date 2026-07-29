@@ -4,7 +4,11 @@ import {
   collection,
   query,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  doc,
+  updateDoc,
+  increment,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const feed = document.getElementById("feed");
@@ -80,7 +84,9 @@ onSnapshot(q, (snapshot) => {
           font-size:17px;
         ">
 
-          <button>❤️ ${post.likes || 0}</button>
+          <button onclick="likePost('${postId}')">
+❤️ ${post.likes || 0}
+</button>
 
           <button>💬 ${post.comments || 0}</button>
 
@@ -97,3 +103,13 @@ onSnapshot(q, (snapshot) => {
   });
 
 });
+
+window.likePost = async function(postId){
+
+    const postRef = doc(db, "posts", postId);
+
+    await updateDoc(postRef, {
+        likes: increment(1)
+    });
+
+};
