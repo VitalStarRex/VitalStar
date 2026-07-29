@@ -104,17 +104,6 @@ onSnapshot(q, (snapshot) => {
 
 });
 
-window.likePost = async function(postId){
-
-    const postRef = doc(db, "posts", postId);
-
-    await updateDoc(postRef, {
-        likes: increment(1)
-    });
-
-};
-
-
 
 window.likePost = async function(postId){
 
