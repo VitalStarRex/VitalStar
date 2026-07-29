@@ -18,8 +18,28 @@ import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/
       serviceWorkerRegistration: registration
     });
 
-    alert("Token: " + token);
-    console.log("Token:", token);
+                    
+
+  import {
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { db, auth } from "./firebase.js";
+
+// ...
+
+console.log("Token:", token);
+
+const user = auth.currentUser;
+
+if (user) {
+    await updateDoc(doc(db, "users", user.uid), {
+        fcmToken: token
+    });
+}
+
+
 
   } catch (error) {
     alert("Notification Error: " + error.message);
