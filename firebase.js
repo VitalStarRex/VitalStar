@@ -1,14 +1,11 @@
 // Firebase App
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-
-import { getMessaging } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
-
-
 // Firebase Services
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getMessaging } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -23,24 +20,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export services
+// Export Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);    
-
+export const storage = getStorage(app);
 export const messaging = getMessaging(app);
-
-
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
-
-const messaging = getMessaging();
-
-const permission = await Notification.requestPermission();
-
-if (permission === "granted") {
-    const token = await getToken(messaging, {
-        vapidKey: "YOUR_VAPID_KEY_HERE"
-    });
-
-    console.log("Notification Token:", token);
-}
