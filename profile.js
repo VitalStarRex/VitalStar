@@ -21,3 +21,6 @@ document.getElementById("name").textContent = user.username;
 
 document.getElementById("bio").textContent =
     user.bio || "No bio yet.";
+
+document.getElementById("posts").textContent =
+    user.posts || 0;
