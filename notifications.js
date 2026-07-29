@@ -1,8 +1,18 @@
-import { messaging } from "./firebase.js";
-import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+import { db, auth, messaging } from "./firebase.js";
+
+import {
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getToken,
+  onMessage
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 (async () => {
   try {
+
     const permission = await Notification.requestPermission();
 
     if (permission !== "granted") {
@@ -10,7 +20,6 @@ import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/
       return;
     }
 
-    // Wait for the service worker you already registered
     const registration = await navigator.serviceWorker.ready;
 
     const token = await getToken(messaging, {
@@ -18,36 +27,27 @@ import { getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/
       serviceWorkerRegistration: registration
     });
 
-                    
+    console.log("Token:", token);
 
-  import {
-  doc,
-  updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    const user = auth.currentUser;
 
-import { db, auth } from "./firebase.js";
-
-// ...
-
-console.log("Token:", token);
-
-const user = auth.currentUser;
-
-if (user) {
-    await updateDoc(doc(db, "users", user.uid), {
+    if (user) {
+      await updateDoc(doc(db, "users", user.uid), {
         fcmToken: token
-    });
-}
-
-
+      });
+    }
 
   } catch (error) {
-    alert("Notification Error: " + error.message);
     console.error(error);
+    alert(error.message);
   }
+
 })();
 
 onMessage(messaging, (payload) => {
-  alert("New notification received!");
+
+  alert(payload.notification?.title || "New notification");
+
   console.log(payload);
+
 });
