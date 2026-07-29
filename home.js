@@ -1,65 +1,97 @@
-import { db, auth } from "./firebase.js";
+ import { db } from "./firebase.js";
 
 import {
-addDoc,
-collection,
-serverTimestamp,
-doc,
-getDoc
+  collection,
+  query,
+  orderBy,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+const feed = document.getElementById("feed");
 
-window.createPost = async function(){
-
-const text = document.getElementById("postText").value;
-
-const user = auth.currentUser;
-
-
-if(!user){
-alert("Please login first");
-return;
-}
-
-
-// Get user profile
-const userSnap = await getDoc(
-doc(db,"users",user.uid)
+const q = query(
+  collection(db, "posts"),
+  orderBy("createdAt", "desc")
 );
 
+onSnapshot(q, (snapshot) => {
 
-let username = "VitalStar User";
+  feed.innerHTML = "";
 
+  snapshot.forEach((doc) => {
 
-if(userSnap.exists()){
+    const post = doc.data();
+    const postId = doc.id;
 
-username = userSnap.data().username;
+    feed.innerHTML += `
 
-}
+      <div style="
+        background:white;
+        margin:15px;
+        padding:15px;
+        border-radius:15px;
+        box-shadow:0 2px 8px rgba(0,0,0,.15);
+      ">
 
+        <div style="display:flex;align-items:center;gap:10px;">
 
+          <div style="
+            width:45px;
+            height:45px;
+            border-radius:50%;
+            background:#1877f2;
+            color:white;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            font-size:20px;
+          ">
+            👤
+          </div>
 
-await addDoc(collection(db,"posts"),{
+          <div>
+            <h3 style="margin:0;">
+              ${post.username || "VitalStar User"}
+            </h3>
 
-uid:user.uid,
+            <small>
+              ${
+                post.createdAt
+                  ? post.createdAt.toDate().toLocaleString()
+                  : "Just now"
+              }
+            </small>
+          </div>
 
-username:username,
+        </div>
 
-text:text,
+        <p style="margin-top:15px;font-size:16px;">
+          ${post.text || ""}
+        </p>
 
-likes:0,
+        <hr>
 
-comments:0,
+        <div style="
+          display:flex;
+          justify-content:space-around;
+          margin-top:10px;
+          font-size:17px;
+        ">
 
-shares:0,
+          <button>❤️ ${post.likes || 0}</button>
 
-reposts:0,
+          <button>💬 ${post.comments || 0}</button>
 
-createdAt:serverTimestamp()
+          <button>🔁 ${post.reposts || 0}</button>
+
+          <button>🔗 ${post.shares || 0}</button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
 
 });
-
-
-alert("Post created successfully");
-
-};
