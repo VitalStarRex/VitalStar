@@ -1,68 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Users List</title>
+import { db } from "./firebase.js";
 
-<style>
-body{
-    font-family:Arial,sans-serif;
-    background:#f4f4f4;
-    padding:20px;
-}
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-h2{
-    text-align:center;
-    color:#1877f2;
-}
+const usersList = document.getElementById("usersList");
 
-.user{
-    background:#fff;
-    padding:15px;
-    margin:10px 0;
-    border-radius:10px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
-</style>
-</head>
-<body>
+const q = query(
+  collection(db, "users"),
+  orderBy("username", "asc")
+);
 
-<h2>Registered Users</h2>
+onSnapshot(q, (snapshot) => {
 
-<div id="users"></div>
+  usersList.innerHTML = "";
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+  snapshot.forEach((doc) => {
 
-// Paste your Firebase configuration here
-const firebaseConfig = {
-  // Your Firebase config
-};
+    const user = doc.data();
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    usersList.innerHTML += `
+      <div class="user" onclick="location.href='chat.html?uid=${doc.id}'">
+        <div class="avatar">
+          ${user.username.charAt(0).toUpperCase()}
+        </div>
 
-const usersDiv = document.getElementById("users");
+        <div class="info">
+          <div class="name">${user.username}</div>
+          <div class="status">Tap to chat</div>
+        </div>
+      </div>
+    `;
 
-async function loadUsers(){
-    const querySnapshot = await getDocs(collection(db, "users"));
+  });
 
-    querySnapshot.forEach((doc)=>{
-        const data = doc.data();
-
-        usersDiv.innerHTML += `
-            <div class="user">
-                <h3>${data.username}</h3>
-                <p>Email: ${data.email}</p>
-            </div>
-        `;
-    });
-}
-
-loadUsers();
-</script>
-
-</body>
-</html>
+});
