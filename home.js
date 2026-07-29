@@ -1,209 +1,65 @@
-import {db} from "./firebase.js";
-
+import { db, auth } from "./firebase.js";
 
 import {
-
+addDoc,
 collection,
-query,
-orderBy,
-onSnapshot,
+serverTimestamp,
 doc,
-updateDoc,
-increment
+getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+window.createPost = async function(){
+
+const text = document.getElementById("postText").value;
+
+const user = auth.currentUser;
+
+
+if(!user){
+alert("Please login first");
+return;
 }
 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-
-const feed = document.getElementById("feed");
-
-
-
-const q = query(
-
-collection(db,"posts"),
-
-orderBy("createdAt","desc")
-
+// Get user profile
+const userSnap = await getDoc(
+doc(db,"users",user.uid)
 );
 
 
-
-onSnapshot(q,(snapshot)=>{
-
-
-feed.innerHTML="";
+let username = "VitalStar User";
 
 
-snapshot.forEach((item)=>{
+if(userSnap.exists()){
 
+username = userSnap.data().username;
 
-let post=item.data();
-
-let id=item.id;
+}
 
 
 
-feed.innerHTML += `
+await addDoc(collection(db,"posts"),{
 
+uid:user.uid,
 
-<div class="post-card">
+username:username,
 
+text:text,
 
-<div class="user">
+likes:0,
 
-👤 ${post.username}
+comments:0,
 
-</div>
+shares:0,
 
+reposts:0,
 
-
-<div class="post-text">
-
-${post.text}
-
-</div>
-
-
-
-<div class="actions">
-
-
-<button onclick="likePost('${id}')">
-
-❤️ ${post.likes || 0}
-
-</button>
-
-
-
-<button onclick="commentPost('${id}')">
-
-💬 ${post.comments || 0}
-
-</button>
-
-
-
-<button onclick="sharePost('${id}')">
-
-🔗 ${post.shares || 0}
-
-</button>
-
-
-
-<button onclick="repostPost('${id}')">
-
-🔁 ${post.reposts || 0}
-
-</button>
-
-
-</div>
-
-
-
-</div>
-
-
-`;
-
+createdAt:serverTimestamp()
 
 });
 
 
-});
-
-
-
-
-// LIKE
-
-window.likePost = async function(id){
-
-await updateDoc(
-
-doc(db,"posts",id),
-
-{
-
-likes:increment(1)
-
-}
-
-);
-
-};
-
-
-
-
-// COMMENT COUNT
-
-window.commentPost = async function(id){
-
-await updateDoc(
-
-doc(db,"posts",id),
-
-{
-
-comments:increment(1)
-
-}
-
-);
-
-
-alert("Comment system will be connected next");
-
-};
-
-
-
-
-// SHARE
-
-window.sharePost = async function(id){
-
-await updateDoc(
-
-doc(db,"posts",id),
-
-{
-
-shares:increment(1)
-
-}
-
-);
-
-
-alert("Post shared");
-
-};
-
-
-
-
-// REPOST
-
-window.repostPost = async function(id){
-
-await updateDoc(
-
-doc(db,"posts",id),
-
-{
-
-reposts:increment(1)
-
-}
-
-);
-
+alert("Post created successfully");
 
 };
