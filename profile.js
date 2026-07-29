@@ -10,3 +10,9 @@ const uid = params.get("uid");
 
 const userRef = doc(db, "users", uid);
 const userSnap = await getDoc(userRef);
+
+if (userSnap.exists()) {
+
+    const user = userSnap.data();
+
+}
