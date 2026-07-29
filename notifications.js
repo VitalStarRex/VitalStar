@@ -29,13 +29,24 @@ import {
 
     console.log("Token:", token);
 
-    const user = auth.currentUser;
+   
 
-    if (user) {
-      await updateDoc(doc(db, "users", user.uid), {
+auth.onAuthStateChanged(async (user) => {
+
+    if (!user) return;
+
+    await updateDoc(doc(db, "users", user.uid), {
         fcmToken: token
-      });
-    }
+    });
+
+    console.log("FCM token saved!");
+
+});
+
+ 
+      
+      
+    
 
   } catch (error) {
     console.error(error);
