@@ -115,9 +115,11 @@ onSnapshot(q, (snapshot) => {
           </button>
 
 
-          <button>
-          💬 ${post.comments || 0}
-          </button>
+         
+          <button onclick="openComments('${postId}')">
+💬 ${post.comments || 0}
+</button>
+
 
 
           <button>
