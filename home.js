@@ -50,18 +50,20 @@ onSnapshot(q, (snapshot) => {
           </div>
 
           <div>
-            <h3 style="margin:0;">
-              ${post.username || "VitalStar User"}
-            </h3>
+    <h3 style="margin:0;">
+        <a href="profile.html?uid=${post.uid}" style="text-decoration:none;color:black;">
+            ${post.username || "VitalStar User"}
+        </a>
+    </h3>
 
-            <small>
-              ${
-                post.createdAt
-                  ? post.createdAt.toDate().toLocaleString()
-                  : "Just now"
-              }
-            </small>
-          </div>
+    <small>
+        ${
+          post.createdAt
+            ? post.createdAt.toDate().toLocaleString()
+            : "Just now"
+        }
+    </small>
+</div>
 
         </div>
 
