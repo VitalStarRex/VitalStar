@@ -15,17 +15,19 @@ if (userSnap.exists()) {
 
     const user = userSnap.data();
 
+    document.getElementById("name").textContent =
+        user.username;
+
+    document.getElementById("bio").textContent =
+        user.bio || "No bio yet.";
+
+    document.getElementById("posts").textContent =
+        user.posts || 0;
+
+    document.getElementById("followers").textContent =
+        user.followers || 0;
+
+    document.getElementById("following").textContent =
+        user.following || 0;
+
 }
-
-document.getElementById("following").textContent =
-    user.following || 0;
-document.getElementById("name").textContent = user.username;
-
-document.getElementById("bio").textContent =
-    user.bio || "No bio yet.";
-
-document.getElementById("posts").textContent =
-    user.posts || 0;
-
-document.getElementById("followers").textContent =
-    user.followers || 0;
