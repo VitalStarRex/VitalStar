@@ -6,7 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const params = new URLSearchParams(window.location.search);
-const uid = params.get("uid");
+const uid = params.get("uid"); alert(uid);
 
 const userRef = doc(db, "users", uid);
 const userSnap = await getDoc(userRef);
