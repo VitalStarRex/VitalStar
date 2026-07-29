@@ -293,54 +293,41 @@ function openMenu(){
 
 
 
-<h2 id="username">Loading username...</h2>
-
-<script type="module">
-import { db } from "./firebase.js";
-
-import { 
-    doc, 
-    getDoc 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import { 
-    getAuth, 
-    onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+ 
 
 
-const auth = getAuth();
-
-const username = document.getElementById("username");
 
 
-onAuthStateChanged(auth, async (user)=>{
 
-    if(user){
 
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
 
-        if(userSnap.exists()){
+<!DOCTYPE html>
+<html>
+<head>
 
-            const data = userSnap.data();
+<title>VitalStar Feed</title>
 
-            username.innerHTML = "@" + data.username;
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-        }else{
+<link rel="stylesheet" href="style.css">
 
-            username.innerHTML = "Username not found";
+</head>
 
-        }
+<body>
 
-    }else{
+<header>
+⭐ VitalStar
+</header>
 
-        username.innerHTML = "Not logged in";
 
-    }
+<div id="feed"></div>
 
-});
-</script>
+
+<script type="module" src="home.js"></script>
+
+</body>
+</html>
+
 
 
 
