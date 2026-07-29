@@ -1,7 +1,14 @@
-
-<h1 class="vitalstar-title">VitalStar Register</h1>
+<!DOCTYPE html>
+<html>
+<head>
+<title>VitalStar Register</title>
 
 <style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f2f2f2;
+}
+
 .vitalstar-title {
     font-weight: bold;
     color: yellow;
@@ -11,73 +18,192 @@
     border-radius: 8px;
     font-size: 32px;
 }
-</style><br/><br/>
+
+form{
+    background:white;
+    width:300px;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px gray;
+}
+
+input{
+    width:90%;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid gray;
+}
+
+button{
+    width:95%;
+    padding:12px;
+    background:#1877f2;
+    color:white;
+    border:none;
+    border-radius:20px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#0d5dc8;
+}
+
+</style>
+
+</head>
 
 
-<center> <form id="registerForm">  
-<br/><br/>
-  <input type="text" id="fullname" placeholder="Full Name" required"><br/> <br/>
+<body>
 
-  <input type="text" id="username" placeholder="Username" required><br/><br/>
- <input type="text" id="birthday" placeholder="birthday DD/MM/YY" required">
 
-<br/><br/>
+<h1 class="vitalstar-title">VitalStar Register</h1>
 
-<input type="text" id="county" placeholder="County" required">
+<br><br>
 
-<br/><br/>
-  <input type="email" id="email" placeholder="Email" required><br/><br/>
 
-  <input type="password" id="password" placeholder="Password" required><br/><br/>
-   
+<center>
 
-  <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-<br/><br/>
-  <br/><button type="submit">Register</button>
-</form><center/></center><script type="module">
+<form id="registerForm">
+
+<input type="text" id="fullname" placeholder="Full Name" required>
+
+<br><br>
+
+<input type="text" id="username" placeholder="Username" required>
+
+<br><br>
+
+<input type="text" id="birthday" placeholder="Birthday DD/MM/YY" required>
+
+<br><br>
+
+<input type="text" id="country" placeholder="Country" required>
+
+<br><br>
+
+<input type="email" id="email" placeholder="Email" required>
+
+<br><br>
+
+<input type="password" id="password" placeholder="Password" required>
+
+<br><br>
+
+<input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+
+<br><br>
+
+<button type="submit">Register</button>
+
+</form>
+
+</center>
+
+
+
+<script type="module">
+
 import { auth, db } from "./firebase.js";
 
-import {
-  doc,
-  setDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
-  createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+import {
+doc,
+setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
 
 const form = document.getElementById("registerForm");
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
 
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const confirmPassword = document.getElementById("confirmPassword").value;
+form.addEventListener("submit", async(e)=>{
 
-  if (password !== confirmPassword) {
-    alert("Passwords do not match!");
-    return;
-  }
+e.preventDefault();
 
-  try {
 
-  const fullname = document.getElementById("fullname").value;
-  const username = document.getElementById("username").value;
+const fullname = document.getElementById("fullname").value;
 
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const username = document.getElementById("username").value;
 
-  await setDoc(doc(db, "users", userCredential.user.uid), {
-    fullname: fullname,
-    username: username,
-    email: email
-  });
+const birthday = document.getElementById("birthday").value;
 
-  alert("Registration successful!");
-  window.location.href = "login.html";
+const country = document.getElementById("country").value;
 
-} catch (error) {
-  alert(error.message);
+const email = document.getElementById("email").value;
+
+const password = document.getElementById("password").value;
+
+const confirmPassword = document.getElementById("confirmPassword").value;
+
+
+
+if(password !== confirmPassword){
+
+alert("Passwords do not match!");
+
+return;
+
 }
+
+
+
+try{
+
+
+const userCredential = await createUserWithEmailAndPassword(
+auth,
+email,
+password
+);
+
+
+
+await setDoc(
+doc(db,"users",userCredential.user.uid),
+{
+
+fullname: fullname,
+
+username: username,
+
+birthday: birthday,
+
+country: country,
+
+email: email
+
+}
+
+);
+
+
+
+alert("Registration successful!");
+
+
+window.location.href="login.html";
+
+
+}
+
+catch(error){
+
+alert(error.message);
+
+}
+
+
 });
-         </script>
+
+
+</script>
+
+
+</body>
+</html>
