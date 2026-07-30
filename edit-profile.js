@@ -173,9 +173,14 @@ form.addEventListener("submit", async (e) => {
         }
 
         // Update password if entered
-        if (password.value.trim() !== "") {
-            await updatePassword(user, password.value.trim());
-        }
+        
+
+
+
+
+{
+            
+        
 
         alert("Profile updated successfully!");
 
