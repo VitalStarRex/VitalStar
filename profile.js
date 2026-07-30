@@ -29,12 +29,27 @@ auth.onAuthStateChanged(async (user) => {
 
     try {
 
-        const userRef = doc(db, "users", user.uid);
-        const snap = await getDoc(userRef);
+       
 
-        if (!snap.exists()) {
-            alert("Profile not found.");
-            return;
+
+console.log("Logged in UID:", user.uid);
+
+const userRef = doc(db, "users", user.uid);
+const snap = await getDoc(userRef);
+
+console.log("Document exists:", snap.exists());
+
+if (!snap.exists()) {
+    alert("Profile not found.\nUID: " + user.uid);
+    return;
+}
+
+console.log(snap.data());
+        
+
+      
+            
+
         }
 
         const data = snap.data();
