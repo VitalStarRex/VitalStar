@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>VitalStar</title>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -17,32 +20,47 @@ body{
     background:#eef2ff;
 }
 
-/* Header */
+
+/* HEADER */
+
 header{
     position:fixed;
     top:0;
     left:0;
     width:100%;
     height:60px;
+
     background:linear-gradient(135deg,#1877f2,#7b2ff7);
-    color:#fff;
+
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    justify-content:space-between;
+
     padding:0 15px;
-    box-shadow:0 3px 10px rgba(0,0,0,.2);
+
+    color:white;
+
     z-index:1000;
+
+    box-shadow:0 3px 10px rgba(0,0,0,.2);
 }
+
 
 .logo{
     font-size:24px;
     font-weight:bold;
 }
 
+
 .menu{
+    border:none;
+    background:none;
+    color:white;
+
     font-size:28px;
     cursor:pointer;
 }
+
 
 .icons{
     display:flex;
@@ -50,95 +68,179 @@ header{
     font-size:22px;
 }
 
-/* Side Menu */
+
+.icons a{
+    text-decoration:none;
+}
+
+
+/* SIDEBAR */
+
 .sidebar{
+
     position:fixed;
+
     top:0;
     left:-260px;
+
     width:250px;
     height:100%;
+
     background:white;
-    transition:.3s;
-    box-shadow:2px 0 10px rgba(0,0,0,.2);
+
     padding-top:70px;
+
+    transition:.3s;
+
+    box-shadow:2px 0 10px rgba(0,0,0,.2);
+
     z-index:999;
+
 }
+
+
 
 .sidebar a{
+
     display:block;
+
     padding:15px 20px;
-    color:#333;
+
     text-decoration:none;
+
+    color:#333;
+
     font-weight:bold;
+
 }
+
 
 .sidebar a:hover{
+
     background:#1877f2;
+
     color:white;
+
 }
 
-/* Content */
+
+
+/* CONTENT */
+
 .container{
-    margin-top:80px;
-    padding:15px;
+
+    padding:80px 15px 90px;
+
 }
 
-/* Create Post */
-.post-box{
-    background:white;
-    border-radius:15px;
-    padding:15px;
-    box-shadow:0 2px 8px rgba(0,0,0,.1);
-}
 
-.post-box input{
-    width:100%;
-    padding:12px;
-    border:none;
-    background:#f2f2f2;
-    border-radius:25px;
-    font-size:16px;
-    outline:none;
-}
-
-/* Stories */
-.stories{
-    display:flex;
-    overflow-x:auto;
-    gap:10px;
-    margin:20px 0;
-}
-
-.story{
-    min-width:90px;
-    height:150px;
-    border-radius:15px;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-weight:bold;
-    box-shadow:0 3px 8px rgba(0,0,0,.2);
-}
 </style>
+
 </head>
 
+
 <body>
-
-<header>.    
-
 
 
 
 <header>
-    <button class="menu" onclick="openMenu()">☰</button>
+
+
+<button class="menu" onclick="openMenu()">
+☰
+</button>
+
+
+<div class="logo">
+⭐ VitalStar
+</div>
+
+
+
+<div class="icons">
+
+<a href="notifications.html">
+🔔
+</a>
+
+
+<a href="messages.html">
+💬
+</a>
+
+
+</div>
+
+
 </header>
 
+
+
+
+<div class="sidebar" id="sidebar">
+
+
+<a href="home.html">
+🏠 Home
+</a>
+
+
+<a href="profile.html">
+👤 Profile
+</a>
+
+
+<a href="users.html">
+👥 Friends
+</a>
+
+
+<a href="messages.html">
+💬 Messages
+</a>
+
+
+<a href="#">
+📸 Photos
+</a>
+
+
+<a href="#">
+⚙️ Settings
+</a>
+
+
+<a href="#">
+🚪 Logout
+</a>
+
+
+</div>
+
+
+
+
 <script>
+
 function openMenu(){
-    alert("Menu opened");
+
+const sidebar=document.getElementById("sidebar");
+
+
+if(sidebar.style.left==="0px"){
+
+sidebar.style.left="-260px";
+
 }
+
+else{
+
+sidebar.style.left="0px";
+
+}
+
+}
+
 </script>
 
 
@@ -147,157 +249,356 @@ function openMenu(){
 
 
 
-<div class="logo">⭐ VitalStar</div>
 
-<div class="icons">
-<span><a href="notifications.html">🔔</a></span>
-<span><a href="message.html">💬</a></span>
-</div>
-</header>
 
-<div class="sidebar" id="sidebar">
-<a href="#">🏠 Home</a>
-<a href="#">👤 Profile</a>
-<a href="users.html">👥 Friends</a>
-<a href="#">💬 Messages</a>
-<a href="#">📸 Photos</a>
-<a href="#">⚙️ Settings</a>
-<a href="#">🚪 Logout</a>
-</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <div class="container">
 
-<div class="post-box">
+
+<!-- Welcome Card -->
+
+<div class="hero-card">
+
+<div class="hero-left">
+
+<div class="hero-icon">
+✨
+</div>
 
 
+<div>
 
-<div class="hero-card"><center>
+<h2 id="welcomeText">
+Good Day...
+</h2>
 
-    <div class="hero-left">
 
-        <div class="hero-icon">
-            ✨
-        </div>
-
-        <div>
-
-            <h2 id="welcomeText">
-                Good Day...
-            </h2>
-
-            <p id="welcomeSub">
-                Welcome back to VitalStar
-            </p>
-
-        </div>
-
-    </div>
-
-    <div class="hero-badge">
-        ● Online
-    </div>
-
-</div></center>
-
+<p id="welcomeSub">
+Welcome back to VitalStar
+</p>
 
 
 </div>
+
+</div>
+
+
+<div class="hero-badge">
+● Online
+</div>
+
+
+</div>
+
+
+
+
+<!-- STORIES -->
 
 <div class="stories">
-<div class="story">Story</div>
-<div class="story">Story</div>
-<div class="story">Story</div>
-<div class="story">Story</div>
-<div class="story">Story</div>
+
+
+<div class="story">
+Story
 </div>
 
+
+<div class="story">
+Story
 </div>
 
-<script>
-function openMenu(){
-    const menu=document.getElementById("sidebar");
 
-    if(menu.style.left=="0px"){
-        menu.style.left="-260px";
-    }else{
-        menu.style.left="0";
-    }
-}
-</script>
-                                       
+<div class="story">
+Story
+</div>
 
 
+<div class="story">
+Story
+</div>
 
 
-<br/> <br/> 
-<br/> <br/> 
+<div class="story">
+Story
+</div>
 
 
-
-           
+</div>
 
 
 
-<br/> <br/>
+
+
+<!-- FEED -->
+
+<h2 class="latest-title">
+
+<span class="red">L</span>
+<span class="orange">a</span>
+<span class="yellow">t</span>
+<span class="green">e</span>
+<span class="blue">s</span>
+<span class="purple">t</span>
+
+</h2>
+
+
+
+<div id="feed"></div>
+
+
+
+</div>
+
 
 
 
 
 <style>
 
-.feed{
-    margin-top:20px;
+
+.hero-card{
+
+background:white;
+
+border-radius:20px;
+
+padding:20px;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+box-shadow:0 5px 15px rgba(0,0,0,.1);
+
 }
+
+
+.hero-left{
+
+display:flex;
+
+align-items:center;
+
+gap:15px;
+
+}
+
+
+
+.hero-icon{
+
+font-size:40px;
+
+}
+
+
+
+.hero-badge{
+
+color:green;
+
+font-weight:bold;
+
+}
+
+
+
+
+/* STORIES */
+
+
+.stories{
+
+display:flex;
+
+gap:10px;
+
+overflow-x:auto;
+
+margin:20px 0;
+
+}
+
+
+.story{
+
+min-width:90px;
+
+height:150px;
+
+border-radius:15px;
+
+background:linear-gradient(135deg,#1877f2,#7b2ff7);
+
+color:white;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-weight:bold;
+
+}
+
+
+
+
+/* LATEST TITLE */
+
+
+.latest-title{
+
+background:black;
+
+padding:12px 20px;
+
+border-radius:12px;
+
+font-size:32px;
+
+font-weight:bold;
+
+display:inline-block;
+
+}
+
+
+.red{
+color:#ff3b30;
+}
+
+.orange{
+color:#ff9500;
+}
+
+.yellow{
+color:#ffcc00;
+}
+
+.green{
+color:#34c759;
+}
+
+.blue{
+color:#007aff;
+}
+
+.purple{
+color:#af52de;
+}
+
+
+
+
+
+/* POST DESIGN */
+
 
 .post-card{
-    background:#fff;
-    border-radius:20px;
-    overflow:hidden;
-    margin-bottom:20px;
-    box-shadow:0 5px 15px rgba(0,0,0,.15);
+
+background:white;
+
+border-radius:20px;
+
+overflow:hidden;
+
+margin-top:20px;
+
+box-shadow:0 5px 15px rgba(0,0,0,.15);
+
 }
+
+
 
 .user-info{
-    display:flex;
-    align-items:center;
-    padding:15px;
+
+display:flex;
+
+align-items:center;
+
+padding:15px;
+
 }
+
 
 .avatar{
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    margin-right:10px;
+
+width:50px;
+
+height:50px;
+
+border-radius:50%;
+
+margin-right:10px;
+
 }
+
+
 
 .post-card p{
-    padding:0 15px 15px;
-    font-size:16px;
+
+padding:15px;
+
+font-size:16px;
+
 }
+
 
 .post-photo{
-    width:100%;
-    display:block;
+
+width:100%;
+
 }
+
+
 
 .post-buttons{
-    display:flex;
-    justify-content:space-around;
-    padding:15px;
-    border-top:1px solid #ddd;
+
+display:flex;
+
+justify-content:space-around;
+
+padding:15px;
+
+border-top:1px solid #ddd;
+
 }
+
+
 
 .post-buttons button{
-    border:none;
-    background:none;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
+
+background:none;
+
+border:none;
+
+font-size:16px;
+
+font-weight:bold;
+
+cursor:pointer;
+
 }
 
-.post-buttons button:hover{
-    color:#1877f2;
-}
+
 
 </style>
 
@@ -306,174 +607,180 @@ function openMenu(){
 
 
 
-<br/>   <!DOCTYPE html>
-<html>
-<head>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-<center><h2 class="latest-title">
-    <span class="red">L</span><span class="orange">a</span><span class="yellow">t</span><span class="green">e</span><span class="blue">s</span><span class="purple">t</span>
-</h2>
-
-<style>
-.latest-title{
-    background:#000;
-    padding:12px 20px;
-    text-align:center;
-    border-radius:12px;
-    font-size:32px;
-    font-weight:bold;
-    display:inline-block;
-}
-
-.red{color:#ff3b30;}
-.orange{color:#ff9500;}
-.yellow{color:#ffcc00;}
-.green{color:#34c759;}
-.blue{color:#007aff;}
-.purple{color:#af52de;}
-</style><br/><br/>
-
-
-
-
-
-
-
-
-
-
-
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<link rel="stylesheet" href="style.css">
-
-</head>
-
-<body>
-
-
-
-
-<div id="feed"></div>
-
-
-<script type="module" src="home.js"></script>
-
-</body>
-</html>      <br/> <br/>
-
-
-
-
-
-
-
-
-
-
-   
-<!DOCTYPE html>
-<html>
-<head>
-
-
-
-<div id="feed"></div>
-
-
-</centar>
-
-<br/>
-<br/><br/>
 
 
 
 
 
 <!-- Bottom Navigation -->
+
 <div class="bottom-nav">
-    <a href="home.html">🏠<br><small>Home</small></a>
-    <a href="friends.html">👥<br><small>Friends</small></a>
-    <a href="create-post.html" class="create-btn">➕</a>
-    <a href="messages.html">💬<br><small>Chat</small></a>
-    <a href="profile.html">👤<br><small>Profile</small></a>
+
+
+<a href="home.html">
+🏠
+<small>Home</small>
+</a>
+
+
+<a href="friends.html">
+👥
+<small>Friends</small>
+</a>
+
+
+<a href="create-post.html" class="create-btn">
+➕
+</a>
+
+
+<a href="messages.html">
+💬
+<small>Chat</small>
+</a>
+
+
+<a href="profile.html">
+👤
+<small>Profile</small>
+</a>
+
+
 </div>
 
+
+
+
 <style>
+
 .bottom-nav{
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    height:65px;
-    background:#ffffff;
-    display:flex;
-    justify-content:space-around;
-    align-items:center;
-    box-shadow:0 -3px 10px rgba(0,0,0,.15);
-    z-index:1000;
+
+position:fixed;
+
+bottom:0;
+
+left:0;
+
+width:100%;
+
+height:65px;
+
+background:white;
+
+display:flex;
+
+justify-content:space-around;
+
+align-items:center;
+
+box-shadow:0 -3px 10px rgba(0,0,0,.15);
+
+z-index:1000;
+
 }
+
 
 .bottom-nav a{
-    text-decoration:none;
-    color:#555;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
+
+text-decoration:none;
+
+color:#555;
+
+text-align:center;
+
+font-size:22px;
+
 }
 
-.bottom-nav a small{
-    display:block;
-    font-size:11px;
+
+.bottom-nav small{
+
+display:block;
+
+font-size:11px;
+
 }
+
+
 
 .create-btn{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
-    color:white !important;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:30px !important;
-    margin-top:-25px;
-    box-shadow:0 5px 15px rgba(0,0,0,.3);
+
+width:55px;
+
+height:55px;
+
+border-radius:50%;
+
+background:linear-gradient(135deg,#1877f2,#7b2ff7);
+
+color:white !important;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:30px !important;
+
+margin-top:-25px;
+
 }
+
+
 </style>
 
-<script>
-if ("serviceWorker" in navigator)  
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="module" src="home.js"></script>
+
+<script>
+
+if ("serviceWorker" in navigator){
 
 navigator.serviceWorker.register("./firebase-messaging-sw.js")
-  .then(registration => {
-    console.log("Service Worker registered:", registration);
-  })
-  .catch(error => {
-    alert("Service Worker Error: " + error.message);
-    console.error(error);
-  });
+
+.then((registration)=>{
+
+console.log("Service Worker registered:", registration);
+
+})
+
+.catch((error)=>{
+
+console.error("Service Worker Error:",error);
+
+});
+
+}
 
 </script>
 
+
 <script type="module" src="notifications.js"></script>
 
-</body>
-</html>
 
+</body>
+
+</html>
