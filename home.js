@@ -230,3 +230,52 @@ window.likePost = async function(postId){
 window.openComments = function(postId){
     location.href = "comments.html?postId=" + postId;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { auth, db } from "./firebase.js";
+
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+auth.onAuthStateChanged(async(user)=>{
+
+    if(!user) return;
+
+    const snap = await getDoc(doc(db,"users",user.uid));
+
+    if(snap.exists()){
+
+        const username = snap.data().username;
+
+        const hour = new Date().getHours();
+
+        let greeting = "Good Evening";
+
+        if(hour < 12){
+            greeting = "Good Morning";
+        }else if(hour < 17){
+            greeting = "Good Afternoon";
+        }
+
+        document.getElementById("welcomeText").innerHTML =
+        `${greeting}, <span style="color:#FFD54F;">${username}</span> 👋`;
+
+    }
+
+});
