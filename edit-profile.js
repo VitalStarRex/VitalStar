@@ -11,11 +11,10 @@ import {
   updatePassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Profile Picture
+// Images
 const profileImage = document.getElementById("profileImage");
 const profilePreview = document.getElementById("profilePreview");
 
-// Cover Photo
 const coverImage = document.getElementById("coverImage");
 const coverPreview = document.getElementById("coverPreview");
 
@@ -34,7 +33,7 @@ const form = document.getElementById("editProfileForm");
 let imageFile = null;
 let coverFile = null;
 
-// Preview Profile Picture
+// Profile Picture Preview
 profileImage.addEventListener("change", (e) => {
     imageFile = e.target.files[0];
 
@@ -43,7 +42,7 @@ profileImage.addEventListener("change", (e) => {
     }
 });
 
-// Preview Cover Photo
+// Cover Photo Preview
 coverImage.addEventListener("change", (e) => {
     coverFile = e.target.files[0];
 
@@ -52,11 +51,7 @@ coverImage.addEventListener("change", (e) => {
     }
 });
 
-
-
-
-
-// Load current user's profile
+// Load User Profile
 auth.onAuthStateChanged(async (user) => {
 
     if (!user) {
@@ -109,6 +104,7 @@ auth.onAuthStateChanged(async (user) => {
 async function uploadImage(file) {
 
     const formData = new FormData();
+
     formData.append("file", file);
     formData.append("upload_preset", "vitalstar_upload");
 
@@ -146,17 +142,17 @@ form.addEventListener("submit", async (e) => {
         let profilePicture = profilePreview.src;
         let coverPhoto = coverPreview.src;
 
-        // Upload profile picture
+        // Upload new profile picture
         if (imageFile) {
             profilePicture = await uploadImage(imageFile);
         }
 
-        // Upload cover photo
+        // Upload new cover photo
         if (coverFile) {
             coverPhoto = await uploadImage(coverFile);
         }
 
-        // Save profile to Firestore
+        // Update Firestore
         await updateDoc(doc(db, "users", user.uid), {
             fullName: fullName.value.trim(),
             username: username.value.trim(),
@@ -167,57 +163,36 @@ form.addEventListener("submit", async (e) => {
             coverPhoto: coverPhoto
         });
 
+
+
+
+
+
         // Update email if changed
         if (email.value.trim() !== user.email) {
-            await updateEmail(user, email.value.trim());
+            try {
+                await updateEmail(user, email.value.trim());
+            } catch (err) {
+                alert("Email was not updated.\nPlease log in again before changing your email.");
+            }
         }
 
         // Update password if entered
-        
+        if (password.value.trim() !== "") {
+            try {
+                await updatePassword(user, password.value.trim());
+            } catch (err) {
+                alert("Password was not updated.\nPlease log in again before changing your password.");
+            }
+        }
 
+        alert("Profile updated successfully!");
 
+        window.location.href = "profile.html";
 
-// Update email if changed
-if (email.value.trim() !== user.email) {
-    try {
-        await updateEmail(user, email.value.trim());
     } catch (err) {
-        alert("Please log in again before changing your email.");
-    }
-}
-
-// Update password if entered
-if (password.value.trim() !== "") {
-    try {
-        await updatePassword(user, password.value.trim());
-    } catch (err) {
-        alert("Please log in again before changing your password.");
-    }
-}
-
-alert("Profile updated successfully!");
-
-window.location.href = "profile.html";
-    
-        
-    
-
-
-                 
-            
-
-
-         catch (err) {
-        console.error(err);
+        console.error("Profile Update Error:", err);
         alert(err.message);
     }
 
 });
-
-
-
-
-
-
-
-
