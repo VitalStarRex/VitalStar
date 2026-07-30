@@ -29,11 +29,36 @@ console.log("Post ID =", postId);
 const commentList = document.getElementById("commentList");
 
 // Load comments
-const q = query(
-    collection(db, "comments"),
-    where("postId", "==", postId),
-    orderBy("createdAt", "asc")
-);
+
+
+
+
+onSnapshot(collection(db, "comments"), (snapshot) => {
+
+    commentList.innerHTML = "";
+
+    snapshot.forEach((docSnap) => {
+
+        const comment = docSnap.data();
+
+        if (comment.postId !== postId) return;
+
+        commentList.innerHTML += `
+            <div class="comment">
+                <b>${comment.username}</b><br>
+                ${comment.text}
+            </div>
+        `;
+    });
+
+    if (commentList.innerHTML === "") {
+        commentList.innerHTML = "<p>No comments yet.</p>";
+    }
+
+});
+
+
+
 
 onSnapshot(q, (snapshot) => {
 
