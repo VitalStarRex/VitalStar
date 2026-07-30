@@ -1,10 +1,9 @@
 
-import { db, auth } from "./firebase.js";
-
 import {
     collection,
     query,
     orderBy,
+    limit,
     onSnapshot,
     doc,
     updateDoc,
@@ -15,7 +14,6 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
-
 const feed = document.getElementById("feed");
 
 
@@ -24,7 +22,8 @@ const feed = document.getElementById("feed");
 
 const postsQuery = query(
     collection(db,"posts"),
-    orderBy("createdAt","desc")
+    orderBy("createdAt","desc"),
+    limit(10)
 );
 
 
