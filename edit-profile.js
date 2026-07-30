@@ -57,8 +57,11 @@ auth.onAuthStateChanged(async (user) => {
             fullName.value = data.fullName || "";
             username.value = data.username || "";
             email.value = user.email || "";
-            dob.value = data.dob || "";
-            bio.value = data.bio || "";
+             
+             dob.value = data.dob || "";
+country.value = data.country || "";
+bio.value = data.bio || "";
+
 
             if (data.profilePicture) {
                 profilePreview.src = data.profilePicture;
