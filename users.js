@@ -11,7 +11,7 @@ const usersList = document.getElementById("usersList");
 
 const q = query(
   collection(db, "users"),
-  orderBy("username", "asc")
+  orderBy("fullname", "asc")
 );
 
 onSnapshot(q, (snapshot) => {
@@ -25,11 +25,11 @@ onSnapshot(q, (snapshot) => {
     usersList.innerHTML += `
       <div class="user" onclick="location.href='profile.html?uid=${doc.id}'">
         <div class="avatar">
-          ${user.username.charAt(0).toUpperCase()}
+          ${user.fullname.charAt(0).toUpperCase()}
         </div>
 
         <div class="info">
-          <div class="name">${user.username}</div>
+          <div class="name">${user.fullname}</div>
           <div class="status">Tap to chat</div>
         </div>
       </div>
