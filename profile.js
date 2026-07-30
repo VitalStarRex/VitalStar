@@ -8,6 +8,8 @@ import {
   updateDoc,
   increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+   
+const messageBtn = document.getElementById("messageBtn");                                              
 
 const coverPhoto = document.getElementById("coverPhoto");
 const profilePicture = document.getElementById("profilePicture");
