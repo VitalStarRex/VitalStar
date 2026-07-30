@@ -28,7 +28,10 @@ auth.onAuthStateChanged(async (user) => {
 
   try {
          const params = new URLSearchParams(window.location.search);
-const profileUid = params.get("uid") || user.uid;
+const profileUid = params.get("uid") || user.uid;              
+
+   console.log("Logged in UID:", user.uid);
+console.log("Profile UID:", profileUid);
 
 const userRef = doc(db, "users", profileUid);
 
