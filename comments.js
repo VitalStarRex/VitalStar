@@ -93,6 +93,3 @@ window.sendComment = async function(){
 
 
 
-window.openComments = function(postId){
-    location.href = "comments.html?postId=" + postId;
-};
