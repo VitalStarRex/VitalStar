@@ -1,111 +1,39 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>Login</title>
-
+<html><head><title>Login</title>
 <style>
-body{
-    font-family:Arial;
-    background:linear-gradient(135deg,#667eea,#764ba2);
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.box{
-    background:white;
-    padding:30px;
-    width:300px;
-    border-radius:15px;
-    text-align:center;
-}
-
-input{
-    width:90%;
-    padding:12px;
-    margin:10px;
-}
-
-button{
-    width:95%;
-    padding:12px;
-    background:#667eea;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:18px;
-}
-
-a{
-    color:#667eea;
-}
-</style>
-
-</head>
-
-<body>
-
+body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);height:100vh;display:flex;justify-content:center;align-items:center}
+.box{background:#fff;padding:30px;width:300px;border-radius:15px;text-align:center}
+input{width:90%;padding:12px;margin:10px}
+button{width:95%;padding:12px;background:#667eea;color:#fff;border:none;border-radius:8px;font-size:18px}
+a{color:#667eea}
+</style></head><body>
 <div class="box">
-
 <h2>Login</h2>
-
-<input id="email" type="email" placeholder="Email">
-
+<input id="username" type="text" placeholder="Username">
 <input id="password" type="password" placeholder="Password">
-
 <button onclick="login()">Login</button>
-
-<p>
-Don't have an account?
-<a href="register.html">Register</a>
-</p>
-
+<p>Don't have an account? <a href="register.html">Register</a></p>
 </div>
 
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection,query,where,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-<script type="module">                          
-                                      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDIePnptlh5c4q9RSPZJ8pYLAYNswNHgCs",
-  authDomain: "mysocialapp-87ea4.firebaseapp.com",
-  projectId: "mysocialapp-87ea4",
-  storageBucket: "mysocialapp-87ea4.firebasestorage.app",
-  messagingSenderId: "164883751409",
-  appId: "1:164883751409:web:b7ccfcc42dfc06783fe450",
-  measurementId: "G-6L9PV3CRT3"
-};
-
-
-const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
-
-
-window.login = function(){
-
-let email = document.getElementById("email").value;
-let password = document.getElementById("password").value;
-
-
-signInWithEmailAndPassword(auth,email,password)
-
-.then(() => {
-alert("Login successful!");
-window.location.href="home.html";
-})
-
-.catch((error)=>{
-alert(error.message);
-});
-
+window.login=async function(){
+ const username=document.getElementById("username").value.trim().toLowerCase();
+ const password=document.getElementById("password").value;
+ try{
+   const q=query(collection(db,"users"),where("username","==",username));
+   const snap=await getDocs(q);
+   if(snap.empty){alert("Username not found.");return;}
+   const email=snap.docs[0].data().email;
+   await signInWithEmailAndPassword(auth,email,password);
+   alert("Login successful!");
+   window.location.href="home.html";
+ }catch(e){
+   alert(e.message);
+ }
 }
-
 </script>
-
-</body>
-</html>
+</body></html>
