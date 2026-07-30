@@ -55,6 +55,23 @@ body:formData
 
 const data = await response.json();
 
+console.log(data);
+
+return data.secure_url;
+
+}
+
+const response = await fetch(
+"https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
+{
+method:"POST",
+body:formData
+}
+);
+
+
+const data = await response.json();
+
 return data.secure_url;
 
 }
