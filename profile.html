@@ -8,36 +8,82 @@
 </head>
 <body>
 
-<header class="cover">
-  <img id="coverPhoto" src="https://via.placeholder.com/1200x260" alt="Cover Photo">
-</header>
+<div class="profile-page">
 
-<main class="profile-card">
-  <img id="profilePicture" src="https://via.placeholder.com/150" alt="Profile Picture" class="avatar">
+<div class="cover-container">
+<img id="coverPhoto" src="https://via.placeholder.com/1200x350" class="cover-photo">
 
-  <h1 id="fullName">Loading...</h1>
-  <p id="username">@username</p>
-  <p id="bio">No bio yet.</p>
-  <p id="dob"></p>
+<div class="profile-image-box">
+<img id="profilePicture" src="https://via.placeholder.com/180" class="profile-picture">
+</div>
+</div>
 
-  <section class="stats">
-    <div><h3 id="posts">0</h3><span>Posts</span></div>
-    <div><h3 id="followers">0</h3><span>Followers</span></div>
-    <div><h3 id="following">0</h3><span>Following</span></div>
-  </section>
+<div class="profile-info">
 
-  <div class="actions">
-    <button id="editProfileBtn">Edit Profile</button>
-    <button id="followBtn">Follow</button>
-    <button id="messageBtn">Message</button>
-  </div>
+<h1 id="fullName">Loading...</h1>
 
-  <section class="photos">
-    <h2>Photos</h2>
-    <div id="gallery" class="gallery"></div>
-  </section>
-</main>
+<p class="username" id="username">@username</p>
+
+<div class="details">
+
+<p id="country">🌍 Country</p>
+
+<p id="dob">🎂 Birthday</p>
+
+</div>
+
+<p id="bio" class="bio">
+No bio yet.
+</p>
+
+<div class="stats">
+
+<div>
+<h2 id="posts">0</h2>
+<span>Posts</span>
+</div>
+
+<div>
+<h2 id="followers">0</h2>
+<span>Followers</span>
+</div>
+
+<div>
+<h2 id="following">0</h2>
+<span>Following</span>
+</div>
+
+</div>
+
+<div class="buttons">
+
+<button id="editProfileBtn">
+✏ Edit Profile
+</button>
+
+<button id="followBtn">
+➕ Follow
+</button>
+
+<button id="messageBtn">
+💬 Message
+</button>
+
+</div>
+
+</div>
+
+<div class="posts-section">
+
+<h2>Posts</h2>
+
+<div id="gallery"></div>
+
+</div>
+
+</div>
 
 <script type="module" src="profile.js"></script>
+
 </body>
 </html>
