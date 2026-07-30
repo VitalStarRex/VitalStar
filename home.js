@@ -223,3 +223,10 @@ window.likePost = async function(postId){
 
 
 };
+
+
+
+
+window.openComments = function(postId){
+    location.href = "comments.html?postId=" + postId;
+};
