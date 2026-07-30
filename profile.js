@@ -8,8 +8,7 @@ import {
   updateDoc,
   increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-   
-const messageBtn = document.getElementById("messageBtn");                                              
+                                                
 
 const coverPhoto = document.getElementById("coverPhoto");
 const profilePicture = document.getElementById("profilePicture");
@@ -216,15 +215,18 @@ followBtn.addEventListener("click", async () => {
 
 
 
-
-
-
-
 messageBtn.addEventListener("click", () => {
+
+    alert("Message button clicked!");
+
     const params = new URLSearchParams(window.location.search);
     const profileUid = params.get("uid");
 
-    if (profileUid) {
-        window.location.href = `chat.html?uid=${profileUid}`;
+    if (!profileUid) {
+        alert("No profile UID found.");
+        return;
     }
+
+    window.location.href = "chat.html?uid=" + profileUid;
+
 });
