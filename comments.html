@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comments</title>
+<title>Comments - VitalStar</title>
 
 <style>
-body{
+*{
     margin:0;
+    padding:0;
+    box-sizing:border-box;
     font-family:Arial,sans-serif;
+}
+
+body{
     background:#eef2ff;
 }
 
@@ -19,17 +24,53 @@ header{
     text-align:center;
     font-size:22px;
     font-weight:bold;
+    position:sticky;
+    top:0;
 }
 
 #commentList{
     padding:15px;
+    padding-bottom:130px;
 }
 
 .comment{
     background:white;
     padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+    box-shadow:0 3px 10px rgba(0,0,0,.1);
+}
+
+.comment-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.comment-avatar{
+    width:45px;
+    height:45px;
+    border-radius:50%;
+    background:#1877f2;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:22px;
+}
+
+.comment-text{
+    margin-top:10px;
+    line-height:1.5;
+    word-break:break-word;
+}
+
+.comment-photo{
+    width:100%;
+    max-width:450px;
     border-radius:12px;
-    margin-bottom:10px;
+    margin-top:10px;
+    display:block;
 }
 
 .comment-box{
@@ -37,21 +78,39 @@ header{
     bottom:0;
     left:0;
     width:100%;
-    display:flex;
     background:white;
     padding:10px;
+    box-shadow:0 -2px 10px rgba(0,0,0,.15);
 }
 
-.comment-box input{
-    flex:1;
-    padding:10px;
-    border-radius:20px;
+.comment-box input[type="text"]{
+    width:100%;
+    padding:12px;
     border:1px solid #ccc;
+    border-radius:20px;
+    margin-bottom:10px;
+    outline:none;
+}
+
+.comment-box input[type="file"]{
+    width:100%;
+    margin-bottom:10px;
 }
 
 .comment-box button{
-    margin-left:10px;
-    padding:10px 18px;
+    width:100%;
+    padding:12px;
+    background:#1877f2;
+    color:white;
+    border:none;
+    border-radius:20px;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.comment-box button:hover{
+    background:#145fd1;
 }
 </style>
 
@@ -64,8 +123,21 @@ header{
 <div id="commentList"></div>
 
 <div class="comment-box">
-    <input id="commentText" placeholder="Write a comment...">
-    <button onclick="sendComment()">Send</button>
+
+<input
+type="text"
+id="commentText"
+placeholder="Write a comment...">
+
+<input
+type="file"
+id="commentImage"
+accept="image/*">
+
+<button onclick="sendComment()">
+Send
+</button>
+
 </div>
 
 <script type="module" src="comments.js"></script>
