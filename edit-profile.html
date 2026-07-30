@@ -106,8 +106,15 @@ button:hover{
 
 <h1>Edit Profile</h1>
 
+
+
+
 <div class="profile-section">
-<img id="profilePreview" src="default-avatar.png">
+
+<h3>Profile Picture</h3>
+
+<img id="profilePreview"
+src="default-avatar.png">
 
 <input
 type="file"
@@ -117,7 +124,33 @@ accept="image/*">
 <label for="profileImage">
 Change Profile Picture
 </label>
+
+<br><br>
+
+<h3>Cover Photo</h3>
+
+<img id="coverPreview"
+src="https://via.placeholder.com/600x220"
+style="
+width:100%;
+height:180px;
+object-fit:cover;
+border-radius:10px;
+margin-bottom:10px;">
+
+<input
+type="file"
+id="coverImage"
+accept="image/*">
+
+<label for="coverImage">
+Change Cover Photo
+</label>
+
 </div>
+
+
+
 
 <form id="editProfileForm">
 
