@@ -1,28 +1,208 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
 
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#f0f2f5;color:#222}
-.cover{height:260px;background:#1877f2;overflow:hidden}
-.cover img{width:100%;height:100%;object-fit:cover}
-.profile-card{max-width:760px;margin:-70px auto 30px;background:#fff;border-radius:16px;
-padding:20px;box-shadow:0 4px 14px rgba(0,0,0,.15);text-align:center}
-.avatar{width:150px;height:150px;border-radius:50%;border:5px solid #fff;
-object-fit:cover;background:#ddd}
-#fullName{margin-top:15px}
-#username{color:#666;margin:6px 0}
-#bio,#dob{color:#555;margin:8px 0}
-.stats{display:flex;justify-content:space-around;margin:25px 0}
-.stats h3{color:#1877f2}
-.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.actions button{padding:12px 22px;border:none;border-radius:24px;cursor:pointer;color:#fff}
-#editProfileBtn{background:#555}
-#followBtn{background:#1877f2}
-#messageBtn{background:#42b72a}
-.photos{margin-top:30px;text-align:left}
-.photos h2{margin-bottom:12px}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
-.gallery img{width:100%;height:120px;object-fit:cover;border-radius:10px}
-@media(max-width:600px){
-.stats{flex-direction:column;gap:15px}
-.profile-card{margin:-50px 10px 20px}
-.avatar{width:120px;height:120px}
+body{
+    background:#eef2f7;
+    color:#222;
+}
+
+/* Cover */
+
+.cover-container{
+    position:relative;
+}
+
+.cover-photo{
+    width:100%;
+    height:300px;
+    object-fit:cover;
+    display:block;
+}
+
+/* Main Card */
+
+.profile-page{
+    max-width:850px;
+    margin:auto;
+    background:#fff;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 8px 25px rgba(0,0,0,.15);
+    margin-top:20px;
+    margin-bottom:30px;
+}
+
+/* Profile Picture */
+
+.profile-image-box{
+    display:flex;
+    justify-content:center;
+    margin-top:-90px;
+}
+
+.profile-picture{
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    object-fit:cover;
+    border:6px solid white;
+    background:#ddd;
+    box-shadow:0 4px 15px rgba(0,0,0,.2);
+}
+
+/* Info */
+
+.profile-info{
+    text-align:center;
+    padding:20px;
+}
+
+.profile-info h1{
+    font-size:30px;
+    margin-top:10px;
+}
+
+.username{
+    color:#1877f2;
+    font-size:18px;
+    margin-top:5px;
+}
+
+.details{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+    margin:15px 0;
+    color:#666;
+    font-size:15px;
+}
+
+.bio{
+    max-width:600px;
+    margin:15px auto;
+    color:#444;
+    line-height:1.6;
+}
+
+/* Stats */
+
+.stats{
+    display:flex;
+    justify-content:space-evenly;
+    margin:30px 0;
+}
+
+.stats div{
+    flex:1;
+}
+
+.stats h2{
+    color:#1877f2;
+    font-size:28px;
+}
+
+.stats span{
+    color:#666;
+}
+
+/* Buttons */
+
+.buttons{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.buttons button{
+    padding:12px 26px;
+    border:none;
+    border-radius:30px;
+    font-size:16px;
+    cursor:pointer;
+    transition:.3s;
+    color:white;
+}
+
+#editProfileBtn{
+    background:#444;
+}
+
+#followBtn{
+    background:#1877f2;
+}
+
+#messageBtn{
+    background:#28a745;
+}
+
+.buttons button:hover{
+    transform:translateY(-3px);
+    opacity:.9;
+}
+
+/* Posts */
+
+.posts-section{
+    padding:25px;
+}
+
+.posts-section h2{
+    margin-bottom:20px;
+    color:#1877f2;
+}
+
+#gallery{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+    gap:15px;
+}
+
+#gallery img{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    border-radius:12px;
+    transition:.3s;
+}
+
+#gallery img:hover{
+    transform:scale(1.03);
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+.cover-photo{
+    height:220px;
+}
+
+.profile-picture{
+    width:140px;
+    height:140px;
+    margin-top:20px;
+}
+
+.profile-info h1{
+    font-size:24px;
+}
+
+.stats{
+    flex-direction:row;
+}
+
+.buttons{
+    flex-direction:column;
+}
+
+.buttons button{
+    width:100%;
+}
+
 }
