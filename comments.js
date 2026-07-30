@@ -17,6 +17,15 @@ import {
 const params = new URLSearchParams(window.location.search);
 const postId = params.get("postId");
 
+
+
+const postId = params.get("postId");
+
+alert("Post ID = " + postId);
+console.log("Post ID =", postId);
+
+
+
 const commentList = document.getElementById("commentList");
 
 // Load comments
