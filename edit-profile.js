@@ -26,7 +26,7 @@ const form = document.getElementById("editProfileForm");
 let imageFile = null;
 
 // Preview selected image
-profileImage.addEventListener("change", e => {
+profileImage.addEventListener("change", (e) => {
     imageFile = e.target.files[0];
 
     if (imageFile) {
@@ -34,28 +34,38 @@ profileImage.addEventListener("change", e => {
     }
 });
 
-// Load current profile
-auth.onAuthStateChanged(async user => {
+// Load current user's profile
+auth.onAuthStateChanged(async (user) => {
 
     if (!user) {
-        location.href = "login.html";
+        window.location.href = "login.html";
         return;
     }
 
-    const snap = await getDoc(doc(db, "users", user.uid));
+    try {
 
-    if (!snap.exists()) return;
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
 
-    const data = snap.data();
+        if (snap.exists()) {
 
-    fullName.value = data.fullName || "";
-    username.value = data.username || "";
-    email.value = user.email || "";
-    dob.value = data.dob || "";
-    bio.value = data.bio || "";
+            const data = snap.data();
 
-    if (data.profilePicture) {
-        profilePreview.src = data.profilePicture;
+            fullName.value = data.fullName || "";
+            username.value = data.username || "";
+            email.value = user.email || "";
+            dob.value = data.dob || "";
+            bio.value = data.bio || "";
+
+            if (data.profilePicture) {
+                profilePreview.src = data.profilePicture;
+            }
+
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to load profile.");
     }
 
 });
@@ -66,68 +76,72 @@ async function uploadImage(file) {
     const formData = new FormData();
 
     formData.append("file", file);
-    formData.append("upload_preset", "YOUR_UPLOAD_PRESET");
+    formData.append("upload_preset", "vitalstar_upload");
 
-    const res = await fetch(
-        "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
+    const response = await fetch(
+        "https://api.cloudinary.com/v1_1/m0scmqqv/image/upload",
         {
             method: "POST",
             body: formData
         }
     );
 
-    const data = await res.json();
+    const result = await response.json();
 
-    return data.secure_url;
+    if (!response.ok) {
+        throw new Error(result.error?.message || "Image upload failed.");
+    }
+
+    return result.secure_url;
 }
 
 // Save profile
-form.addEventListener("submit", async e => {
+form.addEventListener("submit", async (e) => {
 
     e.preventDefault();
 
     const user = auth.currentUser;
 
-    if (!user) return;
-
-    let profilePicture = profilePreview.src;
-
-    if (imageFile) {
-        profilePicture = await uploadImage(imageFile);
+    if (!user) {
+        alert("Please log in first.");
+        return;
     }
 
-    await updateDoc(doc(db, "users", user.uid), {
+    try {
 
-        fullName: fullName.value.trim(),
-        username: username.value.trim(),
-        dob: dob.value,
-        bio: bio.value.trim(),
-        profilePicture: profilePicture
+        let profilePicture = profilePreview.src;
 
-    });
+        // Upload new image if selected
+        if (imageFile) {
+            profilePicture = await uploadImage(imageFile);
+        }
 
-    if (email.value !== user.email) {
+        // Save to Firestore
+        await updateDoc(doc(db, "users", user.uid), {
+            fullName: fullName.value.trim(),
+            username: username.value.trim(),
+            dob: dob.value,
+            bio: bio.value.trim(),
+            profilePicture: profilePicture
+        });
 
-        try {
+        // Update email if changed
+        if (email.value.trim() !== user.email) {
             await updateEmail(user, email.value.trim());
-        } catch (err) {
-            alert(err.message);
         }
 
-    }
-
-    if (password.value.trim() !== "") {
-
-        try {
+        // Update password if entered
+        if (password.value.trim() !== "") {
             await updatePassword(user, password.value.trim());
-        } catch (err) {
-            alert(err.message);
         }
 
+        alert("Profile updated successfully!");
+
+        window.location.href = "profile.html";
+
+    } catch (err) {
+        console.error(err);
+        alert(err.message);
     }
 
-    alert("Profile updated successfully.");
-
-    location.href = "profile.html";
-
-}); 
+});
