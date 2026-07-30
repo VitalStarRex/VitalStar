@@ -41,6 +41,20 @@ const userRef = doc(db, "users", profileUid);
 
     const data = snap.data();
 
+
+
+
+
+if (profileUid === user.uid) {
+    editProfileBtn.style.display = "inline-block";
+    document.getElementById("followBtn").style.display = "none";
+    document.getElementById("messageBtn").style.display = "none";
+} else {
+    editProfileBtn.style.display = "none";
+}
+
+
+
     fullName.textContent = data.fullName || "No Name";
     username.textContent = "@" + (data.username || "username");
     country.textContent = "🌍 " + (data.country || "Country not set");
