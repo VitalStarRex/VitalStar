@@ -5,6 +5,8 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+alert("comments.js loaded");
+
 const commentList = document.getElementById("commentList");
 
 onSnapshot(collection(db, "comments"), (snapshot) => {
@@ -24,4 +26,7 @@ onSnapshot(collection(db, "comments"), (snapshot) => {
 
     });
 
+}, (error) => {
+    alert(error.message);
+    console.error(error);
 });
