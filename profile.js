@@ -197,3 +197,32 @@ followBtn.addEventListener("click", async () => {
     }
 
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+messageBtn.addEventListener("click", () => {
+    const params = new URLSearchParams(window.location.search);
+    const profileUid = params.get("uid");
+
+    if (profileUid) {
+        window.location.href = `chat.html?uid=${profileUid}`;
+    }
+});
