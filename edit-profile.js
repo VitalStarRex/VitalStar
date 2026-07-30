@@ -124,12 +124,21 @@ form.addEventListener("submit", async (e) => {
 
         // Save to Firestore
         await updateDoc(doc(db, "users", user.uid), {
-            fullName: fullName.value.trim(),
-            username: username.value.trim(),
-            dob: dob.value,
-            bio: bio.value.trim(),
-            profilePicture: profilePicture
-        });
+            
+
+
+
+       await updateDoc(doc(db, "users", user.uid), {
+    fullName: fullName.value.trim(),
+    username: username.value.trim(),
+    dob: dob.value,
+    country: country.value.trim(),
+    bio: bio.value.trim(),
+    profilePicture: profilePicture
+});
+            
+            
+   
 
         // Update email if changed
         if (email.value.trim() !== user.email) {
