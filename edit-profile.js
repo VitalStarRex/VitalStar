@@ -18,6 +18,9 @@ const fullName = document.getElementById("fullName");
 const username = document.getElementById("username");
 const email = document.getElementById("email");
 const dob = document.getElementById("dob");
+
+const dob = document.getElementById("dob");
+const country = document.getElementById("country");
 const password = document.getElementById("password");
 const bio = document.getElementById("bio");
 
