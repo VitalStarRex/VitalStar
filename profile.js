@@ -2,99 +2,167 @@ import { auth, db } from "./firebase.js";
 
 import {
     doc,
-    getDoc
+    getDoc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const coverPhoto = document.getElementById("coverPhoto");
-const profilePicture = document.getElementById("profilePicture");
+import {
+    updateEmail,
+    updatePassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const profileImage = document.getElementById("profileImage");
+const coverImage = document.getElementById("coverImage");
+
+const profilePreview = document.getElementById("profilePreview");
+const coverPreview = document.getElementById("coverPreview");
+
 const fullName = document.getElementById("fullName");
 const username = document.getElementById("username");
-const bio = document.getElementById("bio");
+const email = document.getElementById("email");
 const dob = document.getElementById("dob");
+const password = document.getElementById("password");
+const bio = document.getElementById("bio");
 
-const posts = document.getElementById("posts");
-const followers = document.getElementById("followers");
-const following = document.getElementById("following");
+const form = document.getElementById("editProfileForm");
 
-const editProfileBtn = document.getElementById("editProfileBtn");
-const followBtn = document.getElementById("followBtn");
-const messageBtn = document.getElementById("messageBtn");
+let profileFile = null;
+let coverFile = null;
 
-auth.onAuthStateChanged(async (currentUser) => {
+profileImage.addEventListener("change", (e) => {
 
-    if (!currentUser) {
-        window.location.href = "login.html";
+    profileFile = e.target.files[0];
+
+    if (profileFile) {
+        profilePreview.src = URL.createObjectURL(profileFile);
+    }
+
+});
+
+coverImage.addEventListener("change", (e) => {
+
+    coverFile = e.target.files[0];
+
+    if (coverFile) {
+        coverPreview.src = URL.createObjectURL(coverFile);
+    }
+
+});
+
+auth.onAuthStateChanged(async (user) => {
+
+    if (!user) {
+        location.href = "login.html";
         return;
     }
 
-    const params = new URLSearchParams(window.location.search);
+    const snap = await getDoc(doc(db, "users", user.uid));
 
-    const uid = params.get("uid") || currentUser.uid;
+    if (!snap.exists()) return;
 
-    const isMyProfile = uid === currentUser.uid;
+    const data = snap.data();
 
-    if (isMyProfile) {
+    fullName.value = data.fullName || "";
+    username.value = data.username || "";
+    email.value = user.email || "";
+    dob.value = data.dob || "";
+    bio.value = data.bio || "";
 
-        editProfileBtn.style.display = "inline-block";
-        followBtn.style.display = "none";
-        messageBtn.style.display = "none";
-
-        editProfileBtn.onclick = () => {
-            window.location.href = "edit-profile.html";
-        };
-
-    } else {
-
-        editProfileBtn.style.display = "none";
-        followBtn.style.display = "inline-block";
-        messageBtn.style.display = "inline-block";
-
+    if (data.profilePicture) {
+        profilePreview.src = data.profilePicture;
     }
+
+    if (data.coverPhoto) {
+        coverPreview.src = data.coverPhoto;
+    }
+});
+
+async function uploadImage(file) {
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    formData.append("upload_preset", "vitalstar_upload");
+
+
+    const response = await fetch(
+        "https://api.cloudinary.com/v1_1/m0scmqqv/image/upload",
+        {
+            method: "POST",
+            body: formData
+        }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error?.message || "Upload failed");
+    }
+
+    return result.secure_url;
+}
+
+form.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const user = auth.currentUser;
+
+    if (!user) return;
 
     try {
 
-        const snap = await getDoc(doc(db, "users", uid));
+        let profilePicture = profilePreview.src;
+        let coverPhoto = coverPreview.src;
 
-        if (!snap.exists()) {
+        if (profileFile) {
+            profilePicture = await uploadImage(profileFile);
+        }
 
-            fullName.textContent = "User not found";
+        if (coverFile) {
+            coverPhoto = await uploadImage(coverFile);
+        }
 
-            return;
+        await updateDoc(doc(db, "users", user.uid), {
+
+            fullName: fullName.value.trim(),
+            username: username.value.trim(),
+            dob: dob.value,
+            bio: bio.value.trim(),
+            profilePicture: profilePicture,
+            coverPhoto: coverPhoto
+
+        });
+
+        if (email.value.trim() !== user.email) {
+
+            try {
+                await updateEmail(user, email.value.trim());
+            } catch (err) {
+                alert(err.message);
+            }
 
         }
 
-        const user = snap.data();
+        if (password.value.trim() !== "") {
 
+            try {
+                await updatePassword(user, password.value.trim());
+            } catch (err) {
+                alert(err.message);
+            }
 
-
-
-        fullName.textContent = user.fullName || "Unknown User";
-        username.textContent = "@" + (user.username || "username");
-        bio.textContent = user.bio || "No bio yet.";
-
-        if (user.dob) {
-            dob.textContent = "Date of Birth: " + user.dob;
-        } else {
-            dob.textContent = "";
         }
 
-        posts.textContent = user.posts || 0;
-        followers.textContent = user.followers || 0;
-        following.textContent = user.following || 0;
+        alert("Profile updated successfully!");
 
-        if (user.profilePicture) {
-            profilePicture.src = user.profilePicture;
-        }
-
-        if (user.coverPhoto) {
-            coverPhoto.src = user.coverPhoto;
-        }
+        window.location.href = "profile.html";
 
     } catch (error) {
 
         console.error(error);
-
-        fullName.textContent = "Error loading profile";
+        alert(error.message);
 
     }
 
