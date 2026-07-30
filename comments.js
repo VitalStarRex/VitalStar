@@ -90,3 +90,9 @@ window.sendComment = async function(){
     document.getElementById("commentText").value="";
 
 };
+
+
+
+window.openComments = function(postId){
+    location.href = "comments.html?postId=" + postId;
+};
