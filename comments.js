@@ -17,48 +17,16 @@ import {
 const params = new URLSearchParams(window.location.search);
 const postId = params.get("postId");
 
-
-
-const postId = params.get("postId");
-
-alert("Post ID = " + postId);
-console.log("Post ID =", postId);
-
-
+console.log("Post ID:", postId);
 
 const commentList = document.getElementById("commentList");
 
 // Load comments
-
-
-
-
-onSnapshot(collection(db, "comments"), (snapshot) => {
-
-    commentList.innerHTML = "";
-
-    snapshot.forEach((docSnap) => {
-
-        const comment = docSnap.data();
-
-        if (comment.postId !== postId) return;
-
-        commentList.innerHTML += `
-            <div class="comment">
-                <b>${comment.username}</b><br>
-                ${comment.text}
-            </div>
-        `;
-    });
-
-    if (commentList.innerHTML === "") {
-        commentList.innerHTML = "<p>No comments yet.</p>";
-    }
-
-});
-
-
-
+const q = query(
+    collection(db, "comments"),
+    where("postId", "==", postId),
+    orderBy("createdAt", "asc")
+);
 
 onSnapshot(q, (snapshot) => {
 
@@ -75,12 +43,17 @@ onSnapshot(q, (snapshot) => {
 
         commentList.innerHTML += `
             <div class="comment">
-                <b>${comment.username}</b><br>
+                <b>${comment.username}</b>
+                <br>
                 ${comment.text}
             </div>
         `;
+
     });
 
+}, (error) => {
+    console.error(error);
+    alert(error.message);
 });
 
 // Send comment
@@ -90,21 +63,24 @@ async function sendComment() {
 
         const text = document.getElementById("commentText").value.trim();
 
-        if (text === "") return;
+        if (text === "") {
+            alert("Please type a comment.");
+            return;
+        }
 
         const user = auth.currentUser;
 
         if (!user) {
-            alert("Please log in first.");
+            alert("Please login first.");
             return;
         }
 
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userSnap = await getDoc(doc(db, "users", user.uid));
 
         let username = "VitalStar User";
 
-        if (userDoc.exists()) {
-            username = userDoc.data().username || "VitalStar User";
+        if (userSnap.exists()) {
+            username = userSnap.data().username || "VitalStar User";
         }
 
         await addDoc(collection(db, "comments"), {
