@@ -30,7 +30,8 @@ onSnapshot(q, (snapshot) => {
     commentList.innerHTML = "";
 
     if (snapshot.empty) {
-        commentList.innerHTML = "<p>No comments yet.</p>";
+        commentList.innerHTML =
+        "<p style='text-align:center;'>No comments yet.</p>";
         return;
     }
 
@@ -38,12 +39,46 @@ onSnapshot(q, (snapshot) => {
 
         const comment = docSnap.data();
 
+        let date = "Just now";
+
+        if (comment.createdAt) {
+            try {
+                date = comment.createdAt.toDate().toLocaleString();
+            } catch (e) {}
+        }
+
         commentList.innerHTML += `
-            <div class="comment">
-                <b>${comment.username}</b><br><br>
-                ${comment.text}
+        <div class="comment">
+
+            <div style="display:flex;align-items:center;gap:10px;">
+
+                <div style="
+                width:45px;
+                height:45px;
+                border-radius:50%;
+                background:#1877f2;
+                color:white;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                font-size:22px;">
+                👤
+                </div>
+
+                <div>
+                    <b>${comment.username}</b><br>
+                    <small style="color:gray;">${date}</small>
+                </div>
+
             </div>
+
+            <p style="margin-top:10px;">
+                ${comment.text}
+            </p>
+
+        </div>
         `;
+
     });
 
 });
@@ -54,7 +89,10 @@ async function sendComment() {
 
         const text = document.getElementById("commentText").value.trim();
 
-        if (text === "") return;
+        if (!text) {
+            alert("Write a comment first.");
+            return;
+        }
 
         const user = auth.currentUser;
 
@@ -72,10 +110,10 @@ async function sendComment() {
         }
 
         await addDoc(collection(db, "comments"), {
-            postId: postId,
+            postId,
             uid: user.uid,
-            username: username,
-            text: text,
+            username,
+            text,
             createdAt: serverTimestamp()
         });
 
