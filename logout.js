@@ -1,20 +1,29 @@
 import { auth } from "./firebase.js";
 
 import {
-signOut
+    signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+const logoutBtn = document.getElementById("logoutBtn");
 
-const logoutBtn=document.getElementById("logoutBtn");
+if (logoutBtn) {
 
+    logoutBtn.addEventListener("click", async () => {
 
-logoutBtn.addEventListener("click",()=>{
+        try {
 
-signOut(auth)
-.then(()=>{
+            await signOut(auth);
 
-window.location.href="login.html";
+            alert("Logged out successfully.");
 
-});
+            window.location.href = "login.html";
 
-});
+        } catch (error) {
+
+            alert(error.message);
+
+        }
+
+    });
+
+}
