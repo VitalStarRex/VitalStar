@@ -27,7 +27,11 @@ auth.onAuthStateChanged(async (user) => {
   }
 
   try {
-    const userRef = doc(db, "users", user.uid);
+         const params = new URLSearchParams(window.location.search);
+const profileUid = params.get("uid") || user.uid;
+
+const userRef = doc(db, "users", profileUid);
+
     const snap = await getDoc(userRef);
 
     if (!snap.exists()) {
