@@ -1,169 +1,74 @@
 import { auth, db } from "./firebase.js";
 
 import {
-    doc,
-    getDoc,
-    updateDoc
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-    updateEmail,
-    updatePassword
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-const profileImage = document.getElementById("profileImage");
-const coverImage = document.getElementById("coverImage");
-
-const profilePreview = document.getElementById("profilePreview");
-const coverPreview = document.getElementById("coverPreview");
+const coverPhoto = document.getElementById("coverPhoto");
+const profilePicture = document.getElementById("profilePicture");
 
 const fullName = document.getElementById("fullName");
 const username = document.getElementById("username");
-const email = document.getElementById("email");
+const country = document.getElementById("country");
 const dob = document.getElementById("dob");
-const password = document.getElementById("password");
 const bio = document.getElementById("bio");
 
-const form = document.getElementById("editProfileForm");
+const posts = document.getElementById("posts");
+const followers = document.getElementById("followers");
+const following = document.getElementById("following");
 
-let profileFile = null;
-let coverFile = null;
-
-profileImage.addEventListener("change", (e) => {
-
-    profileFile = e.target.files[0];
-
-    if (profileFile) {
-        profilePreview.src = URL.createObjectURL(profileFile);
-    }
-
-});
-
-coverImage.addEventListener("change", (e) => {
-
-    coverFile = e.target.files[0];
-
-    if (coverFile) {
-        coverPreview.src = URL.createObjectURL(coverFile);
-    }
-
-});
+const editProfileBtn = document.getElementById("editProfileBtn");
 
 auth.onAuthStateChanged(async (user) => {
 
     if (!user) {
-        location.href = "login.html";
+        window.location.href = "login.html";
         return;
     }
 
-    const snap = await getDoc(doc(db, "users", user.uid));
-
-    if (!snap.exists()) return;
-
-    const data = snap.data();
-
-    fullName.value = data.fullName || "";
-    username.value = data.username || "";
-    email.value = user.email || "";
-    dob.value = data.dob || "";
-    bio.value = data.bio || "";
-
-    if (data.profilePicture) {
-        profilePreview.src = data.profilePicture;
-    }
-
-    if (data.coverPhoto) {
-        coverPreview.src = data.coverPhoto;
-    }
-});
-
-async function uploadImage(file) {
-
-    const formData = new FormData();
-
-    formData.append("file", file);
-
-    formData.append("upload_preset", "vitalstar_upload");
-
-
-    const response = await fetch(
-        "https://api.cloudinary.com/v1_1/m0scmqqv/image/upload",
-        {
-            method: "POST",
-            body: formData
-        }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-        throw new Error(result.error?.message || "Upload failed");
-    }
-
-    return result.secure_url;
-}
-
-form.addEventListener("submit", async (e) => {
-
-    e.preventDefault();
-
-    const user = auth.currentUser;
-
-    if (!user) return;
-
     try {
 
-        let profilePicture = profilePreview.src;
-        let coverPhoto = coverPreview.src;
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
 
-        if (profileFile) {
-            profilePicture = await uploadImage(profileFile);
+        if (!snap.exists()) {
+            alert("Profile not found.");
+            return;
         }
 
-        if (coverFile) {
-            coverPhoto = await uploadImage(coverFile);
-        }
+        const data = snap.data();
 
-        await updateDoc(doc(db, "users", user.uid), {
+        fullName.textContent = data.fullName || "No Name";
+        username.textContent = "@" + (data.username || "username");
 
-            fullName: fullName.value.trim(),
-            username: username.value.trim(),
-            dob: dob.value,
-            bio: bio.value.trim(),
-            profilePicture: profilePicture,
-            coverPhoto: coverPhoto
+        country.textContent = "🌍 " + (data.country || "Country not set");
 
-        });
+        dob.textContent = "🎂 " + (data.dob || "Birthday not set");
 
-        if (email.value.trim() !== user.email) {
+        bio.textContent = data.bio || "No bio yet.";
 
-            try {
-                await updateEmail(user, email.value.trim());
-            } catch (err) {
-                alert(err.message);
-            }
+        profilePicture.src =
+            data.profilePicture ||
+            "https://via.placeholder.com/180";
 
-        }
+        coverPhoto.src =
+            data.coverPhoto ||
+            "https://via.placeholder.com/1200x350";
 
-        if (password.value.trim() !== "") {
+        posts.textContent = data.postsCount || 0;
+        followers.textContent = data.followersCount || 0;
+        following.textContent = data.followingCount || 0;
 
-            try {
-                await updatePassword(user, password.value.trim());
-            } catch (err) {
-                alert(err.message);
-            }
+    } catch (err) {
 
-        }
-
-        alert("Profile updated successfully!");
-
-        window.location.href = "profile.html";
-
-    } catch (error) {
-
-        console.error(error);
-        alert(error.message);
+        console.error(err);
+        alert("Failed to load profile.");
 
     }
 
+});
+
+editProfileBtn.addEventListener("click", () => {
+    window.location.href = "edit-profile.html";
 });
