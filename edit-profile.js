@@ -177,8 +177,25 @@ form.addEventListener("submit", async (e) => {
 
 
 
+// Update email if changed
+if (email.value.trim() !== user.email) {
+    try {
+        await updateEmail(user, email.value.trim());
+    } catch (err) {
+        alert("Please log in again before changing your email.");
+    }
+}
 
-{
+// Update password if entered
+if (password.value.trim() !== "") {
+    try {
+        await updatePassword(user, password.value.trim());
+    } catch (err) {
+        alert("Please log in again before changing your password.");
+    }
+}
+
+                 {
             
         
 
