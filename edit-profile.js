@@ -195,15 +195,19 @@ if (password.value.trim() !== "") {
     }
 }
 
-                 {
-            
+alert("Profile updated successfully!");
+
+window.location.href = "profile.html";
+    
         
+    
 
-        alert("Profile updated successfully!");
 
-        window.location.href = "profile.html";
+                 
+            
 
-    } catch (err) {
+
+         catch (err) {
         console.error(err);
         alert(err.message);
     }
