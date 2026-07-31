@@ -2,9 +2,9 @@ import { auth, db } from "./firebase.js";
 
 import {
     collection,
+    onSnapshot,
     query,
     where,
-    onSnapshot,
     orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -24,22 +24,10 @@ onAuthStateChanged(auth, (user) => {
     }
 
 
-   
-
-
-
-
-
-
-const q = query(
-    collection(db, "chats")
-);
-
-
-
-
-
-
+    const q = query(
+        collection(db, "chats"),
+        where("participants", "array-contains", user.uid)
+    );
 
 
     onSnapshot(q, (snapshot) => {
@@ -48,7 +36,9 @@ const q = query(
 
 
         if (snapshot.empty) {
+
             messageList.innerHTML = "No messages yet";
+
             return;
         }
 
@@ -57,9 +47,17 @@ const q = query(
 
             const chat = doc.data();
 
-            const otherUser = chat.participants.find(
-                id => id !== user.uid
-            );
+
+            let otherUser = "Unknown user";
+
+
+            if (chat.participants) {
+
+                otherUser = chat.participants.find(
+                    id => id !== user.uid
+                ) || "Unknown user";
+
+            }
 
 
             const div = document.createElement("div");
@@ -68,13 +66,15 @@ const q = query(
 
 
             div.innerHTML = `
+
                 <div class="name">
                     ${otherUser}
                 </div>
 
                 <div class="last-message">
-                    ${chat.lastMessage || ""}
+                    ${chat.lastMessage || "No message"}
                 </div>
+
             `;
 
 
@@ -88,8 +88,18 @@ const q = query(
 
             messageList.appendChild(div);
 
+
         });
 
+
+    }, (error) => {
+
+        console.error(error);
+
+        messageList.innerHTML =
+        "Error loading messages";
+
     });
+
 
 });
