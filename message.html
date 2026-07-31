@@ -1,193 +1,70 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Messages - VitalStar</title>
+    <title>Messages - VitalStar</title>
 
-<style>
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f0f2f5;
-}
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+        }
 
-.header{
-    background:#1877f2;
-    color:white;
-    padding:15px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-}
+        .header {
+            background: purple;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-.chat-list{
-    padding:10px;
-}
+        .message-list {
+            padding: 10px;
+        }
 
-.chat{
-    display:flex;
-    align-items:center;
-    background:#fff;
-    padding:12px;
-    margin-bottom:10px;
-    border-radius:10px;
-    cursor:pointer;
-    box-shadow:0 2px 5px rgba(0,0,0,.1);
-    transition:.2s;
-}
+        .message-card {
+            background: white;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
 
-.chat:hover{
-    background:#f7f7f7;
-}
+        .message-card:hover {
+            background: #eee;
+        }
 
-.avatar{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    background:#1877f2;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:22px;
-    font-weight:bold;
-    margin-right:12px;
-    overflow:hidden;
-}
+        .name {
+            font-size: 18px;
+            font-weight: bold;
+            color: purple;
+        }
 
-.avatar img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
+        .last-message {
+            color: #555;
+            margin-top: 5px;
+        }
 
-.info{
-    flex:1;
-}
-
-.name{
-    font-weight:bold;
-    font-size:18px;
-}
-
-.last{
-    color:gray;
-    font-size:14px;
-    margin-top:4px;
-}
-
-.time{
-    font-size:12px;
-    color:gray;
-}
-</style>
-
+        .time {
+            font-size: 12px;
+            color: gray;
+            float: right;
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="header">
-💬 Messages
+    Messages
 </div>
 
-<!-- Real conversations will appear here -->
-<div class="chat-list" id="chatList">
-
+<div id="messageList" class="message-list">
+    Loading messages...
 </div>
 
-<script type="module" src="messages.js"></script>
-<script type="module" src="auth-guard.js"></script>
+
+<script type="module" src="message.js"></script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Bottom Navigation -->
-<div style="
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:65px;
-background:#e5e5e5;
-border-top:1px solid #ccc;
-display:flex;
-justify-content:space-around;
-align-items:center;
-box-shadow:0 -2px 8px rgba(0,0,0,0.1);
-z-index:1000;
-">
-
-    <a href="home.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>🏠</span>
-        <small style="font-size:12px;">Home</small>
-    </a>
-
-    <a href="users.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👥</span>
-        <small style="font-size:12px;">Friends</small>
-    </a>
-
-    <a href="create-post.html" style="
-    width:55px;
-    height:55px;
-    background:#1877f2;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-decoration:none;
-    font-size:30px;
-    margin-top:-25px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-    ">
-        ➕
-    </a>
-
-    <a href="general-room.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>💬</span>
-        <small style="font-size:12px;">Chat</small>
-    </a>
-
-    <a href="profile.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👤</span>
-        <small style="font-size:12px;">Profile</small>
-    </a>
-
-</div>
