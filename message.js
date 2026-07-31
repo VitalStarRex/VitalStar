@@ -5,7 +5,8 @@ import {
     onSnapshot,
     query,
     where,
-    orderBy
+    getDoc,
+    doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -30,33 +31,53 @@ onAuthStateChanged(auth, (user) => {
     );
 
 
-    onSnapshot(q, (snapshot) => {
+    onSnapshot(q, async (snapshot) => {
 
         messageList.innerHTML = "";
 
 
-        if (snapshot.empty) {
+        for (const chatDoc of snapshot.docs) {
 
-            messageList.innerHTML = "No messages yet";
-
-            return;
-        }
+            const chat = chatDoc.data();
 
 
-        snapshot.forEach((doc) => {
-
-            const chat = doc.data();
-
-
-            let otherUser = "Unknown user";
+            const otherUserId = chat.participants.find(
+                id => id !== user.uid
+            );
 
 
-            if (chat.participants) {
+            let fullName = "Unknown User";
+            let profilePic = "default.png";
 
-                otherUser = chat.participants.find(
-                    id => id !== user.uid
-                ) || "Unknown user";
 
+            // Get user profile
+            const userSnap = await getDoc(
+                doc(db, "users", otherUserId)
+            );
+
+
+            if (userSnap.exists()) {
+
+                const userData = userSnap.data();
+
+                fullName = userData.fullName || "Unknown User";
+
+                profilePic = userData.profilePic || "default.png";
+
+            }
+
+
+            // Message status
+            let status = "Sent ✓";
+
+
+            if (chat.read === true) {
+                status = "Read ✓✓";
+            }
+
+
+            if (chat.read === false) {
+                status = "Unread 🔴";
             }
 
 
@@ -67,12 +88,29 @@ onAuthStateChanged(auth, (user) => {
 
             div.innerHTML = `
 
-                <div class="name">
-                    ${otherUser}
-                </div>
+                <img 
+                src="${profilePic}"
+                style="
+                width:45px;
+                height:45px;
+                border-radius:50%;
+                object-fit:cover;
+                vertical-align:middle;
+                margin-right:10px;
+                ">
+
+                <span class="name">
+                ${fullName}
+                </span>
+
 
                 <div class="last-message">
-                    ${chat.lastMessage || "No message"}
+                ${chat.lastMessage || ""}
+                </div>
+
+
+                <div class="time">
+                ${status}
                 </div>
 
             `;
@@ -81,25 +119,15 @@ onAuthStateChanged(auth, (user) => {
             div.onclick = () => {
 
                 window.location.href =
-                `chat.html?uid=${otherUser}`;
+                `chat.html?uid=${otherUserId}`;
 
             };
 
 
             messageList.appendChild(div);
 
-
-        });
-
-
-    }, (error) => {
-
-        console.error(error);
-
-        messageList.innerHTML =
-        "Error loading messages";
+        }
 
     });
-
 
 });
