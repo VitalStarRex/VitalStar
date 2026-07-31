@@ -1,4 +1,4 @@
-
+hi
 
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -43,11 +43,14 @@ window.createPost = async function () {
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
 
-    let username = "VitalStar User";
+    
 
-    if (userSnap.exists()) {
-        username = userSnap.data().username || "VitalStar User";
-    }
+let fullName = "VitalStar User";
+
+if (userSnap.exists()) {
+    fullName = userSnap.data().fullName || "VitalStar User";
+}
+
 
     let imageUrl = "";
 
