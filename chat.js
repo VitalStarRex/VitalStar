@@ -1,7 +1,6 @@
 import { auth, db } from "./firebase.js";     
 
 
-
 import {
     doc,
     getDoc,
@@ -11,7 +10,8 @@ import {
     orderBy,
     onSnapshot,
     serverTimestamp,
-    setDoc
+    setDoc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -312,12 +312,20 @@ return;
 await addDoc(messagesRef, {
     senderId: user.uid,
     receiverId: receiverUid,
+
     text: text,
     image: image,
     video: video,
     audio: audio,
-    timestamp: serverTimestamp()
+
+    timestamp: serverTimestamp(),
+
+    sent: true,
+    delivered: false,
+    read: false
 });
+   
+  
 
 
 
@@ -329,11 +337,25 @@ await setDoc(
     doc(db, "chats", chatId),
     {
         participants: [user.uid, receiverUid],
-        lastMessage: text || (image ? "📷 Photo" : video ? "🎥 Video" : audio ? "🎤 Voice message" : ""),
-        lastTimestamp: serverTimestamp()
+
+        lastMessage:
+            text ||
+            (image ? "📷 Photo" :
+            video ? "🎥 Video" :
+            audio ? "🎤 Voice message" : ""),
+
+        lastTimestamp: serverTimestamp(),
+
+        lastSender: user.uid,
+        lastReceiver: receiverUid,
+        delivered: false,
+        read: false
     },
     { merge: true }
 );
+
+  
+
 
 
 
