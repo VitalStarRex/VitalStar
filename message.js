@@ -11,7 +11,23 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+
+
+
+
 const chatList = document.getElementById("chatList");
+
+if (!chatList) {
+    console.error("chatList not found");
+    return;
+}
+
+
+
+
+
+
 
 onAuthStateChanged(auth, (user) => {
 
