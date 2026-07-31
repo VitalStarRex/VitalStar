@@ -10,7 +10,7 @@ onAuthStateChanged(auth, (user) => {
 
 
 
-import { auth, db } from "./firebase.js";
+
 
 import {
   doc,
