@@ -458,6 +458,8 @@ msg.senderId===user.uid
 
 
 
+
+
 let messageTime = "";
 
 const date = msg.timestamp?.toDate?.();
@@ -470,15 +472,10 @@ if (date) {
 }
 
 
+
+
+
     
-
-
-
-    messageTime = date.toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit"
-    });
-}
 
 
 
