@@ -1,20 +1,19 @@
-
-
-import { auth, db } from "./firebase.js";
+Correct? import { auth, db } from "./firebase.js";
 
 import {
-    doc,
-    getDoc,
-    collection,
-    addDoc,
-    query,
-    orderBy,
-    onSnapshot,
-    serverTimestamp,
-    setDoc,
-    updateDoc
+doc,
+getDoc,
+collection,
+addDoc,
+query,
+orderBy,
+onSnapshot,
+serverTimestamp,
+setDoc,
+updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// HTML Elements
 const backBtn = document.getElementById("backBtn");
 const chatAvatar = document.getElementById("chatAvatar");
 const chatName = document.getElementById("chatName");
@@ -29,217 +28,369 @@ const videoInput = document.getElementById("videoInput");
 
 const imageBtn = document.getElementById("imageBtn");
 const videoBtn = document.getElementById("videoBtn");
+const recordBtn = document.getElementById("recordBtn");
+
+// Cloudinary Upload
 
 async function uploadToCloudinary(file){
-    const formData = new FormData();
 
-    formData.append("file", file);
-    formData.append("upload_preset", "vitalstar_upload");
+const formData = new FormData();
 
-    const response = await fetch(
-        "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
-        {
-            method:"POST",
-            body:formData
-        }
-    );
+formData.append("file", file);
 
-    const data = await response.json();
-    return data.secure_url;
+formData.append(
+"upload_preset",
+"vitalstar_upload"
+);
+
+const response = await fetch(
+"https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
+{
+method:"POST",
+body:formData
+}
+);
+
+const data = await response.json();
+
+console.log(data);
+
+return data.secure_url;
+
 }
 
-imageBtn.onclick = () => imageInput.click();
-videoBtn.onclick = () => videoInput.click();
+// Open file picker
 
-const params = new URLSearchParams(window.location.search);
-const receiverUid = params.get("uid");
+imageBtn.onclick = ()=>{
+imageInput.click();
+};
 
-backBtn.onclick = () => history.back();
+videoBtn.onclick = ()=>{
+videoInput.click();
+};
+
+// Voice recording
+
+let recorder;
+let audioChunks=[];
+
+recordBtn.onclick = async()=>{
+
+if(!recorder || recorder.state==="inactive"){
+
+const stream =
+await navigator.mediaDevices.getUserMedia({
+audio:true
+});
+
+recorder = new MediaRecorder(stream);
+
+audioChunks=[];
+
+recorder.ondataavailable=(e)=>{
+
+audioChunks.push(e.data);
+
+};
+
+recorder.onstop=async()=>{
+
+const audioBlob =
+new Blob(audioChunks,{
+type:"audio/webm"
+});
+
+const url =
+await uploadToCloudinary(audioBlob);
+
+window.voiceUrl=url;
+
+alert("Voice note ready 🎤");
+
+};
+
+recorder.start();
+
+recordBtn.textContent="⏹";
+
+}
+else{
+
+recorder.stop();
+
+recordBtn.textContent="🎤";
+
+}
+
+};
+
+// Get receiver UID
+
+const params =
+new URLSearchParams(window.location.search);
+
+const receiverUid =
+params.get("uid");
+
+// Back button
+
+backBtn.onclick=()=>{
+
+history.back();
+
+};
+
+// Login check
 
 auth.onAuthStateChanged(async(user)=>{
 
-    if(!user){
-        window.location.href="login.html";
-        return;
+if(!user){
+
+window.location.href="login.html";
+
+return;
+
+}
+
+const chatId =
+user.uid < receiverUid
+?
+user.uid+""+receiverUid
+:
+receiverUid+""+user.uid;
+
+const receiverRef =
+doc(db,"users",receiverUid);
+
+const receiverSnap =
+await getDoc(receiverRef);
+
+if(receiverSnap.exists()){
+
+const data =
+receiverSnap.data();
+
+chatName.textContent =
+data.fullName || data.username;
+
+chatName.style.cursor = "pointer";
+
+chatName.onclick = () => {
+window.location.href = profile.html?uid=${receiverUid};
+};
+
+chatAvatar.src =
+data.profilePicture ||
+"https://via.placeholder.com/50";
+
+chatStatus.textContent="Online";
+
+}
+
+const messagesRef =
+collection(db,"chats",chatId,"messages");
+
+// Send message
+
+messageForm.addEventListener(
+"submit",
+async(e)=>{
+
+e.preventDefault();
+
+const text =
+messageInput.value.trim();
+
+let image="";
+let video="";
+let audio="";
+
+try{
+
+if(imageInput.files[0]){
+
+image =
+await uploadToCloudinary(
+imageInput.files[0]
+);
+
+}
+
+if(videoInput.files[0]){
+
+video =
+await uploadToCloudinary(
+videoInput.files[0]
+);
+
+}
+
+if(window.voiceUrl){
+
+audio =
+window.voiceUrl;
+
+window.voiceUrl="";
+
+}
+
+if(!text && !image && !video && !audio)
+return;
+
+await addDoc(messagesRef, {
+senderId: user.uid,
+receiverId: receiverUid,
+
+text: text,  
+image: image,  
+video: video,  
+audio: audio,  
+
+timestamp: serverTimestamp(),  
+
+sent: true,  
+delivered: false,  
+read: false
+
+});
+
+await setDoc(
+doc(db, "chats", chatId),
+{
+participants: [user.uid, receiverUid],
+
+lastMessage:  
+        text ||  
+        (image ? "📷 Photo" :  
+        video ? "🎥 Video" :  
+        audio ? "🎤 Voice message" : ""),  
+
+    lastTimestamp: serverTimestamp(),  
+
+    lastSenderId: user.uid,  
+    lastReceiverId: receiverUid,  
+
+    lastRead: false,  
+    lastDelivered: false  
+},  
+{ merge: true }
+
+);
+
+messageInput.value="";
+
+imageInput.value="";
+
+videoInput.value="";
+
+}
+catch(err){
+
+console.error(err);
+
+alert("Failed to send message");
+
+}
+
+});
+
+// Display messages
+
+const q =
+query(
+messagesRef,
+orderBy("timestamp","asc")
+);
+
+onSnapshot(q, (snapshot) => {
+
+messages.innerHTML = "";  
+
+snapshot.forEach(async (messageDoc) => {  
+
+    const msg = messageDoc.data();  
+
+    if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {  
+
+        await updateDoc(messageDoc.ref, {  
+            delivered: true,  
+            read: true  
+        });  
+
     }
 
-    const chatId =
-        user.uid < receiverUid
-        ? user.uid+"_"+receiverUid
-        : receiverUid+"_"+user.uid;
+const div =
+document.createElement("div");
 
-    const userSnap = await getDoc(doc(db,"users",receiverUid));
+div.className =
+msg.senderId===user.uid
+?
+"message sent"
+:
+"message received";
 
-    if(userSnap.exists()){
+let messageTime = "";
 
-        const data = userSnap.data();
+const date = msg.timestamp?.toDate?.();
 
-        chatName.textContent =
-        data.fullName || data.username || "User";
+if (date) {
+messageTime = date.toLocaleTimeString([], {
+hour: "numeric",
+minute: "2-digit"
+});
+}
 
+let delivered = msg.delivered;
+let read = msg.read;
 
+if (msg.receiverId === user.uid && (!delivered || !read)) {
+delivered = true;
+read = true;
+}
 
+let status = "✓ Sent";
 
-        chatAvatar.src =
-        data.profilePicture || "https://via.placeholder.com/50";
+if (delivered) {
+status = "✓✓ Delivered";
+}
 
-        chatStatus.textContent = "Online";
-    }
+if (read) {
+status = "✓✓ Read";
+}
 
-    const messagesRef =
-    collection(db, "chats", chatId, "messages");
+div.innerHTML = `
 
-    messageForm.addEventListener("submit", async (e) => {
+${msg.text ? <p>${msg.text}</p> : ""}
 
-        e.preventDefault();
+${msg.image ?
+<img src="${msg.image}" width="200">
+: ""}
 
-        const text = messageInput.value.trim();
+${msg.video ?
+<video controls width="220">   <source src="${msg.video}">   </video>
+: ""}
 
-        if (!text && !imageInput.files[0] && !videoInput.files[0])
-            return;
+${msg.audio ?
+<audio controls>   <source src="${msg.audio}">   </audio>
+: ""}
 
-        let image = "";
-        let video = "";
+<div class="message-footer">  <span class="message-time">  
+    ${messageTime}  
+</span>  
 
-        if (imageInput.files[0])
-            image = await uploadToCloudinary(imageInput.files[0]);
+<span class="message-status">  
+    ${status}  
+</span>
 
-        if (videoInput.files[0])
-            video = await uploadToCloudinary(videoInput.files[0]);
+</div>  `;
 
-        await addDoc(messagesRef, {
+messages.appendChild(div);
 
-            senderId: user.uid,
-            receiverId: receiverUid,
+});
 
-            text,
-            image,
-            video,
+messages.scrollTop =
+messages.scrollHeight;
 
-            timestamp: serverTimestamp(),
-
-            delivered: false,
-            read: false
-        });
-
-        await setDoc(
-            doc(db, "chats", chatId),
-            {
-
-                participants: [
-                    user.uid,
-                    receiverUid
-                ],
-
-                lastMessage:
-                text ||
-                (image ? "📷 Photo" :
-                video ? "🎥 Video" : ""),
-
-                lastImage: image,
-                lastVideo: video,
-
-                lastTimestamp: serverTimestamp(),
-
-                lastSenderId: user.uid,
-                lastReceiverId: receiverUid,
-
-                lastRead: false,
-                lastDelivered: false
-
-            },
-            { merge: true }
-        );
-
-        messageInput.value = "";
-        imageInput.value = "";
-        videoInput.value = "";
-
-    });
-
-
-
-
-
-    const q = query(
-        messagesRef,
-        orderBy("timestamp", "asc")
-    );
-
-    onSnapshot(q, async (snapshot) => {
-
-        messages.innerHTML = "";
-
-        for (const messageDoc of snapshot.docs) {
-
-            const msg = messageDoc.data();
-
-            if (
-                msg.receiverId === user.uid &&
-                (!msg.delivered || !msg.read)
-            ) {
-
-                await updateDoc(messageDoc.ref, {
-
-                    delivered: true,
-                    read: true
-
-                });
-
-                await updateDoc(doc(db, "chats", chatId), {
-
-                    lastDelivered: true,
-                    lastRead: true
-
-                });
-
-                msg.delivered = true;
-                msg.read = true;
-
-            }
-
-            const div = document.createElement("div");
-
-            div.className =
-            msg.senderId === user.uid
-            ? "message sent"
-            : "message received";
-
-            let status = "✓ Sent";
-
-            if (msg.delivered)
-                status = "✓✓ Delivered";
-
-            if (msg.read)
-                status = "✓✓ Read";
-
-            div.innerHTML = `
-
-            ${msg.text ? `<p>${msg.text}</p>` : ""}
-
-            ${msg.image ? `<img src="${msg.image}" width="200">` : ""}
-
-            ${msg.video ? `
-            <video controls width="220">
-            <source src="${msg.video}">
-            </video>` : ""}
-
-            <div class="message-footer">
-
-            <span class="message-status">
-            ${status}
-            </span>
-
-            </div>
-
-            `;
-
-            messages.appendChild(div);
-
-        }
-
-        messages.scrollTop = messages.scrollHeight;
-
-    });
+});
 
 });
