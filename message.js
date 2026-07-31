@@ -9,7 +9,43 @@ import {
     doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
+import 
+
+
+
+
+
+function formatTime(timestamp) {
+
+    if (!timestamp) return "";
+
+    const messageTime = new Date(timestamp.seconds * 1000);
+    const now = new Date();
+
+    const seconds = Math.floor(
+        (now - messageTime) / 1000
+    );
+
+    if (seconds < 60) {
+        return "Just now";
+    }
+
+    if (seconds < 3600) {
+        return Math.floor(seconds / 60) + " min ago";
+    }
+
+    if (seconds < 86400) {
+        return Math.floor(seconds / 3600) + " hr ago";
+    }
+
+    return messageTime.toLocaleDateString();
+}
+
+
+
+
+
+{
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -93,9 +129,15 @@ onAuthStateChanged(auth, (user) => {
             
 
 
-let status = chat.lastRead
-    ? "Read ✓✓"
-    : "Unread 🔴";
+let status = "";
+
+if (chat.lastSenderId === user.uid) {
+    status = "Sent ✓";
+} else if (chat.lastRead) {
+    status = "Read ✓✓";
+} else {
+    status = "Unread 🔴";
+}
 
 
 
