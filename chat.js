@@ -226,6 +226,15 @@ chatName.textContent =
 data.fullName || data.username;
 
 
+
+chatName.style.cursor = "pointer";
+
+chatName.onclick = () => {
+    window.location.href = `profile.html?uid=${receiverUid}`;
+};
+
+
+
 chatAvatar.src =
 data.profilePicture ||
 "https://via.placeholder.com/50";
