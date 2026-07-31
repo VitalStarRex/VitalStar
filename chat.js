@@ -318,16 +318,28 @@ return;
 
 
 
+// 1. Save the actual message
+await addDoc(messagesRef, {
+    senderId: user.uid,
+    receiverId: receiverUid,
+    text: text,
+    image: image,
+    video: video,
+    audio: audio,
+    timestamp: serverTimestamp(),
+    sent: true,
+    delivered: false,
+    read: false
+});
+
+
+// 2. Update the chat preview
 await setDoc(
     doc(db, "chats", chatId),
     {
         participants: [user.uid, receiverUid],
 
-        lastMessage:
-            text ||
-            (image ? "📷 Photo" :
-            video ? "🎥 Video" :
-            audio ? "🎤 Voice message" : ""),
+        lastMessage: text,
 
         lastImage: image,
         lastVideo: video,
@@ -341,10 +353,8 @@ await setDoc(
         lastRead: false,
         lastDelivered: false
     },
-    { merge: true }
-);
-   
-  
+    { merge:true }
+); 
 
 
 
