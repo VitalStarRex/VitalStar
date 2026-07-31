@@ -384,55 +384,71 @@ ${fullName}
 
 
 
-
 // ===============================
 // UNREAD MESSAGE BADGE
 // ===============================
 
-import {
-    where
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 const messageBadge =
 document.getElementById("messageBadge");
+
 
 onAuthStateChanged(auth, (user) => {
 
     if (!user) return;
+
 
     const messageQuery = query(
         collection(db, "chats"),
         where("participants", "array-contains", user.uid)
     );
 
+
     onSnapshot(messageQuery, (snapshot) => {
 
         let unreadCount = 0;
+
 
         snapshot.forEach((chatDoc) => {
 
             const chat = chatDoc.data();
 
+
+            // Count only messages sent by another person
+            // that are not read
+
             if (
-                chat.lastReceiver === user.uid &&
-                chat.read === false
+                chat.lastSenderId !== user.uid &&
+                chat.lastRead === false
             ) {
+
                 unreadCount++;
+
             }
+
 
         });
 
-        if (unreadCount > 0) {
 
-            messageBadge.textContent = unreadCount;
 
-        } else {
+        if (messageBadge) {
 
-            messageBadge.textContent = "0";
+            if (unreadCount > 0) {
+
+                messageBadge.textContent = unreadCount;
+                messageBadge.style.display = "block";
+
+            } else {
+
+                messageBadge.textContent = "";
+                messageBadge.style.display = "none";
+
+            }
 
         }
 
+
     });
+
 
 });
 
