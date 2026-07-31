@@ -9,50 +9,72 @@ import {
     doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import 
-
-
-
-
-
-function formatTime(timestamp) {
-
-    if (!timestamp) return "";
-
-    const messageTime = new Date(timestamp.seconds * 1000);
-    const now = new Date();
-
-    const seconds = Math.floor(
-        (now - messageTime) / 1000
-    );
-
-    if (seconds < 60) {
-        return "Just now";
-    }
-
-    if (seconds < 3600) {
-        return Math.floor(seconds / 60) + " min ago";
-    }
-
-    if (seconds < 86400) {
-        return Math.floor(seconds / 3600) + " hr ago";
-    }
-
-    return messageTime.toLocaleDateString();
-}
-
-
-
-
-
-{
+import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const messageList = document.getElementById("messageList");
 
-onAuthStateChanged(auth, (user) => {
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
 
+function formatTime(timestamp) {
+    if (!timestamp) return "";
+
+    let messageDate;
+
+    if (typeof timestamp.toDate === "function") {
+        messageDate = timestamp.toDate();
+    } else if (timestamp.seconds) {
+        messageDate = new Date(timestamp.seconds * 1000);
+    } else {
+        messageDate = new Date(timestamp);
+    }
+
+    const now = new Date();
+    const seconds = Math.floor((now - messageDate) / 1000);
+
+    if (seconds < 60) return "Just now";
+    if (seconds < 3600) return Math.floor(seconds / 60) + " min ago";
+    if (seconds < 86400) return Math.floor(seconds / 3600) + " hr ago";
+
+    return messageDate.toLocaleDateString();
+}
+
+function getTimestampValue(timestamp) {
+    if (!timestamp) return 0;
+
+    if (typeof timestamp.toDate === "function") {
+        return timestamp.toDate().getTime();
+    }
+
+    if (timestamp.seconds) {
+        return timestamp.seconds * 1000;
+    }
+
+    const date = new Date(timestamp);
+    return isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function getStatus(chat, currentUserId) {
+    if (chat.lastSenderId === currentUserId) {
+        return "Sent ✓";
+    }
+
+    if (chat.lastRead) {
+        return "Read ✓✓";
+    }
+
+    return "Unread 🔴";
+}
+
+onAuthStateChanged(auth, (user) => {
     if (!user) {
         window.location.href = "login.html";
         return;
@@ -64,7 +86,6 @@ onAuthStateChanged(auth, (user) => {
     );
 
     onSnapshot(q, async (snapshot) => {
-
         messageList.innerHTML = "";
 
         if (snapshot.empty) {
@@ -72,7 +93,6 @@ onAuthStateChanged(auth, (user) => {
             return;
         }
 
-        // Store all chats
         const chats = [];
 
         snapshot.forEach((chatDoc) => {
@@ -82,34 +102,26 @@ onAuthStateChanged(auth, (user) => {
             });
         });
 
-        // Unread first, newest first
         chats.sort((a, b) => {
+            const aUnread = a.lastSenderId !== user.uid && !a.lastRead ? 0 : 1;
+            const bUnread = b.lastSenderId !== user.uid && !b.lastRead ? 0 : 1;
 
-            if (a.read !== b.read) {
-                return a.read ? 1 : -1;
+            if (aUnread !== bUnread) {
+                return aUnread - bUnread;
             }
 
-            const aTime = a.lastTimestamp?.seconds || 0;
-            const bTime = b.lastTimestamp?.seconds || 0;
-
-            return bTime - aTime;
+            return getTimestampValue(b.lastTimestamp) - getTimestampValue(a.lastTimestamp);
         });
 
         for (const chat of chats) {
-
-            const otherUserId = chat.participants.find(
-                id => id !== user.uid
-            );
+            const otherUserId = chat.participants.find(id => id !== user.uid);
 
             let fullName = "Unknown User";
             let profilePic = "default.png";
 
-            const userSnap = await getDoc(
-                doc(db, "users", otherUserId)
-            );
+            const userSnap = await getDoc(doc(db, "users", otherUserId));
 
             if (userSnap.exists()) {
-
                 const userData = userSnap.data();
 
                 fullName =
@@ -126,63 +138,43 @@ onAuthStateChanged(auth, (user) => {
                     "default.png";
             }
 
-            
+            const status = getStatus(chat, user.uid);
+            const timeText = formatTime(chat.lastTimestamp);
 
-
-let status = "";
-
-if (chat.lastSenderId === user.uid) {
-    status = "Sent ✓";
-} else if (chat.lastRead) {
-    status = "Read ✓✓";
-} else {
-    status = "Unread 🔴";
-}
-
-
+            const lastMessageHtml = chat.lastImageUrl
+                ? `<img src="${chat.lastImageUrl}" class="message-preview-image" onerror="this.style.display='none'">`
+                : `<div class="last-message-text">${escapeHtml(chat.lastMessage || "No message")}</div>`;
 
             const div = document.createElement("div");
-
             div.className = "message-card";
 
-
-
-
-
             div.innerHTML = `
-
                 <img
                     src="${profilePic}"
                     onerror="this.src='default.png'"
                     class="profile-picture">
 
                 <div class="message-info">
-
                     <div class="name">
-                        ${fullName}
+                        ${escapeHtml(fullName)}
                     </div>
 
                     <div class="last-message">
-                        ${chat.lastMessage || "No message"}
+                        ${lastMessageHtml}
                     </div>
 
                     <div class="time">
-                        ${status}
+                        <span class="status-text">${status}</span>
+                        <span class="time-text">${timeText}</span>
                     </div>
-
                 </div>
-
             `;
 
             div.onclick = () => {
-                window.location.href =
-                    `chat.html?uid=${otherUserId}`;
+                window.location.href = `chat.html?uid=${otherUserId}`;
             };
 
             messageList.appendChild(div);
-
         }
-
     });
-
 });
