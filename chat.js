@@ -458,13 +458,7 @@ msg.senderId===user.uid
 
 
 
-
-
-
-    let messageTime = "";
-
-if (msg.timestamp) {
-    
+let messageTime = "";
 
 const date = msg.timestamp?.toDate?.();
 
@@ -474,6 +468,9 @@ if (date) {
         minute: "2-digit"
     });
 }
+
+
+    
 
 
 
