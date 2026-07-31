@@ -1,16 +1,3 @@
-
-import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-    }
-});
-
-
-
-
 import { auth, db } from "./firebase.js";
 
 import {
@@ -20,6 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
+  onAuthStateChanged,
   updateEmail,
   updatePassword
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -37,8 +25,8 @@ const username = document.getElementById("username");
 const email = document.getElementById("email");
 const dob = document.getElementById("dob");
 const country = document.getElementById("country");
-const password = document.getElementById("password");
 const bio = document.getElementById("bio");
+const password = document.getElementById("password");
 
 const form = document.getElementById("editProfileForm");
 
@@ -65,7 +53,7 @@ coverImage.addEventListener("change", (e) => {
 });
 
 // Load User Profile
-auth.onAuthStateChanged(async (user) => {
+onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
         window.location.href = "login.html";
@@ -100,18 +88,11 @@ auth.onAuthStateChanged(async (user) => {
         }
 
     } catch (err) {
-        console.error(err);
+        console.error("Load Profile Error:", err);
         alert("Failed to load profile.");
     }
 
 });
-
-
-
-
-
-
-
 
 // Upload image to Cloudinary
 async function uploadImage(file) {
@@ -119,7 +100,9 @@ async function uploadImage(file) {
     const formData = new FormData();
 
     formData.append("file", file);
-    formData.append("upload_preset", "vitalstar_upload");
+
+    // Correct upload preset
+    formData.append("upload_preset", "vitalstar-upload");
 
     const response = await fetch(
         "https://api.cloudinary.com/v1_1/m0scmqqv/image/upload",
@@ -137,6 +120,13 @@ async function uploadImage(file) {
 
     return result.secure_url;
 }
+
+
+
+
+
+
+
 
 // Save Profile
 form.addEventListener("submit", async (e) => {
@@ -165,37 +155,41 @@ form.addEventListener("submit", async (e) => {
             coverPhoto = await uploadImage(coverFile);
         }
 
-        // Update Firestore
+        // Update Firestore profile
         await updateDoc(doc(db, "users", user.uid), {
             fullName: fullName.value.trim(),
             username: username.value.trim(),
             dob: dob.value,
             country: country.value.trim(),
             bio: bio.value.trim(),
-            profilePicture: profilePicture,
-            coverPhoto: coverPhoto
+            profilePicture,
+            coverPhoto
         });
 
-
-
-
-
-
         // Update email if changed
-        if (email.value.trim() !== user.email) {
+        if (
+            email.value.trim() &&
+            email.value.trim() !== user.email
+        ) {
             try {
                 await updateEmail(user, email.value.trim());
             } catch (err) {
-                alert("Email was not updated.\nPlease log in again before changing your email.");
+                console.error("Email Update Error:", err);
+                alert(
+                    "Email could not be updated. Please log out and log in again before changing your email."
+                );
             }
         }
 
         // Update password if entered
-        if (password.value.trim() !== "") {
+        if (password.value.trim()) {
             try {
                 await updatePassword(user, password.value.trim());
             } catch (err) {
-                alert("Password was not updated.\nPlease log in again before changing your password.");
+                console.error("Password Update Error:", err);
+                alert(
+                    "Password could not be updated. Please log out and log in again before changing your password."
+                );
             }
         }
 
@@ -205,7 +199,7 @@ form.addEventListener("submit", async (e) => {
 
     } catch (err) {
         console.error("Profile Update Error:", err);
-        alert(err.message);
+        alert(err.message || "Failed to update profile.");
     }
 
 });
