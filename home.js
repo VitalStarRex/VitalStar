@@ -112,7 +112,7 @@ onSnapshot(postsQuery,(snapshot)=>{
 
 <a href="profile.html?uid=${post.uid}">
 
-${post.fullname || "VitalStar User"}
+${post.fullName || "VitalStar User"}
 
 </a>
 
