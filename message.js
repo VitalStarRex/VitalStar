@@ -36,6 +36,12 @@ onAuthStateChanged(auth, (user) => {
         messageList.innerHTML = "";
 
 
+        if (snapshot.empty) {
+            messageList.innerHTML = "No messages yet";
+            return;
+        }
+
+
         for (const chatDoc of snapshot.docs) {
 
             const chat = chatDoc.data();
@@ -50,7 +56,6 @@ onAuthStateChanged(auth, (user) => {
             let profilePic = "default.png";
 
 
-            // Get user profile
             const userSnap = await getDoc(
                 doc(db, "users", otherUserId)
             );
@@ -60,21 +65,30 @@ onAuthStateChanged(auth, (user) => {
 
                 const userData = userSnap.data();
 
-                fullName = userData.fullName || "Unknown User";
 
-                profilePic = userData.profilePic || "default.png";
+                fullName =
+                userData.fullName ||
+                userData.username ||
+                "Unknown User";
+
+
+                profilePic =
+                userData.profilePic ||
+                userData.photoURL ||
+                userData.photoUrl ||
+                userData.profileImage ||
+                userData.imageUrl ||
+                "default.png";
 
             }
 
 
-            // Message status
             let status = "Sent ✓";
 
 
             if (chat.read === true) {
                 status = "Read ✓✓";
             }
-
 
             if (chat.read === false) {
                 status = "Unread 🔴";
@@ -88,30 +102,29 @@ onAuthStateChanged(auth, (user) => {
 
             div.innerHTML = `
 
-                <img 
-                src="${profilePic}"
-                style="
-                width:45px;
-                height:45px;
-                border-radius:50%;
-                object-fit:cover;
-                vertical-align:middle;
-                margin-right:10px;
-                ">
+            <img 
+            src="${profilePic}"
+            onerror="this.src='default.png'"
+            class="profile-picture">
 
-                <span class="name">
-                ${fullName}
-                </span>
+
+            <div class="message-info">
+
+                <div class="name">
+                    ${fullName}
+                </div>
 
 
                 <div class="last-message">
-                ${chat.lastMessage || ""}
+                    ${chat.lastMessage || "No message"}
                 </div>
 
 
                 <div class="time">
-                ${status}
+                    ${status}
                 </div>
+
+            </div>
 
             `;
 
@@ -128,6 +141,8 @@ onAuthStateChanged(auth, (user) => {
 
         }
 
+
     });
+
 
 });
