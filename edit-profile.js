@@ -102,7 +102,7 @@ async function uploadImage(file) {
     formData.append("file", file);
 
     // Correct upload preset
-    formData.append("upload_preset", "vitalstar-upload");
+    formData.append("upload_preset", "vitalstar_upload");
 
     const response = await fetch(
         "https://api.cloudinary.com/v1_1/m0scmqqv/image/upload",
