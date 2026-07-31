@@ -1,4 +1,4 @@
-Correct? import { auth, db } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 
 import {
 doc,
@@ -259,13 +259,17 @@ doc(db, "chats", chatId),
 {
 participants: [user.uid, receiverUid],
 
-lastMessage:  
-        text ||  
-        (image ? "📷 Photo" :  
-        video ? "🎥 Video" :  
-        audio ? "🎤 Voice message" : ""),  
+lastMessage:
+text ||
+(image ? "📷 Photo" :
+video ? "🎥 Video" :
+audio ? "🎤 Voice message" : ""),
 
-    lastTimestamp: serverTimestamp(),  
+lastImage: image,
+lastVideo: video,
+lastAudio: audio,
+
+lastTimestamp: serverTimestamp(),  
 
     lastSenderId: user.uid,  
     lastReceiverId: receiverUid,  
@@ -343,9 +347,13 @@ minute: "2-digit"
 let delivered = msg.delivered;
 let read = msg.read;
 
-if (msg.receiverId === user.uid && (!delivered || !read)) {
-delivered = true;
-read = true;
+if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
+
+await updateDoc(doc(db, "chats", chatId), {  
+    lastDelivered: true,  
+    lastRead: true  
+});
+
 }
 
 let status = "✓ Sent";
@@ -394,3 +402,5 @@ messages.scrollHeight;
 });
 
 });
+
+Correct?
