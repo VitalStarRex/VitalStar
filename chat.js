@@ -341,7 +341,6 @@ await addDoc(messagesRef, {
 
 
 
-
 await setDoc(
     doc(db, "chats", chatId),
     {
@@ -355,15 +354,14 @@ await setDoc(
 
         lastTimestamp: serverTimestamp(),
 
-        lastSender: user.uid,
-        lastReceiver: receiverUid,
-        delivered: false,
-        read: false
+        lastSenderId: user.uid,
+        lastReceiverId: receiverUid,
+
+        lastRead: false,
+        lastDelivered: false
     },
     { merge: true }
-);
-
-  
+);  
 
 
 
