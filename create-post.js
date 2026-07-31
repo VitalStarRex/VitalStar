@@ -80,7 +80,7 @@ if (userSnap.exists()) {
 
     await addDoc(collection(db, "posts"), {
         uid: user.uid,
-        username: username,
+        fullName: fullName,
         text: text,
         image: imageUrl,
         likes: 0,
