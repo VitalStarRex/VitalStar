@@ -339,8 +339,8 @@ await getDoc(doc(db,"users",user.uid));
 if(userSnap.exists()){
 
 
-const username =
-userSnap.data().username || "User";
+const fullName =
+userSnap.data().fullName || "User";
 
 
 
@@ -377,7 +377,7 @@ if(welcome){
 
 welcome.innerHTML =
 `${greeting}, <span style="color:#FFD54F">
-${username}
+${fullName}
 </span> 👋`;
 
 }
