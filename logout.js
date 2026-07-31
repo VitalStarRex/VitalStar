@@ -1,16 +1,4 @@
 import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-    }
-});
-
-
-
-
-import { auth } from "./firebase.js";
 
 import {
     signOut
@@ -28,11 +16,13 @@ if (logoutBtn) {
 
             alert("Logged out successfully.");
 
-            window.location.href = "login.html";
+            window.location.replace("login.html");
 
         } catch (error) {
 
-            alert(error.message);
+            console.error(error);
+
+            alert("Logout failed. Please try again.");
 
         }
 
