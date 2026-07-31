@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase.js";     
+edrimport { auth, db } from "./firebase.js";     
 
 
 import {
@@ -318,48 +318,20 @@ return;
 
 
 
-await addDoc(messagesRef, {
-    senderId: user.uid,
-    receiverId: receiverUid,
-
-    text: text,
-    image: image,
-    video: video,
-    audio: audio,
-
-    timestamp: serverTimestamp(),
-
-    sent: true,
-    delivered: false,
-    read: false
-});
-   
-  
-
-
-
-
-
-
 await setDoc(
     doc(db, "chats", chatId),
     {
         participants: [user.uid, receiverUid],
 
-       
-lastMessage:
-    text ||
-    (image ? "📷 Photo" :
-    video ? "🎥 Video" :
-    audio ? "🎤 Voice message" : ""),
+        lastMessage:
+            text ||
+            (image ? "📷 Photo" :
+            video ? "🎥 Video" :
+            audio ? "🎤 Voice message" : ""),
 
-lastImage: image,
-lastVideo: video,
-lastAudio: audio,
-         
-            
-            
-            
+        lastImage: image,
+        lastVideo: video,
+        lastAudio: audio,
 
         lastTimestamp: serverTimestamp(),
 
@@ -370,7 +342,14 @@ lastAudio: audio,
         lastDelivered: false
     },
     { merge: true }
-);  
+);
+   
+  
+
+
+
+
+
 
 
 
