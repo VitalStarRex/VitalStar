@@ -46,3 +46,67 @@ onAuthStateChanged(auth, (user) => {
             if (!userSnap.exists()) continue;
 
             const userData = userSnap.data();
+
+
+
+
+
+
+
+
+            const chatDiv = document.createElement("div");
+            chatDiv.className = "chat";
+
+            chatDiv.innerHTML = `
+                <div class="avatar">
+                    ${
+                        userData.profilePicture
+                        ? `<img src="${userData.profilePicture}" alt="${userData.fullName}">`
+                        : (userData.fullName || "?").charAt(0).toUpperCase()
+                    }
+                </div>
+
+                <div class="info">
+                    <div class="name">
+                        ${userData.fullName || userData.username || "Unknown User"}
+                    </div>
+
+                    <div class="last">
+                        ${chat.lastMessage || "Start a conversation"}
+                    </div>
+                </div>
+
+                <div class="time">
+                    ${
+                        chat.lastTimestamp
+                        ? new Date(chat.lastTimestamp.toDate()).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit"
+                          })
+                        : ""
+                    }
+                </div>
+            `;
+
+            chatDiv.onclick = () => {
+                window.location.href = `chat.html?uid=${otherUid}`;
+            };
+
+            chatList.appendChild(chatDiv);
+        }
+
+        if (chatList.innerHTML === "") {
+            chatList.innerHTML = `
+                <div style="
+                    text-align:center;
+                    padding:40px;
+                    color:gray;
+                ">
+                    No conversations yet.
+                </div>
+            `;
+        }
+
+    });
+
+});
