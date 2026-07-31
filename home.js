@@ -384,6 +384,11 @@ ${fullName}
 
 
 
+
+
+
+
+
 // ===============================
 // UNREAD MESSAGE BADGE
 // ===============================
@@ -413,21 +418,17 @@ onAuthStateChanged(auth, (user) => {
             const chat = chatDoc.data();
 
 
-            // Count only messages sent by another person
-            // that are not read
-
             if (
+                chat.lastSenderId &&
                 chat.lastSenderId !== user.uid &&
-                chat.lastRead === false
+                chat.lastRead !== true
             ) {
 
                 unreadCount++;
 
             }
 
-
         });
-
 
 
         if (messageBadge) {
@@ -449,8 +450,9 @@ onAuthStateChanged(auth, (user) => {
 
     });
 
-
 });
+
+
 
 
 
