@@ -1,60 +1,48 @@
+import { auth, db } from "./firebase.js";
 
-
-
-import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-    }
-});
-
-
-
-import { db } from "./firebase.js";
-
 import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  query,
-  orderBy,
-  onSnapshot
+    collection,
+    query,
+    orderBy,
+    onSnapshot,
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const messages = document.getElementById("messages");
+const chatList = document.getElementById("chatList");
 
-// Send message
-window.sendMessage = async function () {
-  const input = document.getElementById("messageInput");
-  const text = input.value.trim();
+onAuthStateChanged(auth, (user) => {
 
-  if (!text) return;
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
 
-  await addDoc(collection(db, "messages"), {
-    text: text,
-    createdAt: serverTimestamp()
-  });
+    const chatsRef = collection(db, "chats");
 
-  input.value = "";
-};
+    const q = query(
+        chatsRef,
+        orderBy("lastTimestamp", "desc")
+    );
 
-// Display messages in real time
-const q = query(collection(db, "messages"), orderBy("createdAt"));
+    onSnapshot(q, async (snapshot) => {
 
-onSnapshot(q, (snapshot) => {
-  messages.innerHTML = "";
+        chatList.innerHTML = "";
 
-  snapshot.forEach((doc) => {
-    const data = doc.data();
+        for (const chatDoc of snapshot.docs) {
 
-    messages.innerHTML += `
-      <div class="message">
-        ${data.text}
-      </div>
-    `;
-  });
+            const chat = chatDoc.data();
 
-  messages.scrollTop = messages.scrollHeight;
-});
+            if (!chat.participants || !chat.participants.includes(user.uid)) {
+                continue;
+            }
+
+            const otherUid = chat.participants.find(uid => uid !== user.uid);
+
+            const userSnap = await getDoc(doc(db, "users", otherUid));
+
+            if (!userSnap.exists()) continue;
+
+            const userData = userSnap.data();
