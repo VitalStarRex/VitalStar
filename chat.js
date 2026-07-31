@@ -305,23 +305,25 @@ return;
 
 
 
-await addDoc(messagesRef,{
 
-senderId:user.uid,
 
-receiverId:receiverUid,
 
-text:text,
 
-image:image,
+await setDoc(
+    doc(db, "chats", chatId),
+    {
+        participants: [user.uid, receiverUid],
+        lastMessage: text || (image ? "📷 Photo" : video ? "🎥 Video" : audio ? "🎤 Voice message" : ""),
+        lastTimestamp: serverTimestamp()
+    },
+    { merge: true }
+);
 
-video:video,
 
-audio:audio,
 
-timestamp:serverTimestamp()
 
-});
+
+
 
 
 
