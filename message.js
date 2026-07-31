@@ -90,9 +90,14 @@ onAuthStateChanged(auth, (user) => {
                     "default.png";
             }
 
-            let status = chat.read
-                ? "Read ✓✓"
-                : "Unread 🔴";
+            
+
+
+let status = chat.lastRead
+    ? "Read ✓✓"
+    : "Unread 🔴";
+
+
 
             const div = document.createElement("div");
 
