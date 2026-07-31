@@ -63,15 +63,31 @@ function getTimestampValue(timestamp) {
 }
 
 function getStatus(chat, currentUserId) {
-    if (chat.lastSenderId === currentUserId) {
-        return "Sent ✓";
-    }
-
     if (chat.lastRead) {
         return "Read ✓✓";
     }
 
+    if (chat.lastSenderId === currentUserId) {
+        return chat.lastDelivered ? "Delivered ✓✓" : "Sent ✓";
+    }
+
     return "Unread 🔴";
+}
+
+function getLastMessageHtml(chat) {
+    if (chat.lastImage) {
+        return `<img src="${chat.lastImage}" class="message-preview-image" onerror="this.style.display='none'">`;
+    }
+
+    if (chat.lastVideo) {
+        return `<div class="last-message-text">🎥 Video</div>`;
+    }
+
+    if (chat.lastAudio) {
+        return `<div class="last-message-text">🎤 Voice message</div>`;
+    }
+
+    return `<div class="last-message-text">${escapeHtml(chat.lastMessage || "No message")}</div>`;
 }
 
 onAuthStateChanged(auth, (user) => {
@@ -103,8 +119,8 @@ onAuthStateChanged(auth, (user) => {
         });
 
         chats.sort((a, b) => {
-            const aUnread = a.lastSenderId !== user.uid && !a.lastRead ? 0 : 1;
-            const bUnread = b.lastSenderId !== user.uid && !b.lastRead ? 0 : 1;
+            const aUnread = a.lastRead ? 1 : 0;
+            const bUnread = b.lastRead ? 1 : 0;
 
             if (aUnread !== bUnread) {
                 return aUnread - bUnread;
@@ -140,10 +156,7 @@ onAuthStateChanged(auth, (user) => {
 
             const status = getStatus(chat, user.uid);
             const timeText = formatTime(chat.lastTimestamp);
-
-            const lastMessageHtml = chat.lastImageUrl
-                ? `<img src="${chat.lastImageUrl}" class="message-preview-image" onerror="this.style.display='none'">`
-                : `<div class="last-message-text">${escapeHtml(chat.lastMessage || "No message")}</div>`;
+            const lastMessageHtml = getLastMessageHtml(chat);
 
             const div = document.createElement("div");
             div.className = "message-card";
