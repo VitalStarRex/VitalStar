@@ -309,6 +309,22 @@ return;
 
 
 
+await addDoc(messagesRef, {
+    senderId: user.uid,
+    receiverId: receiverUid,
+    text: text,
+    image: image,
+    video: video,
+    audio: audio,
+    timestamp: serverTimestamp()
+});
+
+
+
+
+
+
+
 await setDoc(
     doc(db, "chats", chatId),
     {
