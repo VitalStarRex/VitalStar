@@ -13,9 +13,7 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-
 const messageList = document.getElementById("messageList");
-
 
 onAuthStateChanged(auth, (user) => {
 
@@ -24,125 +22,120 @@ onAuthStateChanged(auth, (user) => {
         return;
     }
 
-
     const q = query(
         collection(db, "chats"),
         where("participants", "array-contains", user.uid)
     );
 
-
     onSnapshot(q, async (snapshot) => {
 
         messageList.innerHTML = "";
-
 
         if (snapshot.empty) {
             messageList.innerHTML = "No messages yet";
             return;
         }
 
+        // Store all chats
+        const chats = [];
 
-        for (const chatDoc of snapshot.docs) {
+        snapshot.forEach((chatDoc) => {
+            chats.push({
+                id: chatDoc.id,
+                ...chatDoc.data()
+            });
+        });
 
-            const chat = chatDoc.data();
+        // Unread first, newest first
+        chats.sort((a, b) => {
 
+            if (a.read !== b.read) {
+                return a.read ? 1 : -1;
+            }
+
+            const aTime = a.lastTimestamp?.seconds || 0;
+            const bTime = b.lastTimestamp?.seconds || 0;
+
+            return bTime - aTime;
+        });
+
+        for (const chat of chats) {
 
             const otherUserId = chat.participants.find(
                 id => id !== user.uid
             );
 
-
             let fullName = "Unknown User";
             let profilePic = "default.png";
-
 
             const userSnap = await getDoc(
                 doc(db, "users", otherUserId)
             );
 
-
             if (userSnap.exists()) {
 
                 const userData = userSnap.data();
 
-
                 fullName =
-                userData.fullName ||
-                userData.username ||
-                "Unknown User";
-
+                    userData.fullName ||
+                    userData.username ||
+                    "Unknown User";
 
                 profilePic =
-                userData.profilePic ||
-                userData.photoURL ||
-                userData.photoUrl ||
-                userData.profileImage ||
-                userData.imageUrl ||
-                "default.png";
-
+                    userData.profilePic ||
+                    userData.photoURL ||
+                    userData.photoUrl ||
+                    userData.profileImage ||
+                    userData.imageUrl ||
+                    "default.png";
             }
 
-
-            let status = "Sent ✓";
-
-
-            if (chat.read === true) {
-                status = "Read ✓✓";
-            }
-
-            if (chat.read === false) {
-                status = "Unread 🔴";
-            }
-
+            let status = chat.read
+                ? "Read ✓✓"
+                : "Unread 🔴";
 
             const div = document.createElement("div");
 
             div.className = "message-card";
 
 
+
+
+
             div.innerHTML = `
 
-            <img 
-            src="${profilePic}"
-            onerror="this.src='default.png'"
-            class="profile-picture">
+                <img
+                    src="${profilePic}"
+                    onerror="this.src='default.png'"
+                    class="profile-picture">
 
+                <div class="message-info">
 
-            <div class="message-info">
+                    <div class="name">
+                        ${fullName}
+                    </div>
 
-                <div class="name">
-                    ${fullName}
+                    <div class="last-message">
+                        ${chat.lastMessage || "No message"}
+                    </div>
+
+                    <div class="time">
+                        ${status}
+                    </div>
+
                 </div>
-
-
-                <div class="last-message">
-                    ${chat.lastMessage || "No message"}
-                </div>
-
-
-                <div class="time">
-                    ${status}
-                </div>
-
-            </div>
 
             `;
 
-
             div.onclick = () => {
-
                 window.location.href =
-                `chat.html?uid=${otherUserId}`;
-
+                    `chat.html?uid=${otherUserId}`;
             };
-
 
             messageList.appendChild(div);
 
         }
 
-
     });
-
 
 });
