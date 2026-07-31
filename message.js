@@ -24,11 +24,22 @@ onAuthStateChanged(auth, (user) => {
     }
 
 
-    const q = query(
-        collection(db, "chats"),
-        where("participants", "array-contains", user.uid),
-        orderBy("lastTimestamp", "desc")
-    );
+   
+
+
+
+
+
+
+const q = query(
+    collection(db, "chats")
+);
+
+
+
+
+
+
 
 
     onSnapshot(q, (snapshot) => {
