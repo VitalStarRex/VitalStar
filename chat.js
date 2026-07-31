@@ -437,5 +437,3 @@ messages.scrollHeight;
 });
 
 });
-
-Correct?
