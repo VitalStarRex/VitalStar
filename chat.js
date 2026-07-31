@@ -401,17 +401,40 @@ orderBy("timestamp","asc")
 
 
 
-onSnapshot(q,(snapshot)=>{
 
 
-messages.innerHTML="";
 
 
-snapshot.forEach((doc)=>{
+onSnapshot(q, (snapshot) => {
+
+    messages.innerHTML = "";
+
+    snapshot.forEach(async (messageDoc) => {
+
+        const msg = messageDoc.data();
+
+        if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
+
+            await updateDoc(messageDoc.ref, {
+                delivered: true,
+                read: true
+            });
+
+        }
+
+        
 
 
-const msg =
-doc.data();
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -429,28 +452,67 @@ msg.senderId===user.uid
 
 
 
-div.innerHTML=`
 
-${msg.text ? `<p>${msg.text}</p>`:""}
 
+
+
+
+
+
+
+
+    let messageTime = "";
+
+if (msg.timestamp) {
+    const date = msg.timestamp.toDate();
+
+    messageTime = date.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
+
+let status = "✓ Sent";
+
+if (msg.delivered) {
+    status = "✓✓ Delivered";
+}
+
+if (msg.read) {
+    status = "✓✓ Read";
+}
+
+div.innerHTML = `
+
+${msg.text ? `<p>${msg.text}</p>` : ""}
 
 ${msg.image ?
 `<img src="${msg.image}" width="200">`
-:""}
-
+: ""}
 
 ${msg.video ?
 `<video controls width="220">
 <source src="${msg.video}">
 </video>`
-:""}
-
+: ""}
 
 ${msg.audio ?
 `<audio controls>
 <source src="${msg.audio}">
 </audio>`
-:""}
+: ""}
+
+<div class="message-footer">
+
+    <span class="message-time">
+        ${messageTime}
+    </span>
+
+    <span class="message-status">
+        ${status}
+    </span>
+
+</div>
 
 `;
 
