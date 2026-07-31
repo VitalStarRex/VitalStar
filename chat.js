@@ -346,11 +346,20 @@ await setDoc(
     {
         participants: [user.uid, receiverUid],
 
-        lastMessage:
-            text ||
-            (image ? "📷 Photo" :
-            video ? "🎥 Video" :
-            audio ? "🎤 Voice message" : ""),
+       
+lastMessage:
+    text ||
+    (image ? "📷 Photo" :
+    video ? "🎥 Video" :
+    audio ? "🎤 Voice message" : ""),
+
+lastImage: image,
+lastVideo: video,
+lastAudio: audio,
+         
+            
+            
+            
 
         lastTimestamp: serverTimestamp(),
 
