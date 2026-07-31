@@ -472,15 +472,35 @@ if (msg.timestamp) {
     });
 }
 
+
+
+
+
+
+
+
+
+
+let delivered = msg.delivered;
+let read = msg.read;
+
+if (msg.receiverId === user.uid && (!delivered || !read)) {
+    delivered = true;
+    read = true;
+}
+
 let status = "✓ Sent";
 
-if (msg.delivered) {
+if (delivered) {
     status = "✓✓ Delivered";
 }
 
-if (msg.read) {
+if (read) {
     status = "✓✓ Read";
 }
+
+
+
 
 div.innerHTML = `
 
