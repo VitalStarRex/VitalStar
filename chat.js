@@ -509,10 +509,7 @@ let read = msg.read;
 
   if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
 
-    await updateDoc(messageDoc.ref, {
-        delivered: true,
-        read: true
-    });
+   
 
     await updateDoc(doc(db, "chats", chatId), {
         lastDelivered: true,
