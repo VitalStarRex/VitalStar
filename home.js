@@ -9,10 +9,6 @@ onAuthStateChanged(auth, (user) => {
 
 
 
-
-
-import { db, auth } from "./firebase.js";
-
 import {
     collection,
     query,
