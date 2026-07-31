@@ -377,21 +377,33 @@ if (read) {
 status = "✓✓ Read";
 }
 
+
+
+
+
 div.innerHTML = `
 
-${msg.text ? <p>${msg.text}</p> : ""}
+${msg.text ? `<p>${msg.text}</p>` : ""}
 
 ${msg.image ?
-<img src="${msg.image}" width="200">
+`<img src="${msg.image}" width="200">`
 : ""}
 
 ${msg.video ?
-<video controls width="220">   <source src="${msg.video}">   </video>
+`<video controls width="220">
+<source src="${msg.video}">
+</video>`
 : ""}
 
 ${msg.audio ?
-<audio controls>   <source src="${msg.audio}">   </audio>
+`<audio controls>
+<source src="${msg.audio}">
+</audio>`
 : ""}
+
+
+
+
 
 <div class="message-footer">  <span class="message-time">  
     ${messageTime}  
