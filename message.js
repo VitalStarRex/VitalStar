@@ -1,6 +1,8 @@
 import { auth, db } from "./firebase.js";
 
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
     collection,
@@ -11,118 +13,138 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-
-
-
-
 const chatList = document.getElementById("chatList");
 
 if (!chatList) {
-    console.error("chatList not found");
-    return;
-}
+    console.error("chatList element not found.");
+} else {
 
+    onAuthStateChanged(auth, (user) => {
 
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
 
+        const chatsRef = collection(db, "chats");
 
+        const q = query(
+            chatsRef,
+            orderBy("lastTimestamp", "desc")
+        );
 
+        onSnapshot(
+            q,
+            async (snapshot) => {
 
+                chatList.innerHTML = "";
 
-onAuthStateChanged(auth, (user) => {
+                for (const chatDoc of snapshot.docs) {
 
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+                    const chat = chatDoc.data();
 
-    const chatsRef = collection(db, "chats");
+                    if (
+                        !chat.participants ||
+                        !Array.isArray(chat.participants) ||
+                        !chat.participants.includes(user.uid)
+                    ) {
+                        continue;
+                    }
 
-    const q = query(
-        chatsRef,
-        orderBy("lastTimestamp", "desc")
-    );
+                    const otherUid = chat.participants.find(
+                        uid => uid !== user.uid
+                    );
 
-    onSnapshot(q, async (snapshot) => {
+                    if (!otherUid) continue;
 
-        chatList.innerHTML = "";
+                    try {
 
-        for (const chatDoc of snapshot.docs) {
+                        const userSnap = await getDoc(doc(db, "users", otherUid));
 
-            const chat = chatDoc.data();
+                        if (!userSnap.exists()) continue;
 
-            if (!chat.participants || !chat.participants.includes(user.uid)) {
-                continue;
+                        const userData = userSnap.data();
+
+                        const chatDiv = document.createElement("div");
+                        chatDiv.className = "chat";
+
+                        const profileImage = userData.profilePicture
+                            ? `<img src="${userData.profilePicture}" alt="Profile">`
+                            : (userData.fullName || userData.username || "?")
+                                  .charAt(0)
+                                  .toUpperCase();
+
+                        let time = "";
+
+                        if (
+                            chat.lastTimestamp &&
+                            typeof chat.lastTimestamp.toDate === "function"
+                        ) {
+                            time = chat.lastTimestamp.toDate().toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit"
+                            });
+                        }
+
+                        chatDiv.innerHTML = `
+                            <div class="avatar">
+                                ${profileImage}
+                            </div>
+
+                            <div class="info">
+                                <div class="name">
+                                    ${userData.fullName || userData.username || "Unknown User"}
+                                </div>
+
+                                <div class="last">
+                                    ${chat.lastMessage || "Start a conversation"}
+                                </div>
+                            </div>
+
+                            <div class="time">
+                                ${time}
+                            </div>
+                        `;
+
+                        chatDiv.addEventListener("click", () => {
+                            window.location.href = `chat.html?uid=${otherUid}`;
+                        });
+
+                        chatList.appendChild(chatDiv);
+
+                    } catch (err) {
+                        console.error("User Load Error:", err);
+                    }
+                }
+
+                if (!chatList.children.length) {
+                    chatList.innerHTML = `
+                        <div style="
+                            text-align:center;
+                            padding:40px;
+                            color:gray;
+                        ">
+                            No conversations yet.
+                        </div>
+                    `;
+                }
+
+            },
+            (error) => {
+                console.error("Firestore Error:", error);
+
+                chatList.innerHTML = `
+                    <div style="
+                        text-align:center;
+                        padding:40px;
+                        color:red;
+                    ">
+                        Failed to load messages.
+                    </div>
+                `;
             }
-
-            const otherUid = chat.participants.find(uid => uid !== user.uid);
-
-            const userSnap = await getDoc(doc(db, "users", otherUid));
-
-            if (!userSnap.exists()) continue;
-
-            const userData = userSnap.data();
-
-
-
-
-
-
-
-
-            const chatDiv = document.createElement("div");
-            chatDiv.className = "chat";
-
-            chatDiv.innerHTML = `
-                <div class="avatar">
-                    ${
-                        userData.profilePicture
-                        ? `<img src="${userData.profilePicture}" alt="${userData.fullName}">`
-                        : (userData.fullName || "?").charAt(0).toUpperCase()
-                    }
-                </div>
-
-                <div class="info">
-                    <div class="name">
-                        ${userData.fullName || userData.username || "Unknown User"}
-                    </div>
-
-                    <div class="last">
-                        ${chat.lastMessage || "Start a conversation"}
-                    </div>
-                </div>
-
-                <div class="time">
-                    ${
-                        chat.lastTimestamp
-                        ? new Date(chat.lastTimestamp.toDate()).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit"
-                          })
-                        : ""
-                    }
-                </div>
-            `;
-
-            chatDiv.onclick = () => {
-                window.location.href = `chat.html?uid=${otherUid}`;
-            };
-
-            chatList.appendChild(chatDiv);
-        }
-
-        if (chatList.innerHTML === "") {
-            chatList.innerHTML = `
-                <div style="
-                    text-align:center;
-                    padding:40px;
-                    color:gray;
-                ">
-                    No conversations yet.
-                </div>
-            `;
-        }
+        );
 
     });
 
-});
+}
