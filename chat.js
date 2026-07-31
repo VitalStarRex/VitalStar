@@ -309,131 +309,166 @@ messagesRef,
 orderBy("timestamp","asc")
 );
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 onSnapshot(q, (snapshot) => {
 
-messages.innerHTML = "";  
+messages.innerHTML = "";
 
-snapshot.forEach(async (messageDoc) => {  
+snapshot.forEach(async (messageDoc) => {
 
-    const msg = messageDoc.data();  
+const msg = messageDoc.data();
 
-    
+let delivered = msg.delivered || false;
+let read = msg.read || false;
 
 
-if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
+// Mark received messages as delivered and read
+if(msg.receiverId === user.uid && (!delivered || !read)){
 
-    await updateDoc(doc(db, "chats", chatId), {
-        lastDelivered: true,
-        lastRead: true
+    await updateDoc(messageDoc.ref,{
+        delivered:true,
+        read:true
     });
 
     delivered = true;
     read = true;
+
 }
 
 
+// Message bubble
 
-
-const div =
-document.createElement("div");
+const div = document.createElement("div");
 
 div.className =
-msg.senderId===user.uid
+msg.senderId === user.uid
 ?
 "message sent"
 :
 "message received";
 
-let messageTime = "";
+
+// Time
+
+let messageTime="";
 
 const date = msg.timestamp?.toDate?.();
 
-if (date) {
-messageTime = date.toLocaleTimeString([], {
-hour: "numeric",
-minute: "2-digit"
+if(date){
+
+messageTime =
+date.toLocaleTimeString([],{
+hour:"numeric",
+minute:"2-digit"
 });
-}
 
-let delivered = msg.delivered;
-let read = msg.read;
-
-
-
-
-if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
-
-    await updateDoc(messageDoc.ref, {
-        delivered: true,
-        read: true
-    });
-
-    await updateDoc(doc(db, "chats", chatId), {
-        lastDelivered: true,
-        lastRead: true
-    });
-
-    delivered = true;
-    read = true;
 }
 
 
+// Status
 
-let status = "✓ Sent";
+let status="";
 
-if (delivered) {
-status = "✓✓ Delivered";
+if(msg.senderId === user.uid){
+
+status="✓ Sent";
+
+if(delivered){
+status="✓✓ Delivered";
 }
 
-if (read) {
-status = "✓✓ Read";
+if(read){
+status="✓✓ Read";
+}
+
 }
 
 
-
-
+// HTML
 
 div.innerHTML = `
 
 ${msg.text ? `<p>${msg.text}</p>` : ""}
 
+
 ${msg.image ?
 `<img src="${msg.image}" width="200">`
-: ""}
+:
+""}
+
 
 ${msg.video ?
-`<video controls width="220">
+`
+<video controls width="220">
 <source src="${msg.video}">
-</video>`
-: ""}
+</video>
+`
+:
+""}
+
 
 ${msg.audio ?
-`<audio controls>
+`
+<audio controls>
 <source src="${msg.audio}">
-</audio>`
-: ""}
+</audio>
+`
+:
+""}
 
 
 
+<div class="message-footer">
 
-
-<div class="message-footer">  <span class="message-time">  
-    ${messageTime}  
-</span>  
-
-<span class="message-status">  
-    ${status}  
+<span class="message-time">
+${messageTime}
 </span>
 
-</div>  `;
+
+<span class="message-status">
+${status}
+</span>
+
+</div>
+
+`;
+
 
 messages.appendChild(div);
 
+
 });
+
 
 messages.scrollTop =
 messages.scrollHeight;
 
-});
 
 });
