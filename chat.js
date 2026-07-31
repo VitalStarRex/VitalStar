@@ -152,12 +152,15 @@ return;
 
 }
 
+
 const chatId =
 user.uid < receiverUid
 ?
-user.uid+""+receiverUid
+user.uid + "_" + receiverUid
 :
-receiverUid+""+user.uid;
+receiverUid + "_" + user.uid;
+
+
 
 const receiverRef =
 doc(db,"users",receiverUid);
@@ -176,7 +179,7 @@ data.fullName || data.username;
 chatName.style.cursor = "pointer";
 
 chatName.onclick = () => {
-window.location.href = profile.html?uid=${receiverUid};
+    window.location.href = `profile.html?uid=${receiverUid}`;
 };
 
 chatAvatar.src =
@@ -314,14 +317,22 @@ snapshot.forEach(async (messageDoc) => {
 
     const msg = messageDoc.data();  
 
-    if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {  
+    
 
-        await updateDoc(messageDoc.ref, {  
-            delivered: true,  
-            read: true  
-        });  
 
-    }
+if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
+
+    await updateDoc(doc(db, "chats", chatId), {
+        lastDelivered: true,
+        lastRead: true
+    });
+
+    delivered = true;
+    read = true;
+}
+
+
+
 
 const div =
 document.createElement("div");
