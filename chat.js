@@ -56,7 +56,7 @@ formData.append("file", file);
 
 formData.append(
 "upload_preset",
-"vitalstar-upload"
+"vitalstar_upload"
 );
 
 
