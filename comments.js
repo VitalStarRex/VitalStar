@@ -43,7 +43,7 @@ import {
 const params = new URLSearchParams(window.location.search);
 const postId = params.get("postId");
 
-alert(postId);
+alert(commentList);
 
 
 
