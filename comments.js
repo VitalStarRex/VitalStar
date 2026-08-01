@@ -51,9 +51,20 @@ const q = query(
     orderBy("createdAt", "asc")
 );
 
-onSnapshot(q, (snapshot) => {
+
+     
+
+
+   onSnapshot(q, (snapshot) => {
+
+    console.log("Snapshot:", snapshot);
+    console.log("Number of comments:", snapshot.size);
 
     commentList.innerHTML = "";
+
+
+
+
 
     if (snapshot.empty) {
 
