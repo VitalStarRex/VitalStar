@@ -43,7 +43,13 @@ import {
 const params = new URLSearchParams(window.location.search);
 const postId = params.get("postId");
 
+alert(postId);
+
+
+
 const commentList = document.getElementById("commentList");
+
+
 
 const q = query(
     collection(db, "comments"),
