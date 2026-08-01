@@ -1,3 +1,4 @@
+I mean this code
 import { auth, db } from "./firebase.js";
 
 import {
@@ -132,9 +133,6 @@ new URLSearchParams(window.location.search);
 const receiverUid =
 params.get("uid");
 
-alert("Receiver UID: " + receiverUid);
-console.log(receiverUid);
-
 // Back button
 
 backBtn.onclick=()=>{
@@ -156,12 +154,15 @@ return;
 }
 
 
+
 const chatId =
 user.uid < receiverUid
 ?
 user.uid + "_" + receiverUid
 :
 receiverUid + "_" + user.uid;
+
+
 
 
 
@@ -181,9 +182,7 @@ data.fullName || data.username;
 
 chatName.style.cursor = "pointer";
 
-chatName.onclick = () => {
-    window.location.href = `profile.html?uid=${receiverUid}`;
-};
+chatName.onclick = () =>  window.location.href = `profile.html?uid=${receiverUid}`;
 
 chatAvatar.src =
 data.profilePicture ||
@@ -247,15 +246,15 @@ await addDoc(messagesRef, {
 senderId: user.uid,
 receiverId: receiverUid,
 
-text: text,  
-image: image,  
-video: video,  
-audio: audio,  
+text: text,
+image: image,
+video: video,
+audio: audio,
 
-timestamp: serverTimestamp(),  
+timestamp: serverTimestamp(),
 
-sent: true,  
-delivered: false,  
+sent: true,
+delivered: false,
 read: false
 
 });
@@ -275,14 +274,15 @@ lastImage: image,
 lastVideo: video,
 lastAudio: audio,
 
-lastTimestamp: serverTimestamp(),  
+lastTimestamp: serverTimestamp(),
 
-    lastSenderId: user.uid,  
-    lastReceiverId: receiverUid,  
+lastSenderId: user.uid,    
+lastReceiverId: receiverUid,    
 
-    lastRead: false,  
-    lastDelivered: false  
-},  
+lastRead: false,    
+lastDelivered: false
+
+},
 { merge: true }
 
 );
@@ -312,166 +312,95 @@ messagesRef,
 orderBy("timestamp","asc")
 );
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 onSnapshot(q, (snapshot) => {
 
 messages.innerHTML = "";
 
 snapshot.forEach(async (messageDoc) => {
 
-const msg = messageDoc.data();
+const msg = messageDoc.data();    
 
-let delivered = msg.delivered || false;
-let read = msg.read || false;
+if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {    
 
-
-// Mark received messages as delivered and read
-if(msg.receiverId === user.uid && (!delivered || !read)){
-
-    await updateDoc(messageDoc.ref,{
-        delivered:true,
-        read:true
-    });
-
-    delivered = true;
-    read = true;
+    await updateDoc(messageDoc.ref, {    
+        delivered: true,    
+        read: true    
+    });    
 
 }
 
-
-// Message bubble
-
-const div = document.createElement("div");
+const div =
+document.createElement("div");
 
 div.className =
-msg.senderId === user.uid
+msg.senderId===user.uid
 ?
 "message sent"
 :
 "message received";
 
-
-// Time
-
-let messageTime="";
+let messageTime = "";
 
 const date = msg.timestamp?.toDate?.();
 
-if(date){
+if (date) {
+messageTime = date.toLocaleTimeString([], {
+hour: "numeric",
+minute: "2-digit"
+});
+}
 
-messageTime =
-date.toLocaleTimeString([],{
-hour:"numeric",
-minute:"2-digit"
+let delivered = msg.delivered;
+let read = msg.read;
+
+if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
+
+await updateDoc(doc(db, "chats", chatId), {
+lastDelivered: true,
+lastRead: true
 });
 
 }
 
+let status = "✓ Sent";
 
-// Status
-
-let status="";
-
-if(msg.senderId === user.uid){
-
-status="✓ Sent";
-
-if(delivered){
-status="✓✓ Delivered";
+if (delivered) {
+status = "✓✓ Delivered";
 }
 
-if(read){
-status="✓✓ Read";
+if (read) {
+status = "✓✓ Read";
 }
-
-}
-
-
-// HTML
 
 div.innerHTML = `
 
-${msg.text ? `<p>${msg.text}</p>` : ""}
-
+${msg.text ? <p>${msg.text}</p> : ""}
 
 ${msg.image ?
-`<img src="${msg.image}" width="200">`
-:
-""}
-
+<img src="${msg.image}" width="200">
+: ""}
 
 ${msg.video ?
-`
-<video controls width="220">
-<source src="${msg.video}">
-</video>
-`
-:
-""}
-
+<video controls width="220">   <source src="${msg.video}">   </video>
+: ""}
 
 ${msg.audio ?
-`
-<audio controls>
-<source src="${msg.audio}">
-</audio>
-`
-:
-""}
+<audio controls>   <source src="${msg.audio}">   </audio>
+: ""}
 
-
-
-<div class="message-footer">
-
-<span class="message-time">
-${messageTime}
-</span>
-
-
-<span class="message-status">
-${status}
-</span>
-
-</div>
-
-`;
-
-
-messages.appendChild(div);
-
+<div class="message-footer">  <span class="message-time">    
+    ${messageTime}    
+</span>    <span class="message-status">    
+    ${status}    
+</span>  </div>  `;  messages.appendChild(div);
 
 });
-
 
 messages.scrollTop =
 messages.scrollHeight;
 
+});
 
 });
+
+Correct?
