@@ -132,6 +132,9 @@ new URLSearchParams(window.location.search);
 const receiverUid =
 params.get("uid");
 
+alert("Receiver UID: " + receiverUid);
+console.log(receiverUid);
+
 // Back button
 
 backBtn.onclick=()=>{
