@@ -66,7 +66,9 @@ const q = query(
      
 
 
-   onSnapshot(q, (snapshot) => {
+  onSnapshot(q, (snapshot) => {
+
+    alert("Comments found: " + snapshot.size);
 
     console.log("Snapshot:", snapshot);
     console.log("Number of comments:", snapshot.size);
