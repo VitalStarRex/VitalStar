@@ -256,43 +256,34 @@ onAuthStateChanged(auth, async (user) => {
                     class="profile-picture"
                     onerror="this.src='default.png'">
 
-                <div class="message-info">
+                
 
-                    <div class="name">
-                        ${escapeHtml(fullName)}
-                    </div>
 
-                    <div class="last-message">
-                        ${lastMessageHtml}
-                    </div>
 
-                    <div class="time">
+<div class="message-info">
 
-                        <span class="status-text">
-                            ${status}
-                        </span>
+    <div class="top-row">
 
-                        <span class="time-text">
-                            ${timeText}
-                        </span>
+        <div class="name">
+            ${escapeHtml(fullName)}
+        </div>
 
-                    </div>
+        <div class="time-text">
+            ${timeText}
+        </div>
 
-                </div>
+    </div>
 
-            `;
+    <div class="bottom-row">
 
-            div.onclick = () => {
+        <div class="last-message">
+            ${lastMessageHtml}
+        </div>
 
-                window.location.href =
-                    `chat.html?uid=${otherUserId}`;
+        <div class="status-text">
+            ${status}
+        </div>
 
-            };
+    </div>
 
-            messageList.appendChild(div);
-
-        }
-
-    });
-
-});
+</div>
