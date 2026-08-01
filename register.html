@@ -7,17 +7,17 @@
 
 <style>
 body{
+    margin:0;
     font-family:Arial,sans-serif;
     background:#f2f2f2;
     display:flex;
     justify-content:center;
     align-items:center;
     min-height:100vh;
-    margin:0;
 }
 
 .container{
-    width:320px;
+    width:330px;
     background:#fff;
     padding:25px;
     border-radius:15px;
@@ -27,10 +27,10 @@ body{
 h1{
     text-align:center;
     background:#000;
-    color:#ffd700;
-    padding:10px;
+    color:gold;
+    padding:12px;
     border-radius:10px;
-    margin-bottom:25px;
+    margin-bottom:20px;
 }
 
 input{
@@ -40,13 +40,14 @@ input{
     border:1px solid #ccc;
     border-radius:8px;
     box-sizing:border-box;
+    font-size:15px;
 }
 
 button{
     width:100%;
     padding:12px;
     border:none;
-    border-radius:20px;
+    border-radius:25px;
     background:#1877f2;
     color:white;
     font-size:17px;
@@ -68,33 +69,17 @@ button:hover{
 
 <form id="registerForm">
 
-<input
-type="text"
-id="username"
-placeholder="Username"
-required>
+<input type="text" id="fullName" placeholder="Full Name" required>
 
-<input
-type="email"
-id="email"
-placeholder="Email"
-required>
+<input type="text" id="username" placeholder="Username" required>
 
-<input
-type="password"
-id="password"
-placeholder="Password"
-required>
+<input type="email" id="email" placeholder="Email" required>
 
-<input
-type="password"
-id="confirmPassword"
-placeholder="Confirm Password"
-required>
+<input type="password" id="password" placeholder="Password" required>
 
-<button type="submit">
-Register
-</button>
+<input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+
+<button type="submit">Register</button>
 
 </form>
 
@@ -118,65 +103,72 @@ getDocs,
 serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const form=document.getElementById("registerForm");
+const form = document.getElementById("registerForm");
 
-form.addEventListener("submit",async(e)=>{
+form.addEventListener("submit", async (e)=>{
 
 e.preventDefault();
 
-const username=document.getElementById("username").value.trim().toLowerCase();
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
-const confirmPassword=document.getElementById("confirmPassword").value;
+const fullName = document.getElementById("fullName").value.trim();
 
-if(password!==confirmPassword){
-alert("Passwords do not match.");
-return;
+const username = document.getElementById("username").value.trim().toLowerCase();
+
+const email = document.getElementById("email").value.trim();
+
+const password = document.getElementById("password").value;
+
+const confirmPassword = document.getElementById("confirmPassword").value;
+
+if(password !== confirmPassword){
+    alert("Passwords do not match.");
+    return;
 }
 
-const q=query(
-collection(db,"users"),
-where("username","==",username)
+const q = query(
+    collection(db,"users"),
+    where("username","==",username)
 );
 
-const snap=await getDocs(q);
+const snap = await getDocs(q);
 
 if(!snap.empty){
-alert("Username already exists.");
-return;
+    alert("Username already exists.");
+    return;
 }
 
 try{
 
-const cred=await createUserWithEmailAndPassword(
-auth,
-email,
-password
+const cred = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password
 );
 
 await setDoc(doc(db,"users",cred.user.uid),{
 
-uid:cred.user.uid,
+    uid: cred.user.uid,
 
-username:username,
+    fullName: fullName,
 
-email:email,
+    username: username,
 
-profilePic:"",
+    email: email,
 
-bio:"",
+    profilePic: "default.png",
 
-online:true,
+    bio: "",
 
-lastSeen:serverTimestamp(),
+    online: true,
 
-createdAt:serverTimestamp()
+    lastSeen: serverTimestamp(),
+
+    createdAt: serverTimestamp()
 
 });
 
 alert("Registration successful!");
 
-window.location.href="edit-profile.html";
+window.location.href = "edit-profile.html";
 
 }catch(error){
 
