@@ -49,7 +49,7 @@ alert(postId);
 
 const commentList = document.getElementById("commentList");
 
-
+alert(commentList);
 
 const q = query(
     collection(db, "comments"),
