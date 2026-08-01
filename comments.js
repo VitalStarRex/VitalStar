@@ -76,13 +76,29 @@ onSnapshot(q, (snapshot) => {
 
 <div class="comment-header">
 
+
 <div class="comment-avatar">
-👤
+
+<img
+src="${comment.profilePicture || 'https://via.placeholder.com/45'}"
+style="
+width:100%;
+height:100%;
+border-radius:50%;
+object-fit:cover;
+">
+
 </div>
 
 <div>
 
-<b>${comment.username || "VitalStar User"}</b>
+<b>${comment.fullName || "VitalStar User"}</b>
+
+<br>
+
+<span style="color:#1877f2;font-size:13px;">
+@${comment.username || "username"}
+</span>
 
 <br>
 
@@ -91,6 +107,7 @@ ${date}
 </small>
 
 </div>
+
 
 </div>
 
