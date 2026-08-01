@@ -369,6 +369,14 @@ if(msg.receiverId === user.uid && (!delivered || !read)){
 }
 
 
+
+await updateDoc(doc(db, "chats", chatId), {
+    lastDelivered: true,
+    lastRead: true
+});
+
+
+
 // Message bubble
 
 const div = document.createElement("div");
