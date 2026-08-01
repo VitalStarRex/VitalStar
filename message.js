@@ -287,3 +287,29 @@ onAuthStateChanged(auth, async (user) => {
     </div>
 
 </div>
+
+
+
+`;
+
+            div.addEventListener("click", () => {
+                window.location.href = `chat.html?uid=${otherUserId}`;
+            });
+
+            messageList.appendChild(div);
+
+        }
+
+    }, (error) => {
+
+        console.error("Error loading messages:", error);
+
+        messageList.innerHTML = `
+            <div style="padding:20px;text-align:center;color:red;">
+                Failed to load messages.
+            </div>
+        `;
+
+    });
+
+});
