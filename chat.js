@@ -161,6 +161,12 @@ user.uid + "_" + receiverUid
 receiverUid + "_" + user.uid;
 
 
+await updateDoc(doc(db, "chats", chatId), {
+    lastRead: true,
+    lastDelivered: true
+});
+
+
 
 const receiverRef =
 doc(db,"users",receiverUid);
