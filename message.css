@@ -102,3 +102,25 @@
     font-weight:700;
     color:purple;
 }
+
+
+.top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.bottom-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:3px;
+}
+
+.last-message{
+    flex:1;
+}
+
+.status-text{
+    margin-left:10px;
+}
