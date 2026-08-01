@@ -320,14 +320,26 @@ snapshot.forEach(async (messageDoc) => {
 
 const msg = messageDoc.data();    
 
-if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {    
 
-    await updateDoc(messageDoc.ref, {    
-        delivered: true,    
-        read: true    
-    });    
 
+
+
+
+if (msg.receiverId === user.uid && (!msg.delivered || !msg.read)) {
+
+    await updateDoc(doc(db, "chats", chatId), {
+        lastDelivered: true,
+        lastRead: true
+    });
+
+    delivered = true;
+    read = true;
 }
+
+
+    
+
+
 
 const div =
 document.createElement("div");
