@@ -49,7 +49,6 @@ alert(commentList);
 
 const commentList = document.getElementById("commentList");
 
-alert(commentList);
 
 
 
