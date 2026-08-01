@@ -25,6 +25,7 @@ function escapeHtml(text) {
 }
 
 function formatTime(timestamp) {
+
     if (!timestamp) return "";
 
     let messageDate;
@@ -41,13 +42,18 @@ function formatTime(timestamp) {
     const seconds = Math.floor((now - messageDate) / 1000);
 
     if (seconds < 60) return "Just now";
-    if (seconds < 3600) return Math.floor(seconds / 60) + " min ago";
-    if (seconds < 86400) return Math.floor(seconds / 3600) + " hr ago";
+
+    if (seconds < 3600)
+        return Math.floor(seconds / 60) + " min ago";
+
+    if (seconds < 86400)
+        return Math.floor(seconds / 3600) + " hr ago";
 
     return messageDate.toLocaleDateString();
 }
 
 function getTimestampValue(timestamp) {
+
     if (!timestamp) return 0;
 
     if (typeof timestamp.toDate === "function") {
@@ -59,49 +65,99 @@ function getTimestampValue(timestamp) {
     }
 
     const date = new Date(timestamp);
-    return isNaN(date.getTime()) ? 0 : date.getTime();
+
+    return isNaN(date.getTime())
+        ? 0
+        : date.getTime();
 }
 
-
-
+/* ===============================
+   MESSAGE STATUS
+================================ */
 
 function getStatus(chat, currentUserId) {
 
-    if (chat.lastSenderId === currentUserId) {
+    // Receiver
 
-        if (chat.lastRead) {
-            return "✓✓ Read";
+    if (chat.lastSenderId !== currentUserId) {
+
+        if (!chat.lastRead) {
+
+            return `
+                <span class="unread-badge">
+                    Unread
+                </span>
+            `;
         }
 
-        if (chat.lastDelivered) {
-            return "✓✓ Delivered";
-        }
-
-        return "✓ Sent";
+        return "";
     }
 
-    return "";
+    // Sender
+
+    if (chat.lastRead) {
+        return "✔️✔️";
+    }
+
+    return "✔️";
 }
 
-
+/* ===============================
+   LAST MESSAGE PREVIEW
+================================ */
 
 function getLastMessageHtml(chat) {
+
     if (chat.lastImage) {
-        return `<img src="${chat.lastImage}" class="message-preview-image" onerror="this.style.display='none'">`;
+
+        return `
+            <div class="last-message-text">
+                🖼️ Photo
+            </div>
+        `;
     }
 
     if (chat.lastVideo) {
-        return `<div class="last-message-text">🎥 Video</div>`;
+
+        return `
+            <div class="last-message-text">
+                🎥 Video
+            </div>
+        `;
     }
 
     if (chat.lastAudio) {
-        return `<div class="last-message-text">🎤 Voice message</div>`;
+
+        return `
+            <div class="last-message-text">
+                🎤 Voice message
+            </div>
+        `;
     }
 
-    return `<div class="last-message-text">${escapeHtml(chat.lastMessage || "No message")}</div>`;
+    if (chat.lastDocument) {
+
+        return `
+            <div class="last-message-text">
+                📄 Document
+            </div>
+        `;
+    }
+
+    return `
+        <div class="last-message-text">
+            ${escapeHtml(chat.lastMessage || "No message")}
+        </div>
+    `;
 }
 
-onAuthStateChanged(auth, (user) => {
+
+
+
+
+
+onAuthStateChanged(auth, async (user) => {
+
     if (!user) {
         window.location.href = "login.html";
         return;
@@ -113,9 +169,11 @@ onAuthStateChanged(auth, (user) => {
     );
 
     onSnapshot(q, async (snapshot) => {
+
         messageList.innerHTML = "";
 
         if (snapshot.empty) {
+
             messageList.innerHTML = "No messages yet";
             return;
         }
@@ -123,30 +181,40 @@ onAuthStateChanged(auth, (user) => {
         const chats = [];
 
         snapshot.forEach((chatDoc) => {
+
             chats.push({
                 id: chatDoc.id,
                 ...chatDoc.data()
             });
+
         });
 
-       
+        // Show newest conversation first
+        chats.sort((a, b) => {
 
+            return (
+                getTimestampValue(b.lastTimestamp) -
+                getTimestampValue(a.lastTimestamp)
+            );
 
-chats.sort((a, b) => {
-    return getTimestampValue(b.lastTimestamp) - getTimestampValue(a.lastTimestamp);
-});
-
-
+        });
 
         for (const chat of chats) {
-            const otherUserId = chat.participants.find(id => id !== user.uid);
+
+            const otherUserId =
+                chat.participants.find(
+                    id => id !== user.uid
+                );
 
             let fullName = "Unknown User";
             let profilePic = "default.png";
 
-            const userSnap = await getDoc(doc(db, "users", otherUserId));
+            const userSnap = await getDoc(
+                doc(db, "users", otherUserId)
+            );
 
             if (userSnap.exists()) {
+
                 const userData = userSnap.data();
 
                 fullName =
@@ -163,20 +231,33 @@ chats.sort((a, b) => {
                     "default.png";
             }
 
-            const status = getStatus(chat, user.uid);
-            const timeText = formatTime(chat.lastTimestamp);
-            const lastMessageHtml = getLastMessageHtml(chat);
+            const status =
+                getStatus(chat, user.uid);
+
+            const timeText =
+                formatTime(chat.lastTimestamp);
+
+            const lastMessageHtml =
+                getLastMessageHtml(chat);
+
+
+
+
+
 
             const div = document.createElement("div");
+
             div.className = "message-card";
 
             div.innerHTML = `
+
                 <img
                     src="${profilePic}"
-                    onerror="this.src='default.png'"
-                    class="profile-picture">
+                    class="profile-picture"
+                    onerror="this.src='default.png'">
 
                 <div class="message-info">
+
                     <div class="name">
                         ${escapeHtml(fullName)}
                     </div>
@@ -186,17 +267,32 @@ chats.sort((a, b) => {
                     </div>
 
                     <div class="time">
-                        <span class="status-text">${status}</span>
-                        <span class="time-text">${timeText}</span>
+
+                        <span class="status-text">
+                            ${status}
+                        </span>
+
+                        <span class="time-text">
+                            ${timeText}
+                        </span>
+
                     </div>
+
                 </div>
+
             `;
 
             div.onclick = () => {
-                window.location.href = `chat.html?uid=${otherUserId}`;
+
+                window.location.href =
+                    `chat.html?uid=${otherUserId}`;
+
             };
 
             messageList.appendChild(div);
+
         }
+
     });
+
 });
