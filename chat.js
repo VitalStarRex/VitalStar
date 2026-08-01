@@ -467,4 +467,4 @@ messages.appendChild(div);
 
 }); // End onSnapshot
 
-}); // End auth.onAuthStateChanged
+}); // End auth.onAuthStateChanged});
