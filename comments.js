@@ -117,19 +117,41 @@ ${comment.text || ""}
 
 </p>
 
-${comment.image ?
 
-`
+
+
+
+
+
+${comment.image ? `
 
 <img
 class="comment-photo"
 src="${comment.image}">
 
-`
+` : ""}
 
-: ""}
+<div class="comment-actions">
+
+<button onclick="likeComment('${docSnap.id}')">
+❤️ ${comment.likes || 0}
+</button>
+
+<button onclick="showReplyBox('${docSnap.id}')">
+💬 Reply
+</button>
 
 </div>
+
+<div id="replyBox-${docSnap.id}"></div>
+
+</div>
+
+
+
+
+
+
 
 `;
 
