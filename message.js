@@ -129,16 +129,14 @@ onAuthStateChanged(auth, (user) => {
             });
         });
 
-        chats.sort((a, b) => {
-            const aUnread = a.lastRead ? 1 : 0;
-            const bUnread = b.lastRead ? 1 : 0;
+       
 
-            if (aUnread !== bUnread) {
-                return aUnread - bUnread;
-            }
 
-            return getTimestampValue(b.lastTimestamp) - getTimestampValue(a.lastTimestamp);
-        });
+chats.sort((a, b) => {
+    return getTimestampValue(b.lastTimestamp) - getTimestampValue(a.lastTimestamp);
+});
+
+
 
         for (const chat of chats) {
             const otherUserId = chat.participants.find(id => id !== user.uid);
