@@ -11,9 +11,7 @@ onAuthStateChanged(auth, (user) => {
 
 
 
-
-import { db, auth } from "./firebase.js";
-
+     
 import {
     collection,
     addDoc,
@@ -25,8 +23,18 @@ import {
     doc,
     getDoc,
     updateDoc,
-    increment
+    increment,
+    deleteDoc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+
+
+
+
+
+
 
 const params = new URLSearchParams(window.location.search);
 const postId = params.get("postId");
