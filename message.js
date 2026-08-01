@@ -62,17 +62,28 @@ function getTimestampValue(timestamp) {
     return isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+
+
+
 function getStatus(chat, currentUserId) {
-    if (chat.lastRead) {
-        return "Read ✓✓";
-    }
 
     if (chat.lastSenderId === currentUserId) {
-        return chat.lastDelivered ? "Delivered ✓✓" : "Sent ✓";
+
+        if (chat.lastRead) {
+            return "✓✓ Read";
+        }
+
+        if (chat.lastDelivered) {
+            return "✓✓ Delivered";
+        }
+
+        return "✓ Sent";
     }
 
-    return "Unread 🔴";
+    return "";
 }
+
+
 
 function getLastMessageHtml(chat) {
     if (chat.lastImage) {
