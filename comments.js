@@ -299,3 +299,63 @@ await addDoc(collection(db, "comments"), {
     }
 
 };
+
+
+
+
+
+
+
+
+
+window.likeComment = async function(commentId) {
+
+    try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("Please login first.");
+            return;
+        }
+
+        const likeId = `${commentId}_${user.uid}`;
+
+        const likeRef = doc(db, "commentLikes", likeId);
+
+        const likeSnap = await getDoc(likeRef);
+
+        const commentRef = doc(db, "comments", commentId);
+
+        if (likeSnap.exists()) {
+
+            // Unlike
+            await deleteDoc(likeRef);
+
+            await updateDoc(commentRef, {
+                likes: increment(-1)
+            });
+
+        } else {
+
+            // Like
+            await setDoc(likeRef, {
+                commentId: commentId,
+                uid: user.uid,
+                createdAt: new Date()
+            });
+
+            await updateDoc(commentRef, {
+                likes: increment(1)
+            });
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+        alert("Failed to like comment.");
+
+    }
+
+};
