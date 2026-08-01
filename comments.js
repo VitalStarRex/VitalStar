@@ -51,10 +51,15 @@ const commentList = document.getElementById("commentList");
 
 alert(commentList);
 
+
+
+
+
+
+
+
 const q = query(
-    collection(db, "comments"),
-    where("postId", "==", postId),
-    orderBy("createdAt", "asc")
+    collection(db, "comments")
 );
 
 
