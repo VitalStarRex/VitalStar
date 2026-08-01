@@ -394,9 +394,7 @@ ${fullName}
 // UNREAD MESSAGE BADGE
 // ===============================
 
-const messageBadge =
-document.getElementById("messageBadge");
-
+const messageBadge = document.getElementById("messageBadge");
 
 onAuthStateChanged(auth, (user) => {
 
@@ -419,10 +417,10 @@ onAuthStateChanged(auth, (user) => {
             const chat = chatDoc.data();
 
 
+            // Count unread messages received by current user
             if (
-                chat.lastSenderId &&
-                chat.lastSenderId !== user.uid &&
-                chat.lastRead !== true
+                chat.lastReceiverId === user.uid &&
+                chat.lastRead === false
             ) {
 
                 unreadCount++;
@@ -434,24 +432,31 @@ onAuthStateChanged(auth, (user) => {
 
         if (messageBadge) {
 
-            if (unreadCount > 0) {
+            messageBadge.textContent = unreadCount;
 
-                messageBadge.textContent = unreadCount;
-                messageBadge.style.display = "block";
-
-            } else {
-
-                messageBadge.textContent = "";
-                messageBadge.style.display = "none";
-
-            }
+            // Always show the badge, even when it is 0
+            messageBadge.style.display = "block";
 
         }
 
 
+    }, (error) => {
+
+        console.error("Unread message badge error:", error);
+
+        if (messageBadge) {
+            messageBadge.textContent = "0";
+            messageBadge.style.display = "block";
+        }
+
     });
 
 });
+
+
+
+
+
 
 
 
