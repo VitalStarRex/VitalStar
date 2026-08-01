@@ -463,8 +463,10 @@ ${status}
 
 messages.appendChild(div);
 
+});
 
+messages.scrollTop = messages.scrollHeight;
 
 }); // End onSnapshot
 
-}); // End auth.onAuthStateChanged});
+}); // End auth.onAuthStateChanged
