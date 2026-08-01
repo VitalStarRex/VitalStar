@@ -1,86 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VitalStar Register</title>
+
 <style>
-body{font-family:Arial,sans-serif;background:#f2f2f2}
-.vitalstar-title{font-weight:bold;color:yellow;background:#000;padding:10px 20px;text-align:center;border-radius:8px;font-size:32px}
-form{background:#fff;width:300px;padding:25px;border-radius:15px;box-shadow:0 5px 15px gray}
-input{width:90%;padding:12px;border-radius:8px;border:1px solid gray}
-button{width:95%;padding:12px;background:#1877f2;color:#fff;border:none;border-radius:20px;font-size:18px;font-weight:bold}
-button:hover{background:#0d5dc8}
+body{
+    font-family:Arial,sans-serif;
+    background:#f2f2f2;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    margin:0;
+}
+
+.container{
+    width:320px;
+    background:#fff;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,.2);
+}
+
+h1{
+    text-align:center;
+    background:#000;
+    color:#ffd700;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:25px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-bottom:15px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:20px;
+    background:#1877f2;
+    color:white;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0d5dc8;
+}
 </style>
 </head>
+
 <body>
-<h1 class="vitalstar-title">VitalStar Register</h1>
-<br><br>
-<center>
+
+<div class="container">
+
+<h1>VitalStar Register</h1>
+
 <form id="registerForm">
-<br>
-<input type="text" id="username" placeholder="Username" required><br><br>
 
+<input
+type="text"
+id="username"
+placeholder="Username"
+required>
 
-<input type="email" id="email" placeholder="Email" required><br><br>
+<input
+type="email"
+id="email"
+placeholder="Email"
+required>
 
+<input
+type="password"
+id="password"
+placeholder="Password"
+required>
 
-<input type="password" id="password" placeholder="Password" required><br><br>
+<input
+type="password"
+id="confirmPassword"
+placeholder="Confirm Password"
+required>
 
+<button type="submit">
+Register
+</button>
 
-<input type="password" id="confirmPassword" placeholder="Confirm Password" required><br><br>
-
-
-<button type="submit">Register</button>
 </form>
-</center>
+
+</div>
 
 <script type="module">
+
 import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc,setDoc,collection,query,where,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+doc,
+setDoc,
+collection,
+query,
+where,
+getDocs,
+serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const form=document.getElementById("registerForm");
 
 form.addEventListener("submit",async(e)=>{
+
 e.preventDefault();
 
-const fullname=document.getElementById("fullname").value.trim();
 const username=document.getElementById("username").value.trim().toLowerCase();
-const birthday=document.getElementById("birthday").value.trim();
-const country=document.getElementById("country").value.trim();
 const email=document.getElementById("email").value.trim();
 const password=document.getElementById("password").value;
 const confirmPassword=document.getElementById("confirmPassword").value;
 
 if(password!==confirmPassword){
- alert("Passwords do not match!");
- return;
+alert("Passwords do not match.");
+return;
 }
 
-const q=query(collection(db,"users"),where("username","==",username));
+const q=query(
+collection(db,"users"),
+where("username","==",username)
+);
+
 const snap=await getDocs(q);
+
 if(!snap.empty){
- alert("Username already exists.");
- return;
+alert("Username already exists.");
+return;
 }
 
 try{
- const cred=await createUserWithEmailAndPassword(auth,email,password);
 
- await setDoc(doc(db,"users",cred.user.uid),{
-   uid:cred.user.uid,
-   fullname,
-   username,
-   birthday,
-   country,
-   email
- });
+const cred=await createUserWithEmailAndPassword(
+auth,
+email,
+password
+);
 
- alert("Registration successful!");
- window.location.href="edit-profile.html";
-}catch(error){
- alert(error.message);
-}
+await setDoc(doc(db,"users",cred.user.uid),{
+
+uid:cred.user.uid,
+
+username:username,
+
+email:email,
+
+profilePic:"",
+
+bio:"",
+
+online:true,
+
+lastSeen:serverTimestamp(),
+
+createdAt:serverTimestamp()
+
 });
+
+alert("Registration successful!");
+
+window.location.href="edit-profile.html";
+
+}catch(error){
+
+alert(error.message);
+
+}
+
+});
+
 </script>
+
 </body>
 </html>
