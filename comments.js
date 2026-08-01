@@ -148,18 +148,28 @@ window.sendComment = async function () {
 
         }
 
-        const userDoc =
-        await getDoc(doc(db, "users", user.uid));
+        
 
-        let username = "VitalStar User";
 
-        if (userDoc.exists()) {
+const userDoc = await getDoc(doc(db, "users", user.uid));
 
-            username =
-            userDoc.data().username ||
-            "VitalStar User";
+let username = "VitalStar User";
+let fullName = "VitalStar User";
+let profilePicture = "";
 
-        }
+if (userDoc.exists()) {
+
+    const userData = userDoc.data();
+
+    username = userData.username || "VitalStar User";
+    fullName = userData.fullName || "VitalStar User";
+    profilePicture = userData.profilePicture || "";
+
+}
+
+
+
+        
 
         let imageUrl = "";
 
@@ -204,18 +214,24 @@ window.sendComment = async function () {
 
 
 
+await addDoc(collection(db, "comments"), {
+
+    postId: postId,
+    uid: user.uid,
+    username: username,
+    fullName: fullName,
+    profilePicture: profilePicture,
+    text: text,
+    image: imageUrl,
+    likes: 0,
+    replies: 0,
+    createdAt: serverTimestamp()
+
+});
+
+      
 
 
-        await addDoc(collection(db, "comments"), {
-
-            postId: postId,
-            uid: user.uid,
-            username: username,
-            text: text,
-            image: imageUrl,
-            createdAt: serverTimestamp()
-
-        });
 
         await updateDoc(doc(db, "posts", postId), {
 
