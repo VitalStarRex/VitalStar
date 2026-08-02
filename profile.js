@@ -116,8 +116,27 @@ dob.textContent =
 gender.textContent =
     "🚻 " + (data.gender || "Not specified");
 
-rank.textContent =
-    "🏅 " + (data.rank || "Member");
+
+
+const followerCount = data.followersCount || 0;
+
+let userRank = "🌱 New Member";
+
+if (followerCount >= 1000) {
+    userRank = "🌍 Legend";
+} else if (followerCount >= 500) {
+    userRank = "👑 Celebrity";
+} else if (followerCount >= 100) {
+    userRank = "🔥 Influencer";
+} else if (followerCount >= 50) {
+    userRank = "💎 Popular";
+} else if (followerCount >= 10) {
+    userRank = "⭐ Rising Star";
+}
+
+rank.textContent = userRank;
+
+
 
 if (data.online === true) {
 
