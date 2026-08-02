@@ -1,9 +1,13 @@
-import { auth, db } from "./firebase.js";
+import { auth, db, rtdb } from "./firebase.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+import {
+    ref,
+    onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 import {
     doc,
@@ -138,24 +142,36 @@ rank.textContent = userRank;
 
 
 
-if (data.online === true) {
 
-    lastSeen.textContent = "🟢 Online";
 
-} else if (data.lastSeen) {
+const statusRef = ref(rtdb, "status/" + profileUid);
 
-    const date = data.lastSeen.toDate();
+onValue(statusRef, (snapshot) => {
 
-    lastSeen.textContent =
-        "🕒 Last seen: " +
-        date.toLocaleString();
+    const status = snapshot.val();
 
-} else {
+    if (!status) {
+        lastSeen.textContent = "⚪ Offline";
+        return;
+    }
 
-    lastSeen.textContent =
-        "⚪ Offline";
+    if (status.online === true) {
 
-}
+        lastSeen.textContent = "🟢 Online";
+
+    } else if (status.lastSeen) {
+
+        const date = new Date(status.lastSeen);
+
+        lastSeen.textContent =
+            "🕒 Last seen: " + date.toLocaleString();
+
+    }
+
+});
+
+
+
 
 bio.textContent =
     data.bio || "No bio yet.";
