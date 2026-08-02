@@ -270,7 +270,47 @@ followBtn.addEventListener("click", async () => {
 
 
 
+async function loadUserPosts(profileUid) {
 
+    gallery.innerHTML = "";
+
+    const q = query(
+        collection(db, "posts"),
+        where("uid", "==", profileUid),
+        orderBy("createdAt", "desc")
+    );
+
+    const snap = await getDocs(q);
+
+    let count = 0;
+
+    snap.forEach((doc) => {
+
+        count++;
+
+        const post = doc.data();
+
+        const img = document.createElement("img");
+
+        img.src = post.image || "https://via.placeholder.com/300";
+
+        img.onclick = () => {
+            window.location.href =
+                "comments.html?postId=" + doc.id;
+        };
+
+        gallery.appendChild(img);
+
+    });
+
+    posts.textContent = count;
+
+    if (count === 0) {
+        gallery.innerHTML =
+            "<p>No posts yet.</p>";
+    }
+
+}
 
 
 
