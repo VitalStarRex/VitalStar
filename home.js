@@ -315,85 +315,6 @@ window.location.href =
 
 
 
-// WELCOME MESSAGE
-
-
-auth.onAuthStateChanged(async(user)=>{
-
-
-if(!user) return;
-
-
-
-
-
-auth.onAuthStateChanged(async(user)=>{
-
-if(!user) return;
-
-await updateDoc(doc(db, "users", user.uid), {
-    online: true,
-    lastSeen: serverTimestamp()
-});
-
-
-
-const userSnap =
-await getDoc(doc(db,"users",user.uid));
-
-
-
-if(userSnap.exists()){
-
-
-const fullName =
-userSnap.data().fullName || "User";
-
-
-
-const hour =
-new Date().getHours();
-
-
-
-let greeting =
-"Good Evening";
-
-
-
-if(hour < 12){
-
-greeting="Good Morning";
-
-}
-
-else if(hour < 17){
-
-greeting="Good Afternoon";
-
-}
-
-
-
-const welcome =
-document.getElementById("welcomeText");
-
-
-
-if(welcome){
-
-welcome.innerHTML =
-`${greeting}, <span style="color:#FFD54F">
-${fullName}
-</span> 👋`;
-
-}
-
-
-}
-
-
-});
 
 
 
@@ -472,7 +393,52 @@ onAuthStateChanged(auth, (user) => {
 
 
 
+// WELCOME MESSAGE
 
+auth.onAuthStateChanged(async(user)=>{
+
+if(!user) return;
+
+// Set user online
+await updateDoc(doc(db, "users", user.uid), {
+    online: true,
+    lastSeen: serverTimestamp()
+});
+
+const userSnap =
+await getDoc(doc(db,"users",user.uid));
+
+if(userSnap.exists()){
+
+const fullName =
+userSnap.data().fullName || "User";
+
+const hour =
+new Date().getHours();
+
+let greeting =
+"Good Evening";
+
+if(hour < 12){
+    greeting="Good Morning";
+}
+else if(hour < 17){
+    greeting="Good Afternoon";
+}
+
+const welcome =
+document.getElementById("welcomeText");
+
+if(welcome){
+    welcome.innerHTML =
+`${greeting}, <span style="color:#FFD54F">
+${fullName}
+</span> 👋`;
+}
+
+}
+
+});
 
 
 
