@@ -295,8 +295,6 @@ if (userDoc.exists()) {
 
 
 
-       alert("Saving comment to post: " + postId);
-
 
 
 await addDoc(collection(db, "comments"), {
