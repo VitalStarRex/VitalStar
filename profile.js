@@ -46,7 +46,7 @@ const followBtn = document.getElementById("followBtn");
 const messageBtn = document.getElementById("messageBtn");
 const gallery = document.getElementById("gallery");
 
-auth.onAuthStateChanged(async (user) => {
+onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
         window.location.href = "login.html";
@@ -146,9 +146,16 @@ rank.textContent = userRank;
 
 const statusRef = ref(rtdb, "status/" + profileUid);
 
+
+
 onValue(statusRef, (snapshot) => {
 
+    console.log("Profile UID:", profileUid);
+    console.log("Realtime status:", snapshot.val());
+
     const status = snapshot.val();
+
+
 
     if (!status) {
         lastSeen.textContent = "⚪ Offline";
