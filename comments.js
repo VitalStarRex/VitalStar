@@ -127,7 +127,12 @@ object-fit:cover;
 
 <div>
 
-<b>${comment.fullName || "VitalStar User"}</b>
+<b>
+<a href="profile.html?uid=${comment.uid}"
+style="text-decoration:none;color:black;">
+${comment.fullName || "VitalStar User"}
+</a>
+</b>
 
 <br>
 
