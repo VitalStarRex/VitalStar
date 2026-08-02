@@ -3,6 +3,7 @@ import { auth, db } from "./firebase.js";
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";     
+                                          
 
 import {
     collection,
@@ -16,7 +17,8 @@ import {
     increment,
     getDoc,
     setDoc,
-    deleteDoc
+    deleteDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -320,6 +322,19 @@ auth.onAuthStateChanged(async(user)=>{
 
 
 if(!user) return;
+
+
+
+
+
+auth.onAuthStateChanged(async(user)=>{
+
+if(!user) return;
+
+await updateDoc(doc(db, "users", user.uid), {
+    online: true,
+    lastSeen: serverTimestamp()
+});
 
 
 
