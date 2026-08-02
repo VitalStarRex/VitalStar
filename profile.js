@@ -4,13 +4,19 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+
 import {
     doc,
     getDoc,
     setDoc,
     deleteDoc,
     updateDoc,
-    increment
+    increment,
+    collection,
+    query,
+    where,
+    getDocs,
+    orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
                                                 
 
@@ -34,6 +40,7 @@ const following = document.getElementById("following");
 const editProfileBtn = document.getElementById("editProfileBtn");
 const followBtn = document.getElementById("followBtn");
 const messageBtn = document.getElementById("messageBtn");
+const gallery = document.getElementById("gallery");
 
 auth.onAuthStateChanged(async (user) => {
 
