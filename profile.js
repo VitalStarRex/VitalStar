@@ -23,6 +23,10 @@ const country = document.getElementById("country");
 const dob = document.getElementById("dob");
 const bio = document.getElementById("bio");
 
+const gender = document.getElementById("gender");
+const rank = document.getElementById("rank");
+const lastSeen = document.getElementById("lastSeen");
+
 const posts = document.getElementById("posts");
 const followers = document.getElementById("followers");
 const following = document.getElementById("following");
@@ -92,20 +96,66 @@ if (profileUid === user.uid) {
 
 // Display profile information
 fullName.textContent = data.fullName || "No Name";
-username.textContent = "@" + (data.username || "username");
-country.textContent = "🌍 " + (data.country || "Country not set");
-dob.textContent = "🎂 " + (data.dob || "Birthday not set");
-bio.textContent = data.bio || "No bio yet.";
+
+username.textContent =
+    "@" + (data.username || "username");
+
+country.textContent =
+    "🌍 " + (data.country || "Country not set");
+
+dob.textContent =
+    "🎂 " + (data.dob || "Birthday not set");
+
+gender.textContent =
+    "🚻 " + (data.gender || "Not specified");
+
+rank.textContent =
+    "🏅 " + (data.rank || "Member");
+
+if (data.online === true) {
+
+    lastSeen.textContent = "🟢 Online";
+
+} else if (data.lastSeen) {
+
+    const date = data.lastSeen.toDate();
+
+    lastSeen.textContent =
+        "🕒 Last seen: " +
+        date.toLocaleString();
+
+} else {
+
+    lastSeen.textContent =
+        "⚪ Offline";
+
+}
+
+bio.textContent =
+    data.bio || "No bio yet.";
 
 profilePicture.src =
-    data.profilePicture || "https://via.placeholder.com/180";
+    data.profilePicture ||
+    "https://via.placeholder.com/180";
 
 coverPhoto.src =
-    data.coverPhoto || "https://via.placeholder.com/1200x350";
+    data.coverPhoto ||
+    "https://via.placeholder.com/1200x350";
 
-posts.textContent = data.postsCount || 0;
-followers.textContent = data.followersCount || 0;
-following.textContent = data.followingCount || 0;
+posts.textContent =
+    data.postsCount || 0;
+
+followers.textContent =
+    data.followersCount || 0;
+
+following.textContent =
+    data.followingCount || 0;
+
+
+
+
+
+
 
 } catch (err) {
     console.error("Profile Error:", err);
