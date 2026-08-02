@@ -59,6 +59,7 @@ alert("commentList loaded");
 const q = query(
     collection(db, "comments"),
     where("postId", "==", postId),
+    orderBy("createdAt", "desc")
 );
 
 
