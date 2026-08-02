@@ -3,8 +3,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 
 // Firebase Services
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 import { getMessaging } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 // Firebase Configuration
@@ -23,5 +28,6 @@ const app = initializeApp(firebaseConfig);
 // Export Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
 export const messaging = getMessaging(app);
