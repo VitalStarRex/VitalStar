@@ -200,7 +200,14 @@ followers.textContent =
 following.textContent =
     data.followingCount || 0;
 
-await loadUserPosts(profileUid);
+
+
+try {
+    await loadUserPosts(profileUid);
+} catch (err) {
+    console.error("Load posts error:", err);
+}
+
 
 
 
@@ -210,10 +217,14 @@ await loadUserPosts(profileUid);
 
 } catch (err) {
     console.error("Profile Error:", err);
-    alert("Failed to load profile.");
+
+    // Only show the popup if the profile document itself couldn't be loaded
+    if (err.code === "permission-denied" || err.code === "unavailable") {
+        alert("Failed to load profile.");
+    }
 }
 
-});
+);
 
 editProfileBtn.addEventListener("click", () => {
     window.location.href = "edit-profile.html";
