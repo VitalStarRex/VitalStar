@@ -158,6 +158,8 @@ followers.textContent =
 following.textContent =
     data.followingCount || 0;
 
+await loadUserPosts(profileUid);
+
 
 
 
