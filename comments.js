@@ -43,7 +43,11 @@ import {
 const params = new URLSearchParams(window.location.search);
 const postId = params.get("postId");
 
-alert(commentList);
+if (!postId) {
+    alert("Post ID not found.");
+    throw new Error("Missing postId");
+}
+
 
 
 
@@ -52,12 +56,10 @@ const commentList = document.getElementById("commentList");
 alert("commentList loaded");
 
 
-
-
-
-
 const q = query(
-    collection(db, "comments")
+    collection(db, "comments"),
+    where("postId", "==", postId),
+    orderBy("createdAt", "asc")
 );
 
 
