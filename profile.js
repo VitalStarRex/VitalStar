@@ -318,15 +318,35 @@ followBtn.addEventListener("click", async () => {
 const currentUserSnap = await getDoc(doc(db, "users", user.uid));
 const currentUser = currentUserSnap.data();
 
-// Create follow notification
-await addDoc(collection(db, "notifications"), {
-    userId: profileUid,              // Receiver
-    senderId: user.uid,              // Follower
+// Create follow notification.  
+const notificationRef = await addDoc(collection(db, "notifications"), {
+    userId: profileUid,
+    senderId: user.uid,
     type: "follow",
     message: `${currentUser.fullName} started following you.`,
     read: false,
     createdAt: serverTimestamp()
 });
+
+alert("Notification created: " + notificationRef.id);
+
+
+
+
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
 
 
         }
