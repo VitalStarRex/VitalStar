@@ -164,10 +164,6 @@ user.uid + "_" + receiverUid
 receiverUid + "_" + user.uid;
 
 
-await updateDoc(doc(db, "chats", chatId), {
-    lastRead: true,
-    lastDelivered: true
-});
 
 
 
@@ -366,10 +362,7 @@ let read = msg.read || false;
 // Mark received messages as delivered and read
 if(msg.receiverId === user.uid && (!delivered || !read)){
 
-    await updateDoc(messageDoc.ref,{
-        delivered:true,
-        read:true
-    });
+   
 
     delivered = true;
     read = true;
