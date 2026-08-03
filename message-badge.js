@@ -1,97 +1,50 @@
 import { auth, db } from "./firebase.js";
 
-import { 
-    onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-    collectionGroup,
+    collection,
     query,
     where,
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
 const messageBadge = document.getElementById("messageBadge");
 
-let unsubscribeMessages = null;
+if (messageBadge) {
+    messageBadge.style.display = "none";
+}
 
-
-// Wait for login status
 onAuthStateChanged(auth, (user) => {
 
+    if (!user || !messageBadge) return;
 
-    // Stop old listener
-    if (unsubscribeMessages) {
-        unsubscribeMessages();
-        unsubscribeMessages = null;
-    }
-
-
-    if (!user || !messageBadge) {
-
-        if (messageBadge) {
-            messageBadge.style.display = "none";
-        }
-
-        return;
-    }
-
-
-
-    const unreadQuery = query(
-
-        collectionGroup(db, "messages"),
-
-        where("receiverId", "==", user.uid),
-
-        where("read", "==", false)
-
+    const q = query(
+        collection(db, "chats"),
+        where("lastReceiverId", "==", user.uid),
+        where("lastRead", "==", false)
     );
 
+    onSnapshot(q, (snapshot) => {
 
+        const unread = snapshot.size;
 
-    unsubscribeMessages = onSnapshot(
+        if (unread > 0) {
 
-        unreadQuery,
+            messageBadge.textContent = unread;
+            messageBadge.style.display = "flex";
 
-        (snapshot) => {
+        } else {
 
-
-            const unreadCount = snapshot.size;
-
-
-            if (unreadCount > 0) {
-
-                messageBadge.textContent = unreadCount;
-
-                messageBadge.style.display = "flex";
-
-
-            } else {
-
-                messageBadge.textContent = "";
-
-                messageBadge.style.display = "none";
-
-            }
-
-
-        },
-
-
-        (error) => {
-
-            console.error(
-                "Message badge error:",
-                error.message
-            );
-
+            messageBadge.textContent = "";
             messageBadge.style.display = "none";
 
         }
 
-    );
+    }, (error) => {
 
+        console.error(error);
+
+    });
 
 });
