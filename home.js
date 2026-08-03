@@ -326,6 +326,8 @@ window.location.href =
 
 
 
+
+
 // ===============================
 // UNREAD MESSAGE BADGE
 // ===============================
@@ -353,7 +355,6 @@ onAuthStateChanged(auth, (user) => {
             const chat = chatDoc.data();
 
 
-            // Count unread messages received by current user
             if (
                 chat.lastReceiverId === user.uid &&
                 chat.lastRead === false
@@ -368,26 +369,26 @@ onAuthStateChanged(auth, (user) => {
 
         if (messageBadge) {
 
-            messageBadge.textContent = unreadCount;
+            if (unreadCount > 0) {
 
-            // Always show the badge, even when it is 0
-            messageBadge.style.display = "block";
+                messageBadge.textContent = unreadCount;
+                messageBadge.style.display = "block";
+
+            } else {
+
+                messageBadge.textContent = "";
+                messageBadge.style.display = "none";
+
+            }
 
         }
 
-
-    }, (error) => {
-
-        console.error("Unread message badge error:", error);
-
-        if (messageBadge) {
-            messageBadge.textContent = "0";
-            messageBadge.style.display = "block";
-        }
 
     });
 
 });
+
+
 
 
 
