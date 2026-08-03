@@ -9,6 +9,9 @@ import {
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+
+
+
 import {
     doc,
     getDoc,
@@ -20,8 +23,13 @@ import {
     query,
     where,
     getDocs,
-    orderBy
+    orderBy,
+    addDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+     
+
+
                                                 
 
 const coverPhoto = document.getElementById("coverPhoto");
@@ -305,6 +313,21 @@ followBtn.addEventListener("click", async () => {
             followBtn.textContent = "✓ Following";
 
             followers.textContent = Number(followers.textContent) + 1;
+
+// Get current user's details
+const currentUserSnap = await getDoc(doc(db, "users", user.uid));
+const currentUser = currentUserSnap.data();
+
+// Create follow notification
+await addDoc(collection(db, "notifications"), {
+    userId: profileUid,              // Receiver
+    senderId: user.uid,              // Follower
+    type: "follow",
+    message: `${currentUser.fullName} started following you.`,
+    read: false,
+    createdAt: serverTimestamp()
+});
+
 
         }
 
