@@ -356,7 +356,7 @@ alert("Notification created: " + notificationRef.id);
     alert(err.message);
 }
 
-});
+
 
 
 
