@@ -69,14 +69,21 @@ followBtn.addEventListener("click", async () => {
 
             const currentUser = (await getDoc(doc(db, "users", user.uid))).data();
 
-            await addDoc(collection(db, "notifications"), {
-                userId: profileUid,
-                senderId: user.uid,
-                type: "follow",
-                message: `${currentUser.fullName} started following you.`,
-                read: false,
-                createdAt: serverTimestamp()
-            });
+            
+
+await addDoc(collection(db, "notifications"), {
+    receiverId: profileUid,
+    senderId: user.uid,
+    senderName: currentUser.fullName,
+    senderPhoto: currentUser.profilePicture || "",
+    text: "started following you.",
+    type: "follow",
+    read: false,
+    createdAt: serverTimestamp()
+});
+
+
+
 
             followBtn.textContent = "✓ Following";
             followers.textContent = Number(followers.textContent) + 1;
