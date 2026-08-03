@@ -373,6 +373,8 @@ window.location.href =
 
 const messageBadge = document.getElementById("messageBadge");
 
+alert(messageBadge);
+
 messageBadge.textContent = "5";
 messageBadge.style.display = "flex";
 
