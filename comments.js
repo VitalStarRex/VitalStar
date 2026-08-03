@@ -60,6 +60,67 @@ alert("commentList loaded");
 const postContainer = document.getElementById("postContainer");
 
 
+async function loadPost() {
+
+    const postSnap = await getDoc(doc(db, "posts", postId));
+
+    if (!postSnap.exists()) return;
+
+    const post = postSnap.data();
+
+    let date = "Just now";
+
+    if (post.createdAt) {
+        try {
+            date = post.createdAt.toDate().toLocaleString();
+        } catch (e) {}
+    }
+
+    postContainer.innerHTML = `
+        <div class="comment">
+
+            <div class="comment-header">
+                <div class="comment-avatar">👤</div>
+
+                <div>
+                    <b>
+                        <a href="profile.html?uid=${post.uid}" style="text-decoration:none;color:black;">
+                            ${post.fullName || "VitalStar User"}
+                        </a>
+                    </b>
+                    <br>
+                    <small>${date}</small>
+                </div>
+            </div>
+
+            <p class="comment-text">${post.text || ""}</p>
+
+            ${post.image ? `<img class="comment-photo" src="${post.image}">` : ""}
+
+            ${post.video ? `
+                <video class="comment-photo" controls>
+                    <source src="${post.video}" type="video/mp4">
+                </video>
+            ` : ""}
+
+            <div class="comment-actions">
+                ❤️ ${post.likes || 0}
+                &nbsp;&nbsp;
+                💬 ${post.comments || 0}
+                &nbsp;&nbsp;
+                🔗 ${post.shares || 0}
+            </div>
+
+        </div>
+    `;
+}
+
+loadPost();
+
+
+
+
+
 const q = query(
     collection(db, "comments"),
     where("postId", "==", postId),
