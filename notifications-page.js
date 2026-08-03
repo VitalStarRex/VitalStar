@@ -46,7 +46,7 @@ auth.onAuthStateChanged((user) => {
         }
 
 
-        snapshot.forEach((notificationDoc) => {
+        snapshot.docs.slice(0, 50).forEach((notificationDoc) => {
 
             const notification = notificationDoc.data();
 
