@@ -241,46 +241,10 @@ editProfileBtn.addEventListener("click", () => {
 
 
 
-followBtn.addEventListener("click", async () => {
 
-    const user = auth.currentUser;
 
-    if (!user) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const profileUid = params.get("uid");
 
-    if (!profileUid || profileUid === user.uid) return;
-
-    try {
-
-        const followingRef = doc(
-            db,
-            "users",
-            user.uid,
-            "following",
-            profileUid
-        );
-
-        const followerRef = doc(
-            db,
-            "users",
-            profileUid,
-            "followers",
-            user.uid
-        );
-
-        const followingSnap = await getDoc(followingRef);
-
-        if (followingSnap.exists()) {
-
-            // Unfollow
-            await deleteDoc(followingRef);
-            await deleteDoc(followerRef);
-
-            await updateDoc(doc(db, "users", user.uid), {
-                followingCount: increment(-1)
-            });
 
             await updateDoc(doc(db, "users", profileUid), {
                 followersCount: increment(-1)
