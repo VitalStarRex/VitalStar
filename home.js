@@ -373,6 +373,9 @@ window.location.href =
 
 const messageBadge = document.getElementById("messageBadge");
 
+messageBadge.textContent = "5";
+messageBadge.style.display = "flex";
+
 onAuthStateChanged(auth, (user) => {
 
     if (!user) return;
