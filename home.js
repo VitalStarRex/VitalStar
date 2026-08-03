@@ -376,6 +376,55 @@ window.location.href =
 
 
 
+// SHARE POST
+
+window.sharePost = async function(postId) {
+
+    const postRef = doc(db, "posts", postId);
+
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) {
+        alert("Post not found.");
+        return;
+    }
+
+    const post = postSnap.data();
+
+    const shareUrl = `${window.location.origin}/post.html?id=${postId}`;
+
+    try {
+
+        if (navigator.share) {
+
+            await navigator.share({
+                title: post.fullName || "VitalStar Post",
+                text: post.text || "Check out this post!",
+                url: shareUrl
+            });
+
+        } else {
+
+            await navigator.clipboard.writeText(shareUrl);
+
+            alert("Post link copied to clipboard.");
+
+        }
+
+        await updateDoc(postRef, {
+            shares: increment(1)
+        });
+
+    } catch (error) {
+        console.log("Share cancelled.", error);
+    }
+
+};
+
+
+
+
+
 
 
 
