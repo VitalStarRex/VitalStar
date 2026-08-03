@@ -15,31 +15,20 @@ if (messageBadge) {
     messageBadge.style.display = "none";
 }
 
+
 onAuthStateChanged(auth, (user) => {
 
     if (!user || !messageBadge) return;
 
-    const chatsQuery = query(
-        collection(db, "chats"),
-        where("participants", "array-contains", user.uid)
+    const unreadQuery = query(
+        collectionGroup(db, "messages"),
+        where("receiverId", "==", user.uid),
+        where("read", "==", false)
     );
 
-    onSnapshot(chatsQuery, (snapshot) => {
+    onSnapshot(unreadQuery, (snapshot) => {
 
-        let unreadCount = 0;
-
-        snapshot.forEach((chatDoc) => {
-
-            const chat = chatDoc.data();
-
-            if (
-                chat.lastReceiverId === user.uid &&
-                chat.lastRead === false
-            ) {
-                unreadCount++;
-            }
-
-        });
+        const unreadCount = snapshot.size;
 
         if (unreadCount > 0) {
             messageBadge.textContent = unreadCount;
