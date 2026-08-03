@@ -5,6 +5,7 @@ collection,
 query,
 where,
 orderBy,
+limit,
 onSnapshot,
 updateDoc,
 doc
@@ -20,11 +21,18 @@ if (!user) {
 }  
 
 
-const q = query(  
-    collection(db, "notifications"),  
-    where("receiverId", "==", user.uid),  
 
-);  
+
+
+
+    const q = query(
+        collection(db, "notifications"),
+        where("receiverId", "==", user.uid),
+        orderBy("createdAt", "desc"),
+        limit(50)
+    );  
+
+
 
 
 onSnapshot(q, (snapshot) => {  
