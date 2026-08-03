@@ -127,7 +127,7 @@ auth.onAuthStateChanged((user) => {
 
                 } catch(error) {
 
-                   alert(error.message);
+                   alert(error.code);
                        
                         
              
