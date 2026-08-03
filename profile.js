@@ -314,14 +314,21 @@ followBtn.addEventListener("click", async () => {
 alert("Reached notification code");
 
             // Get current user's details
-            const currentUserSnap = await getDoc(doc(db, "users", user.uid));
+           
 
-            if (currentUserSnap.exists()) {
 
-                const currentUser = currentUserSnap.data();
+const currentUserSnap = await getDoc(doc(db, "users", user.uid));
 
-                
+alert("User exists: " + currentUserSnap.exists());
+
 const test = await addDoc(collection(db, "notifications"), {
+    test: true
+});
+
+alert("Created: " + test.id);
+
+
+                        {
     test: true
 });
 
