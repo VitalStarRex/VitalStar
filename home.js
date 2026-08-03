@@ -393,18 +393,25 @@ onAuthStateChanged(auth, (user) => {
 
         let unreadCount = 0;
 
-        snapshot.forEach((chatDoc) => {
+    snapshot.forEach((chatDoc) => {
 
-            console.log(chatDoc.data());
+    const chat = chatDoc.data();
 
-            const chat = chatDoc.data();
+    console.log("Current user:", user.uid);
+    console.log("Receiver:", chat.lastReceiverId);
+    console.log("Read:", chat.lastRead);
 
-            if (
-                chat.lastReceiverId === user.uid &&
-                chat.lastRead === false
-            ) {
-                unreadCount++;
-            }
+    if (
+        chat.lastReceiverId === user.uid &&
+        chat.lastRead === false
+    ) {
+        unreadCount++;
+    }
+
+});    
+
+
+
 
         });
 
