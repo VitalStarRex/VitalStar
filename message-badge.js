@@ -14,48 +14,84 @@ import {
 
 const messageBadge = document.getElementById("messageBadge");
 
-
-if (messageBadge) {
-    messageBadge.style.display = "none";
-}
+let unsubscribeMessages = null;
 
 
+// Wait for login status
 onAuthStateChanged(auth, (user) => {
 
-    if (!user || !messageBadge) return;
+
+    // Stop old listener
+    if (unsubscribeMessages) {
+        unsubscribeMessages();
+        unsubscribeMessages = null;
+    }
+
+
+    if (!user || !messageBadge) {
+
+        if (messageBadge) {
+            messageBadge.style.display = "none";
+        }
+
+        return;
+    }
+
 
 
     const unreadQuery = query(
+
         collectionGroup(db, "messages"),
+
         where("receiverId", "==", user.uid),
+
         where("read", "==", false)
+
     );
 
 
-    onSnapshot(unreadQuery, (snapshot) => {
+
+    unsubscribeMessages = onSnapshot(
+
+        unreadQuery,
+
+        (snapshot) => {
 
 
-        const unreadCount = snapshot.size;
+            const unreadCount = snapshot.size;
 
 
-        if (unreadCount > 0) {
+            if (unreadCount > 0) {
 
-            messageBadge.textContent = unreadCount;
-            messageBadge.style.display = "flex";
+                messageBadge.textContent = unreadCount;
 
-        } else {
+                messageBadge.style.display = "flex";
 
-            messageBadge.textContent = "";
+
+            } else {
+
+                messageBadge.textContent = "";
+
+                messageBadge.style.display = "none";
+
+            }
+
+
+        },
+
+
+        (error) => {
+
+            console.error(
+                "Message badge error:",
+                error.message
+            );
+
             messageBadge.style.display = "none";
 
         }
 
-
-    }, (error) => {
-
-        console.error("Badge error:", error);
-
-    });
+    );
 
 
 });
