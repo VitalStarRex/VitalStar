@@ -133,14 +133,36 @@ ${post.text || ""}
 
 
 
-${post.image ? 
+${post.image ?
 
 `
-<img class="post-photo"
-src="${post.image}">
+<img
+class="post-photo"
+src="${post.image}"
+alt="Post Image">
 `
 
-:""}
+: ""}
+
+
+${post.video ?
+
+`
+<video
+class="post-video"
+controls
+preload="metadata">
+
+<source
+src="${post.video}"
+type="video/mp4">
+
+Your browser does not support video.
+
+</video>
+`
+
+: ""}
 
 
 
