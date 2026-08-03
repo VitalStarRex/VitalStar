@@ -327,7 +327,6 @@ window.location.href =
 
 
 
-
 // ===============================
 // UNREAD MESSAGE BADGE
 // ===============================
@@ -338,52 +337,40 @@ onAuthStateChanged(auth, (user) => {
 
     if (!user) return;
 
-
     const messageQuery = query(
         collection(db, "chats"),
         where("participants", "array-contains", user.uid)
     );
 
-
     onSnapshot(messageQuery, (snapshot) => {
 
         let unreadCount = 0;
-
 
         snapshot.forEach((chatDoc) => {
 
             const chat = chatDoc.data();
 
-
             if (
                 chat.lastReceiverId === user.uid &&
                 chat.lastRead === false
             ) {
-
                 unreadCount++;
-
             }
 
         });
 
-
         if (messageBadge) {
-
             if (unreadCount > 0) {
-
                 messageBadge.textContent = unreadCount;
-                messageBadge.style.display = "block";
-
+                messageBadge.style.display = "flex";
             } else {
-
-                messageBadge.textContent = "";
+                messageBadge.textContent = "0";
                 messageBadge.style.display = "none";
-
             }
-
         }
 
-
+    }, (error) => {
+        console.error(error);
     });
 
 });
