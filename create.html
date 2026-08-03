@@ -1,0 +1,147 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f3f4f6;
+    color:#222;
+}
+
+.header{
+    position:sticky;
+    top:0;
+    background:#6a0dad;
+    color:#fff;
+    text-align:center;
+    padding:18px;
+    font-size:22px;
+    font-weight:bold;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+    z-index:100;
+}
+
+.container{
+    width:100%;
+    max-width:650px;
+    margin:25px auto;
+    padding:15px;
+}
+
+.post-card{
+    background:#fff;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 6px 18px rgba(0,0,0,.12);
+}
+
+#postText{
+    width:100%;
+    min-height:160px;
+    border:1px solid #ddd;
+    border-radius:14px;
+    padding:15px;
+    font-size:16px;
+    resize:none;
+    outline:none;
+    transition:.3s;
+}
+
+#postText:focus{
+    border-color:#6a0dad;
+    box-shadow:0 0 8px rgba(106,13,173,.25);
+}
+
+.preview-box{
+    margin-top:20px;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.preview{
+    width:100%;
+    max-height:350px;
+    border-radius:14px;
+    object-fit:cover;
+    border:1px solid #ddd;
+}
+
+.upload-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+}
+
+.upload-btn{
+    flex:1;
+    text-align:center;
+    padding:14px;
+    border-radius:12px;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.25s;
+    user-select:none;
+}
+
+.image-btn{
+    background:#2196f3;
+}
+
+.image-btn:hover{
+    background:#1976d2;
+}
+
+.video-btn{
+    background:#ff5722;
+}
+
+.video-btn:hover{
+    background:#e64a19;
+}
+
+.post-btn{
+    width:100%;
+    margin-top:22px;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:#6a0dad;
+    color:#fff;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.post-btn:hover{
+    background:#5b0cb0;
+    transform:translateY(-2px);
+}
+
+.post-btn:active{
+    transform:scale(.98);
+}
+
+@media(max-width:600px){
+
+    .container{
+        padding:12px;
+    }
+
+    .post-card{
+        padding:15px;
+    }
+
+    .upload-buttons{
+        flex-direction:column;
+    }
+
+    .header{
+        font-size:20px;
+    }
+
+}
