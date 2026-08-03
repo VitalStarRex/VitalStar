@@ -4,158 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VitalStar Notifications</title>
-
 <style>
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#eef2ff;
-}
-
-header{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:60px;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
-    color:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
-    font-weight:bold;
-    box-shadow:0 2px 8px rgba(0,0,0,.2);
-    z-index:1000;
-}
-
-.back{
-    position:absolute;
-    left:15px;
-    color:white;
-    text-decoration:none;
-    font-size:28px;
-}
-
-.container{
-    margin-top:75px;
-    padding:10px;
-}
-
-#notifications{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-}
-
-.loading{
-    text-align:center;
-    color:#666;
-    margin-top:40px;
-}
+body{margin:0;font-family:Arial,sans-serif;background:#eef2ff;padding-bottom:90px;}
+header{position:fixed;top:0;left:0;width:100%;height:60px;background:linear-gradient(135deg,#1877f2,#7b2ff7);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:1000;}
+.back{position:absolute;left:15px;color:#fff;text-decoration:none;font-size:28px;}
+.container{margin-top:75px;padding:10px;padding-bottom:90px;}
+#notifications{display:flex;flex-direction:column;gap:12px;}
+.loading{text-align:center;color:#666;margin-top:40px;}
+.bottom-nav{position:fixed;bottom:0;left:0;width:100%;height:65px;background:#e5e5e5;border-top:1px solid #ccc;display:flex;justify-content:space-around;align-items:center;box-shadow:0 -2px 8px rgba(0,0,0,.1);z-index:1000;}
+.bottom-nav a{text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;}
+.bottom-nav small{font-size:12px;}
+.create{width:55px;height:55px;background:#1877f2;color:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center;text-decoration:none;font-size:30px;margin-top:-25px;box-shadow:0 4px 10px rgba(0,0,0,.2);}
 </style>
-
 </head>
-
 <body>
-
-<header>
-    <a href="home.html" class="back">←</a>
-    🔔 Notifications
-</header>
-
+<header><a href="home.html" class="back">←</a>🔔 Notifications</header>
 <div class="container">
-
-    <div id="notifications">
-
-        <div class="loading">
-            Loading notifications...
-        </div>
-
-    </div>
-
+<div id="notifications"><div class="loading">Loading notifications...</div></div>
 </div>
-
+<div class="bottom-nav">
+<a href="home.html"><span>🏠</span><small>Home</small></a>
+<a href="users.html"><span>👥</span><small>Friends</small></a>
+<a href="create-post.html" class="create">➕</a>
+<a href="general-room.html"><span>💬</span><small>Chat</small></a>
+<a href="profile.html"><span>👤</span><small>Profile</small></a>
+</div>
 <script type="module" src="notifications-page.js"></script>
-
 <script type="module" src="auth-guard.js"></script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Bottom Navigation -->
-<div style="
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:65px;
-background:#e5e5e5;
-border-top:1px solid #ccc;
-display:flex;
-justify-content:space-around;
-align-items:center;
-box-shadow:0 -2px 8px rgba(0,0,0,0.1);
-z-index:1000;
-">
-
-    <a href="home.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>🏠</span>
-        <small style="font-size:12px;">Home</small>
-    </a>
-
-    <a href="users.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👥</span>
-        <small style="font-size:12px;">Friends</small>
-    </a>
-
-    <a href="create-post.html" style="
-    width:55px;
-    height:55px;
-    background:#1877f2;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-decoration:none;
-    font-size:30px;
-    margin-top:-25px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-    ">
-        ➕
-    </a>
-
-    <a href="general-room.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>💬</span>
-        <small style="font-size:12px;">Chat</small>
-    </a>
-
-    <a href="profile.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👤</span>
-        <small style="font-size:12px;">Profile</small>
-    </a>
-
-</div>
