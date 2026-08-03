@@ -5,6 +5,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     onSnapshot,
     updateDoc,
     doc
@@ -25,7 +26,8 @@ auth.onAuthStateChanged((user) => {
     const q = query(
         collection(db, "notifications"),
         where("receiverId", "==", user.uid),
-        
+        orderBy("createdAt", "desc"),
+        limit(50)
     );
 
 
@@ -71,7 +73,12 @@ auth.onAuthStateChanged((user) => {
 
                 <img 
                 src="${notification.senderPhoto || 'https://via.placeholder.com/50'}"
-                class="notification-photo">
+                style="
+                width:35px;
+                height:35px;
+                border-radius:50%;
+                object-fit:cover;
+                ">
 
 
                 <div class="notification-text">
@@ -127,10 +134,7 @@ auth.onAuthStateChanged((user) => {
 
                 } catch(error) {
 
-                   alert(error.code);
-                       
-                        
-             
+                    alert(error.code);
 
                 }
 
@@ -147,7 +151,7 @@ auth.onAuthStateChanged((user) => {
     }, (error) => {
 
 
-         alert(error.message);
+        alert(error.code);
 
 
         notifications.innerHTML = `
