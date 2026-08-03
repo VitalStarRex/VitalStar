@@ -311,6 +311,8 @@ followBtn.addEventListener("click", async () => {
             followBtn.textContent = "✓ Following";
             followers.textContent = Number(followers.textContent) + 1;
 
+alert("Reached notification code");
+
             // Get current user's details
             const currentUserSnap = await getDoc(doc(db, "users", user.uid));
 
