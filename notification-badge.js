@@ -40,8 +40,6 @@ onAuthStateChanged(auth, (user) => {
 
     }, (error) => {
 
-        console.error("Message badge error:", error);
+    alert(error.message);
 
-    });
-
-});
+}); });
