@@ -1,5 +1,6 @@
 import { auth, db } from "./firebase.js";
 
+
 import {
 doc,
 getDoc,
@@ -7,11 +8,13 @@ collection,
 addDoc,
 query,
 orderBy,
+limit,
 onSnapshot,
 serverTimestamp,
 setDoc,
 updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 
 // HTML Elements
 const backBtn = document.getElementById("backBtn");
