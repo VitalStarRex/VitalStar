@@ -337,7 +337,6 @@ alert("Notification created: " + notificationRef.id);
 
 
 
-});
 
 
 
@@ -355,7 +354,7 @@ alert("Notification created: " + notificationRef.id);
     console.error(err);
     alert(err.message);
 }
-
+});
 
 
 
