@@ -147,10 +147,7 @@ auth.onAuthStateChanged((user) => {
     }, (error) => {
 
 
-        console.log(
-            "Notification loading error:",
-            error
-        );
+         alert(error.message);
 
 
         notifications.innerHTML = `
