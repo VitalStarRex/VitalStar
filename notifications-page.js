@@ -158,9 +158,14 @@ auth.onAuthStateChanged((user) => {
 
         });
 
-    }, (error) => {
+    },  
+}, (error) => {
 
-        console.error(error);
+    console.error(error);
+
+    alert(error.message);
+
+});
 
         notifications.innerHTML = `
             <div class="loading">
