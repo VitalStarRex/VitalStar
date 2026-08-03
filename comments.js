@@ -53,7 +53,11 @@ if (!postId) {
 
 const commentList = document.getElementById("commentList");
 
+
 alert("commentList loaded");
+
+
+const postContainer = document.getElementById("postContainer");
 
 
 const q = query(
