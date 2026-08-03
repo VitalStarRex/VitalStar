@@ -224,7 +224,7 @@ try {
     }
 }
 
-);
+});
 
 editProfileBtn.addEventListener("click", () => {
     window.location.href = "edit-profile.html";
