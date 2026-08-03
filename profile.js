@@ -320,14 +320,18 @@ alert("Reached notification code");
 
                 const currentUser = currentUserSnap.data();
 
-                await addDoc(collection(db, "notifications"), {
-                    userId: profileUid,
-                    senderId: user.uid,
-                    type: "follow",
-                    message: `${currentUser.fullName} started following you.`,
-                    read: false,
-                    createdAt: serverTimestamp()
-                });
+                
+const test = await addDoc(collection(db, "notifications"), {
+    test: true
+});
+
+alert("Created: " + test.id);
+                 
+                    
+       
+                   
+               
+           
 
             }
 
