@@ -331,10 +331,20 @@ followBtn.addEventListener("click", async () => {
 
         }
 
-    } catch (err) {
-        console.error("Follow Error:", err);
-        alert(err.message);
-    }
+   
+} catch (err) {
+    console.error("Follow Error:", err);
+    console.error("Error code:", err.code);
+    console.error("Error message:", err.message);
+
+    alert(
+        "Code: " + err.code +
+        "\nMessage: " + err.message
+    );
+}
+        
+   
+    
 
 });
 
