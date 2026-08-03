@@ -349,8 +349,7 @@ limit(15)
 
 
 
-
-onSnapshot(q, (snapshot) => {
+onSnapshot(q, async (snapshot) => {
 
 messages.innerHTML = "";
 
@@ -486,7 +485,7 @@ ${status}
 
 messages.appendChild(div);
 
-});
+}
 
 messages.scrollTop = messages.scrollHeight;
 
