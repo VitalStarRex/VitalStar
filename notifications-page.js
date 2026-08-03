@@ -1,171 +1,164 @@
 import { auth, db } from "./firebase.js";
 
 import {
-    collection,
-    query,
-    where,
-    orderBy,
-    limit,
-    onSnapshot,
-    updateDoc,
-    doc
+collection,
+query,
+where,
+orderBy,
+onSnapshot,
+updateDoc,
+doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 
 const notifications = document.getElementById("notifications");
 
-
 auth.onAuthStateChanged((user) => {
 
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+if (!user) {  
+    window.location.href = "login.html";  
+    return;  
+}  
 
 
-    const q = query(
-        collection(db, "notifications"),
-        where("receiverId", "==", user.uid),
-        orderBy("createdAt", "desc"),
-        limit(50)
-    );
+const q = query(  
+    collection(db, "notifications"),  
+    where("receiverId", "==", user.uid),  
 
+);  
 
-    onSnapshot(q, (snapshot) => {
 
-        notifications.innerHTML = "";
+onSnapshot(q, (snapshot) => {  
 
+    notifications.innerHTML = "";  
 
-        if (snapshot.empty) {
 
-            notifications.innerHTML = `
-            <div class="loading">
-                No notifications yet.
-            </div>
-            `;
+    if (snapshot.empty) {  
 
-            return;
-        }
+        notifications.innerHTML = `  
+        <div class="loading">  
+            No notifications yet.  
+        </div>  
+        `;  
 
+        return;  
+    }  
 
-        snapshot.forEach((notificationDoc) => {
 
-            const notification = notificationDoc.data();
+    snapshot.forEach((notificationDoc) => {  
 
+        const notification = notificationDoc.data();  
 
-            let time = "Just now";
 
-            if (notification.createdAt) {
+        let time = "Just now";  
 
-                time = notification.createdAt
-                    .toDate()
-                    .toLocaleString();
+        if (notification.createdAt) {  
 
-            }
+            time = notification.createdAt  
+                .toDate()  
+                .toLocaleString();  
 
+        }  
 
-            const card = document.createElement("div");
 
-            card.className = "notification-card";
+        const card = document.createElement("div");  
 
+        card.className = "notification-card";  
 
-            card.innerHTML = `
 
-                <img 
-                src="${notification.senderPhoto || 'https://via.placeholder.com/50'}"
-                style="
-                width:35px;
-                height:35px;
-                border-radius:50%;
-                object-fit:cover;
-                ">
+        card.innerHTML = `  
 
+            <img   
+            src="${notification.senderPhoto || 'https://via.placeholder.com/50'}"  
+            class="notification-photo">  
 
-                <div class="notification-text">
 
-                    <b>${notification.senderName || "Someone"}</b>
+            <div class="notification-text">  
 
-                    <br>
+                <b>${notification.senderName || "Someone"}</b>  
 
-                    ${notification.text || "New notification"}
+                <br>  
 
-                    <br>
+                ${notification.text || "New notification"}  
 
-                    <small>${time}</small>
+                <br>  
 
-                </div>
+                <small>${time}</small>  
 
+            </div>  
 
-                ${
-                    notification.read
-                    ? ""
-                    : `<span class="unread-dot">●</span>`
-                }
 
-            `;
+            ${  
+                notification.read  
+                ? ""  
+                : `<span class="unread-dot">●</span>`  
+            }  
 
+        `;  
 
 
-            card.onclick = async () => {
 
-                try {
+        card.onclick = async () => {  
 
-                    await updateDoc(
-                        doc(db, "notifications", notificationDoc.id),
-                        {
-                            read: true
-                        }
-                    );
+            try {  
 
+                await updateDoc(  
+                    doc(db, "notifications", notificationDoc.id),  
+                    {  
+                        read: true  
+                    }  
+                );  
 
-                    if (notification.postId) {
 
-                        window.location.href =
-                        "comments.html?postId=" + notification.postId;
+                if (notification.postId) {  
 
+                    window.location.href =  
+                    "comments.html?postId=" + notification.postId;  
 
-                    } else if (notification.senderId) {
 
-                        window.location.href =
-                        "profile.html?uid=" + notification.senderId;
+                } else if (notification.senderId) {  
 
-                    }
+                    window.location.href =  
+                    "profile.html?uid=" + notification.senderId;  
 
+                }  
 
-                } catch(error) {
 
-                    alert(error.code);
+            } catch(error) {  
 
-                }
+               alert(error.code);  
 
-            };
 
 
-            notifications.appendChild(card);
 
+            }  
 
-        });
+        };  
 
 
+        notifications.appendChild(card);  
 
-    }, (error) => {
 
+    });  
 
-        alert(error.code);
 
 
-        notifications.innerHTML = `
+}, (error) => {  
 
-        <div class="loading">
 
-            Failed to load notifications.
+     alert(error.message);  
 
-        </div>
 
-        `;
+    notifications.innerHTML = `  
 
+    <div class="loading">  
 
-    });
+        Failed to load notifications.  
 
+    </div>  
+
+    `;  
+
+
+});
 
 });
