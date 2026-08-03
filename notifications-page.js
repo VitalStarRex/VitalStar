@@ -127,10 +127,10 @@ auth.onAuthStateChanged((user) => {
 
                 } catch(error) {
 
-                    console.log(
-                        "Update error:",
-                        error
-                    );
+                   alert(error.message);
+                       
+                        
+             
 
                 }
 
