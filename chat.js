@@ -157,17 +157,18 @@ return;
 
 
 const chatId =
-user.uid < receiverUid
-?
-user.uid + "_" + receiverUid
-:
-receiverUid + "_" + user.uid;
+    user.uid < receiverUid
+        ? `${user.uid}_${receiverUid}`
+        : `${receiverUid}_${user.uid}`;
 
-
-await updateDoc(doc(db, "chats", chatId), {
-    lastRead: true,
-    lastDelivered: true
-});
+// Create the chat document if it doesn't exist
+await setDoc(
+    doc(db, "chats", chatId),
+    {
+        participants: [user.uid, receiverUid]
+    },
+    { merge: true }
+);
 
 
 
@@ -250,46 +251,57 @@ if(!text && !image && !video && !audio)
 return;
 
 await addDoc(messagesRef, {
-senderId: user.uid,
-receiverId: receiverUid,
 
-text: text,  
-image: image,  
-video: video,  
-audio: audio,  
+    senderId: user.uid,
+    receiverId: receiverUid,
 
-timestamp: serverTimestamp(),  
+    text,
+    image,
+    video,
+    audio,
 
-sent: true,  
-delivered: false,  
-read: false
+    timestamp: serverTimestamp(),
+
+    sent: true,
+    delivered: false,
+    read: false
 
 });
 
+
+const preview =
+    text ||
+    (image ? "📷 Photo" :
+     video ? "🎥 Video" :
+     audio ? "🎤 Voice message" :
+     "New message");
+
+
 await setDoc(
-doc(db, "chats", chatId),
-{
-participants: [user.uid, receiverUid],
 
-lastMessage:
-text ||
-(image ? "📷 Photo" :
-video ? "🎥 Video" :
-audio ? "🎤 Voice message" : ""),
+    doc(db, "chats", chatId),
 
-lastImage: image,
-lastVideo: video,
-lastAudio: audio,
+    {
 
-lastTimestamp: serverTimestamp(),  
+        participants: [user.uid, receiverUid],
 
-    lastSenderId: user.uid,  
-    lastReceiverId: receiverUid,  
+        lastMessage: preview,
 
-    lastRead: false,  
-    lastDelivered: false  
-},  
-{ merge: true }
+        lastImage: image || "",
+        lastVideo: video || "",
+        lastAudio: audio || "",
+
+        lastTimestamp: serverTimestamp(),
+
+        lastSenderId: user.uid,
+        lastReceiverId: receiverUid,
+
+        lastDelivered: false,
+        lastRead: false
+
+    },
+
+    { merge: true }
 
 );
 
@@ -364,24 +376,33 @@ let read = msg.read || false;
 
 
 // Mark received messages as delivered and read
-if(msg.receiverId === user.uid && (!delivered || !read)){
 
-    await updateDoc(messageDoc.ref,{
-        delivered:true,
-        read:true
+
+
+
+
+if (
+    msg.receiverId === user.uid &&
+    (!msg.delivered || !msg.read)
+) {
+
+    await updateDoc(messageDoc.ref, {
+        delivered: true,
+        read: true
     });
+
+    await setDoc(
+        doc(db, "chats", chatId),
+        {
+            lastDelivered: true,
+            lastRead: true
+        },
+        { merge: true }
+    );
 
     delivered = true;
     read = true;
-
 }
-
-
-
-await updateDoc(doc(db, "chats", chatId), {
-    lastDelivered: true,
-    lastRead: true
-});
 
 
 
