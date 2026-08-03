@@ -15,22 +15,19 @@ if (messageBadge) {
     messageBadge.style.display = "none";
 }
 
-
 onAuthStateChanged(auth, (user) => {
 
     if (!user || !messageBadge) return;
 
-
-const unreadQuery = collectionGroup(db, "messages");
-
-onSnapshot(unreadQuery, (snapshot) => {
-
-    alert("Messages found: " + snapshot.size);
-
-});
-
+    const unreadQuery = query(
+        collectionGroup(db, "messages"),
+        where("receiverId", "==", user.uid),
+        where("read", "==", false)
+    );
 
     onSnapshot(unreadQuery, (snapshot) => {
+
+        alert("Messages found: " + snapshot.size);
 
         const unreadCount = snapshot.size;
 
@@ -43,7 +40,7 @@ onSnapshot(unreadQuery, (snapshot) => {
         }
 
     }, (error) => {
+        alert(error.message);
+    });
 
-    alert(error.message);
-
-}); });
+});
