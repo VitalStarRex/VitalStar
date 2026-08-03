@@ -354,7 +354,9 @@ onSnapshot(q, (snapshot) => {
 
 messages.innerHTML = "";
 
-snapshot.forEach(async (messageDoc) => {
+const messageDocs = snapshot.docs.reverse();
+
+for (const messageDoc of messageDocs) {
 
 const msg = messageDoc.data();
 
