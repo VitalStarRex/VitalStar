@@ -383,11 +383,46 @@ onAuthStateChanged(auth, (user) => {
         where("participants", "array-contains", user.uid)
     );
 
-    onSnapshot(messageQuery, (snapshot) => {
+    
 
-        let unreadCount = 0;
 
-        snapshot.forEach((chatDoc) => {
+
+onSnapshot(messageQuery, (snapshot) => {
+
+    console.log("Chats found:", snapshot.size);
+
+    let unreadCount = 0;
+
+    snapshot.forEach((chatDoc) => {
+
+        console.log(chatDoc.data());
+
+        const chat = chatDoc.data();
+
+        if (
+            chat.lastReceiverId === user.uid &&
+            chat.lastRead === false
+        ) {
+            unreadCount++;
+        }
+
+    });
+
+    if (messageBadge) {
+        if (unreadCount > 0) {
+            messageBadge.textContent = unreadCount;
+            messageBadge.style.display = "flex";
+        } else {
+            messageBadge.textContent = "0";
+            messageBadge.style.display = "none";
+        }
+    }
+
+});
+
+
+
+
 
             const chat = chatDoc.data();
 
