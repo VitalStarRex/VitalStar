@@ -331,10 +331,10 @@ await addDoc(collection(db, "notifications"), {
 
         }
 
-    } catch (err) {
-        console.error("Follow Error:", err);
-        alert("Failed to follow user.");
-    }
+   } catch (err) {
+    console.error(err);
+    alert(err.message);
+}
 
 });
 
