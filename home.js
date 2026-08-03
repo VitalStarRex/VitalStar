@@ -194,8 +194,7 @@ Your browser does not support video.
 </button>
 
 
-
-<button>
+<button onclick="sharePost('${postId}')">
 
 🔗 ${post.shares || 0}
 
