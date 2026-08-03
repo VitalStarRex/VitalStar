@@ -139,17 +139,22 @@ auth.onAuthStateChanged((user) => {
             });
 
         },
-        (error) => {
+        
+(error) => {
+    console.error("Notifications Error:", error);
+    alert(error.code + "\n\n" + error.message);
 
-            console.error(error);
+    notifications.innerHTML = `
+        <div class="loading">
+            ${error.message}
+        </div>
+    `;
+}
 
-            notifications.innerHTML = `
-                <div class="loading">
-                    Failed to load notifications.
-                </div>
-            `;
+          
 
-        }
+            
+              
     );
 
 });
