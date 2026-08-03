@@ -328,9 +328,7 @@ const test = await addDoc(collection(db, "notifications"), {
 alert("Created: " + test.id);
 
 
-                        {
-    test: true
-});
+              
 
 alert("Created: " + test.id);
                  
