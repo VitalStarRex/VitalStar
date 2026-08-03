@@ -19,15 +19,22 @@ onAuthStateChanged(auth, (user) => {
 
     if (!user || !messageBadge) return;
 
-    const unreadQuery = query(
-        collectionGroup(db, "messages"),
+    
+const unreadQuery = query(
+    collectionGroup(db, "messages"),
+    where("receiverId", "==", user.uid)
+);
+
+
+
+
         where("receiverId", "==", user.uid),
         where("read", "==", false)
     );
 
     onSnapshot(unreadQuery, (snapshot) => {
 
-        alert("Messages found: " + snapshot.size);
+        alert("Messages for me: " + snapshot.size);
 
         const unreadCount = snapshot.size;
 
