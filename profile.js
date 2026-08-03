@@ -241,7 +241,6 @@ editProfileBtn.addEventListener("click", () => {
 
 
 
-
 followBtn.addEventListener("click", async () => {
 
     const user = auth.currentUser;
@@ -288,7 +287,6 @@ followBtn.addEventListener("click", async () => {
             });
 
             followBtn.textContent = "➕ Follow";
-
             followers.textContent = Number(followers.textContent) - 1;
 
         } else {
@@ -311,53 +309,34 @@ followBtn.addEventListener("click", async () => {
             });
 
             followBtn.textContent = "✓ Following";
-
             followers.textContent = Number(followers.textContent) + 1;
 
-// Get current user's details
-const currentUserSnap = await getDoc(doc(db, "users", user.uid));
-const currentUser = currentUserSnap.data();
+            // Get current user's details
+            const currentUserSnap = await getDoc(doc(db, "users", user.uid));
 
-// Create follow notification.  
-const notificationRef = await addDoc(collection(db, "notifications"), {
-    userId: profileUid,
-    senderId: user.uid,
-    type: "follow",
-    message: `${currentUser.fullName} started following you.`,
-    read: false,
-    createdAt: serverTimestamp()
-});
+            if (currentUserSnap.exists()) {
 
-alert("Notification created: " + notificationRef.id);
+                const currentUser = currentUserSnap.data();
 
+                await addDoc(collection(db, "notifications"), {
+                    userId: profileUid,
+                    senderId: user.uid,
+                    type: "follow",
+                    message: `${currentUser.fullName} started following you.`,
+                    read: false,
+                    createdAt: serverTimestamp()
+                });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            }
 
         }
 
-   } catch (err) {
-    console.error(err);
-    alert(err.message);
-}
+    } catch (err) {
+        console.error("Follow Error:", err);
+        alert(err.message);
+    }
+
 });
-
-
-
 
 
 
