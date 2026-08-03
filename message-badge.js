@@ -28,9 +28,7 @@ const unreadQuery = query(
 
 
 
-        where("receiverId", "==", user.uid),
-        where("read", "==", false)
-    );
+
 
     onSnapshot(unreadQuery, (snapshot) => {
 
