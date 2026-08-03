@@ -25,7 +25,7 @@ auth.onAuthStateChanged((user) => {
     const q = query(
         collection(db, "notifications"),
         where("receiverId", "==", user.uid),
-        orderBy("createdAt", "desc")
+        
     );
 
 
