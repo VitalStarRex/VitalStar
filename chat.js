@@ -312,10 +312,14 @@ alert("Failed to send message");
 
 // Display messages
 
+
+
+
 const q =
 query(
 messagesRef,
-orderBy("timestamp","asc")
+orderBy("timestamp","desc"),
+limit(15)
 );
 
 
