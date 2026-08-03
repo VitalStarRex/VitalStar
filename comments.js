@@ -321,6 +321,32 @@ await addDoc(collection(db, "comments"), {
             comments: increment(1)
 
         });
+const postSnap = await getDoc(doc(db, "posts", postId));
+
+if (postSnap.exists()) {
+
+    const post = postSnap.data();
+
+    // Don't notify yourself
+    if (post.uid !== user.uid) {
+
+        await addDoc(collection(db, "notifications"), {
+            receiverId: post.uid,
+            senderId: user.uid,
+            senderName: fullName,
+            senderPhoto: profilePicture,
+            type: "comment",
+            postId: postId,
+            text: "commented on your post.",
+            read: false,
+            createdAt: serverTimestamp()
+        });
+
+    }
+
+}
+
+
 
         document.getElementById("commentText").value = "";
         document.getElementById("commentImage").value = "";
