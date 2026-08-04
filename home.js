@@ -285,41 +285,7 @@ likes:increment(-1)
 });
 
 
-// Send like notification
 
-const postSnap = await getDoc(postRef);
-
-if (postSnap.exists()) {
-
-    const postData = postSnap.data();
-
-    // Don't notify yourself
-    if (postData.uid !== user.uid) {
-
-        const userSnap = await getDoc(doc(db, "users", user.uid));
-
-        if (userSnap.exists()) {
-
-            const currentUser = userSnap.data();
-
-            await addDoc(collection(db, "notifications"), {
-
-                receiverId: postData.uid,
-                senderId: user.uid,
-                senderName: currentUser.fullName || currentUser.username,
-                senderPhoto: currentUser.profilePicture || "",
-                text: "liked your post ❤️",
-                postId: postId,
-                read: false,
-                createdAt: serverTimestamp()
-
-            });
-
-        }
-
-    }
-
-}
 
 
 
@@ -348,6 +314,43 @@ await updateDoc(postRef,{
 likes:increment(1)
 
 });
+
+
+
+const postSnap = await getDoc(postRef);
+
+if (postSnap.exists()) {
+
+    const postData = postSnap.data();
+
+    if (postData.uid !== user.uid) {
+
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+
+        if (userSnap.exists()) {
+
+            const currentUser = userSnap.data();
+
+            await addDoc(collection(db, "notifications"), {
+
+                receiverId: postData.uid,
+                senderId: user.uid,
+                senderName: currentUser.fullName || currentUser.username,
+                senderPhoto: currentUser.profilePicture || "",
+                text: "liked your post ❤️",
+                type: "like",
+                postId: postId,
+                read: false,
+                createdAt: serverTimestamp()
+
+            });
+
+        }
+
+    }
+
+}
+
 
 
 }
