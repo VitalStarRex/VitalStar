@@ -133,15 +133,13 @@ gender.textContent =
 
 
 
-
 // =======================
 // RANK SYSTEM
 // =======================
 
-// Replace this with YOUR Firebase Authentication UID
-const OWNER_UID = "PASTE_YOUR_UID_HERE";
+const OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
 
-if (profileUid === FvbfTXi65VgpuPtBxr8kGzBRLRr1) {
+if (profileUid === OWNER_UID) {
 
     rank.textContent = "👑 Owner";
 
@@ -166,8 +164,6 @@ if (profileUid === FvbfTXi65VgpuPtBxr8kGzBRLRr1) {
     rank.textContent = userRank;
 
 }
-
-
 
 
 
