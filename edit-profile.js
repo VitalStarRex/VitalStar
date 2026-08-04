@@ -21,7 +21,7 @@ const coverPreview = document.getElementById("coverPreview");
 
 // Form Fields
 const fullName = document.getElementById("fullName");
-const username = document.getElementById("username");
+const gender = document.getElementById("gender");
 const email = document.getElementById("email");
 const dob = document.getElementById("dob");
 const country = document.getElementById("country");
@@ -73,7 +73,7 @@ onAuthStateChanged(auth, async (user) => {
         const data = snap.data();
 
         fullName.value = data.fullName || "";
-        username.value = data.username || "";
+        gender.value = data.gender || "";
         email.value = user.email || "";
         dob.value = data.dob || "";
         country.value = data.country || "";
@@ -158,7 +158,7 @@ form.addEventListener("submit", async (e) => {
         // Update Firestore profile
         await updateDoc(doc(db, "users", user.uid), {
             fullName: fullName.value.trim(),
-            username: username.value.trim(),
+            gender: gender.value.trim(),
             dob: dob.value,
             country: country.value.trim(),
             bio: bio.value.trim(),
