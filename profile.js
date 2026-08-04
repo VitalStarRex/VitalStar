@@ -338,6 +338,23 @@ try {
 
     posts.textContent = count;
 
+posts.textContent = count;
+
+const seeMore = document.createElement("a");
+
+seeMore.href = "user-posts.html?uid=" + profileUid;
+seeMore.textContent = "See More";
+
+seeMore.style.display = "block";
+seeMore.style.textAlign = "center";
+seeMore.style.margin = "20px 0";
+seeMore.style.fontWeight = "bold";
+seeMore.style.fontSize = "22px";
+seeMore.style.color = "#00BFFF";
+seeMore.style.textDecoration = "none";
+
+gallery.appendChild(seeMore);
+
 }
 
 
