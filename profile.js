@@ -77,8 +77,7 @@ onAuthStateChanged(auth, async (user) => {
         const data = snap.data();
       
        
-    alert("Logged in UID: " + user.uid);
-alert("Profile UID: " + profileUid);
+    
 
 
 
