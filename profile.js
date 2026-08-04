@@ -130,23 +130,48 @@ gender.textContent =
 
 
 
-const followerCount = data.followersCount || 0;
 
-let userRank = "🌱 New Member";
 
-if (followerCount >= 1000) {
-    userRank = "🌍 Legend";
-} else if (followerCount >= 500) {
-    userRank = "👑 Celebrity";
-} else if (followerCount >= 100) {
-    userRank = "🔥 Influencer";
-} else if (followerCount >= 50) {
-    userRank = "💎 Popular";
-} else if (followerCount >= 10) {
-    userRank = "⭐ Rising Star";
+
+
+// =======================
+// RANK SYSTEM
+// =======================
+
+// Replace this with YOUR Firebase Authentication UID
+const OWNER_UID = "PASTE_YOUR_UID_HERE";
+
+if (profileUid === FvbfTXi65VgpuPtBxr8kGzBRLRr1) {
+
+    rank.textContent = "👑 Owner";
+
+} else {
+
+    const followerCount = data.followersCount || 0;
+
+    let userRank = "🌱 New Member";
+
+    if (followerCount >= 1000) {
+        userRank = "🌍 Legend";
+    } else if (followerCount >= 500) {
+        userRank = "👑 Celebrity";
+    } else if (followerCount >= 100) {
+        userRank = "🔥 Influencer";
+    } else if (followerCount >= 50) {
+        userRank = "💎 Popular";
+    } else if (followerCount >= 10) {
+        userRank = "⭐ Rising Star";
+    }
+
+    rank.textContent = userRank;
+
 }
 
-rank.textContent = userRank;
+
+
+
+
+
 
 
 
