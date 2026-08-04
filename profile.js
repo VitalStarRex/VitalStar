@@ -263,7 +263,21 @@ async function loadUserPosts(profileUid) {
         orderBy("createdAt", "desc")
     );
 
-    const snap = await getDocs(q);
+    
+
+
+let snap;
+
+try {
+    snap = await getDocs(q);
+} catch (error) {
+    console.error("Post query error:", error);
+    alert(error.message);
+    return;
+}
+
+
+
 
     let count = 0;
 
