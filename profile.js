@@ -134,22 +134,21 @@ const followerCount = data.followersCount || 0;
 
 let userRank = "🌱 New Member";
 
-if (followerCount >= 5000) {
+if (followerCount >= 1000) {
     userRank = "🌍 Legend";
-} else if (followerCount >= 1000) {
-    userRank = "👑 Celebrity";
 } else if (followerCount >= 500) {
+    userRank = "👑 Celebrity";
+} else if (followerCount >= 100) {
     userRank = "🔥 Influencer";
 } else if (followerCount >= 50) {
     userRank = "💎 Popular";
 } else if (followerCount >= 10) {
     userRank = "⭐ Rising Star";
-} else if (profileUid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1") {
+} else if (profileUid >= "FvbfTXi65VgpuPtBxr8kGzBRLRr1") {
     userRank = "👑 Owner";
 }
 
-
-  rank.textContent = userRank;
+rank.textContent = userRank;
 
 
 
@@ -247,6 +246,14 @@ editProfileBtn.addEventListener("click", () => {
 
 
 
+
+
+          
+
+
+
+
+
 async function loadUserPosts(profileUid) {
 
     gallery.innerHTML = "";
@@ -261,67 +268,33 @@ async function loadUserPosts(profileUid) {
 
     let count = 0;
 
-    if (snap.empty) {
-        gallery.innerHTML = "<p>No posts yet.</p>";
-        posts.textContent = "0";
-        return;
-    }
-
-    snap.forEach((docSnap) => {
+    snap.forEach((doc) => {
 
         count++;
 
-        const post = docSnap.data();
+        const post = doc.data();
 
-        const card = document.createElement("div");
+        const img = document.createElement("img");
 
-        card.style.background = "#fff";
-        card.style.marginBottom = "15px";
-        card.style.padding = "15px";
-        card.style.borderRadius = "12px";
-        card.style.boxShadow = "0 2px 5px rgba(0,0,0,.15)";
+        img.src = post.image || "https://via.placeholder.com/300";
 
-        let image = "";
+        img.onclick = () => {
+            window.location.href =
+                "comments.html?postId=" + doc.id;
+        };
 
-        if (post.image) {
-            image = `
-                <img src="${post.image}"
-                style="width:100%;border-radius:10px;margin-top:10px;">
-            `;
-        }
-
-        let time = "";
-
-        if (post.createdAt?.toDate) {
-            time = post.createdAt.toDate().toLocaleString();
-        }
-
-        card.innerHTML = `
-            <h3>${post.fullName || fullName.textContent}</h3>
-
-            <p>${post.text || ""}</p>
-
-            ${image}
-
-            <br>
-
-            <small style="color:gray;">
-                ${time}
-            </small>
-        `;
-
-        gallery.appendChild(card);
+        gallery.appendChild(img);
 
     });
 
     posts.textContent = count;
 
+    if (count === 0) {
+        gallery.innerHTML =
+            "<p>No posts yet.</p>";
+    }
+
 }
-
-          
-
-
-
 
 
 
