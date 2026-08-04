@@ -15,6 +15,7 @@ import {
 import {
     doc,
     getDoc,
+    limit,
     setDoc,
     deleteDoc,
     updateDoc,
@@ -258,10 +259,11 @@ async function loadUserPosts(profileUid) {
     gallery.innerHTML = "";
 
     const q = query(
-        collection(db, "posts"),
-        where("uid", "==", profileUid),
-        orderBy("createdAt", "desc")
-    );
+    collection(db, "posts"),
+    where("uid", "==", profileUid),
+    orderBy("createdAt", "desc"),
+    limit(10)
+);
 
     
 
