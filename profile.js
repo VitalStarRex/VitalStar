@@ -134,7 +134,7 @@ const OWNER_UID = "YOUR_FIREBASE_AUTH_UID"; // Replace with your Firebase Auth U
 
 let userRank;
 
-if (profileUid === OWNER_UID) {
+if (profileUid ===  FvbfTXi65VgpuPtBxr8kGzBRLRr1 ) {
     userRank = "👑 Owner";
 } else {
     const followerCount = data.followersCount || 0;
