@@ -67,20 +67,30 @@ followBtn.addEventListener("click", async () => {
                 followersCount: increment(1)
             });
 
-            const currentUser = (await getDoc(doc(db, "users", user.uid))).data();
 
-            
 
-await addDoc(collection(db, "notifications"), {
-    receiverId: profileUid,
-    senderId: user.uid,
-    senderName: currentUser.fullName,
-    senderPhoto: currentUser.profilePicture || "",
-    text: "started following you.",
-    type: "follow",
-    read: false,
-    createdAt: serverTimestamp()
-});
+
+
+
+
+const userSnap = await getDoc(doc(db, "users", user.uid));
+
+if (userSnap.exists()) {
+
+    const currentUser = userSnap.data();
+
+    await addDoc(collection(db, "notifications"), {
+        receiverId: profileUid,
+        senderId: user.uid,
+        senderName: currentUser.fullName || currentUser.username || "Someone",
+        senderPhoto: currentUser.profilePicture || "",
+        text: "started following you.",
+        type: "follow",
+        read: false,
+        createdAt: serverTimestamp()
+    });
+
+}
 
 
 
