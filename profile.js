@@ -136,9 +136,9 @@ let userRank = "🌱 New Member";
 
 if (followerCount >= 1000) {
     userRank = "🌍 Legend";
-} else if (followerCount >= 500) {
+} else if (followerCount >= 1000) {
     userRank = "👑 Celebrity";
-} else if (followerCount >= 100) {
+} else if (followerCount >= 500) {
     userRank = "🔥 Influencer";
 } else if (followerCount >= 50) {
     userRank = "💎 Popular";
