@@ -1,29 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Admin Panel</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f4f8;margin:0}
+header{background:#6a1b9a;color:#fff;padding:16px;text-align:center}
+main{max-width:800px;margin:20px auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.card{background:#fff;border-radius:10px;padding:18px;text-decoration:none;color:#222;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.card:hover{transform:translateY(-2px)}
+.note{background:#fff3cd;padding:12px;border-radius:8px;margin-bottom:18px}
+</style>
 </head>
 <body>
-
-<h1>Admin Dashboard</h1>
-
-<div id="adminPanel" style="display:none;">
-    <button onclick="location.href='manage-users.html'">
-        Manage Users
-    </button>
-
-    <button onclick="location.href='reports.html'">
-        Reports
-    </button>
-
-    <button onclick="location.href='manage-posts.html'">
-        Manage Posts
-    </button>
+<header><h1>Owner Admin Dashboard</h1></header>
+<main>
+<div class="note">
+<strong>Owner UID:</strong> FvbfTXi65VgpuPtBxr8kGzBRLRr1<br>
+This page is only the dashboard UI. Connect it to admin.js and secure it with Firebase rules.
 </div>
-
-<h2 id="error"></h2>
-
+<div class="grid">
+<a class="card" href="manage-users.html"><h3>👥 Manage Users</h3><p>Ban, unban and manage accounts.</p></a>
+<a class="card" href="manage-posts.html"><h3>📝 Manage Posts</h3><p>Delete inappropriate posts.</p></a>
+<a class="card" href="reports.html"><h3>⚠ Reports</h3><p>Review user reports.</p></a>
+<a class="card" href="announcements.html"><h3>📢 Announcements</h3><p>Post site announcements.</p></a>
+</div>
+</main>
 <script type="module" src="admin.js"></script>
-
 </body>
 </html>
