@@ -144,7 +144,10 @@ if (followerCount >= 1000) {
     userRank = "💎 Popular";
 } else if (followerCount >= 10) {
     userRank = "⭐ Rising Star";
-} else if (followersCount >= 50000) { userRank = "👑 Owner";
+} else if (profileUid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1") {
+    userRank = "👑 Owner";
+}
+
 
  } rank.textContent = userRank;
 
