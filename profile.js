@@ -134,7 +134,7 @@ const followerCount = data.followersCount || 0;
 
 let userRank = "🌱 New Member";
 
-if (followerCount >= 1000) {
+if (followerCount >= 5000) {
     userRank = "🌍 Legend";
 } else if (followerCount >= 1000) {
     userRank = "👑 Celebrity";
