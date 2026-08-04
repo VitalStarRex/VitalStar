@@ -133,13 +133,8 @@ gender.textContent =
 
 
 
-// =======================
-// RANK SYSTEM
-// =======================
-
-const OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
-
-if (profileUid === OWNER_UID) {
+// OWNER RANK
+if (data.uid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1" || profileUid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1") {
 
     rank.textContent = "👑 Owner";
 
@@ -162,7 +157,6 @@ if (profileUid === OWNER_UID) {
     }
 
     rank.textContent = userRank;
-
 }
 
 
