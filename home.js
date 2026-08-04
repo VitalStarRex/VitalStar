@@ -31,7 +31,7 @@ const feed = document.getElementById("feed");
 const postsQuery = query(
     collection(db,"posts"),
     orderBy("createdAt","desc"),
-    limit(15)
+    limit(10)
 );
 
 
