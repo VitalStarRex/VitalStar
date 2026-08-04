@@ -129,12 +129,16 @@ gender.textContent =
     "🚻 " + (data.gender || "Not specified");
 
 
-const OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
+const followerCount = Number(data.followersCount || 0);
 
-const followerCount = data.followersCount || 0;
 let userRank = "🌱 New Member";
 
-if (profileUid === OWNER_UID) {
+const OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
+
+console.log("Viewing profile:", profileUid);
+console.log("Owner UID:", OWNER_UID);
+
+if (String(profileUid).trim() === OWNER_UID) {
     userRank = "👑 Owner";
 } else if (followerCount >= 1000) {
     userRank = "🌍 Legend";
@@ -149,7 +153,6 @@ if (profileUid === OWNER_UID) {
 }
 
 rank.textContent = userRank;
-
 
 
 const statusRef = ref(rtdb, "status/" + profileUid);
