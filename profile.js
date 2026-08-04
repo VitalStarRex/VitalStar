@@ -129,33 +129,26 @@ gender.textContent =
     "🚻 " + (data.gender || "Not specified");
 
 
+const OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
 
-const OWNER_UID = "YOUR_FIREBASE_AUTH_UID"; // Replace with your Firebase Auth UID
+const followerCount = data.followersCount || 0;
+let userRank = "🌱 New Member";
 
-let userRank;
-
-if (profileUid ===  FvbfTXi65VgpuPtBxr8kGzBRLRr1 ) {
+if (profileUid === OWNER_UID) {
     userRank = "👑 Owner";
-} else {
-    const followerCount = data.followersCount || 0;
-
-    userRank = "🌱 New Member";
-
-    if (followerCount >= 1000) {
-        userRank = "🌍 Legend";
-    } else if (followerCount >= 500) {
-        userRank = "👑 Celebrity";
-    } else if (followerCount >= 100) {
-        userRank = "🔥 Influencer";
-    } else if (followerCount >= 50) {
-        userRank = "💎 Popular";
-    } else if (followerCount >= 10) {
-        userRank = "⭐ Rising Star";
-    }
+} else if (followerCount >= 1000) {
+    userRank = "🌍 Legend";
+} else if (followerCount >= 500) {
+    userRank = "💎👑 Celebrity";
+} else if (followerCount >= 100) {
+    userRank = "🔥 Influencer";
+} else if (followerCount >= 50) {
+    userRank = "💎 Popular";
+} else if (followerCount >= 10) {
+    userRank = "⭐ Rising Star";
 }
 
 rank.textContent = userRank;
-
 
 
 
