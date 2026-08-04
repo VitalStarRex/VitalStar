@@ -253,7 +253,6 @@ editProfileBtn.addEventListener("click", () => {
 
 
 
-
 async function loadUserPosts(profileUid) {
 
     gallery.innerHTML = "";
@@ -268,34 +267,62 @@ async function loadUserPosts(profileUid) {
 
     let count = 0;
 
-    snap.forEach((doc) => {
+    if (snap.empty) {
+        gallery.innerHTML = "<p>No posts yet.</p>";
+        posts.textContent = "0";
+        return;
+    }
+
+    snap.forEach((docSnap) => {
 
         count++;
 
-        const post = doc.data();
+        const post = docSnap.data();
 
-        const img = document.createElement("img");
+        const card = document.createElement("div");
 
-        img.src = post.image || "https://via.placeholder.com/300";
+        card.style.background = "#fff";
+        card.style.marginBottom = "15px";
+        card.style.padding = "15px";
+        card.style.borderRadius = "12px";
+        card.style.boxShadow = "0 2px 5px rgba(0,0,0,.15)";
 
-        img.onclick = () => {
-            window.location.href =
-                "comments.html?postId=" + doc.id;
-        };
+        let image = "";
 
-        gallery.appendChild(img);
+        if (post.image) {
+            image = `
+                <img src="${post.image}"
+                style="width:100%;border-radius:10px;margin-top:10px;">
+            `;
+        }
+
+        let time = "";
+
+        if (post.createdAt?.toDate) {
+            time = post.createdAt.toDate().toLocaleString();
+        }
+
+        card.innerHTML = `
+            <h3>${post.fullName || fullName.textContent}</h3>
+
+            <p>${post.text || ""}</p>
+
+            ${image}
+
+            <br>
+
+            <small style="color:gray;">
+                ${time}
+            </small>
+        `;
+
+        gallery.appendChild(card);
 
     });
 
     posts.textContent = count;
 
-    if (count === 0) {
-        gallery.innerHTML =
-            "<p>No posts yet.</p>";
-    }
-
 }
-
 
 
 
