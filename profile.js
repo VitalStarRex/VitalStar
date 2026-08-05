@@ -229,22 +229,69 @@ async function loadUserPosts(profileUid) {
     const MAX_GALLERY_POSTS = 10;
     const docsToShow = snap.docs.slice(0, MAX_GALLERY_POSTS);
 
-    docsToShow.forEach((doc) => {
 
-        const post = doc.data();
+
+
+
+
+
+docsToShow.forEach((docSnap) => {
+
+    const post = docSnap.data();
+
+    const item = document.createElement("div");
+    item.className = "gallery-item";
+
+    item.onclick = () => {
+        window.location.href = "comments.html?postId=" + docSnap.id;
+    };
+
+    // IMAGE POST
+    if (post.image) {
 
         const img = document.createElement("img");
+        img.src = post.image;
+        img.alt = "Post";
+        item.appendChild(img);
 
-        img.src = post.image || "https://via.placeholder.com/300";
+    }
 
-        img.onclick = () => {
-            window.location.href =
-                "comments.html?postId=" + doc.id;
-        };
+    // VIDEO POST
+    else if (post.video) {
 
-        gallery.appendChild(img);
+        const video = document.createElement("video");
+        video.src = post.video;
+        video.muted = true;
+        video.preload = "metadata";
+        item.appendChild(video);
 
-    });
+        const playIcon = document.createElement("div");
+        playIcon.className = "video-icon";
+        playIcon.textContent = "▶";
+        item.appendChild(playIcon);
+
+    }
+
+    // TEXT POST
+    else {
+
+        const text = document.createElement("div");
+        text.className = "text-post-preview";
+
+        text.textContent =
+            (post.text || "").substring(0, 80);
+
+        item.appendChild(text);
+
+    }
+
+    gallery.appendChild(item);
+
+});
+
+
+
+
 
     // If there are more posts than the gallery shows, add a link to the full posts page
     if (snap.size > MAX_GALLERY_POSTS) {
