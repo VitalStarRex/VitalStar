@@ -1,4 +1,4 @@
-import { auth, db } from "./firebase.js";
+import { auth, db, rtdb } from "./firebase.js";
 
 import {
     onAuthStateChanged
@@ -11,6 +11,10 @@ import {
     where,
     orderBy,
     limit,
+    
+    ref,
+    set,
+    onDisconnect
     onSnapshot,
     doc,
     updateDoc,
@@ -450,11 +454,18 @@ auth.onAuthStateChanged(async(user)=>{
 
 if(!user) return;
 
-// Set user online
-await updateDoc(doc(db, "users", user.uid), {
+const statusRef = ref(rtdb, "status/" + user.uid);
+
+await set(statusRef, {
     online: true,
-    lastSeen: serverTimestamp()
+    lastSeen: Date.now()
 });
+
+onDisconnect(statusRef).set({
+    online: false,
+    lastSeen: Date.now()
+});
+
 
 const userSnap =
 await getDoc(doc(db,"users",user.uid));
