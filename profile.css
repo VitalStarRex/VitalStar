@@ -136,22 +136,68 @@ body{
     margin-bottom:20px;
     color:#1877f2;
 }
+
+/* Two posts per row */
 #gallery{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
 }
-#gallery img{
+
+.gallery-item{
+    position:relative;
     width:100%;
-    aspect-ratio:1/1;
-    object-fit:cover;
-    border-radius:10px;
-    transition:.3s;
+    height:180px;
+    overflow:hidden;
+    border-radius:12px;
+    background:#f5f5f5;
     cursor:pointer;
 }
-#gallery img:hover{transform:scale(1.03);}
 
-/* Mobile */
+.gallery-item img,
+.gallery-item video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.text-post-preview{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:100%;
+    height:100%;
+    padding:12px;
+    text-align:center;
+    font-weight:bold;
+    color:#333;
+    background:#fff;
+}
+
+.video-icon{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:40px;
+    color:#fff;
+    text-shadow:0 0 10px #000;
+}
+
+.view-all-posts-link{
+    grid-column:1/-1;
+    display:block;
+    text-align:center;
+    padding:14px;
+    margin-top:8px;
+    background:#8c8c8c;
+    color:#fff;
+    font-weight:800;
+    font-size:1.1rem;
+    text-decoration:none;
+    border-radius:10px;
+}
+
 @media(max-width:768px){
 .cover-photo{height:220px;}
 .profile-picture{
@@ -164,67 +210,6 @@ body{
 .buttons{flex-direction:column;}
 .buttons button{width:100%;}
 #gallery{
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
+    grid-template-columns:repeat(2,1fr);
 }
-}
-
-
-
-
-
-
-
-
-
-
-/* Two-row gallery grid (5 columns x 2 rows = 10 posts max) */
-#gallery {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: 1fr;
-    gap: 10px;
-}
-
-#gallery img {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-}
-
-#gallery img:hover {
-    transform: scale(1.03);
-}
-
-/* "View All Posts" link — bold, fancy font, ash background */
-.view-all-posts-link {
-    grid-column: 1 / -1;
-    display: block;
-    text-align: center;
-    padding: 14px;
-    margin-top: 8px;
-    background-color: #8c8c8c; /* ash */
-    color: #ffffff;
-    font-family: "Poppins", "Segoe UI", sans-serif;
-    font-weight: 800;
-    font-size: 1.1rem;
-    letter-spacing: 0.5px;
-    text-decoration: none;
-    border-radius: 10px;
-    transition: background-color 0.2s ease, transform 0.15s ease;
-}
-
-.view-all-posts-link:hover {
-    background-color: #737373;
-    transform: translateY(-2px);
-}
-
-/* Optional: on small screens, drop to 2 columns so rows stay readable */
-@media (max-width: 480px) {
-    #gallery {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
