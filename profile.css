@@ -168,3 +168,63 @@ body{
     gap:8px;
 }
 }
+
+
+
+
+
+
+
+
+
+
+/* Two-row gallery grid (5 columns x 2 rows = 10 posts max) */
+#gallery {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 10px;
+}
+
+#gallery img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+#gallery img:hover {
+    transform: scale(1.03);
+}
+
+/* "View All Posts" link — bold, fancy font, ash background */
+.view-all-posts-link {
+    grid-column: 1 / -1;
+    display: block;
+    text-align: center;
+    padding: 14px;
+    margin-top: 8px;
+    background-color: #8c8c8c; /* ash */
+    color: #ffffff;
+    font-family: "Poppins", "Segoe UI", sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.view-all-posts-link:hover {
+    background-color: #737373;
+    transform: translateY(-2px);
+}
+
+/* Optional: on small screens, drop to 2 columns so rows stay readable */
+@media (max-width: 480px) {
+    #gallery {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
