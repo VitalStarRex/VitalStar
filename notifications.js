@@ -2,13 +2,68 @@ import { db, auth, messaging } from "./firebase.js";
 
 import {
   doc,
-  updateDoc
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
   getToken,
   onMessage
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+
+
+// MARK ALL NOTIFICATIONS AS READ
+
+window.markAllNotificationsRead = async function () {
+
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("Please login first");
+    return;
+  }
+
+  try {
+
+    const unreadQuery = query(
+      collection(db, "notifications"),
+      where("receiverId", "==", user.uid),
+      where("read", "==", false)
+    );
+
+    const snapshot = await getDocs(unreadQuery);
+
+    if (snapshot.empty) {
+      return;
+    }
+
+    const batch = writeBatch(db);
+
+    snapshot.forEach((notificationDoc) => {
+      batch.update(notificationDoc.ref, { read: true });
+    });
+
+    await batch.commit();
+
+  } catch (error) {
+    console.error("Failed to mark notifications as read:", error);
+  }
+
+};
+
+const markAllReadLink = document.getElementById("markAllReadLink");
+
+if (markAllReadLink) {
+  markAllReadLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.markAllNotificationsRead();
+  });
+}
+
 
 (async () => {
   try {
@@ -29,7 +84,7 @@ import {
 
     console.log("Token:", token);
 
-   
+
 
 auth.onAuthStateChanged(async (user) => {
 
@@ -43,10 +98,10 @@ auth.onAuthStateChanged(async (user) => {
 
 });
 
- 
-      
-      
-    
+
+
+
+
 
   } catch (error) {
     console.error(error);
