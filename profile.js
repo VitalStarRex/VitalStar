@@ -9,9 +9,6 @@ import {
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-
-
-
 import {
     doc,
     getDoc,
@@ -27,10 +24,6 @@ import {
     addDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-     
-
-
-                                                
 
 const coverPhoto = document.getElementById("coverPhoto");
 const profilePicture = document.getElementById("profilePicture");
@@ -75,199 +68,142 @@ onAuthStateChanged(auth, async (user) => {
         }
 
         const data = snap.data();
-      
-       
-    
 
+        // Show correct buttons
+        if (profileUid === user.uid) {
 
+            editProfileBtn.style.display = "inline-block";
+            followBtn.style.display = "none";
+            messageBtn.style.display = "none";
 
+        } else {
 
+            editProfileBtn.style.display = "none";
+            followBtn.style.display = "inline-block";
+            messageBtn.style.display = "inline-block";
 
-// Show correct buttons
-if (profileUid === user.uid) {
+            // Check if current user already follows this profile
+            const followingRef = doc(
+                db,
+                "users",
+                user.uid,
+                "following",
+                profileUid
+            );
 
-    editProfileBtn.style.display = "inline-block";
-    followBtn.style.display = "none";
-    messageBtn.style.display = "none";
+            const followingSnap = await getDoc(followingRef);
 
-} else {
+            if (followingSnap.exists()) {
+                followBtn.textContent = "✓ Following";
+            } else {
+                followBtn.textContent = "➕ Follow";
+            }
 
-    editProfileBtn.style.display = "none";
-    followBtn.style.display = "inline-block";
-    messageBtn.style.display = "inline-block";
+        }
 
-    // Check if current user already follows this profile
-    const followingRef = doc(
-        db,
-        "users",
-        user.uid,
-        "following",
-        profileUid
-    );
+        // Display profile information
+        fullName.textContent = data.fullName || "No Name";
 
-    const followingSnap = await getDoc(followingRef);
+        username.textContent =
+            "@" + (data.username || "username");
 
-    if (followingSnap.exists()) {
-        followBtn.textContent = "✓ Following";
-    } else {
-        followBtn.textContent = "➕ Follow";
+        country.textContent =
+            "🌍 " + (data.country || "Country not set");
+
+        dob.textContent =
+            "🎂 " + (data.dob || "Birthday not set");
+
+        gender.textContent =
+            "🚻 " + (data.gender || "Not specified");
+
+        // OWNER RANK
+        if (data.uid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1" || profileUid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1") {
+
+            rank.textContent = "👑 Owner";
+
+        } else {
+
+            const followerCount = data.followersCount || 0;
+
+            let userRank = "🌱 New Member";
+
+            if (followerCount >= 1000) {
+                userRank = "🌍 Legend";
+            } else if (followerCount >= 500) {
+                userRank = "👑 Celebrity";
+            } else if (followerCount >= 100) {
+                userRank = "🔥 Influencer";
+            } else if (followerCount >= 50) {
+                userRank = "💎 Popular";
+            } else if (followerCount >= 10) {
+                userRank = "⭐ Rising Star";
+            }
+
+            rank.textContent = userRank;
+        }
+
+        bio.textContent =
+            data.bio || "No bio yet.";
+
+        profilePicture.src =
+            data.profilePicture ||
+            "https://via.placeholder.com/180";
+
+        coverPhoto.src =
+            data.coverPhoto ||
+            "https://via.placeholder.com/1200x350";
+
+        posts.textContent =
+            data.postsCount || 0;
+
+        followers.textContent =
+            data.followersCount || 0;
+
+        following.textContent =
+            data.followingCount || 0;
+
+        // Realtime online/offline status — separate from profile data above
+        const statusRef = ref(rtdb, "status/" + profileUid);
+
+        onValue(statusRef, (snapshot) => {
+
+            const status = snapshot.val();
+
+            if (!status) {
+                lastSeen.textContent = "⚪ Offline";
+                return;
+            }
+
+            if (status.online) {
+                lastSeen.textContent = "🟢 Online";
+            } else if (status.lastSeen) {
+                const date = new Date(Number(status.lastSeen));
+                lastSeen.textContent = "🕒 Last seen: " + date.toLocaleString();
+            } else {
+                lastSeen.textContent = "⚪ Offline";
+            }
+        });
+
+        try {
+            await loadUserPosts(profileUid);
+        } catch (err) {
+            console.error("Load posts error:", err);
+        }
+
+    } catch (err) {
+        console.error("Profile Error:", err);
+
+        // Only show the popup if the profile document itself couldn't be loaded
+        if (err.code === "permission-denied" || err.code === "unavailable") {
+            alert("Failed to load profile.");
+        }
     }
-
-}
-
-// Display profile information
-fullName.textContent = data.fullName || "No Name";
-
-username.textContent =
-    "@" + (data.username || "username");
-
-country.textContent =
-    "🌍 " + (data.country || "Country not set");
-
-dob.textContent =
-    "🎂 " + (data.dob || "Birthday not set");
-
-gender.textContent =
-    "🚻 " + (data.gender || "Not specified");
-
-
-
-
-
-
-// OWNER RANK
-if (data.uid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1" || profileUid === "FvbfTXi65VgpuPtBxr8kGzBRLRr1") {
-
-    rank.textContent = "👑 Owner";
-
-} else {
-
-    const followerCount = data.followersCount || 0;
-
-    let userRank = "🌱 New Member";
-
-    if (followerCount >= 1000) {
-        userRank = "🌍 Legend";
-    } else if (followerCount >= 500) {
-        userRank = "👑 Celebrity";
-    } else if (followerCount >= 100) {
-        userRank = "🔥 Influencer";
-    } else if (followerCount >= 50) {
-        userRank = "💎 Popular";
-    } else if (followerCount >= 10) {
-        userRank = "⭐ Rising Star";
-    }
-
-    rank.textContent = userRank;
-}
-
-
-
-
-
-
-
-
-
-const statusRef = ref(rtdb, "status/" + profileUid);
-
-
-
-onValue(statusRef, (snapshot) => {
-
-    console.log("Profile UID:", profileUid);
-    console.log("Realtime status:", snapshot.val());
-
-    const status = snapshot.val();
-     console.log(status);
-
-
-
-   
-
-
-const status = snapshot.val();
-
-if (!status) {
-    lastSeen.textContent = "⚪ Offline";
-    return;
-}
-
-if (status.online) {
-    lastSeen.textContent = "🟢 Online";
-} else if (status.lastSeen) {
-    const date = new Date(Number(status.lastSeen));
-    lastSeen.textContent = "🕒 Last seen: " + date.toLocaleString();
-} else {
-    lastSeen.textContent = "⚪ Offline";
-}
-
-
-
-
-bio.textContent =
-    data.bio || "No bio yet.";
-
-profilePicture.src =
-    data.profilePicture ||
-    "https://via.placeholder.com/180";
-
-coverPhoto.src =
-    data.coverPhoto ||
-    "https://via.placeholder.com/1200x350";
-
-posts.textContent =
-    data.postsCount || 0;
-
-followers.textContent =
-    data.followersCount || 0;
-
-following.textContent =
-    data.followingCount || 0;
-
-
-
-try {
-    await loadUserPosts(profileUid);
-} catch (err) {
-    console.error("Load posts error:", err);
-}
-
-
-
-
-
-
-
-
-} catch (err) {
-    console.error("Profile Error:", err);
-
-    // Only show the popup if the profile document itself couldn't be loaded
-    if (err.code === "permission-denied" || err.code === "unavailable") {
-        alert("Failed to load profile.");
-    }
-}
 
 });
 
 editProfileBtn.addEventListener("click", () => {
     window.location.href = "edit-profile.html";
 });
-
-
-
-
-
-
-
-
-
-          
-
-
-
-
 
 async function loadUserPosts(profileUid) {
 
@@ -311,13 +247,7 @@ async function loadUserPosts(profileUid) {
 
 }
 
-
-
-
-
 messageBtn.addEventListener("click", () => {
-
-    alert("Message button clicked!");
 
     const params = new URLSearchParams(window.location.search);
     const profileUid = params.get("uid");
