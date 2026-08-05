@@ -186,29 +186,21 @@ onValue(statusRef, (snapshot) => {
    
 
 
+const status = snapshot.val();
 
-if (status.online) {
-
-    lastSeen.textContent = "🟢 Online";
-
-} else {
-
-    if (status.lastSeen) {
-
-        const date = new Date(Number(status.lastSeen));
-
-        lastSeen.textContent =
-            "🕒 Last seen: " + date.toLocaleString();
-
-    } else {
-
-        lastSeen.textContent = "⚪ Offline";
-
-    }
-
+if (!status) {
+    lastSeen.textContent = "⚪ Offline";
+    return;
 }
 
-
+if (status.online) {
+    lastSeen.textContent = "🟢 Online";
+} else if (status.lastSeen) {
+    const date = new Date(Number(status.lastSeen));
+    lastSeen.textContent = "🕒 Last seen: " + date.toLocaleString();
+} else {
+    lastSeen.textContent = "⚪ Offline";
+}
 
 
 
