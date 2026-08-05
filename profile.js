@@ -179,6 +179,7 @@ onValue(statusRef, (snapshot) => {
     console.log("Realtime status:", snapshot.val());
 
     const status = snapshot.val();
+     console.log(status);
 
 
 
