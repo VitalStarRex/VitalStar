@@ -217,11 +217,19 @@ async function loadUserPosts(profileUid) {
 
     const snap = await getDocs(q);
 
-    let count = 0;
+    // Total post count always reflects the real total, not just what's shown
+    posts.textContent = snap.size;
 
-    snap.forEach((doc) => {
+    if (snap.empty) {
+        gallery.innerHTML = "<p>No posts yet.</p>";
+        return;
+    }
 
-        count++;
+    // Gallery shows a max of 10 posts (two rows of 5)
+    const MAX_GALLERY_POSTS = 10;
+    const docsToShow = snap.docs.slice(0, MAX_GALLERY_POSTS);
+
+    docsToShow.forEach((doc) => {
 
         const post = doc.data();
 
@@ -238,11 +246,16 @@ async function loadUserPosts(profileUid) {
 
     });
 
-    posts.textContent = count;
+    // If there are more posts than the gallery shows, add a link to the full posts page
+    if (snap.size > MAX_GALLERY_POSTS) {
 
-    if (count === 0) {
-        gallery.innerHTML =
-            "<p>No posts yet.</p>";
+        const viewAllLink = document.createElement("a");
+
+        viewAllLink.href = "user-posts.html?uid=" + profileUid;
+        viewAllLink.textContent = "View All Posts →";
+        viewAllLink.className = "view-all-posts-link";
+
+        gallery.appendChild(viewAllLink);
     }
 
 }
