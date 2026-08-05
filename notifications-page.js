@@ -8,10 +8,63 @@ import {
     limit,
     onSnapshot,
     updateDoc,
-    doc
+    doc,
+    getDocs,
+    writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const notifications = document.getElementById("notifications");
+
+
+// MARK ALL AS READ LINK
+
+const markAllReadLink = document.createElement("a");
+markAllReadLink.href = "#";
+markAllReadLink.id = "markAllReadLink";
+markAllReadLink.textContent = "Mark all as read";
+markAllReadLink.style.cssText = "display:block;text-align:right;padding:8px 12px;color:#1565c0;text-decoration:none;font-size:14px;";
+
+notifications.parentNode.insertBefore(markAllReadLink, notifications);
+
+markAllReadLink.addEventListener("click", async (e) => {
+
+    e.preventDefault();
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+    try {
+
+        const unreadQuery = query(
+            collection(db, "notifications"),
+            where("receiverId", "==", user.uid),
+            where("read", "==", false)
+        );
+
+        const snapshot = await getDocs(unreadQuery);
+
+        if (snapshot.empty) {
+            return;
+        }
+
+        const batch = writeBatch(db);
+
+        snapshot.forEach((notificationDoc) => {
+            batch.update(notificationDoc.ref, { read: true });
+        });
+
+        await batch.commit();
+
+    } catch (error) {
+        console.error("Failed to mark all as read:", error);
+        alert("Failed to mark notifications as read.");
+    }
+
+});
+
 
 auth.onAuthStateChanged((user) => {
 
@@ -139,7 +192,7 @@ auth.onAuthStateChanged((user) => {
             });
 
         },
-        
+
 (error) => {
     console.error("Notifications Error:", error);
     alert(error.code + "\n\n" + error.message);
@@ -151,10 +204,10 @@ auth.onAuthStateChanged((user) => {
     `;
 }
 
-          
 
-            
-              
+
+
+
     );
 
 });
