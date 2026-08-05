@@ -3,7 +3,9 @@ import { auth, db, rtdb } from "./firebase.js";
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";     
-                                         
+                          
+
+
 import {
     collection,
     addDoc,
@@ -11,10 +13,6 @@ import {
     where,
     orderBy,
     limit,
-    
-    ref,
-    set,
-    onDisconnect
     onSnapshot,
     doc,
     updateDoc,
@@ -24,6 +22,14 @@ import {
     deleteDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+    ref,
+    set,
+    onDisconnect
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
 
 
 const feed = document.getElementById("feed");
