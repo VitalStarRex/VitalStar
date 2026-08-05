@@ -26,7 +26,8 @@ import {
 import {
     ref,
     set,
-    onDisconnect
+    onDisconnect,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
@@ -462,14 +463,15 @@ if(!user) return;
 
 const statusRef = ref(rtdb, "status/" + user.uid);
 
+
 await set(statusRef, {
     online: true,
-    lastSeen: Date.now()
+    lastSeen: serverTimestamp()
 });
 
 onDisconnect(statusRef).set({
     online: false,
-    lastSeen: Date.now()
+    lastSeen: serverTimestamp()
 });
 
 
