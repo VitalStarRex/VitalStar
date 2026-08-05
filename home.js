@@ -468,19 +468,23 @@ window.sharePost = async function(postId) {
 
 // WELCOME MESSAGE
 
+auth.onAuthStateChanged(async(user)=>{
+
+if(!user) return;
+
 const statusRef = ref(rtdb, "status/" + user.uid);
 
-// Register disconnect first
-await onDisconnect(statusRef).set({
-    online: false,
-    lastSeen: rtdbServerTimestamp()
-});
 
-// Then mark the user online
 await set(statusRef, {
     online: true,
     lastSeen: rtdbServerTimestamp()
 });
+
+onDisconnect(statusRef).set({
+    online: false,
+    lastSeen: rtdbServerTimestamp()
+});
+
 
 const userSnap =
 await getDoc(doc(db,"users",user.uid));
