@@ -338,6 +338,17 @@ if (postSnap.exists()) {
 
         const userSnap = await getDoc(doc(db, "users", user.uid));
 
+
+console.log("UID:", user.uid);
+
+if (userSnap.exists()) {
+    console.log(userSnap.data());
+} else {
+    console.log("User document not found");
+}
+
+
+
         if (userSnap.exists()) {
 
             const currentUser = userSnap.data();
