@@ -124,16 +124,23 @@ const state = {
 };
 
 const CATEGORY_LABELS = {
-  fitness: 'Fitness & Training',
-  nutrition: 'Nutrition & Diet',
-  'mental-wellness': 'Mental Wellness',
-  'yoga-meditation': 'Yoga & Meditation',
-  'weight-loss': 'Weight Loss',
-  bodybuilding: 'Bodybuilding & Strength',
-  'running-cardio': 'Running & Cardio',
+  technology: 'Technology',
+  gaming: 'Gaming',
+  programming: 'Programming',
+  music: 'Music',
+  'movies-tv': 'Movies & TV',
+  anime: 'Anime',
   sports: 'Sports',
-  'support-group': 'Support Group',
-  general: 'General Health & Vitality',
+  education: 'Education',
+  business: 'Business',
+  entertainment: 'Entertainment',
+  news: 'News',
+  science: 'Science',
+  fashion: 'Fashion',
+  travel: 'Travel',
+  politics: 'Politics',
+  religion: 'Religion',
+  general: 'General',
   other: 'Other'
 };
 
