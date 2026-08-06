@@ -491,8 +491,6 @@ onDisconnect(statusRef).set({
 
 const onlineUsersCount = document.getElementById("onlineUsersCount");
 
-const onlineUsersCount = document.getElementById("onlineUsersCount");
-
 onValue(ref(rtdb, "status"), (snapshot) => {
 
     let count = 0;
