@@ -17,6 +17,12 @@ const firebaseConfig = {
   apiKey: "AIzaSyDIePnptlh5c4q9RSPZJ8pYLAYNswNHgCs",
   authDomain: "mysocialapp-87ea4.firebaseapp.com",
   projectId: "mysocialapp-87ea4",
+
+
+
+databaseURL: "https://mysocialapp-87ea4-default-rtdb.firebaseio.com",
+
+
   storageBucket: "mysocialapp-87ea4.firebasestorage.app",
   messagingSenderId: "164883751409",
   appId: "1:164883751409:web:b7ccfcc42dfc06783fe450"
