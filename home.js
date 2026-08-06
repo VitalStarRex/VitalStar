@@ -23,12 +23,11 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+
 import {
     ref,
-    set,
-    onValue,
-    onDisconnect,
-    serverTimestamp as rtdbServerTimestamp
+    onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
@@ -473,18 +472,6 @@ auth.onAuthStateChanged(async(user)=>{
 
 if(!user) return;
 
-const statusRef = ref(rtdb, "status/" + user.uid);
-
-
-await set(statusRef, {
-    online: true,
-    lastSeen: rtdbServerTimestamp()
-});
-
-onDisconnect(statusRef).set({
-    online: false,
-    lastSeen: rtdbServerTimestamp()
-});
 
 
 
