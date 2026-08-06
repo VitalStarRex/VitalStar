@@ -16,7 +16,7 @@ if (logoutBtn) {
 
             alert("Logged out successfully.");
 
-            window.location.replace("login.html");
+            window.location.replace("index.html");
 
         } catch (error) {
 
