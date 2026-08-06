@@ -29,7 +29,6 @@ window.login=async function(){
    if(snap.empty){alert("Username not found.");return;}
    const email=snap.docs[0].data().email;
    await signInWithEmailAndPassword(auth,email,password);
-   alert("Login successful!");
    window.location.href="home.html";
  }catch(e){
    alert(e.message);
