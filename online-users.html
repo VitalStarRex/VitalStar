@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Online Users</title>
+
+<style>
+body{
+    margin:0;
+    background:#111827;
+    font-family:Arial,sans-serif;
+    color:#fff;
+}
+
+h2{
+    text-align:center;
+    padding:15px;
+}
+
+#users{
+    max-width:700px;
+    margin:auto;
+}
+
+.user{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:12px;
+    border-bottom:1px solid #333;
+    text-decoration:none;
+    color:white;
+}
+
+.user:hover{
+    background:#1f2937;
+}
+
+.user img{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.name{
+    font-size:17px;
+    font-weight:bold;
+}
+
+.username{
+    color:#aaa;
+    font-size:14px;
+}
+
+.online{
+    margin-left:auto;
+    width:12px;
+    height:12px;
+    background:#00ff55;
+    border-radius:50%;
+    box-shadow:0 0 10px #00ff55;
+}
+</style>
+
+</head>
+<body>
+
+<h2>🟢 Online Users</h2>
+
+<div id="users"></div>
+
+<script type="module" src="online-users.js"></script>
+
+</body>
+</html>
