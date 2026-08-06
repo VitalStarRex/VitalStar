@@ -26,6 +26,7 @@ import {
 import {
     ref,
     set,
+    onValue,
     onDisconnect,
     serverTimestamp as rtdbServerTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -488,30 +489,25 @@ onDisconnect(statusRef).set({
 
 
 
-import { rtdb } from "./firebase.js";
-
-import {
-    ref,
-    onValue
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const onlineUsersCount = document.getElementById("onlineUsersCount");
 
 const onlineUsersCount = document.getElementById("onlineUsersCount");
 
-const statusRef = ref(rtdb, "status");
-
-onValue(statusRef, (snapshot) => {
+onValue(ref(rtdb, "status"), (snapshot) => {
 
     let count = 0;
 
     snapshot.forEach((child) => {
         const status = child.val();
 
-        if (status.state === "online") {
+        if (status.online === true) {
             count++;
         }
     });
 
-    onlineUsersCount.textContent = `🟢 Online: ${count}`;
+    if (onlineUsersCount) {
+        onlineUsersCount.textContent = `🟢 Online: ${count}`;
+    }
 
 });
 
