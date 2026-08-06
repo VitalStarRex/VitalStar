@@ -1,1 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Groups - VitalStar</title>
 
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f0f2f5;
+}
+
+.header{
+    background:#1877f2;
+    color:#fff;
+    padding:18px;
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+    position:sticky;
+    top:0;
+}
+
+.search{
+    padding:15px;
+    background:white;
+}
+
+.search input{
+    width:100%;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    font-size:16px;
+}
+
+#createGroupBtn{
+    width:calc(100% - 30px);
+    margin:15px;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#1877f2;
+    color:white;
+    font-size:17px;
+    cursor:pointer;
+}
+
+#groupsList{
+    padding:15px;
+}
+
+.group-card{
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    margin-bottom:18px;
+    box-shadow:0 3px 12px rgba(0,0,0,.12);
+    cursor:pointer;
+}
+
+.group-cover{
+    width:100%;
+    height:160px;
+    object-fit:cover;
+}
+
+.group-info{
+    padding:15px;
+    display:flex;
+    gap:15px;
+}
+
+.group-avatar{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    object-fit:cover;
+    border:3px solid white;
+    margin-top:-35px;
+    background:#eee;
+}
+
+.group-name{
+    font-size:20px;
+    font-weight:bold;
+}
+
+.group-meta{
+    color:#666;
+    margin-top:5px;
+}
+
+.badge{
+    display:inline-block;
+    margin-top:8px;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:12px;
+    color:white;
+}
+
+.public{background:#28a745;}
+.private{background:#dc3545;}
+.premium{background:#ff9800;}
+.free{background:#1877f2;}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+👥 VitalStar Groups
+</div>
+
+<div class="search">
+<input
+type="text"
+id="searchInput"
+placeholder="Search groups...">
+</div>
+
+<button id="createGroupBtn">
+➕ Create New Group
+</button>
+
+<div id="groupsList"></div>
+
+<script type="module" src="groups.js"></script>
+
+</body>
+</html>
