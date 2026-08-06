@@ -580,4 +580,9 @@ searchClearBtn.addEventListener('click', () => {
   loadGroupsForActiveView(true);
 });
 
-// ========================================
+// ============================================================
+// LOAD MORE
+// ============================================================
+loadMoreBtn.addEventListener('click', () => {
+  loadGroupsForActiveView(false);
+});
