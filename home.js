@@ -486,6 +486,40 @@ onDisconnect(statusRef).set({
 });
 
 
+
+
+import { rtdb } from "./firebase.js";
+
+import {
+    ref,
+    onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const onlineUsersCount = document.getElementById("onlineUsersCount");
+
+const statusRef = ref(rtdb, "status");
+
+onValue(statusRef, (snapshot) => {
+
+    let count = 0;
+
+    snapshot.forEach((child) => {
+        const status = child.val();
+
+        if (status.state === "online") {
+            count++;
+        }
+    });
+
+    onlineUsersCount.textContent = `🟢 Online: ${count}`;
+
+});
+
+
+
+
+
+
 const userSnap =
 await getDoc(doc(db,"users",user.uid));
 
