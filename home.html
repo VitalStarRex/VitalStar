@@ -135,6 +135,40 @@ header{
 }
 
 
+.darkModeBtn{
+
+    display:block;
+
+    width:100%;
+
+    text-align:left;
+
+    padding:15px 20px;
+
+    border:none;
+
+    background:none;
+
+    color:#333;
+
+    font-weight:bold;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+}
+
+
+.darkModeBtn:hover{
+
+    background:#1877f2;
+
+    color:white;
+
+}
+
+
 
 /* CONTENT */
 
@@ -189,6 +223,45 @@ header{
     font-weight: bold;
 
     border: 2px solid white;
+}
+
+
+/* DARK MODE */
+
+body.dark-mode{
+    background:#121212;
+    color:#e4e4e4;
+}
+
+body.dark-mode .sidebar{
+    background:#1e1e1e;
+}
+
+body.dark-mode .sidebar a{
+    color:#e4e4e4;
+}
+
+body.dark-mode .hero-card,
+body.dark-mode .post-card{
+    background:#1e1e1e;
+    color:#e4e4e4;
+}
+
+body.dark-mode .post-buttons{
+    border-top:1px solid #333;
+}
+
+body.dark-mode .bottom-nav{
+    background:#1e1e1e;
+}
+
+body.dark-mode .bottom-nav a{
+    color:#ccc;
+}
+
+body.dark-mode .darkModeBtn{
+    background:#333;
+    color:#ffd700;
 }
 
 
@@ -297,6 +370,9 @@ header{
 <a href="edit-profile.html">
 ⚙️ Settings
 </a>
+
+
+<button id="darkModeToggle" class="darkModeBtn">🌙 Dark Mode</button>
 
 
 <button id="logoutBtn">🚪 Logout</button>
@@ -870,6 +946,8 @@ console.error("Service Worker Error:",error);
 <script type="module" src="notifications.js"></script>
 
 <script type="module" src="logout.js"></script>
+
+<script src="dark-mode.js"></script>
 
 </body>
 
