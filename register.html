@@ -58,6 +58,11 @@ button{
 button:hover{
     background:#0d5dc8;
 }
+
+button:disabled{
+    background:#9db8e8;
+    cursor:not-allowed;
+}
 </style>
 </head>
 
@@ -79,7 +84,7 @@ button:hover{
 
 <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
 
-<button type="submit">Register</button>
+<button type="submit" id="registerBtn">Register</button>
 
 </form>
 
@@ -104,10 +109,15 @@ serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const form = document.getElementById("registerForm");
+const registerBtn = document.getElementById("registerBtn");
 
 form.addEventListener("submit", async (e)=>{
 
 e.preventDefault();
+
+// Prevent double taps from triggering multiple signups
+registerBtn.disabled = true;
+registerBtn.textContent = "Registering...";
 
 const fullName = document.getElementById("fullName").value.trim();
 
@@ -121,8 +131,12 @@ const confirmPassword = document.getElementById("confirmPassword").value;
 
 if(password !== confirmPassword){
     alert("Passwords do not match.");
+    registerBtn.disabled = false;
+    registerBtn.textContent = "Register";
     return;
 }
+
+try{
 
 const q = query(
     collection(db,"users"),
@@ -133,10 +147,10 @@ const snap = await getDocs(q);
 
 if(!snap.empty){
     alert("Username already exists.");
+    registerBtn.disabled = false;
+    registerBtn.textContent = "Register";
     return;
 }
-
-try{
 
 const cred = await createUserWithEmailAndPassword(
     auth,
@@ -173,6 +187,8 @@ window.location.href = "edit-profile.html";
 }catch(error){
 
 alert(error.message);
+registerBtn.disabled = false;
+registerBtn.textContent = "Register";
 
 }
 
