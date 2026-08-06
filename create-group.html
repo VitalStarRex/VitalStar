@@ -1,1 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Group - VitalStar</title>
 
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    background:#f0f2f5;
+}
+
+.container{
+    max-width:700px;
+    margin:20px auto;
+    background:#fff;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+}
+
+.header{
+    background:#1877f2;
+    color:#fff;
+    padding:18px;
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.cover-box{
+    height:220px;
+    background:#ddd;
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.cover-box img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.cover-upload{
+    position:absolute;
+    bottom:10px;
+    right:10px;
+}
+
+.profile-box{
+    text-align:center;
+    margin-top:-60px;
+}
+
+.profile-box img{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    border:5px solid white;
+    object-fit:cover;
+    background:#eee;
+}
+
+.form{
+    padding:20px;
+}
+
+.form label{
+    display:block;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+.form input,
+.form textarea,
+.form select{
+    width:100%;
+    padding:12px;
+    margin-top:6px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    font-size:16px;
+}
+
+textarea{
+    resize:vertical;
+    min-height:100px;
+}
+
+button{
+    width:100%;
+    margin-top:25px;
+    padding:15px;
+    background:#1877f2;
+    color:white;
+    border:none;
+    border-radius:10px;
+    font-size:18px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#166fe5;
+}
+
+#priceBox{
+    display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+Create New Group
+</div>
+
+<div class="cover-box">
+    <img id="coverPreview" src="https://via.placeholder.com/900x300?text=Group+Cover">
+    <div class="cover-upload">
+        <input type="file" id="coverInput" accept="image/*">
+    </div>
+</div>
+
+<div class="profile-box">
+    <img id="profilePreview" src="https://via.placeholder.com/150">
+    <br><br>
+    <input type="file" id="profileInput" accept="image/*">
+</div>
+
+<div class="form">
+
+<label>Group Name</label>
+<input type="text" id="groupName" placeholder="Enter group name">
+
+<label>Description</label>
+<textarea id="description" placeholder="Describe your group"></textarea>
+
+<label>Category</label>
+<select id="category">
+<option>Technology</option>
+<option>Gaming</option>
+<option>Education</option>
+<option>Music</option>
+<option>Movies</option>
+<option>Sports</option>
+<option>Business</option>
+<option>News</option>
+<option>Other</option>
+</select>
+
+<label>Privacy</label>
+<select id="privacy">
+<option value="public">🌍 Public</option>
+<option value="private">🔒 Private</option>
+</select>
+
+<label>Group Type</label>
+<select id="groupType">
+<option value="free">🆓 Free</option>
+<option value="premium">💎 Premium</option>
+</select>
+
+<div id="priceBox">
+<label>Subscription Price (₦)</label>
+<input type="number" id="price" placeholder="500">
+</div>
+
+<label>Group Rules</label>
+<textarea id="rules" placeholder="Write the rules for your group"></textarea>
+
+<button id="createBtn">
+🚀 Create Group
+</button>
+
+</div>
+
+</div>
+
+<script src="create-group.js" type="module"></script>
+
+</body>
+</html>
