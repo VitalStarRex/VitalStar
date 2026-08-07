@@ -428,4 +428,152 @@
   }
   .toast--success { border-color: rgba(34,211,165,0.35); } .toast--success i { color: var(--success); }
   .toast--error { border-color: rgba(255,92,122,0.35); } .toast--error i { color: var(--danger); }
-  .toast--info i { color: var(-
+  .toast--info i { color: var(--electric-blue-bright); }
+  .toast i { margin-top: 2px; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(-10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .toast.is-leaving { animation: toast-out 0.25s var(--ease-out) forwards; }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(-8px) scale(0.97); } }
+</style>
+</head>
+<body>
+
+  <nav class="vs-navbar">
+    <div class="vs-navbar__left">
+      <a href="feed.html" class="vs-logo">
+        <span class="vs-logo__mark"><i class="fa-solid fa-bolt"></i></span>
+        VitalStar
+      </a>
+      <span class="vs-page-title">Groups</span>
+    </div>
+    <div class="vs-navbar__right">
+      <a href="create-group.html" class="btn-create-group-nav">
+        <i class="fa-solid fa-plus"></i> Create group
+      </a>
+      <div class="vs-avatar-sm" id="navUserAvatar"><i class="fa-solid fa-user"></i></div>
+    </div>
+  </nav>
+
+  <main class="groups-page">
+
+    <section class="groups-hero">
+      <h1>Discover your community</h1>
+      <p>Find people who share your interests, from gaming and tech to music, sports, and everything in between.</p>
+
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Search groups by name…" autocomplete="off" />
+        <span class="search-loading" id="searchLoading"></span>
+        <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="category-chips" id="categoryChips">
+        <button class="category-chip is-active" data-category="all">All</button>
+        <button class="category-chip" data-category="technology"><i class="fa-solid fa-microchip"></i> Technology</button>
+        <button class="category-chip" data-category="gaming"><i class="fa-solid fa-gamepad"></i> Gaming</button>
+        <button class="category-chip" data-category="programming"><i class="fa-solid fa-code"></i> Programming</button>
+        <button class="category-chip" data-category="music"><i class="fa-solid fa-music"></i> Music</button>
+        <button class="category-chip" data-category="movies-tv"><i class="fa-solid fa-clapperboard"></i> Movies &amp; TV</button>
+        <button class="category-chip" data-category="anime"><i class="fa-solid fa-dragon"></i> Anime</button>
+        <button class="category-chip" data-category="sports"><i class="fa-solid fa-futbol"></i> Sports</button>
+        <button class="category-chip" data-category="education"><i class="fa-solid fa-graduation-cap"></i> Education</button>
+        <button class="category-chip" data-category="business"><i class="fa-solid fa-briefcase"></i> Business</button>
+        <button class="category-chip" data-category="entertainment"><i class="fa-solid fa-film"></i> Entertainment</button>
+        <button class="category-chip" data-category="news"><i class="fa-solid fa-newspaper"></i> News</button>
+        <button class="category-chip" data-category="science"><i class="fa-solid fa-flask"></i> Science</button>
+        <button class="category-chip" data-category="fashion"><i class="fa-solid fa-shirt"></i> Fashion</button>
+        <button class="category-chip" data-category="travel"><i class="fa-solid fa-plane"></i> Travel</button>
+        <button class="category-chip" data-category="politics"><i class="fa-solid fa-landmark"></i> Politics</button>
+        <button class="category-chip" data-category="religion"><i class="fa-solid fa-place-of-worship"></i> Religion</button>
+        <button class="category-chip" data-category="general"><i class="fa-solid fa-star"></i> General</button>
+      </div>
+    </section>
+
+    <section class="trending-rail" id="trendingSection">
+      <div class="section-head">
+        <h2><i class="fa-solid fa-fire flame"></i> Trending groups</h2>
+        <span class="sub">Most active this week</span>
+      </div>
+      <div class="trending-scroll" id="trendingList"></div>
+    </section>
+
+    <section class="groups-tabs-section">
+      <div class="tabs" id="groupTabs">
+        <button class="tab is-active" data-tab="discover"><i class="fa-solid fa-compass"></i> Discover</button>
+        <button class="tab" data-tab="recommended"><i class="fa-solid fa-sparkles"></i> Recommended</button>
+        <button class="tab" data-tab="my-groups"><i class="fa-solid fa-users"></i> My Groups</button>
+      </div>
+
+      <div class="groups-grid" id="groupsGrid"></div>
+
+      <div class="groups-empty" id="groupsEmptyState" style="display:none;">
+        <i class="fa-solid fa-users-slash"></i>
+        <h3>No groups found</h3>
+        <p id="groupsEmptyMessage">Try a different search or category, or start your own community.</p>
+        <a href="create-group.html" class="btn-primary-inline"><i class="fa-solid fa-plus"></i> Create a group</a>
+      </div>
+
+      <button class="btn-load-more" id="loadMoreBtn" style="display:none;">Load more groups</button>
+    </section>
+
+  </main>
+
+  <a href="create-group.html" class="fab-create-group" aria-label="Create group">
+    <i class="fa-solid fa-plus"></i>
+  </a>
+
+  <div id="toast-container"></div>
+
+  <!-- ============================================================
+       TEMPLATES — cloned and populated by groups.js
+       ============================================================ -->
+  <template id="groupCardTemplate">
+    <a class="group-card" href="group.html">
+      <div class="group-card__cover"></div>
+      <div class="group-card__body">
+        <div class="group-card__avatar"></div>
+        <div class="group-card__name-row">
+          <span class="group-card__name"></span>
+          <span class="badge group-card__privacy-badge"></span>
+          <span class="badge badge--premium group-card__premium-badge" style="display:none;"><i class="fa-solid fa-crown" style="font-size:9px;"></i> Premium</span>
+          <span class="badge badge--verified group-card__verified-badge" style="display:none;"><i class="fa-solid fa-badge-check" style="font-size:9px;"></i> Verified</span>
+        </div>
+        <p class="group-card__desc"></p>
+        <div class="group-card__stats">
+          <span><i class="fa-solid fa-users"></i> <b class="group-card__member-count"></b></span>
+          <span><i class="fa-solid fa-message"></i> <b class="group-card__post-count"></b></span>
+          <span class="group-card__online"><i class="fa-solid fa-circle"></i> <b class="group-card__online-count"></b> online</span>
+        </div>
+        <button type="button" class="btn-join group-card__join-btn">Join group</button>
+      </div>
+    </a>
+  </template>
+
+  <template id="trendingCardTemplate">
+    <a class="trending-card" href="group.html">
+      <span class="trending-card__rank"></span>
+      <div class="trending-card__cover"></div>
+      <div class="trending-card__body">
+        <div class="trending-card__avatar"></div>
+        <div class="trending-card__name"></div>
+        <div class="trending-card__meta"><i class="fa-solid fa-users"></i> <span class="trending-card__member-count"></span> members</div>
+      </div>
+    </a>
+  </template>
+
+  <template id="skeletonCardTemplate">
+    <div class="skeleton-card">
+      <div class="skeleton-block skeleton-cover"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-block skeleton-avatar"></div>
+        <div class="skeleton-block skeleton-line w-60"></div>
+        <div class="skeleton-block skeleton-line w-90"></div>
+        <div class="skeleton-block skeleton-line w-40"></div>
+      </div>
+    </div>
+  </template>
+
+  <script type="module" src="./groups.js"></script>
+</body>
+</html>
