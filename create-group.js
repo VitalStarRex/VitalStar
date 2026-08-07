@@ -3,18 +3,28 @@
 // Handles: auth guard, live preview sync, cover/avatar upload
 // to Cloudinary, dynamic rules list, validation, and creating
 // the group document (+ owner membership) in Firestore.
-// ============================================================
+// ===========================================================
 
-import { auth, db } from '../firebase.js';
-import {
-  onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+
+
+
+
+
+
+import { onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
 import {
   doc,
   collection,
   setDoc,
   serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+
+
+
 
 // ============================================================
 // CLOUDINARY CONFIG — reused across the whole project
