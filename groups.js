@@ -5,7 +5,7 @@
 // tabs, join / request-to-join logic, and pagination.
 // ============================================================
 
-import { auth, db } from '../firebase-config.js';
+import { auth, db } from '../firebase.js';
 import {
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
