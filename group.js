@@ -27,7 +27,8 @@ import {
   limit,
   getDocs,
   increment,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // ============================================================
@@ -523,20 +524,42 @@ async function joinGroup() {
   const isPrivate = group.privacy === 'private';
   const status = isPrivate ? 'pending' : 'active';
 
+  const memberRef = doc(db, 'groups', state.groupId, 'members', user.uid);
+  const groupRef = doc(db, 'groups', state.groupId);
+
   try {
-    const memberRef = doc(db, 'groups', state.groupId, 'members', user.uid);
-    await setDoc(memberRef, {
-      uid: user.uid,
-      displayName: user.displayName || 'VitalStar Member',
-      photoURL: user.photoURL || '',
-      role: 'member',
-      status,
-      category: group.category || '',
-      joinedAt: serverTimestamp()
+    // Atomic: the member-doc creation and the memberCount increment either
+    // both happen or neither does, and the transaction re-checks (server-side)
+    // whether a member doc already exists before writing anything — so a
+    // double-click, two open tabs, or a reload-then-click can never create a
+    // duplicate membership or increment memberCount more than once.
+    let alreadyMember = false;
+
+    await runTransaction(db, async (transaction) => {
+      const existingMemberSnap = await transaction.get(memberRef);
+      if (existingMemberSnap.exists()) {
+        alreadyMember = true;
+        return;
+      }
+
+      transaction.set(memberRef, {
+        uid: user.uid,
+        displayName: user.displayName || 'VitalStar Member',
+        photoURL: user.photoURL || '',
+        role: 'member',
+        status,
+        category: group.category || '',
+        joinedAt: serverTimestamp()
+      });
+
+      // Only bump memberCount for immediate (public) joins — a pending
+      // private-group request must NOT count as a member yet.
+      if (status === 'active') {
+        transaction.update(groupRef, { memberCount: increment(1) });
+      }
     });
 
-    if (status === 'active') {
-      await updateDoc(doc(db, 'groups', state.groupId), { memberCount: increment(1) });
+    if (!alreadyMember && status === 'active') {
       state.groupData.memberCount = (state.groupData.memberCount || 0) + 1;
       statMemberCount.textContent = formatCount(state.groupData.memberCount);
     }
