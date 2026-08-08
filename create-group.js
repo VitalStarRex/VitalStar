@@ -47,57 +47,18 @@ const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
 
 
 
+async function uploadGroupImage(file, folder) {
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-function uploadToCloudinary(file, onProgress) {
-  return new Promise((resolve, reject) => {
+  const storageRef = ref(
+    storage,
+    `groups/${state.currentUser.uid}/${folder}/${Date.now()}_${safeName}`
+  );
 
-    const url =
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  await uploadBytes(storageRef, file);
 
-    const formData = new FormData();
-
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-    const xhr = new XMLHttpRequest();
-
-    xhr.open("POST", url, true);
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && onProgress) {
-        onProgress(
-          Math.round((event.loaded / event.total) * 100)
-        );
-      }
-    };
-
-    xhr.onload = () => {
-      try {
-        const response = JSON.parse(xhr.responseText);
-
-        if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
-          resolve(response.secure_url);
-        } else {
-          reject(
-            new Error(
-              response?.error?.message || "Cloudinary upload failed."
-            )
-          );
-        }
-
-      } catch (error) {
-        reject(new Error("Cloudinary returned an invalid response."));
-      }
-    };
-
-    xhr.onerror = () => {
-      reject(new Error("Unable to connect to Cloudinary."));
-    };
-
-    xhr.send(formData);
-  });
+  return await getDownloadURL(storageRef);
 }
-
 
 
 
@@ -494,12 +455,25 @@ form.addEventListener('submit', async (event) => {
     let coverURL = '';
     let avatarURL = '';
 
-    if (state.coverFile) {
-      coverURL = await uploadToCloudinary(state.coverFile);
-    }
-    if (state.avatarFile) {
-      avatarURL = await uploadToCloudinary(state.avatarFile);
-    }
+   
+
+
+
+
+
+
+      if (state.coverFile) {
+  coverURL = await uploadGroupImage(state.coverFile, "covers");
+}
+
+if (state.avatarFile) {
+  avatarURL = await uploadGroupImage(state.avatarFile, "avatars");
+}
+
+
+
+
+
 
     const name = nameInput.value.trim();
     const description = descInput.value.trim();
