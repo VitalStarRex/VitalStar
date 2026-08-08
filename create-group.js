@@ -6,7 +6,7 @@
 // ===========================================================
 
 
-import { auth, db, storage } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 
 import { onAuthStateChanged }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -17,15 +17,6 @@ import {
   setDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
 
 
 // ============================================================
@@ -40,31 +31,29 @@ const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
  * This is the shared upload method — reuse it anywhere the app
  * needs to send an image or video to Cloudinary.
  * @param {File} file
- * @param {(percent: number) => void} [onProgress]
+ * @param {string} folder - e.g. "groups/<uid>/covers"
  * @returns {Promise<string>} secure_url of the uploaded asset
  */
+async function uploadToCloudinary(file, folder) {
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', folder);
 
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData
+  });
 
+  if (!response.ok) {
+    throw new Error('Image upload failed. Please try again.');
+  }
 
-async function uploadGroupImage(file, folder) {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-
-  const storageRef = ref(
-    storage,
-    `groups/${state.currentUser.uid}/${folder}/${Date.now()}_${safeName}`
-  );
-
-  await uploadBytes(storageRef, file);
-
-  return await getDownloadURL(storageRef);
+  const data = await response.json();
+  return data.secure_url;
 }
-
-
-
-
-
-
 
 
 // ============================================================
@@ -121,6 +110,8 @@ const state = {
   currentUser: null,
   coverFile: null,
   avatarFile: null,
+  coverObjectUrl: null,
+  avatarObjectUrl: null,
   rules: [],
   isSubmitting: false
 };
@@ -223,7 +214,9 @@ function syncCategoryPreview() {
 }
 
 function syncPrivacyPreview() {
-  const value = document.querySelector('input[name="privacy"]:checked').value;
+  const checked = document.querySelector('input[name="privacy"]:checked');
+  if (!checked) return; // no default selected in HTML — skip safely
+  const value = checked.value;
   if (value === 'private') {
     previewPrivacyBadge.className = 'badge badge--private';
     previewPrivacyBadge.innerHTML = '<i class="fa-solid fa-lock" style="font-size:9px;"></i> Private';
@@ -234,7 +227,9 @@ function syncPrivacyPreview() {
 }
 
 function syncGroupTypePreview() {
-  const value = document.querySelector('input[name="groupType"]:checked').value;
+  const checked = document.querySelector('input[name="groupType"]:checked');
+  if (!checked) return; // no default selected in HTML — skip safely
+  const value = checked.value;
   const isPremium = value === 'premium';
   previewPremiumBadge.style.display = isPremium ? 'inline-flex' : 'none';
   premiumPriceWrapper.classList.toggle('is-visible', isPremium);
@@ -272,7 +267,11 @@ coverUploadInput.addEventListener('change', () => {
   }
 
   state.coverFile = file;
+
+  if (state.coverObjectUrl) URL.revokeObjectURL(state.coverObjectUrl);
   const objectUrl = URL.createObjectURL(file);
+  state.coverObjectUrl = objectUrl;
+
   coverDropzone.style.backgroundImage = `url(${objectUrl})`;
   coverDropzone.classList.add('has-image');
   previewCover.style.backgroundImage = `url(${objectUrl})`;
@@ -294,7 +293,11 @@ avatarUploadInput.addEventListener('change', () => {
   }
 
   state.avatarFile = file;
+
+  if (state.avatarObjectUrl) URL.revokeObjectURL(state.avatarObjectUrl);
   const objectUrl = URL.createObjectURL(file);
+  state.avatarObjectUrl = objectUrl;
+
   avatarDropzone.style.backgroundImage = `url(${objectUrl})`;
   avatarDropzone.classList.add('has-image');
   previewAvatar.style.backgroundImage = `url(${objectUrl})`;
@@ -385,7 +388,8 @@ function validateForm() {
     setFieldError(categoryField, false);
   }
 
-  const groupType = document.querySelector('input[name="groupType"]:checked').value;
+  const groupTypeChecked = document.querySelector('input[name="groupType"]:checked');
+  const groupType = groupTypeChecked ? groupTypeChecked.value : 'free';
   if (groupType === 'premium') {
     const price = parseFloat(priceInput.value);
     if (isNaN(price) || price < 1) {
@@ -455,25 +459,19 @@ form.addEventListener('submit', async (event) => {
     let coverURL = '';
     let avatarURL = '';
 
-   
+    if (state.coverFile) {
+      coverURL = await uploadToCloudinary(
+        state.coverFile,
+        `groups/${state.currentUser.uid}/covers`
+      );
+    }
 
-
-
-
-
-
-      if (state.coverFile) {
-  coverURL = await uploadGroupImage(state.coverFile, "covers");
-}
-
-if (state.avatarFile) {
-  avatarURL = await uploadGroupImage(state.avatarFile, "avatars");
-}
-
-
-
-
-
+    if (state.avatarFile) {
+      avatarURL = await uploadToCloudinary(
+        state.avatarFile,
+        `groups/${state.currentUser.uid}/avatars`
+      );
+    }
 
     const name = nameInput.value.trim();
     const description = descInput.value.trim();
