@@ -1,26 +1,17 @@
 // ============================================================
-// VITALSTAR — create-group.js
-// Handles: auth guard, live preview sync, cover/avatar upload
-// to Cloudinary, dynamic rules list, validation, and creating
-// the group document (+ owner membership) in Firestore.
-// ===========================================================
-
-
-import { auth, db } from "./firebase.js";
-
-import { onAuthStateChanged }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+// FIREBASE IMPORTS
+// ============================================================
+import { auth, db } from './firebase-config.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   doc,
   collection,
   setDoc,
   serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // ============================================================
-// CLOUDINARY CONFIG — reused across the whole project
+// CLOUDINARY CONFIG
 // ============================================================
 const CLOUDINARY_CLOUD_NAME = 'm0scmqqv';
 const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
@@ -31,7 +22,8 @@ const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
  * This is the shared upload method — matches the same pattern
  * used in create-post.js, so behavior stays consistent app-wide.
  * @param {File} file
- * @returns {Promise<string>} secure_url of the uploaded asset, or "" on failure
+ * @returns {Promise<string>} secure_url of the uploaded asset
+ * @throws {Error} if the upload fails
  */
 async function uploadToCloudinary(file) {
   const type = file.type.startsWith('video') ? 'video' : 'image';
@@ -40,18 +32,29 @@ async function uploadToCloudinary(file) {
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`,
-    {
+  const uploadURL =
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`;
+
+  try {
+    const response = await fetch(uploadURL, {
       method: 'POST',
       body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error?.message || `Cloudinary upload failed (${response.status})`
+      );
     }
-  );
 
-  const data = await response.json();
-  return data.secure_url || '';
+    return data.secure_url || '';
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw error;
+  }
 }
-
 
 // ============================================================
 // DOM REFERENCES
@@ -162,52 +165,13 @@ function escapeHtml(str) {
 }
 
 // ============================================================
-// AUTH 
-async function uploadToCloudinary(file) {
-  const type = file.type.startsWith('video') ? 'video' : 'image';
-
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-  const uploadURL =
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`;
-
-  try {
-    const response = await fetch(uploadURL, {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
-
-    console.log('Cloudinary response:', data);
-
-    if (!response.ok) {
-      throw new Error(
-        data.error?.message || `Cloudinary upload failed (${response.status})`
-      );
-    }
-
-    return data.secure_url || '';
-
-  } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    throw error;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
+// AUTH GUARD
+// Redirects to login if no user is signed in, and populates the
+// nav avatar once we have a confirmed user. Matches the same
+// pattern used across the rest of the app.
+// ============================================================
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
     window.location.href = 'login.html';
     return;
   }
