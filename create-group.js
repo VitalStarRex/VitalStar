@@ -28,31 +28,28 @@ const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
 /**
  * Uploads a single file to Cloudinary using the unsigned upload
  * preset. Returns the secure URL of the uploaded asset.
- * This is the shared upload method — reuse it anywhere the app
- * needs to send an image or video to Cloudinary.
+ * This is the shared upload method — matches the same pattern
+ * used in create-post.js, so behavior stays consistent app-wide.
  * @param {File} file
- * @param {string} folder - e.g. "groups/<uid>/covers"
- * @returns {Promise<string>} secure_url of the uploaded asset
+ * @returns {Promise<string>} secure_url of the uploaded asset, or "" on failure
  */
-async function uploadToCloudinary(file, folder) {
-  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+async function uploadToCloudinary(file) {
+  const type = file.type.startsWith('video') ? 'video' : 'image';
 
   const formData = new FormData();
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  formData.append('folder', folder);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData
-  });
-
-  if (!response.ok) {
-    throw new Error('Image upload failed. Please try again.');
-  }
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`,
+    {
+      method: 'POST',
+      body: formData
+    }
+  );
 
   const data = await response.json();
-  return data.secure_url;
+  return data.secure_url || '';
 }
 
 
@@ -460,17 +457,17 @@ form.addEventListener('submit', async (event) => {
     let avatarURL = '';
 
     if (state.coverFile) {
-      coverURL = await uploadToCloudinary(
-        state.coverFile,
-        `groups/${state.currentUser.uid}/covers`
-      );
+      coverURL = await uploadToCloudinary(state.coverFile);
+      if (!coverURL) {
+        throw new Error('Cover photo upload failed. Please try again.');
+      }
     }
 
     if (state.avatarFile) {
-      avatarURL = await uploadToCloudinary(
-        state.avatarFile,
-        `groups/${state.currentUser.uid}/avatars`
-      );
+      avatarURL = await uploadToCloudinary(state.avatarFile);
+      if (!avatarURL) {
+        throw new Error('Profile picture upload failed. Please try again.');
+      }
     }
 
     const name = nameInput.value.trim();
