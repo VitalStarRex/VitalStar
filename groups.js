@@ -125,6 +125,41 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================================
+// FIRESTORE ERROR LOGGING
+//
+// When a Firestore query needs a composite index that doesn't exist yet,
+// the SDK rejects with code 'failed-precondition' and a message that
+// embeds a direct console link to create that exact index. That link is
+// the single most useful piece of debugging info you'll get from
+// Firestore, so it must never be swallowed — every catch block below
+// that touches a Firestore call passes its error through this function
+// FIRST, before showing the generic user-facing toast.
+//
+// This never replaces the toast — it runs alongside it. The toast is for
+// the user; this console output is for you (or whoever's debugging).
+// ============================================================
+function logFirestoreError(context, error) {
+  console.error(`[Firestore error] ${context}`);
+  console.error(error); // full error object — preserves stack trace, code, everything
+
+  if (error && error.code) {
+    console.error(`  code: ${error.code}`);
+  }
+  if (error && error.message) {
+    console.error(`  message: ${error.message}`);
+
+    // 'failed-precondition' index errors embed a console URL in the message
+    // that looks like: https://console.firebase.google.com/project/.../firestore/indexes?create_composite=...
+    const urlMatch = error.message.match(/https:\/\/console\.firebase\.google\.com\S*/);
+    if (urlMatch) {
+      console.error(`  ➜ This looks like a missing-index error. Create it here: ${urlMatch[0]}`);
+    } else if (error.code === 'failed-precondition') {
+      console.error('  ➜ This is a failed-precondition error but no index-creation URL was found in the message — check the message above for details.');
+    }
+  }
+}
+
+// ============================================================
 // UTILITIES
 // ============================================================
 function formatCount(num) {
@@ -175,7 +210,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadTrending();
     await loadGroupsForActiveView(true);
   } catch (error) {
-    console.error('Error initializing groups page:', error);
+    logFirestoreError('Initializing groups page (auth guard)', error);
     showToast('Something went wrong loading groups. Please refresh.', 'error');
   }
 });
@@ -216,7 +251,10 @@ async function loadUserMemberships() {
     list.sort((a, b) => b.joinedAt - a.joinedAt);
     state.membershipList = list;
   } catch (error) {
-    console.error('Error loading memberships:', error);
+    // Memberships silently degrade (join buttons just show as "not joined")
+    // rather than blocking the page, but the real error still needs to be
+    // visible for debugging — never swallow it.
+    logFirestoreError('Loading user memberships (collectionGroup "members" query)', error);
   }
 }
 
@@ -252,7 +290,7 @@ async function loadTrending() {
     });
   } catch (error) {
     // Trending is optional — never let it block the main Groups page.
-    console.error('Error loading trending groups:', error);
+    logFirestoreError('Loading trending groups (privacy + memberCount query)', error);
     trendingSection.style.display = 'none';
   }
 }
@@ -419,7 +457,11 @@ async function handleJoinClick(group, buttonEl) {
       'success'
     );
   } catch (error) {
-    console.error('Error joining group:', error);
+    // Not an index-related error (this is a transaction, not a query), but
+    // still logged in full — a generic toast alone would hide the real cause
+    // (e.g. permission-denied from security rules) from anyone debugging.
+    console.error('[Firestore error] Joining group (transaction)');
+    console.error(error);
     buttonEl.disabled = false;
     buttonEl.textContent = originalText;
     showToast('Could not join this group. Please try again.', 'error');
@@ -474,7 +516,15 @@ async function loadGroupsForActiveView(reset) {
 
     if (loadMoreBtn) loadMoreBtn.style.display = state.hasMore ? 'block' : 'none';
   } catch (error) {
-    console.error('Error loading groups:', error);
+    // This catches errors from fetchDiscoverGroups / fetchRecommendedGroups /
+    // fetchMyGroups / fetchSearchResults, whichever ran for the active tab.
+    // Include the active tab + category + search query in the log so a
+    // missing-index error can be traced straight back to the exact query
+    // shape that triggered it.
+    logFirestoreError(
+      `Loading groups (tab: ${state.activeTab}, category: ${state.activeCategory}, search: "${state.searchQuery}")`,
+      error
+    );
     clearSkeletons();
     showToast('Could not load groups right now. Please try again.', 'error');
   } finally {
@@ -495,7 +545,8 @@ function buildEmptyMessage() {
 // standard composite query. Firestore will prompt you (via a console
 // link in the error message) to create the needed composite index the
 // first time this runs in a fresh project — that's expected and correct,
-// not a bug to work around.
+// not a bug to work around. Errors here propagate up to
+// loadGroupsForActiveView's catch block, which logs them in full.
 async function fetchDiscoverGroups(reset) {
   const constraints = [where('privacy', '==', 'public')];
   if (state.activeCategory !== 'all') constraints.push(where('category', '==', state.activeCategory));
@@ -517,7 +568,8 @@ async function fetchDiscoverGroups(reset) {
 // that single '==' filter is strictly more precise than the 'in' list,
 // so we use ONLY the '==' filter in that case and skip the 'in' filter
 // entirely. The 'in' filter (recommend from the user's joined
-// categories) is only used when the chip is on "All".
+// categories) is only used when the chip is on "All". Errors here also
+// propagate up to loadGroupsForActiveView's catch block.
 async function fetchRecommendedGroups(reset) {
   const constraints = [where('privacy', '==', 'public')];
 
@@ -549,6 +601,11 @@ async function fetchRecommendedGroups(reset) {
 }
 
 // ---- My Groups (client-paginated over the already-loaded membership list) ----
+// No Firestore query index is needed here — this reads individual docs by
+// ID (getDoc), not a filtered/ordered query, so there's nothing for
+// logFirestoreError's index-URL matching to find. Errors here (e.g. a
+// permission-denied on one of the getDoc calls) still propagate up to
+// loadGroupsForActiveView's catch block and get logged in full there.
 async function fetchMyGroups(reset) {
   if (reset) state.myGroupsPageIndex = 0;
 
@@ -603,6 +660,7 @@ async function fetchMyGroups(reset) {
 // results are silently lost — they just arrive across more "Load More"
 // clicks. This is the standard trade-off of doing AND-refinement on top of
 // an OR-only index, and is normal/expected without a real search backend.
+// Errors here propagate up to loadGroupsForActiveView's catch block.
 async function fetchSearchResults(reset) {
   const words = state.searchQuery
     .toLowerCase()
