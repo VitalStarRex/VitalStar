@@ -179,7 +179,13 @@ onAuthStateChanged(auth, async (user) => {
 
 // ============================================================
 // LOAD GROUP
-// ============================================================
+// ============================================================ 
+
+
+
+
+
+
 async function loadGroup() {
   if (!state.groupId) {
     showNotFound();
@@ -188,6 +194,15 @@ async function loadGroup() {
 
   try {
     const groupRef = doc(db, 'groups', state.groupId);
+    const memberRef = doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      state.currentUser.uid
+    );
+
+    // Load the group directly from Firestore.
     const groupSnap = await getDoc(groupRef);
 
     if (!groupSnap.exists()) {
@@ -195,12 +210,20 @@ async function loadGroup() {
       return;
     }
 
-    state.groupData = { id: groupSnap.id, ...groupSnap.data() };
+    // Always use the latest Firestore group data.
+    state.groupData = {
+      id: groupSnap.id,
+      ...groupSnap.data()
+    };
 
-    const memberRef = doc(db, 'groups', state.groupId, 'members', state.currentUser.uid);
+    // Load this user's exact membership document.
     const memberSnap = await getDoc(memberRef);
-    state.membership = memberSnap.exists() ? memberSnap.data() : null;
 
+    state.membership = memberSnap.exists()
+      ? memberSnap.data()
+      : null;
+
+    // Render everything from the Firestore data we just loaded.
     renderHeader();
     renderSidebar();
     await renderAdmins();
@@ -210,11 +233,18 @@ async function loadGroup() {
 
     pageLoader.classList.add('is-hidden');
     groupPageContent.classList.add('is-visible');
+
   } catch (error) {
     console.error('Error loading group:', error);
     showNotFound();
   }
 }
+
+
+
+
+
+
 
 function showNotFound() {
   pageLoader.classList.add('is-hidden');
