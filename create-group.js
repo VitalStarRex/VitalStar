@@ -37,39 +37,68 @@ const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
  * @param {(percent: number) => void} [onProgress]
  * @returns {Promise<string>} secure_url of the uploaded asset
  */
+
+
+
+
+
 function uploadToCloudinary(file, onProgress) {
   return new Promise((resolve, reject) => {
-    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+
+    const url =
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
+
+    xhr.open("POST", url, true);
 
     xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && typeof onProgress === 'function') {
-        onProgress(Math.round((event.loaded / event.total) * 100));
+      if (event.lengthComputable && onProgress) {
+        onProgress(
+          Math.round((event.loaded / event.total) * 100)
+        );
       }
     };
 
     xhr.onload = () => {
       try {
         const response = JSON.parse(xhr.responseText);
+
         if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
           resolve(response.secure_url);
         } else {
-          reject(new Error(response.error?.message || 'Upload to Cloudinary failed.'));
+          reject(
+            new Error(
+              response?.error?.message || "Cloudinary upload failed."
+            )
+          );
         }
-      } catch (err) {
-        reject(new Error('Unexpected response from Cloudinary.'));
+
+      } catch (error) {
+        reject(new Error("Cloudinary returned an invalid response."));
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error while uploading to Cloudinary.'));
+    xhr.onerror = () => {
+      reject(new Error("Unable to connect to Cloudinary."));
+    };
+
     xhr.send(formData);
   });
 }
+
+
+
+
+
+
+
+
 
 // ============================================================
 // DOM REFERENCES
