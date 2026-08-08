@@ -162,10 +162,52 @@ function escapeHtml(str) {
 }
 
 // ============================================================
-// AUTH GUARD
-// ============================================================
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
+// AUTH 
+async function uploadToCloudinary(file) {
+  const type = file.type.startsWith('video') ? 'video' : 'image';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  const uploadURL =
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`;
+
+  try {
+    const response = await fetch(uploadURL, {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await response.json();
+
+    console.log('Cloudinary response:', data);
+
+    if (!response.ok) {
+      throw new Error(
+        data.error?.message || `Cloudinary upload failed (${response.status})`
+      );
+    }
+
+    return data.secure_url || '';
+
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw error;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
     window.location.href = 'login.html';
     return;
   }
