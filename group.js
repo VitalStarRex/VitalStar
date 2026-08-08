@@ -598,13 +598,37 @@ async function leaveGroup() {
   if (!window.confirm(`Leave ${state.groupData.name}? You'll need to rejoin to see its posts again.`)) return;
   joinLeaveBtn.disabled = true;
 
+  const memberRef = doc(db, 'groups', state.groupId, 'members', state.currentUser.uid);
+  const groupRef = doc(db, 'groups', state.groupId);
+
   try {
-    await deleteDoc(doc(db, 'groups', state.groupId, 'members', state.currentUser.uid));
-    await updateDoc(doc(db, 'groups', state.groupId), { memberCount: increment(-1) });
+    // Atomic: only remove the membership doc and decrement memberCount if an
+    // ACTIVE membership actually exists right now, re-checked server-side —
+    // so a double-click, two open tabs, or a stale UI state can never
+    // decrement more than once or decrement a membership that's already gone.
+    let wasActiveMember = false;
+
+    await runTransaction(db, async (transaction) => {
+      const existingMemberSnap = await transaction.get(memberRef);
+      if (!existingMemberSnap.exists()) {
+        return; // already removed elsewhere — nothing to delete or decrement
+      }
+
+      const memberData = existingMemberSnap.data();
+      transaction.delete(memberRef);
+
+      if (memberData.status === 'active') {
+        wasActiveMember = true;
+        transaction.update(groupRef, { memberCount: increment(-1) });
+      }
+    });
 
     state.membership = null;
-    state.groupData.memberCount = Math.max(0, (state.groupData.memberCount || 1) - 1);
-    statMemberCount.textContent = formatCount(state.groupData.memberCount);
+
+    if (wasActiveMember) {
+      state.groupData.memberCount = Math.max(0, (state.groupData.memberCount || 1) - 1);
+      statMemberCount.textContent = formatCount(state.groupData.memberCount);
+    }
 
     renderJoinLeaveState();
     applyAccessControl();
