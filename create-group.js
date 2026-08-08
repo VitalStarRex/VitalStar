@@ -6,8 +6,7 @@
 // ===========================================================
 
 
-
-import { auth, db } from "./firebase.js";
+import { auth, db, storage } from "./firebase.js";
 
 import { onAuthStateChanged }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -19,6 +18,13 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 
 
