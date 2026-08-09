@@ -16,101 +16,141 @@ import {
 
 const usersDiv = document.getElementById("users");
 
+if (!usersDiv) {
+  console.error("❌ Element #users was not found in the HTML.");
+}
+
 onAuthStateChanged(auth, (user) => {
 
+  console.log("AUTH USER:", user);
+
   if (!user) {
+    console.log("❌ No logged-in user");
     location.href = "login.html";
     return;
   }
 
+  console.log("✅ Logged in:", user.uid);
+
   const statusRef = ref(rtdb, "status");
 
-  onValue(statusRef, async (snapshot) => {
+  onValue(
+    statusRef,
+    async (snapshot) => {
 
-    usersDiv.innerHTML = "";
+      console.log("RTDB STATUS:", snapshot.val());
 
-    if (!snapshot.exists()) {
-      usersDiv.innerHTML = `<div class="no-users">No users online</div>`;
-      return;
-    }
+      usersDiv.innerHTML = "";
 
-    const promises = [];
-
-    snapshot.forEach((child) => {
-
-      const uid = child.key;
-      const data = child.val();
-
-      // Only show other users who are currently online
-      if (data?.state === "online" && uid !== user.uid) {
-        promises.push(loadUser(uid));
+      if (!snapshot.exists()) {
+        usersDiv.innerHTML = "<p>No online users</p>";
+        console.log("❌ status does not exist");
+        return;
       }
 
-    });
+      const onlineUsers = [];
 
-    const users = await Promise.all(promises);
+      snapshot.forEach((child) => {
 
-    const validUsers = users.filter(Boolean);
+        const uid = child.key;
+        const data = child.val();
 
-    if (validUsers.length === 0) {
-      usersDiv.innerHTML = `<div class="no-users">No other users online</div>`;
-      return;
+        console.log("USER STATUS:", uid, data);
+
+        if (
+          data &&
+          data.state === "online" &&
+          uid !== user.uid
+        ) {
+          onlineUsers.push(uid);
+        }
+
+      });
+
+      console.log("ONLINE OTHER USERS:", onlineUsers);
+
+      if (onlineUsers.length === 0) {
+        usersDiv.innerHTML = "<p>No other users online</p>";
+        return;
+      }
+
+      for (const uid of onlineUsers) {
+
+        try {
+
+          const userSnap = await getDoc(
+            doc(db, "users", uid)
+          );
+
+          console.log(
+            "FIRESTORE USER:",
+            uid,
+            userSnap.exists() ? userSnap.data() : "NOT FOUND"
+          );
+
+          if (!userSnap.exists()) continue;
+
+          const u = userSnap.data();
+
+          const fullName =
+            u.fullName ||
+            u.fullname ||
+            u.displayName ||
+            "VitalStar User";
+
+          const username =
+            u.username ||
+            "user";
+
+          const photoURL =
+            u.photoURL ||
+            u.profilePicture ||
+            u.avatar ||
+            "default-avatar.png";
+
+          usersDiv.innerHTML += `
+
+            <a class="user" href="profile.html?uid=${encodeURIComponent(uid)}">
+
+              <img
+                src="${photoURL}"
+                alt="${fullName}"
+                onerror="this.src='default-avatar.png'"
+              >
+
+              <div>
+                <div class="name">${fullName}</div>
+                <div class="username">@${username}</div>
+              </div>
+
+              <div class="online"></div>
+
+            </a>
+
+          `;
+
+        } catch (error) {
+
+          console.error(
+            "❌ Firestore error for user:",
+            uid,
+            error
+          );
+
+        }
+
+      }
+
+    },
+
+    (error) => {
+
+      console.error("❌ RTDB ERROR:", error);
+
+      usersDiv.innerHTML =
+        "<p>Unable to load online users.</p>";
+
     }
-
-    usersDiv.innerHTML = validUsers.join("");
-
-  });
+  );
 
 });
-
-
-async function loadUser(uid) {
-
-  try {
-
-    const snap = await getDoc(doc(db, "users", uid));
-
-    if (!snap.exists()) return null;
-
-    const u = snap.data();
-
-    const fullName = u.fullName || "VitalStar User";
-    const username = u.username || "user";
-    const photoURL = u.photoURL || "default-avatar.png";
-
-    return `
-
-      <a class="user" href="profile.html?uid=${encodeURIComponent(uid)}">
-
-        <img
-          src="${photoURL}"
-          alt="${fullName}"
-          onerror="this.src='default-avatar.png'"
-        >
-
-        <div class="user-info">
-
-          <div class="name">
-            ${fullName}
-          </div>
-
-          <div class="username">
-            @${username}
-          </div>
-
-        </div>
-
-        <div class="online"></div>
-
-      </a>
-
-    `;
-
-  } catch (error) {
-
-    console.error("Failed to load user:", uid, error);
-    return null;
-
-  }
-
-}
