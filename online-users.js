@@ -1,79 +1,116 @@
 import { auth, db, rtdb } from "./firebase.js";
 
 import {
-onAuthStateChanged
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-ref,
-onValue
+  ref,
+  onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 import {
-doc,
-getDoc
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const usersDiv = document.getElementById("users");
 
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth, (user) => {
 
-if(!user){
-location.href="login.html";
-return;
-}
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
 
-const statusRef = ref(rtdb,"status");
+  const statusRef = ref(rtdb, "status");
 
-onValue(statusRef,async(snapshot)=>{
+  onValue(statusRef, async (snapshot) => {
 
-usersDiv.innerHTML="";
+    usersDiv.innerHTML = "";
 
-if(!snapshot.exists()) return;
+    if (!snapshot.exists()) {
+      usersDiv.innerHTML = `<div class="no-users">No users online</div>`;
+      return;
+    }
 
-const promises=[];
+    const promises = [];
 
-snapshot.forEach(child=>{
+    snapshot.forEach((child) => {
 
-const uid=child.key;
-const data=child.val();
+      const uid = child.key;
+      const data = child.val();
 
-if(data.state==="online" && uid!==user.uid){
+      // Only show other users who are currently online
+      if (data?.state === "online" && uid !== user.uid) {
+        promises.push(loadUser(uid));
+      }
 
-promises.push(loadUser(uid));
+    });
 
-}
+    const users = await Promise.all(promises);
+
+    const validUsers = users.filter(Boolean);
+
+    if (validUsers.length === 0) {
+      usersDiv.innerHTML = `<div class="no-users">No other users online</div>`;
+      return;
+    }
+
+    usersDiv.innerHTML = validUsers.join("");
+
+  });
 
 });
 
-await Promise.all(promises);
 
-});
+async function loadUser(uid) {
 
-});
+  try {
 
-async function loadUser(uid){
+    const snap = await getDoc(doc(db, "users", uid));
 
-const snap=await getDoc(doc(db,"users",uid));
+    if (!snap.exists()) return null;
 
-if(!snap.exists()) return;
+    const u = snap.data();
 
-const u=snap.data();
+    const fullName = u.fullName || "VitalStar User";
+    const username = u.username || "user";
+    const photoURL = u.photoURL || "default-avatar.png";
 
-usersDiv.innerHTML+=`
+    return `
 
-<a class="user" href="profile.html?uid=${uid}">
-<img src="${u.photoURL || 'default-avatar.png'}">
+      <a class="user" href="profile.html?uid=${encodeURIComponent(uid)}">
 
-<div>
-<div class="name">${u.fullName}</div>
-<div class="username">@${u.username}</div>
-</div>
+        <img
+          src="${photoURL}"
+          alt="${fullName}"
+          onerror="this.src='default-avatar.png'"
+        >
 
-<div class="online"></div>
+        <div class="user-info">
 
-</a>
+          <div class="name">
+            ${fullName}
+          </div>
 
-`;
+          <div class="username">
+            @${username}
+          </div>
+
+        </div>
+
+        <div class="online"></div>
+
+      </a>
+
+    `;
+
+  } catch (error) {
+
+    console.error("Failed to load user:", uid, error);
+    return null;
+
+  }
 
 }
