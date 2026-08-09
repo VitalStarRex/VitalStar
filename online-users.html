@@ -1,77 +1,245 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Online Users</title>
+// ============================================================
+// VITALSTAR — online-users.js
+// Shows ALL currently online users, including the current user
+// ============================================================
 
-<style>
-body{
-    margin:0;
-    background:#111827;
-    font-family:Arial,sans-serif;
-    color:#fff;
+import { auth, db, rtdb } from "./firebase.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  ref,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+import {
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const usersDiv = document.getElementById("users");
+
+if (!usersDiv) {
+  console.error("VitalStar: #users element not found.");
 }
 
-h2{
-    text-align:center;
-    padding:15px;
+
+// ============================================================
+// AUTH
+// ============================================================
+
+onAuthStateChanged(auth, (user) => {
+
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  loadOnlineUsers();
+
+});
+
+
+// ============================================================
+// LOAD ONLINE USERS
+// ============================================================
+
+function loadOnlineUsers() {
+
+  const statusRef = ref(rtdb, "status");
+
+  onValue(
+    statusRef,
+
+    async (snapshot) => {
+
+      usersDiv.innerHTML = "";
+
+      if (!snapshot.exists()) {
+
+        usersDiv.innerHTML = `
+          <div class="no-users">
+            No users online
+          </div>
+        `;
+
+        return;
+      }
+
+
+      const onlineUsers = [];
+
+
+      // Get EVERY online user
+      snapshot.forEach((child) => {
+
+        const uid = child.key;
+        const status = child.val();
+
+        if (
+          uid &&
+          status &&
+          status.online === true
+        ) {
+          onlineUsers.push(uid);
+        }
+
+      });
+
+
+      if (onlineUsers.length === 0) {
+
+        usersDiv.innerHTML = `
+          <div class="no-users">
+            No users online
+          </div>
+        `;
+
+        return;
+      }
+
+
+      // ========================================================
+      // LOAD EACH USER FROM FIRESTORE
+      // ========================================================
+
+      for (const uid of onlineUsers) {
+
+        try {
+
+          const userSnap = await getDoc(
+            doc(db, "users", uid)
+          );
+
+
+          if (!userSnap.exists()) {
+            continue;
+          }
+
+
+          const data = userSnap.data();
+
+
+          const fullName =
+            data.fullName ||
+            data.fullname ||
+            data.displayName ||
+            "VitalStar User";
+
+
+          const username =
+            data.username ||
+            "user";
+
+
+          const photoURL =
+            data.photoURL ||
+            data.profilePicture ||
+            data.avatar ||
+            "default-avatar.png";
+
+
+          const userLink = document.createElement("a");
+
+          userLink.className = "user";
+
+          userLink.href =
+            "profile.html?uid=" +
+            encodeURIComponent(uid);
+
+
+          userLink.innerHTML = `
+
+            <img
+              src="${escapeHTML(photoURL)}"
+              alt="${escapeHTML(fullName)}"
+              onerror="this.src='default-avatar.png'"
+            >
+
+            <div class="user-details">
+
+              <div class="name">
+                ${escapeHTML(fullName)}
+              </div>
+
+              <div class="username">
+                @${escapeHTML(username)}
+              </div>
+
+            </div>
+
+            <div class="online"></div>
+
+          `;
+
+
+          usersDiv.appendChild(userLink);
+
+
+        } catch (error) {
+
+          console.error(
+            "Error loading online user:",
+            uid,
+            error
+          );
+
+        }
+
+      }
+
+
+      if (!usersDiv.children.length) {
+
+        usersDiv.innerHTML = `
+          <div class="no-users">
+            No users online
+          </div>
+        `;
+
+      }
+
+    },
+
+
+    // ========================================================
+    // RTDB ERROR
+    // ========================================================
+
+    (error) => {
+
+      console.error(
+        "Realtime Database error:",
+        error
+      );
+
+      usersDiv.innerHTML = `
+        <div class="no-users">
+          Unable to load online users.
+        </div>
+      `;
+
+    }
+
+  );
+
 }
 
-#users{
-    max-width:700px;
-    margin:auto;
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
 }
-
-.user{
-    display:flex;
-    align-items:center;
-    gap:15px;
-    padding:12px;
-    border-bottom:1px solid #333;
-    text-decoration:none;
-    color:white;
-}
-
-.user:hover{
-    background:#1f2937;
-}
-
-.user img{
-    width:55px;
-    height:55px;
-    border-radius:50%;
-    object-fit:cover;
-}
-
-.name{
-    font-size:17px;
-    font-weight:bold;
-}
-
-.username{
-    color:#aaa;
-    font-size:14px;
-}
-
-.online{
-    margin-left:auto;
-    width:12px;
-    height:12px;
-    background:#00ff55;
-    border-radius:50%;
-    box-shadow:0 0 10px #00ff55;
-}
-</style>
-
-</head>
-<body>
-
-<h2>🟢 Online Users</h2>
-
-<div id="users"></div>
-
-<script type="module" src="online-users.js"></script>
-
-</body>
-</html>
