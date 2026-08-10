@@ -1,6 +1,6 @@
 // ============================================================
-// VITALSTAR — online-users.js
-// Shows other users who are currently online
+// VITALSTAR — presence.js
+// Reliable Firebase Realtime Database presence system
 // ============================================================
 
 import { auth, db, rtdb } from "./firebase.js";
@@ -11,22 +11,24 @@ import {
 
 import {
   ref,
-  onValue
+  onValue,
+  set,
+  onDisconnect,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 import {
   doc,
-  getDoc
+  updateDoc,
+  serverTimestamp as firestoreServerTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
-const usersDiv = document.getElementById("users");
+// ============================================================
+// FIREBASE CONNECTION STATUS
+// ============================================================
 
-
-if (!usersDiv) {
-  console.error("VitalStar: #users element not found.");
-  throw new Error("#users element not found");
-}
+const connectedRef = ref(rtdb, ".info/connected");
 
 
 // ============================================================
@@ -36,252 +38,132 @@ if (!usersDiv) {
 onAuthStateChanged(auth, (user) => {
 
   if (!user) {
-    location.href = "login.html";
     return;
   }
 
-  loadOnlineUsers(user.uid);
+  setupPresence(user.uid);
 
 });
 
 
 // ============================================================
-// LOAD ONLINE USERS
+// SETUP PRESENCE
 // ============================================================
 
-function loadOnlineUsers(currentUid) {
+function setupPresence(uid) {
 
-  const statusRef = ref(rtdb, "status");
+  const statusRef = ref(rtdb, `status/${uid}`);
 
-  onValue(
-    statusRef,
-
-    async (snapshot) => {
-
-      usersDiv.innerHTML = "";
-
-      if (!snapshot.exists()) {
-
-        usersDiv.innerHTML = `
-          <div class="no-users">
-            No users online
-          </div>
-        `;
-
-        return;
-      }
+  const offlineData = {
+    online: false,
+    lastSeen: serverTimestamp()
+  };
 
 
-      const onlineUIDs = [];
+  // ==========================================================
+  // WATCH FIREBASE CONNECTION
+  // ==========================================================
+
+  onValue(connectedRef, async (snapshot) => {
+
+    const connected = snapshot.val();
+
+    console.log(
+      "VitalStar Firebase connection:",
+      connected
+    );
 
 
-      // ========================================================
-      // CHECK EACH USER'S ONLINE STATUS
-      // ========================================================
+    // --------------------------------------------------------
+    // NOT CONNECTED
+    // --------------------------------------------------------
 
-      snapshot.forEach((child) => {
+    if (connected !== true) {
+      return;
+    }
 
-        const uid = child.key;
-        const data = child.val();
 
+    // --------------------------------------------------------
+    // IMPORTANT:
+    // Tell Firebase what to do automatically when connection
+    // disappears.
+    // --------------------------------------------------------
 
-        /*
-          IMPORTANT:
+    try {
 
-          Your presence code uses:
-
-          online: true
-
-          NOT:
-
-          state: "online"
-        */
-
-        if (
-          uid &&
-          uid !== currentUid &&
-          data &&
-          data.online === true
-        ) {
-
-          onlineUIDs.push(uid);
-
-        }
-
-      });
-
+      await onDisconnect(statusRef).set(offlineData);
 
       console.log(
-        "VitalStar online users:",
-        onlineUIDs
+        "VitalStar: onDisconnect configured."
       );
 
-
-      if (onlineUIDs.length === 0) {
-
-        usersDiv.innerHTML = `
-          <div class="no-users">
-            No other users online
-          </div>
-        `;
-
-        return;
-      }
-
-
-      // ========================================================
-      // LOAD USER PROFILES FROM FIRESTORE
-      // ========================================================
-
-      const userCards = await Promise.all(
-
-        onlineUIDs.map(async (uid) => {
-
-          try {
-
-            const userRef = doc(db, "users", uid);
-
-            const userSnap = await getDoc(userRef);
-
-
-            if (!userSnap.exists()) {
-              console.warn(
-                "User profile not found:",
-                uid
-              );
-
-              return "";
-            }
-
-
-            const user = userSnap.data();
-
-
-            const fullName =
-              user.fullName ||
-              user.fullname ||
-              user.displayName ||
-              "VitalStar User";
-
-
-            const username =
-              user.username ||
-              "user";
-
-
-            const photoURL =
-              user.photoURL ||
-              user.profilePicture ||
-              user.avatar ||
-              "default-avatar.png";
-
-
-            return `
-
-              <a
-                class="user"
-                href="profile.html?uid=${encodeURIComponent(uid)}"
-              >
-
-                <img
-                  class="user-avatar"
-                  src="${escapeHTML(photoURL)}"
-                  alt="${escapeHTML(fullName)}"
-                  onerror="this.src='default-avatar.png'"
-                >
-
-                <div class="user-details">
-
-                  <div class="name">
-                    ${escapeHTML(fullName)}
-                  </div>
-
-                  <div class="username">
-                    @${escapeHTML(username)}
-                  </div>
-
-                </div>
-
-                <span class="online"></span>
-
-              </a>
-
-            `;
-
-          } catch (error) {
-
-            console.error(
-              "Error loading user:",
-              uid,
-              error
-            );
-
-            return "";
-
-          }
-
-        })
-
-      );
-
-
-      const validCards =
-        userCards.filter(Boolean);
-
-
-      if (validCards.length === 0) {
-
-        usersDiv.innerHTML = `
-          <div class="no-users">
-            No other users online
-          </div>
-        `;
-
-        return;
-      }
-
-
-      usersDiv.innerHTML =
-        validCards.join("");
-
-    },
-
-
-    // ========================================================
-    // RTDB ERROR
-    // ========================================================
-
-    (error) => {
+    } catch (error) {
 
       console.error(
-        "VitalStar RTDB error:",
+        "VitalStar: Unable to configure onDisconnect:",
         error
       );
 
-      usersDiv.innerHTML = `
-        <div class="no-users">
-          Unable to load online users.
-        </div>
-      `;
+      return;
 
     }
 
-  );
 
-}
+    // --------------------------------------------------------
+    // USER IS ONLINE
+    // --------------------------------------------------------
+
+    try {
+
+      await set(statusRef, {
+        online: true,
+        lastSeen: serverTimestamp()
+      });
+
+      console.log(
+        "VitalStar: User is ONLINE:",
+        uid
+      );
+
+    } catch (error) {
+
+      console.error(
+        "VitalStar: Unable to set online status:",
+        error
+      );
+
+      return;
+
+    }
 
 
-// ============================================================
-// ESCAPE HTML
-// ============================================================
+    // ========================================================
+    // ALSO UPDATE FIRESTORE
+    // ========================================================
 
-function escapeHTML(value) {
+    try {
 
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+      await updateDoc(
+        doc(db, "users", uid),
+        {
+          online: true,
+          lastSeen: firestoreServerTimestamp()
+        }
+      );
+
+      console.log(
+        "VitalStar: Firestore online status updated."
+      );
+
+    } catch (error) {
+
+      console.error(
+        "VitalStar: Firestore online update failed:",
+        error
+      );
+
+    }
+
+  });
 
 }
