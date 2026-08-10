@@ -1,9 +1,9 @@
 // ============================================================
 // VITALSTAR — presence.js
-// Reliable Firebase Realtime Database presence system
+// Reliable Firebase Realtime Database presence
 // ============================================================
 
-import { auth, db, rtdb } from "./firebase.js";
+import { auth, rtdb } from "./firebase.js";
 
 import {
   onAuthStateChanged
@@ -17,18 +17,14 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-import {
-  doc,
-  updateDoc,
-  serverTimestamp as firestoreServerTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 
 // ============================================================
-// FIREBASE CONNECTION STATUS
+// FIREBASE CONNECTION
 // ============================================================
 
 const connectedRef = ref(rtdb, ".info/connected");
+
+let heartbeatTimer = null;
 
 
 // ============================================================
@@ -38,31 +34,28 @@ const connectedRef = ref(rtdb, ".info/connected");
 onAuthStateChanged(auth, (user) => {
 
   if (!user) {
+
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+
     return;
   }
 
-  setupPresence(user.uid);
+  startPresence(user.uid);
 
 });
 
 
 // ============================================================
-// SETUP PRESENCE
+// START PRESENCE
 // ============================================================
 
-function setupPresence(uid) {
+function startPresence(uid) {
 
   const statusRef = ref(rtdb, `status/${uid}`);
 
-  const offlineData = {
-    online: false,
-    lastSeen: serverTimestamp()
-  };
-
-
-  // ==========================================================
-  // WATCH FIREBASE CONNECTION
-  // ==========================================================
 
   onValue(connectedRef, async (snapshot) => {
 
@@ -74,33 +67,36 @@ function setupPresence(uid) {
     );
 
 
-    // --------------------------------------------------------
+    // ========================================================
     // NOT CONNECTED
-    // --------------------------------------------------------
+    // ========================================================
 
     if (connected !== true) {
+
       return;
+
     }
 
 
-    // --------------------------------------------------------
-    // IMPORTANT:
-    // Tell Firebase what to do automatically when connection
-    // disappears.
-    // --------------------------------------------------------
+    // ========================================================
+    // AUTOMATIC OFFLINE STATUS
+    // ========================================================
 
     try {
 
-      await onDisconnect(statusRef).set(offlineData);
+      await onDisconnect(statusRef).set({
+        online: false,
+        lastSeen: serverTimestamp()
+      });
 
       console.log(
-        "VitalStar: onDisconnect configured."
+        "VitalStar: onDisconnect configured"
       );
 
     } catch (error) {
 
       console.error(
-        "VitalStar: Unable to configure onDisconnect:",
+        "VitalStar: onDisconnect error:",
         error
       );
 
@@ -109,9 +105,9 @@ function setupPresence(uid) {
     }
 
 
-    // --------------------------------------------------------
-    // USER IS ONLINE
-    // --------------------------------------------------------
+    // ========================================================
+    // MARK ONLINE
+    // ========================================================
 
     try {
 
@@ -121,14 +117,14 @@ function setupPresence(uid) {
       });
 
       console.log(
-        "VitalStar: User is ONLINE:",
+        "VitalStar: ONLINE",
         uid
       );
 
     } catch (error) {
 
       console.error(
-        "VitalStar: Unable to set online status:",
+        "VitalStar: Unable to set online:",
         error
       );
 
@@ -138,31 +134,36 @@ function setupPresence(uid) {
 
 
     // ========================================================
-    // ALSO UPDATE FIRESTORE
+    // HEARTBEAT
+    // Refresh lastSeen every 30 seconds
     // ========================================================
 
-    try {
+    if (heartbeatTimer) {
 
-      await updateDoc(
-        doc(db, "users", uid),
-        {
-          online: true,
-          lastSeen: firestoreServerTimestamp()
-        }
-      );
-
-      console.log(
-        "VitalStar: Firestore online status updated."
-      );
-
-    } catch (error) {
-
-      console.error(
-        "VitalStar: Firestore online update failed:",
-        error
-      );
+      clearInterval(heartbeatTimer);
 
     }
+
+
+    heartbeatTimer = setInterval(async () => {
+
+      try {
+
+        await set(statusRef, {
+          online: true,
+          lastSeen: serverTimestamp()
+        });
+
+      } catch (error) {
+
+        console.error(
+          "VitalStar heartbeat error:",
+          error
+        );
+
+      }
+
+    }, 30000);
 
   });
 
