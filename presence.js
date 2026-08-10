@@ -1,15 +1,11 @@
 // ============================================================
 // VITALSTAR — presence.js
-// Reliable Firebase Realtime Database presence
+// Firebase Realtime Database Presence System
 // ============================================================
 
-import { auth, rtdb } from "./firebase.js";
-
+import { auth } from "./firebase.js";
 import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
+  getDatabase,
   ref,
   onValue,
   set,
@@ -17,14 +13,23 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+
+// ============================================================
+// DATABASE
+// ============================================================
+
+const db = getDatabase();
+
 
 // ============================================================
 // FIREBASE CONNECTION
 // ============================================================
 
-const connectedRef = ref(rtdb, ".info/connected");
-
-let heartbeatTimer = null;
+const connectedRef = ref(db, ".info/connected");
 
 
 // ============================================================
@@ -34,12 +39,6 @@ let heartbeatTimer = null;
 onAuthStateChanged(auth, (user) => {
 
   if (!user) {
-
-    if (heartbeatTimer) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = null;
-    }
-
     return;
   }
 
@@ -49,37 +48,28 @@ onAuthStateChanged(auth, (user) => {
 
 
 // ============================================================
-// START PRESENCE
+// PRESENCE
 // ============================================================
 
 function startPresence(uid) {
 
-  const statusRef = ref(rtdb, `status/${uid}`);
+  const statusRef = ref(db, "status/" + uid);
 
 
   onValue(connectedRef, async (snapshot) => {
 
-    const connected = snapshot.val();
-
-    console.log(
-      "VitalStar Firebase connection:",
-      connected
-    );
-
-
-    // ========================================================
-    // NOT CONNECTED
-    // ========================================================
-
-    if (connected !== true) {
-
+    if (snapshot.val() !== true) {
       return;
-
     }
 
 
+    console.log("VitalStar: Firebase connected");
+
+
     // ========================================================
-    // AUTOMATIC OFFLINE STATUS
+    // IMPORTANT:
+    // Firebase will automatically execute this when the
+    // user's connection disappears.
     // ========================================================
 
     try {
@@ -90,23 +80,22 @@ function startPresence(uid) {
       });
 
       console.log(
-        "VitalStar: onDisconnect configured"
+        "VitalStar: offline handler registered"
       );
 
     } catch (error) {
 
       console.error(
-        "VitalStar: onDisconnect error:",
+        "VitalStar: onDisconnect failed:",
         error
       );
 
       return;
-
     }
 
 
     // ========================================================
-    // MARK ONLINE
+    // MARK USER ONLINE
     // ========================================================
 
     try {
@@ -117,53 +106,18 @@ function startPresence(uid) {
       });
 
       console.log(
-        "VitalStar: ONLINE",
+        "VitalStar: USER ONLINE",
         uid
       );
 
     } catch (error) {
 
       console.error(
-        "VitalStar: Unable to set online:",
+        "VitalStar: unable to mark user online:",
         error
       );
 
-      return;
-
     }
-
-
-    // ========================================================
-    // HEARTBEAT
-    // Refresh lastSeen every 30 seconds
-    // ========================================================
-
-    if (heartbeatTimer) {
-
-      clearInterval(heartbeatTimer);
-
-    }
-
-
-    heartbeatTimer = setInterval(async () => {
-
-      try {
-
-        await set(statusRef, {
-          online: true,
-          lastSeen: serverTimestamp()
-        });
-
-      } catch (error) {
-
-        console.error(
-          "VitalStar heartbeat error:",
-          error
-        );
-
-      }
-
-    }, 30000);
 
   });
 
