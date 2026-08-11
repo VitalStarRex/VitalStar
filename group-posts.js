@@ -43,28 +43,78 @@ function uploadToCloudinary(file, resourceType, onProgress) {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
+    // Large videos on slow connections shouldn't hang forever — without
+    // this, a stalled upload just sits until the browser gives up on its
+    // own schedule, which makes the eventual failure harder to diagnose.
+    xhr.timeout = 120000;
+
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && typeof onProgress === 'function') {
         onProgress(Math.round((event.loaded / event.total) * 100));
       }
     };
+
     xhr.onload = () => {
+      // Reaching onload means a response DID come back from Cloudinary —
+      // so any failure here is a Cloudinary-side rejection (bad preset,
+      // preset not allowed for this resource type, file too large per
+      // preset rules, etc), not a network/CORS problem.
       try {
         const response = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
           resolve({ url: response.secure_url, resourceType: response.resource_type });
         } else {
-          // Log Cloudinary's actual error so it's visible in devtools,
-          // and reject with a message the UI can display.
-          console.error('Cloudinary rejected the upload:', response);
+          console.error(
+            '[Cloudinary] Server rejected the upload — status:', xhr.status,
+            xhr.statusText, '— body:', response
+          );
           reject(new Error(response.error?.message || `Cloudinary upload failed (status ${xhr.status}).`));
         }
       } catch (err) {
-        console.error('Cloudinary returned an unparseable response:', xhr.responseText);
+        console.error(
+          '[Cloudinary] Response received but could not be parsed as JSON — status:',
+          xhr.status, xhr.statusText, '— raw response:', xhr.responseText
+        );
         reject(new Error('Unexpected response from Cloudinary.'));
       }
     };
-    xhr.onerror = () => reject(new Error('Network error while uploading to Cloudinary.'));
+
+    xhr.onerror = () => {
+      // onerror fires ONLY when no HTTP response was ever received at all
+      // (xhr.status stays 0 here). That rules out Cloudinary config issues
+      // like a bad preset or a preset that disallows video — those return
+      // a real HTTP status and are handled in onload above instead. A
+      // status-0 failure means the request itself was blocked or dropped
+      // before it reached Cloudinary's servers: a CORS preflight
+      // rejection, a Content-Security-Policy connect-src restriction in
+      // the page, an ad-blocker/privacy extension blocking
+      // api.cloudinary.com, or a dropped connection mid-upload.
+      console.error('[Cloudinary] Network-level failure — no response was ever received.', {
+        status: xhr.status,
+        readyState: xhr.readyState,
+        online: navigator.onLine,
+        url,
+        resourceType: endpoint,
+        fileSizeMB: (file.size / 1024 / 1024).toFixed(2)
+      });
+      console.error(
+        '[Cloudinary] Next step: open DevTools → Network tab, retry the ' +
+        'upload, and inspect this request\'s status column. "CORS error" ' +
+        'or "(blocked:other)" confirms it is being blocked before reaching ' +
+        'Cloudinary, not a preset/config problem.'
+      );
+      reject(new Error('Network error while uploading to Cloudinary.'));
+    };
+
+    xhr.ontimeout = () => {
+      console.error(
+        '[Cloudinary] Upload timed out after', xhr.timeout, 'ms — the file',
+        `(${(file.size / 1024 / 1024).toFixed(2)}MB) may be too large for`,
+        'the current connection speed.'
+      );
+      reject(new Error('Upload to Cloudinary timed out.'));
+    };
+
     xhr.send(formData);
   });
 }
@@ -163,6 +213,13 @@ function injectStyles() {
     .post-card__author-name { font-weight: 600; font-size: 13.5px; color: #1a1d29; }
     .role-chip { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: var(--radius-full); background: rgba(139,92,255,0.12); color: var(--violet-accent); text-transform: capitalize; }
     .post-card__meta { font-size: 11.5px; color: #8a90a0; margin-top: 1px; }
+
+    /* Author profile links (avatar + name) — deliberately NOT styled like
+       ordinary browser links (no default blue color, no underline at rest). */
+    .post-author-link { text-decoration: none; color: inherit; cursor: pointer; display: inline-flex; }
+    a.post-card__author-name, a.comment-author { display: inline-block; }
+    a.post-card__author-name:hover, a.comment-author:hover { text-decoration: underline; }
+    a.post-card__avatar:hover, a.comment-avatar:hover { opacity: 0.85; }
 
     .post-card__menu-wrap { position: relative; }
     .post-card__menu-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: none; color: #8a90a0; display: flex; align-items: center; justify-content: center; }
@@ -299,6 +356,13 @@ function canModeratePosts() {
   return role === 'owner' || role === 'admin' || role === 'moderator';
 }
 
+// Builds a link to a user's profile page from their uid. Falls back to '#'
+// if a uid isn't available (shouldn't normally happen, but keeps the link
+// from throwing/breaking if older data is missing the field).
+function authorProfileHref(uid) {
+  return uid ? `profile.html?uid=${encodeURIComponent(uid)}` : '#';
+}
+
 // ============================================================
 // COMPOSER
 // ============================================================
@@ -315,7 +379,7 @@ function renderComposer() {
   wrap.className = 'composer';
   wrap.innerHTML = `
     <div class="composer__top">
-      <div class="composer__avatar" id="composerAvatar"></div>
+      <a class="post-author-link composer__avatar" id="composerAvatar" href="${authorProfileHref(ctx.currentUser.uid)}"></a>
       <textarea class="composer__input" id="composerInput" placeholder="Share something with the group…" maxlength="3000" rows="1"></textarea>
     </div>
     <div class="composer__media-preview" id="composerMediaPreview"></div>
@@ -511,15 +575,16 @@ function renderPostCard(post) {
   const isAuthor = post.authorId === ctx.currentUser.uid;
   const canModerate = canModeratePosts();
   const timeLabel = post.createdAt && post.createdAt.toDate ? timeAgo(post.createdAt.toDate()) : 'just now';
+  const profileHref = authorProfileHref(post.authorId);
 
   card.innerHTML = `
     <div class="post-card__pin-flag"><i class="fa-solid fa-thumbtack"></i> Pinned post</div>
     <div class="post-card__head">
       <div class="post-card__author">
-        <div class="post-card__avatar"></div>
+        <a class="post-author-link post-card__avatar" href="${profileHref}"></a>
         <div class="post-card__author-info">
           <div class="post-card__author-name-row">
-            <span class="post-card__author-name"></span>
+            <a class="post-author-link post-card__author-name" href="${profileHref}"></a>
             ${post.authorRole && post.authorRole !== 'member' ? `<span class="role-chip">${escapeHtml(post.authorRole)}</span>` : ''}
           </div>
           <div class="post-card__meta">${timeLabel}${post.isEdited ? ' · edited' : ''}</div>
@@ -857,6 +922,7 @@ function buildCommentComposer(post, parentCommentId, container) {
         });
         const repliesListEl = container;
         repliesListEl.appendChild(buildReplyItem({
+          authorId: ctx.currentUser.uid,
           authorName: ctx.currentUser.displayName,
           authorPhotoURL: ctx.currentUser.photoURL,
           text
@@ -904,13 +970,15 @@ function buildCommentComposer(post, parentCommentId, container) {
 }
 
 function buildCommentItem(comment, post) {
+  const profileHref = authorProfileHref(comment.authorId);
+
   const item = document.createElement('div');
   item.className = 'comment-item';
   item.innerHTML = `
-    <div class="comment-avatar"></div>
+    <a class="post-author-link comment-avatar" href="${profileHref}"></a>
     <div style="flex:1; min-width:0;">
       <div class="comment-bubble">
-        <div class="comment-author"></div>
+        <a class="post-author-link comment-author" href="${profileHref}"></a>
         <div class="comment-text"></div>
       </div>
       <div class="comment-footer">
@@ -958,12 +1026,14 @@ async function loadReplies(commentId, post, repliesListEl) {
 }
 
 function buildReplyItem(reply) {
+  const profileHref = authorProfileHref(reply.authorId);
+
   const item = document.createElement('div');
   item.className = 'comment-item';
   item.innerHTML = `
-    <div class="comment-avatar" style="width:26px;height:26px;"></div>
+    <a class="post-author-link comment-avatar" style="width:26px;height:26px;" href="${profileHref}"></a>
     <div class="comment-bubble" style="flex:1;">
-      <div class="comment-author"></div>
+      <a class="post-author-link comment-author" href="${profileHref}"></a>
       <div class="comment-text"></div>
     </div>
   `;
