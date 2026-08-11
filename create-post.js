@@ -1,3 +1,14 @@
+// ============================================================
+// VITALSTAR — create-post.js
+// Handles:
+// - Authentication
+// - Image/video preview
+// - Cloudinary uploads
+// - Posting state
+// - Firestore post creation
+// - Redirect to home after successful posting
+// ============================================================
+
 import { auth, db } from "./firebase.js";
 
 import {
@@ -13,34 +24,23 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
 onAuthStateChanged(auth, (user) => {
+
     if (!user) {
         window.location.href = "login.html";
         return;
     }
+
 });
 
 
-// --- File validation limits ---
-const MAX_IMAGE_MB = 10;
-const MAX_VIDEO_MB = 100;
-
-
-function validateFile(file, type) {
-    const maxMB = type === "video" ? MAX_VIDEO_MB : MAX_IMAGE_MB;
-    const maxBytes = maxMB * 1024 * 1024;
-
-    if (!file.type.startsWith(type)) {
-        return `Please choose a valid ${type} file.`;
-    }
-
-    if (file.size > maxBytes) {
-        return `${type === "video" ? "Video" : "Image"} must be under ${maxMB}MB.`;
-    }
-
-    return null; // no error
-}
-
+// ============================================================
+// CLOUDINARY UPLOAD
+// ============================================================
 
 async function uploadToCloudinary(file) {
 
@@ -51,6 +51,7 @@ async function uploadToCloudinary(file) {
     const formData = new FormData();
 
     formData.append("file", file);
+
     formData.append(
         "upload_preset",
         "vitalstar_upload"
@@ -67,135 +68,488 @@ async function uploadToCloudinary(file) {
     const data = await response.json();
 
     if (!response.ok || !data.secure_url) {
-        console.error("Cloudinary upload error:", data);
-        throw new Error(data?.error?.message || "Upload failed. Please try again.");
+
+        console.error(
+            "Cloudinary upload error:",
+            data
+        );
+
+        throw new Error(
+            data?.error?.message ||
+            "Media upload failed. Please try again."
+        );
     }
 
     return data.secure_url;
 }
 
 
-// --- UI helpers ---
+// ============================================================
+// POSTING STATE
+// ============================================================
 
 function setPostingState(isPosting) {
-    const btn = document.getElementById("postSubmitBtn");
-    const status = document.getElementById("postStatus");
 
-    if (btn) {
-        btn.disabled = isPosting;
-        btn.textContent = isPosting ? "Posting..." : "Post";
+    const button =
+        document.getElementById("postSubmitBtn");
+
+    const status =
+        document.getElementById("postStatus");
+
+
+    if (button) {
+
+        button.disabled = isPosting;
+
+        button.textContent =
+            isPosting
+                ? "Posting..."
+                : "Post";
     }
+
 
     if (status) {
-        status.textContent = isPosting ? "Uploading, please wait..." : "";
+
+        status.textContent =
+            isPosting
+                ? "Uploading, please wait..."
+                : "";
     }
+
 }
 
 
+// ============================================================
+// MEDIA PREVIEW
+// ============================================================
+
+function clearMediaPreview() {
+
+    const preview =
+        document.getElementById("mediaPreview");
+
+
+    if (!preview) {
+        return;
+    }
+
+
+    preview.innerHTML = "";
+
+    preview.style.display = "none";
+}
+
+
+// ------------------------------------------------------------
+// Show selected image/video
+// ------------------------------------------------------------
+
+function showMediaPreview(file) {
+
+    const preview =
+        document.getElementById("mediaPreview");
+
+
+    if (!preview || !file) {
+        return;
+    }
+
+
+    preview.innerHTML = "";
+
+
+    const objectURL =
+        URL.createObjectURL(file);
+
+
+    // IMAGE
+    if (file.type.startsWith("image")) {
+
+        const image =
+            document.createElement("img");
+
+
+        image.src = objectURL;
+
+        image.alt = "Image preview";
+
+        image.className =
+            "post-media-preview";
+
+
+        image.style.width = "100%";
+
+        image.style.maxHeight = "400px";
+
+        image.style.objectFit = "contain";
+
+        image.style.display = "block";
+
+        image.style.borderRadius = "10px";
+
+
+        preview.appendChild(image);
+    }
+
+
+    // VIDEO
+    else if (file.type.startsWith("video")) {
+
+        const video =
+            document.createElement("video");
+
+
+        video.src = objectURL;
+
+        video.controls = true;
+
+        video.preload = "metadata";
+
+        video.className =
+            "post-media-preview";
+
+
+        video.style.width = "100%";
+
+        video.style.maxHeight = "400px";
+
+        video.style.display = "block";
+
+        video.style.borderRadius = "10px";
+
+
+        preview.appendChild(video);
+    }
+
+
+    preview.style.display = "block";
+}
+
+
+// ============================================================
+// FILE INPUT PREVIEW
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const imageInput =
+            document.getElementById("postImage");
+
+
+        const videoInput =
+            document.getElementById("postVideo");
+
+
+        // ----------------------------------------------------
+        // IMAGE SELECTED
+        // ----------------------------------------------------
+
+        if (imageInput) {
+
+            imageInput.addEventListener(
+                "change",
+                () => {
+
+                    const file =
+                        imageInput.files[0];
+
+
+                    if (file) {
+
+                        // Only one media type at a time
+                        if (videoInput) {
+                            videoInput.value = "";
+                        }
+
+
+                        showMediaPreview(file);
+
+                    } else {
+
+                        clearMediaPreview();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        // ----------------------------------------------------
+        // VIDEO SELECTED
+        // ----------------------------------------------------
+
+        if (videoInput) {
+
+            videoInput.addEventListener(
+                "change",
+                () => {
+
+                    const file =
+                        videoInput.files[0];
+
+
+                    if (file) {
+
+                        // Only one media type at a time
+                        if (imageInput) {
+                            imageInput.value = "";
+                        }
+
+
+                        showMediaPreview(file);
+
+                    } else {
+
+                        clearMediaPreview();
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// CREATE POST
+// ============================================================
+
 window.createPost = async function () {
 
-    const text = document
-        .getElementById("postText")
-        .value
-        .trim();
+    const textElement =
+        document.getElementById("postText");
+
+
+    const text =
+        textElement
+            ? textElement.value.trim()
+            : "";
+
 
     const imageFile =
-        document.getElementById("postImage")
-        ?.files[0];
+        document
+            .getElementById("postImage")
+            ?.files[0];
+
 
     const videoFile =
-        document.getElementById("postVideo")
-        ?.files[0];
+        document
+            .getElementById("postVideo")
+            ?.files[0];
+
+
+    // --------------------------------------------------------
+    // Check if anything was entered
+    // --------------------------------------------------------
 
     if (!text && !imageFile && !videoFile) {
-        alert("Write something or choose an image/video.");
+
+        alert(
+            "Write something or choose an image/video."
+        );
+
         return;
     }
 
-    const user = auth.currentUser;
+
+    // --------------------------------------------------------
+    // Check authentication
+    // --------------------------------------------------------
+
+    const user =
+        auth.currentUser;
+
 
     if (!user) {
+
         alert("Please login first.");
+
         return;
     }
 
-    // Validate files BEFORE uploading anything
-    if (imageFile) {
-        const error = validateFile(imageFile, "image");
-        if (error) {
-            alert(error);
-            return;
-        }
-    }
 
-    if (videoFile) {
-        const error = validateFile(videoFile, "video");
-        if (error) {
-            alert(error);
-            return;
-        }
-    }
+    // --------------------------------------------------------
+    // Start posting state
+    // --------------------------------------------------------
 
     setPostingState(true);
 
+
     try {
 
-        // Get user profile
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+        // ====================================================
+        // GET USER PROFILE
+        // ====================================================
 
-        let fullName = "VitalStar User";
+        const userRef =
+            doc(
+                db,
+                "users",
+                user.uid
+            );
+
+
+        const userSnap =
+            await getDoc(userRef);
+
+
+        let fullName =
+            "VitalStar User";
+
 
         if (userSnap.exists()) {
-            fullName = userSnap.data().fullName || "VitalStar User";
+
+            fullName =
+                userSnap.data().fullName ||
+                "VitalStar User";
         }
+
+
+        // ====================================================
+        // MEDIA URLS
+        // ====================================================
 
         let imageUrl = "";
+
         let videoUrl = "";
 
-        // Upload image
+
+        // ====================================================
+        // UPLOAD IMAGE
+        // ====================================================
+
         if (imageFile) {
-            imageUrl = await uploadToCloudinary(imageFile);
+
+            imageUrl =
+                await uploadToCloudinary(
+                    imageFile
+                );
+
         }
 
-        // Upload video
+
+        // ====================================================
+        // UPLOAD VIDEO
+        // ====================================================
+
         if (videoFile) {
-            videoUrl = await uploadToCloudinary(videoFile);
+
+            videoUrl =
+                await uploadToCloudinary(
+                    videoFile
+                );
+
         }
 
-        // Save post
-        await addDoc(collection(db, "posts"), {
-            uid: user.uid,
-            fullName: fullName,
-            text: text,
-            image: imageUrl,
-            video: videoUrl,
-            likes: 0,
-            comments: 0,
-            shares: 0,
-            reposts: 0,
-            createdAt: serverTimestamp()
-        });
 
-        // Reset form
-        document.getElementById("postText").value = "";
+        // ====================================================
+        // SAVE POST TO FIRESTORE
+        // ====================================================
 
-        if (document.getElementById("postImage")) {
-            document.getElementById("postImage").value = "";
+        await addDoc(
+            collection(db, "posts"),
+            {
+
+                uid: user.uid,
+
+                fullName: fullName,
+
+                text: text,
+
+                image: imageUrl,
+
+                video: videoUrl,
+
+                likes: 0,
+
+                comments: 0,
+
+                shares: 0,
+
+                reposts: 0,
+
+                createdAt:
+                    serverTimestamp()
+
+            }
+        );
+
+
+        // ====================================================
+        // CLEAR FORM
+        // ====================================================
+
+        if (textElement) {
+
+            textElement.value = "";
+
         }
 
-        if (document.getElementById("postVideo")) {
-            document.getElementById("postVideo").value = "";
+
+        if (
+            document.getElementById("postImage")
+        ) {
+
+            document
+                .getElementById("postImage")
+                .value = "";
+
         }
 
-        alert("Post created successfully!");
 
-    } catch (err) {
-        console.error("createPost error:", err);
-        alert(err.message || "Something went wrong. Please try again.");
+        if (
+            document.getElementById("postVideo")
+        ) {
+
+            document
+                .getElementById("postVideo")
+                .value = "";
+
+        }
+
+
+        clearMediaPreview();
+
+
+        // ====================================================
+        // SUCCESS
+        // ====================================================
+
+        alert(
+            "Post created successfully!"
+        );
+
+
+        // Redirect to home
+        window.location.href =
+            "home.html";
+
+
+    } catch (error) {
+
+        console.error(
+            "createPost error:",
+            error
+        );
+
+
+        alert(
+            error.message ||
+            "Something went wrong. Please try again."
+        );
+
 
     } finally {
+
         setPostingState(false);
+
     }
 
 };
