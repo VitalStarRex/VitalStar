@@ -33,7 +33,6 @@ onAuthStateChanged(auth, (user) => {
 
     if (!user) {
         window.location.href = "login.html";
-        return;
     }
 
 });
@@ -60,7 +59,7 @@ const postButton =
 
 
 // ============================================================
-// CREATE POSTING STATUS
+// POSTING STATUS
 // ============================================================
 
 const postStatus =
@@ -70,15 +69,11 @@ postStatus.id = "postStatus";
 
 postStatus.style.display = "none";
 postStatus.style.textAlign = "center";
-postStatus.style.marginTop = "12px";
-postStatus.style.padding = "10px";
-postStatus.style.borderRadius = "8px";
+postStatus.style.marginTop = "10px";
+postStatus.style.padding = "8px";
 postStatus.style.fontSize = "14px";
 postStatus.style.fontWeight = "bold";
 postStatus.style.color = "#1877f2";
-
-
-// Put status underneath the Post button
 
 if (postButton) {
 
@@ -99,10 +94,7 @@ function setPostingState(isPosting) {
         return;
     }
 
-
-    postButton.disabled =
-        isPosting;
-
+    postButton.disabled = isPosting;
 
     if (isPosting) {
 
@@ -115,8 +107,7 @@ function setPostingState(isPosting) {
         postStatus.textContent =
             "Uploading your post, please wait...";
 
-    }
-    else {
+    } else {
 
         postButton.textContent =
             "🚀 Post";
@@ -138,60 +129,72 @@ function setPostingState(isPosting) {
 
 if (imageInput) {
 
-    imageInput.addEventListener(
-        "change",
-        () => {
+    imageInput.addEventListener("change", () => {
 
-            const file =
-                imageInput.files[0];
+        const file =
+            imageInput.files[0];
 
-
-            if (!file) {
-                return;
-            }
+        if (!file) {
+            return;
+        }
 
 
-            // Clear video input
-            if (videoInput) {
-                videoInput.value = "";
-            }
+        // Clear video selection
+        if (videoInput) {
+            videoInput.value = "";
+        }
 
 
-            // Hide video preview
-            if (videoPreview) {
+        // Hide video preview
+        if (videoPreview) {
 
-                videoPreview.pause();
+            videoPreview.pause();
 
-                videoPreview.removeAttribute(
-                    "src"
-                );
+            videoPreview.removeAttribute(
+                "src"
+            );
 
-                videoPreview.load();
+            videoPreview.load();
 
-                videoPreview.style.display =
-                    "none";
-
-            }
-
-
-            // Show image preview
-            if (imagePreview) {
-
-                const imageURL =
-                    URL.createObjectURL(file);
+            videoPreview.style.display =
+                "none";
+        }
 
 
-                imagePreview.src =
-                    imageURL;
+        // Show image preview
+        if (imagePreview) {
 
+            imagePreview.src =
+                URL.createObjectURL(file);
 
-                imagePreview.style.display =
-                    "block";
+            imagePreview.style.display =
+                "block";
 
-            }
+            // SMALL PREVIEW
+            imagePreview.style.width =
+                "auto";
+
+            imagePreview.style.maxWidth =
+                "100%";
+
+            imagePreview.style.height =
+                "auto";
+
+            imagePreview.style.maxHeight =
+                "220px";
+
+            imagePreview.style.objectFit =
+                "contain";
+
+            imagePreview.style.margin =
+                "10px auto";
+
+            imagePreview.style.borderRadius =
+                "10px";
 
         }
-    );
+
+    });
 
 }
 
@@ -202,56 +205,71 @@ if (imageInput) {
 
 if (videoInput) {
 
-    videoInput.addEventListener(
-        "change",
-        () => {
+    videoInput.addEventListener("change", () => {
 
-            const file =
-                videoInput.files[0];
+        const file =
+            videoInput.files[0];
 
-
-            if (!file) {
-                return;
-            }
+        if (!file) {
+            return;
+        }
 
 
-            // Clear image input
-            if (imageInput) {
-                imageInput.value = "";
-            }
+        // Clear image selection
+        if (imageInput) {
+            imageInput.value = "";
+        }
 
 
-            // Hide image preview
-            if (imagePreview) {
+        // Hide image preview
+        if (imagePreview) {
 
-                imagePreview.removeAttribute(
-                    "src"
-                );
+            imagePreview.removeAttribute(
+                "src"
+            );
 
-                imagePreview.style.display =
-                    "none";
-
-            }
-
-
-            // Show video preview
-            if (videoPreview) {
-
-                const videoURL =
-                    URL.createObjectURL(file);
+            imagePreview.style.display =
+                "none";
+        }
 
 
-                videoPreview.src =
-                    videoURL;
+        // Show video preview
+        if (videoPreview) {
 
+            videoPreview.src =
+                URL.createObjectURL(file);
 
-                videoPreview.style.display =
-                    "block";
+            videoPreview.controls =
+                true;
 
-            }
+            videoPreview.style.display =
+                "block";
+
+            // SMALL PREVIEW
+            videoPreview.style.width =
+                "100%";
+
+            videoPreview.style.maxWidth =
+                "420px";
+
+            videoPreview.style.height =
+                "auto";
+
+            videoPreview.style.maxHeight =
+                "220px";
+
+            videoPreview.style.objectFit =
+                "contain";
+
+            videoPreview.style.margin =
+                "10px auto";
+
+            videoPreview.style.borderRadius =
+                "10px";
 
         }
-    );
+
+    });
 
 }
 
@@ -305,7 +323,6 @@ async function uploadToCloudinary(file) {
             data
         );
 
-
         throw new Error(
             data?.error?.message ||
             "Media upload failed."
@@ -344,7 +361,7 @@ window.createPost = async function () {
 
 
     // --------------------------------------------------------
-    // Nothing entered
+    // CHECK CONTENT
     // --------------------------------------------------------
 
     if (
@@ -362,7 +379,7 @@ window.createPost = async function () {
 
 
     // --------------------------------------------------------
-    // Check login
+    // CHECK LOGIN
     // --------------------------------------------------------
 
     const user =
@@ -426,7 +443,6 @@ window.createPost = async function () {
         let videoUrl = "";
 
 
-        // IMAGE
         if (imageFile) {
 
             imageUrl =
@@ -437,7 +453,6 @@ window.createPost = async function () {
         }
 
 
-        // VIDEO
         if (videoFile) {
 
             videoUrl =
@@ -449,7 +464,7 @@ window.createPost = async function () {
 
 
         // ====================================================
-        // SAVE POST TO FIRESTORE
+        // SAVE POST
         // ====================================================
 
         await addDoc(
@@ -560,16 +575,12 @@ window.createPost = async function () {
         );
 
 
-        // ====================================================
-        // REDIRECT TO HOME
-        // ====================================================
-
+        // Redirect to home
         window.location.href =
             "home.html";
 
 
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "createPost error:",
@@ -582,10 +593,9 @@ window.createPost = async function () {
             "Something went wrong. Please try again."
         );
 
-    }
-    finally {
 
-        // Stop posting state
+    } finally {
+
         setPostingState(false);
 
     }
