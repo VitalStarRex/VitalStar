@@ -170,21 +170,15 @@ if (imageInput) {
             imagePreview.style.display =
                 "block";
 
-            // SMALL PREVIEW
+            // EXACT PREVIEW SIZE
             imagePreview.style.width =
-                "auto";
-
-            imagePreview.style.maxWidth =
-                "100%";
+                "100px";
 
             imagePreview.style.height =
-                "auto";
-
-            imagePreview.style.maxHeight =
-                "220px";
+                "120px";
 
             imagePreview.style.objectFit =
-                "contain";
+                "cover";
 
             imagePreview.style.margin =
                 "10px auto";
@@ -245,21 +239,15 @@ if (videoInput) {
             videoPreview.style.display =
                 "block";
 
-            // SMALL PREVIEW
+            // EXACT PREVIEW SIZE
             videoPreview.style.width =
-                "100%";
-
-            videoPreview.style.maxWidth =
-                "420px";
+                "100px";
 
             videoPreview.style.height =
-                "auto";
-
-            videoPreview.style.maxHeight =
-                "220px";
+                "120px";
 
             videoPreview.style.objectFit =
-                "contain";
+                "cover";
 
             videoPreview.style.margin =
                 "10px auto";
@@ -464,7 +452,7 @@ window.createPost = async function () {
 
 
         // ====================================================
-        // SAVE POST
+        // SAVE POST TO FIRESTORE
         // ====================================================
 
         await addDoc(
@@ -596,6 +584,7 @@ window.createPost = async function () {
 
     } finally {
 
+        // Stop posting state
         setPostingState(false);
 
     }
