@@ -41,7 +41,7 @@ const postsQuery = query(
 );
 
 
-onSnapshot(postsQuery, (snapshot) => {
+onSnapshot(postsQuery, async (snapshot) => {
 
     feed.innerHTML = "";
 
@@ -61,7 +61,8 @@ onSnapshot(postsQuery, (snapshot) => {
     }
 
 
-    snapshot.forEach((docSnap) => {
+    // Load each post
+    for (const docSnap of snapshot.docs) {
 
         const post = docSnap.data();
 
@@ -84,25 +85,143 @@ onSnapshot(postsQuery, (snapshot) => {
         }
 
 
+        // ====================================================
+        // GET POST AUTHOR PROFILE
+        // ====================================================
+
+        let profilePicture = "";
+        let fullName = post.fullName || "VitalStar User";
+
+
+        try {
+
+            const userSnap = await getDoc(
+                doc(db, "users", post.uid)
+            );
+
+
+            if (userSnap.exists()) {
+
+                const userData = userSnap.data();
+
+
+                fullName =
+                    userData.fullName ||
+                    userData.username ||
+                    post.fullName ||
+                    "VitalStar User";
+
+
+                profilePicture =
+                    userData.profilePicture ||
+                    "";
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Could not load profile:",
+                error
+            );
+
+        }
+
+
+        // ====================================================
+        // PROFILE PICTURE
+        // ====================================================
+
+        const avatarHTML = profilePicture
+
+            ? `
+                <img
+                    src="${profilePicture}"
+                    alt="${fullName}"
+                    style="
+                        width:50px;
+                        height:50px;
+                        border-radius:50%;
+                        object-fit:cover;
+                        display:block;
+                    "
+                    onerror="
+                        this.style.display='none';
+                        this.nextElementSibling.style.display='flex';
+                    "
+                >
+
+                <div
+                    style="
+                        width:50px;
+                        height:50px;
+                        border-radius:50%;
+                        background:#e5e7eb;
+                        display:none;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:25px;
+                    "
+                >
+                    👤
+                </div>
+            `
+
+            : `
+                <div
+                    style="
+                        width:50px;
+                        height:50px;
+                        border-radius:50%;
+                        background:#e5e7eb;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:25px;
+                    "
+                >
+                    👤
+                </div>
+            `;
+
+
+        // ====================================================
+        // DISPLAY POST
+        // ====================================================
+
         feed.innerHTML += `
 
-<div class="post-card"
-style="
-text-align:center;
-">
+<div
+    class="post-card"
+    style="
+        text-align:center;
+    "
+>
 
 
     <!-- USER INFORMATION -->
 
-    <div class="user-info"
-    style="
-        justify-content:center;
-        text-align:center;
-    ">
+    <div
+        class="user-info"
+        style="
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+        "
+    >
 
 
-        <div class="avatar">
-            👤
+        <div
+            class="avatar"
+            style="
+                display:flex;
+                align-items:center;
+                justify-content:center;
+            "
+        >
+
+            ${avatarHTML}
+
         </div>
 
 
@@ -114,7 +233,7 @@ text-align:center;
                     href="profile.html?uid=${post.uid}"
                 >
 
-                    ${post.fullName || "VitalStar User"}
+                    ${fullName}
 
                 </a>
 
@@ -136,10 +255,12 @@ text-align:center;
     ${
         post.text
             ? `
-            <p style="
-                text-align:center;
-                margin:15px auto;
-            ">
+            <p
+                style="
+                    text-align:center;
+                    margin:15px auto;
+                "
+            >
                 ${post.text}
             </p>
             `
@@ -210,6 +331,8 @@ text-align:center;
             display:flex;
             justify-content:center;
             align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
         "
     >
 
@@ -255,8 +378,7 @@ text-align:center;
 
 `;
 
-    });
-
+    }
 
 }, (error) => {
 
@@ -265,10 +387,12 @@ text-align:center;
 
     feed.innerHTML = `
 
-        <p style="
-            color:red;
-            text-align:center;
-        ">
+        <p
+            style="
+                color:red;
+                text-align:center;
+            "
+        >
 
             Unable to load posts
 
