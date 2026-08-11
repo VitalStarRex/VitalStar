@@ -1,108 +1,321 @@
 // ============================================================
 // VITALSTAR — user-post.js
-// Displays posts belonging to a user.
-// Safe version: avoids compound Firestore index requirements.
+// Diagnostic + user posts loader
 // ============================================================
-
-import { auth, db } from "./firebase.js";
-
-import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-// ============================================================
-// SETTINGS
-// ============================================================
-
-const POSTS_LIMIT = 10;
 
 const postsContainer = document.getElementById("posts");
 
 
 // ============================================================
-// HELPERS
+// SHOW STATUS
 // ============================================================
 
-function escapeHTML(value) {
-  if (value === null || value === undefined) return "";
+function showStatus(message, error = false) {
 
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  if (!postsContainer) {
+    alert(message);
+    return;
+  }
+
+  postsContainer.innerHTML = `
+    <div class="${error ? "empty" : "loading"}">
+      ${message}
+    </div>
+  `;
+
 }
 
 
-function getUserId() {
+// ============================================================
+// START
+// ============================================================
 
-  const params = new URLSearchParams(
-    window.location.search
-  );
-
-  return (
-    params.get("uid") ||
-    params.get("userId") ||
-    params.get("id") ||
-    null
-  );
-}
-
-
-function timestampToNumber(value) {
-
-  if (!value) return 0;
-
-  if (typeof value.toMillis === "function") {
-    return value.toMillis();
-  }
-
-  if (typeof value.toDate === "function") {
-    return value.toDate().getTime();
-  }
-
-  if (value instanceof Date) {
-    return value.getTime();
-  }
-
-  if (typeof value === "number") {
-    return value;
-  }
-
-  const date = new Date(value);
-
-  return isNaN(date.getTime())
-    ? 0
-    : date.getTime();
-}
-
-
-function formatTime(post) {
-
-  const value =
-    post.createdAt ||
-    post.timestamp ||
-    post.updatedAt;
-
-  const milliseconds =
-    timestampToNumber(value);
-
-  if (!milliseconds) return "";
+async function startUserPosts() {
 
   try {
-    return new Date(milliseconds).toLocaleString();
-  } catch {
-    return "";
+
+    showStatus("Connecting to VitalStar...");
+
+
+    // --------------------------------------------------------
+    // Load your existing Firebase configuration
+    // --------------------------------------------------------
+
+    const firebaseModule =
+      await import("./firebase.js");
+
+
+    const auth =
+      firebaseModule.auth;
+
+    const db =
+      firebaseModule.db;
+
+
+    if (!auth) {
+
+      throw new Error(
+        "Firebase Auth was not exported from firebase.js"
+      );
+
+    }
+
+
+    if (!db) {
+
+      throw new Error(
+        "Firestore db was not exported from firebase.js"
+      );
+
+    }
+
+
+    showStatus("Firebase connected. Checking login...");
+
+
+    // --------------------------------------------------------
+    // Firebase Auth
+    // --------------------------------------------------------
+
+    const {
+      onAuthStateChanged
+    } = await import(
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
+    );
+
+
+    onAuthStateChanged(
+      auth,
+      async (user) => {
+
+        try {
+
+          if (!user) {
+
+            showStatus(
+              "You must be logged in to view posts."
+            );
+
+            return;
+
+          }
+
+
+          console.log(
+            "Logged-in user:",
+            user.uid
+          );
+
+
+          // --------------------------------------------------
+          // Get profile UID from URL
+          // --------------------------------------------------
+
+          const params =
+            new URLSearchParams(
+              window.location.search
+            );
+
+
+          const profileUid =
+            params.get("uid") ||
+            params.get("userId") ||
+            params.get("id") ||
+            user.uid;
+
+
+          console.log(
+            "Posts will be loaded for:",
+            profileUid
+          );
+
+
+          await loadPosts(
+            db,
+            profileUid
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "USER POSTS ERROR:",
+            error
+          );
+
+
+          showStatus(
+            "Error loading posts:<br><br>" +
+            escapeHTML(
+              error.message ||
+              String(error)
+            ),
+            true
+          );
+
+        }
+
+      }
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "USER-POST STARTUP ERROR:",
+      error
+    );
+
+
+    showStatus(
+      `
+        <strong>user-post.js failed to start</strong>
+        <br><br>
+        ${escapeHTML(
+          error.message ||
+          String(error)
+        )}
+      `,
+      true
+    );
+
   }
+
+}
+
+
+// ============================================================
+// LOAD POSTS
+// ============================================================
+
+async function loadPosts(db, uid) {
+
+  showStatus("Loading posts from Firestore...");
+
+
+  const {
+    collection,
+    getDocs
+  } = await import(
+    "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+  );
+
+
+  const postsSnapshot =
+    await getDocs(
+      collection(db, "posts")
+    );
+
+
+  console.log(
+    "Total posts in database:",
+    postsSnapshot.size
+  );
+
+
+  const posts = [];
+
+
+  postsSnapshot.forEach(
+    (postDoc) => {
+
+      const data =
+        postDoc.data();
+
+
+      console.log(
+        "Post:",
+        postDoc.id,
+        data
+      );
+
+
+      const ownerId =
+        data.userId ||
+        data.authorId ||
+        data.uid ||
+        data.ownerId ||
+        data.createdBy;
+
+
+      if (ownerId === uid) {
+
+        posts.push({
+
+          id: postDoc.id,
+
+          ...data
+
+        });
+
+      }
+
+    }
+  );
+
+
+  console.log(
+    "Posts belonging to this user:",
+    posts.length
+  );
+
+
+  // ----------------------------------------------------------
+  // Sort newest first
+  // ----------------------------------------------------------
+
+  posts.sort(
+    (a, b) => {
+
+      return getTimestamp(b) -
+             getTimestamp(a);
+
+    }
+  );
+
+
+  const latestPosts =
+    posts.slice(0, 10);
+
+
+  if (latestPosts.length === 0) {
+
+    showStatus(
+      "This user has no posts yet."
+    );
+
+    return;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Load profile
+  // ----------------------------------------------------------
+
+  const profile =
+    await loadProfile(
+      db,
+      uid
+    );
+
+
+  postsContainer.innerHTML = "";
+
+
+  latestPosts.forEach(
+    (post) => {
+
+      postsContainer.appendChild(
+        createPostElement(
+          post,
+          profile
+        )
+      );
+
+    }
+  );
+
 }
 
 
@@ -110,16 +323,25 @@ function formatTime(post) {
 // LOAD PROFILE
 // ============================================================
 
-async function loadUserProfile(uid) {
+async function loadProfile(db, uid) {
 
   try {
 
-    const userRef = doc(db, "users", uid);
+    const {
+      doc,
+      getDoc
+    } = await import(
+      "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+    );
 
-    const userSnap =
-      await getDoc(userRef);
 
-    if (!userSnap.exists()) {
+    const snap =
+      await getDoc(
+        doc(db, "users", uid)
+      );
+
+
+    if (!snap.exists()) {
 
       return {
         fullName: "VitalStar User",
@@ -129,8 +351,10 @@ async function loadUserProfile(uid) {
 
     }
 
+
     const user =
-      userSnap.data();
+      snap.data();
+
 
     return {
 
@@ -152,126 +376,45 @@ async function loadUserProfile(uid) {
 
     };
 
+
   } catch (error) {
 
-    console.error(
-      "Profile loading error:",
+    console.warn(
+      "Profile could not be loaded:",
       error
     );
 
+
     return {
-      fullName: "VitalStar User",
-      username: "",
-      avatarURL: ""
+
+      fullName:
+        "VitalStar User",
+
+      username:
+        "",
+
+      avatarURL:
+        ""
+
     };
 
   }
-}
-
-
-// ============================================================
-// CHECK POST OWNER
-// ============================================================
-
-function belongsToUser(post, uid) {
-
-  return (
-    post.userId === uid ||
-    post.authorId === uid ||
-    post.uid === uid ||
-    post.ownerId === uid ||
-    post.createdBy === uid
-  );
 
 }
 
 
 // ============================================================
-// MEDIA
+// CREATE POST
 // ============================================================
 
-function getMediaURL(post) {
-
-  return (
-    post.mediaURL ||
-    post.mediaUrl ||
-    post.imageURL ||
-    post.imageUrl ||
-    post.videoURL ||
-    post.videoUrl ||
-    post.fileURL ||
-    post.fileUrl ||
-    ""
-  );
-
-}
-
-
-function getMediaType(post) {
-
-  return String(
-    post.mediaType ||
-    post.type ||
-    ""
-  ).toLowerCase();
-
-}
-
-
-function createMedia(post) {
-
-  const url =
-    getMediaURL(post);
-
-  if (!url) return "";
-
-  const type =
-    getMediaType(post);
-
-
-  if (
-    type.includes("video") ||
-    post.videoURL ||
-    post.videoUrl
-  ) {
-
-    return `
-      <video
-        class="post-media"
-        src="${escapeHTML(url)}"
-        controls
-        preload="metadata">
-      </video>
-    `;
-
-  }
-
-
-  return `
-    <img
-      class="post-media"
-      src="${escapeHTML(url)}"
-      alt="Post media"
-      loading="lazy"
-      onerror="this.style.display='none'">
-  `;
-
-}
-
-
-// ============================================================
-// RENDER POST
-// ============================================================
-
-function renderPost(post, profile) {
+function createPostElement(post, profile) {
 
   const article =
     document.createElement("article");
 
-  article.className = "post";
 
-  article.dataset.postId =
-    post.id || "";
+  article.className =
+    "post";
 
 
   const text =
@@ -288,12 +431,16 @@ function renderPost(post, profile) {
 
   const username =
     profile.username
-      ? `@${escapeHTML(profile.username)}`
+      ? "@" + profile.username
       : "";
 
 
   const time =
-    formatTime(post);
+    formatDate(
+      post.createdAt ||
+      post.timestamp ||
+      post.updatedAt
+    );
 
 
   article.innerHTML = `
@@ -304,7 +451,10 @@ function renderPost(post, profile) {
         class="avatar"
         src="${escapeHTML(avatar)}"
         alt="Profile picture"
-        onerror="this.src='https://via.placeholder.com/100'">
+        onerror="
+          this.src='https://via.placeholder.com/100'
+        "
+      >
 
       <div>
 
@@ -316,7 +466,7 @@ function renderPost(post, profile) {
           username
             ? `
               <div class="username">
-                ${username}
+                ${escapeHTML(username)}
               </div>
             `
             : ""
@@ -376,189 +526,179 @@ function renderPost(post, profile) {
 
 
 // ============================================================
-// LOAD POSTS
+// MEDIA
 // ============================================================
 
-async function loadUserPosts(uid) {
+function createMedia(post) {
 
-  if (!postsContainer) {
-    console.error(
-      "user-post.js: #posts element not found."
-    );
-    return;
-  }
-
-
-  postsContainer.innerHTML = `
-    <div class="loading">
-      Loading posts...
-    </div>
-  `;
+  const url =
+    post.mediaURL ||
+    post.mediaUrl ||
+    post.imageURL ||
+    post.imageUrl ||
+    post.videoURL ||
+    post.videoUrl ||
+    post.fileURL ||
+    post.fileUrl ||
+    "";
 
 
-  try {
-
-    console.log(
-      "Loading posts for UID:",
-      uid
-    );
+  if (!url) return "";
 
 
-    // Get posts WITHOUT where/orderBy.
-    // This avoids Firestore index problems.
-    const snapshot =
-      await getDocs(
-        collection(db, "posts")
-      );
+  const type =
+    String(
+      post.mediaType ||
+      post.type ||
+      ""
+    ).toLowerCase();
 
 
-    console.log(
-      "Total posts found:",
-      snapshot.size
-    );
+  if (
+    type.includes("video") ||
+    post.videoURL ||
+    post.videoUrl
+  ) {
 
-
-    const posts = [];
-
-
-    snapshot.forEach(postDoc => {
-
-      const data =
-        postDoc.data();
-
-
-      if (
-        belongsToUser(data, uid)
-      ) {
-
-        posts.push({
-          id: postDoc.id,
-          ...data
-        });
-
-      }
-
-    });
-
-
-    console.log(
-      "Posts belonging to user:",
-      posts.length
-    );
-
-
-    // Newest first
-    posts.sort((a, b) => {
-
-      const aTime =
-        timestampToNumber(
-          a.createdAt ||
-          a.timestamp ||
-          a.updatedAt
-        );
-
-      const bTime =
-        timestampToNumber(
-          b.createdAt ||
-          b.timestamp ||
-          b.updatedAt
-        );
-
-      return bTime - aTime;
-
-    });
-
-
-    // Latest 10
-    const latestPosts =
-      posts.slice(0, POSTS_LIMIT);
-
-
-    if (latestPosts.length === 0) {
-
-      postsContainer.innerHTML = `
-        <div class="empty">
-          No posts available.
-        </div>
-      `;
-
-      return;
-
-    }
-
-
-    const profile =
-      await loadUserProfile(uid);
-
-
-    postsContainer.innerHTML = "";
-
-
-    latestPosts.forEach(post => {
-
-      const element =
-        renderPost(
-          post,
-          profile
-        );
-
-      postsContainer.appendChild(element);
-
-    });
-
-
-  } catch (error) {
-
-    console.error(
-      "USER POSTS ERROR:",
-      error
-    );
-
-
-    postsContainer.innerHTML = `
-      <div class="empty">
-        Unable to load posts.
-        <br>
-        <small>
-          Check the browser console for the exact error.
-        </small>
-      </div>
+    return `
+      <video
+        class="post-media"
+        src="${escapeHTML(url)}"
+        controls
+        preload="metadata">
+      </video>
     `;
 
   }
+
+
+  return `
+    <img
+      class="post-media"
+      src="${escapeHTML(url)}"
+      alt="Post media"
+      loading="lazy"
+      onerror="this.style.display='none'"
+    >
+  `;
 
 }
 
 
 // ============================================================
-// AUTH
+// TIME
 // ============================================================
 
-onAuthStateChanged(
-  auth,
-  async (user) => {
+function getTimestamp(post) {
 
-    if (!user) {
+  return getTimestampValue(
+    post.createdAt ||
+    post.timestamp ||
+    post.updatedAt
+  );
 
-      if (postsContainer) {
-
-        postsContainer.innerHTML = `
-          <div class="empty">
-            Please sign in to view posts.
-          </div>
-        `;
-
-      }
-
-      return;
-    }
+}
 
 
-    const uid =
-      getUserId() || user.uid;
+function getTimestampValue(value) {
+
+  if (!value) return 0;
 
 
-    await loadUserPosts(uid);
+  if (
+    typeof value.toMillis ===
+    "function"
+  ) {
+
+    return value.toMillis();
 
   }
-);
+
+
+  if (
+    typeof value.toDate ===
+    "function"
+  ) {
+
+    return value.toDate().getTime();
+
+  }
+
+
+  if (
+    typeof value ===
+    "number"
+  ) {
+
+    return value;
+
+  }
+
+
+  const date =
+    new Date(value);
+
+
+  return isNaN(
+    date.getTime()
+  )
+    ? 0
+    : date.getTime();
+
+}
+
+
+function formatDate(value) {
+
+  const time =
+    getTimestampValue(value);
+
+
+  if (!time) return "";
+
+
+  return new Date(
+    time
+  ).toLocaleString();
+
+}
+
+
+// ============================================================
+// SECURITY
+// ============================================================
+
+function escapeHTML(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+// ============================================================
+// START
+// ============================================================
+
+startUserPosts();
