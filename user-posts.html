@@ -1,76 +1,436 @@
-<style>
+<!DOCTYPE html>
+<html lang="en">
 
-/* ============================================================
-   USER POSTS — COMPACT SOCIAL MEDIA STYLE
-   ============================================================ */
+<head>
 
-.post-card {
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-    background: #fff;
-}
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-/* ============================================================
-   POST IMAGE
-   ============================================================ */
-
-.post-photo {
-
-    display: block;
-
-    width: 100%;
-
-    height: 280px;
-
-    max-height: 280px;
-
-    object-fit: contain;
-
-    background: #f1f1f1;
-
-    cursor: pointer;
-
-}
+    <title>VitalStar Posts</title>
 
 
-/* ============================================================
-   POST VIDEO
-   ============================================================ */
+    <style>
 
-.post-video {
-
-    display: block;
-
-    width: 100%;
-
-    height: 280px;
-
-    max-height: 280px;
-
-    object-fit: contain;
-
-    background: #000;
-
-}
+        * {
+            box-sizing: border-box;
+        }
 
 
-/* ============================================================
-   MOBILE
-   ============================================================ */
+        body {
 
-@media (max-width: 600px) {
+            margin: 0;
 
-    .post-photo,
-    .post-video {
+            padding: 0;
 
-        height: 240px;
+            background: #f5f6f8;
 
-        max-height: 240px;
+            font-family: Arial, sans-serif;
 
-    }
+            color: #111827;
 
-}
+        }
 
-</style>
+
+        /* ====================================================
+           PAGE
+           ==================================================== */
+
+        .page {
+
+            width: 100%;
+
+            max-width: 650px;
+
+            margin: 0 auto;
+
+            padding: 8px;
+
+        }
+
+
+        /* ====================================================
+           TITLE
+           ==================================================== */
+
+        .page-title {
+
+            background: #ffffff;
+
+            padding: 10px 12px;
+
+            margin-bottom: 8px;
+
+            border-radius: 8px;
+
+            font-size: 18px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* ====================================================
+           FEED
+           ==================================================== */
+
+        #feed,
+        #posts {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+        }
+
+
+        /* ====================================================
+           POST CARD
+           ==================================================== */
+
+        .post-card {
+
+            width: 100%;
+
+            background: #ffffff;
+
+            border-radius: 8px;
+
+            overflow: hidden;
+
+            border: 1px solid #e5e7eb;
+
+            margin: 0;
+
+        }
+
+
+        /* ====================================================
+           USER INFO
+           ==================================================== */
+
+        .user-info {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            padding: 8px 10px;
+
+        }
+
+
+        .user-info h3 {
+
+            margin: 0;
+
+            font-size: 14px;
+
+            line-height: 1.2;
+
+        }
+
+
+        .user-info h3 a {
+
+            color: #111827;
+
+            text-decoration: none;
+
+        }
+
+
+        .user-info small {
+
+            display: block;
+
+            color: #6b7280;
+
+            font-size: 11px;
+
+            margin-top: 2px;
+
+        }
+
+
+        /* ====================================================
+           PROFILE AVATAR
+           ==================================================== */
+
+        .post-avatar {
+
+            width: 36px;
+
+            height: 36px;
+
+            min-width: 36px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            background: #e5e7eb;
+
+        }
+
+
+        .post-avatar-fallback {
+
+            width: 36px;
+
+            height: 36px;
+
+            min-width: 36px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #e5e7eb;
+
+            font-size: 18px;
+
+        }
+
+
+        /* ====================================================
+           POST TEXT
+           ==================================================== */
+
+        .post-card > p {
+
+            margin: 0;
+
+            padding: 0 10px 8px;
+
+            font-size: 13px;
+
+            line-height: 1.35;
+
+            word-break: break-word;
+
+        }
+
+
+        /* ====================================================
+           IMAGE
+           ==================================================== */
+
+        .post-photo {
+
+            display: block;
+
+            width: 100%;
+
+            height: 100px;
+
+            max-height: 100px;
+
+            object-fit: contain;
+
+            background: #f1f1f1;
+
+        }
+
+
+        /* ====================================================
+           VIDEO
+           ==================================================== */
+
+        .post-video {
+
+            display: block;
+
+            width: 100%;
+
+            height: 100px;
+
+            max-height: 100px;
+
+            object-fit: contain;
+
+            background: #000000;
+
+        }
+
+
+        /* ====================================================
+           POST BUTTONS
+           ==================================================== */
+
+        .post-buttons {
+
+            display: flex;
+
+            width: 100%;
+
+            padding: 2px 4px;
+
+            border-top: 1px solid #eeeeee;
+
+        }
+
+
+        .post-buttons button {
+
+            flex: 1;
+
+            border: none;
+
+            background: transparent;
+
+            color: #374151;
+
+            padding: 6px 2px;
+
+            font-size: 12px;
+
+            cursor: pointer;
+
+            border-radius: 5px;
+
+        }
+
+
+        .post-buttons button:active {
+
+            background: #f3f4f6;
+
+        }
+
+
+        /* ====================================================
+           EMPTY / ERROR
+           ==================================================== */
+
+        .empty {
+
+            text-align: center;
+
+            padding: 20px;
+
+            color: #6b7280;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ====================================================
+           MOBILE
+           ==================================================== */
+
+        @media (max-width: 600px) {
+
+            .page {
+
+                padding: 5px;
+
+            }
+
+
+            .page-title {
+
+                margin-bottom: 5px;
+
+                padding: 9px 10px;
+
+                font-size: 17px;
+
+            }
+
+
+            #feed,
+            #posts {
+
+                gap: 6px;
+
+            }
+
+
+            .post-card {
+
+                border-radius: 7px;
+
+            }
+
+
+            .user-info {
+
+                padding: 7px 9px;
+
+            }
+
+
+            .post-photo,
+            .post-video {
+
+                height: 100px;
+
+                max-height: 100px;
+
+            }
+
+
+            .post-buttons button {
+
+                font-size: 11px;
+
+                padding: 6px 1px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <main class="page">
+
+
+        <div class="page-title">
+            Posts
+        </div>
+
+
+        <div id="feed">
+
+            <div class="empty">
+                Loading posts...
+            </div>
+
+        </div>
+
+
+    </main>
+
+
+    <!-- IMPORTANT:
+         Your actual JavaScript filename is user-posts.js
+    -->
+
+    <script
+        type="module"
+        src="./user-posts.js">
+    </script>
+
+
+</body>
+
+</html>
