@@ -1,31 +1,37 @@
 // ============================================================
 // VITALSTAR — user-posts.js
 // User profile posts
-// Matches the main VitalStar post system.
-// Includes:
-// - User posts
-// - Likes
-// - Comments
-// - Shares
-// - Notifications
-// - Profile links
+//
+// FEATURES
+// - Shows ALL posts belonging to the profile user
+// - Newest posts first
+// - Text posts
 // - Images
 // - Videos
+// - Likes
+// - Comments
+// - Reposts
+// - Shares
+// - Like notifications
+// - Repost notifications
+// - Notification badge
+// - Profile links
 // ============================================================
 
+
 import { auth, db } from "./firebase.js";
+
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 
 import {
     collection,
     addDoc,
     query,
     where,
-    orderBy,
-    limit,
     onSnapshot,
     doc,
     updateDoc,
@@ -38,9 +44,7 @@ import {
 
 
 // ============================================================
-// FIND FEED
-// Supports #feed used by your existing post system.
-// Also supports #posts as a fallback.
+// FEED
 // ============================================================
 
 const feed =
@@ -49,7 +53,7 @@ const feed =
 
 
 // ============================================================
-// GET PROFILE USER ID
+// GET PROFILE UID
 // ============================================================
 
 function getProfileUid() {
@@ -59,11 +63,13 @@ function getProfileUid() {
             window.location.search
         );
 
+
     return (
         params.get("uid") ||
         params.get("userId") ||
         params.get("id")
     );
+
 }
 
 
@@ -89,22 +95,102 @@ function escapeHTML(value) {
 
 function getPostDate(post) {
 
-    let date = "Just now";
+    if (!post.createdAt) {
 
-    if (post.createdAt) {
-
-        try {
-
-            date =
-                post.createdAt
-                    .toDate()
-                    .toLocaleString();
-
-        } catch (e) {}
+        return "Just now";
 
     }
 
-    return date;
+
+    try {
+
+        return post.createdAt
+            .toDate()
+            .toLocaleString();
+
+    } catch (error) {
+
+        return "Just now";
+
+    }
+
+}
+
+
+// ============================================================
+// GET PROFILE DATA
+// ============================================================
+
+async function getProfileData(uid, post) {
+
+    let profile = {
+
+        fullName:
+            post.fullName ||
+            "VitalStar User",
+
+        username:
+            post.username ||
+            "",
+
+        profilePicture:
+            post.profilePicture ||
+            post.avatarURL ||
+            post.photoURL ||
+            ""
+
+    };
+
+
+    try {
+
+        const userSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "users",
+                    uid
+                )
+            );
+
+
+        if (userSnap.exists()) {
+
+            const user =
+                userSnap.data();
+
+
+            profile.fullName =
+                user.fullName ||
+                user.displayName ||
+                user.name ||
+                profile.fullName;
+
+
+            profile.username =
+                user.username ||
+                profile.username;
+
+
+            profile.profilePicture =
+                user.profilePicture ||
+                user.avatarURL ||
+                user.photoURL ||
+                profile.profilePicture;
+
+        }
+
+    } catch (error) {
+
+        console.log(
+            "Could not load profile:",
+            error
+        );
+
+    }
+
+
+    return profile;
 
 }
 
@@ -118,7 +204,7 @@ function loadUserPosts(profileUid) {
     if (!feed) {
 
         console.error(
-            "user-posts.js: #feed or #posts was not found."
+            "user-posts.js: #feed or #posts not found."
         );
 
         return;
@@ -126,20 +212,40 @@ function loadUserPosts(profileUid) {
     }
 
 
+    feed.innerHTML = `
+
+        <p style="
+            text-align:center;
+            padding:20px;
+        ">
+
+            Loading posts...
+
+        </p>
+
+    `;
+
+
     /*
-     * We intentionally use ONLY where().
+     * Only filter by uid.
      *
-     * This avoids requiring a composite Firestore index.
-     * Posts are sorted below in JavaScript.
+     * We sort the posts in JavaScript so that
+     * no composite Firestore index is required.
      */
 
-    const postsQuery = query(
-        collection(db, "posts"),
-        where("uid", "==", profileUid)
-    );
+    const postsQuery =
+        query(
+            collection(db, "posts"),
+            where(
+                "uid",
+                "==",
+                profileUid
+            )
+        );
 
 
     onSnapshot(
+
         postsQuery,
 
         async (snapshot) => {
@@ -150,12 +256,16 @@ function loadUserPosts(profileUid) {
             if (snapshot.empty) {
 
                 feed.innerHTML = `
+
                     <p style="
                         text-align:center;
                         padding:20px;
                     ">
+
                         No posts yet. Be the first to post ⭐
+
                     </p>
+
                 `;
 
                 return;
@@ -163,52 +273,68 @@ function loadUserPosts(profileUid) {
             }
 
 
+            // ------------------------------------------------
+            // CONVERT SNAPSHOT TO ARRAY
+            // ------------------------------------------------
+
             const posts = [];
 
 
-            snapshot.forEach((docSnap) => {
+            snapshot.forEach(
+                (docSnap) => {
 
-                posts.push({
+                    posts.push({
 
-                    id: docSnap.id,
+                        id:
+                            docSnap.id,
 
-                    ...docSnap.data()
+                        ...docSnap.data()
 
-                });
+                    });
 
-            });
-
-
-            // ------------------------------------------------
-            // Newest first
-            // ------------------------------------------------
-
-            posts.sort((a, b) => {
-
-                const aTime =
-                    a.createdAt
-                        ? a.createdAt.toMillis()
-                        : 0;
-
-                const bTime =
-                    b.createdAt
-                        ? b.createdAt.toMillis()
-                        : 0;
-
-                return bTime - aTime;
-
-            });
+                }
+            );
 
 
             // ------------------------------------------------
-            // Latest 10 posts
+            // NEWEST FIRST
             // ------------------------------------------------
 
-            const latestPosts =
-                posts.slice(0, 10);
+            posts.sort(
+                (a, b) => {
+
+                    const aTime =
+                        a.createdAt
+                            ? getTime(
+                                a.createdAt
+                            )
+                            : 0;
 
 
-            for (const post of latestPosts) {
+                    const bTime =
+                        b.createdAt
+                            ? getTime(
+                                b.createdAt
+                            )
+                            : 0;
+
+
+                    return bTime - aTime;
+
+                }
+            );
+
+
+            // ------------------------------------------------
+            // SHOW ALL POSTS
+            // NO LIMIT
+            // ------------------------------------------------
+
+            for (
+                const post
+                of posts
+            ) {
+
 
                 const postId =
                     post.id;
@@ -219,85 +345,59 @@ function loadUserPosts(profileUid) {
 
 
                 // ------------------------------------------------
-                // PROFILE IMAGE
+                // PROFILE
                 // ------------------------------------------------
 
-                let profilePicture =
-                    post.profilePicture ||
-                    post.avatarURL ||
-                    post.photoURL ||
-                    "";
-
-
-                /*
-                 * If the post doesn't contain the profile
-                 * picture, get it from users/{uid}.
-                 */
-
-                if (!profilePicture && post.uid) {
-
-                    try {
-
-                        const userSnap =
-                            await getDoc(
-                                doc(
-                                    db,
-                                    "users",
-                                    post.uid
-                                )
-                            );
-
-
-                        if (userSnap.exists()) {
-
-                            const userData =
-                                userSnap.data();
-
-
-                            profilePicture =
-                                userData.profilePicture ||
-                                userData.avatarURL ||
-                                userData.photoURL ||
-                                "";
-
-                        }
-
-                    } catch (error) {
-
-                        console.log(
-                            "Profile image unavailable.",
-                            error
-                        );
-
-                    }
-
-                }
+                const profile =
+                    await getProfileData(
+                        profileUid,
+                        post
+                    );
 
 
                 // ------------------------------------------------
                 // AVATAR
                 // ------------------------------------------------
 
-                const avatarHTML =
-                    profilePicture
+                let avatarHTML;
 
-                    ? `
+
+                if (
+                    profile.profilePicture
+                ) {
+
+                    avatarHTML = `
+
                         <img
                             class="post-avatar"
-                            src="${escapeHTML(profilePicture)}"
+                            src="${escapeHTML(
+                                profile.profilePicture
+                            )}"
                             alt="Profile picture"
-                            onerror="this.style.display='none'">
-                      `
+                            onerror="
+                                this.style.display='none';
+                            "
+                        >
 
-                    : `
+                    `;
+
+                } else {
+
+                    avatarHTML = `
+
                         <div class="post-avatar-fallback">
+
                             👤
+
                         </div>
-                      `;
+
+                    `;
+
+                }
 
 
                 // ------------------------------------------------
-                // POST
+                // POST CARD
                 // ------------------------------------------------
 
                 feed.innerHTML += `
@@ -305,11 +405,15 @@ function loadUserPosts(profileUid) {
                     <div class="post-card">
 
 
+                        <!-- USER -->
+
                         <div class="user-info">
 
 
                             <a
-                                href="profile.html?uid=${encodeURIComponent(post.uid || "")}"
+                                href="profile.html?uid=${encodeURIComponent(
+                                    post.uid || profileUid
+                                )}"
                                 class="post-profile-link"
                             >
 
@@ -323,12 +427,13 @@ function loadUserPosts(profileUid) {
                                 <h3>
 
                                     <a
-                                        href="profile.html?uid=${encodeURIComponent(post.uid || "")}"
+                                        href="profile.html?uid=${encodeURIComponent(
+                                            post.uid || profileUid
+                                        )}"
                                     >
 
                                         ${escapeHTML(
-                                            post.fullName ||
-                                            "VitalStar User"
+                                            profile.fullName
                                         )}
 
                                     </a>
@@ -337,20 +442,29 @@ function loadUserPosts(profileUid) {
 
 
                                 ${
-                                    post.username
+                                    profile.username
                                     ?
+
                                     `
+
                                     <small>
-                                        @${escapeHTML(post.username)}
+                                        @${escapeHTML(
+                                            profile.username
+                                        )}
                                     </small>
+
                                     `
+
                                     :
+
                                     ""
                                 }
 
 
                                 <small>
+
                                     ${escapeHTML(date)}
+
                                 </small>
 
 
@@ -360,38 +474,60 @@ function loadUserPosts(profileUid) {
                         </div>
 
 
+                        <!-- TEXT -->
+
                         ${
                             post.text
                             ?
+
                             `
+
                             <p>
-                                ${escapeHTML(post.text)}
+                                ${escapeHTML(
+                                    post.text
+                                )}
                             </p>
+
                             `
+
                             :
+
                             ""
                         }
 
+
+                        <!-- IMAGE -->
 
                         ${
                             post.image
                             ?
+
                             `
+
                             <img
                                 class="post-photo"
-                                src="${escapeHTML(post.image)}"
+                                src="${escapeHTML(
+                                    post.image
+                                )}"
                                 alt="Post Image"
                             >
+
                             `
+
                             :
+
                             ""
                         }
 
 
+                        <!-- VIDEO -->
+
                         ${
                             post.video
                             ?
+
                             `
+
                             <video
                                 class="post-video"
                                 controls
@@ -399,54 +535,69 @@ function loadUserPosts(profileUid) {
                             >
 
                                 <source
-                                    src="${escapeHTML(post.video)}"
+                                    src="${escapeHTML(
+                                        post.video
+                                    )}"
                                     type="video/mp4"
                                 >
 
                                 Your browser does not support video.
 
                             </video>
+
                             `
+
                             :
+
                             ""
                         }
 
+
+                        <!-- BUTTONS -->
 
                         <div class="post-buttons">
 
 
                             <button
+                                type="button"
                                 onclick="likePost('${postId}')"
                             >
 
-                                ❤️ ${post.likes || 0}
+                                ❤️
+                                ${post.likes || 0}
 
                             </button>
 
 
                             <button
+                                type="button"
                                 onclick="openComments('${postId}')"
                             >
 
-                                💬 ${post.comments || 0}
+                                💬
+                                ${post.comments || 0}
 
                             </button>
 
 
                             <button
+                                type="button"
                                 onclick="repostPost('${postId}')"
                             >
 
-                                🔁 ${post.reposts || 0}
+                                🔁
+                                ${post.reposts || 0}
 
                             </button>
 
 
                             <button
+                                type="button"
                                 onclick="sharePost('${postId}')"
                             >
 
-                                🔗 ${post.shares || 0}
+                                🔗
+                                ${post.shares || 0}
 
                             </button>
 
@@ -466,7 +617,7 @@ function loadUserPosts(profileUid) {
         (error) => {
 
             console.error(
-                "Unable to load user posts:",
+                "USER POSTS ERROR:",
                 error
             );
 
@@ -493,10 +644,48 @@ function loadUserPosts(profileUid) {
 
 
 // ============================================================
+// FIRESTORE TIMESTAMP
+// ============================================================
+
+function getTime(value) {
+
+    try {
+
+        if (
+            typeof value.toMillis ===
+            "function"
+        ) {
+
+            return value.toMillis();
+
+        }
+
+
+        if (
+            typeof value.toDate ===
+            "function"
+        ) {
+
+            return value.toDate().getTime();
+
+        }
+
+    } catch (error) {}
+
+
+
+    return 0;
+
+}
+
+
+// ============================================================
 // LIKE SYSTEM
 // ============================================================
 
-window.likePost = async function(postId) {
+window.likePost =
+async function(postId) {
+
 
     const user =
         auth.currentUser;
@@ -515,8 +704,11 @@ window.likePost = async function(postId) {
 
     try {
 
+
         const likeId =
-            postId + "_" + user.uid;
+            postId +
+            "_" +
+            user.uid;
 
 
         const likeRef =
@@ -562,11 +754,12 @@ window.likePost = async function(postId) {
             postSnap.data();
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------
         // UNLIKE
-        // ----------------------------------------------------
+        // ------------------------------------------------
 
         if (likeSnap.exists()) {
+
 
             await deleteDoc(
                 likeRef
@@ -576,8 +769,10 @@ window.likePost = async function(postId) {
             await updateDoc(
                 postRef,
                 {
+
                     likes:
                         increment(-1)
+
                 }
             );
 
@@ -587,9 +782,9 @@ window.likePost = async function(postId) {
         }
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------
         // LIKE
-        // ----------------------------------------------------
+        // ------------------------------------------------
 
         await setDoc(
             likeRef,
@@ -619,14 +814,15 @@ window.likePost = async function(postId) {
         );
 
 
-        // ----------------------------------------------------
+        // ------------------------------------------------
         // NOTIFICATION
-        // ----------------------------------------------------
+        // ------------------------------------------------
 
         if (
             postData.uid &&
             postData.uid !== user.uid
         ) {
+
 
             const userSnap =
                 await getDoc(
@@ -638,7 +834,10 @@ window.likePost = async function(postId) {
                 );
 
 
-            if (userSnap.exists()) {
+            if (
+                userSnap.exists()
+            ) {
+
 
                 const currentUser =
                     userSnap.data();
@@ -697,10 +896,6 @@ window.likePost = async function(postId) {
             error
         );
 
-        alert(
-            "Unable to like this post."
-        );
-
     }
 
 };
@@ -710,11 +905,14 @@ window.likePost = async function(postId) {
 // COMMENTS
 // ============================================================
 
-window.openComments = function(postId) {
+window.openComments =
+function(postId) {
 
     window.location.href =
         "comments.html?postId=" +
-        encodeURIComponent(postId);
+        encodeURIComponent(
+            postId
+        );
 
 };
 
@@ -723,7 +921,9 @@ window.openComments = function(postId) {
 // REPOST
 // ============================================================
 
-window.repostPost = async function(postId) {
+window.repostPost =
+async function(postId) {
+
 
     const user =
         auth.currentUser;
@@ -741,6 +941,7 @@ window.repostPost = async function(postId) {
 
 
     try {
+
 
         const postRef =
             doc(
@@ -767,6 +968,10 @@ window.repostPost = async function(postId) {
         }
 
 
+        const post =
+            postSnap.data();
+
+
         await updateDoc(
             postRef,
             {
@@ -778,18 +983,15 @@ window.repostPost = async function(postId) {
         );
 
 
-        const post =
-            postSnap.data();
-
-
-        // ----------------------------------------------------
+        // ------------------------------------------------
         // REPOST NOTIFICATION
-        // ----------------------------------------------------
+        // ------------------------------------------------
 
         if (
             post.uid &&
             post.uid !== user.uid
         ) {
+
 
             const userSnap =
                 await getDoc(
@@ -801,7 +1003,10 @@ window.repostPost = async function(postId) {
                 );
 
 
-            if (userSnap.exists()) {
+            if (
+                userSnap.exists()
+            ) {
+
 
                 const currentUser =
                     userSnap.data();
@@ -866,12 +1071,15 @@ window.repostPost = async function(postId) {
 
 
 // ============================================================
-// SHARE POST
+// SHARE
 // ============================================================
 
-window.sharePost = async function(postId) {
+window.sharePost =
+async function(postId) {
+
 
     try {
+
 
         const postRef =
             doc(
@@ -906,56 +1114,29 @@ window.sharePost = async function(postId) {
             `${window.location.origin}/post.html?id=${postId}`;
 
 
-        let shared =
-            false;
-
-
-        // ----------------------------------------------------
-        // NATIVE SHARE
-        // ----------------------------------------------------
-
         if (
             navigator.share
         ) {
 
-            try {
 
-                await navigator.share({
+            await navigator.share({
 
-                    title:
-                        post.fullName ||
-                        "VitalStar Post",
+                title:
+                    post.fullName ||
+                    "VitalStar Post",
 
-                    text:
-                        post.text ||
-                        "Check out this post!",
+                text:
+                    post.text ||
+                    "Check out this post!",
 
-                    url:
-                        shareUrl
+                url:
+                    shareUrl
 
-                });
-
-
-                shared = true;
-
-            } catch (error) {
-
-                console.log(
-                    "Share cancelled."
-                );
-
-                return;
-
-            }
-
-        }
+            });
 
 
-        // ----------------------------------------------------
-        // CLIPBOARD FALLBACK
-        // ----------------------------------------------------
+        } else {
 
-        else {
 
             await navigator.clipboard.writeText(
                 shareUrl
@@ -966,35 +1147,24 @@ window.sharePost = async function(postId) {
                 "Post link copied to clipboard."
             );
 
-
-            shared = true;
-
         }
 
 
-        // ----------------------------------------------------
-        // COUNT SHARE
-        // ----------------------------------------------------
+        await updateDoc(
+            postRef,
+            {
 
-        if (shared) {
+                shares:
+                    increment(1)
 
-            await updateDoc(
-                postRef,
-                {
-
-                    shares:
-                        increment(1)
-
-                }
-            );
-
-        }
+            }
+        );
 
 
     } catch (error) {
 
-        console.error(
-            "Share error:",
+        console.log(
+            "Share cancelled.",
             error
         );
 
@@ -1009,6 +1179,7 @@ window.sharePost = async function(postId) {
 
 function setupNotificationBadge(user) {
 
+
     const notificationBadge =
         document.getElementById(
             "notificationBadge"
@@ -1017,10 +1188,6 @@ function setupNotificationBadge(user) {
 
     if (!notificationBadge) {
 
-        console.log(
-            "notificationBadge not found on this page."
-        );
-
         return;
 
     }
@@ -1028,7 +1195,11 @@ function setupNotificationBadge(user) {
 
     const notificationQuery =
         query(
-            collection(db, "notifications"),
+            collection(
+                db,
+                "notifications"
+            ),
+
             where(
                 "receiverId",
                 "==",
@@ -1039,13 +1210,17 @@ function setupNotificationBadge(user) {
 
     onSnapshot(
         notificationQuery,
+
         (snapshot) => {
 
-            let unreadNotifications = 0;
+
+            let unreadNotifications =
+                0;
 
 
             snapshot.forEach(
                 (notificationDoc) => {
+
 
                     const notification =
                         notificationDoc.data();
@@ -1069,6 +1244,7 @@ function setupNotificationBadge(user) {
                     : "0";
 
         },
+
         (error) => {
 
             console.error(
@@ -1077,6 +1253,7 @@ function setupNotificationBadge(user) {
             );
 
         }
+
     );
 
 }
@@ -1088,22 +1265,30 @@ function setupNotificationBadge(user) {
 
 onAuthStateChanged(
     auth,
+
     (user) => {
 
+
         if (!user) {
+
 
             if (feed) {
 
                 feed.innerHTML = `
+
                     <p style="
                         text-align:center;
                         padding:20px;
                     ">
+
                         Please login to view posts.
+
                     </p>
+
                 `;
 
             }
+
 
             return;
 
@@ -1115,10 +1300,12 @@ onAuthStateChanged(
 
 
         /*
-         * If profile.html?uid=XXXX exists,
-         * show that user's posts.
+         * Profile page:
          *
-         * Otherwise show the logged-in user's posts.
+         * profile.html?uid=USER_UID
+         *
+         * If no UID exists, the logged-in user's
+         * own UID is used.
          */
 
         const uid =
@@ -1131,10 +1318,14 @@ onAuthStateChanged(
         );
 
 
-        // Notification badge
+        // ----------------------------------------------------
+        // NOTIFICATION BADGE
+        // ----------------------------------------------------
+
         setupNotificationBadge(
             user
         );
 
     }
+
 );
