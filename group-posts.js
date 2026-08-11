@@ -4,48 +4,206 @@
 //
 // Handles:
 // - Text posts
-// - Image uploads
-// - Video uploads
-// - Image preview
+// - Image uploads via Cloudinary
+// - Video uploads via Cloudinary
 // - HTML5 video playback
-// - Real user full names
-// - Real profile pictures
-// - Profile links
+// - Full author name from users/{uid}
+// - Profile picture from users/{uid}
+// - Yellow author names
 // - Likes
 // - Comments
 // - Replies
-// - Reposts
-// - Sharing
 // - Edit / Delete
 // - Pin / Unpin
 // - Report
+// - Repost
+// - Share
 // - Pagination
 // ============================================================
 
 import {
-  doc,
   addDoc,
-  deleteDoc,
-  updateDoc,
-  setDoc,
-  getDoc,
-  getDocs,
   collection,
   query,
+  where,
   orderBy,
   limit,
   startAfter,
   increment,
-  serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
+  serverTimestamp,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ============================================================
 // CLOUDINARY
+// Same method used by your working create-post.js
 // ============================================================
 
-const CLOUDINARY_CLOUD_NAME = 'm0scmqqv';
-const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
+const CLOUDINARY_CLOUD_NAME = "m0scmqqv";
+const CLOUDINARY_UPLOAD_PRESET = "vitalstar_upload";
+
+
+// ============================================================
+// CLOUDINARY UPLOAD
+// ============================================================
+
+async function uploadToCloudinary(file) {
+
+  if (!file) {
+    throw new Error("No file selected.");
+  }
+
+  const type = file.type.startsWith("video")
+    ? "video"
+    : "image";
+
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  formData.append(
+    "upload_preset",
+    CLOUDINARY_UPLOAD_PRESET
+  );
+
+  try {
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`,
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    let data = {};
+
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error(
+        "[Cloudinary] Could not read response:",
+        jsonError
+      );
+    }
+
+    if (!response.ok) {
+
+      console.error(
+        "[Cloudinary] Upload failed:",
+        data
+      );
+
+      throw new Error(
+        data?.error?.message ||
+        `Cloudinary upload failed (${response.status}).`
+      );
+    }
+
+    if (!data.secure_url) {
+
+      console.error(
+        "[Cloudinary] No secure_url returned:",
+        data
+      );
+
+      throw new Error(
+        "Cloudinary did not return a media URL."
+      );
+    }
+
+    return {
+      url: data.secure_url,
+      resourceType: data.resource_type || type
+    };
+
+  } catch (error) {
+
+    console.error(
+      "[Cloudinary] Upload error:",
+      error
+    );
+
+    if (
+      error instanceof TypeError ||
+      error.message?.toLowerCase().includes("failed to fetch")
+    ) {
+      throw new Error(
+        "Could not connect to Cloudinary. Check your internet connection and try again."
+      );
+    }
+
+    throw error;
+  }
+}
+
+
+// ============================================================
+// VIDEO PLAYBACK URL
+//
+// Cloudinary can deliver the uploaded video as MP4.
+// This helps when the original upload is MOV or another format
+// that some mobile browsers cannot play directly.
+// ============================================================
+
+function getPlayableVideoUrl(url) {
+
+  if (!url) {
+    return "";
+  }
+
+  try {
+
+    const parsed = new URL(url);
+
+    if (
+      parsed.hostname.includes("res.cloudinary.com") &&
+      parsed.pathname.includes("/video/upload/")
+    ) {
+
+      const marker = "/video/upload/";
+
+      const index = parsed.pathname.indexOf(marker);
+
+      if (index !== -1) {
+
+        const before = parsed.pathname.slice(
+          0,
+          index + marker.length
+        );
+
+        const after = parsed.pathname.slice(
+          index + marker.length
+        );
+
+        // Do not add transformation twice.
+        if (!after.startsWith("f_mp4/")) {
+
+          parsed.pathname =
+            before +
+            "f_mp4/" +
+            after;
+        }
+
+        return parsed.toString();
+      }
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "Could not transform video URL:",
+      error
+    );
+  }
+
+  return url;
+}
 
 
 // ============================================================
@@ -53,203 +211,135 @@ const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
 // ============================================================
 
 const POSTS_PAGE_SIZE = 10;
-const POSTS_STYLE_ID = 'vs-group-posts-styles';
-
-const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 60 * 1024 * 1024;
-
-
-// ============================================================
-// STATE
-// ============================================================
+const POSTS_STYLE_ID = "vs-group-posts-styles";
 
 let ctx = null;
 let state = null;
 
 
-// Cache user profiles so we do not repeatedly request the
-// same user document from Firestore.
-const authorCache = new Map();
+// ============================================================
+// PROFILE CACHE
+// Prevents repeatedly downloading the same user document.
+// ============================================================
+
+const profileCache = new Map();
 
 
 // ============================================================
-// CLOUDINARY UPLOAD
+// GET USER PROFILE
+//
+// Reads:
+// users/{uid}
+//
+// Supports several possible profile-picture field names so this
+// works with your existing VitalStar profile structure.
 // ============================================================
 
-function uploadToCloudinary(file, resourceType, onProgress) {
-  return new Promise((resolve, reject) => {
+async function getUserProfile(uid) {
 
-    if (!file) {
-      reject(new Error('No media file selected.'));
-      return;
+  if (!uid) {
+    return {
+      fullName: "VitalStar User",
+      photoURL: ""
+    };
+  }
+
+  if (profileCache.has(uid)) {
+    return profileCache.get(uid);
+  }
+
+  try {
+
+    const userRef = doc(
+      ctx.db,
+      "users",
+      uid
+    );
+
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+
+      const fallback = {
+        fullName: "VitalStar User",
+        photoURL: ""
+      };
+
+      profileCache.set(uid, fallback);
+
+      return fallback;
     }
 
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      reject(new Error('Cloudinary configuration is missing.'));
-      return;
-    }
+    const data = userSnap.data();
 
-    /*
-     * Use the explicit endpoint first.
-     *
-     * Images:
-     * /image/upload
-     *
-     * Videos:
-     * /video/upload
-     */
-    const endpoint =
-      resourceType === 'video'
-        ? 'video/upload'
-        : 'image/upload';
+    const profile = {
 
-    const url =
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${endpoint}`;
+      fullName:
+        data.fullName ||
+        data.displayName ||
+        data.name ||
+        "VitalStar User",
 
-    const formData = new FormData();
+      photoURL:
+        data.photoURL ||
+        data.profilePicture ||
+        data.profilePic ||
+        data.profileImage ||
+        data.avatar ||
+        data.image ||
+        ""
 
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-    const xhr = new XMLHttpRequest();
-
-    xhr.open('POST', url, true);
-
-    /*
-     * Five minutes gives large videos enough time to upload
-     * on a mobile connection.
-     */
-    xhr.timeout = 300000;
-
-    xhr.upload.onprogress = (event) => {
-
-      if (
-        event.lengthComputable &&
-        typeof onProgress === 'function'
-      ) {
-        const percent =
-          Math.round((event.loaded / event.total) * 100);
-
-        onProgress(percent);
-      }
     };
 
+    profileCache.set(uid, profile);
 
-    xhr.onload = () => {
+    return profile;
 
-      let response = null;
+  } catch (error) {
 
-      try {
-        response = JSON.parse(xhr.responseText || '{}');
-      } catch (error) {
-        console.error(
-          '[Cloudinary] Invalid JSON response:',
-          xhr.responseText
-        );
+    console.error(
+      "Could not load user profile:",
+      error
+    );
 
-        reject(
-          new Error(
-            `Cloudinary returned an invalid response (${xhr.status}).`
-          )
-        );
-
-        return;
-      }
-
-
-      if (
-        xhr.status >= 200 &&
-        xhr.status < 300 &&
-        response.secure_url
-      ) {
-
-        resolve({
-          url: response.secure_url,
-          resourceType:
-            response.resource_type || resourceType
-        });
-
-        return;
-      }
-
-
-      console.error(
-        '[Cloudinary] Upload rejected:',
-        {
-          status: xhr.status,
-          response
-        }
-      );
-
-
-      let message =
-        response?.error?.message ||
-        `Cloudinary upload failed (${xhr.status}).`;
-
-
-      /*
-       * Give a much more useful error when the unsigned
-       * preset is not configured for the selected media.
-       */
-      if (
-        xhr.status === 400 &&
-        resourceType === 'video'
-      ) {
-        message =
-          response?.error?.message ||
-          'Cloudinary rejected the video. Make sure the vitalstar_upload preset is unsigned and allows video uploads.';
-      }
-
-
-      reject(new Error(message));
+    return {
+      fullName: "VitalStar User",
+      photoURL: ""
     };
+  }
+}
 
 
-    xhr.onerror = () => {
+// ============================================================
+// INITIALS
+// ============================================================
 
-      console.error(
-        '[Cloudinary] Network error.',
-        {
-          online: navigator.onLine,
-          url,
-          fileName: file.name,
-          fileSizeMB:
-            (file.size / 1024 / 1024).toFixed(2),
-          resourceType
-        }
-      );
+function getInitials(name) {
 
+  if (!name) {
+    return "U";
+  }
 
-      reject(
-        new Error(
-          navigator.onLine
-            ? 'Could not connect to Cloudinary. Your browser or network may be blocking the Cloudinary upload.'
-            : 'You appear to be offline. Check your internet connection and try again.'
-        )
-      );
-    };
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join("") || "U";
+}
 
 
-    xhr.onabort = () => {
+// ============================================================
+// PROFILE LINK
+// ============================================================
 
-      reject(
-        new Error('Cloudinary upload was cancelled.')
-      );
-    };
+function authorProfileHref(uid) {
 
+  if (!uid) {
+    return "#";
+  }
 
-    xhr.ontimeout = () => {
-
-      reject(
-        new Error(
-          'Cloudinary upload timed out. Try a smaller file or a stronger internet connection.'
-        )
-      );
-    };
-
-
-    xhr.send(formData);
-  });
+  return `profile.html?uid=${encodeURIComponent(uid)}`;
 }
 
 
@@ -263,11 +353,9 @@ function injectStyles() {
     return;
   }
 
-
-  const style = document.createElement('style');
+  const style = document.createElement("style");
 
   style.id = POSTS_STYLE_ID;
-
 
   style.textContent = `
 
@@ -276,431 +364,316 @@ function injectStyles() {
        ======================================================== */
 
     .composer {
-      border-radius: var(--radius-lg, 18px);
+      border-radius: var(--radius-lg, 22px);
       background: #ffffff;
       border: 1px solid rgba(0,0,0,0.08);
       padding: 16px 18px;
       margin-bottom: 20px;
     }
 
-
     .composer__top {
       display: flex;
       gap: 12px;
+      align-items: flex-start;
     }
-
 
     .composer__avatar {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       flex-shrink: 0;
-
-      background:
-        linear-gradient(
-          135deg,
-          #2f6fff,
-          #8b5cff
-        );
-
-      background-size: cover;
+      background: linear-gradient(
+        135deg,
+        #315fff,
+        #7c4dff
+      ) center/cover;
       background-position: center;
-
+      background-repeat: no-repeat;
       display: flex;
       align-items: center;
       justify-content: center;
-
       font-weight: 700;
-      color: #fff;
+      color: #ffffff;
       font-size: 15px;
-
-      overflow: hidden;
       text-decoration: none;
+      overflow: hidden;
     }
-
 
     .composer__input {
       flex: 1;
       min-height: 42px;
       max-height: 220px;
       resize: none;
-
       background: #f5f6f8;
-
       border: 1px solid rgba(0,0,0,0.1);
-
       border-radius: 12px;
-
       padding: 11px 14px;
-
       color: #1a1d29;
-
-      font-family: inherit;
       font-size: 14px;
-
       outline: none;
     }
 
-
     .composer__input:focus {
-      border-color: #2f6fff;
+      border-color: #315fff;
     }
-
 
     .composer__input::placeholder {
       color: #9aa0ac;
     }
 
-
-    /* ========================================================
-       MEDIA PREVIEW
-       ======================================================== */
-
     .composer__media-preview {
       margin-top: 12px;
-
       position: relative;
-
       display: none;
-
       border-radius: 14px;
-
       overflow: hidden;
-
       background: #000;
-
-      min-height: 0;
     }
-
 
     .composer__media-preview.is-visible {
       display: block;
     }
 
-
     .composer__media-preview img,
     .composer__media-preview video {
-
       width: 100%;
-
-      max-height: 340px;
-
-      display: block;
-
+      max-height: 320px;
       object-fit: contain;
-
+      display: block;
       background: #000;
     }
 
-
-    .composer__media-preview img {
-      min-height: 80px;
-    }
-
-
     .composer__media-remove {
-
       position: absolute;
-
       top: 10px;
       right: 10px;
-
+      z-index: 5;
       width: 32px;
       height: 32px;
-
       border-radius: 50%;
-
       background: rgba(0,0,0,0.75);
-
       border: none;
-
       color: #fff;
-
       display: flex;
-
       align-items: center;
       justify-content: center;
-
-      z-index: 5;
+      cursor: pointer;
     }
 
-
     .composer__bottom {
-
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
-
+      gap: 10px;
       margin-top: 12px;
     }
 
-
     .composer__tools {
-
       display: flex;
-
       gap: 8px;
     }
 
-
     .composer__tool-btn {
-
       width: 40px;
       height: 40px;
-
       border-radius: 12px;
-
       background: #f5f6f8;
-
       border: 1px solid rgba(0,0,0,0.1);
-
       color: #5a6070;
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
+      cursor: pointer;
     }
-
 
     .composer__tool-btn:hover {
-
-      color: #2f6fff;
-
-      border-color: #2f6fff;
+      color: #315fff;
+      border-color: #315fff;
     }
-
 
     .composer__post-btn {
-
       padding: 10px 22px;
-
       border-radius: 999px;
-
       border: none;
-
-      background:
-        linear-gradient(
-          135deg,
-          #2f6fff,
-          #8b5cff
-        );
-
+      background: linear-gradient(
+        135deg,
+        #315fff,
+        #7c4dff
+      );
       color: #fff;
-
       font-weight: 700;
-
-      font-size: 14px;
+      font-size: 13.5px;
+      cursor: pointer;
     }
 
-
     .composer__post-btn:disabled {
-
       opacity: 0.5;
-
       cursor: default;
     }
 
+    .composer-join-notice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(47,111,255,0.07);
+      border: 1px solid rgba(47,111,255,0.18);
+      color: #4a5568;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
 
     /* ========================================================
-       POST
+       POST CARD
        ======================================================== */
 
     .post-card {
-
-      border-radius: var(--radius-lg, 18px);
-
+      border-radius: 22px;
       background: #ffffff;
-
       border: 1px solid rgba(0,0,0,0.08);
-
       padding: 16px 18px;
-
       margin-bottom: 16px;
-
-      animation: rise-in 0.35s ease;
+      overflow: hidden;
     }
-
 
     .post-card.is-pinned {
-
-      border-color: rgba(255,194,75,0.5);
+      border-color: rgba(255,194,75,0.55);
     }
 
-
     .post-card__pin-flag {
-
       display: none;
-
       align-items: center;
-
       gap: 6px;
-
       font-size: 11.5px;
-
       color: #d69e00;
-
       font-weight: 700;
-
       margin-bottom: 10px;
     }
 
-
     .post-card.is-pinned
     .post-card__pin-flag {
-
       display: flex;
     }
-
 
     .post-card__head {
-
       display: flex;
-
       align-items: flex-start;
-
       justify-content: space-between;
-
       gap: 10px;
     }
-
 
     .post-card__author {
-
       display: flex;
-
       gap: 10px;
-
       min-width: 0;
+      align-items: center;
     }
 
-
-    /* ========================================================
-       AUTHOR AVATAR
-       ======================================================== */
-
     .post-card__avatar {
-
       width: 44px;
       height: 44px;
-
       border-radius: 50%;
-
       flex-shrink: 0;
-
-      background:
-        linear-gradient(
-          135deg,
-          #2f6fff,
-          #8b5cff
-        );
-
+      background: linear-gradient(
+        135deg,
+        #315fff,
+        #7c4dff
+      ) center/cover;
       background-position: center;
-
-      background-size: cover;
-
+      background-repeat: no-repeat;
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       font-weight: 700;
-
       color: #fff;
-
       font-size: 15px;
-
       overflow: hidden;
-
       text-decoration: none;
     }
 
-
     .post-card__author-info {
-
       min-width: 0;
     }
 
-
     .post-card__author-name-row {
-
       display: flex;
-
       align-items: center;
-
       gap: 6px;
-
       flex-wrap: wrap;
     }
 
-
-    /* ========================================================
-       FULL NAME — YELLOW
-       ======================================================== */
-
+    /* YELLOW AUTHOR NAME */
     .post-card__author-name {
-
       font-weight: 800;
-
       font-size: 14px;
-
-      color: #f2c94c !important;
-
+      color: #e2aa00 !important;
       text-decoration: none;
-
       cursor: pointer;
     }
 
-
     .post-card__author-name:hover {
-
       text-decoration: underline;
     }
 
-
-    .post-card__meta {
-
-      font-size: 11.5px;
-
-      color: #8a90a0;
-
-      margin-top: 2px;
-    }
-
-
     .role-chip {
-
       font-size: 10px;
-
       font-weight: 700;
-
       padding: 3px 8px;
-
       border-radius: 999px;
-
       background: rgba(139,92,255,0.12);
-
       color: #8b5cff;
-
       text-transform: capitalize;
     }
 
+    .post-card__meta {
+      font-size: 11.5px;
+      color: #8a90a0;
+      margin-top: 2px;
+    }
 
     .post-author-link {
-
       text-decoration: none;
-
       cursor: pointer;
     }
 
 
-    .post-card__avatar:hover {
+    /* ========================================================
+       POST BODY
+       ======================================================== */
 
-      opacity: 0.85;
+    .post-card__text {
+      font-size: 14px;
+      color: #1a1d29;
+      line-height: 1.6;
+      margin: 12px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .post-card__media {
+      margin-top: 12px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #000;
+      width: 100%;
+    }
+
+    .post-card__media img {
+      width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      display: block;
+      background: #000;
+    }
+
+    .post-card__media video {
+      width: 100%;
+      max-height: 500px;
+      display: block;
+      background: #000;
+      object-fit: contain;
     }
 
 
@@ -709,174 +682,61 @@ function injectStyles() {
        ======================================================== */
 
     .post-card__menu-wrap {
-
       position: relative;
     }
 
-
     .post-card__menu-btn {
-
-      width: 32px;
-
-      height: 32px;
-
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
-
       border: none;
-
       background: none;
-
       color: #8a90a0;
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
+      cursor: pointer;
     }
 
-
     .post-card__menu-btn:hover {
-
       background: rgba(0,0,0,0.05);
-
       color: #1a1d29;
     }
 
-
     .post-card__menu {
-
       display: none;
-
       position: absolute;
-
       top: 38px;
-
       right: 0;
-
       z-index: 50;
-
       background: #ffffff;
-
       border: 1px solid rgba(0,0,0,0.1);
-
-      border-radius: 12px;
-
-      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-
+      border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
       overflow: hidden;
-
       min-width: 170px;
     }
 
-
     .post-card__menu.is-open {
-
       display: block;
     }
-
 
     .post-card__menu button {
-
       display: flex;
-
       align-items: center;
-
       gap: 9px;
-
       width: 100%;
-
       padding: 11px 14px;
-
       background: none;
-
       border: none;
-
       color: #4a5568;
-
       font-size: 13px;
-
       text-align: left;
+      cursor: pointer;
     }
-
 
     .post-card__menu button:hover {
-
       background: rgba(0,0,0,0.04);
-    }
-
-
-    /* ========================================================
-       BODY
-       ======================================================== */
-
-    .post-card__text {
-
-      font-size: 14px;
-
-      color: #1a1d29;
-
-      line-height: 1.6;
-
-      margin: 12px 0 0;
-
-      white-space: pre-wrap;
-
-      word-break: break-word;
-    }
-
-
-    .post-card__media {
-
-      margin-top: 12px;
-
-      border-radius: 14px;
-
-      overflow: hidden;
-
-      background: #000;
-    }
-
-
-    .post-card__media img {
-
-      width: 100%;
-
-      max-height: 560px;
-
-      object-fit: contain;
-
-      display: block;
-
-      background: #000;
-    }
-
-
-    /* ========================================================
-       VIDEO
-       ======================================================== */
-
-    .post-card__media video {
-
-      width: 100%;
-
-      max-height: 560px;
-
-      min-height: 180px;
-
-      object-fit: contain;
-
-      display: block;
-
-      background: #000;
-
-      outline: none;
-    }
-
-
-    .post-card__media video::-webkit-media-controls {
-
-      display: flex !important;
     }
 
 
@@ -885,58 +745,35 @@ function injectStyles() {
        ======================================================== */
 
     .post-card__actions {
-
       display: flex;
-
       gap: 6px;
-
       margin-top: 14px;
-
       padding-top: 12px;
-
       border-top: 1px solid rgba(0,0,0,0.08);
     }
 
-
     .post-action-btn {
-
       flex: 1;
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       gap: 7px;
-
       padding: 9px;
-
       border-radius: 10px;
-
       border: none;
-
       background: none;
-
       color: #6a7080;
-
       font-size: 12.5px;
-
       font-weight: 600;
+      cursor: pointer;
     }
-
 
     .post-action-btn:hover {
-
       background: rgba(0,0,0,0.04);
-
-      color: #1a1d29;
     }
 
-
     .post-action-btn.is-liked {
-
-      color: #ef4444;
+      color: #e63946;
     }
 
 
@@ -945,251 +782,157 @@ function injectStyles() {
        ======================================================== */
 
     .comments-section {
-
       display: none;
-
       margin-top: 14px;
-
       padding-top: 14px;
-
       border-top: 1px solid rgba(0,0,0,0.08);
     }
 
-
     .comments-section.is-open {
-
       display: block;
     }
 
-
     .comment-composer {
-
       display: flex;
-
       gap: 8px;
-
       margin-bottom: 12px;
     }
 
-
     .comment-input {
-
       flex: 1;
-
       background: #f5f6f8;
-
       border: 1px solid rgba(0,0,0,0.1);
-
       border-radius: 999px;
-
       padding: 9px 15px;
-
       color: #1a1d29;
-
       font-size: 13px;
-
       outline: none;
     }
 
-
     .comment-send-btn {
-
-      width: 34px;
-
-      height: 34px;
-
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-
       border: none;
-
-      background: #2f6fff;
-
+      background: #315fff;
       color: #fff;
-
       flex-shrink: 0;
+      cursor: pointer;
     }
 
-
     .comment-item {
-
       display: flex;
-
       gap: 9px;
-
       margin-bottom: 12px;
     }
 
-
     .comment-avatar {
-
-      width: 30px;
-
-      height: 30px;
-
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-
       flex-shrink: 0;
-
-      background:
-        linear-gradient(
-          135deg,
-          #2f6fff,
-          #8b5cff
-        );
-
-      background-size: cover;
-
+      background: linear-gradient(
+        135deg,
+        #315fff,
+        #7c4dff
+      ) center/cover;
       background-position: center;
-
       display: flex;
-
       align-items: center;
-
       justify-content: center;
-
       font-weight: 700;
-
       font-size: 11px;
-
       color: #fff;
-
       overflow: hidden;
-    }
-
-
-    .comment-bubble {
-
-      background: #f5f6f8;
-
-      border-radius: 12px;
-
-      padding: 8px 12px;
-
-      flex: 1;
-    }
-
-
-    .comment-author {
-
-      font-size: 12.5px;
-
-      font-weight: 700;
-
-      color: #f2c94c !important;
-
       text-decoration: none;
     }
 
+    .comment-bubble {
+      background: #f5f6f8;
+      border-radius: 14px;
+      padding: 8px 12px;
+      flex: 1;
+    }
+
+    .comment-author {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #e2aa00 !important;
+      text-decoration: none;
+    }
 
     .comment-text {
-
       font-size: 13px;
-
       color: #4a5568;
-
       margin-top: 2px;
-
       line-height: 1.45;
-
       word-break: break-word;
     }
 
-
     .comment-footer {
-
       display: flex;
-
       gap: 12px;
-
       margin-top: 5px;
     }
 
-
     .comment-reply-btn {
-
       font-size: 11.5px;
-
       color: #8a90a0;
-
       background: none;
-
       border: none;
-
       font-weight: 600;
+      cursor: pointer;
     }
-
 
     .replies-list {
-
       margin-top: 8px;
-
       margin-left: 16px;
-
       display: flex;
-
       flex-direction: column;
-
       gap: 8px;
     }
-
 
     .reply-composer {
-
-      display: none;
-
-      gap: 8px;
-
-      margin-top: 8px;
-
-      margin-left: 16px;
-    }
-
-
-    .reply-composer.is-open {
-
       display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      margin-left: 16px;
     }
 
 
     /* ========================================================
-       LOAD MORE / EMPTY
+       OTHER
        ======================================================== */
 
     .load-more-posts-btn {
-
       display: block;
-
       width: 100%;
-
       margin-top: 6px;
-
       padding: 11px;
-
       border-radius: 12px;
-
       background: #f5f6f8;
-
       border: 1px solid rgba(0,0,0,0.1);
-
       color: #1a1d29;
-
       font-weight: 600;
-
       font-size: 13px;
+      cursor: pointer;
     }
 
-
     .posts-empty {
-
       text-align: center;
-
       padding: 50px 20px;
-
       color: #8a90a0;
     }
 
-  `;
+    .posts-empty i {
+      font-size: 30px;
+      color: #315fff;
+      opacity: 0.7;
+      margin-bottom: 12px;
+      display: block;
+    }
 
+  `;
 
   document.head.appendChild(style);
 }
@@ -1205,7 +948,6 @@ export async function init(context) {
 
   injectStyles();
 
-
   state = {
 
     lastVisibleDoc: null,
@@ -1216,168 +958,48 @@ export async function init(context) {
 
     pendingMediaFile: null,
 
-    pendingMediaType: null,
-
-    pendingPreviewURL: null
+    pendingMediaType: null
 
   };
 
-
-  ctx.panelEl.innerHTML = '';
-
-
-  /*
-   * Make sure current user information is loaded before
-   * creating the composer.
-   */
-  await hydrateCurrentUser();
-
+  ctx.panelEl.innerHTML = "";
 
   renderComposer();
 
+  const feedList =
+    document.createElement("div");
 
-  const feedList = document.createElement('div');
-
-  feedList.id = 'postsFeedList';
+  feedList.id = "postsFeedList";
 
   ctx.panelEl.appendChild(feedList);
 
 
-  const loadMoreBtn = document.createElement('button');
+  const loadMoreBtn =
+    document.createElement("button");
 
-  loadMoreBtn.className = 'load-more-posts-btn';
+  loadMoreBtn.className =
+    "load-more-posts-btn";
 
-  loadMoreBtn.id = 'loadMorePostsBtn';
+  loadMoreBtn.id =
+    "loadMorePostsBtn";
 
-  loadMoreBtn.textContent = 'Load more posts';
+  loadMoreBtn.textContent =
+    "Load more posts";
 
-  loadMoreBtn.style.display = 'none';
-
+  loadMoreBtn.style.display =
+    "none";
 
   loadMoreBtn.addEventListener(
-    'click',
+    "click",
     () => loadPosts(false)
   );
 
-
-  ctx.panelEl.appendChild(loadMoreBtn);
+  ctx.panelEl.appendChild(
+    loadMoreBtn
+  );
 
 
   await loadPosts(true);
-}
-
-
-// ============================================================
-// USER PROFILE HELPERS
-// ============================================================
-
-async function getUserProfile(uid) {
-
-  if (!uid) {
-    return null;
-  }
-
-
-  if (authorCache.has(uid)) {
-    return authorCache.get(uid);
-  }
-
-
-  try {
-
-    const userSnap =
-      await getDoc(
-        doc(ctx.db, 'users', uid)
-      );
-
-
-    if (!userSnap.exists()) {
-
-      authorCache.set(uid, null);
-
-      return null;
-    }
-
-
-    const data = userSnap.data() || {};
-
-    const profile = {
-
-      uid,
-
-      fullName:
-        data.fullName ||
-        data.fullname ||
-        data.displayName ||
-        data.name ||
-        data.username ||
-        'VitalStar Member',
-
-      photoURL:
-        data.photoURL ||
-        data.profilePicture ||
-        data.profileImage ||
-        data.avatar ||
-        data.photo ||
-        ''
-
-    };
-
-
-    authorCache.set(uid, profile);
-
-    return profile;
-
-  } catch (error) {
-
-    console.error(
-      'Could not load user profile:',
-      uid,
-      error
-    );
-
-    return null;
-  }
-}
-
-
-// ============================================================
-// CURRENT USER
-// ============================================================
-
-async function hydrateCurrentUser() {
-
-  if (!ctx?.currentUser?.uid) {
-    return;
-  }
-
-
-  const uid = ctx.currentUser.uid;
-
-  const profile =
-    await getUserProfile(uid);
-
-
-  if (!profile) {
-    return;
-  }
-
-
-  /*
-   * Add full-name information to currentUser without
-   * destroying the Firebase user object.
-   */
-  ctx.currentUser.fullName =
-    profile.fullName ||
-    ctx.currentUser.fullName ||
-    ctx.currentUser.displayName ||
-    'VitalStar Member';
-
-
-  ctx.currentUser.photoURL =
-    profile.photoURL ||
-    ctx.currentUser.photoURL ||
-    '';
 }
 
 
@@ -1389,7 +1011,7 @@ function isActiveMember() {
 
   return (
     ctx.membership &&
-    ctx.membership.status === 'active'
+    ctx.membership.status === "active"
   );
 }
 
@@ -1404,25 +1026,14 @@ function currentUserRole() {
 
 function canModeratePosts() {
 
-  const role = currentUserRole();
+  const role =
+    currentUserRole();
 
   return (
-    role === 'owner' ||
-    role === 'admin' ||
-    role === 'moderator'
+    role === "owner" ||
+    role === "admin" ||
+    role === "moderator"
   );
-}
-
-
-// ============================================================
-// PROFILE LINK
-// ============================================================
-
-function authorProfileHref(uid) {
-
-  return uid
-    ? `profile.html?uid=${encodeURIComponent(uid)}`
-    : '#';
 }
 
 
@@ -1435,12 +1046,13 @@ function renderComposer() {
   if (!isActiveMember()) {
 
     const notice =
-      document.createElement('div');
+      document.createElement("div");
 
     notice.className =
-      'composer-join-notice';
+      "composer-join-notice";
 
     notice.innerHTML = `
+      <i class="fa-solid fa-circle-info"></i>
       <span>
         Join this group to post, like, and comment.
       </span>
@@ -1453,10 +1065,9 @@ function renderComposer() {
 
 
   const wrap =
-    document.createElement('div');
+    document.createElement("div");
 
-  wrap.className = 'composer';
-
+  wrap.className = "composer";
 
   wrap.innerHTML = `
 
@@ -1466,7 +1077,9 @@ function renderComposer() {
         class="post-author-link composer__avatar"
         id="composerAvatar"
         href="${authorProfileHref(ctx.currentUser.uid)}"
-      ></a>
+      >
+        ${getInitials(ctx.currentUser.displayName)}
+      </a>
 
       <textarea
         class="composer__input"
@@ -1478,12 +1091,10 @@ function renderComposer() {
 
     </div>
 
-
     <div
       class="composer__media-preview"
       id="composerMediaPreview"
     ></div>
-
 
     <div class="composer__bottom">
 
@@ -1498,7 +1109,6 @@ function renderComposer() {
           <i class="fa-solid fa-image"></i>
         </button>
 
-
         <button
           type="button"
           class="composer__tool-btn"
@@ -1508,24 +1118,21 @@ function renderComposer() {
           <i class="fa-solid fa-video"></i>
         </button>
 
-
         <input
           type="file"
           id="composerImageInput"
-          accept="image/jpeg,image/png,image/gif,image/webp,image/*"
+          accept="image/*"
           style="display:none;"
         />
-
 
         <input
           type="file"
           id="composerVideoInput"
-          accept="video/mp4,video/webm,video/ogg,video/*"
+          accept="video/*"
           style="display:none;"
         />
 
       </div>
-
 
       <button
         type="button"
@@ -1546,119 +1153,158 @@ function renderComposer() {
   );
 
 
-  const avatarEl =
-    wrap.querySelector('#composerAvatar');
+  const avatar =
+    wrap.querySelector(
+      "#composerAvatar"
+    );
 
 
-  ctx.applyMediaBackground(
-    avatarEl,
-    ctx.currentUser.photoURL || '',
-    ctx.initialsFrom(
-      ctx.currentUser.fullName ||
-      ctx.currentUser.displayName ||
-      'U'
-    )
-  );
+  loadComposerProfile(avatar);
 
 
   const input =
-    wrap.querySelector('#composerInput');
+    wrap.querySelector(
+      "#composerInput"
+    );
 
 
   const postBtn =
-    wrap.querySelector('#composerPostBtn');
+    wrap.querySelector(
+      "#composerPostBtn"
+    );
 
 
   input.addEventListener(
-    'input',
+    "input",
     () => {
 
-      input.style.height = 'auto';
+      input.style.height = "auto";
 
       input.style.height =
-        `${Math.min(input.scrollHeight, 220)}px`;
+        `${Math.min(
+          input.scrollHeight,
+          220
+        )}px`;
 
-      updateComposerButtonState(
-        input,
-        postBtn
-      );
+      updatePostButtonState();
     }
   );
 
 
-  wrap
-    .querySelector('#composerImageBtn')
-    .addEventListener(
-      'click',
-      () =>
-        wrap
-          .querySelector('#composerImageInput')
-          .click()
-    );
+  wrap.querySelector(
+    "#composerImageBtn"
+  ).addEventListener(
+    "click",
+    () =>
+      wrap.querySelector(
+        "#composerImageInput"
+      ).click()
+  );
 
 
-  wrap
-    .querySelector('#composerVideoBtn')
-    .addEventListener(
-      'click',
-      () =>
-        wrap
-          .querySelector('#composerVideoInput')
-          .click()
-    );
+  wrap.querySelector(
+    "#composerVideoBtn"
+  ).addEventListener(
+    "click",
+    () =>
+      wrap.querySelector(
+        "#composerVideoInput"
+      ).click()
+  );
 
 
-  wrap
-    .querySelector('#composerImageInput')
-    .addEventListener(
-      'change',
-      (event) =>
-        handleComposerMediaSelect(
-          event,
-          'image'
-        )
-    );
+  wrap.querySelector(
+    "#composerImageInput"
+  ).addEventListener(
+    "change",
+    event =>
+      handleComposerMediaSelect(
+        event,
+        "image"
+      )
+  );
 
 
-  wrap
-    .querySelector('#composerVideoInput')
-    .addEventListener(
-      'change',
-      (event) =>
-        handleComposerMediaSelect(
-          event,
-          'video'
-        )
-    );
+  wrap.querySelector(
+    "#composerVideoInput"
+  ).addEventListener(
+    "change",
+    event =>
+      handleComposerMediaSelect(
+        event,
+        "video"
+      )
+  );
 
 
   postBtn.addEventListener(
-    'click',
-    () => submitPost(wrap)
+    "click",
+    () =>
+      submitPost(wrap)
   );
 }
 
 
 // ============================================================
-// COMPOSER BUTTON STATE
+// LOAD COMPOSER PROFILE
 // ============================================================
 
-function updateComposerButtonState(
-  input,
-  button
-) {
+async function loadComposerProfile(avatar) {
 
-  button.disabled =
-    input.value.trim().length === 0 &&
-    !state.pendingMediaFile;
+  const profile =
+    await getUserProfile(
+      ctx.currentUser.uid
+    );
+
+
+  avatar.textContent =
+    getInitials(profile.fullName);
+
+
+  if (profile.photoURL) {
+
+    setAvatarBackground(
+      avatar,
+      profile.photoURL,
+      profile.fullName
+    );
+  }
 }
 
 
 // ============================================================
-// MEDIA PREVIEW
+// AVATAR BACKGROUND
 // ============================================================
 
-async function handleComposerMediaSelect(
+function setAvatarBackground(
+  element,
+  photoURL,
+  name
+) {
+
+  element.textContent =
+    getInitials(name);
+
+  if (!photoURL) {
+    return;
+  }
+
+  element.style.backgroundImage =
+    `url("${photoURL}")`;
+
+  element.style.backgroundSize =
+    "cover";
+
+  element.style.backgroundPosition =
+    "center";
+}
+
+
+// ============================================================
+// MEDIA SELECTION
+// ============================================================
+
+function handleComposerMediaSelect(
   event,
   type
 ) {
@@ -1666,370 +1312,259 @@ async function handleComposerMediaSelect(
   const file =
     event.target.files?.[0];
 
-
   if (!file) {
     return;
   }
 
 
   const maxSize =
-    type === 'video'
-      ? MAX_VIDEO_SIZE
-      : MAX_IMAGE_SIZE;
+    type === "video"
+      ? 60 * 1024 * 1024
+      : 8 * 1024 * 1024;
 
 
   if (file.size > maxSize) {
 
     ctx.showToast(
-      `${type === 'video' ? 'Video' : 'Image'} is too large. Maximum size is ${
-        type === 'video' ? '60MB' : '8MB'
+      `${
+        type === "video"
+          ? "Video"
+          : "Image"
+      } is too large. Maximum ${
+        type === "video"
+          ? "60MB"
+          : "8MB"
       }.`,
-      'error'
+      "error"
     );
 
-    event.target.value = '';
+    event.target.value = "";
 
     return;
   }
 
 
   if (
-    type === 'image' &&
-    !file.type.startsWith('image/')
+    type === "image" &&
+    !file.type.startsWith("image/")
   ) {
 
     ctx.showToast(
-      'Please select a valid image.',
-      'error'
+      "Please select a valid image.",
+      "error"
     );
-
-    event.target.value = '';
 
     return;
   }
 
 
   if (
-    type === 'video' &&
-    !file.type.startsWith('video/')
+    type === "video" &&
+    !file.type.startsWith("video/")
   ) {
 
     ctx.showToast(
-      'Please select a valid video.',
-      'error'
+      "Please select a valid video.",
+      "error"
     );
-
-    event.target.value = '';
 
     return;
   }
 
 
-  state.pendingMediaFile = file;
+  state.pendingMediaFile =
+    file;
 
-  state.pendingMediaType = type;
+  state.pendingMediaType =
+    type;
 
 
   const preview =
     document.getElementById(
-      'composerMediaPreview'
+      "composerMediaPreview"
     );
 
 
-  if (!preview) {
-    return;
+  // Revoke previous preview URL
+  if (state.previewObjectURL) {
+
+    URL.revokeObjectURL(
+      state.previewObjectURL
+    );
   }
 
 
-  /*
-   * Revoke previous object URL.
-   */
-  if (state.pendingPreviewURL) {
-
-    try {
-      URL.revokeObjectURL(
-        state.pendingPreviewURL
-      );
-    } catch (_) {}
-
-    state.pendingPreviewURL = null;
-  }
+  const objectUrl =
+    URL.createObjectURL(file);
 
 
-  preview.innerHTML = '';
+  state.previewObjectURL =
+    objectUrl;
 
 
-  /*
-   * IMAGE PREVIEW
-   *
-   * Use FileReader instead of relying only on a blob URL.
-   * This fixes the broken "Selected image" preview shown
-   * in the screenshot on some Android browsers.
-   */
-  if (type === 'image') {
-
-    try {
-
-      const dataURL =
-        await readFileAsDataURL(file);
+  preview.innerHTML = "";
 
 
-      const img =
-        document.createElement('img');
+  if (type === "image") {
 
+    const image =
+      document.createElement("img");
 
-      img.src = dataURL;
+    image.src = objectUrl;
 
-      img.alt = 'Selected image';
+    image.alt =
+      "Selected image";
 
-      img.loading = 'eager';
+    image.onload = () => {
+      // Keep object URL alive while preview is displayed.
+    };
 
+    preview.appendChild(
+      image
+    );
 
-      img.onerror = () => {
-
-        preview.innerHTML =
-          '<div style="padding:20px;color:#fff;text-align:center;">Could not preview this image.</div>';
-      };
-
-
-      preview.appendChild(img);
-
-    } catch (error) {
-
-      console.error(
-        'Image preview error:',
-        error
-      );
-
-      ctx.showToast(
-        'Could not preview this image.',
-        'error'
-      );
-
-      state.pendingMediaFile = null;
-
-      state.pendingMediaType = null;
-
-      return;
-    }
-
-  }
-
-
-  /*
-   * VIDEO PREVIEW
-   */
-  if (type === 'video') {
+  } else {
 
     const video =
-      document.createElement('video');
+      document.createElement("video");
 
-
-    const objectURL =
-      URL.createObjectURL(file);
-
-
-    state.pendingPreviewURL =
-      objectURL;
-
-
-    video.src = objectURL;
+    video.src =
+      objectUrl;
 
     video.controls = true;
 
     video.playsInline = true;
 
-    video.preload = 'metadata';
+    video.preload = "metadata";
 
-    video.muted = true;
-
-
-    video.addEventListener(
-      'error',
-      () => {
-
-        console.error(
-          'Video preview error:',
-          video.error
-        );
-
-        ctx.showToast(
-          'This video cannot be previewed by your browser.',
-          'error'
-        );
-      }
+    preview.appendChild(
+      video
     );
-
-
-    preview.appendChild(video);
   }
 
 
-  /*
-   * REMOVE BUTTON
-   */
   const removeBtn =
-    document.createElement('button');
+    document.createElement("button");
 
-
-  removeBtn.type = 'button';
+  removeBtn.type =
+    "button";
 
   removeBtn.className =
-    'composer__media-remove';
-
+    "composer__media-remove";
 
   removeBtn.innerHTML =
     '<i class="fa-solid fa-xmark"></i>';
 
 
   removeBtn.addEventListener(
-    'click',
-    () => {
-
-      clearPendingMedia();
-
-      const imageInput =
-        document.getElementById(
-          'composerImageInput'
-        );
-
-      const videoInput =
-        document.getElementById(
-          'composerVideoInput'
-        );
-
-
-      if (imageInput) {
-        imageInput.value = '';
-      }
-
-
-      if (videoInput) {
-        videoInput.value = '';
-      }
-
-
-      const input =
-        document.getElementById(
-          'composerInput'
-        );
-
-
-      const postBtn =
-        document.getElementById(
-          'composerPostBtn'
-        );
-
-
-      if (input && postBtn) {
-        updateComposerButtonState(
-          input,
-          postBtn
-        );
-      }
-    }
+    "click",
+    clearSelectedMedia
   );
 
 
-  preview.appendChild(removeBtn);
-
-  preview.classList.add('is-visible');
-
-
-  const input =
-    document.getElementById(
-      'composerInput'
-    );
+  preview.appendChild(
+    removeBtn
+  );
 
 
-  const postBtn =
-    document.getElementById(
-      'composerPostBtn'
-    );
+  preview.classList.add(
+    "is-visible"
+  );
 
 
-  if (input && postBtn) {
-
-    postBtn.disabled = false;
-  }
+  updatePostButtonState();
 }
 
 
 // ============================================================
-// READ FILE AS DATA URL
+// CLEAR SELECTED MEDIA
 // ============================================================
 
-function readFileAsDataURL(file) {
+function clearSelectedMedia() {
 
-  return new Promise(
-    (resolve, reject) => {
+  state.pendingMediaFile =
+    null;
 
-      const reader =
-        new FileReader();
-
-
-      reader.onload =
-        () => resolve(
-          reader.result
-        );
+  state.pendingMediaType =
+    null;
 
 
-      reader.onerror =
-        () =>
-          reject(
-            reader.error ||
-            new Error(
-              'Could not read file.'
-            )
-          );
+  if (state.previewObjectURL) {
 
+    URL.revokeObjectURL(
+      state.previewObjectURL
+    );
 
-      reader.readAsDataURL(file);
-    }
-  );
-}
-
-
-// ============================================================
-// CLEAR MEDIA
-// ============================================================
-
-function clearPendingMedia() {
-
-  if (state.pendingPreviewURL) {
-
-    try {
-
-      URL.revokeObjectURL(
-        state.pendingPreviewURL
-      );
-
-    } catch (_) {}
-
+    state.previewObjectURL =
+      null;
   }
-
-
-  state.pendingPreviewURL = null;
-
-  state.pendingMediaFile = null;
-
-  state.pendingMediaType = null;
 
 
   const preview =
     document.getElementById(
-      'composerMediaPreview'
+      "composerMediaPreview"
     );
 
 
   if (preview) {
 
-    preview.innerHTML = '';
+    preview.innerHTML = "";
 
     preview.classList.remove(
-      'is-visible'
+      "is-visible"
     );
   }
+
+
+  const imageInput =
+    document.getElementById(
+      "composerImageInput"
+    );
+
+  const videoInput =
+    document.getElementById(
+      "composerVideoInput"
+    );
+
+
+  if (imageInput) {
+    imageInput.value = "";
+  }
+
+  if (videoInput) {
+    videoInput.value = "";
+  }
+
+
+  updatePostButtonState();
+}
+
+
+// ============================================================
+// POST BUTTON STATE
+// ============================================================
+
+function updatePostButtonState() {
+
+  const input =
+    document.getElementById(
+      "composerInput"
+    );
+
+  const postBtn =
+    document.getElementById(
+      "composerPostBtn"
+    );
+
+
+  if (!input || !postBtn) {
+    return;
+  }
+
+
+  postBtn.disabled =
+    input.value.trim().length === 0 &&
+    !state.pendingMediaFile;
 }
 
 
@@ -2037,17 +1572,19 @@ function clearPendingMedia() {
 // SUBMIT POST
 // ============================================================
 
-async function submitPost(composerEl) {
+async function submitPost(
+  composerEl
+) {
 
   const input =
     composerEl.querySelector(
-      '#composerInput'
+      "#composerInput"
     );
 
 
   const postBtn =
     composerEl.querySelector(
-      '#composerPostBtn'
+      "#composerPostBtn"
     );
 
 
@@ -2059,6 +1596,12 @@ async function submitPost(composerEl) {
     !text &&
     !state.pendingMediaFile
   ) {
+
+    ctx.showToast(
+      "Write something or choose an image/video.",
+      "error"
+    );
+
     return;
   }
 
@@ -2066,50 +1609,39 @@ async function submitPost(composerEl) {
   postBtn.disabled = true;
 
   postBtn.textContent =
-    'Posting...';
+    "Posting...";
 
 
   try {
 
-    /*
-     * Make sure user profile is current.
-     */
-    await hydrateCurrentUser();
+    // ========================================================
+    // Get current user profile
+    // ========================================================
+
+    const profile =
+      await getUserProfile(
+        ctx.currentUser.uid
+      );
 
 
-    let mediaURL = '';
+    // ========================================================
+    // Upload media
+    // ========================================================
 
-    let mediaType = 'none';
+    let mediaURL = "";
+
+    let mediaType = "none";
 
 
-    /*
-     * Upload media first.
-     */
     if (state.pendingMediaFile) {
 
-      const selectedFile =
-        state.pendingMediaFile;
-
-
-      const selectedType =
-        state.pendingMediaType;
-
-
       postBtn.textContent =
-        selectedType === 'video'
-          ? 'Uploading video...'
-          : 'Uploading image...';
+        "Uploading...";
 
 
       const uploadResult =
         await uploadToCloudinary(
-          selectedFile,
-          selectedType,
-          (percent) => {
-
-            postBtn.textContent =
-              `Uploading ${selectedType} ${percent}%...`;
-          }
+          state.pendingMediaFile
         );
 
 
@@ -2118,44 +1650,21 @@ async function submitPost(composerEl) {
 
 
       mediaType =
-        selectedType;
-
-
-      if (!mediaURL) {
-
-        throw new Error(
-          'Cloudinary did not return a media URL.'
-        );
-      }
+        state.pendingMediaType;
     }
 
 
-    /*
-     * Get best available full name.
-     */
-    const authorName =
-      ctx.currentUser.fullName ||
-      ctx.currentUser.displayName ||
-      ctx.currentUser.name ||
-      'VitalStar Member';
-
-
-    const authorPhotoURL =
-      ctx.currentUser.photoURL ||
-      '';
-
+    // ========================================================
+    // Save group post
+    // ========================================================
 
     const postsRef =
       collection(
         ctx.db,
-        'groups',
+        "groups",
         ctx.groupId,
-        'posts'
+        "posts"
       );
-
-
-    postBtn.textContent =
-      'Publishing...';
 
 
     await addDoc(
@@ -2165,13 +1674,19 @@ async function submitPost(composerEl) {
         authorId:
           ctx.currentUser.uid,
 
-        authorName,
+        // IMPORTANT:
+        // Store the real Firestore full name.
+        authorName:
+          profile.fullName ||
+          "VitalStar User",
 
-        authorPhotoURL,
+        authorPhotoURL:
+          profile.photoURL ||
+          "",
 
         authorRole:
           currentUserRole() ||
-          'member',
+          "member",
 
         text,
 
@@ -2202,61 +1717,38 @@ async function submitPost(composerEl) {
     );
 
 
-    try {
+    // ========================================================
+    // Update group post count
+    // ========================================================
 
-      await updateDoc(
-        ctx.groupRef,
-        {
-          postCount:
-            increment(1)
-        }
-      );
-
-      ctx.refreshHeaderStats();
-
-    } catch (countError) {
-
-      console.warn(
-        'Post created but group postCount could not be updated:',
-        countError
-      );
-    }
+    await updateDoc(
+      ctx.groupRef,
+      {
+        postCount:
+          increment(1)
+      }
+    );
 
 
-    input.value = '';
+    ctx.refreshHeaderStats();
+
+
+    // ========================================================
+    // Reset composer
+    // ========================================================
+
+    input.value = "";
 
     input.style.height =
-      'auto';
+      "auto";
 
 
-    clearPendingMedia();
-
-
-    const imageInput =
-      composerEl.querySelector(
-        '#composerImageInput'
-      );
-
-
-    const videoInput =
-      composerEl.querySelector(
-        '#composerVideoInput'
-      );
-
-
-    if (imageInput) {
-      imageInput.value = '';
-    }
-
-
-    if (videoInput) {
-      videoInput.value = '';
-    }
+    clearSelectedMedia();
 
 
     ctx.showToast(
-      'Posted successfully!',
-      'success'
+      "Post created successfully!",
+      "success"
     );
 
 
@@ -2265,59 +1757,60 @@ async function submitPost(composerEl) {
   } catch (error) {
 
     console.error(
-      'Error creating post:',
+      "Error creating group post:",
       error
     );
 
 
     ctx.showToast(
-      error?.message ||
-      'Could not publish your post. Please try again.',
-      'error'
+      error.message ||
+      "Could not publish your post.",
+      "error"
     );
 
   } finally {
 
-    postBtn.disabled =
-      input.value.trim().length === 0 &&
-      !state.pendingMediaFile;
-
-
     postBtn.textContent =
-      'Post';
+      "Post";
+
+    updatePostButtonState();
   }
 }
 
 
 // ============================================================
-// FEED LOADING
+// LOAD POSTS
 // ============================================================
 
-async function loadPosts(reset) {
+async function loadPosts(
+  reset
+) {
 
   if (state.isLoadingMore) {
     return;
   }
 
 
-  state.isLoadingMore = true;
+  state.isLoadingMore =
+    true;
 
 
   const feedList =
     document.getElementById(
-      'postsFeedList'
+      "postsFeedList"
     );
 
 
   const loadMoreBtn =
     document.getElementById(
-      'loadMorePostsBtn'
+      "loadMorePostsBtn"
     );
 
 
   if (!feedList) {
 
-    state.isLoadingMore = false;
+    state.isLoadingMore =
+      false;
 
     return;
   }
@@ -2325,7 +1818,8 @@ async function loadPosts(reset) {
 
   if (reset) {
 
-    state.lastVisibleDoc = null;
+    state.lastVisibleDoc =
+      null;
 
     feedList.innerHTML = `
       <div class="tab-panel-placeholder">
@@ -2341,13 +1835,13 @@ async function loadPosts(reset) {
     const constraints = [
 
       orderBy(
-        'isPinned',
-        'desc'
+        "isPinned",
+        "desc"
       ),
 
       orderBy(
-        'createdAt',
-        'desc'
+        "createdAt",
+        "desc"
       ),
 
       limit(
@@ -2374,31 +1868,33 @@ async function loadPosts(reset) {
       query(
         collection(
           ctx.db,
-          'groups',
+          "groups",
           ctx.groupId,
-          'posts'
+          "posts"
         ),
         ...constraints
       );
 
 
     const snapshot =
-      await getDocs(postsQuery);
+      await getDocs(
+        postsQuery
+      );
 
 
     if (reset) {
 
-      feedList.innerHTML = '';
+      feedList.innerHTML =
+        "";
     }
 
 
-    if (snapshot.docs.length > 0) {
-
-      state.lastVisibleDoc =
-        snapshot.docs[
-          snapshot.docs.length - 1
-        ];
-    }
+    state.lastVisibleDoc =
+      snapshot.docs.length
+        ? snapshot.docs[
+            snapshot.docs.length - 1
+          ]
+        : state.lastVisibleDoc;
 
 
     state.hasMore =
@@ -2412,48 +1908,25 @@ async function loadPosts(reset) {
     ) {
 
       feedList.innerHTML = `
-
         <div class="posts-empty">
-
           <i class="fa-solid fa-note-sticky"></i>
-
-          <p>
-            No posts yet.
-            Be the first to share something!
-          </p>
-
+          <p>No posts yet. Be the first to share something!</p>
         </div>
-
       `;
 
     } else {
 
       snapshot.forEach(
-        (postDoc) => {
+        postDoc => {
 
           const post = {
-
             id: postDoc.id,
-
             ...postDoc.data()
-
           };
 
 
-          const card =
-            renderPostCard(post);
-
-
-          feedList.appendChild(card);
-
-
-          /*
-           * Load the latest user profile after the card
-           * is displayed.
-           */
-          hydratePostAuthor(
-            card,
-            post
+          feedList.appendChild(
+            renderPostCard(post)
           );
         }
       );
@@ -2464,14 +1937,14 @@ async function loadPosts(reset) {
 
       loadMoreBtn.style.display =
         state.hasMore
-          ? 'block'
-          : 'none';
+          ? "block"
+          : "none";
     }
 
   } catch (error) {
 
     console.error(
-      'Error loading posts:',
+      "Error loading group posts:",
       error
     );
 
@@ -2479,111 +1952,25 @@ async function loadPosts(reset) {
     if (reset) {
 
       feedList.innerHTML = `
-
         <div class="posts-empty">
-
           <p>
             Could not load posts right now.
           </p>
-
         </div>
-
       `;
     }
 
 
     ctx.showToast(
-      'Could not load posts.',
-      'error'
+      "Could not load posts.",
+      "error"
     );
 
   } finally {
 
-    state.isLoadingMore = false;
+    state.isLoadingMore =
+      false;
   }
-}
-
-
-// ============================================================
-// HYDRATE POST AUTHOR
-// ============================================================
-
-async function hydratePostAuthor(
-  card,
-  post
-) {
-
-  if (!post.authorId) {
-    return;
-  }
-
-
-  const profile =
-    await getUserProfile(
-      post.authorId
-    );
-
-
-  if (!profile) {
-    return;
-  }
-
-
-  const fullName =
-    profile.fullName ||
-    post.authorName ||
-    'VitalStar Member';
-
-
-  const photoURL =
-    profile.photoURL ||
-    post.authorPhotoURL ||
-    '';
-
-
-  /*
-   * Update DOM.
-   */
-  const nameEl =
-    card.querySelector(
-      '.post-card__author-name'
-    );
-
-
-  if (nameEl) {
-
-    nameEl.textContent =
-      fullName;
-  }
-
-
-  const avatarEl =
-    card.querySelector(
-      '.post-card__avatar'
-    );
-
-
-  if (avatarEl) {
-
-    ctx.applyMediaBackground(
-      avatarEl,
-      photoURL,
-      ctx.initialsFrom(
-        fullName
-      )
-    );
-  }
-
-
-  /*
-   * Keep the in-memory post current.
-   */
-  post.authorName =
-    fullName;
-
-
-  post.authorPhotoURL =
-    photoURL;
 }
 
 
@@ -2594,14 +1981,14 @@ async function hydratePostAuthor(
 function renderPostCard(post) {
 
   const card =
-    document.createElement('div');
+    document.createElement("div");
 
 
   card.className =
     `post-card${
       post.isPinned
-        ? ' is-pinned'
-        : ''
+        ? " is-pinned"
+        : ""
     }`;
 
 
@@ -2624,7 +2011,7 @@ function renderPostCard(post) {
       ? timeAgo(
           post.createdAt.toDate()
         )
-      : 'just now';
+      : "just now";
 
 
   const profileHref =
@@ -2633,21 +2020,12 @@ function renderPostCard(post) {
     );
 
 
-  const authorName =
-    post.authorName ||
-    'VitalStar Member';
-
-
   card.innerHTML = `
 
     <div class="post-card__pin-flag">
-
       <i class="fa-solid fa-thumbtack"></i>
-
       Pinned post
-
     </div>
-
 
     <div class="post-card__head">
 
@@ -2656,8 +2034,11 @@ function renderPostCard(post) {
         <a
           class="post-author-link post-card__avatar"
           href="${profileHref}"
-        ></a>
-
+        >
+          ${getInitials(
+            post.authorName
+          )}
+        </a>
 
         <div class="post-card__author-info">
 
@@ -2666,12 +2047,12 @@ function renderPostCard(post) {
             <a
               class="post-author-link post-card__author-name"
               href="${profileHref}"
-            ></a>
-
+            >
+            </a>
 
             ${
               post.authorRole &&
-              post.authorRole !== 'member'
+              post.authorRole !== "member"
                 ? `
                   <span class="role-chip">
                     ${escapeHtml(
@@ -2679,22 +2060,18 @@ function renderPostCard(post) {
                     )}
                   </span>
                 `
-                : ''
+                : ""
             }
 
           </div>
 
-
           <div class="post-card__meta">
-
             ${timeLabel}
-
             ${
               post.isEdited
-                ? ' · edited'
-                : ''
+                ? " · edited"
+                : ""
             }
-
           </div>
 
         </div>
@@ -2711,7 +2088,6 @@ function renderPostCard(post) {
           <i class="fa-solid fa-ellipsis"></i>
         </button>
 
-
         <div class="post-card__menu">
 
           ${
@@ -2725,9 +2101,8 @@ function renderPostCard(post) {
                   Edit
                 </button>
               `
-              : ''
+              : ""
           }
-
 
           ${
             isAuthor || canModerate
@@ -2740,9 +2115,8 @@ function renderPostCard(post) {
                   Delete
                 </button>
               `
-              : ''
+              : ""
           }
-
 
           ${
             canModerate
@@ -2752,18 +2126,16 @@ function renderPostCard(post) {
                   class="pin-post-btn"
                 >
                   <i class="fa-solid fa-thumbtack"></i>
-
                   ${
                     post.isPinned
-                      ? 'Unpin'
-                      : 'Pin'
+                      ? "Unpin"
+                      : "Pin"
                   }
                   post
                 </button>
               `
-              : ''
+              : ""
           }
-
 
           ${
             !isAuthor
@@ -2776,7 +2148,7 @@ function renderPostCard(post) {
                   Report
                 </button>
               `
-              : ''
+              : ""
           }
 
         </div>
@@ -2796,7 +2168,6 @@ function renderPostCard(post) {
         class="post-action-btn like-btn"
       >
         <i class="fa-regular fa-heart"></i>
-
         <span class="like-count">
           ${ctx.formatCount(
             post.likesCount || 0
@@ -2810,7 +2181,6 @@ function renderPostCard(post) {
         class="post-action-btn comment-toggle-btn"
       >
         <i class="fa-regular fa-comment"></i>
-
         <span class="comment-count">
           ${ctx.formatCount(
             post.commentsCount || 0
@@ -2824,7 +2194,6 @@ function renderPostCard(post) {
         class="post-action-btn repost-btn"
       >
         <i class="fa-solid fa-retweet"></i>
-
         <span class="repost-count">
           ${ctx.formatCount(
             post.repostsCount || 0
@@ -2838,7 +2207,6 @@ function renderPostCard(post) {
         class="post-action-btn share-btn"
       >
         <i class="fa-solid fa-share"></i>
-
         Share
       </button>
 
@@ -2853,23 +2221,37 @@ function renderPostCard(post) {
   `;
 
 
+  // ----------------------------------------------------------
+  // Existing saved author information
+  // ----------------------------------------------------------
+
+  const authorName =
+    post.authorName ||
+    "VitalStar User";
+
+
   const authorAvatar =
     card.querySelector(
-      '.post-card__avatar'
+      ".post-card__avatar"
     );
 
 
-  ctx.applyMediaBackground(
-    authorAvatar,
-    post.authorPhotoURL || '',
-    ctx.initialsFrom(
+  authorAvatar.textContent =
+    getInitials(authorName);
+
+
+  if (post.authorPhotoURL) {
+
+    setAvatarBackground(
+      authorAvatar,
+      post.authorPhotoURL,
       authorName
-    )
-  );
+    );
+  }
 
 
   card.querySelector(
-    '.post-card__author-name'
+    ".post-card__author-name"
   ).textContent =
     authorName;
 
@@ -2892,7 +2274,97 @@ function renderPostCard(post) {
   );
 
 
+  // ----------------------------------------------------------
+  // Refresh author from users collection.
+  // This also fixes older posts that were saved as
+  // "VitalStar Member".
+  // ----------------------------------------------------------
+
+  refreshPostAuthor(
+    card,
+    post
+  );
+
+
   return card;
+}
+
+
+// ============================================================
+// REFRESH POST AUTHOR
+// ============================================================
+
+async function refreshPostAuthor(
+  card,
+  post
+) {
+
+  if (!post.authorId) {
+    return;
+  }
+
+
+  try {
+
+    const profile =
+      await getUserProfile(
+        post.authorId
+      );
+
+
+    const name =
+      profile.fullName ||
+      post.authorName ||
+      "VitalStar User";
+
+
+    const nameEl =
+      card.querySelector(
+        ".post-card__author-name"
+      );
+
+
+    const avatar =
+      card.querySelector(
+        ".post-card__avatar"
+      );
+
+
+    if (nameEl) {
+
+      nameEl.textContent =
+        name;
+    }
+
+
+    if (avatar) {
+
+      setAvatarBackground(
+        avatar,
+        profile.photoURL ||
+          post.authorPhotoURL ||
+          "",
+        name
+      );
+    }
+
+
+    // Update the in-memory post.
+    post.authorName =
+      name;
+
+    post.authorPhotoURL =
+      profile.photoURL ||
+      post.authorPhotoURL ||
+      "";
+
+  } catch (error) {
+
+    console.error(
+      "Could not refresh post author:",
+      error
+    );
+  }
 }
 
 
@@ -2907,28 +2379,25 @@ function renderPostBody(
 
   const body =
     card.querySelector(
-      '.post-card__body'
+      ".post-card__body"
     );
 
 
-  body.innerHTML = '';
+  body.innerHTML = "";
 
 
   if (post.repostOf) {
 
     const banner =
-      document.createElement('div');
-
+      document.createElement("div");
 
     banner.className =
-      'repost-banner';
-
+      "repost-banner";
 
     banner.innerHTML = `
       <i class="fa-solid fa-retweet"></i>
       Reposted
     `;
-
 
     body.appendChild(
       banner
@@ -2939,16 +2408,13 @@ function renderPostBody(
   if (post.text) {
 
     const textEl =
-      document.createElement('p');
-
+      document.createElement("p");
 
     textEl.className =
-      'post-card__text';
-
+      "post-card__text";
 
     textEl.textContent =
       post.text;
-
 
     body.appendChild(
       textEl
@@ -2956,103 +2422,82 @@ function renderPostBody(
   }
 
 
-  /*
-   * MEDIA
-   */
+  // ==========================================================
+  // MEDIA
+  // ==========================================================
+
   if (post.mediaURL) {
 
     const mediaWrap =
-      document.createElement('div');
-
+      document.createElement("div");
 
     mediaWrap.className =
-      'post-card__media';
+      "post-card__media";
 
 
     if (
       post.mediaType ===
-      'video'
+      "video"
     ) {
 
       const video =
-        document.createElement('video');
+        document.createElement(
+          "video"
+        );
 
 
-      /*
-       * Important attributes for mobile browsers.
-       */
       video.controls = true;
 
-      video.playsInline = true;
+      video.playsInline =
+        true;
 
-      video.preload = 'metadata';
+      video.preload =
+        "metadata";
+
 
       video.setAttribute(
-        'playsinline',
-        ''
+        "controlsList",
+        "nodownload"
       );
 
 
-      /*
-       * Cloudinary secure URL.
-       */
-      video.src =
-        normalizeMediaURL(
+      const source =
+        document.createElement(
+          "source"
+        );
+
+
+      source.src =
+        getPlayableVideoUrl(
           post.mediaURL
         );
 
 
+      source.type =
+        "video/mp4";
+
+
+      video.appendChild(
+        source
+      );
+
+
+      video.appendChild(
+        document.createTextNode(
+          "Your browser does not support video playback."
+        )
+      );
+
+
       video.addEventListener(
-        'error',
+        "error",
         () => {
 
           console.error(
-            'Posted video could not play:',
-            {
-              url: post.mediaURL,
-              error: video.error
-            }
+            "Video playback failed:",
+            post.mediaURL
           );
 
-
-          /*
-           * Show a useful fallback rather than a
-           * completely blank media area.
-           */
-          if (
-            !mediaWrap.querySelector(
-              '.video-error-message'
-            )
-          ) {
-
-            const errorText =
-              document.createElement(
-                'div'
-              );
-
-
-            errorText.className =
-              'video-error-message';
-
-
-            errorText.style.cssText =
-              `
-                padding:16px;
-                color:#fff;
-                background:#111;
-                text-align:center;
-                font-size:13px;
-              `;
-
-
-            errorText.textContent =
-              'This video could not be played by your browser.';
-
-
-            mediaWrap.appendChild(
-              errorText
-            );
-          }
         }
       );
 
@@ -3063,42 +2508,42 @@ function renderPostBody(
 
     } else {
 
-      const img =
+      const image =
         document.createElement(
-          'img'
+          "img"
         );
 
 
-      img.src =
-        normalizeMediaURL(
-          post.mediaURL
-        );
+      image.src =
+        post.mediaURL;
 
 
-      img.alt =
-        'Post image';
+      image.alt =
+        "Post image";
 
 
-      img.loading =
-        'lazy';
+      image.loading =
+        "lazy";
 
 
-      img.decoding =
-        'async';
+      image.decoding =
+        "async";
 
 
-      img.onerror =
+      image.addEventListener(
+        "error",
         () => {
 
           console.error(
-            'Posted image could not load:',
+            "Image failed to load:",
             post.mediaURL
           );
-        };
+        }
+      );
 
 
       mediaWrap.appendChild(
-        img
+        image
       );
     }
 
@@ -3113,85 +2558,37 @@ function renderPostBody(
 
     const original =
       document.createElement(
-        'div'
+        "div"
       );
 
-
     original.className =
-      'repost-original';
+      "repost-original";
 
 
     original.innerHTML = `
-
-      <div
-        class="repost-original__author"
-      ></div>
-
-      <div
-        class="repost-original__text"
-      ></div>
-
+      <div class="repost-original__author"></div>
+      <div class="repost-original__text"></div>
     `;
 
 
     original.querySelector(
-      '.repost-original__author'
+      ".repost-original__author"
     ).textContent =
       post.repostOfAuthorName ||
-      'VitalStar Member';
+      "VitalStar User";
 
 
     original.querySelector(
-      '.repost-original__text'
+      ".repost-original__text"
     ).textContent =
       post.repostOfText ||
-      '';
+      "";
 
 
     body.appendChild(
       original
     );
   }
-}
-
-
-// ============================================================
-// NORMALIZE MEDIA URL
-// ============================================================
-
-function normalizeMediaURL(url) {
-
-  if (!url) {
-    return '';
-  }
-
-
-  /*
-   * Cloudinary normally returns HTTPS URLs already.
-   */
-  if (
-    url.startsWith(
-      'https://'
-    )
-  ) {
-    return url;
-  }
-
-
-  if (
-    url.startsWith(
-      'http://'
-    )
-  ) {
-
-    return url.replace(
-      'http://',
-      'https://'
-    );
-  }
-
-
-  return url;
 }
 
 
@@ -3206,36 +2603,33 @@ function bindPostCardEvents(
 
   const menuBtn =
     card.querySelector(
-      '.post-card__menu-btn'
+      ".post-card__menu-btn"
     );
 
 
   const menu =
     card.querySelector(
-      '.post-card__menu'
+      ".post-card__menu"
     );
 
 
   menuBtn.addEventListener(
-    'click',
-    (event) => {
+    "click",
+    event => {
 
       event.stopPropagation();
 
-
       document
         .querySelectorAll(
-          '.post-card__menu.is-open'
+          ".post-card__menu.is-open"
         )
         .forEach(
-          (otherMenu) => {
+          m => {
 
-            if (
-              otherMenu !== menu
-            ) {
+            if (m !== menu) {
 
-              otherMenu.classList.remove(
-                'is-open'
+              m.classList.remove(
+                "is-open"
               );
             }
           }
@@ -3243,7 +2637,7 @@ function bindPostCardEvents(
 
 
       menu.classList.toggle(
-        'is-open'
+        "is-open"
       );
     }
   );
@@ -3251,14 +2645,14 @@ function bindPostCardEvents(
 
   const editBtn =
     card.querySelector(
-      '.edit-post-btn'
+      ".edit-post-btn"
     );
 
 
   if (editBtn) {
 
     editBtn.addEventListener(
-      'click',
+      "click",
       () =>
         startEditPost(
           card,
@@ -3270,14 +2664,14 @@ function bindPostCardEvents(
 
   const deleteBtn =
     card.querySelector(
-      '.delete-post-btn'
+      ".delete-post-btn"
     );
 
 
   if (deleteBtn) {
 
     deleteBtn.addEventListener(
-      'click',
+      "click",
       () =>
         deletePost(
           card,
@@ -3289,14 +2683,14 @@ function bindPostCardEvents(
 
   const pinBtn =
     card.querySelector(
-      '.pin-post-btn'
+      ".pin-post-btn"
     );
 
 
   if (pinBtn) {
 
     pinBtn.addEventListener(
-      'click',
+      "click",
       () =>
         togglePinPost(
           post
@@ -3307,14 +2701,14 @@ function bindPostCardEvents(
 
   const reportBtn =
     card.querySelector(
-      '.report-post-btn'
+      ".report-post-btn"
     );
 
 
   if (reportBtn) {
 
     reportBtn.addEventListener(
-      'click',
+      "click",
       () =>
         reportPost(
           post
@@ -3323,79 +2717,79 @@ function bindPostCardEvents(
   }
 
 
-  card
-    .querySelector('.like-btn')
-    .addEventListener(
-      'click',
-      () =>
-        toggleLike(
-          card,
-          post
-        )
-    );
+  card.querySelector(
+    ".like-btn"
+  ).addEventListener(
+    "click",
+    () =>
+      toggleLike(
+        card,
+        post
+      )
+  );
 
 
-  card
-    .querySelector(
-      '.comment-toggle-btn'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        toggleComments(
-          card,
-          post
-        )
-    );
+  card.querySelector(
+    ".comment-toggle-btn"
+  ).addEventListener(
+    "click",
+    () =>
+      toggleComments(
+        card,
+        post
+      )
+  );
 
 
-  card
-    .querySelector(
-      '.repost-btn'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        repostPost(
-          post
-        )
-    );
+  card.querySelector(
+    ".repost-btn"
+  ).addEventListener(
+    "click",
+    () =>
+      repostPost(
+        post
+      )
+  );
 
 
-  card
-    .querySelector(
-      '.share-btn'
-    )
-    .addEventListener(
-      'click',
-      () =>
-        sharePost(
-          post
-        )
-    );
+  card.querySelector(
+    ".share-btn"
+  ).addEventListener(
+    "click",
+    () =>
+      sharePost(
+        post
+      )
+  );
 }
 
 
 // ============================================================
-// GLOBAL MENU CLOSE
+// CLOSE MENUS
 // ============================================================
 
-document.addEventListener(
-  'click',
-  () => {
+if (!window.__vitalstarGroupPostMenuHandler) {
 
-    document
-      .querySelectorAll(
-        '.post-card__menu.is-open'
-      )
-      .forEach(
-        (menu) =>
-          menu.classList.remove(
-            'is-open'
-          )
-      );
-  }
-);
+  window.__vitalstarGroupPostMenuHandler =
+    true;
+
+  document.addEventListener(
+    "click",
+    () => {
+
+      document
+        .querySelectorAll(
+          ".post-card__menu.is-open"
+        )
+        .forEach(
+          menu =>
+            menu.classList.remove(
+              "is-open"
+            )
+        );
+    }
+  );
+}
 
 
 // ============================================================
@@ -3414,7 +2808,7 @@ function timeAgo(date) {
 
 
   if (seconds < 60) {
-    return 'just now';
+    return "just now";
   }
 
 
@@ -3454,8 +2848,8 @@ function timeAgo(date) {
   return date.toLocaleDateString(
     undefined,
     {
-      month: 'short',
-      day: 'numeric'
+      month: "short",
+      day: "numeric"
     }
   );
 }
@@ -3465,17 +2859,17 @@ function timeAgo(date) {
 // ESCAPE HTML
 // ============================================================
 
-function escapeHtml(str) {
+function escapeHtml(
+  str
+) {
 
   const div =
     document.createElement(
-      'div'
+      "div"
     );
 
-
   div.textContent =
-    String(str || '');
-
+    String(str ?? "");
 
   return div.innerHTML;
 }
@@ -3492,23 +2886,23 @@ function startEditPost(
 
   const body =
     card.querySelector(
-      '.post-card__body'
+      ".post-card__body"
     );
 
 
   const textEl =
     body.querySelector(
-      '.post-card__text'
+      ".post-card__text"
     );
 
 
   const currentText =
-    post.text || '';
+    post.text || "";
 
 
   const editWrap =
     document.createElement(
-      'div'
+      "div"
     );
 
 
@@ -3516,24 +2910,48 @@ function startEditPost(
 
     <textarea
       class="post-card__edit-textarea"
+      style="
+        width:100%;
+        min-height:90px;
+        padding:10px;
+        border-radius:12px;
+        border:1px solid #315fff;
+        resize:vertical;
+      "
     ></textarea>
 
-
     <div
-      class="post-card__edit-actions"
+      style="
+        display:flex;
+        gap:8px;
+        margin-top:8px;
+      "
     >
 
       <button
         type="button"
         class="save-btn"
+        style="
+          padding:8px 15px;
+          border:0;
+          border-radius:999px;
+          background:#315fff;
+          color:white;
+          font-weight:600;
+        "
       >
         Save
       </button>
 
-
       <button
         type="button"
         class="cancel-btn"
+        style="
+          padding:8px 15px;
+          border:1px solid #ddd;
+          border-radius:999px;
+          background:#f5f6f8;
+        "
       >
         Cancel
       </button>
@@ -3543,7 +2961,7 @@ function startEditPost(
 
 
   editWrap.querySelector(
-    'textarea'
+    "textarea"
   ).value =
     currentText;
 
@@ -3563,96 +2981,84 @@ function startEditPost(
   }
 
 
-  editWrap
-    .querySelector(
-      '.cancel-btn'
-    )
-    .addEventListener(
-      'click',
-      () =>
+  editWrap.querySelector(
+    ".cancel-btn"
+  ).addEventListener(
+    "click",
+    () =>
+      renderPostBody(
+        card,
+        post
+      )
+  );
+
+
+  editWrap.querySelector(
+    ".save-btn"
+  ).addEventListener(
+    "click",
+    async () => {
+
+      const newText =
+        editWrap
+          .querySelector(
+            "textarea"
+          )
+          .value
+          .trim();
+
+
+      try {
+
+        await updateDoc(
+          doc(
+            ctx.db,
+            "groups",
+            ctx.groupId,
+            "posts",
+            post.id
+          ),
+          {
+            text: newText,
+            isEdited: true,
+            updatedAt:
+              serverTimestamp()
+          }
+        );
+
+
+        post.text =
+          newText;
+
+        post.isEdited =
+          true;
+
+
         renderPostBody(
           card,
           post
-        )
-    );
+        );
 
 
-  editWrap
-    .querySelector(
-      '.save-btn'
-    )
-    .addEventListener(
-      'click',
-      async () => {
+        ctx.showToast(
+          "Post updated.",
+          "success"
+        );
 
-        const newText =
-          editWrap
-            .querySelector(
-              'textarea'
-            )
-            .value
-            .trim();
+      } catch (error) {
 
+        console.error(
+          "Error updating post:",
+          error
+        );
 
-        try {
-
-          const postRef =
-            doc(
-              ctx.db,
-              'groups',
-              ctx.groupId,
-              'posts',
-              post.id
-            );
-
-
-          await updateDoc(
-            postRef,
-            {
-              text: newText,
-
-              isEdited: true,
-
-              updatedAt:
-                serverTimestamp()
-            }
-          );
-
-
-          post.text =
-            newText;
-
-
-          post.isEdited =
-            true;
-
-
-          renderPostBody(
-            card,
-            post
-          );
-
-
-          ctx.showToast(
-            'Post updated.',
-            'success'
-          );
-
-        } catch (error) {
-
-          console.error(
-            'Error updating post:',
-            error
-          );
-
-
-          ctx.showToast(
-            'Could not update the post.',
-            'error'
-          );
-        }
+        ctx.showToast(
+          "Could not update the post.",
+          "error"
+        );
       }
-    );
+    }
+  );
 }
 
 
@@ -3667,9 +3073,10 @@ async function deletePost(
 
   if (
     !window.confirm(
-      'Delete this post? This cannot be undone.'
+      "Delete this post? This cannot be undone."
     )
   ) {
+
     return;
   }
 
@@ -3679,54 +3086,44 @@ async function deletePost(
     await deleteDoc(
       doc(
         ctx.db,
-        'groups',
+        "groups",
         ctx.groupId,
-        'posts',
+        "posts",
         post.id
       )
     );
 
 
-    try {
+    await updateDoc(
+      ctx.groupRef,
+      {
+        postCount:
+          increment(-1)
+      }
+    );
 
-      await updateDoc(
-        ctx.groupRef,
-        {
-          postCount:
-            increment(-1)
-        }
-      );
 
-      ctx.refreshHeaderStats();
-
-    } catch (countError) {
-
-      console.warn(
-        'Post deleted but postCount could not be updated:',
-        countError
-      );
-    }
+    ctx.refreshHeaderStats();
 
 
     card.remove();
 
 
     ctx.showToast(
-      'Post deleted.',
-      'info'
+      "Post deleted.",
+      "info"
     );
 
   } catch (error) {
 
     console.error(
-      'Error deleting post:',
+      "Error deleting post:",
       error
     );
 
-
     ctx.showToast(
-      'Could not delete the post.',
-      'error'
+      "Could not delete the post.",
+      "error"
     );
   }
 }
@@ -3742,18 +3139,14 @@ async function togglePinPost(
 
   try {
 
-    const postRef =
+    await updateDoc(
       doc(
         ctx.db,
-        'groups',
+        "groups",
         ctx.groupId,
-        'posts',
+        "posts",
         post.id
-      );
-
-
-    await updateDoc(
-      postRef,
+      ),
       {
         isPinned:
           !post.isPinned
@@ -3763,9 +3156,9 @@ async function togglePinPost(
 
     ctx.showToast(
       post.isPinned
-        ? 'Post unpinned.'
-        : 'Post pinned to the top.',
-      'success'
+        ? "Post unpinned."
+        : "Post pinned to the top.",
+      "success"
     );
 
 
@@ -3774,21 +3167,20 @@ async function togglePinPost(
   } catch (error) {
 
     console.error(
-      'Error pinning post:',
+      "Error pinning post:",
       error
     );
 
-
     ctx.showToast(
-      'Could not update the pin status.',
-      'error'
+      "Could not update the pin status.",
+      "error"
     );
   }
 }
 
 
 // ============================================================
-// REPORT POST
+// REPORT
 // ============================================================
 
 async function reportPost(
@@ -3797,7 +3189,7 @@ async function reportPost(
 
   const reason =
     window.prompt(
-      'Why are you reporting this post?'
+      "Why are you reporting this post?"
     );
 
 
@@ -3805,6 +3197,7 @@ async function reportPost(
     !reason ||
     !reason.trim()
   ) {
+
     return;
   }
 
@@ -3814,11 +3207,10 @@ async function reportPost(
     await addDoc(
       collection(
         ctx.db,
-        'reports'
+        "reports"
       ),
       {
-
-        type: 'post',
+        type: "post",
 
         groupId:
           ctx.groupId,
@@ -3833,7 +3225,7 @@ async function reportPost(
           reason.trim(),
 
         status:
-          'pending',
+          "pending",
 
         createdAt:
           serverTimestamp()
@@ -3842,21 +3234,20 @@ async function reportPost(
 
 
     ctx.showToast(
-      'Post reported.',
-      'success'
+      "Post reported.",
+      "success"
     );
 
   } catch (error) {
 
     console.error(
-      'Error reporting post:',
+      "Error reporting post:",
       error
     );
 
-
     ctx.showToast(
-      'Could not submit the report.',
-      'error'
+      "Could not submit the report.",
+      "error"
     );
   }
 }
@@ -3876,11 +3267,11 @@ async function refreshLikeButtonState(
     const likeRef =
       doc(
         ctx.db,
-        'groups',
+        "groups",
         ctx.groupId,
-        'posts',
+        "posts",
         postId,
-        'likes',
+        "likes",
         ctx.currentUser.uid
       );
 
@@ -3893,7 +3284,7 @@ async function refreshLikeButtonState(
 
     const likeBtn =
       card.querySelector(
-        '.like-btn'
+        ".like-btn"
       );
 
 
@@ -3905,20 +3296,20 @@ async function refreshLikeButtonState(
     if (likeSnap.exists()) {
 
       likeBtn.classList.add(
-        'is-liked'
+        "is-liked"
       );
 
 
       likeBtn.querySelector(
-        'i'
+        "i"
       ).className =
-        'fa-solid fa-heart';
+        "fa-solid fa-heart";
     }
 
   } catch (error) {
 
     console.error(
-      'Error checking like state:',
+      "Error checking like state:",
       error
     );
   }
@@ -3937,8 +3328,8 @@ async function toggleLike(
   if (!isActiveMember()) {
 
     ctx.showToast(
-      'Join this group to like posts.',
-      'info'
+      "Join this group to like posts.",
+      "info"
     );
 
     return;
@@ -3947,28 +3338,28 @@ async function toggleLike(
 
   const likeBtn =
     card.querySelector(
-      '.like-btn'
+      ".like-btn"
     );
 
 
   const countEl =
     likeBtn.querySelector(
-      '.like-count'
+      ".like-count"
     );
 
 
   const isLiked =
     likeBtn.classList.contains(
-      'is-liked'
+      "is-liked"
     );
 
 
   const postRef =
     doc(
       ctx.db,
-      'groups',
+      "groups",
       ctx.groupId,
-      'posts',
+      "posts",
       post.id
     );
 
@@ -3976,44 +3367,34 @@ async function toggleLike(
   const likeRef =
     doc(
       ctx.db,
-      'groups',
+      "groups",
       ctx.groupId,
-      'posts',
+      "posts",
       post.id,
-      'likes',
+      "likes",
       ctx.currentUser.uid
     );
 
 
-  const oldCount =
-    Number(
-      post.likesCount || 0
-    );
+  likeBtn.classList.toggle(
+    "is-liked"
+  );
+
+
+  likeBtn.querySelector(
+    "i"
+  ).className =
+    isLiked
+      ? "fa-regular fa-heart"
+      : "fa-solid fa-heart";
 
 
   const newCount =
     Math.max(
       0,
-      oldCount +
-        (
-          isLiked
-            ? -1
-            : 1
-        )
+      (post.likesCount || 0) +
+        (isLiked ? -1 : 1)
     );
-
-
-  likeBtn.classList.toggle(
-    'is-liked'
-  );
-
-
-  likeBtn.querySelector(
-    'i'
-  ).className =
-    isLiked
-      ? 'fa-regular fa-heart'
-      : 'fa-solid fa-heart';
 
 
   post.likesCount =
@@ -4033,7 +3414,6 @@ async function toggleLike(
       await deleteDoc(
         likeRef
       );
-
 
       await updateDoc(
         postRef,
@@ -4056,7 +3436,6 @@ async function toggleLike(
         }
       );
 
-
       await updateDoc(
         postRef,
         {
@@ -4069,40 +3448,13 @@ async function toggleLike(
   } catch (error) {
 
     console.error(
-      'Error toggling like:',
+      "Error toggling like:",
       error
     );
 
-
-    /*
-     * Roll UI back if Firestore failed.
-     */
-    post.likesCount =
-      oldCount;
-
-
-    countEl.textContent =
-      ctx.formatCount(
-        oldCount
-      );
-
-
-    likeBtn.classList.toggle(
-      'is-liked'
-    );
-
-
-    likeBtn.querySelector(
-      'i'
-    ).className =
-      isLiked
-        ? 'fa-solid fa-heart'
-        : 'fa-regular fa-heart';
-
-
     ctx.showToast(
-      'Could not update your like.',
-      'error'
+      "Could not update your like.",
+      "error"
     );
   }
 }
@@ -4119,20 +3471,20 @@ function toggleComments(
 
   const section =
     card.querySelector(
-      '.comments-section'
+      ".comments-section"
     );
 
 
   const isOpen =
     section.classList.contains(
-      'is-open'
+      "is-open"
     );
 
 
   if (isOpen) {
 
     section.classList.remove(
-      'is-open'
+      "is-open"
     );
 
     return;
@@ -4140,13 +3492,13 @@ function toggleComments(
 
 
   section.classList.add(
-    'is-open'
+    "is-open"
   );
 
 
   if (
     section.dataset.loaded ===
-    'false'
+    "false"
   ) {
 
     loadComments(
@@ -4167,17 +3519,13 @@ async function loadComments(
 ) {
 
   section.dataset.loaded =
-    'true';
+    "true";
 
 
   section.innerHTML = `
-
     <div class="tab-panel-placeholder">
-
       <span class="spinner-sm"></span>
-
       Loading comments...
-
     </div>
   `;
 
@@ -4186,21 +3534,18 @@ async function loadComments(
 
     const commentsQuery =
       query(
-
         collection(
           ctx.db,
-          'groups',
+          "groups",
           ctx.groupId,
-          'posts',
+          "posts",
           post.id,
-          'comments'
+          "comments"
         ),
-
         orderBy(
-          'createdAt',
-          'asc'
+          "createdAt",
+          "asc"
         ),
-
         limit(50)
       );
 
@@ -4211,7 +3556,8 @@ async function loadComments(
       );
 
 
-    section.innerHTML = '';
+    section.innerHTML =
+      "";
 
 
     if (isActiveMember()) {
@@ -4228,12 +3574,12 @@ async function loadComments(
 
     const commentsListEl =
       document.createElement(
-        'div'
+        "div"
       );
 
 
     commentsListEl.className =
-      'comments-list';
+      "comments-list";
 
 
     section.appendChild(
@@ -4242,14 +3588,12 @@ async function loadComments(
 
 
     snapshot.forEach(
-      (commentDoc) => {
+      commentDoc => {
 
         commentsListEl.appendChild(
           buildCommentItem(
             {
-              id:
-                commentDoc.id,
-
+              id: commentDoc.id,
               ...commentDoc.data()
             },
             post
@@ -4261,19 +3605,15 @@ async function loadComments(
   } catch (error) {
 
     console.error(
-      'Error loading comments:',
+      "Error loading comments:",
       error
     );
 
-
     section.innerHTML = `
-
       <div class="posts-empty">
-
         <p>
           Could not load comments.
         </p>
-
       </div>
     `;
   }
@@ -4292,14 +3632,14 @@ function buildCommentComposer(
 
   const wrap =
     document.createElement(
-      'div'
+      "div"
     );
 
 
   wrap.className =
     parentCommentId
-      ? 'reply-composer is-open'
-      : 'comment-composer';
+      ? "reply-composer"
+      : "comment-composer";
 
 
   wrap.innerHTML = `
@@ -4309,20 +3649,17 @@ function buildCommentComposer(
       class="comment-input"
       placeholder="${
         parentCommentId
-          ? 'Write a reply...'
-          : 'Write a comment...'
+          ? "Write a reply..."
+          : "Write a comment..."
       }"
       maxlength="1000"
     />
-
 
     <button
       type="button"
       class="comment-send-btn"
     >
-
       <i class="fa-solid fa-paper-plane"></i>
-
     </button>
 
   `;
@@ -4330,13 +3667,13 @@ function buildCommentComposer(
 
   const input =
     wrap.querySelector(
-      '.comment-input'
+      ".comment-input"
     );
 
 
   const sendBtn =
     wrap.querySelector(
-      '.comment-send-btn'
+      ".comment-send-btn"
     );
 
 
@@ -4358,56 +3695,61 @@ function buildCommentComposer(
 
       try {
 
+        const profile =
+          await getUserProfile(
+            ctx.currentUser.uid
+          );
+
+
         if (parentCommentId) {
 
           const repliesRef =
             collection(
               ctx.db,
-              'groups',
+              "groups",
               ctx.groupId,
-              'posts',
+              "posts",
               post.id,
-              'comments',
+              "comments",
               parentCommentId,
-              'replies'
+              "replies"
             );
 
 
-          const replyData = {
+          await addDoc(
+            repliesRef,
+            {
 
-            authorId:
-              ctx.currentUser.uid,
+              authorId:
+                ctx.currentUser.uid,
 
-            authorName:
-              ctx.currentUser.fullName ||
-              ctx.currentUser.displayName ||
-              'VitalStar Member',
+              authorName:
+                profile.fullName,
 
-            authorPhotoURL:
-              ctx.currentUser.photoURL ||
-              '',
+              authorPhotoURL:
+                profile.photoURL,
 
-            text,
+              text,
 
-            createdAt:
-              serverTimestamp()
-          };
-
-
-          const replyDoc =
-            await addDoc(
-              repliesRef,
-              replyData
-            );
+              createdAt:
+                serverTimestamp()
+            }
+          );
 
 
           container.appendChild(
             buildReplyItem(
               {
-                id:
-                  replyDoc.id,
+                authorId:
+                  ctx.currentUser.uid,
 
-                ...replyData
+                authorName:
+                  profile.fullName,
+
+                authorPhotoURL:
+                  profile.photoURL,
+
+                text
               }
             )
           );
@@ -4417,48 +3759,41 @@ function buildCommentComposer(
           const commentsRef =
             collection(
               ctx.db,
-              'groups',
+              "groups",
               ctx.groupId,
-              'posts',
+              "posts",
               post.id,
-              'comments'
+              "comments"
             );
 
 
-          const commentData = {
+          await addDoc(
+            commentsRef,
+            {
 
-            authorId:
-              ctx.currentUser.uid,
+              authorId:
+                ctx.currentUser.uid,
 
-            authorName:
-              ctx.currentUser.fullName ||
-              ctx.currentUser.displayName ||
-              'VitalStar Member',
+              authorName:
+                profile.fullName,
 
-            authorPhotoURL:
-              ctx.currentUser.photoURL ||
-              '',
+              authorPhotoURL:
+                profile.photoURL,
 
-            text,
+              text,
 
-            createdAt:
-              serverTimestamp()
-          };
-
-
-          const commentDoc =
-            await addDoc(
-              commentsRef,
-              commentData
-            );
+              createdAt:
+                serverTimestamp()
+            }
+          );
 
 
           await updateDoc(
             doc(
               ctx.db,
-              'groups',
+              "groups",
               ctx.groupId,
-              'posts',
+              "posts",
               post.id
             ),
             {
@@ -4466,6 +3801,11 @@ function buildCommentComposer(
                 increment(1)
             }
           );
+
+
+          post.commentsCount =
+            (post.commentsCount || 0) +
+            1;
 
 
           const card =
@@ -4476,15 +3816,8 @@ function buildCommentComposer(
 
           if (card) {
 
-            post.commentsCount =
-              (
-                post.commentsCount ||
-                0
-              ) + 1;
-
-
             card.querySelector(
-              '.comment-count'
+              ".comment-count"
             ).textContent =
               ctx.formatCount(
                 post.commentsCount
@@ -4493,9 +3826,10 @@ function buildCommentComposer(
 
 
           const commentsListEl =
-            wrap.parentElement.querySelector(
-              '.comments-list'
-            );
+            wrap.parentElement
+              ?.querySelector(
+                ".comments-list"
+              );
 
 
           if (commentsListEl) {
@@ -4503,10 +3837,16 @@ function buildCommentComposer(
             commentsListEl.appendChild(
               buildCommentItem(
                 {
-                  id:
-                    commentDoc.id,
+                  authorId:
+                    ctx.currentUser.uid,
 
-                  ...commentData
+                  authorName:
+                    profile.fullName,
+
+                  authorPhotoURL:
+                    profile.photoURL,
+
+                  text
                 },
                 post
               )
@@ -4515,19 +3855,19 @@ function buildCommentComposer(
         }
 
 
-        input.value = '';
+        input.value =
+          "";
 
       } catch (error) {
 
         console.error(
-          'Error posting comment:',
+          "Error posting comment:",
           error
         );
 
-
         ctx.showToast(
-          'Could not post your comment.',
-          'error'
+          "Could not post your comment.",
+          "error"
         );
 
       } finally {
@@ -4539,18 +3879,18 @@ function buildCommentComposer(
 
 
   sendBtn.addEventListener(
-    'click',
+    "click",
     submit
   );
 
 
   input.addEventListener(
-    'keydown',
-    (event) => {
+    "keydown",
+    event => {
 
       if (
         event.key ===
-        'Enter'
+        "Enter"
       ) {
 
         event.preventDefault();
@@ -4582,12 +3922,12 @@ function buildCommentItem(
 
   const item =
     document.createElement(
-      'div'
+      "div"
     );
 
 
   item.className =
-    'comment-item';
+    "comment-item";
 
 
   item.innerHTML = `
@@ -4595,10 +3935,18 @@ function buildCommentItem(
     <a
       class="post-author-link comment-avatar"
       href="${profileHref}"
-    ></a>
+    >
+      ${getInitials(
+        comment.authorName
+      )}
+    </a>
 
-
-    <div style="flex:1;min-width:0;">
+    <div
+      style="
+        flex:1;
+        min-width:0;
+      "
+    >
 
       <div class="comment-bubble">
 
@@ -4607,13 +3955,9 @@ function buildCommentItem(
           href="${profileHref}"
         ></a>
 
-
-        <div
-          class="comment-text"
-        ></div>
+        <div class="comment-text"></div>
 
       </div>
-
 
       <div class="comment-footer">
 
@@ -4627,11 +3971,10 @@ function buildCommentItem(
                 Reply
               </button>
             `
-            : ''
+            : ""
         }
 
       </div>
-
 
       <div class="replies-list"></div>
 
@@ -4640,49 +3983,37 @@ function buildCommentItem(
   `;
 
 
-  const avatar =
+  setAvatarBackground(
     item.querySelector(
-      '.comment-avatar'
-    );
-
-
-  const author =
-    item.querySelector(
-      '.comment-author'
-    );
-
-
-  const name =
-    comment.authorName ||
-    'VitalStar Member';
-
-
-  ctx.applyMediaBackground(
-    avatar,
-    comment.authorPhotoURL || '',
-    ctx.initialsFrom(name)
+      ".comment-avatar"
+    ),
+    comment.authorPhotoURL,
+    comment.authorName
   );
 
 
-  author.textContent =
-    name;
+  item.querySelector(
+    ".comment-author"
+  ).textContent =
+    comment.authorName ||
+    "VitalStar User";
 
 
   item.querySelector(
-    '.comment-text'
+    ".comment-text"
   ).textContent =
-    comment.text || '';
+    comment.text || "";
 
 
   const replyBtn =
     item.querySelector(
-      '.comment-reply-btn'
+      ".comment-reply-btn"
     );
 
 
   const repliesList =
     item.querySelector(
-      '.replies-list'
+      ".replies-list"
     );
 
 
@@ -4691,23 +4022,18 @@ function buildCommentItem(
     comment.id
   ) {
 
-    let replyComposerOpen =
-      false;
-
-
     replyBtn.addEventListener(
-      'click',
+      "click",
       () => {
 
         if (
-          replyComposerOpen
+          item.querySelector(
+            ".reply-composer"
+          )
         ) {
+
           return;
         }
-
-
-        replyComposerOpen =
-          true;
 
 
         const composer =
@@ -4720,7 +4046,7 @@ function buildCommentItem(
 
         item
           .querySelector(
-            'div[style]'
+            "div[style]"
           )
           .appendChild(
             composer
@@ -4737,45 +4063,82 @@ function buildCommentItem(
   }
 
 
-  /*
-   * Also refresh comment author profile.
-   */
-  if (comment.authorId) {
-
-    getUserProfile(
-      comment.authorId
-    ).then(
-      (profile) => {
-
-        if (!profile) {
-          return;
-        }
-
-
-        const fullName =
-          profile.fullName ||
-          name;
-
-
-        author.textContent =
-          fullName;
-
-
-        ctx.applyMediaBackground(
-          avatar,
-          profile.photoURL ||
-            comment.authorPhotoURL ||
-            '',
-          ctx.initialsFrom(
-            fullName
-          )
-        );
-      }
-    );
-  }
+  // Refresh comment author from Firestore.
+  refreshCommentAuthor(
+    item,
+    comment
+  );
 
 
   return item;
+}
+
+
+// ============================================================
+// REFRESH COMMENT AUTHOR
+// ============================================================
+
+async function refreshCommentAuthor(
+  item,
+  comment
+) {
+
+  if (!comment.authorId) {
+    return;
+  }
+
+
+  try {
+
+    const profile =
+      await getUserProfile(
+        comment.authorId
+      );
+
+
+    const name =
+      profile.fullName ||
+      comment.authorName ||
+      "VitalStar User";
+
+
+    const avatar =
+      item.querySelector(
+        ".comment-avatar"
+      );
+
+
+    const author =
+      item.querySelector(
+        ".comment-author"
+      );
+
+
+    if (author) {
+
+      author.textContent =
+        name;
+    }
+
+
+    if (avatar) {
+
+      setAvatarBackground(
+        avatar,
+        profile.photoURL ||
+          comment.authorPhotoURL ||
+          "",
+        name
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Could not refresh comment author:",
+      error
+    );
+  }
 }
 
 
@@ -4793,23 +4156,20 @@ async function loadReplies(
 
     const repliesQuery =
       query(
-
         collection(
           ctx.db,
-          'groups',
+          "groups",
           ctx.groupId,
-          'posts',
+          "posts",
           post.id,
-          'comments',
+          "comments",
           commentId,
-          'replies'
+          "replies"
         ),
-
         orderBy(
-          'createdAt',
-          'asc'
+          "createdAt",
+          "asc"
         ),
-
         limit(30)
       );
 
@@ -4821,14 +4181,12 @@ async function loadReplies(
 
 
     snapshot.forEach(
-      (replyDoc) => {
+      replyDoc => {
 
         repliesListEl.appendChild(
           buildReplyItem(
             {
-              id:
-                replyDoc.id,
-
+              id: replyDoc.id,
               ...replyDoc.data()
             }
           )
@@ -4839,7 +4197,7 @@ async function loadReplies(
   } catch (error) {
 
     console.error(
-      'Error loading replies:',
+      "Error loading replies:",
       error
     );
   }
@@ -4862,22 +4220,28 @@ function buildReplyItem(
 
   const item =
     document.createElement(
-      'div'
+      "div"
     );
 
 
   item.className =
-    'comment-item';
+    "comment-item";
 
 
   item.innerHTML = `
 
     <a
       class="post-author-link comment-avatar"
-      style="width:26px;height:26px;"
+      style="
+        width:26px;
+        height:26px;
+      "
       href="${profileHref}"
-    ></a>
-
+    >
+      ${getInitials(
+        reply.authorName
+      )}
+    </a>
 
     <div
       class="comment-bubble"
@@ -4889,82 +4253,33 @@ function buildReplyItem(
         href="${profileHref}"
       ></a>
 
-
-      <div
-        class="comment-text"
-      ></div>
+      <div class="comment-text"></div>
 
     </div>
 
   `;
 
 
-  const name =
-    reply.authorName ||
-    'VitalStar Member';
-
-
-  ctx.applyMediaBackground(
+  setAvatarBackground(
     item.querySelector(
-      '.comment-avatar'
+      ".comment-avatar"
     ),
-    reply.authorPhotoURL || '',
-    ctx.initialsFrom(name)
+    reply.authorPhotoURL,
+    reply.authorName
   );
 
 
   item.querySelector(
-    '.comment-author'
+    ".comment-author"
   ).textContent =
-    name;
+    reply.authorName ||
+    "VitalStar User";
 
 
   item.querySelector(
-    '.comment-text'
+    ".comment-text"
   ).textContent =
-    reply.text || '';
-
-
-  /*
-   * Refresh reply author profile.
-   */
-  if (reply.authorId) {
-
-    getUserProfile(
-      reply.authorId
-    ).then(
-      (profile) => {
-
-        if (!profile) {
-          return;
-        }
-
-
-        const fullName =
-          profile.fullName ||
-          name;
-
-
-        item.querySelector(
-          '.comment-author'
-        ).textContent =
-          fullName;
-
-
-        ctx.applyMediaBackground(
-          item.querySelector(
-            '.comment-avatar'
-          ),
-          profile.photoURL ||
-            reply.authorPhotoURL ||
-            '',
-          ctx.initialsFrom(
-            fullName
-          )
-        );
-      }
-    );
-  }
+    reply.text || "";
 
 
   return item;
@@ -4982,8 +4297,8 @@ async function repostPost(
   if (!isActiveMember()) {
 
     ctx.showToast(
-      'Join this group to repost.',
-      'info'
+      "Join this group to repost.",
+      "info"
     );
 
     return;
@@ -4993,8 +4308,8 @@ async function repostPost(
   if (post.repostOf) {
 
     ctx.showToast(
-      'You can only repost original posts.',
-      'info'
+      "You can only repost original posts.",
+      "info"
     );
 
     return;
@@ -5003,28 +4318,29 @@ async function repostPost(
 
   if (
     !window.confirm(
-      'Repost this to the group feed?'
+      "Repost this to the group feed?"
     )
   ) {
+
     return;
   }
 
 
   try {
 
-    const postsRef =
-      collection(
-        ctx.db,
-        'groups',
-        ctx.groupId,
-        'posts'
+    const profile =
+      await getUserProfile(
+        ctx.currentUser.uid
       );
 
 
-    const authorName =
-      ctx.currentUser.fullName ||
-      ctx.currentUser.displayName ||
-      'VitalStar Member';
+    const postsRef =
+      collection(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts"
+      );
 
 
     await addDoc(
@@ -5034,25 +4350,25 @@ async function repostPost(
         authorId:
           ctx.currentUser.uid,
 
-        authorName,
+        authorName:
+          profile.fullName,
 
         authorPhotoURL:
-          ctx.currentUser.photoURL ||
-          '',
+          profile.photoURL,
 
         authorRole:
           currentUserRole() ||
-          'member',
+          "member",
 
-        text: '',
+        text: "",
 
         mediaURL:
           post.mediaURL ||
-          '',
+          "",
 
         mediaType:
           post.mediaType ||
-          'none',
+          "none",
 
         isPinned:
           false,
@@ -5077,11 +4393,11 @@ async function repostPost(
 
         repostOfAuthorName:
           post.authorName ||
-          'VitalStar Member',
+          "VitalStar User",
 
         repostOfText:
           post.text ||
-          '',
+          "",
 
         createdAt:
           serverTimestamp(),
@@ -5095,9 +4411,9 @@ async function repostPost(
     await updateDoc(
       doc(
         ctx.db,
-        'groups',
+        "groups",
         ctx.groupId,
-        'posts',
+        "posts",
         post.id
       ),
       {
@@ -5107,30 +4423,21 @@ async function repostPost(
     );
 
 
-    try {
+    await updateDoc(
+      ctx.groupRef,
+      {
+        postCount:
+          increment(1)
+      }
+    );
 
-      await updateDoc(
-        ctx.groupRef,
-        {
-          postCount:
-            increment(1)
-        }
-      );
 
-      ctx.refreshHeaderStats();
-
-    } catch (error) {
-
-      console.warn(
-        'Could not update group postCount:',
-        error
-      );
-    }
+    ctx.refreshHeaderStats();
 
 
     ctx.showToast(
-      'Reposted to the group feed.',
-      'success'
+      "Reposted to the group feed.",
+      "success"
     );
 
 
@@ -5139,14 +4446,13 @@ async function repostPost(
   } catch (error) {
 
     console.error(
-      'Error reposting:',
+      "Error reposting:",
       error
     );
 
-
     ctx.showToast(
-      'Could not repost.',
-      'error'
+      "Could not repost.",
+      "error"
     );
   }
 }
@@ -5161,27 +4467,26 @@ async function sharePost(
 ) {
 
   const url =
-    `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(
+    `${window.location.origin}` +
+    `${window.location.pathname}` +
+    `?id=${encodeURIComponent(
       ctx.groupId
-    )}&post=${encodeURIComponent(
+    )}` +
+    `&post=${encodeURIComponent(
       post.id
     )}`;
 
 
   try {
 
-    const postRef =
+    await updateDoc(
       doc(
         ctx.db,
-        'groups',
+        "groups",
         ctx.groupId,
-        'posts',
+        "posts",
         post.id
-      );
-
-
-    await updateDoc(
-      postRef,
+      ),
       {
         sharesCount:
           increment(1)
@@ -5196,21 +4501,23 @@ async function sharePost(
       await navigator.share(
         {
           title:
-            'A post on VitalStar',
+            "A post on VitalStar",
 
           text:
             post.text
-              ? post.text.substring(
+              ? post.text.slice(
                   0,
                   100
                 )
-              : 'View this post on VitalStar',
+              : "Check out this post on VitalStar.",
 
           url
         }
       );
 
-    } else {
+    } else if (
+      navigator.clipboard
+    ) {
 
       await navigator.clipboard.writeText(
         url
@@ -5218,20 +4525,27 @@ async function sharePost(
 
 
       ctx.showToast(
-        'Link copied to clipboard.',
-        'success'
+        "Link copied to clipboard.",
+        "success"
+      );
+
+    } else {
+
+      ctx.showToast(
+        "Share link: " + url,
+        "info"
       );
     }
 
   } catch (error) {
 
     if (
-      error?.name !==
-      'AbortError'
+      error.name !==
+      "AbortError"
     ) {
 
       console.error(
-        'Error sharing post:',
+        "Error sharing post:",
         error
       );
     }
