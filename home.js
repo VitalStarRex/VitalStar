@@ -50,15 +50,14 @@ onSnapshot(postsQuery, (snapshot) => {
 
         feed.innerHTML = `
         <p style="
-        text-align:center;
-        padding:20px;
+            text-align:center;
+            padding:20px;
         ">
-        No posts yet. Be the first to post ⭐
+            No posts yet. Be the first to post ⭐
         </p>
         `;
 
         return;
-
     }
 
 
@@ -87,126 +86,169 @@ onSnapshot(postsQuery, (snapshot) => {
 
         feed.innerHTML += `
 
-<div class="post-card">
-
-
-<div class="user-info">
-
-
-<div class="avatar">
-
-👤
-
-</div>
-
-
-<div>
-
-<h3>
-
-<a href="profile.html?uid=${post.uid}">
-
-${post.fullName || "VitalStar User"}
-
-</a>
-
-</h3>
-
-
-<small>
-${date}
-</small>
-
-
-</div>
-
-
-</div>
-
-
-<p>
-${post.text || ""}
-</p>
-
-
-${post.image ?
-
-`
-<img
-class="post-photo"
-src="${post.image}"
-alt="Post Image"
+<div class="post-card"
 style="
-width:180px;
-height:220px;
-object-fit:cover;
-border-radius:10px;
-display:block;
-">
-`
-
-: ""}
-
-
-${post.video ?
-
-`
-<video
-class="post-video"
-controls
-preload="metadata"
-style="
-width:180px;
-height:220px;
-object-fit:cover;
-border-radius:10px;
-display:block;
+text-align:center;
 ">
 
-<source
-src="${post.video}"
-type="video/mp4">
 
-Your browser does not support video.
+    <!-- USER INFORMATION -->
 
-</video>
-`
-
-: ""}
+    <div class="user-info"
+    style="
+        justify-content:center;
+        text-align:center;
+    ">
 
 
-<div class="post-buttons">
+        <div class="avatar">
+            👤
+        </div>
 
 
-<button onclick="likePost('${postId}')">
+        <div>
 
-❤️ ${post.likes || 0}
+            <h3>
 
-</button>
+                <a
+                    href="profile.html?uid=${post.uid}"
+                >
 
+                    ${post.fullName || "VitalStar User"}
 
-<button onclick="openComments('${postId}')">
+                </a>
 
-💬 ${post.comments || 0}
-
-</button>
-
-
-<button>
-
-🔁 ${post.reposts || 0}
-
-</button>
+            </h3>
 
 
-<button onclick="sharePost('${postId}')">
+            <small>
+                ${date}
+            </small>
 
-🔗 ${post.shares || 0}
-
-</button>
+        </div>
 
 
-</div>
+    </div>
+
+
+    <!-- POST TEXT -->
+
+    ${
+        post.text
+            ? `
+            <p style="
+                text-align:center;
+                margin:15px auto;
+            ">
+                ${post.text}
+            </p>
+            `
+            : ""
+    }
+
+
+    <!-- POST IMAGE -->
+
+    ${
+        post.image
+            ? `
+            <img
+                class="post-photo"
+                src="${post.image}"
+                alt="Post Image"
+                style="
+                    width:180px;
+                    height:220px;
+                    object-fit:cover;
+                    border-radius:10px;
+                    display:block;
+                    margin:10px auto;
+                "
+            >
+            `
+            : ""
+    }
+
+
+    <!-- POST VIDEO -->
+
+    ${
+        post.video
+            ? `
+            <video
+                class="post-video"
+                controls
+                preload="metadata"
+                style="
+                    width:180px;
+                    height:220px;
+                    object-fit:cover;
+                    border-radius:10px;
+                    display:block;
+                    margin:10px auto;
+                "
+            >
+
+                <source
+                    src="${post.video}"
+                    type="video/mp4"
+                >
+
+                Your browser does not support video.
+
+            </video>
+            `
+            : ""
+    }
+
+
+    <!-- POST BUTTONS -->
+
+    <div
+        class="post-buttons"
+        style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        "
+    >
+
+
+        <button
+            onclick="likePost('${postId}')"
+        >
+
+            ❤️ ${post.likes || 0}
+
+        </button>
+
+
+        <button
+            onclick="openComments('${postId}')"
+        >
+
+            💬 ${post.comments || 0}
+
+        </button>
+
+
+        <button>
+
+            🔁 ${post.reposts || 0}
+
+        </button>
+
+
+        <button
+            onclick="sharePost('${postId}')"
+        >
+
+            🔗 ${post.shares || 0}
+
+        </button>
+
+
+    </div>
 
 
 </div>
@@ -223,13 +265,16 @@ Your browser does not support video.
 
     feed.innerHTML = `
 
-<p style="color:red;text-align:center">
+        <p style="
+            color:red;
+            text-align:center;
+        ">
 
-Unable to load posts
+            Unable to load posts
 
-</p>
+        </p>
 
-`;
+    `;
 
 });
 
