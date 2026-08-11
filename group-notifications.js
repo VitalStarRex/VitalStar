@@ -1,185 +1,220 @@
-
 // ============================================================
 // VITALSTAR — group-notifications.js
-// Group notification panel
+// Complete group notification system
 //
 // Handles:
-// - Loading group notifications
-// - Unread notification indicator
-// - Marking notifications as read
-// - Real-time notification updates
-// - Safe fallback when no notifications exist
+// - Real-time group notifications
+// - Unread badge
+// - Notification panel
+// - Mark one notification as read
+// - Mark all notifications as read
+// - Relative timestamps
 //
-// Expected Firestore collection:
-// notifications
+// Firestore structure:
 //
-// Expected notification fields:
-// groupId
-// receiverId
-// senderId
-// senderName
-// senderPhotoURL
-// type
-// message
-// postId
-// createdAt
-// read
+// groups/{groupId}/notifications/{notificationId}
+//
+// {
+//   recipientId: "USER_UID",
+//   actorId: "USER_UID",
+//   actorName: "Full Name",
+//   actorPhotoURL: "",
+//   type: "post",
+//   title: "New group post",
+//   message: "John created a new post.",
+//   read: false,
+//   createdAt: serverTimestamp()
+// }
 // ============================================================
 
 import {
   collection,
   query,
   where,
-  limit,
   onSnapshot,
   doc,
   updateDoc,
   writeBatch,
-  getDocs
+  orderBy,
+  limit
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
 // ============================================================
-// MODULE STATE
+// STATE
 // ============================================================
 
-let state = {
+let unsubscribeNotifications = null;
+
+let notificationState = {
+  notifications: [],
   db: null,
   auth: null,
   currentUser: null,
   groupId: null,
   listEl: null,
   unreadDotEl: null,
-  showToast: null,
-  unsubscribe: null
+  showToast: null
 };
 
 
 // ============================================================
-// INIT
+// INITIALIZE
 // ============================================================
 
 export async function init(ctx) {
 
-  state.db = ctx.db;
-  state.auth = ctx.auth;
-  state.currentUser = ctx.currentUser;
-  state.groupId = ctx.groupId;
-  state.listEl = ctx.listEl;
-  state.unreadDotEl = ctx.unreadDotEl;
-  state.showToast = ctx.showToast;
+  notificationState = {
+    ...notificationState,
+    ...ctx
+  };
 
-  if (!state.db || !state.currentUser || !state.groupId) {
-    renderEmpty("Notifications are unavailable.");
+  const {
+    db,
+    currentUser,
+    groupId,
+    listEl,
+    unreadDotEl
+  } = notificationState;
+
+
+  if (!db || !currentUser || !groupId) {
+    console.error(
+      "Group notifications: missing required context."
+    );
+
+    renderError("Notifications could not be loaded.");
     return;
   }
 
-  renderLoading();
 
-  startNotificationListener();
-}
+  if (!listEl) {
+    console.error(
+      "Group notifications: notificationsList element not found."
+    );
 
-
-// ============================================================
-// LOAD NOTIFICATIONS
-// ============================================================
-
-function startNotificationListener() {
-
-  // Clean up an old listener if the module is initialized again.
-  if (state.unsubscribe) {
-    state.unsubscribe();
-    state.unsubscribe = null;
+    return;
   }
 
 
-  const notificationsRef = collection(
-    state.db,
-    "notifications"
-  );
+  // Clean up an old listener if this module is initialized again.
+  if (unsubscribeNotifications) {
+    unsubscribeNotifications();
+    unsubscribeNotifications = null;
+  }
 
 
-  /*
-   * IMPORTANT:
-   *
-   * We intentionally do NOT use:
-   *
-   * orderBy("createdAt", "desc")
-   *
-   * together with where().
-   *
-   * That combination can require a Firestore composite index.
-   *
-   * We load a limited set and sort them in JavaScript instead.
-   */
-
-  const notificationsQuery = query(
-    notificationsRef,
-    where("groupId", "==", state.groupId),
-    limit(50)
-  );
+  renderLoading();
 
 
-  state.unsubscribe = onSnapshot(
-    notificationsQuery,
+  try {
 
-    (snapshot) => {
-
-      const notifications = snapshot.docs.map((notificationDoc) => ({
-        id: notificationDoc.id,
-        ...notificationDoc.data()
-      }));
-
-
-      // Sort newest first without requiring a Firestore index.
-      notifications.sort((a, b) => {
-
-        const aTime = getTimestampMillis(a.createdAt);
-        const bTime = getTimestampMillis(b.createdAt);
-
-        return bTime - aTime;
-
-      });
+    const notificationsRef = collection(
+      db,
+      "groups",
+      groupId,
+      "notifications"
+    );
 
 
-      renderNotifications(notifications);
+    // IMPORTANT:
+    //
+    // We intentionally do NOT use:
+    //
+    // orderBy("createdAt", "desc")
+    //
+    // together with where().
+    //
+    // That can require a Firestore composite index.
+    //
+    // Instead we retrieve the user's notifications and sort
+    // them in JavaScript.
 
-    },
-
-    (error) => {
-
-      console.error(
-        "Group notifications listener error:",
-        error
-      );
+    const notificationsQuery = query(
+      notificationsRef,
+      where("recipientId", "==", currentUser.uid),
+      limit(100)
+    );
 
 
-      /*
-       * Do not make the whole group page fail because
-       * notifications are unavailable.
-       */
+    unsubscribeNotifications = onSnapshot(
+      notificationsQuery,
 
-      renderEmpty("You're all caught up.");
+      (snapshot) => {
 
-      if (state.unreadDotEl) {
-        state.unreadDotEl.classList.remove("is-visible");
-        state.unreadDotEl.style.display = "none";
+        const notifications = snapshot.docs.map(
+          (notificationDoc) => ({
+            id: notificationDoc.id,
+            ...notificationDoc.data()
+          })
+        );
+
+
+        // Sort newest first.
+        notifications.sort((a, b) => {
+
+          const aTime = getTimestampMillis(a.createdAt);
+          const bTime = getTimestampMillis(b.createdAt);
+
+          return bTime - aTime;
+
+        });
+
+
+        notificationState.notifications =
+          notifications;
+
+
+        renderNotifications();
+
+
+        updateUnreadBadge();
+
+      },
+
+      (error) => {
+
+        console.error(
+          "Group notifications listener error:",
+          error
+        );
+
+        renderError(
+          "Notifications could not be loaded."
+        );
+
+        updateUnreadBadge();
+
       }
+    );
 
-    }
-  );
+  } catch (error) {
+
+    console.error(
+      "Could not initialize group notifications:",
+      error
+    );
+
+    renderError(
+      "Notifications could not be loaded."
+    );
+
+  }
 }
 
 
 // ============================================================
-// TIMESTAMP HELPER
+// GET TIMESTAMP
 // ============================================================
 
 function getTimestampMillis(timestamp) {
 
-  if (!timestamp) return 0;
+  if (!timestamp) {
+    return 0;
+  }
 
 
+  // Firebase Timestamp
   if (
     typeof timestamp.toMillis === "function"
   ) {
@@ -187,25 +222,24 @@ function getTimestampMillis(timestamp) {
   }
 
 
+  // JavaScript Date
+  if (timestamp instanceof Date) {
+    return timestamp.getTime();
+  }
+
+
+  // Number
+  if (typeof timestamp === "number") {
+    return timestamp;
+  }
+
+
+  // Serialized timestamp
   if (
-    typeof timestamp.toDate === "function"
+    typeof timestamp.seconds === "number"
   ) {
-    return timestamp.toDate().getTime();
-  }
 
-
-  if (timestamp.seconds) {
     return timestamp.seconds * 1000;
-  }
-
-
-  if (typeof timestamp === "string") {
-
-    const parsed = Date.parse(timestamp);
-
-    return Number.isNaN(parsed)
-      ? 0
-      : parsed;
 
   }
 
@@ -215,68 +249,64 @@ function getTimestampMillis(timestamp) {
 
 
 // ============================================================
-// FORMAT DATE
+// RELATIVE TIME
 // ============================================================
 
-function formatNotificationTime(timestamp) {
+function formatRelativeTime(timestamp) {
 
   const millis = getTimestampMillis(timestamp);
 
   if (!millis) {
-    return "Just now";
+    return "just now";
+  }
+
+
+  const difference =
+    Math.max(0, Date.now() - millis);
+
+
+  const seconds =
+    Math.floor(difference / 1000);
+
+
+  if (seconds < 10) {
+    return "just now";
+  }
+
+
+  if (seconds < 60) {
+    return `${seconds}s ago`;
+  }
+
+
+  const minutes =
+    Math.floor(seconds / 60);
+
+
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+
+  const hours =
+    Math.floor(minutes / 60);
+
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+
+  const days =
+    Math.floor(hours / 24);
+
+
+  if (days < 7) {
+    return `${days}d ago`;
   }
 
 
   const date = new Date(millis);
-  const now = Date.now();
-
-  const difference = Math.max(
-    0,
-    now - millis
-  );
-
-
-  const minute = 60 * 1000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-
-
-  if (difference < minute) {
-    return "Just now";
-  }
-
-
-  if (difference < hour) {
-
-    const minutes = Math.floor(
-      difference / minute
-    );
-
-    return `${minutes}m ago`;
-
-  }
-
-
-  if (difference < day) {
-
-    const hours = Math.floor(
-      difference / hour
-    );
-
-    return `${hours}h ago`;
-
-  }
-
-
-  if (difference < 7 * day) {
-
-    const days = Math.floor(
-      difference / day
-    );
-
-    return `${days}d ago`;
-
-  }
 
 
   return date.toLocaleDateString(
@@ -290,49 +320,108 @@ function formatNotificationTime(timestamp) {
 
 
 // ============================================================
+// NOTIFICATION ICON
+// ============================================================
+
+function getNotificationIcon(type) {
+
+  const icons = {
+
+    post:
+      "fa-solid fa-file-lines",
+
+    comment:
+      "fa-solid fa-comment",
+
+    like:
+      "fa-solid fa-heart",
+
+    member:
+      "fa-solid fa-user-plus",
+
+    join:
+      "fa-solid fa-user-plus",
+
+    join_request:
+      "fa-solid fa-user-clock",
+
+    approved:
+      "fa-solid fa-circle-check",
+
+    removed:
+      "fa-solid fa-user-minus",
+
+    mention:
+      "fa-solid fa-at",
+
+    chat:
+      "fa-solid fa-comments",
+
+    admin:
+      "fa-solid fa-shield",
+
+    settings:
+      "fa-solid fa-gear",
+
+    system:
+      "fa-solid fa-bell"
+
+  };
+
+
+  return icons[type] ||
+    "fa-solid fa-bell";
+}
+
+
+// ============================================================
 // RENDER LOADING
 // ============================================================
 
 function renderLoading() {
 
-  if (!state.listEl) return;
+  if (!notificationState.listEl) {
+    return;
+  }
 
 
-  state.listEl.innerHTML = `
-    <div class="group-notifications-loading">
+  notificationState.listEl.innerHTML = `
+    <div class="notification-loading">
       <i class="fa-solid fa-spinner fa-spin"></i>
       <span>Loading notifications...</span>
     </div>
   `;
-
 }
 
 
 // ============================================================
-// RENDER EMPTY
+// RENDER ERROR
 // ============================================================
 
-function renderEmpty(message = "You're all caught up.") {
+function renderError(message) {
 
-  if (!state.listEl) return;
+  if (!notificationState.listEl) {
+    return;
+  }
 
 
-  state.listEl.innerHTML = `
-    <div class="group-notifications-empty">
-      <div class="group-notifications-empty-icon">
-        <i class="fa-regular fa-bell"></i>
-      </div>
-
-      <div class="group-notifications-empty-title">
-        ${escapeHTML(message)}
-      </div>
-
-      <div class="group-notifications-empty-text">
-        New group activity will appear here.
-      </div>
+  notificationState.listEl.innerHTML = `
+    <div class="notification-empty notification-error">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span></span>
     </div>
   `;
 
+
+  const span =
+    notificationState.listEl.querySelector(
+      "span"
+    );
+
+
+  if (span) {
+    span.textContent = message;
+  }
 }
 
 
@@ -340,43 +429,104 @@ function renderEmpty(message = "You're all caught up.") {
 // RENDER NOTIFICATIONS
 // ============================================================
 
-function renderNotifications(notifications) {
+function renderNotifications() {
 
-  if (!state.listEl) return;
+  const listEl =
+    notificationState.listEl;
+
+
+  if (!listEl) {
+    return;
+  }
+
+
+  const notifications =
+    notificationState.notifications;
+
+
+  listEl.innerHTML = "";
 
 
   if (!notifications.length) {
 
-    renderEmpty();
+    listEl.innerHTML = `
+      <div class="notification-empty">
+        <div class="notification-empty-icon">
+          <i class="fa-regular fa-bell"></i>
+        </div>
 
-    updateUnreadIndicator([]);
+        <div class="notification-empty-title">
+          You're all caught up.
+        </div>
+
+        <div class="notification-empty-text">
+          New group activity will appear here.
+        </div>
+      </div>
+    `;
 
     return;
   }
 
 
-  const unreadCount = notifications.filter(
-    notification => notification.read !== true &&
-      notification.receiverId === state.currentUser.uid
-  ).length;
+  // Header controls
+  const controls =
+    document.createElement("div");
+
+  controls.className =
+    "notification-controls";
 
 
-  updateUnreadIndicator(notifications);
+  const unreadCount =
+    notifications.filter(
+      notification => !notification.read
+    ).length;
 
 
-  state.listEl.innerHTML = "";
+  controls.innerHTML = `
+    <span class="notification-count">
+      ${unreadCount}
+      unread
+    </span>
+
+    <button
+      type="button"
+      class="mark-all-read-btn"
+      ${unreadCount === 0 ? "disabled" : ""}
+    >
+      Mark all as read
+    </button>
+  `;
 
 
-  notifications.forEach((notification) => {
-
-    const item = createNotificationElement(
-      notification
+  const markAllBtn =
+    controls.querySelector(
+      ".mark-all-read-btn"
     );
 
-    state.listEl.appendChild(item);
 
-  });
+  markAllBtn.addEventListener(
+    "click",
+    markAllAsRead
+  );
 
+
+  listEl.appendChild(controls);
+
+
+  // Notification items
+  notifications.forEach(
+    notification => {
+
+      const item =
+        createNotificationElement(
+          notification
+        );
+
+      listEl.appendChild(item);
+
+    }
+  );
 }
 
 
@@ -384,111 +534,108 @@ function renderNotifications(notifications) {
 // CREATE NOTIFICATION ELEMENT
 // ============================================================
 
-function createNotificationElement(notification) {
+function createNotificationElement(
+  notification
+) {
 
-  const item = document.createElement("div");
+  const item =
+    document.createElement("button");
 
-  item.className = "group-notification-item";
+
+  item.type = "button";
 
 
-  if (notification.read !== true) {
+  item.className =
+    "group-notification";
+
+
+  if (!notification.read) {
     item.classList.add("is-unread");
   }
 
 
-  const avatar = document.createElement("div");
-
-  avatar.className =
-    "group-notification-avatar";
-
-
-  const photo =
-    notification.senderPhotoURL ||
-    notification.photoURL ||
-    "";
-
-
-  const senderName =
-    notification.senderName ||
-    notification.displayName ||
-    "VitalStar Member";
-
-
-  if (photo) {
-
-    avatar.style.backgroundImage =
-      `url("${safeURL(photo)}")`;
-
-    avatar.style.backgroundSize = "cover";
-    avatar.style.backgroundPosition = "center";
-
-  } else {
-
-    avatar.textContent =
-      getInitial(senderName);
-
-  }
-
-
-  const content = document.createElement("div");
-
-  content.className =
-    "group-notification-content";
-
-
-  const text = document.createElement("div");
-
-  text.className =
-    "group-notification-text";
-
-
-  text.textContent =
-    buildNotificationMessage(
-      notification,
-      senderName
+  const icon =
+    getNotificationIcon(
+      notification.type
     );
 
 
-  const time = document.createElement("div");
+  const actorName =
+    notification.actorName ||
+    "VitalStar Member";
 
-  time.className =
-    "group-notification-time";
+
+  const title =
+    notification.title ||
+    "Group notification";
 
 
-  time.textContent =
-    formatNotificationTime(
+  const message =
+    notification.message ||
+    "";
+
+
+  const time =
+    formatRelativeTime(
       notification.createdAt
     );
 
 
-  content.appendChild(text);
-  content.appendChild(time);
+  const avatarHTML =
+    notification.actorPhotoURL
+      ? `<img
+           src="${escapeAttribute(
+             notification.actorPhotoURL
+           )}"
+           alt=""
+         >`
+      : `
+        <span>
+          ${escapeHTML(
+            actorName.charAt(0).toUpperCase()
+          )}
+        </span>
+      `;
 
 
-  if (notification.read !== true) {
+  item.innerHTML = `
 
-    const unread = document.createElement("span");
+    <div class="group-notification-avatar">
+      ${avatarHTML}
+    </div>
 
-    unread.className =
-      "group-notification-unread";
+    <div class="group-notification-icon">
+      <i class="${icon}"></i>
+    </div>
 
-    unread.setAttribute(
-      "aria-label",
-      "Unread"
-    );
+    <div class="group-notification-content">
 
-    item.appendChild(unread);
+      <div class="group-notification-title">
+        ${escapeHTML(title)}
+      </div>
 
-  }
+      <div class="group-notification-message">
+        ${escapeHTML(message)}
+      </div>
 
+      <div class="group-notification-time">
+        ${escapeHTML(time)}
+      </div>
 
-  item.appendChild(avatar);
-  item.appendChild(content);
+    </div>
+
+    ${
+      !notification.read
+        ? `<span class="notification-unread-dot"></span>`
+        : ""
+    }
+
+  `;
 
 
   item.addEventListener(
     "click",
-    () => handleNotificationClick(notification)
+    () => markNotificationAsRead(notification)
   );
 
 
@@ -497,151 +644,35 @@ function createNotificationElement(notification) {
 
 
 // ============================================================
-// BUILD NOTIFICATION MESSAGE
-// ============================================================
-
-function buildNotificationMessage(
-  notification,
-  senderName
-) {
-
-  const type = notification.type || "general";
-
-
-  if (notification.message) {
-
-    return notification.message;
-
-  }
-
-
-  switch (type) {
-
-    case "join":
-    case "member_joined":
-      return `${senderName} joined the group.`;
-
-    case "post":
-    case "new_post":
-      return `${senderName} created a new post.`;
-
-    case "comment":
-    case "new_comment":
-      return `${senderName} commented on a post.`;
-
-    case "like":
-    case "post_like":
-      return `${senderName} liked a post.`;
-
-    case "mention":
-      return `${senderName} mentioned you.`;
-
-    case "invite":
-      return `${senderName} invited you to the group.`;
-
-    case "request":
-    case "join_request":
-      return `${senderName} requested to join the group.`;
-
-    case "approval":
-    case "approved":
-      return `${senderName} approved a group request.`;
-
-    case "announcement":
-      return `${senderName} posted a group announcement.`;
-
-    case "admin":
-      return `${senderName} sent a group notification.`;
-
-    default:
-      return `${senderName} sent a group notification.`;
-
-  }
-}
-
-
-// ============================================================
-// UNREAD INDICATOR
-// ============================================================
-
-function updateUnreadIndicator(notifications) {
-
-  if (!state.unreadDotEl) return;
-
-
-  const unreadExists = notifications.some(
-    notification =>
-      notification.read !== true &&
-      notification.receiverId === state.currentUser.uid
-  );
-
-
-  state.unreadDotEl.classList.toggle(
-    "is-visible",
-    unreadExists
-  );
-
-
-  state.unreadDotEl.style.display =
-    unreadExists
-      ? ""
-      : "none";
-
-}
-
-
-// ============================================================
-// CLICK NOTIFICATION
-// ============================================================
-
-async function handleNotificationClick(notification) {
-
-  await markNotificationAsRead(
-    notification.id
-  );
-
-
-  // Open the related post when possible.
-  if (notification.postId) {
-
-    const postId =
-      encodeURIComponent(
-        notification.postId
-      );
-
-
-    window.location.href =
-      `group.html?id=${encodeURIComponent(
-        state.groupId
-      )}&post=${postId}`;
-
-    return;
-  }
-
-}
-
-
-// ============================================================
-// MARK ONE NOTIFICATION READ
+// MARK ONE AS READ
 // ============================================================
 
 async function markNotificationAsRead(
-  notificationId
+  notification
 ) {
 
-  if (!notificationId) return;
+  if (notification.read) {
+    return;
+  }
 
 
   try {
 
-    await updateDoc(
+    const notificationRef =
       doc(
-        state.db,
+        notificationState.db,
+        "groups",
+        notificationState.groupId,
         "notifications",
-        notificationId
-      ),
+        notification.id
+      );
+
+
+    await updateDoc(
+      notificationRef,
       {
-        read: true
+        read: true,
+        readAt: new Date()
       }
     );
 
@@ -653,7 +684,6 @@ async function markNotificationAsRead(
     );
 
   }
-
 }
 
 
@@ -661,76 +691,45 @@ async function markNotificationAsRead(
 // MARK ALL AS READ
 // ============================================================
 
-export async function markAllAsRead() {
+async function markAllAsRead() {
 
-  if (!state.db || !state.currentUser) {
+  const unread =
+    notificationState.notifications.filter(
+      notification => !notification.read
+    );
+
+
+  if (!unread.length) {
     return;
   }
 
 
   try {
 
-    const notificationsRef =
-      collection(
-        state.db,
-        "notifications"
+    const batch =
+      writeBatch(
+        notificationState.db
       );
 
 
-    const notificationsQuery = query(
-      notificationsRef,
-      where(
-        "groupId",
-        "==",
-        state.groupId
-      ),
-      limit(50)
-    );
+    unread.forEach(
+      notification => {
 
-
-    const snapshot =
-      await getDocs(
-        notificationsQuery
-      );
-
-
-    const unreadDocs =
-      snapshot.docs.filter(
-        notificationDoc => {
-
-          const data =
-            notificationDoc.data();
-
-          return (
-            data.receiverId ===
-              state.currentUser.uid &&
-            data.read !== true
+        const notificationRef =
+          doc(
+            notificationState.db,
+            "groups",
+            notificationState.groupId,
+            "notifications",
+            notification.id
           );
 
-        }
-      );
-
-
-    if (!unreadDocs.length) {
-
-      updateUnreadIndicator([]);
-
-      return;
-
-    }
-
-
-    const batch =
-      writeBatch(state.db);
-
-
-    unreadDocs.forEach(
-      notificationDoc => {
 
         batch.update(
-          notificationDoc.ref,
+          notificationRef,
           {
-            read: true
+            read: true,
+            readAt: new Date()
           }
         );
 
@@ -741,14 +740,73 @@ export async function markAllAsRead() {
     await batch.commit();
 
 
-    updateUnreadIndicator([]);
+    if (typeof notificationState.showToast === "function") {
+
+      notificationState.showToast(
+        "All notifications marked as read.",
+        "success"
+      );
+
+    }
 
   } catch (error) {
 
     console.error(
-      "Could not mark notifications as read:",
+      "Could not mark all notifications as read:",
       error
     );
+
+
+    if (typeof notificationState.showToast === "function") {
+
+      notificationState.showToast(
+        "Could not mark notifications as read.",
+        "error"
+      );
+
+    }
+
+  }
+}
+
+
+// ============================================================
+// UPDATE BADGE
+// ============================================================
+
+function updateUnreadBadge() {
+
+  const unreadCount =
+    notificationState.notifications.filter(
+      notification => !notification.read
+    ).length;
+
+
+  const badge =
+    notificationState.unreadDotEl;
+
+
+  if (!badge) {
+    return;
+  }
+
+
+  badge.classList.toggle(
+    "is-visible",
+    unreadCount > 0
+  );
+
+
+  // Support either a dot or a number badge.
+  if (
+    badge.dataset &&
+    badge.dataset.numeric === "true"
+  ) {
+
+    badge.textContent =
+      unreadCount > 99
+        ? "99+"
+        : String(unreadCount);
 
   }
 
@@ -756,53 +814,153 @@ export async function markAllAsRead() {
 
 
 // ============================================================
-// ESCAPE HTML
+// HTML ESCAPING
 // ============================================================
 
 function escapeHTML(value) {
 
   return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+function escapeAttribute(value) {
+
+  return escapeHTML(value);
 
 }
 
 
 // ============================================================
-// SAFE URL
+// CLEANUP
 // ============================================================
 
-function safeURL(value) {
+export function destroy() {
 
-  const url = String(value || "");
+  if (unsubscribeNotifications) {
 
-  if (
-    url.startsWith("https://") ||
-    url.startsWith("http://")
-  ) {
-    return url.replaceAll('"', "%22");
+    unsubscribeNotifications();
+
+    unsubscribeNotifications = null;
+
+  }
+
+}
+
+
+// ============================================================
+// CREATE NOTIFICATION HELPER
+//
+// Other group modules can import this function.
+//
+// Example:
+//
+// import {
+//   createGroupNotification
+// } from "./group-notifications.js";
+//
+// await createGroupNotification(db, groupId, {
+//   recipientId: userId,
+//   actorId: currentUser.uid,
+//   actorName: currentUser.displayName,
+//   actorPhotoURL: currentUser.photoURL,
+//   type: "post",
+//   title: "New group post",
+//   message: "John created a new post."
+// });
+// ============================================================
+
+export async function createGroupNotification(
+  db,
+  groupId,
+  data
+) {
+
+  if (!db || !groupId || !data?.recipientId) {
+
+    console.warn(
+      "createGroupNotification: missing required data."
+    );
+
+    return null;
   }
 
 
-  return "";
+  try {
 
-}
+    const notificationsRef =
+      collection(
+        db,
+        "groups",
+        groupId,
+        "notifications"
+      );
 
 
-// ============================================================
-// INITIAL
-// ============================================================
+    const notificationData = {
 
-function getInitial(name) {
+      recipientId:
+        data.recipientId,
 
-  return (
-    String(name || "V")
-      .trim()
-      .charAt(0)
-      .toUpperCase() || "V"
-  );
+      actorId:
+        data.actorId || "",
 
+      actorName:
+        data.actorName ||
+        "VitalStar Member",
+
+      actorPhotoURL:
+        data.actorPhotoURL ||
+        "",
+
+      type:
+        data.type ||
+        "system",
+
+      title:
+        data.title ||
+        "Group notification",
+
+      message:
+        data.message ||
+        "",
+
+      read: false,
+
+      createdAt:
+        data.createdAt ||
+        new Date()
+
+    };
+
+
+    const notificationRef =
+      await import(
+        "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      ).then(
+        firestore =>
+          firestore.addDoc(
+            notificationsRef,
+            notificationData
+          )
+      );
+
+
+    return notificationRef.id;
+
+  } catch (error) {
+
+    console.error(
+      "Could not create group notification:",
+      error
+    );
+
+    return null;
+
+  }
 }
