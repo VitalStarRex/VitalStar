@@ -1,7 +1,7 @@
 // ============================================================
 // VITALSTAR — user-post.js
-// Displays posts belonging to the selected user.
-// Uses the existing Firebase configuration from firebase.js.
+// Displays posts belonging to a user.
+// Safe version: avoids compound Firestore index requirements.
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -12,10 +12,6 @@ import {
 
 import {
   collection,
-  query,
-  where,
-  orderBy,
-  limit,
   getDocs,
   doc,
   getDoc
@@ -36,9 +32,7 @@ const postsContainer = document.getElementById("posts");
 // ============================================================
 
 function escapeHTML(value) {
-  if (value === null || value === undefined) {
-    return "";
-  }
+  if (value === null || value === undefined) return "";
 
   return String(value)
     .replace(/&/g, "&amp;")
@@ -49,37 +43,6 @@ function escapeHTML(value) {
 }
 
 
-function getTime(post) {
-
-  const timestamp =
-    post.createdAt ||
-    post.timestamp ||
-    post.updatedAt;
-
-  if (!timestamp) {
-    return "";
-  }
-
-  try {
-
-    const date = timestamp.toDate
-      ? timestamp.toDate()
-      : new Date(timestamp);
-
-    return date.toLocaleString();
-
-  } catch (error) {
-
-    return "";
-
-  }
-}
-
-
-// ============================================================
-// GET USER ID
-// ============================================================
-
 function getUserId() {
 
   const params = new URLSearchParams(
@@ -89,13 +52,62 @@ function getUserId() {
   return (
     params.get("uid") ||
     params.get("userId") ||
-    params.get("id")
+    params.get("id") ||
+    null
   );
 }
 
 
+function timestampToNumber(value) {
+
+  if (!value) return 0;
+
+  if (typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (typeof value.toDate === "function") {
+    return value.toDate().getTime();
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  const date = new Date(value);
+
+  return isNaN(date.getTime())
+    ? 0
+    : date.getTime();
+}
+
+
+function formatTime(post) {
+
+  const value =
+    post.createdAt ||
+    post.timestamp ||
+    post.updatedAt;
+
+  const milliseconds =
+    timestampToNumber(value);
+
+  if (!milliseconds) return "";
+
+  try {
+    return new Date(milliseconds).toLocaleString();
+  } catch {
+    return "";
+  }
+}
+
+
 // ============================================================
-// LOAD USER PROFILE
+// LOAD PROFILE
 // ============================================================
 
 async function loadUserProfile(uid) {
@@ -103,17 +115,22 @@ async function loadUserProfile(uid) {
   try {
 
     const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
+
+    const userSnap =
+      await getDoc(userRef);
 
     if (!userSnap.exists()) {
+
       return {
         fullName: "VitalStar User",
         username: "",
         avatarURL: ""
       };
+
     }
 
-    const user = userSnap.data();
+    const user =
+      userSnap.data();
 
     return {
 
@@ -138,7 +155,7 @@ async function loadUserProfile(uid) {
   } catch (error) {
 
     console.error(
-      "Error loading user profile:",
+      "Profile loading error:",
       error
     );
 
@@ -153,7 +170,24 @@ async function loadUserProfile(uid) {
 
 
 // ============================================================
-// FIND MEDIA
+// CHECK POST OWNER
+// ============================================================
+
+function belongsToUser(post, uid) {
+
+  return (
+    post.userId === uid ||
+    post.authorId === uid ||
+    post.uid === uid ||
+    post.ownerId === uid ||
+    post.createdBy === uid
+  );
+
+}
+
+
+// ============================================================
+// MEDIA
 // ============================================================
 
 function getMediaURL(post) {
@@ -169,36 +203,32 @@ function getMediaURL(post) {
     post.fileUrl ||
     ""
   );
+
 }
 
 
 function getMediaType(post) {
 
-  const type =
+  return String(
     post.mediaType ||
     post.type ||
-    "";
-
-  return String(type).toLowerCase();
+    ""
+  ).toLowerCase();
 
 }
 
 
-// ============================================================
-// CREATE MEDIA
-// ============================================================
-
 function createMedia(post) {
 
-  const url = getMediaURL(post);
+  const url =
+    getMediaURL(post);
 
-  if (!url) {
-    return "";
-  }
+  if (!url) return "";
 
-  const type = getMediaType(post);
+  const type =
+    getMediaType(post);
 
-  // Video
+
   if (
     type.includes("video") ||
     post.videoURL ||
@@ -217,7 +247,6 @@ function createMedia(post) {
   }
 
 
-  // Image
   return `
     <img
       class="post-media"
@@ -236,9 +265,14 @@ function createMedia(post) {
 
 function renderPost(post, profile) {
 
-  const postId =
-    post.id ||
-    "";
+  const article =
+    document.createElement("article");
+
+  article.className = "post";
+
+  article.dataset.postId =
+    post.id || "";
+
 
   const text =
     post.text ||
@@ -246,28 +280,20 @@ function renderPost(post, profile) {
     post.caption ||
     "";
 
-  const time =
-    getTime(post);
 
   const avatar =
     profile.avatarURL ||
     "https://via.placeholder.com/100";
+
 
   const username =
     profile.username
       ? `@${escapeHTML(profile.username)}`
       : "";
 
-  const media =
-    createMedia(post);
 
-
-  const article =
-    document.createElement("article");
-
-  article.className = "post";
-
-  article.dataset.postId = postId;
+  const time =
+    formatTime(post);
 
 
   article.innerHTML = `
@@ -288,13 +314,21 @@ function renderPost(post, profile) {
 
         ${
           username
-            ? `<div class="username">${username}</div>`
+            ? `
+              <div class="username">
+                ${username}
+              </div>
+            `
             : ""
         }
 
         ${
           time
-            ? `<div class="post-time">${escapeHTML(time)}</div>`
+            ? `
+              <div class="post-time">
+                ${escapeHTML(time)}
+              </div>
+            `
             : ""
         }
 
@@ -314,7 +348,7 @@ function renderPost(post, profile) {
     }
 
 
-    ${media}
+    ${createMedia(post)}
 
 
     <div class="post-actions">
@@ -348,58 +382,99 @@ function renderPost(post, profile) {
 async function loadUserPosts(uid) {
 
   if (!postsContainer) {
+    console.error(
+      "user-post.js: #posts element not found."
+    );
     return;
   }
 
-  postsContainer.innerHTML =
-    `<div class="loading">Loading posts...</div>`;
+
+  postsContainer.innerHTML = `
+    <div class="loading">
+      Loading posts...
+    </div>
+  `;
 
 
   try {
 
-    /*
-     * Posts are stored in the "posts" collection.
-     * Supported author fields:
-     * - userId (preferred)
-     * - authorId (fallback)
-     * - uid
-     */
-
-    let snapshot = null;
+    console.log(
+      "Loading posts for UID:",
+      uid
+    );
 
 
-    try {
-
-      const q = query(
-        collection(db, "posts"),
-        where("userId", "==", uid),
-        orderBy("createdAt", "desc"),
-        limit(POSTS_LIMIT)
-      );
-
-      snapshot = await getDocs(q);
-
-    } catch (firstError) {
-
-      console.warn(
-        "Primary query using userId failed. Retrying with authorId...",
-        firstError
+    // Get posts WITHOUT where/orderBy.
+    // This avoids Firestore index problems.
+    const snapshot =
+      await getDocs(
+        collection(db, "posts")
       );
 
 
-      const q = query(
-        collection(db, "posts"),
-        where("authorId", "==", uid),
-        orderBy("createdAt", "desc"),
-        limit(POSTS_LIMIT)
-      );
-
-      snapshot = await getDocs(q);
-
-    }
+    console.log(
+      "Total posts found:",
+      snapshot.size
+    );
 
 
-    if (!snapshot || snapshot.empty) {
+    const posts = [];
+
+
+    snapshot.forEach(postDoc => {
+
+      const data =
+        postDoc.data();
+
+
+      if (
+        belongsToUser(data, uid)
+      ) {
+
+        posts.push({
+          id: postDoc.id,
+          ...data
+        });
+
+      }
+
+    });
+
+
+    console.log(
+      "Posts belonging to user:",
+      posts.length
+    );
+
+
+    // Newest first
+    posts.sort((a, b) => {
+
+      const aTime =
+        timestampToNumber(
+          a.createdAt ||
+          a.timestamp ||
+          a.updatedAt
+        );
+
+      const bTime =
+        timestampToNumber(
+          b.createdAt ||
+          b.timestamp ||
+          b.updatedAt
+        );
+
+      return bTime - aTime;
+
+    });
+
+
+    // Latest 10
+    const latestPosts =
+      posts.slice(0, POSTS_LIMIT);
+
+
+    if (latestPosts.length === 0) {
 
       postsContainer.innerHTML = `
         <div class="empty">
@@ -408,6 +483,7 @@ async function loadUserPosts(uid) {
       `;
 
       return;
+
     }
 
 
@@ -418,17 +494,13 @@ async function loadUserPosts(uid) {
     postsContainer.innerHTML = "";
 
 
-    snapshot.forEach(postDoc => {
-
-      const post = {
-        id: postDoc.id,
-        ...postDoc.data()
-      };
-
+    latestPosts.forEach(post => {
 
       const element =
-        renderPost(post, profile);
-
+        renderPost(
+          post,
+          profile
+        );
 
       postsContainer.appendChild(element);
 
@@ -438,14 +510,18 @@ async function loadUserPosts(uid) {
   } catch (error) {
 
     console.error(
-      "Failed to load user posts:",
+      "USER POSTS ERROR:",
       error
     );
 
 
     postsContainer.innerHTML = `
       <div class="empty">
-        Unable to load posts at this time.
+        Unable to load posts.
+        <br>
+        <small>
+          Check the browser console for the exact error.
+        </small>
       </div>
     `;
 
@@ -458,28 +534,31 @@ async function loadUserPosts(uid) {
 // AUTH
 // ============================================================
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+  auth,
+  async (user) => {
 
-  if (!user) {
+    if (!user) {
 
-    if (postsContainer) {
+      if (postsContainer) {
 
-      postsContainer.innerHTML = `
-        <div class="empty">
-          Please sign in to view posts.
-        </div>
-      `;
+        postsContainer.innerHTML = `
+          <div class="empty">
+            Please sign in to view posts.
+          </div>
+        `;
 
+      }
+
+      return;
     }
 
-    return;
+
+    const uid =
+      getUserId() || user.uid;
+
+
+    await loadUserPosts(uid);
+
   }
-
-
-  const uid =
-    getUserId() || user.uid;
-
-
-  await loadUserPosts(uid);
-
-});
+);
