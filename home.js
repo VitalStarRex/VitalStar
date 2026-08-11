@@ -2,9 +2,7 @@ import { auth, db, rtdb } from "./firebase.js";
 
 import {
     onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";     
-                          
-
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
     collection,
@@ -23,37 +21,32 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-
 import {
     ref,
     onValue
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
-
-
 const feed = document.getElementById("feed");
 
 
-
+// ============================================================
 // LOAD POSTS
+// ============================================================
 
 const postsQuery = query(
-    collection(db,"posts"),
-    orderBy("createdAt","desc"),
+    collection(db, "posts"),
+    orderBy("createdAt", "desc"),
     limit(10)
 );
 
 
-
-onSnapshot(postsQuery,(snapshot)=>{
-
+onSnapshot(postsQuery, (snapshot) => {
 
     feed.innerHTML = "";
 
 
-    if(snapshot.empty){
+    if (snapshot.empty) {
 
         feed.innerHTML = `
         <p style="
@@ -65,35 +58,30 @@ onSnapshot(postsQuery,(snapshot)=>{
         `;
 
         return;
-
     }
 
 
-
-    snapshot.forEach((docSnap)=>{
-
+    snapshot.forEach((docSnap) => {
 
         const post = docSnap.data();
 
         const postId = docSnap.id;
 
 
-
         let date = "Just now";
 
 
-        if(post.createdAt){
+        if (post.createdAt) {
 
-            try{
+            try {
 
                 date = post.createdAt
-                .toDate()
-                .toLocaleString();
+                    .toDate()
+                    .toLocaleString();
 
-            }catch(e){}
+            } catch (e) {}
 
         }
-
 
 
         feed.innerHTML += `
@@ -135,13 +123,9 @@ ${date}
 </div>
 
 
-
-
 <p>
 ${post.text || ""}
 </p>
-
-
 
 
 ${post.image ?
@@ -150,7 +134,14 @@ ${post.image ?
 <img
 class="post-photo"
 src="${post.image}"
-alt="Post Image">
+alt="Post Image"
+style="
+width:100px;
+height:120px;
+object-fit:cover;
+border-radius:10px;
+display:block;
+">
 `
 
 : ""}
@@ -162,7 +153,14 @@ ${post.video ?
 <video
 class="post-video"
 controls
-preload="metadata">
+preload="metadata"
+style="
+width:100px;
+height:120px;
+object-fit:cover;
+border-radius:10px;
+display:block;
+">
 
 <source
 src="${post.video}"
@@ -176,9 +174,6 @@ Your browser does not support video.
 : ""}
 
 
-
-
-
 <div class="post-buttons">
 
 
@@ -189,13 +184,11 @@ Your browser does not support video.
 </button>
 
 
-
 <button onclick="openComments('${postId}')">
 
 💬 ${post.comments || 0}
 
 </button>
-
 
 
 <button>
@@ -212,28 +205,22 @@ Your browser does not support video.
 </button>
 
 
-
 </div>
 
 
 </div>
-
 
 `;
-
-
 
     });
 
 
+}, (error) => {
 
-},(error)=>{
-
-
-console.error(error);
+    console.error(error);
 
 
-feed.innerHTML = `
+    feed.innerHTML = `
 
 <p style="color:red;text-align:center">
 
@@ -243,344 +230,446 @@ Unable to load posts
 
 `;
 
-
 });
 
 
-
-
-
-
+// ============================================================
 // LIKE SYSTEM
+// ============================================================
 
+window.likePost = async function(postId) {
 
-window.likePost = async function(postId){
+    const user = auth.currentUser;
 
 
-const user = auth.currentUser;
+    if (!user) {
 
+        alert("Please login first");
 
-if(!user){
+        return;
 
-alert("Please login first");
+    }
 
-return;
 
-}
+    const likeId =
+        postId + "_" + user.uid;
 
 
+    const likeRef =
+        doc(db, "likes", likeId);
 
-const likeId = postId+"_"+user.uid;
 
+    const likeSnap =
+        await getDoc(likeRef);
 
-const likeRef = doc(db,"likes",likeId);
 
+    const postRef =
+        doc(db, "posts", postId);
 
-const likeSnap = await getDoc(likeRef);
 
+    if (likeSnap.exists()) {
 
-const postRef = doc(db,"posts",postId);
+        await deleteDoc(likeRef);
 
 
+        await updateDoc(postRef, {
 
-if(likeSnap.exists()){
+            likes: increment(-1)
 
+        });
 
-await deleteDoc(likeRef);
 
+    } else {
 
-await updateDoc(postRef,{
+        await setDoc(likeRef, {
 
-likes:increment(-1)
+            uid: user.uid,
 
-});
+            postId: postId,
 
+            createdAt: new Date()
 
+        });
 
 
+        await updateDoc(postRef, {
 
+            likes: increment(1)
 
+        });
 
 
+        const postSnap =
+            await getDoc(postRef);
 
-}
 
-else{
+        if (postSnap.exists()) {
 
+            const postData =
+                postSnap.data();
 
-await setDoc(likeRef,{
 
-uid:user.uid,
+            if (postData.uid !== user.uid) {
 
-postId:postId,
+                const userSnap =
+                    await getDoc(
+                        doc(
+                            db,
+                            "users",
+                            user.uid
+                        )
+                    );
 
-createdAt:new Date()
 
-});
+                console.log(
+                    "UID:",
+                    user.uid
+                );
 
 
+                if (userSnap.exists()) {
 
-await updateDoc(postRef,{
+                    console.log(
+                        userSnap.data()
+                    );
 
-likes:increment(1)
+                } else {
 
-});
+                    console.log(
+                        "User document not found"
+                    );
 
+                }
 
 
-const postSnap = await getDoc(postRef);
+                if (userSnap.exists()) {
 
-if (postSnap.exists()) {
+                    const currentUser =
+                        userSnap.data();
 
-    const postData = postSnap.data();
 
-    if (postData.uid !== user.uid) {
+                    await addDoc(
+                        collection(
+                            db,
+                            "notifications"
+                        ),
+                        {
 
-        const userSnap = await getDoc(doc(db, "users", user.uid));
+                            receiverId:
+                                postData.uid,
 
+                            senderId:
+                                user.uid,
 
-console.log("UID:", user.uid);
+                            senderName:
+                                currentUser.fullName ||
+                                currentUser.username,
 
-if (userSnap.exists()) {
-    console.log(userSnap.data());
-} else {
-    console.log("User document not found");
-}
+                            senderPhoto:
+                                currentUser.profilePicture ||
+                                "",
 
+                            text:
+                                "liked your post ❤️",
 
+                            type:
+                                "like",
 
-        if (userSnap.exists()) {
+                            postId:
+                                postId,
 
-            const currentUser = userSnap.data();
+                            read:
+                                false,
 
-            await addDoc(collection(db, "notifications"), {
-
-                receiverId: postData.uid,
-                senderId: user.uid,
-                senderName: currentUser.fullName || currentUser.username,
-                senderPhoto: currentUser.profilePicture || "",
-                text: "liked your post ❤️",
-                type: "like",
-                postId: postId,
-                read: false,
-                createdAt: serverTimestamp()
-
-            });
+                            createdAt:
+                                serverTimestamp()
+
+                        }
+                    );
+
+                }
+
+            }
 
         }
 
     }
 
-}
-
-
-
-}
-
-
 };
 
 
-
-
-
-
+// ============================================================
 // OPEN COMMENTS
+// ============================================================
 
+window.openComments = function(postId) {
 
-window.openComments=function(postId){
-
-window.location.href =
-"comments.html?postId="+postId;
+    window.location.href =
+        "comments.html?postId=" + postId;
 
 };
 
 
-
-
-
-
-
+// ============================================================
 // SHARE POST
+// ============================================================
 
 window.sharePost = async function(postId) {
 
-    const postRef = doc(db, "posts", postId);
+    const postRef =
+        doc(db, "posts", postId);
 
-    const postSnap = await getDoc(postRef);
+
+    const postSnap =
+        await getDoc(postRef);
+
 
     if (!postSnap.exists()) {
+
         alert("Post not found.");
+
         return;
+
     }
 
-    const post = postSnap.data();
 
-    const shareUrl = `${window.location.origin}/post.html?id=${postId}`;
+    const post =
+        postSnap.data();
+
+
+    const shareUrl =
+        `${window.location.origin}/post.html?id=${postId}`;
+
 
     try {
 
         if (navigator.share) {
 
             await navigator.share({
-                title: post.fullName || "VitalStar Post",
-                text: post.text || "Check out this post!",
-                url: shareUrl
+
+                title:
+                    post.fullName ||
+                    "VitalStar Post",
+
+                text:
+                    post.text ||
+                    "Check out this post!",
+
+                url:
+                    shareUrl
+
             });
 
         } else {
 
-            await navigator.clipboard.writeText(shareUrl);
+            await navigator.clipboard.writeText(
+                shareUrl
+            );
 
-            alert("Post link copied to clipboard.");
+            alert(
+                "Post link copied to clipboard."
+            );
 
         }
 
+
         await updateDoc(postRef, {
-            shares: increment(1)
+
+            shares:
+                increment(1)
+
         });
 
+
     } catch (error) {
-        console.log("Share cancelled.", error);
+
+        console.log(
+            "Share cancelled.",
+            error
+        );
+
     }
 
 };
 
 
+// ============================================================
+// WELCOME MESSAGE + ONLINE USERS
+// ============================================================
+
+auth.onAuthStateChanged(async (user) => {
+
+    if (!user) return;
 
 
+    const onlineUsersCount =
+        document.getElementById(
+            "onlineUsersCount"
+        );
 
 
+    onValue(
+        ref(rtdb, "status"),
+        (snapshot) => {
+
+            let count = 0;
 
 
+            snapshot.forEach((child) => {
+
+                const status =
+                    child.val();
 
 
+                if (
+                    status.online === true
+                ) {
+
+                    count++;
+
+                }
+
+            });
 
 
+            if (onlineUsersCount) {
 
+                onlineUsersCount.textContent =
+                    `🟢 Online: ${count}`;
 
+            }
 
-
-
-
-
-
-
-// WELCOME MESSAGE
-
-auth.onAuthStateChanged(async(user)=>{
-
-if(!user) return;
-
-
-
-
-
-const onlineUsersCount = document.getElementById("onlineUsersCount");
-
-onValue(ref(rtdb, "status"), (snapshot) => {
-
-    let count = 0;
-
-    snapshot.forEach((child) => {
-        const status = child.val();
-
-        if (status.online === true) {
-            count++;
         }
-    });
+    );
 
-    if (onlineUsersCount) {
-        onlineUsersCount.textContent = `🟢 Online: ${count}`;
+
+    const userSnap =
+        await getDoc(
+            doc(
+                db,
+                "users",
+                user.uid
+            )
+        );
+
+
+    if (userSnap.exists()) {
+
+        const fullName =
+            userSnap.data().fullName ||
+            "User";
+
+
+        const hour =
+            new Date().getHours();
+
+
+        let greeting =
+            "Good Evening";
+
+
+        if (hour < 12) {
+
+            greeting =
+                "Good Morning";
+
+        } else if (hour < 17) {
+
+            greeting =
+                "Good Afternoon";
+
+        }
+
+
+        const welcome =
+            document.getElementById(
+                "welcomeText"
+            );
+
+
+        if (welcome) {
+
+            welcome.innerHTML =
+                `${greeting}, <span style="color:#FFD54F">
+                ${fullName}
+                </span> 👋`;
+
+        }
+
     }
 
 });
 
 
-
-
-
-
-const userSnap =
-await getDoc(doc(db,"users",user.uid));
-
-if(userSnap.exists()){
-
-const fullName =
-userSnap.data().fullName || "User";
-
-const hour =
-new Date().getHours();
-
-let greeting =
-"Good Evening";
-
-if(hour < 12){
-    greeting="Good Morning";
-}
-else if(hour < 17){
-    greeting="Good Afternoon";
-}
-
-const welcome =
-document.getElementById("welcomeText");
-
-if(welcome){
-    welcome.innerHTML =
-`${greeting}, <span style="color:#FFD54F">
-${fullName}
-</span> 👋`;
-}
-
-}
-
-});
-
-
-
-
-
-
-// ===============================
+// ============================================================
 // UNREAD NOTIFICATION BADGE
-// ===============================
+// ============================================================
 
 const notificationBadge =
-document.getElementById("notificationBadge");
-
-onAuthStateChanged(auth, (user) => {
-
-    if (!user) return;
-
-    const notificationQuery = query(
-        collection(db, "notifications"),
-        where("receiverId", "==", user.uid)
+    document.getElementById(
+        "notificationBadge"
     );
 
-    onSnapshot(notificationQuery, (snapshot) => {
 
-        let unreadNotifications = 0;
+onAuthStateChanged(
+    auth,
+    (user) => {
 
-        snapshot.forEach((notificationDoc) => {
+        if (!user) return;
 
-            const notification = notificationDoc.data();
 
-            if (notification.read === false) {
-                unreadNotifications++;
+        const notificationQuery =
+            query(
+                collection(
+                    db,
+                    "notifications"
+                ),
+                where(
+                    "receiverId",
+                    "==",
+                    user.uid
+                )
+            );
+
+
+        onSnapshot(
+            notificationQuery,
+            (snapshot) => {
+
+                let unreadNotifications =
+                    0;
+
+
+                snapshot.forEach(
+                    (notificationDoc) => {
+
+                        const notification =
+                            notificationDoc.data();
+
+
+                        if (
+                            notification.read === false
+                        ) {
+
+                            unreadNotifications++;
+
+                        }
+
+                    }
+                );
+
+
+                if (notificationBadge) {
+
+                    notificationBadge.textContent =
+                        unreadNotifications > 0
+                            ? unreadNotifications
+                            : "0";
+
+                }
+
             }
+        );
 
-        });
-
-        if (unreadNotifications > 0) {
-
-            notificationBadge.textContent = unreadNotifications;
-
-        } else {
-
-            notificationBadge.textContent = "0";
-
-        }
-
-    });
-
-});
+    }
+);
