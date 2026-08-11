@@ -58,6 +58,7 @@ onSnapshot(postsQuery, (snapshot) => {
         `;
 
         return;
+
     }
 
 
@@ -136,8 +137,8 @@ class="post-photo"
 src="${post.image}"
 alt="Post Image"
 style="
-width:100px;
-height:120px;
+width:180px;
+height:220px;
 object-fit:cover;
 border-radius:10px;
 display:block;
@@ -155,8 +156,8 @@ class="post-video"
 controls
 preload="metadata"
 style="
-width:100px;
-height:120px;
+width:180px;
+height:220px;
 object-fit:cover;
 border-radius:10px;
 display:block;
