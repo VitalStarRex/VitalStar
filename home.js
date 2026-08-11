@@ -61,13 +61,16 @@ onSnapshot(postsQuery, async (snapshot) => {
     }
 
 
-    // Load each post
     for (const docSnap of snapshot.docs) {
 
         const post = docSnap.data();
 
         const postId = docSnap.id;
 
+
+        // ====================================================
+        // POST DATE
+        // ====================================================
 
         let date = "Just now";
 
@@ -86,11 +89,14 @@ onSnapshot(postsQuery, async (snapshot) => {
 
 
         // ====================================================
-        // GET POST AUTHOR PROFILE
+        // LOAD USER PROFILE
         // ====================================================
 
         let profilePicture = "";
-        let fullName = post.fullName || "VitalStar User";
+
+        let fullName =
+            post.fullName ||
+            "VitalStar User";
 
 
         try {
@@ -102,7 +108,8 @@ onSnapshot(postsQuery, async (snapshot) => {
 
             if (userSnap.exists()) {
 
-                const userData = userSnap.data();
+                const userData =
+                    userSnap.data();
 
 
                 fullName =
@@ -135,6 +142,7 @@ onSnapshot(postsQuery, async (snapshot) => {
         const avatarHTML = profilePicture
 
             ? `
+
                 <img
                     src="${profilePicture}"
                     alt="${fullName}"
@@ -165,9 +173,11 @@ onSnapshot(postsQuery, async (snapshot) => {
                 >
                     👤
                 </div>
+
             `
 
             : `
+
                 <div
                     style="
                         width:50px;
@@ -182,11 +192,12 @@ onSnapshot(postsQuery, async (snapshot) => {
                 >
                     👤
                 </div>
+
             `;
 
 
         // ====================================================
-        // DISPLAY POST
+        // POST HTML
         // ====================================================
 
         feed.innerHTML += `
@@ -209,7 +220,6 @@ onSnapshot(postsQuery, async (snapshot) => {
             text-align:center;
         "
     >
-
 
         <div
             class="avatar"
@@ -246,7 +256,6 @@ onSnapshot(postsQuery, async (snapshot) => {
 
         </div>
 
-
     </div>
 
 
@@ -255,14 +264,18 @@ onSnapshot(postsQuery, async (snapshot) => {
     ${
         post.text
             ? `
+
             <p
                 style="
                     text-align:center;
                     margin:15px auto;
                 "
             >
+
                 ${post.text}
+
             </p>
+
             `
             : ""
     }
@@ -273,6 +286,7 @@ onSnapshot(postsQuery, async (snapshot) => {
     ${
         post.image
             ? `
+
             <img
                 class="post-photo"
                 src="${post.image}"
@@ -286,6 +300,7 @@ onSnapshot(postsQuery, async (snapshot) => {
                     margin:10px auto;
                 "
             >
+
             `
             : ""
     }
@@ -296,6 +311,7 @@ onSnapshot(postsQuery, async (snapshot) => {
     ${
         post.video
             ? `
+
             <video
                 class="post-video"
                 controls
@@ -318,12 +334,13 @@ onSnapshot(postsQuery, async (snapshot) => {
                 Your browser does not support video.
 
             </video>
+
             `
             : ""
     }
 
 
-    <!-- POST BUTTONS -->
+    <!-- ACTION BUTTONS -->
 
     <div
         class="post-buttons"
@@ -331,11 +348,14 @@ onSnapshot(postsQuery, async (snapshot) => {
             display:flex;
             justify-content:center;
             align-items:center;
-            gap:8px;
+            gap:15px;
             flex-wrap:wrap;
+            margin-top:15px;
         "
     >
 
+
+        <!-- LIKE -->
 
         <button
             onclick="likePost('${postId}')"
@@ -346,6 +366,8 @@ onSnapshot(postsQuery, async (snapshot) => {
         </button>
 
 
+        <!-- COMMENTS -->
+
         <button
             onclick="openComments('${postId}')"
         >
@@ -355,12 +377,16 @@ onSnapshot(postsQuery, async (snapshot) => {
         </button>
 
 
+        <!-- REPOST -->
+
         <button>
 
             🔁 ${post.reposts || 0}
 
         </button>
 
+
+        <!-- SHARE -->
 
         <button
             onclick="sharePost('${postId}')"
@@ -380,9 +406,13 @@ onSnapshot(postsQuery, async (snapshot) => {
 
     }
 
+
 }, (error) => {
 
-    console.error(error);
+    console.error(
+        "Post loading error:",
+        error
+    );
 
 
     feed.innerHTML = `
@@ -409,12 +439,15 @@ onSnapshot(postsQuery, async (snapshot) => {
 
 window.likePost = async function(postId) {
 
-    const user = auth.currentUser;
+    const user =
+        auth.currentUser;
 
 
     if (!user) {
 
-        alert("Please login first");
+        alert(
+            "Please login first"
+        );
 
         return;
 
@@ -426,7 +459,11 @@ window.likePost = async function(postId) {
 
 
     const likeRef =
-        doc(db, "likes", likeId);
+        doc(
+            db,
+            "likes",
+            likeId
+        );
 
 
     const likeSnap =
@@ -434,136 +471,158 @@ window.likePost = async function(postId) {
 
 
     const postRef =
-        doc(db, "posts", postId);
+        doc(
+            db,
+            "posts",
+            postId
+        );
 
+
+    // ========================================================
+    // UNLIKE
+    // ========================================================
 
     if (likeSnap.exists()) {
 
-        await deleteDoc(likeRef);
+        await deleteDoc(
+            likeRef
+        );
 
 
-        await updateDoc(postRef, {
+        await updateDoc(
+            postRef,
+            {
 
-            likes: increment(-1)
-
-        });
-
-
-    } else {
-
-        await setDoc(likeRef, {
-
-            uid: user.uid,
-
-            postId: postId,
-
-            createdAt: new Date()
-
-        });
-
-
-        await updateDoc(postRef, {
-
-            likes: increment(1)
-
-        });
-
-
-        const postSnap =
-            await getDoc(postRef);
-
-
-        if (postSnap.exists()) {
-
-            const postData =
-                postSnap.data();
-
-
-            if (postData.uid !== user.uid) {
-
-                const userSnap =
-                    await getDoc(
-                        doc(
-                            db,
-                            "users",
-                            user.uid
-                        )
-                    );
-
-
-                console.log(
-                    "UID:",
-                    user.uid
-                );
-
-
-                if (userSnap.exists()) {
-
-                    console.log(
-                        userSnap.data()
-                    );
-
-                } else {
-
-                    console.log(
-                        "User document not found"
-                    );
-
-                }
-
-
-                if (userSnap.exists()) {
-
-                    const currentUser =
-                        userSnap.data();
-
-
-                    await addDoc(
-                        collection(
-                            db,
-                            "notifications"
-                        ),
-                        {
-
-                            receiverId:
-                                postData.uid,
-
-                            senderId:
-                                user.uid,
-
-                            senderName:
-                                currentUser.fullName ||
-                                currentUser.username,
-
-                            senderPhoto:
-                                currentUser.profilePicture ||
-                                "",
-
-                            text:
-                                "liked your post ❤️",
-
-                            type:
-                                "like",
-
-                            postId:
-                                postId,
-
-                            read:
-                                false,
-
-                            createdAt:
-                                serverTimestamp()
-
-                        }
-                    );
-
-                }
+                likes:
+                    increment(-1)
 
             }
+        );
 
-        }
+
+        return;
 
     }
+
+
+    // ========================================================
+    // LIKE
+    // ========================================================
+
+    await setDoc(
+        likeRef,
+        {
+
+            uid:
+                user.uid,
+
+            postId:
+                postId,
+
+            createdAt:
+                new Date()
+
+        }
+    );
+
+
+    await updateDoc(
+        postRef,
+        {
+
+            likes:
+                increment(1)
+
+        }
+    );
+
+
+    // ========================================================
+    // LIKE NOTIFICATION
+    // ========================================================
+
+    const postSnap =
+        await getDoc(
+            postRef
+        );
+
+
+    if (!postSnap.exists()) {
+        return;
+    }
+
+
+    const postData =
+        postSnap.data();
+
+
+    // Don't notify yourself
+
+    if (
+        postData.uid === user.uid
+    ) {
+        return;
+    }
+
+
+    const userSnap =
+        await getDoc(
+            doc(
+                db,
+                "users",
+                user.uid
+            )
+        );
+
+
+    if (!userSnap.exists()) {
+        return;
+    }
+
+
+    const currentUser =
+        userSnap.data();
+
+
+    await addDoc(
+        collection(
+            db,
+            "notifications"
+        ),
+        {
+
+            receiverId:
+                postData.uid,
+
+            senderId:
+                user.uid,
+
+            senderName:
+                currentUser.fullName ||
+                currentUser.username ||
+                "VitalStar User",
+
+            senderPhoto:
+                currentUser.profilePicture ||
+                "",
+
+            text:
+                "liked your post ❤️",
+
+            type:
+                "like",
+
+            postId:
+                postId,
+
+            read:
+                false,
+
+            createdAt:
+                serverTimestamp()
+
+        }
+    );
 
 };
 
@@ -572,10 +631,12 @@ window.likePost = async function(postId) {
 // OPEN COMMENTS
 // ============================================================
 
-window.openComments = function(postId) {
+window.openComments =
+function(postId) {
 
     window.location.href =
-        "comments.html?postId=" + postId;
+        "comments.html?postId=" +
+        postId;
 
 };
 
@@ -584,19 +645,28 @@ window.openComments = function(postId) {
 // SHARE POST
 // ============================================================
 
-window.sharePost = async function(postId) {
+window.sharePost =
+async function(postId) {
 
     const postRef =
-        doc(db, "posts", postId);
+        doc(
+            db,
+            "posts",
+            postId
+        );
 
 
     const postSnap =
-        await getDoc(postRef);
+        await getDoc(
+            postRef
+        );
 
 
     if (!postSnap.exists()) {
 
-        alert("Post not found.");
+        alert(
+            "Post not found."
+        );
 
         return;
 
@@ -636,6 +706,7 @@ window.sharePost = async function(postId) {
                 shareUrl
             );
 
+
             alert(
                 "Post link copied to clipboard."
             );
@@ -643,12 +714,15 @@ window.sharePost = async function(postId) {
         }
 
 
-        await updateDoc(postRef, {
+        await updateDoc(
+            postRef,
+            {
 
-            shares:
-                increment(1)
+                shares:
+                    increment(1)
 
-        });
+            }
+        );
 
 
     } catch (error) {
@@ -667,10 +741,17 @@ window.sharePost = async function(postId) {
 // WELCOME MESSAGE + ONLINE USERS
 // ============================================================
 
-auth.onAuthStateChanged(async (user) => {
+auth.onAuthStateChanged(
+async (user) => {
 
-    if (!user) return;
+    if (!user) {
+        return;
+    }
 
+
+    // ========================================================
+    // ONLINE USER COUNT
+    // ========================================================
 
     const onlineUsersCount =
         document.getElementById(
@@ -679,27 +760,33 @@ auth.onAuthStateChanged(async (user) => {
 
 
     onValue(
-        ref(rtdb, "status"),
+        ref(
+            rtdb,
+            "status"
+        ),
         (snapshot) => {
 
             let count = 0;
 
 
-            snapshot.forEach((child) => {
+            snapshot.forEach(
+                (child) => {
 
-                const status =
-                    child.val();
+                    const status =
+                        child.val();
 
 
-                if (
-                    status.online === true
-                ) {
+                    if (
+                        status &&
+                        status.online === true
+                    ) {
 
-                    count++;
+                        count++;
+
+                    }
 
                 }
-
-            });
+            );
 
 
             if (onlineUsersCount) {
@@ -713,6 +800,10 @@ auth.onAuthStateChanged(async (user) => {
     );
 
 
+    // ========================================================
+    // WELCOME MESSAGE
+    // ========================================================
+
     const userSnap =
         await getDoc(
             doc(
@@ -723,48 +814,54 @@ auth.onAuthStateChanged(async (user) => {
         );
 
 
-    if (userSnap.exists()) {
-
-        const fullName =
-            userSnap.data().fullName ||
-            "User";
+    if (!userSnap.exists()) {
+        return;
+    }
 
 
-        const hour =
-            new Date().getHours();
+    const userData =
+        userSnap.data();
 
 
-        let greeting =
-            "Good Evening";
+    const fullName =
+        userData.fullName ||
+        userData.username ||
+        "User";
 
 
-        if (hour < 12) {
-
-            greeting =
-                "Good Morning";
-
-        } else if (hour < 17) {
-
-            greeting =
-                "Good Afternoon";
-
-        }
+    const hour =
+        new Date().getHours();
 
 
-        const welcome =
-            document.getElementById(
-                "welcomeText"
-            );
+    let greeting =
+        "Good Evening";
 
 
-        if (welcome) {
+    if (hour < 12) {
 
-            welcome.innerHTML =
-                `${greeting}, <span style="color:#FFD54F">
-                ${fullName}
-                </span> 👋`;
+        greeting =
+            "Good Morning";
 
-        }
+    } else if (hour < 17) {
+
+        greeting =
+            "Good Afternoon";
+
+    }
+
+
+    const welcome =
+        document.getElementById(
+            "welcomeText"
+        );
+
+
+    if (welcome) {
+
+        welcome.innerHTML =
+            `${greeting}, <span style="color:#FFD54F">
+            ${fullName}
+            </span> 👋`;
 
     }
 
@@ -785,7 +882,9 @@ onAuthStateChanged(
     auth,
     (user) => {
 
-        if (!user) return;
+        if (!user) {
+            return;
+        }
 
 
         const notificationQuery =
