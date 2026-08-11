@@ -1,12 +1,5 @@
 // ============================================================
 // VITALSTAR — create-post.js
-// Handles:
-// - Authentication
-// - Image/video preview
-// - Cloudinary uploads
-// - Posting state
-// - Firestore post creation
-// - Redirect to home after successful posting
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -25,62 +18,299 @@ import {
 
 
 // ============================================================
-// AUTHENTICATION
+// AUTH
 // ============================================================
 
 onAuthStateChanged(auth, (user) => {
 
     if (!user) {
         window.location.href = "login.html";
-        return;
     }
 
 });
 
 
 // ============================================================
-// CLOUDINARY UPLOAD
+// CREATE PREVIEW + POSTING STATE UI
+// ============================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const postText =
+        document.getElementById("postText");
+
+    const imageInput =
+        document.getElementById("postImage");
+
+    const videoInput =
+        document.getElementById("postVideo");
+
+    const postButton =
+        document.getElementById("postSubmitBtn");
+
+
+    // --------------------------------------------------------
+    // Create preview area automatically
+    // --------------------------------------------------------
+
+    let preview =
+        document.getElementById("mediaPreview");
+
+    if (!preview) {
+
+        preview =
+            document.createElement("div");
+
+        preview.id = "mediaPreview";
+
+        preview.style.display = "none";
+        preview.style.margin = "12px 0";
+        preview.style.padding = "8px";
+        preview.style.background = "#f1f3f5";
+        preview.style.borderRadius = "12px";
+        preview.style.overflow = "hidden";
+
+        // Put preview before the Post button
+        if (postButton) {
+
+            postButton.parentNode.insertBefore(
+                preview,
+                postButton
+            );
+
+        }
+        else if (postText) {
+
+            postText.parentNode.appendChild(
+                preview
+            );
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // Create posting status automatically
+    // --------------------------------------------------------
+
+    let status =
+        document.getElementById("postStatus");
+
+    if (!status) {
+
+        status =
+            document.createElement("div");
+
+        status.id = "postStatus";
+
+        status.style.display = "none";
+        status.style.textAlign = "center";
+        status.style.padding = "10px";
+        status.style.fontSize = "14px";
+        status.style.fontWeight = "600";
+
+
+        if (postButton) {
+
+            postButton.parentNode.insertBefore(
+                status,
+                postButton
+            );
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // Preview function
+    // --------------------------------------------------------
+
+    function showPreview(file) {
+
+        preview.innerHTML = "";
+
+        if (!file) {
+
+            preview.style.display = "none";
+
+            return;
+        }
+
+
+        const objectURL =
+            URL.createObjectURL(file);
+
+
+        // IMAGE
+        if (file.type.startsWith("image")) {
+
+            const img =
+                document.createElement("img");
+
+            img.src = objectURL;
+
+            img.alt = "Selected image";
+
+            img.style.width = "100%";
+            img.style.maxHeight = "400px";
+            img.style.objectFit = "contain";
+            img.style.display = "block";
+            img.style.borderRadius = "10px";
+
+            preview.appendChild(img);
+
+        }
+
+
+        // VIDEO
+        else if (file.type.startsWith("video")) {
+
+            const video =
+                document.createElement("video");
+
+            video.src = objectURL;
+
+            video.controls = true;
+
+            video.preload = "metadata";
+
+            video.style.width = "100%";
+            video.style.maxHeight = "400px";
+            video.style.display = "block";
+            video.style.borderRadius = "10px";
+
+            preview.appendChild(video);
+
+        }
+
+
+        preview.style.display = "block";
+    }
+
+
+    // --------------------------------------------------------
+    // IMAGE SELECTED
+    // --------------------------------------------------------
+
+    if (imageInput) {
+
+        imageInput.addEventListener(
+            "change",
+            () => {
+
+                const file =
+                    imageInput.files[0];
+
+                if (file) {
+
+                    // Remove video selection
+                    if (videoInput) {
+                        videoInput.value = "";
+                    }
+
+                    showPreview(file);
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // VIDEO SELECTED
+    // --------------------------------------------------------
+
+    if (videoInput) {
+
+        videoInput.addEventListener(
+            "change",
+            () => {
+
+                const file =
+                    videoInput.files[0];
+
+                if (file) {
+
+                    // Remove image selection
+                    if (imageInput) {
+                        imageInput.value = "";
+                    }
+
+                    showPreview(file);
+
+                }
+
+            }
+        );
+
+    }
+
+});
+
+
+// ============================================================
+// CLOUDINARY
 // ============================================================
 
 async function uploadToCloudinary(file) {
 
-    const type = file.type.startsWith("video")
-        ? "video"
-        : "image";
+    const type =
+        file.type.startsWith("video")
+            ? "video"
+            : "image";
 
-    const formData = new FormData();
 
-    formData.append("file", file);
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "file",
+        file
+    );
+
 
     formData.append(
         "upload_preset",
         "vitalstar_upload"
     );
 
-    const response = await fetch(
-        `https://api.cloudinary.com/v1_1/m0scmqqv/${type}/upload`,
-        {
-            method: "POST",
-            body: formData
-        }
-    );
 
-    const data = await response.json();
+    const response =
+        await fetch(
+            `https://api.cloudinary.com/v1_1/m0scmqqv/${type}/upload`,
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+
+    const data =
+        await response.json();
+
 
     if (!response.ok || !data.secure_url) {
 
         console.error(
-            "Cloudinary upload error:",
+            "Cloudinary error:",
             data
         );
 
         throw new Error(
             data?.error?.message ||
-            "Media upload failed. Please try again."
+            "Upload failed."
         );
+
     }
 
+
     return data.secure_url;
+
 }
 
 
@@ -99,222 +329,32 @@ function setPostingState(isPosting) {
 
     if (button) {
 
-        button.disabled = isPosting;
+        button.disabled =
+            isPosting;
 
         button.textContent =
             isPosting
                 ? "Posting..."
                 : "Post";
+
     }
 
 
     if (status) {
 
+        status.style.display =
+            isPosting
+                ? "block"
+                : "none";
+
         status.textContent =
             isPosting
-                ? "Uploading, please wait..."
+                ? "Uploading your post, please wait..."
                 : "";
+
     }
 
 }
-
-
-// ============================================================
-// MEDIA PREVIEW
-// ============================================================
-
-function clearMediaPreview() {
-
-    const preview =
-        document.getElementById("mediaPreview");
-
-
-    if (!preview) {
-        return;
-    }
-
-
-    preview.innerHTML = "";
-
-    preview.style.display = "none";
-}
-
-
-// ------------------------------------------------------------
-// Show selected image/video
-// ------------------------------------------------------------
-
-function showMediaPreview(file) {
-
-    const preview =
-        document.getElementById("mediaPreview");
-
-
-    if (!preview || !file) {
-        return;
-    }
-
-
-    preview.innerHTML = "";
-
-
-    const objectURL =
-        URL.createObjectURL(file);
-
-
-    // IMAGE
-    if (file.type.startsWith("image")) {
-
-        const image =
-            document.createElement("img");
-
-
-        image.src = objectURL;
-
-        image.alt = "Image preview";
-
-        image.className =
-            "post-media-preview";
-
-
-        image.style.width = "100%";
-
-        image.style.maxHeight = "400px";
-
-        image.style.objectFit = "contain";
-
-        image.style.display = "block";
-
-        image.style.borderRadius = "10px";
-
-
-        preview.appendChild(image);
-    }
-
-
-    // VIDEO
-    else if (file.type.startsWith("video")) {
-
-        const video =
-            document.createElement("video");
-
-
-        video.src = objectURL;
-
-        video.controls = true;
-
-        video.preload = "metadata";
-
-        video.className =
-            "post-media-preview";
-
-
-        video.style.width = "100%";
-
-        video.style.maxHeight = "400px";
-
-        video.style.display = "block";
-
-        video.style.borderRadius = "10px";
-
-
-        preview.appendChild(video);
-    }
-
-
-    preview.style.display = "block";
-}
-
-
-// ============================================================
-// FILE INPUT PREVIEW
-// ============================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        const imageInput =
-            document.getElementById("postImage");
-
-
-        const videoInput =
-            document.getElementById("postVideo");
-
-
-        // ----------------------------------------------------
-        // IMAGE SELECTED
-        // ----------------------------------------------------
-
-        if (imageInput) {
-
-            imageInput.addEventListener(
-                "change",
-                () => {
-
-                    const file =
-                        imageInput.files[0];
-
-
-                    if (file) {
-
-                        // Only one media type at a time
-                        if (videoInput) {
-                            videoInput.value = "";
-                        }
-
-
-                        showMediaPreview(file);
-
-                    } else {
-
-                        clearMediaPreview();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // VIDEO SELECTED
-        // ----------------------------------------------------
-
-        if (videoInput) {
-
-            videoInput.addEventListener(
-                "change",
-                () => {
-
-                    const file =
-                        videoInput.files[0];
-
-
-                    if (file) {
-
-                        // Only one media type at a time
-                        if (imageInput) {
-                            imageInput.value = "";
-                        }
-
-
-                        showMediaPreview(file);
-
-                    } else {
-
-                        clearMediaPreview();
-
-                    }
-
-                }
-            );
-
-        }
-
-    }
-);
 
 
 // ============================================================
@@ -345,11 +385,11 @@ window.createPost = async function () {
             ?.files[0];
 
 
-    // --------------------------------------------------------
-    // Check if anything was entered
-    // --------------------------------------------------------
-
-    if (!text && !imageFile && !videoFile) {
+    if (
+        !text &&
+        !imageFile &&
+        !videoFile
+    ) {
 
         alert(
             "Write something or choose an image/video."
@@ -359,34 +399,29 @@ window.createPost = async function () {
     }
 
 
-    // --------------------------------------------------------
-    // Check authentication
-    // --------------------------------------------------------
-
     const user =
         auth.currentUser;
 
 
     if (!user) {
 
-        alert("Please login first.");
+        alert(
+            "Please login first."
+        );
 
         return;
     }
 
 
-    // --------------------------------------------------------
-    // Start posting state
-    // --------------------------------------------------------
-
+    // START POSTING STATE
     setPostingState(true);
 
 
     try {
 
-        // ====================================================
-        // GET USER PROFILE
-        // ====================================================
+        // ----------------------------------------------------
+        // Get user profile
+        // ----------------------------------------------------
 
         const userRef =
             doc(
@@ -409,21 +444,18 @@ window.createPost = async function () {
             fullName =
                 userSnap.data().fullName ||
                 "VitalStar User";
+
         }
 
 
-        // ====================================================
-        // MEDIA URLS
-        // ====================================================
+        // ----------------------------------------------------
+        // Upload media
+        // ----------------------------------------------------
 
         let imageUrl = "";
 
         let videoUrl = "";
 
-
-        // ====================================================
-        // UPLOAD IMAGE
-        // ====================================================
 
         if (imageFile) {
 
@@ -435,10 +467,6 @@ window.createPost = async function () {
         }
 
 
-        // ====================================================
-        // UPLOAD VIDEO
-        // ====================================================
-
         if (videoFile) {
 
             videoUrl =
@@ -449,12 +477,15 @@ window.createPost = async function () {
         }
 
 
-        // ====================================================
-        // SAVE POST TO FIRESTORE
-        // ====================================================
+        // ----------------------------------------------------
+        // Save post
+        // ----------------------------------------------------
 
         await addDoc(
-            collection(db, "posts"),
+            collection(
+                db,
+                "posts"
+            ),
             {
 
                 uid: user.uid,
@@ -482,9 +513,9 @@ window.createPost = async function () {
         );
 
 
-        // ====================================================
-        // CLEAR FORM
-        // ====================================================
+        // ----------------------------------------------------
+        // Clear form
+        // ----------------------------------------------------
 
         if (textElement) {
 
@@ -515,19 +546,32 @@ window.createPost = async function () {
         }
 
 
-        clearMediaPreview();
+        const preview =
+            document.getElementById(
+                "mediaPreview"
+            );
 
 
-        // ====================================================
-        // SUCCESS
-        // ====================================================
+        if (preview) {
+
+            preview.innerHTML = "";
+
+            preview.style.display =
+                "none";
+
+        }
+
+
+        // ----------------------------------------------------
+        // Success
+        // ----------------------------------------------------
 
         alert(
             "Post created successfully!"
         );
 
 
-        // Redirect to home
+        // Redirect home
         window.location.href =
             "home.html";
 
@@ -548,6 +592,7 @@ window.createPost = async function () {
 
     } finally {
 
+        // STOP POSTING STATE
         setPostingState(false);
 
     }
