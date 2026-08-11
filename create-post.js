@@ -21,13 +21,32 @@ onAuthStateChanged(auth, (user) => {
 });
 
 
+// --- File validation limits ---
+const MAX_IMAGE_MB = 10;
+const MAX_VIDEO_MB = 100;
+
+
+function validateFile(file, type) {
+    const maxMB = type === "video" ? MAX_VIDEO_MB : MAX_IMAGE_MB;
+    const maxBytes = maxMB * 1024 * 1024;
+
+    if (!file.type.startsWith(type)) {
+        return `Please choose a valid ${type} file.`;
+    }
+
+    if (file.size > maxBytes) {
+        return `${type === "video" ? "Video" : "Image"} must be under ${maxMB}MB.`;
+    }
+
+    return null; // no error
+}
+
 
 async function uploadToCloudinary(file) {
 
     const type = file.type.startsWith("video")
         ? "video"
         : "image";
-
 
     const formData = new FormData();
 
@@ -37,7 +56,6 @@ async function uploadToCloudinary(file) {
         "vitalstar_upload"
     );
 
-
     const response = await fetch(
         `https://api.cloudinary.com/v1_1/m0scmqqv/${type}/upload`,
         {
@@ -46,175 +64,138 @@ async function uploadToCloudinary(file) {
         }
     );
 
-
     const data = await response.json();
 
-    return data.secure_url || "";
+    if (!response.ok || !data.secure_url) {
+        console.error("Cloudinary upload error:", data);
+        throw new Error(data?.error?.message || "Upload failed. Please try again.");
+    }
+
+    return data.secure_url;
 }
 
 
+// --- UI helpers ---
 
+function setPostingState(isPosting) {
+    const btn = document.getElementById("postSubmitBtn");
+    const status = document.getElementById("postStatus");
+
+    if (btn) {
+        btn.disabled = isPosting;
+        btn.textContent = isPosting ? "Posting..." : "Post";
+    }
+
+    if (status) {
+        status.textContent = isPosting ? "Uploading, please wait..." : "";
+    }
+}
 
 
 window.createPost = async function () {
-
 
     const text = document
         .getElementById("postText")
         .value
         .trim();
 
-
     const imageFile =
         document.getElementById("postImage")
         ?.files[0];
-
 
     const videoFile =
         document.getElementById("postVideo")
         ?.files[0];
 
-
-
     if (!text && !imageFile && !videoFile) {
-
         alert("Write something or choose an image/video.");
-
         return;
     }
-
-
 
     const user = auth.currentUser;
 
-
     if (!user) {
-
         alert("Please login first.");
-
         return;
     }
 
-
-
-
-    // Get user profile
-
-    const userRef = doc(db, "users", user.uid);
-
-    const userSnap = await getDoc(userRef);
-
-
-
-    let fullName = "VitalStar User";
-
-
-    if (userSnap.exists()) {
-
-        fullName =
-        userSnap.data().fullName || "VitalStar User";
-
-    }
-
-
-
-
-
-    let imageUrl = "";
-
-    let videoUrl = "";
-
-
-
-    // Upload image
-
+    // Validate files BEFORE uploading anything
     if (imageFile) {
-
-        imageUrl = await uploadToCloudinary(imageFile);
-
-
-        if (!imageUrl) {
-
-            alert("Image upload failed.");
-
+        const error = validateFile(imageFile, "image");
+        if (error) {
+            alert(error);
             return;
         }
     }
-
-
-
-
-
-    // Upload video
 
     if (videoFile) {
-
-        videoUrl = await uploadToCloudinary(videoFile);
-
-
-        if (!videoUrl) {
-
-            alert("Video upload failed.");
-
+        const error = validateFile(videoFile, "video");
+        if (error) {
+            alert(error);
             return;
         }
     }
 
+    setPostingState(true);
 
+    try {
 
+        // Get user profile
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
 
+        let fullName = "VitalStar User";
 
+        if (userSnap.exists()) {
+            fullName = userSnap.data().fullName || "VitalStar User";
+        }
 
-    // Save post
+        let imageUrl = "";
+        let videoUrl = "";
 
-    await addDoc(collection(db, "posts"), {
+        // Upload image
+        if (imageFile) {
+            imageUrl = await uploadToCloudinary(imageFile);
+        }
 
-        uid: user.uid,
+        // Upload video
+        if (videoFile) {
+            videoUrl = await uploadToCloudinary(videoFile);
+        }
 
-        fullName: fullName,
+        // Save post
+        await addDoc(collection(db, "posts"), {
+            uid: user.uid,
+            fullName: fullName,
+            text: text,
+            image: imageUrl,
+            video: videoUrl,
+            likes: 0,
+            comments: 0,
+            shares: 0,
+            reposts: 0,
+            createdAt: serverTimestamp()
+        });
 
-        text: text,
+        // Reset form
+        document.getElementById("postText").value = "";
 
-        image: imageUrl,
+        if (document.getElementById("postImage")) {
+            document.getElementById("postImage").value = "";
+        }
 
-        video: videoUrl,
+        if (document.getElementById("postVideo")) {
+            document.getElementById("postVideo").value = "";
+        }
 
-        likes: 0,
+        alert("Post created successfully!");
 
-        comments: 0,
+    } catch (err) {
+        console.error("createPost error:", err);
+        alert(err.message || "Something went wrong. Please try again.");
 
-        shares: 0,
-
-        reposts: 0,
-
-        createdAt: serverTimestamp()
-
-    });
-
-
-
-
-
-
-    document.getElementById("postText").value = "";
-
-
-    if(document.getElementById("postImage")){
-
-        document.getElementById("postImage").value = "";
-
+    } finally {
+        setPostingState(false);
     }
-
-
-    if(document.getElementById("postVideo")){
-
-        document.getElementById("postVideo").value = "";
-
-    }
-
-
-
-
-    alert("Post created successfully!");
 
 };
