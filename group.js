@@ -1,64 +1,28 @@
 // ============================================================
 // VITALSTAR — group.js
+// Core controller for group.html
 // ============================================================
-// Core controller for group.html.
-//
-// Handles:
-// - Authentication
-// - Loading the group
-// - Membership / roles
-// - Header and sidebar
-// - Join / leave
-// - Share / invite
-// - Tabs
-// - Admin list
-// - Group access control
-// - Group notifications
-// - Real-time notification badge
-// - Notification panel
-//
-// Notification collection:
-//
-// groups/{groupId}/notifications/{notificationId}
-//
-// Notification fields:
-//
-// recipientId
-// actorId
-// actorName
-// actorPhotoURL
-// type
-// message
-// read
-// createdAt
-// link
-// ============================================================
-
 
 import { auth, db } from '../firebase.js';
-
 
 import {
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
-
 import {
-  addDoc,
-  collection,
-  serverTimestamp,
   doc,
   getDoc,
   setDoc,
   deleteDoc,
   updateDoc,
-  getDocs,
+  collection,
   query,
   where,
   limit,
+  getDocs,
   increment,
-  runTransaction,
-  onSnapshot
+  serverTimestamp,
+  runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 
@@ -67,163 +31,77 @@ import {
 // ============================================================
 
 const TAB_MODULE_LOADERS = {
-
   posts: () => import('./group-posts.js'),
-
   members: () => import('./group-members.js'),
-
   chat: () => import('./group-chat.js'),
-
   subscription: () => import('./group-subscription.js'),
-
   settings: () => import('./group-settings.js')
-
 };
 
-
 const loadedTabModules = new Set();
+
+let notificationsModuleLoaded = false;
+let headerActionsBound = false;
+let tabsBound = false;
 
 
 // ============================================================
 // DOM REFERENCES
 // ============================================================
 
-const navUserAvatar =
-  document.getElementById('navUserAvatar');
+const navUserAvatar = document.getElementById('navUserAvatar');
+const navGroupTitle = document.getElementById('navGroupTitle');
 
-const navGroupTitle =
-  document.getElementById('navGroupTitle');
+const pageLoader = document.getElementById('pageLoader');
+const groupNotFoundState = document.getElementById('groupNotFoundState');
+const groupPageContent = document.getElementById('groupPageContent');
 
+const groupCover = document.getElementById('groupCover');
+const coverEditBtn = document.getElementById('coverEditBtn');
+const groupAvatar = document.getElementById('groupAvatar');
 
-const pageLoader =
-  document.getElementById('pageLoader');
+const groupHeaderActions = document.getElementById('groupHeaderActions');
+const yourRoleTag = document.getElementById('yourRoleTag');
+const yourRoleText = document.getElementById('yourRoleText');
 
-const groupNotFoundState =
-  document.getElementById('groupNotFoundState');
+const shareBtn = document.getElementById('shareBtn');
+const inviteBtn = document.getElementById('inviteBtn');
+const joinLeaveBtn = document.getElementById('joinLeaveBtn');
 
-const groupPageContent =
-  document.getElementById('groupPageContent');
+const groupName = document.getElementById('groupName');
+const groupPrivacyBadge = document.getElementById('groupPrivacyBadge');
+const groupPremiumBadge = document.getElementById('groupPremiumBadge');
+const groupVerifiedBadge = document.getElementById('groupVerifiedBadge');
+const groupCategoryChip = document.getElementById('groupCategoryChip');
+const groupOwnerText = document.getElementById('groupOwnerText');
+const groupCreatedText = document.getElementById('groupCreatedText');
+const groupDescription = document.getElementById('groupDescription');
 
+const statMemberCount = document.getElementById('statMemberCount');
+const statPostCount = document.getElementById('statPostCount');
+const statOnlineCount = document.getElementById('statOnlineCount');
+const statLevel = document.getElementById('statLevel');
 
-const groupCover =
-  document.getElementById('groupCover');
+const lockedNotice = document.getElementById('lockedNotice');
+const groupContentGrid = document.getElementById('groupContentGrid');
 
-const coverEditBtn =
-  document.getElementById('coverEditBtn');
+const groupTabsNav = document.getElementById('groupTabsNav');
+const subscriptionTabBtn = document.getElementById('subscriptionTabBtn');
+const settingsTabBtn = document.getElementById('settingsTabBtn');
 
-const groupAvatar =
-  document.getElementById('groupAvatar');
+const rulesListDisplay = document.getElementById('rulesListDisplay');
+const rulesEmptyDisplay = document.getElementById('rulesEmptyDisplay');
 
+const adminsList = document.getElementById('adminsList');
+const adminsEmptyDisplay = document.getElementById('adminsEmptyDisplay');
 
-const groupHeaderActions =
-  document.getElementById('groupHeaderActions');
+const notificationBellBtn = document.getElementById('notificationBellBtn');
+const notifUnreadDot = document.getElementById('notifUnreadDot');
+const notificationsPanel = document.getElementById('notificationsPanel');
+const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
+const notificationsList = document.getElementById('notificationsList');
 
-const yourRoleTag =
-  document.getElementById('yourRoleTag');
-
-const yourRoleText =
-  document.getElementById('yourRoleText');
-
-const shareBtn =
-  document.getElementById('shareBtn');
-
-const inviteBtn =
-  document.getElementById('inviteBtn');
-
-const joinLeaveBtn =
-  document.getElementById('joinLeaveBtn');
-
-
-const groupName =
-  document.getElementById('groupName');
-
-const groupPrivacyBadge =
-  document.getElementById('groupPrivacyBadge');
-
-const groupPremiumBadge =
-  document.getElementById('groupPremiumBadge');
-
-const groupVerifiedBadge =
-  document.getElementById('groupVerifiedBadge');
-
-const groupCategoryChip =
-  document.getElementById('groupCategoryChip');
-
-const groupOwnerText =
-  document.getElementById('groupOwnerText');
-
-const groupCreatedText =
-  document.getElementById('groupCreatedText');
-
-const groupDescription =
-  document.getElementById('groupDescription');
-
-
-const statMemberCount =
-  document.getElementById('statMemberCount');
-
-const statPostCount =
-  document.getElementById('statPostCount');
-
-const statOnlineCount =
-  document.getElementById('statOnlineCount');
-
-const statLevel =
-  document.getElementById('statLevel');
-
-
-const lockedNotice =
-  document.getElementById('lockedNotice');
-
-const groupContentGrid =
-  document.getElementById('groupContentGrid');
-
-
-const groupTabsNav =
-  document.getElementById('groupTabsNav');
-
-const subscriptionTabBtn =
-  document.getElementById('subscriptionTabBtn');
-
-const settingsTabBtn =
-  document.getElementById('settingsTabBtn');
-
-
-const rulesListDisplay =
-  document.getElementById('rulesListDisplay');
-
-const rulesEmptyDisplay =
-  document.getElementById('rulesEmptyDisplay');
-
-const adminsList =
-  document.getElementById('adminsList');
-
-const adminsEmptyDisplay =
-  document.getElementById('adminsEmptyDisplay');
-
-
-// ============================================================
-// NOTIFICATION DOM
-// ============================================================
-
-const notificationBellBtn =
-  document.getElementById('notificationBellBtn');
-
-const notifUnreadDot =
-  document.getElementById('notifUnreadDot');
-
-const notificationsPanel =
-  document.getElementById('notificationsPanel');
-
-const closeNotificationsBtn =
-  document.getElementById('closeNotificationsBtn');
-
-const notificationsList =
-  document.getElementById('notificationsList');
-
-
-const toastContainer =
-  document.getElementById('toast-container');
+const toastContainer = document.getElementById('toast-container');
 
 
 // ============================================================
@@ -231,43 +109,24 @@ const toastContainer =
 // ============================================================
 
 const CATEGORY_LABELS = {
-
   technology: 'Technology',
-
   gaming: 'Gaming',
-
   programming: 'Programming',
-
   music: 'Music',
-
   'movies-tv': 'Movies & TV',
-
   anime: 'Anime',
-
   sports: 'Sports',
-
   education: 'Education',
-
   business: 'Business',
-
   entertainment: 'Entertainment',
-
   news: 'News',
-
   science: 'Science',
-
   fashion: 'Fashion',
-
   travel: 'Travel',
-
   politics: 'Politics',
-
   religion: 'Religion',
-
   general: 'General',
-
   other: 'Other'
-
 };
 
 
@@ -276,92 +135,72 @@ const CATEGORY_LABELS = {
 // ============================================================
 
 const state = {
-
   currentUser: null,
-
-  groupId:
-    new URLSearchParams(window.location.search).get('id'),
-
+  groupId: new URLSearchParams(window.location.search).get('id'),
   groupData: null,
-
   membership: null,
-
-  activeTab: 'posts',
-
-  notifications: [],
-
-  notificationsUnsubscribe: null,
-
-  initialized: false,
-
-  headerActionsBound: false,
-
-  tabsBound: false
-
+  activeTab: 'posts'
 };
 
 
 // ============================================================
-// UTILITY FUNCTIONS
+// SAFE DOM HELPERS
+// ============================================================
+
+function exists(el) {
+  return !!el;
+}
+
+function setText(el, value) {
+  if (el) {
+    el.textContent = value ?? '';
+  }
+}
+
+function setDisplay(el, value) {
+  if (el) {
+    el.style.display = value;
+  }
+}
+
+
+// ============================================================
+// TOAST
 // ============================================================
 
 function showToast(message, type = 'info') {
 
   if (!toastContainer) {
-
-    alert(message);
-
+    console.log(`[${type}] ${message}`);
     return;
-
   }
-
 
   const icons = {
-
     success: 'fa-circle-check',
-
     error: 'fa-circle-exclamation',
-
     info: 'fa-circle-info'
-
   };
 
+  const toast = document.createElement('div');
 
-  const toast =
-    document.createElement('div');
-
-
-  toast.className =
-    `toast toast--${type}`;
-
+  toast.className = `toast toast--${type}`;
 
   toast.innerHTML = `
-
     <i class="fa-solid ${icons[type] || icons.info}"></i>
-
     <span></span>
-
   `;
 
+  const span = toast.querySelector('span');
 
-  const text =
-    toast.querySelector('span');
-
-
-  if (text) {
-
-    text.textContent = message;
-
+  if (span) {
+    span.textContent = message;
   }
 
-
   toastContainer.appendChild(toast);
-
 
   setTimeout(() => {
 
     toast.classList.add('is-leaving');
-
 
     toast.addEventListener(
       'animationend',
@@ -370,45 +209,32 @@ function showToast(message, type = 'info') {
     );
 
   }, 3800);
-
 }
 
 
 // ============================================================
-// FORMAT COUNT
+// UTILITIES
 // ============================================================
 
 function formatCount(num) {
 
   num = Number(num) || 0;
 
-
   if (num >= 1000000) {
-
     return `${(num / 1000000)
       .toFixed(1)
       .replace(/\.0$/, '')}M`;
-
   }
 
-
   if (num >= 1000) {
-
     return `${(num / 1000)
       .toFixed(1)
       .replace(/\.0$/, '')}K`;
-
   }
 
-
-  return `${num}`;
-
+  return String(num);
 }
 
-
-// ============================================================
-// INITIALS
-// ============================================================
 
 function initialsFrom(name) {
 
@@ -416,53 +242,28 @@ function initialsFrom(name) {
     .trim()
     .charAt(0)
     .toUpperCase();
-
 }
 
 
-// ============================================================
-// MEDIA BACKGROUND
-// ============================================================
-
-function applyMediaBackground(
-  el,
-  url,
-  fallbackText
-) {
+function applyMediaBackground(el, url, fallbackText) {
 
   if (!el) return;
 
-
   if (url) {
 
-    el.style.backgroundImage =
-      `url("${url}")`;
-
-    el.style.backgroundSize =
-      'cover';
-
-    el.style.backgroundPosition =
-      'center';
-
+    el.style.backgroundImage = `url("${url}")`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
     el.textContent = '';
 
-  } else if (
-    fallbackText !== undefined
-  ) {
+  } else if (fallbackText !== undefined) {
 
     el.style.backgroundImage = '';
-
-    el.textContent =
-      fallbackText;
+    el.textContent = fallbackText;
 
   }
-
 }
 
-
-// ============================================================
-// DATE FORMAT
-// ============================================================
 
 function formatDate(timestamp) {
 
@@ -470,115 +271,49 @@ function formatDate(timestamp) {
     !timestamp ||
     typeof timestamp.toDate !== 'function'
   ) {
-
     return 'recently';
-
   }
-
 
   return timestamp
     .toDate()
-    .toLocaleDateString(
-      undefined,
-      {
-        month: 'short',
-        year: 'numeric'
-      }
-    );
-
+    .toLocaleDateString(undefined, {
+      month: 'short',
+      year: 'numeric'
+    });
 }
 
 
 // ============================================================
-// NOTIFICATION DATE
+// LOADING CONTROL
 // ============================================================
 
-function formatNotificationTime(timestamp) {
+function hideLoader() {
 
-  if (!timestamp) {
-
-    return 'just now';
-
+  if (pageLoader) {
+    pageLoader.classList.add('is-hidden');
   }
 
+}
 
-  let date;
 
+function showPage() {
 
-  if (
-    typeof timestamp.toDate === 'function'
-  ) {
+  hideLoader();
 
-    date = timestamp.toDate();
-
-  } else if (
-    timestamp.seconds
-  ) {
-
-    date =
-      new Date(timestamp.seconds * 1000);
-
-  } else {
-
-    return 'just now';
-
+  if (groupPageContent) {
+    groupPageContent.classList.add('is-visible');
   }
 
-
-  const now = Date.now();
-
-  const diff =
-    Math.max(0, now - date.getTime());
+}
 
 
-  const seconds =
-    Math.floor(diff / 1000);
+function showNotFound() {
 
-  const minutes =
-    Math.floor(seconds / 60);
+  hideLoader();
 
-  const hours =
-    Math.floor(minutes / 60);
-
-  const days =
-    Math.floor(hours / 24);
-
-
-  if (seconds < 60) {
-
-    return 'just now';
-
+  if (groupNotFoundState) {
+    groupNotFoundState.classList.add('is-visible');
   }
-
-
-  if (minutes < 60) {
-
-    return `${minutes}m ago`;
-
-  }
-
-
-  if (hours < 24) {
-
-    return `${hours}h ago`;
-
-  }
-
-
-  if (days < 7) {
-
-    return `${days}d ago`;
-
-  }
-
-
-  return date.toLocaleDateString(
-    undefined,
-    {
-      month: 'short',
-      day: 'numeric'
-    }
-  );
 
 }
 
@@ -587,38 +322,27 @@ function formatNotificationTime(timestamp) {
 // AUTH GUARD
 // ============================================================
 
-onAuthStateChanged(
-  auth,
-  async (user) => {
+onAuthStateChanged(auth, async (user) => {
 
-    if (!user) {
+  if (!user) {
 
-      window.location.href =
-        'login.html';
+    window.location.href = 'login.html';
 
-      return;
-
-    }
-
-
-    state.currentUser =
-      user;
-
-
-    if (user.photoURL) {
-
-      applyMediaBackground(
-        navUserAvatar,
-        user.photoURL
-      );
-
-    }
-
-
-    await loadGroup();
-
+    return;
   }
-);
+
+  state.currentUser = user;
+
+  if (navUserAvatar && user.photoURL) {
+    applyMediaBackground(
+      navUserAvatar,
+      user.photoURL
+    );
+  }
+
+  await loadGroup();
+
+});
 
 
 // ============================================================
@@ -627,72 +351,91 @@ onAuthStateChanged(
 
 async function loadGroup() {
 
+  // Prevent endless loading if URL has no group ID.
   if (!state.groupId) {
+
+    console.error('No group ID found in URL.');
 
     showNotFound();
 
     return;
-
   }
 
 
   try {
 
-    const groupRef =
-      doc(
-        db,
-        'groups',
-        state.groupId
-      );
+    const groupRef = doc(
+      db,
+      'groups',
+      state.groupId
+    );
+
+    const memberRef = doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      state.currentUser.uid
+    );
 
 
-    const memberRef =
-      doc(
-        db,
-        'groups',
-        state.groupId,
-        'members',
-        state.currentUser.uid
-      );
+    // --------------------------------------------------------
+    // LOAD GROUP
+    // --------------------------------------------------------
 
-
-    const groupSnap =
-      await getDoc(groupRef);
+    const groupSnap = await getDoc(groupRef);
 
 
     if (!groupSnap.exists()) {
 
+      console.error(
+        'Group does not exist:',
+        state.groupId
+      );
+
       showNotFound();
 
       return;
-
     }
 
 
     state.groupData = {
-
       id: groupSnap.id,
-
       ...groupSnap.data()
-
     };
 
 
-    const memberSnap =
-      await getDoc(memberRef);
+    // --------------------------------------------------------
+    // LOAD MEMBERSHIP
+    // --------------------------------------------------------
 
+    try {
 
-    state.membership =
-      memberSnap.exists()
+      const memberSnap = await getDoc(memberRef);
+
+      state.membership = memberSnap.exists()
         ? memberSnap.data()
         : null;
 
+    } catch (membershipError) {
+
+      console.error(
+        'Membership loading error:',
+        membershipError
+      );
+
+      // Membership failure should NOT freeze the whole page.
+      state.membership = null;
+    }
+
+
+    // --------------------------------------------------------
+    // RENDER MAIN PAGE
+    // --------------------------------------------------------
 
     renderHeader();
 
     renderSidebar();
-
-    await renderAdmins();
 
     applyAccessControl();
 
@@ -700,68 +443,43 @@ async function loadGroup() {
 
     bindHeaderActions();
 
-    startNotificationListener();
-
-
-    if (pageLoader) {
-
-      pageLoader.classList.add(
-        'is-hidden'
+    // IMPORTANT:
+    // Admins are secondary content.
+    // Do NOT wait for them before showing the group.
+    renderAdmins().catch(error => {
+      console.error(
+        'Admin loading error:',
+        error
       );
-
-    }
-
-
-    if (groupPageContent) {
-
-      groupPageContent.classList.add(
-        'is-visible'
-      );
-
-    }
+    });
 
 
-    state.initialized = true;
+    // --------------------------------------------------------
+    // SHOW PAGE IMMEDIATELY
+    // --------------------------------------------------------
+
+    showPage();
+
 
   } catch (error) {
 
     console.error(
-      'Error loading group:',
+      'CRITICAL GROUP LOAD ERROR:',
       error
-    );
-
-    showToast(
-      'Could not load this group.',
-      'error'
     );
 
     showNotFound();
 
-  }
-
-}
-
-
-// ============================================================
-// NOT FOUND
-// ============================================================
-
-function showNotFound() {
-
-  if (pageLoader) {
-
-    pageLoader.classList.add(
-      'is-hidden'
+    showToast(
+      'Unable to load this group. Please try again.',
+      'error'
     );
 
-  }
+  } finally {
 
-
-  if (groupNotFoundState) {
-
-    groupNotFoundState.classList.add(
-      'is-visible'
-    );
+    // FINAL SAFETY NET
+    // Nothing is allowed to leave the page permanently stuck.
+    hideLoader();
 
   }
 
@@ -774,66 +492,73 @@ function showNotFound() {
 
 function renderHeader() {
 
-  const group =
-    state.groupData;
+  const group = state.groupData;
+
+  if (!group) return;
 
 
   document.title =
     `${group.name || 'Group'} · VitalStar`;
 
 
-  if (navGroupTitle) {
-
-    navGroupTitle.textContent =
-      group.name || 'Group';
-
-  }
-
-
-  if (
-    groupCover &&
-    group.coverURL
-  ) {
-
-    groupCover.style.backgroundImage =
-      `url("${group.coverURL}")`;
-
-  }
-
-
-  applyMediaBackground(
-    groupAvatar,
-    group.avatarURL,
-    group.avatarURL
-      ? undefined
-      : initialsFrom(group.name)
+  setText(
+    navGroupTitle,
+    group.name || 'VitalStar Group'
   );
 
 
-  if (
-    groupAvatar &&
-    !group.avatarURL
-  ) {
+  // Cover
+  if (groupCover) {
 
-    groupAvatar.innerHTML =
-      initialsFrom(group.name);
+    if (group.coverURL) {
+
+      groupCover.style.backgroundImage =
+        `url("${group.coverURL}")`;
+
+      groupCover.style.backgroundSize = 'cover';
+      groupCover.style.backgroundPosition = 'center';
+
+    } else {
+
+      groupCover.style.backgroundImage = '';
+
+    }
 
   }
 
 
-  if (groupName) {
+  // Avatar
+  if (groupAvatar) {
 
-    groupName.textContent =
-      group.name || 'Group';
+    if (group.avatarURL) {
+
+      applyMediaBackground(
+        groupAvatar,
+        group.avatarURL
+      );
+
+    } else {
+
+      groupAvatar.style.backgroundImage = '';
+
+      groupAvatar.textContent =
+        initialsFrom(group.name);
+
+    }
 
   }
 
 
+  setText(
+    groupName,
+    group.name || 'VitalStar Group'
+  );
+
+
+  // Privacy
   if (groupPrivacyBadge) {
 
-    if (
-      group.privacy === 'private'
-    ) {
+    if (group.privacy === 'private') {
 
       groupPrivacyBadge.className =
         'badge badge--private';
@@ -854,98 +579,77 @@ function renderHeader() {
   }
 
 
-  if (groupPremiumBadge) {
-
-    groupPremiumBadge.style.display =
-      group.type === 'premium'
-        ? 'inline-flex'
-        : 'none';
-
-  }
+  setDisplay(
+    groupPremiumBadge,
+    group.type === 'premium'
+      ? 'inline-flex'
+      : 'none'
+  );
 
 
-  if (groupVerifiedBadge) {
-
-    groupVerifiedBadge.style.display =
-      group.verified
-        ? 'inline-flex'
-        : 'none';
-
-  }
+  setDisplay(
+    groupVerifiedBadge,
+    group.verified
+      ? 'inline-flex'
+      : 'none'
+  );
 
 
-  if (groupCategoryChip) {
-
-    groupCategoryChip.textContent =
-      CATEGORY_LABELS[group.category]
-      || group.category
-      || 'General';
-
-  }
+  setText(
+    groupCategoryChip,
+    CATEGORY_LABELS[group.category] ||
+    group.category ||
+    'General'
+  );
 
 
-  if (groupOwnerText) {
-
-    groupOwnerText.textContent =
-      `Owned by ${group.ownerName || 'a member'}`;
-
-  }
+  setText(
+    groupOwnerText,
+    `Owned by ${group.ownerName || 'a member'}`
+  );
 
 
-  if (groupCreatedText) {
-
-    groupCreatedText.textContent =
-      `Created ${formatDate(group.createdAt)}`;
-
-  }
+  setText(
+    groupCreatedText,
+    `Created ${formatDate(group.createdAt)}`
+  );
 
 
-  if (groupDescription) {
-
-    groupDescription.textContent =
-      group.description || '';
-
-  }
+  setText(
+    groupDescription,
+    group.description || ''
+  );
 
 
-  if (statMemberCount) {
-
-    statMemberCount.textContent =
-      formatCount(group.memberCount);
-
-  }
+  setText(
+    statMemberCount,
+    formatCount(group.memberCount)
+  );
 
 
-  if (statPostCount) {
-
-    statPostCount.textContent =
-      formatCount(group.postCount);
-
-  }
+  setText(
+    statPostCount,
+    formatCount(group.postCount)
+  );
 
 
-  if (statOnlineCount) {
-
-    statOnlineCount.textContent =
-      formatCount(group.onlineCount);
-
-  }
+  setText(
+    statOnlineCount,
+    formatCount(group.onlineCount)
+  );
 
 
-  if (statLevel) {
-
-    statLevel.textContent =
-      group.level || 1;
-
-  }
+  setText(
+    statLevel,
+    group.level || 1
+  );
 
 
   renderJoinLeaveState();
 
 
   const role =
-    state.membership?.role;
-
+    state.membership?.role || null;
 
   const isOwnerOrAdmin =
     role === 'owner' ||
@@ -965,57 +669,44 @@ function renderHeader() {
 
 
 // ============================================================
-// JOIN / LEAVE BUTTON
+// JOIN / LEAVE UI
 // ============================================================
 
 function renderJoinLeaveState() {
 
   if (!joinLeaveBtn) return;
 
-
   const membership =
     state.membership;
 
 
+  // Owner
   if (
     membership &&
     membership.role === 'owner'
   ) {
 
-    joinLeaveBtn.style.display =
-      'none';
-
+    joinLeaveBtn.style.display = 'none';
 
     if (yourRoleTag) {
-
-      yourRoleTag.classList.add(
-        'is-visible'
-      );
-
+      yourRoleTag.classList.add('is-visible');
     }
 
+    setText(
+      yourRoleText,
+      'Owner'
+    );
 
-    if (yourRoleText) {
-
-      yourRoleText.textContent =
-        'Owner';
-
-    }
-
-
-    if (inviteBtn) {
-
-      inviteBtn.style.display =
-        'inline-flex';
-
-    }
-
+    setDisplay(
+      inviteBtn,
+      'inline-flex'
+    );
 
     return;
-
   }
 
 
+  // Active member
   if (
     membership &&
     [
@@ -1026,11 +717,9 @@ function renderJoinLeaveState() {
     membership.status === 'active'
   ) {
 
-    joinLeaveBtn.style.display =
-      'flex';
+    joinLeaveBtn.style.display = 'flex';
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
     joinLeaveBtn.className =
       'btn-join-leave is-member';
@@ -1040,49 +729,35 @@ function renderJoinLeaveState() {
 
 
     if (yourRoleTag) {
-
-      yourRoleTag.classList.add(
-        'is-visible'
-      );
-
+      yourRoleTag.classList.add('is-visible');
     }
 
 
-    if (yourRoleText) {
-
-      yourRoleText.textContent =
-        membership.role
-          .charAt(0)
-          .toUpperCase()
-        +
-        membership.role.slice(1);
-
-    }
+    setText(
+      yourRoleText,
+      membership.role.charAt(0).toUpperCase() +
+      membership.role.slice(1)
+    );
 
 
-    if (inviteBtn) {
-
-      inviteBtn.style.display =
-        'inline-flex';
-
-    }
-
+    setDisplay(
+      inviteBtn,
+      'inline-flex'
+    );
 
     return;
-
   }
 
 
+  // Pending
   if (
     membership &&
     membership.status === 'pending'
   ) {
 
-    joinLeaveBtn.style.display =
-      'flex';
+    joinLeaveBtn.style.display = 'flex';
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
     joinLeaveBtn.className =
       'btn-join-leave is-pending';
@@ -1092,32 +767,23 @@ function renderJoinLeaveState() {
 
 
     if (yourRoleTag) {
-
-      yourRoleTag.classList.remove(
-        'is-visible'
-      );
-
+      yourRoleTag.classList.remove('is-visible');
     }
 
 
-    if (inviteBtn) {
-
-      inviteBtn.style.display =
-        'none';
-
-    }
-
+    setDisplay(
+      inviteBtn,
+      'none'
+    );
 
     return;
-
   }
 
 
-  joinLeaveBtn.style.display =
-    'flex';
+  // Not a member
+  joinLeaveBtn.style.display = 'flex';
 
-  joinLeaveBtn.disabled =
-    false;
+  joinLeaveBtn.disabled = false;
 
   joinLeaveBtn.className =
     'btn-join-leave';
@@ -1127,20 +793,14 @@ function renderJoinLeaveState() {
 
 
   if (yourRoleTag) {
-
-    yourRoleTag.classList.remove(
-      'is-visible'
-    );
-
+    yourRoleTag.classList.remove('is-visible');
   }
 
 
-  if (inviteBtn) {
-
-    inviteBtn.style.display =
-      'none';
-
-  }
+  setDisplay(
+    inviteBtn,
+    'none'
+  );
 
 }
 
@@ -1151,52 +811,44 @@ function renderJoinLeaveState() {
 
 function renderSidebar() {
 
-  if (
-    !rulesListDisplay ||
-    !rulesEmptyDisplay
-  ) {
-
-    return;
-
-  }
-
+  if (!rulesListDisplay) return;
 
   const rules =
-    state.groupData.rules || [];
+    Array.isArray(state.groupData.rules)
+      ? state.groupData.rules
+      : [];
 
 
-  rulesListDisplay.innerHTML =
-    '';
+  rulesListDisplay.innerHTML = '';
 
 
-  if (!rules.length) {
+  if (rules.length === 0) {
 
-    rulesEmptyDisplay.style.display =
-      'block';
-
-  } else {
-
-    rulesEmptyDisplay.style.display =
-      'none';
-
-
-    rules.forEach(
-      (rule) => {
-
-        const li =
-          document.createElement('li');
-
-        li.textContent =
-          rule;
-
-        rulesListDisplay.appendChild(
-          li
-        );
-
-      }
+    setDisplay(
+      rulesEmptyDisplay,
+      'block'
     );
 
+    return;
   }
+
+
+  setDisplay(
+    rulesEmptyDisplay,
+    'none'
+  );
+
+
+  rules.forEach(rule => {
+
+    const li =
+      document.createElement('li');
+
+    li.textContent = rule;
+
+    rulesListDisplay.appendChild(li);
+
+  });
 
 }
 
@@ -1212,25 +864,24 @@ async function renderAdmins() {
 
   try {
 
-    const membersQuery =
-      query(
-        collection(
-          db,
-          'groups',
-          state.groupId,
-          'members'
-        ),
-        where(
-          'role',
-          'in',
-          [
-            'owner',
-            'admin',
-            'moderator'
-          ]
-        ),
-        limit(10)
-      );
+    const membersQuery = query(
+      collection(
+        db,
+        'groups',
+        state.groupId,
+        'members'
+      ),
+      where(
+        'role',
+        'in',
+        [
+          'owner',
+          'admin',
+          'moderator'
+        ]
+      ),
+      limit(10)
+    );
 
 
     const snapshot =
@@ -1239,133 +890,124 @@ async function renderAdmins() {
 
     adminsList
       .querySelectorAll('.admin-row')
-      .forEach(
-        el => el.remove()
-      );
+      .forEach(el => el.remove());
 
 
     if (snapshot.empty) {
 
-      if (adminsEmptyDisplay) {
-
-        adminsEmptyDisplay.style.display =
-          'block';
-
-      }
+      setDisplay(
+        adminsEmptyDisplay,
+        'block'
+      );
 
       return;
-
     }
 
 
-    if (adminsEmptyDisplay) {
-
-      adminsEmptyDisplay.style.display =
-        'none';
-
-    }
+    setDisplay(
+      adminsEmptyDisplay,
+      'none'
+    );
 
 
     const rolePriority = {
-
       owner: 0,
-
       admin: 1,
-
       moderator: 2
-
     };
 
 
     const admins =
       snapshot.docs
-        .map(
-          d => d.data()
-        )
+        .map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }))
         .sort(
           (a, b) =>
-            (rolePriority[a.role] ?? 3)
-            -
+            (rolePriority[a.role] ?? 3) -
             (rolePriority[b.role] ?? 3)
         );
 
 
-    admins.forEach(
-      (admin) => {
+    admins.forEach(admin => {
 
-        const row =
-          document.createElement('div');
+      const row =
+        document.createElement('div');
 
-        row.className =
-          'admin-row';
-
-
-        const avatar =
-          document.createElement('div');
-
-        avatar.className =
-          'admin-avatar';
+      row.className =
+        'admin-row';
 
 
-        applyMediaBackground(
-          avatar,
-          admin.photoURL,
-          initialsFrom(
-            admin.displayName
-          )
-        );
+      const avatar =
+        document.createElement('div');
+
+      avatar.className =
+        'admin-avatar';
 
 
-        const info =
-          document.createElement('div');
-
-        info.className =
-          'admin-info';
-
-
-        info.innerHTML = `
-
-          <div class="admin-name"></div>
-
-          <div class="admin-role"></div>
-
-        `;
+      applyMediaBackground(
+        avatar,
+        admin.photoURL,
+        initialsFrom(
+          admin.displayName
+        )
+      );
 
 
-        info.querySelector(
-          '.admin-name'
-        ).textContent =
-          admin.displayName ||
-          'VitalStar Member';
+      const info =
+        document.createElement('div');
+
+      info.className =
+        'admin-info';
 
 
-        info.querySelector(
-          '.admin-role'
-        ).textContent =
-          admin.role;
+      const name =
+        document.createElement('div');
+
+      name.className =
+        'admin-name';
+
+      name.textContent =
+        admin.displayName ||
+        'VitalStar Member';
 
 
-        row.appendChild(
-          avatar
-        );
+      const role =
+        document.createElement('div');
 
-        row.appendChild(
-          info
-        );
+      role.className =
+        'admin-role';
+
+      role.textContent =
+        admin.role || 'member';
 
 
-        adminsList.appendChild(
-          row
-        );
+      info.appendChild(name);
+      info.appendChild(role);
 
-      }
-    );
+
+      row.appendChild(avatar);
+      row.appendChild(info);
+
+
+      adminsList.appendChild(row);
+
+    });
+
 
   } catch (error) {
 
     console.error(
       'Error loading admins:',
       error
+    );
+
+    // Do NOT throw.
+    // Admin failure must never stop group.html.
+    setDisplay(
+      adminsEmptyDisplay,
+      'block'
     );
 
   }
@@ -1381,6 +1023,8 @@ function applyAccessControl() {
 
   const group =
     state.groupData;
+
+  if (!group) return;
 
 
   const isActiveMember =
@@ -1414,9 +1058,7 @@ function applyAccessControl() {
 
 
   const role =
-    state.membership
-      ? state.membership.role
-      : null;
+    state.membership?.role || null;
 
 
   const isOwnerOrAdmin =
@@ -1424,24 +1066,20 @@ function applyAccessControl() {
     role === 'admin';
 
 
-  if (subscriptionTabBtn) {
-
-    subscriptionTabBtn.style.display =
-      group.type === 'premium'
-        ? 'flex'
-        : 'none';
-
-  }
+  setDisplay(
+    subscriptionTabBtn,
+    group.type === 'premium'
+      ? 'flex'
+      : 'none'
+  );
 
 
-  if (settingsTabBtn) {
-
-    settingsTabBtn.style.display =
-      isOwnerOrAdmin
-        ? 'flex'
-        : 'none';
-
-  }
+  setDisplay(
+    settingsTabBtn,
+    isOwnerOrAdmin
+      ? 'flex'
+      : 'none'
+  );
 
 
   if (canView) {
@@ -1459,27 +1097,19 @@ function applyAccessControl() {
 
 function setupTabs() {
 
-  if (
-    state.tabsBound ||
-    !groupTabsNav
-  ) {
-
+  if (!groupTabsNav || tabsBound) {
     return;
-
   }
 
-
-  state.tabsBound = true;
+  tabsBound = true;
 
 
   groupTabsNav.addEventListener(
     'click',
-    (event) => {
+    event => {
 
       const tabBtn =
-        event.target.closest(
-          '.group-tab'
-        );
+        event.target.closest('.group-tab');
 
 
       if (!tabBtn) return;
@@ -1500,11 +1130,10 @@ function setupTabs() {
 }
 
 
-// ============================================================
-// ACTIVATE TAB
-// ============================================================
-
 function activateTab(tabName) {
+
+  if (!tabName) return;
+
 
   state.activeTab =
     tabName;
@@ -1514,34 +1143,28 @@ function activateTab(tabName) {
 
     groupTabsNav
       .querySelectorAll('.group-tab')
-      .forEach(
-        btn => {
+      .forEach(btn => {
 
-          btn.classList.toggle(
-            'is-active',
-            btn.dataset.tab ===
-              tabName
-          );
+        btn.classList.toggle(
+          'is-active',
+          btn.dataset.tab === tabName
+        );
 
-        }
-      );
+      });
 
   }
 
 
   document
     .querySelectorAll('.tab-panel')
-    .forEach(
-      panel => {
+    .forEach(panel => {
 
-        panel.classList.toggle(
-          'is-active',
-          panel.dataset.panel ===
-            tabName
-        );
+      panel.classList.toggle(
+        'is-active',
+        panel.dataset.panel === tabName
+      );
 
-      }
-    );
+    });
 
 
   loadTabModuleIfNeeded(
@@ -1555,16 +1178,12 @@ function activateTab(tabName) {
 // LOAD TAB MODULE
 // ============================================================
 
-async function loadTabModuleIfNeeded(
-  tabName
-) {
+async function loadTabModuleIfNeeded(tabName) {
 
   if (
     loadedTabModules.has(tabName)
   ) {
-
     return;
-
   }
 
 
@@ -1577,9 +1196,7 @@ async function loadTabModuleIfNeeded(
 
   const panel =
     document.getElementById(
-      `${tabName === 'posts'
-        ? 'posts'
-        : tabName}Tab`
+      `${tabName}Tab`
     );
 
 
@@ -1595,8 +1212,8 @@ async function loadTabModuleIfNeeded(
 
 
     if (
-      typeof mod.init ===
-      'function'
+      mod &&
+      typeof mod.init === 'function'
     ) {
 
       await mod.init(
@@ -1605,10 +1222,11 @@ async function loadTabModuleIfNeeded(
 
     }
 
+
   } catch (error) {
 
-    console.warn(
-      `Tab module for "${tabName}" isn't available yet:`,
+    console.error(
+      `Tab "${tabName}" failed to load:`,
       error
     );
 
@@ -1616,15 +1234,40 @@ async function loadTabModuleIfNeeded(
     if (panel) {
 
       panel.innerHTML = `
-
         <div class="tab-panel-placeholder">
-
-          This section is still being built out —
-          check back soon.
-
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <p>Unable to load this section.</p>
+          <button type="button" class="retry-tab-btn">
+            Try again
+          </button>
         </div>
-
       `;
+
+
+      const retryBtn =
+        panel.querySelector(
+          '.retry-tab-btn'
+        );
+
+
+      if (retryBtn) {
+
+        retryBtn.addEventListener(
+          'click',
+          () => {
+
+            loadedTabModules.delete(
+              tabName
+            );
+
+            loadTabModuleIfNeeded(
+              tabName
+            );
+
+          }
+        );
+
+      }
 
     }
 
@@ -1637,9 +1280,7 @@ async function loadTabModuleIfNeeded(
 // TAB CONTEXT
 // ============================================================
 
-function buildTabContext(
-  panelEl
-) {
+function buildTabContext(panelEl) {
 
   return {
 
@@ -1676,23 +1317,7 @@ function buildTabContext(
 
     applyMediaBackground,
 
-    refreshHeaderStats,
-
-    // --------------------------------------------
-    // Notification helpers
-    // --------------------------------------------
-
-    notifyMember,
-
-    notifyGroupAdmins,
-
-    notifyGroupMembers,
-
-    createGroupNotification,
-
-    markNotificationAsRead,
-
-    markAllNotificationsAsRead
+    refreshHeaderStats
 
   };
 
@@ -1719,51 +1344,45 @@ async function refreshHeaderStats() {
       await getDoc(groupRef);
 
 
-    if (!snap.exists()) return;
+    if (!snap.exists()) {
+      return;
+    }
 
 
     state.groupData = {
-
       id: snap.id,
-
       ...snap.data()
-
     };
 
 
-    if (statMemberCount) {
-
-      statMemberCount.textContent =
-        formatCount(
-          state.groupData.memberCount
-        );
-
-    }
+    setText(
+      statMemberCount,
+      formatCount(
+        state.groupData.memberCount
+      )
+    );
 
 
-    if (statPostCount) {
-
-      statPostCount.textContent =
-        formatCount(
-          state.groupData.postCount
-        );
-
-    }
+    setText(
+      statPostCount,
+      formatCount(
+        state.groupData.postCount
+      )
+    );
 
 
-    if (statOnlineCount) {
+    setText(
+      statOnlineCount,
+      formatCount(
+        state.groupData.onlineCount
+      )
+    );
 
-      statOnlineCount.textContent =
-        formatCount(
-          state.groupData.onlineCount
-        );
-
-    }
 
   } catch (error) {
 
     console.error(
-      'Error refreshing header stats:',
+      'Error refreshing group stats:',
       error
     );
 
@@ -1778,15 +1397,11 @@ async function refreshHeaderStats() {
 
 function bindHeaderActions() {
 
-  if (state.headerActionsBound) {
-
+  if (headerActionsBound) {
     return;
-
   }
 
-
-  state.headerActionsBound =
-    true;
+  headerActionsBound = true;
 
 
   if (joinLeaveBtn) {
@@ -1829,6 +1444,10 @@ function bindHeaderActions() {
   }
 
 
+  // ----------------------------------------------------------
+  // NOTIFICATION BELL
+  // ----------------------------------------------------------
+
   if (notificationBellBtn) {
 
     notificationBellBtn.addEventListener(
@@ -1847,9 +1466,9 @@ function bindHeaderActions() {
 
         if (notificationsPanel) {
 
-          notificationsPanel.classList.remove(
-            'is-visible'
-          );
+          notificationsPanel
+            .classList
+            .remove('is-visible');
 
         }
 
@@ -1861,15 +1480,15 @@ function bindHeaderActions() {
 
   document.addEventListener(
     'click',
-    (event) => {
+    event => {
 
-      if (
-        !notificationsPanel ||
-        !notificationBellBtn
-      ) {
-
+      if (!notificationsPanel) {
         return;
+      }
 
+
+      if (!notificationBellBtn) {
+        return;
       }
 
 
@@ -1885,9 +1504,9 @@ function bindHeaderActions() {
         )
       ) {
 
-        notificationsPanel.classList.remove(
-          'is-visible'
-        );
+        notificationsPanel
+          .classList
+          .remove('is-visible');
 
       }
 
@@ -2000,7 +1619,6 @@ async function joinGroup() {
             true;
 
           return;
-
         }
 
 
@@ -2008,15 +1626,15 @@ async function joinGroup() {
           memberRef,
           {
 
-            uid:
-              user.uid,
+            uid: user.uid,
 
             displayName:
               user.displayName ||
               'VitalStar Member',
 
             photoURL:
-              user.photoURL || '',
+              user.photoURL ||
+              '',
 
             role:
               'member',
@@ -2024,7 +1642,8 @@ async function joinGroup() {
             status,
 
             category:
-              group.category || '',
+              group.category ||
+              '',
 
             joinedAt:
               serverTimestamp()
@@ -2052,25 +1671,36 @@ async function joinGroup() {
 
 
     if (
-      !alreadyMember &&
+      alreadyMember
+    ) {
+
+      showToast(
+        'You are already a member of this group.',
+        'info'
+      );
+
+      return;
+    }
+
+
+    if (
       status === 'active'
     ) {
 
       state.groupData.memberCount =
         (
-          state.groupData.memberCount ||
-          0
+          Number(
+            state.groupData.memberCount
+          ) || 0
         ) + 1;
 
 
-      if (statMemberCount) {
-
-        statMemberCount.textContent =
-          formatCount(
-            state.groupData.memberCount
-          );
-
-      }
+      setText(
+        statMemberCount,
+        formatCount(
+          state.groupData.memberCount
+        )
+      );
 
     }
 
@@ -2079,7 +1709,8 @@ async function joinGroup() {
 
       status,
 
-      role: 'member',
+      role:
+        'member',
 
       category:
         group.category || ''
@@ -2092,34 +1723,13 @@ async function joinGroup() {
     applyAccessControl();
 
 
-    // Notify group admins/owner.
-    await notifyGroupAdmins({
-
-      type:
-        isPrivate
-          ? 'join_request'
-          : 'member_joined',
-
-      message:
-        isPrivate
-          ? `${user.displayName || 'A member'} requested to join ${group.name}.`
-          : `${user.displayName || 'A member'} joined ${group.name}.`,
-
-      link:
-        window.location.href
-
-    });
-
-
     showToast(
-
       isPrivate
         ? 'Request sent! An admin will review it soon.'
         : `You've joined ${group.name}.`,
-
       'success'
-
     );
+
 
   } catch (error) {
 
@@ -2133,6 +1743,7 @@ async function joinGroup() {
       'Could not join this group. Please try again.',
       'error'
     );
+
 
   } finally {
 
@@ -2157,8 +1768,10 @@ async function cancelJoinRequest() {
   ) {
 
     return;
-
   }
+
+
+  if (!joinLeaveBtn) return;
 
 
   joinLeaveBtn.disabled =
@@ -2192,6 +1805,7 @@ async function cancelJoinRequest() {
       'info'
     );
 
+
   } catch (error) {
 
     console.error(
@@ -2204,6 +1818,7 @@ async function cancelJoinRequest() {
       'Could not cancel the request. Please try again.',
       'error'
     );
+
 
   } finally {
 
@@ -2228,8 +1843,10 @@ async function leaveGroup() {
   ) {
 
     return;
-
   }
+
+
+  if (!joinLeaveBtn) return;
 
 
   joinLeaveBtn.disabled =
@@ -2275,7 +1892,6 @@ async function leaveGroup() {
         ) {
 
           return;
-
         }
 
 
@@ -2289,8 +1905,7 @@ async function leaveGroup() {
 
 
         if (
-          memberData.status ===
-          'active'
+          memberData.status === 'active'
         ) {
 
           wasActiveMember =
@@ -2315,43 +1930,29 @@ async function leaveGroup() {
       null;
 
 
-    if (wasActiveMember) {
+    if (
+      wasActiveMember
+    ) {
 
       state.groupData.memberCount =
         Math.max(
           0,
           (
-            state.groupData.memberCount ||
-            1
+            Number(
+              state.groupData.memberCount
+            ) || 1
           ) - 1
         );
 
 
-      if (statMemberCount) {
-
-        statMemberCount.textContent =
-          formatCount(
-            state.groupData.memberCount
-          );
-
-      }
+      setText(
+        statMemberCount,
+        formatCount(
+          state.groupData.memberCount
+        )
+      );
 
     }
-
-
-    // Notify admins before leaving.
-    await notifyGroupAdmins({
-
-      type:
-        'member_left',
-
-      message:
-        `${state.currentUser.displayName || 'A member'} left ${state.groupData.name}.`,
-
-      link:
-        window.location.href
-
-    });
 
 
     renderJoinLeaveState();
@@ -2363,6 +1964,7 @@ async function leaveGroup() {
       `You left ${state.groupData.name}.`,
       'info'
     );
+
 
   } catch (error) {
 
@@ -2377,6 +1979,7 @@ async function leaveGroup() {
       'error'
     );
 
+
   } finally {
 
     joinLeaveBtn.disabled =
@@ -2388,7 +1991,7 @@ async function leaveGroup() {
 
 
 // ============================================================
-// SHARE GROUP
+// SHARE
 // ============================================================
 
 async function handleShareClick() {
@@ -2429,8 +2032,7 @@ async function handleShareClick() {
   } catch (error) {
 
     if (
-      error.name !==
-      'AbortError'
+      error.name !== 'AbortError'
     ) {
 
       console.error(
@@ -2467,6 +2069,7 @@ async function handleInviteClick() {
       'success'
     );
 
+
   } catch (error) {
 
     console.error(
@@ -2486,128 +2089,93 @@ async function handleInviteClick() {
 
 
 // ============================================================
-// ============================================================
-// NOTIFICATION SYSTEM
-// ============================================================
+// NOTIFICATIONS
 // ============================================================
 
+async function toggleNotificationsPanel() {
 
-// ============================================================
-// NOTIFICATION COLLECTION
-// ============================================================
-
-function notificationsCollection() {
-
-  return collection(
-    db,
-    'groups',
-    state.groupId,
-    'notifications'
-  );
-
-}
-
-
-// ============================================================
-// CREATE NOTIFICATION
-// ============================================================
-
-async function createGroupNotification({
-
-  recipientId,
-
-  type = 'general',
-
-  message = '',
-
-  actorId = state.currentUser?.uid || '',
-
-  actorName =
-    state.currentUser?.displayName ||
-    'VitalStar Member',
-
-  actorPhotoURL =
-    state.currentUser?.photoURL ||
-    '',
-
-  link = '',
-
-  postId = '',
-
-  commentId = ''
-
-}) {
-
-  if (
-    !recipientId ||
-    !message ||
-    !state.groupId
-  ) {
-
-    return null;
-
+  if (!notificationsPanel) {
+    return;
   }
 
 
-  // Never notify the person who caused the action.
+  const willShow =
+    !notificationsPanel
+      .classList
+      .contains('is-visible');
+
+
+  notificationsPanel
+    .classList
+    .toggle(
+      'is-visible',
+      willShow
+    );
+
+
   if (
-    recipientId ===
-    state.currentUser?.uid
+    !willShow ||
+    notificationsModuleLoaded
   ) {
 
-    return null;
-
+    return;
   }
 
 
   try {
 
-    const notificationData = {
-
-      recipientId,
-
-      actorId,
-
-      actorName,
-
-      actorPhotoURL,
-
-      type,
-
-      message,
-
-      link,
-
-      postId,
-
-      commentId,
-
-      read: false,
-
-      createdAt:
-        serverTimestamp()
-
-    };
-
-
-    const notificationRef =
-      await addDoc(
-        notificationsCollection(),
-        notificationData
+    const mod =
+      await import(
+        './group-notifications.js'
       );
 
 
-    return notificationRef.id;
+    notificationsModuleLoaded =
+      true;
+
+
+    if (
+      mod &&
+      typeof mod.init === 'function'
+    ) {
+
+      await mod.init({
+
+        db,
+
+        auth,
+
+        currentUser:
+          state.currentUser,
+
+        groupId:
+          state.groupId,
+
+        listEl:
+          notificationsList,
+
+        unreadDotEl:
+          notifUnreadDot,
+
+        showToast
+
+      });
+
+    }
+
 
   } catch (error) {
 
     console.error(
-      'Error creating group notification:',
+      'Group notifications failed to load:',
       error
     );
 
 
-    return null;
+    showToast(
+      'Notifications could not be loaded.',
+      'error'
+    );
 
   }
 
@@ -2615,100 +2183,5 @@ async function createGroupNotification({
 
 
 // ============================================================
-// NOTIFY ONE MEMBER
+// END OF GROUP.JS
 // ============================================================
-
-async function notifyMember({
-
-  recipientId,
-
-  type = 'general',
-
-  message,
-
-  link = '',
-
-  postId = '',
-
-  commentId = ''
-
-}) {
-
-  if (!recipientId) {
-
-    return null;
-
-  }
-
-
-  return createGroupNotification({
-
-    recipientId,
-
-    type,
-
-    message,
-
-    link,
-
-    postId,
-
-    commentId
-
-  });
-
-}
-
-
-// ============================================================
-// GET GROUP ADMINS
-// ============================================================
-
-async function getGroupAdmins() {
-
-  try {
-
-    const membersRef =
-      collection(
-        db,
-        'groups',
-        state.groupId,
-        'members'
-      );
-
-
-    const snapshot =
-      await getDocs(
-        membersRef
-      );
-
-
-    const admins = [];
-
-
-    snapshot.forEach(
-      memberDoc => {
-
-        const data =
-          memberDoc.data();
-
-
-        if (
-          data.status === 'active' &&
-          [
-            'owner',
-            'admin',
-            'moderator'
-          ].includes(data.role)
-        ) {
-
-          admins.push({
-
-            uid:
-              memberDoc.id,
-
-            ...data
-
-          });
-
-       
