@@ -1,5 +1,6 @@
 export default async (req) => {
     try {
+        // Only allow POST requests
         if (req.method !== "POST") {
             return new Response(
                 JSON.stringify({
@@ -14,8 +15,8 @@ export default async (req) => {
             );
         }
 
+        // Read the user's message
         const body = await req.json();
-
         const message = body?.message?.trim();
 
         if (!message) {
@@ -32,12 +33,13 @@ export default async (req) => {
             );
         }
 
-        const apiKey = process.env.OPENAI_API_KEY;
+        // Get the secret from Netlify
+        const apiKey = process.env.OPENROUTER_API_KEY;
 
         if (!apiKey) {
             return new Response(
                 JSON.stringify({
-                    error: "OPENAI_API_KEY is missing from Netlify."
+                    error: "OPENROUTER_API_KEY is missing from Netlify."
                 }),
                 {
                     status: 500,
@@ -48,38 +50,50 @@ export default async (req) => {
             );
         }
 
+        // Send request to OpenRouter
         const response = await fetch(
-            "https://api.openai.com/v1/responses",
+            "https://openrouter.ai/api/v1/chat/completions",
             {
                 method: "POST",
 
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
+                    "Authorization": `Bearer ${apiKey}`,
+                    "HTTP-Referer": "https://vitalstar.netlify.app",
+                    "X-Title": "VitalStar Orion Pax"
                 },
 
                 body: JSON.stringify({
-                    model: "gpt-5-mini",
+                    model: "openrouter/free",
 
-                    instructions:
-                        "You are Orion Pax, the AI assistant for VitalStar. " +
-                        "Be helpful, clear, calm and direct.",
-
-                    input: message
+                    messages: [
+                        {
+                            role: "system",
+                            content:
+                                "You are Orion Pax, the AI assistant for VitalStar. " +
+                                "Be helpful, intelligent, friendly, clear, and direct. " +
+                                "You are a text-based AI assistant."
+                        },
+                        {
+                            role: "user",
+                            content: message
+                        }
+                    ]
                 })
             }
         );
 
         const data = await response.json();
 
+        // OpenRouter returned an error
         if (!response.ok) {
-            console.error("OpenAI error:", data);
+            console.error("OpenRouter error:", data);
 
             return new Response(
                 JSON.stringify({
                     error:
                         data?.error?.message ||
-                        "OpenAI request failed."
+                        "OpenRouter request failed."
                 }),
                 {
                     status: response.status,
@@ -90,11 +104,29 @@ export default async (req) => {
             );
         }
 
+        // Get Orion's answer
+        const answer =
+            data?.choices?.[0]?.message?.content;
+
+        if (!answer) {
+            return new Response(
+                JSON.stringify({
+                    error:
+                        "OpenRouter returned an empty response."
+                }),
+                {
+                    status: 502,
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+        }
+
+        // Send answer back to orion.html
         return new Response(
             JSON.stringify({
-                answer:
-                    data.output_text ||
-                    "Orion Pax did not return a response."
+                answer: answer
             }),
             {
                 status: 200,
@@ -106,7 +138,10 @@ export default async (req) => {
 
     } catch (error) {
 
-        console.error("Orion function error:", error);
+        console.error(
+            "Orion Pax function error:",
+            error
+        );
 
         return new Response(
             JSON.stringify({
