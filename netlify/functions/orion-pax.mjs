@@ -1,6 +1,20 @@
+const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+};
+
 export default async (req) => {
     try {
-        // Only allow POST requests
+
+        // CORS preflight
+        if (req.method === "OPTIONS") {
+            return new Response(null, {
+                status: 204,
+                headers: corsHeaders
+            });
+        }
+
         if (req.method !== "POST") {
             return new Response(
                 JSON.stringify({
@@ -9,13 +23,13 @@ export default async (req) => {
                 {
                     status: 405,
                     headers: {
+                        ...corsHeaders,
                         "Content-Type": "application/json"
                     }
                 }
             );
         }
 
-        // Read the user's message
         const body = await req.json();
         const message = body?.message?.trim();
 
@@ -27,52 +41,47 @@ export default async (req) => {
                 {
                     status: 400,
                     headers: {
+                        ...corsHeaders,
                         "Content-Type": "application/json"
                     }
                 }
             );
         }
 
-        // Get the secret from Netlify
         const apiKey = process.env.OPENROUTER_API_KEY;
 
         if (!apiKey) {
             return new Response(
                 JSON.stringify({
-                    error: "OPENROUTER_API_KEY is missing from Netlify."
+                    error: "OPENROUTER_API_KEY is missing."
                 }),
                 {
                     status: 500,
                     headers: {
+                        ...corsHeaders,
                         "Content-Type": "application/json"
                     }
                 }
             );
         }
 
-        // Send request to OpenRouter
         const response = await fetch(
             "https://openrouter.ai/api/v1/chat/completions",
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${apiKey}`,
                     "HTTP-Referer": "https://vitalstar.netlify.app",
                     "X-Title": "VitalStar Orion Pax"
                 },
-
                 body: JSON.stringify({
                     model: "openrouter/free",
-
                     messages: [
                         {
                             role: "system",
                             content:
-                                "You are Orion Pax, the AI assistant for VitalStar. " +
-                                "Be helpful, intelligent, friendly, clear, and direct. " +
-                                "You are a text-based AI assistant."
+                                "You are Orion Pax, the AI assistant for VitalStar. Be helpful, intelligent, friendly, clear and direct."
                         },
                         {
                             role: "user",
@@ -85,7 +94,6 @@ export default async (req) => {
 
         const data = await response.json();
 
-        // OpenRouter returned an error
         if (!response.ok) {
             console.error("OpenRouter error:", data);
 
@@ -98,39 +106,39 @@ export default async (req) => {
                 {
                     status: response.status,
                     headers: {
+                        ...corsHeaders,
                         "Content-Type": "application/json"
                     }
                 }
             );
         }
 
-        // Get Orion's answer
         const answer =
             data?.choices?.[0]?.message?.content;
 
         if (!answer) {
             return new Response(
                 JSON.stringify({
-                    error:
-                        "OpenRouter returned an empty response."
+                    error: "OpenRouter returned an empty response."
                 }),
                 {
                     status: 502,
                     headers: {
+                        ...corsHeaders,
                         "Content-Type": "application/json"
                     }
                 }
             );
         }
 
-        // Send answer back to orion.html
         return new Response(
             JSON.stringify({
-                answer: answer
+                answer
             }),
             {
                 status: 200,
                 headers: {
+                    ...corsHeaders,
                     "Content-Type": "application/json"
                 }
             }
@@ -138,20 +146,16 @@ export default async (req) => {
 
     } catch (error) {
 
-        console.error(
-            "Orion Pax function error:",
-            error
-        );
+        console.error("Orion error:", error);
 
         return new Response(
             JSON.stringify({
-                error:
-                    "Orion Pax server error: " +
-                    error.message
+                error: "Orion Pax server error: " + error.message
             }),
             {
                 status: 500,
                 headers: {
+                    ...corsHeaders,
                     "Content-Type": "application/json"
                 }
             }
