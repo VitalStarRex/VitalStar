@@ -188,7 +188,7 @@ body {
 }
 
 /* =========================================================
-   TYPING
+   TYPING INDICATOR
    ========================================================= */
 
 .typing {
@@ -196,8 +196,51 @@ body {
     margin: 10px 0;
 }
 
-.typing .message {
-    color: #6b7280;
+.typing-bubble {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    border-bottom-left-radius: 5px;
+    padding: 12px 15px;
+}
+
+.typing-bubble span {
+    width: 7px;
+    height: 7px;
+    background: #6b7280;
+    border-radius: 50%;
+    animation: orionTyping 1.4s infinite ease-in-out;
+}
+
+.typing-bubble span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing-bubble span:nth-child(2) {
+    animation-delay: .2s;
+}
+
+.typing-bubble span:nth-child(3) {
+    animation-delay: .4s;
+}
+
+@keyframes orionTyping {
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: .4;
+    }
+
+    30% {
+        transform: translateY(-5px);
+        opacity: 1;
+    }
+
 }
 
 /* =========================================================
@@ -379,8 +422,12 @@ body {
 
     <div class="message-row orion">
 
-        <div class="message orion">
-            Orion Pax is thinking...
+        <div class="typing-bubble">
+
+            <span></span>
+            <span></span>
+            <span></span>
+
         </div>
 
     </div>
@@ -489,7 +536,6 @@ function addMessage(text, sender, error = false) {
 
     messages.appendChild(row);
 
-
     messages.scrollTop =
         messages.scrollHeight;
 }
@@ -533,9 +579,7 @@ async function sendMessage() {
     }
 
 
-    /* -------------------------------------------------------
-       SHOW USER MESSAGE
-       ------------------------------------------------------- */
+    /* SHOW USER MESSAGE */
 
     addMessage(
         text,
@@ -543,9 +587,7 @@ async function sendMessage() {
     );
 
 
-    /* -------------------------------------------------------
-       CLEAR INPUT
-       ------------------------------------------------------- */
+    /* CLEAR INPUT */
 
     input.value = "";
 
@@ -553,9 +595,7 @@ async function sendMessage() {
         "44px";
 
 
-    /* -------------------------------------------------------
-       DISABLE INPUT
-       ------------------------------------------------------- */
+    /* DISABLE INPUT */
 
     sendBtn.disabled =
         true;
@@ -564,9 +604,7 @@ async function sendMessage() {
         true;
 
 
-    /* -------------------------------------------------------
-       SHOW THINKING
-       ------------------------------------------------------- */
+    /* SHOW TYPING */
 
     showTyping(true);
 
@@ -574,7 +612,7 @@ async function sendMessage() {
     try {
 
         /* =================================================
-           CALL SUPABASE EDGE FUNCTION
+           CALL SUPABASE
            ================================================= */
 
         const response =
@@ -595,9 +633,7 @@ async function sendMessage() {
             );
 
 
-        /* =================================================
-           READ RESPONSE
-           ================================================= */
+        /* READ RESPONSE */
 
         const raw =
             await response.text();
@@ -633,16 +669,12 @@ async function sendMessage() {
         }
 
 
-        /* -------------------------------------------------
-           HIDE THINKING
-           ------------------------------------------------- */
+        /* HIDE TYPING */
 
         showTyping(false);
 
 
-        /* =================================================
-           SERVER ERROR
-           ================================================= */
+        /* SERVER ERROR */
 
         if (!response.ok) {
 
@@ -665,9 +697,7 @@ async function sendMessage() {
         }
 
 
-        /* =================================================
-           ORION ANSWER
-           ================================================= */
+        /* ORION ANSWER */
 
         if (
             data &&
@@ -719,9 +749,7 @@ async function sendMessage() {
 
     } finally {
 
-        /* -------------------------------------------------
-           RE-ENABLE INPUT
-           ------------------------------------------------- */
+        /* RE-ENABLE INPUT */
 
         sendBtn.disabled =
             false;
@@ -771,7 +799,7 @@ input.addEventListener(
 
 
 /* =========================================================
-   AUTO RESIZE TEXTAREA
+   AUTO RESIZE
    ========================================================= */
 
 input.addEventListener(
