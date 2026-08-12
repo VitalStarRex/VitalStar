@@ -192,8 +192,12 @@ body {
    ========================================================= */
 
 .typing {
-    display: block;
+    display: none;
     margin: 10px 0;
+}
+
+.typing .message-row {
+    margin: 0;
 }
 
 .typing-bubble {
@@ -408,31 +412,32 @@ body {
 
     </div>
 
-</main>
 
+    <!-- ===================================================
+         TYPING INDICATOR
+         NOW INSIDE THE MESSAGE CONTAINER
+         =================================================== -->
 
-<!-- =======================================================
-     TYPING INDICATOR
-     ======================================================= -->
+    <div
+        class="typing"
+        id="typing"
+    >
 
-<div
-    class="typing"
-    id="typing"
->
+        <div class="message-row orion">
 
-    <div class="message-row orion">
+            <div class="typing-bubble">
 
-        <div class="typing-bubble">
+                <span></span>
+                <span></span>
+                <span></span>
 
-            <span></span>
-            <span></span>
-            <span></span>
+            </div>
 
         </div>
 
     </div>
 
-</div>
+</main>
 
 
 <!-- =======================================================
@@ -534,7 +539,13 @@ function addMessage(text, sender, error = false) {
 
     row.appendChild(bubble);
 
-    messages.appendChild(row);
+    /* Insert messages BEFORE typing indicator */
+
+    messages.insertBefore(
+        row,
+        typing
+    );
+
 
     messages.scrollTop =
         messages.scrollHeight;
@@ -553,8 +564,12 @@ function showTyping(show) {
 
     if (show) {
 
-        messages.scrollTop =
-            messages.scrollHeight;
+        requestAnimationFrame(function() {
+
+            messages.scrollTop =
+                messages.scrollHeight;
+
+        });
 
     }
 
@@ -827,6 +842,10 @@ input.addEventListener(
 window.addEventListener(
     "load",
     function() {
+
+        /* Make absolutely sure typing starts hidden */
+
+        showTyping(false);
 
         input.focus();
 
