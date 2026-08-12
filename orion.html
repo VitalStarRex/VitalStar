@@ -592,25 +592,28 @@
             }
 
 
-        } catch (error) {
+     } catch (error) {
 
-            console.error(
-                "Orion connection error:",
-                error
-            );
+    console.error("Orion connection error:", error);
 
+    showTyping(false);
 
-            showTyping(false);
-
-
-            addMessage(
-                "Orion Pax is temporarily unavailable. Please try again.",
-                "orion",
-                true
-            );
+    addMessage(
+        "Connection error: " + error.message,
+        "orion",
+        true
+    );
+}
+     
 
 
-        } finally {
+
+
+
+
+
+
+ finally {
 
             sendBtn.disabled =
                 false;
