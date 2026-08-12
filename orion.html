@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>Orion Pax — VitalStar AI</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -25,6 +31,10 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 .header {
     height: 64px;
@@ -45,6 +55,10 @@ body {
     background: #f1f3f5;
     font-size: 20px;
     cursor: pointer;
+}
+
+.back-btn:active {
+    transform: scale(.95);
 }
 
 .orion-avatar {
@@ -85,10 +99,15 @@ body {
     margin-right: 4px;
 }
 
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
 .messages {
     flex: 1;
     overflow-y: auto;
     padding: 20px 14px 110px;
+    scroll-behavior: smooth;
 }
 
 .welcome {
@@ -123,6 +142,10 @@ body {
     line-height: 1.5;
     font-size: 14px;
 }
+
+/* =========================================================
+   MESSAGE ROW
+   ========================================================= */
 
 .message-row {
     display: flex;
@@ -164,6 +187,10 @@ body {
     color: #b91c1c;
 }
 
+/* =========================================================
+   TYPING
+   ========================================================= */
+
 .typing {
     display: none;
     margin: 10px 0;
@@ -172,6 +199,10 @@ body {
 .typing .message {
     color: #6b7280;
 }
+
+/* =========================================================
+   COMPOSER
+   ========================================================= */
 
 .composer {
     position: fixed;
@@ -223,6 +254,10 @@ body {
     flex-shrink: 0;
 }
 
+#sendBtn:active {
+    transform: scale(.95);
+}
+
 #sendBtn:disabled {
     opacity: .5;
     cursor: not-allowed;
@@ -234,6 +269,10 @@ body {
     color: #9ca3af;
     margin-top: 5px;
 }
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media (max-width: 600px) {
 
@@ -254,20 +293,28 @@ body {
         margin-top: 45px;
         padding: 0 20px;
     }
+
 }
+
 </style>
+
 </head>
 
 <body>
 
 <div class="app">
 
+<!-- =======================================================
+     HEADER
+     ======================================================= -->
+
 <header class="header">
 
     <button
         class="back-btn"
         onclick="history.back()"
-        aria-label="Go back">
+        aria-label="Go back"
+    >
         ←
     </button>
 
@@ -280,8 +327,11 @@ body {
         <h1>Orion Pax</h1>
 
         <div class="status">
+
             <span class="status-dot"></span>
+
             VitalStar AI
+
         </div>
 
     </div>
@@ -289,9 +339,14 @@ body {
 </header>
 
 
+<!-- =======================================================
+     MESSAGES
+     ======================================================= -->
+
 <main
     class="messages"
-    id="messages">
+    id="messages"
+>
 
     <div class="welcome">
 
@@ -299,7 +354,9 @@ body {
             O
         </div>
 
-        <h2>Orion Pax</h2>
+        <h2>
+            Orion Pax
+        </h2>
 
         <p>
             Text-based VitalStar AI.
@@ -311,9 +368,14 @@ body {
 </main>
 
 
+<!-- =======================================================
+     TYPING INDICATOR
+     ======================================================= -->
+
 <div
     class="typing"
-    id="typing">
+    id="typing"
+>
 
     <div class="message-row orion">
 
@@ -326,6 +388,10 @@ body {
 </div>
 
 
+<!-- =======================================================
+     COMPOSER
+     ======================================================= -->
+
 <div class="composer">
 
     <div class="composer-inner">
@@ -334,12 +400,14 @@ body {
             id="messageInput"
             placeholder="Message Orion Pax..."
             rows="1"
-            autocomplete="off"></textarea>
+            autocomplete="off"
+        ></textarea>
 
         <button
             id="sendBtn"
             type="button"
-            aria-label="Send message">
+            aria-label="Send message"
+        >
             ➤
         </button>
 
@@ -357,12 +425,16 @@ body {
 <script>
 
 /* =========================================================
-   ORION PAX — NETLIFY BACKEND
+   ORION PAX — SUPABASE EDGE FUNCTION
    ========================================================= */
 
 const ORION_API =
-    "https://vitalstar.netlify.app/.netlify/functions/orion-pax";
+    "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/orion-pax";
 
+
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
 
 const messages =
     document.getElementById("messages");
@@ -417,13 +489,14 @@ function addMessage(text, sender, error = false) {
 
     messages.appendChild(row);
 
+
     messages.scrollTop =
         messages.scrollHeight;
 }
 
 
 /* =========================================================
-   TYPING
+   TYPING INDICATOR
    ========================================================= */
 
 function showTyping(show) {
@@ -431,11 +504,14 @@ function showTyping(show) {
     typing.style.display =
         show ? "block" : "none";
 
+
     if (show) {
 
         messages.scrollTop =
             messages.scrollHeight;
+
     }
+
 }
 
 
@@ -449,10 +525,17 @@ async function sendMessage() {
         input.value.trim();
 
 
-    if (!text || sendBtn.disabled) {
+    if (
+        !text ||
+        sendBtn.disabled
+    ) {
         return;
     }
 
+
+    /* -------------------------------------------------------
+       SHOW USER MESSAGE
+       ------------------------------------------------------- */
 
     addMessage(
         text,
@@ -460,11 +543,19 @@ async function sendMessage() {
     );
 
 
+    /* -------------------------------------------------------
+       CLEAR INPUT
+       ------------------------------------------------------- */
+
     input.value = "";
 
     input.style.height =
         "44px";
 
+
+    /* -------------------------------------------------------
+       DISABLE INPUT
+       ------------------------------------------------------- */
 
     sendBtn.disabled =
         true;
@@ -473,18 +564,24 @@ async function sendMessage() {
         true;
 
 
+    /* -------------------------------------------------------
+       SHOW THINKING
+       ------------------------------------------------------- */
+
     showTyping(true);
 
 
     try {
+
+        /* =================================================
+           CALL SUPABASE EDGE FUNCTION
+           ================================================= */
 
         const response =
             await fetch(
                 ORION_API,
                 {
                     method: "POST",
-
-                    mode: "cors",
 
                     headers: {
                         "Content-Type":
@@ -498,34 +595,59 @@ async function sendMessage() {
             );
 
 
+        /* =================================================
+           READ RESPONSE
+           ================================================= */
+
         const raw =
             await response.text();
 
 
+        console.log(
+            "Orion raw response:",
+            raw
+        );
+
+
         let data;
+
 
         try {
 
             data =
                 JSON.parse(raw);
 
-        } catch {
+        } catch (parseError) {
+
+            console.error(
+                "Invalid JSON:",
+                parseError
+            );
+
 
             data = {
                 error:
-                    "Netlify returned an invalid response."
+                    "Orion Pax returned an invalid response."
             };
 
         }
 
 
+        /* -------------------------------------------------
+           HIDE THINKING
+           ------------------------------------------------- */
+
         showTyping(false);
 
+
+        /* =================================================
+           SERVER ERROR
+           ================================================= */
 
         if (!response.ok) {
 
             console.error(
-                "Orion server response:",
+                "Orion Supabase error:",
                 response.status,
                 data
             );
@@ -538,9 +660,14 @@ async function sendMessage() {
                 true
             );
 
+
             return;
         }
 
+
+        /* =================================================
+           ORION ANSWER
+           ================================================= */
 
         if (
             data &&
@@ -549,11 +676,17 @@ async function sendMessage() {
         ) {
 
             addMessage(
-                data.answer,
+                data.answer.trim(),
                 "orion"
             );
 
         } else {
+
+            console.error(
+                "Unexpected Orion response:",
+                data
+            );
+
 
             addMessage(
                 "Orion Pax returned an empty response.",
@@ -577,12 +710,18 @@ async function sendMessage() {
 
         addMessage(
             "Unable to connect to Orion Pax. " +
-            "Please check the Netlify function and CORS settings.",
+            "Please check your internet connection " +
+            "and Supabase Edge Function.",
             "orion",
             true
         );
 
+
     } finally {
+
+        /* -------------------------------------------------
+           RE-ENABLE INPUT
+           ------------------------------------------------- */
 
         sendBtn.disabled =
             false;
@@ -591,7 +730,9 @@ async function sendMessage() {
             false;
 
         input.focus();
+
     }
+
 }
 
 
@@ -622,6 +763,7 @@ input.addEventListener(
             event.preventDefault();
 
             sendMessage();
+
         }
 
     }
@@ -629,7 +771,7 @@ input.addEventListener(
 
 
 /* =========================================================
-   AUTO RESIZE
+   AUTO RESIZE TEXTAREA
    ========================================================= */
 
 input.addEventListener(
@@ -639,11 +781,26 @@ input.addEventListener(
         this.style.height =
             "44px";
 
+
         this.style.height =
             Math.min(
                 this.scrollHeight,
                 130
             ) + "px";
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL FOCUS
+   ========================================================= */
+
+window.addEventListener(
+    "load",
+    function() {
+
+        input.focus();
 
     }
 );
