@@ -2,20 +2,15 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>VitalStar</title>
-
-
-
-
-
-
-
-
-
-
 
 
 <style>
@@ -27,24 +22,37 @@
     font-family:Arial,sans-serif;
 }
 
+
 body{
     background:#eef2ff;
 }
 
 
-/* HEADER */
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 header{
+
     position:fixed;
+
     top:0;
     left:0;
+
     width:100%;
     height:60px;
 
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7
+        );
 
     display:flex;
+
     align-items:center;
+
     justify-content:space-between;
 
     padding:0 15px;
@@ -53,48 +61,68 @@ header{
 
     z-index:1000;
 
-    box-shadow:0 3px 10px rgba(0,0,0,.2);
+    box-shadow:
+        0 3px 10px rgba(0,0,0,.2);
+
 }
 
 
 .logo{
+
     font-size:24px;
+
     font-weight:bold;
+
 }
 
 
 .menu{
+
     border:none;
+
     background:none;
+
     color:white;
 
     font-size:28px;
+
     cursor:pointer;
+
 }
 
 
 .icons{
+
     display:flex;
+
     gap:15px;
+
     font-size:22px;
+
 }
 
 
 .icons a{
+
     text-decoration:none;
+
 }
 
 
-/* SIDEBAR */
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 
 .sidebar{
 
     position:fixed;
 
     top:0;
+
     left:-260px;
 
     width:250px;
+
     height:100%;
 
     background:white;
@@ -103,12 +131,12 @@ header{
 
     transition:.3s;
 
-    box-shadow:2px 0 10px rgba(0,0,0,.2);
+    box-shadow:
+        2px 0 10px rgba(0,0,0,.2);
 
     z-index:999;
 
 }
-
 
 
 .sidebar a{
@@ -134,6 +162,156 @@ header{
 
 }
 
+
+/* =========================================================
+   ORION PAX AI MENU
+   ========================================================= */
+
+.orion-menu{
+
+    display:flex !important;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin:4px 10px;
+
+    padding:12px 10px !important;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(123,47,247,.12),
+            rgba(24,119,242,.12)
+        );
+
+    color:#333 !important;
+
+    transition:.25s ease;
+
+}
+
+
+.orion-icon{
+
+    width:32px;
+
+    height:32px;
+
+    min-width:32px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7b2ff7,
+            #1877f2
+        );
+
+    color:white;
+
+    font-size:21px;
+
+    font-weight:900;
+
+    box-shadow:
+        0 0 8px rgba(123,47,247,.6),
+        0 0 18px rgba(24,119,242,.35);
+
+    transition:.25s ease;
+
+}
+
+
+.orion-name{
+
+    font-size:15px;
+
+    font-weight:800;
+
+}
+
+
+.ai-badge{
+
+    margin-left:auto;
+
+    padding:4px 8px;
+
+    border-radius:8px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7b2ff7,
+            #1877f2
+        );
+
+    color:white;
+
+    font-size:10px;
+
+    font-weight:900;
+
+    letter-spacing:.7px;
+
+}
+
+
+.orion-menu:hover{
+
+    background:
+        linear-gradient(
+            135deg,
+            #7b2ff7,
+            #1877f2
+        ) !important;
+
+    color:white !important;
+
+    transform:translateX(3px);
+
+    box-shadow:
+        0 5px 15px rgba(123,47,247,.3);
+
+}
+
+
+.orion-menu:hover .orion-icon{
+
+    background:white;
+
+    color:#7b2ff7;
+
+    transform:
+        rotate(15deg)
+        scale(1.08);
+
+}
+
+
+.orion-menu:hover .ai-badge{
+
+    background:white;
+
+    color:#7b2ff7;
+
+}
+
+
+/* =========================================================
+   DARK MODE BUTTON
+   ========================================================= */
 
 .darkModeBtn{
 
@@ -169,108 +347,232 @@ header{
 }
 
 
+/* =========================================================
+   LOGOUT
+   ========================================================= */
 
-/* CONTENT */
+#logoutBtn{
+
+    display:block;
+
+    width:100%;
+
+    text-align:left;
+
+    padding:15px 20px;
+
+    border:none;
+
+    background:none;
+
+    color:#333;
+
+    font-weight:bold;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+}
+
+
+#logoutBtn:hover{
+
+    background:#1877f2;
+
+    color:white;
+
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
 
 .container{
 
-    padding:80px 15px 90px;
+    padding:
+        80px
+        15px
+        90px;
 
 }
 
 
-
-
-
-
-
-
-
-/* Notification & Message Icons */
+/* =========================================================
+   NOTIFICATION & MESSAGE ICONS
+   ========================================================= */
 
 .icon{
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
 }
+
 
 .icon-link{
-    text-decoration: none;
-    font-size: 24px;
-    color: white;
+
+    text-decoration:none;
+
+    font-size:24px;
+
+    color:white;
+
 }
+
 
 .badge{
-    position: absolute;
-    top: -6px;
-    right: -8px;
 
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
+    position:absolute;
 
-    background: red;
-    color: white;
+    top:-6px;
 
-    border-radius: 50%;
+    right:-8px;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    min-width:18px;
 
-    font-size: 11px;
-    font-weight: bold;
+    height:18px;
 
-    border: 2px solid white;
+    padding:0 5px;
+
+    background:red;
+
+    color:white;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:11px;
+
+    font-weight:bold;
+
+    border:2px solid white;
+
 }
 
 
-/* DARK MODE */
+/* =========================================================
+   DARK MODE
+   ========================================================= */
 
 body.dark-mode{
+
     background:#121212;
+
     color:#e4e4e4;
+
 }
+
 
 body.dark-mode .sidebar{
+
     background:#1e1e1e;
+
 }
 
+
 body.dark-mode .sidebar a{
+
     color:#e4e4e4;
+
 }
+
 
 body.dark-mode .hero-card,
 body.dark-mode .post-card{
+
     background:#1e1e1e;
+
     color:#e4e4e4;
+
 }
+
 
 body.dark-mode .post-buttons{
+
     border-top:1px solid #333;
+
 }
+
 
 body.dark-mode .bottom-nav{
+
     background:#1e1e1e;
+
 }
+
 
 body.dark-mode .bottom-nav a{
+
     color:#ccc;
+
 }
+
 
 body.dark-mode .darkModeBtn{
+
     background:#333;
+
     color:#ffd700;
+
 }
 
 
+body.dark-mode #logoutBtn{
+
+    background:#1e1e1e;
+
+    color:#e4e4e4;
+
+}
 
 
+body.dark-mode #logoutBtn:hover{
+
+    background:#1877f2;
+
+    color:white;
+
+}
 
 
+body.dark-mode .orion-menu{
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(123,47,247,.2),
+            rgba(24,119,242,.2)
+        );
+
+    color:#e4e4e4 !important;
+
+}
 
 
+body.dark-mode .orion-menu:hover{
+
+    background:
+        linear-gradient(
+            135deg,
+            #7b2ff7,
+            #1877f2
+        ) !important;
+
+    color:white !important;
+
+}
 
 </style>
 
@@ -280,176 +582,200 @@ body.dark-mode .darkModeBtn{
 <body>
 
 
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
 
 <header>
 
 
-<button class="menu" onclick="openMenu()">
-☰
+<button
+    class="menu"
+    onclick="openMenu()"
+>
+    ☰
 </button>
 
 
 <div class="logo">
-⭐ VitalStar
+    ⭐ VitalStar
 </div>
-
-
-
-
-
-
-
-
-
-
-
 
 
 <div class="icons">
 
+
     <div class="icon">
 
-        <a href="notifications.html" class="icon-link">
+        <a
+            href="notifications.html"
+            class="icon-link"
+        >
             🔔
         </a>
 
-        <span id="notificationBadge" class="badge">0</span>
+        <span
+            id="notificationBadge"
+            class="badge"
+        >
+            0
+        </span>
 
     </div>
+
 
     <div class="icon">
 
-        <a href="message.html" class="icon-link">
+        <a
+            href="message.html"
+            class="icon-link"
+        >
             💬
         </a>
 
-        <span id="messageBadge" class="badge">0</span>
+        <span
+            id="messageBadge"
+            class="badge"
+        >
+            0
+        </span>
 
     </div>
 
-</div> 
 
-
-
-
-
+</div>
 
 </header>
 
 
+<!-- =========================================================
+     SIDEBAR
+     ========================================================= -->
 
-
-<div class="sidebar" id="sidebar">
-
-
-<a href="home.html">
-🏠 Home
-</a>
+<div
+    class="sidebar"
+    id="sidebar"
+>
 
 
 <a href="profile.html">
-👤 Profile
+    👤 Profile
 </a>
 
 
 <a href="users.html">
-👥 Friends
+    👥 Friends
 </a>
 
 
 <a href="messages.html">
-💬 Messages
+    💬 Messages
 </a>
 
 
-<a href="#">
-📸 Photos
+<!-- ORION PAX AI -->
+
+<a
+    href="orion.html"
+    class="orion-menu"
+>
+
+    <span class="orion-icon">
+        ✦
+    </span>
+
+    <span class="orion-name">
+        Orion Pax
+    </span>
+
+    <span class="ai-badge">
+        AI
+    </span>
+
 </a>
 
 
 <a href="edit-profile.html">
-⚙️ Settings
+    ⚙️ Settings
 </a>
 
 
-<button id="darkModeToggle" class="darkModeBtn">🌙 Dark Mode</button>
+<button
+    id="darkModeToggle"
+    class="darkModeBtn"
+>
+    🌙 Dark Mode
+</button>
 
 
-<button id="logoutBtn">🚪 Logout</button>
+<button
+    id="logoutBtn"
+>
+    🚪 Logout
+</button>
+
 
 </div>
 
 
-
+<!-- =========================================================
+     MENU SCRIPT
+     ========================================================= -->
 
 <script>
 
 function openMenu(){
 
-const sidebar=document.getElementById("sidebar");
+    const sidebar =
+        document.getElementById("sidebar");
 
 
-if(sidebar.style.left==="0px"){
+    if(sidebar.style.left === "0px"){
 
-sidebar.style.left="-260px";
+        sidebar.style.left = "-260px";
 
-}
+    }
 
-else{
+    else{
 
-sidebar.style.left="0px";
+        sidebar.style.left = "0px";
 
-}
+    }
 
 }
 
 </script>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+<!-- =========================================================
+     MAIN CONTENT
+     ========================================================= -->
 
 <div class="container">
 
 
-<!-- Welcome Card -->
+<!-- WELCOME CARD -->
 
 <div class="hero-card">
 
+
 <div class="hero-left">
 
+
 <div class="hero-icon">
-✨
+    ✨
 </div>
 
 
 <div>
 
 <h2 id="welcomeText">
-Good Day...
+    Good Day...
 </h2>
 
 
 <p id="welcomeSub">
-Welcome back to VitalStar
+    Welcome back to VitalStar
 </p>
 
 
@@ -459,357 +785,380 @@ Welcome back to VitalStar
 
 
 <div class="hero-badge">
-● Online
+    ● Online
 </div>
 
 
 </div>
 
 
-
-
-<!-- STORIES -->
+<!-- =========================================================
+     STORIES
+     ========================================================= -->
 
 <div class="stories">
 
 
 <div class="story">
-Story
+    Story
 </div>
 
 
 <div class="story">
-Story
+    Story
 </div>
 
 
 <div class="story">
-Story
+    Story
 </div>
 
 
 <div class="story">
-Story
+    Story
 </div>
 
 
 <div class="story">
-Story
+    Story
 </div>
 
 
 </div>
 
 
+<!-- =========================================================
+     LATEST
+     ========================================================= -->
 
+<center>
 
+<h2 class="latest-title">
 
-<!-- FEED -->
+<span class="red">
+    L
+</span>
 
-<center><h2 class="latest-title">
+<span class="orange">
+    a
+</span>
 
-<span class="red">L</span>
-<span class="orange">a</span>
-<span class="yellow">t</span>
-<span class="green">e</span>
-<span class="blue">s</span>
-<span class="purple">t</span>
+<span class="yellow">
+    t
+</span>
 
-</h2></center>
+<span class="green">
+    e
+</span>
 
+<span class="blue">
+    s
+</span>
+
+<span class="purple">
+    t
+</span>
+
+</h2>
+
+</center>
 
 
 <div id="feed"></div>
 
 
-
 </div>
-
-
-
 
 
 <style>
 
+/* =========================================================
+   HERO
+   ========================================================= */
 
 .hero-card{
 
-background:white;
+    background:white;
 
-border-radius:20px;
+    border-radius:20px;
 
-padding:20px;
+    padding:20px;
 
-display:flex;
+    display:flex;
 
-justify-content:space-between;
+    justify-content:space-between;
 
-align-items:center;
+    align-items:center;
 
-box-shadow:0 5px 15px rgba(0,0,0,.1);
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.1);
 
 }
 
 
 .hero-left{
 
-display:flex;
+    display:flex;
 
-align-items:center;
+    align-items:center;
 
-gap:15px;
+    gap:15px;
 
 }
-
 
 
 .hero-icon{
 
-font-size:40px;
+    font-size:40px;
 
 }
-
 
 
 .hero-badge{
 
-color:green;
+    color:green;
 
-font-weight:bold;
+    font-weight:bold;
 
 }
 
 
-
-
-/* STORIES */
-
+/* =========================================================
+   STORIES
+   ========================================================= */
 
 .stories{
 
-display:flex;
+    display:flex;
 
-gap:10px;
+    gap:10px;
 
-overflow-x:auto;
+    overflow-x:auto;
 
-margin:20px 0;
+    margin:20px 0;
 
 }
 
 
 .story{
 
-min-width:90px;
+    min-width:90px;
 
-height:150px;
+    height:150px;
 
-border-radius:15px;
+    border-radius:15px;
 
-background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7
+        );
 
-color:white;
+    color:white;
 
-display:flex;
+    display:flex;
 
-justify-content:center;
+    justify-content:center;
 
-align-items:center;
+    align-items:center;
 
-font-weight:bold;
+    font-weight:bold;
 
 }
 
 
-
-
-/* LATEST TITLE */
-
+/* =========================================================
+   LATEST TITLE
+   ========================================================= */
 
 .latest-title{
 
-background:black;
+    background:black;
 
-padding:12px 20px;
+    padding:12px 20px;
 
-border-radius:12px;
+    border-radius:12px;
 
-font-size:32px;
+    font-size:32px;
 
-font-weight:bold;
+    font-weight:bold;
 
-display:inline-block;
+    display:inline-block;
 
 }
 
 
 .red{
-color:#ff3b30;
+    color:#ff3b30;
 }
 
 .orange{
-color:#ff9500;
+    color:#ff9500;
 }
 
 .yellow{
-color:#ffcc00;
+    color:#ffcc00;
 }
 
 .green{
-color:#34c759;
+    color:#34c759;
 }
 
 .blue{
-color:#007aff;
+    color:#007aff;
 }
 
 .purple{
-color:#af52de;
+    color:#af52de;
 }
 
 
-
-
-
-/* POST DESIGN */
-
+/* =========================================================
+   POSTS
+   ========================================================= */
 
 .post-card{
 
-background:white;
+    background:white;
 
-border-radius:20px;
+    border-radius:20px;
 
-overflow:hidden;
+    overflow:hidden;
 
-margin-top:20px;
+    margin-top:20px;
 
-box-shadow:0 5px 15px rgba(0,0,0,.15);
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.15);
 
 }
-
 
 
 .user-info{
 
-display:flex;
+    display:flex;
 
-align-items:center;
+    align-items:center;
 
-padding:15px;
+    padding:15px;
 
 }
 
 
 .avatar{
 
-width:50px;
+    width:50px;
 
-height:50px;
+    height:50px;
 
-border-radius:50%;
+    border-radius:50%;
 
-margin-right:10px;
+    margin-right:10px;
 
 }
 
 
-
 .post-card p{
 
-padding:15px;
+    padding:15px;
 
-font-size:16px;
+    font-size:16px;
 
 }
 
 
 .post-photo{
 
-width:100%;
+    width:100%;
 
 }
-
 
 
 .post-buttons{
 
-display:flex;
+    display:flex;
 
-justify-content:space-around;
+    justify-content:space-around;
 
-padding:15px;
+    padding:15px;
 
-border-top:1px solid #ddd;
+    border-top:1px solid #ddd;
 
 }
-
 
 
 .post-buttons button{
 
-background:none;
+    background:none;
 
-border:none;
+    border:none;
 
-font-size:16px;
+    font-size:16px;
 
-font-weight:bold;
+    font-weight:bold;
 
-cursor:pointer;
+    cursor:pointer;
 
 }
-
-
 
 </style>
 
 
-
-
-
-
-
-
-
-
+<!-- =========================================================
+     FOOTER
+     ========================================================= -->
 
 <footer class="vital-footer">
 
-<h2>⭐ VitalStar</h2>
+
+<h2>
+    ⭐ VitalStar
+</h2>
+
 
 <p>
-Connect, share, and shine together.
+    Connect, share, and shine together.
 </p>
+
 
 <div class="footer-links">
 
-<a href="online-users.html" id="onlineUsersCount">
-🟢 Online: 0
+
+<a
+    href="online-users.html"
+    id="onlineUsersCount"
+>
+    🟢 Online: 0
 </a>
+
 
 <a href="policy.html">
-📜 Privacy & Policy
+    📜 Privacy & Policy
 </a>
+
 
 <a href="report.html">
-🚨 Report
+    🚨 Report
 </a>
+
 
 <a href="terms.html">
-⚖️ Terms
+    ⚖️ Terms
 </a>
 
+
 <a href="javascript:void(0)">
-🚫 Do Not Copy Us
+    🚫 Do Not Copy Us
 </a>
+
 
 </div>
 
 
 <p class="copyright">
-© 2026 VitalStar. All rights reserved.
+    © 2026 VitalStar. All rights reserved.
 </p>
+
 
 </footer>
 
@@ -818,287 +1167,341 @@ Connect, share, and shine together.
 
 .vital-footer{
 
-background:#000;
+    background:#000;
 
-color:#888;
+    color:#888;
 
-text-align:center;
+    text-align:center;
 
-padding:35px 15px;
+    padding:35px 15px;
 
-font-family:Arial,sans-serif;
+    font-family:Arial,sans-serif;
 
-box-shadow:0 -5px 20px rgba(0,0,0,.8);
+    box-shadow:
+        0 -5px 20px rgba(0,0,0,.8);
 
 }
 
 
 .vital-footer h2{
 
-color:#ddd;
+    color:#ddd;
 
-font-size:28px;
+    font-size:28px;
 
-font-weight:900;
+    font-weight:900;
 
-text-shadow:
-0 0 8px #777,
-0 0 20px #444;
+    text-shadow:
+        0 0 8px #777,
+        0 0 20px #444;
 
 }
 
 
 .vital-footer p{
 
-font-weight:bold;
+    font-weight:bold;
 
-text-shadow:0 0 8px #333;
+    text-shadow:
+        0 0 8px #333;
 
 }
 
 
 .footer-links{
 
-margin:20px 0;
+    margin:20px 0;
 
 }
 
 
 .footer-links a{
 
-display:inline-block;
+    display:inline-block;
 
-margin:8px;
+    margin:8px;
 
-color:#999;
+    color:#999;
 
-font-weight:bold;
+    font-weight:bold;
 
-text-decoration:none;
+    text-decoration:none;
 
-text-shadow:
-0 0 8px #444;
+    text-shadow:
+        0 0 8px #444;
 
-transition:.3s;
+    transition:.3s;
 
 }
 
 
 .footer-links a:hover{
 
-color:white;
+    color:white;
 
-transform:translateY(-3px);
+    transform:translateY(-3px);
 
-text-shadow:
-0 0 10px white,
-0 0 20px #777;
+    text-shadow:
+        0 0 10px white,
+        0 0 20px #777;
 
 }
 
 
 #onlineUsersCount{
 
-color:#aaa;
+    color:#aaa;
 
 }
 
 
 .copyright{
 
-font-size:13px;
+    font-size:13px;
 
-border-top:1px solid #333;
+    border-top:1px solid #333;
 
-padding-top:15px;
+    padding-top:15px;
 
 }
 
 </style>
 
-<br/><br/><br/><br/>
+
+<br>
+<br>
+<br>
+<br>
 
 
-
-
-
-
-
-
-<!-- Bottom Navigation -->
+<!-- =========================================================
+     BOTTOM NAVIGATION
+     ========================================================= -->
 
 <div class="bottom-nav">
 
 
 <a href="home.html">
-🏠
-<small>Home</small>
+
+    🏠
+
+    <small>
+        Home
+    </small>
+
 </a>
 
 
 <a href="users.html">
-👥
-<small>Friends</small>
+
+    👥
+
+    <small>
+        Friends
+    </small>
+
 </a>
 
 
-<a href="create-post.html" class="create-btn">
-➕
+<a
+    href="create-post.html"
+    class="create-btn"
+>
+
+    ➕
+
 </a>
 
 
 <a href="groups.html">
-🌐
-<small>Groups</small>
+
+    🌐
+
+    <small>
+        Groups
+    </small>
+
 </a>
 
 
 <a href="profile.html">
-👤
-<small>Profile</small>
+
+    👤
+
+    <small>
+        Profile
+    </small>
+
 </a>
 
 
 </div>
 
 
-
-
 <style>
 
 .bottom-nav{
 
-position:fixed;
+    position:fixed;
 
-bottom:0;
+    bottom:0;
 
-left:0;
+    left:0;
 
-width:100%;
+    width:100%;
 
-height:65px;
+    height:65px;
 
-background:white;
+    background:white;
 
-display:flex;
+    display:flex;
 
-justify-content:space-around;
+    justify-content:space-around;
 
-align-items:center;
+    align-items:center;
 
-box-shadow:0 -3px 10px rgba(0,0,0,.15);
+    box-shadow:
+        0 -3px 10px rgba(0,0,0,.15);
 
-z-index:1000;
+    z-index:1000;
 
 }
 
 
 .bottom-nav a{
 
-text-decoration:none;
+    text-decoration:none;
 
-color:#555;
+    color:#555;
 
-text-align:center;
+    text-align:center;
 
-font-size:22px;
+    font-size:22px;
 
 }
 
 
 .bottom-nav small{
 
-display:block;
+    display:block;
 
-font-size:11px;
+    font-size:11px;
 
 }
-
 
 
 .create-btn{
 
-width:55px;
+    width:55px;
 
-height:55px;
+    height:55px;
 
-border-radius:50%;
+    border-radius:50%;
 
-background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7
+        );
 
-color:white !important;
+    color:white !important;
 
-display:flex;
+    display:flex;
 
-justify-content:center;
+    justify-content:center;
 
-align-items:center;
+    align-items:center;
 
-font-size:30px !important;
+    font-size:30px !important;
 
-margin-top:-25px;
+    margin-top:-25px;
 
 }
-
 
 </style>
 
 
+<!-- =========================================================
+     FIREBASE / VITALSTAR SCRIPTS
+     ========================================================= -->
+
+<script
+    type="module"
+    src="auth-guard.js"
+></script>
 
 
+<script
+    type="module"
+    src="presence.js"
+></script>
 
 
+<script
+    type="module"
+    src="message-badge.js"
+></script>
 
 
+<script
+    type="module"
+    src="home.js"
+></script>
 
-
-
-
-
-
-
-
-<script type="module" src="auth-guard.js"></script>
-
-<script type="module" src="presence.js"></script>
-
-<script type="module" src="message-badge.js"></script>
-
-<script type="module" src="home.js"></script>
 
 <script>
 
-if ("serviceWorker" in navigator){
+if("serviceWorker" in navigator){
 
-navigator.serviceWorker.register("./firebase-messaging-sw.js")
+    navigator.serviceWorker.register(
+        "./firebase-messaging-sw.js"
+    )
 
-.then((registration)=>{
+    .then((registration)=>{
 
-console.log("Service Worker registered:", registration);
+        console.log(
+            "Service Worker registered:",
+            registration
+        );
 
-})
+    })
 
-.catch((error)=>{
+    .catch((error)=>{
 
-console.error("Service Worker Error:",error);
+        console.error(
+            "Service Worker Error:",
+            error
+        );
 
-});
+    });
 
 }
 
-</script> 
+</script>
 
 
+<script
+    type="module"
+    src="online-count.js"
+></script>
 
-<script type="module" src="online-count.js"></script>
+
+<script
+    type="module"
+    src="notifications.js"
+></script>
 
 
-<script type="module" src="notifications.js"></script>
+<script
+    type="module"
+    src="logout.js"
+></script>
 
-<script type="module" src="logout.js"></script>
 
 <script src="dark-mode.js"></script>
 
+
 </body>
 
-</html>    
+</html>
