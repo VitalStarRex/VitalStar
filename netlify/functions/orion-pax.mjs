@@ -1,13 +1,11 @@
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
 };
 
 export default async (req) => {
     try {
-
-        // CORS preflight
         if (req.method === "OPTIONS") {
             return new Response(null, {
                 status: 204,
@@ -95,8 +93,6 @@ export default async (req) => {
         const data = await response.json();
 
         if (!response.ok) {
-            console.error("OpenRouter error:", data);
-
             return new Response(
                 JSON.stringify({
                     error:
@@ -133,7 +129,7 @@ export default async (req) => {
 
         return new Response(
             JSON.stringify({
-                answer
+                answer: answer
             }),
             {
                 status: 200,
@@ -150,7 +146,7 @@ export default async (req) => {
 
         return new Response(
             JSON.stringify({
-                error: "Orion Pax server error: " + error.message
+                error: error.message
             }),
             {
                 status: 500,
