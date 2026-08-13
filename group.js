@@ -1,5 +1,6 @@
 // ============================================================
 // VITALSTAR — group.js
+// Core controller for group.html
 // ============================================================
 
 import { auth, db } from '../firebase.js';
@@ -11,7 +12,9 @@ import {
 import {
   doc,
   getDoc,
+  setDoc,
   deleteDoc,
+  updateDoc,
   collection,
   query,
   where,
@@ -22,7 +25,12 @@ import {
   runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-const TAB_LOADERS = {
+
+// ============================================================
+// TAB MODULES
+// ============================================================
+
+const TAB_MODULE_LOADERS = {
   posts: () => import('./group-posts.js'),
   members: () => import('./group-members.js'),
   chat: () => import('./group-chat.js'),
@@ -30,65 +38,77 @@ const TAB_LOADERS = {
   settings: () => import('./group-settings.js')
 };
 
-const loadedTabs = new Set();
+const loadedTabModules = new Set();
+
+let notificationsModuleLoaded = false;
+let headerActionsBound = false;
 let tabsBound = false;
-let actionsBound = false;
-let notificationsLoaded = false;
 
-const $ = id => document.getElementById(id);
 
-const navUserAvatar = $('navUserAvatar');
-const navGroupTitle = $('navGroupTitle');
-const pageLoader = $('pageLoader');
-const notFound = $('groupNotFoundState');
-const page = $('groupPageContent');
+// ============================================================
+// DOM REFERENCES
+// ============================================================
 
-const cover = $('groupCover');
-const coverEdit = $('coverEditBtn');
-const avatar = $('groupAvatar');
+const navUserAvatar = document.getElementById('navUserAvatar');
+const navGroupTitle = document.getElementById('navGroupTitle');
 
-const shareBtn = $('shareBtn');
-const inviteBtn = $('inviteBtn');
-const joinBtn = $('joinLeaveBtn');
+const pageLoader = document.getElementById('pageLoader');
+const groupNotFoundState = document.getElementById('groupNotFoundState');
+const groupPageContent = document.getElementById('groupPageContent');
 
-const roleTag = $('yourRoleTag');
-const roleText = $('yourRoleText');
+const groupCover = document.getElementById('groupCover');
+const coverEditBtn = document.getElementById('coverEditBtn');
+const groupAvatar = document.getElementById('groupAvatar');
 
-const nameEl = $('groupName');
-const privacy = $('groupPrivacyBadge');
-const premium = $('groupPremiumBadge');
-const verified = $('groupVerifiedBadge');
-const category = $('groupCategoryChip');
-const ownerText = $('groupOwnerText');
-const createdText = $('groupCreatedText');
-const description = $('groupDescription');
+const groupHeaderActions = document.getElementById('groupHeaderActions');
+const yourRoleTag = document.getElementById('yourRoleTag');
+const yourRoleText = document.getElementById('yourRoleText');
 
-const memberCount = $('statMemberCount');
-const postCount = $('statPostCount');
-const onlineCount = $('statOnlineCount');
-const level = $('statLevel');
+const shareBtn = document.getElementById('shareBtn');
+const inviteBtn = document.getElementById('inviteBtn');
+const joinLeaveBtn = document.getElementById('joinLeaveBtn');
 
-const locked = $('lockedNotice');
-const content = $('groupContentGrid');
-const tabs = $('groupTabsNav');
-const subscriptionTab = $('subscriptionTabBtn');
-const settingsTab = $('settingsTabBtn');
+const groupName = document.getElementById('groupName');
+const groupPrivacyBadge = document.getElementById('groupPrivacyBadge');
+const groupPremiumBadge = document.getElementById('groupPremiumBadge');
+const groupVerifiedBadge = document.getElementById('groupVerifiedBadge');
+const groupCategoryChip = document.getElementById('groupCategoryChip');
+const groupOwnerText = document.getElementById('groupOwnerText');
+const groupCreatedText = document.getElementById('groupCreatedText');
+const groupDescription = document.getElementById('groupDescription');
 
-const rulesList = $('rulesListDisplay');
-const rulesEmpty = $('rulesEmptyDisplay');
+const statMemberCount = document.getElementById('statMemberCount');
+const statPostCount = document.getElementById('statPostCount');
+const statOnlineCount = document.getElementById('statOnlineCount');
+const statLevel = document.getElementById('statLevel');
 
-const adminsList = $('adminsList');
-const adminsEmpty = $('adminsEmptyDisplay');
+const lockedNotice = document.getElementById('lockedNotice');
+const groupContentGrid = document.getElementById('groupContentGrid');
 
-const bell = $('notificationBellBtn');
-const unreadDot = $('notifUnreadDot');
-const notificationPanel = $('notificationsPanel');
-const closeNotifications = $('closeNotificationsBtn');
-const notificationList = $('notificationsList');
+const groupTabsNav = document.getElementById('groupTabsNav');
+const subscriptionTabBtn = document.getElementById('subscriptionTabBtn');
+const settingsTabBtn = document.getElementById('settingsTabBtn');
 
-const toastBox = $('toast-container');
+const rulesListDisplay = document.getElementById('rulesListDisplay');
+const rulesEmptyDisplay = document.getElementById('rulesEmptyDisplay');
 
-const categories = {
+const adminsList = document.getElementById('adminsList');
+const adminsEmptyDisplay = document.getElementById('adminsEmptyDisplay');
+
+const notificationBellBtn = document.getElementById('notificationBellBtn');
+const notifUnreadDot = document.getElementById('notifUnreadDot');
+const notificationsPanel = document.getElementById('notificationsPanel');
+const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
+const notificationsList = document.getElementById('notificationsList');
+
+const toastContainer = document.getElementById('toast-container');
+
+
+// ============================================================
+// CATEGORY LABELS
+// ============================================================
+
+const CATEGORY_LABELS = {
   technology: 'Technology',
   gaming: 'Gaming',
   programming: 'Programming',
@@ -109,24 +129,53 @@ const categories = {
   other: 'Other'
 };
 
+
+// ============================================================
+// STATE
+// ============================================================
+
 const state = {
-  user: null,
-  id: new URLSearchParams(location.search).get('id'),
-  group: null,
+  currentUser: null,
+  groupId: new URLSearchParams(window.location.search).get('id'),
+  groupData: null,
   membership: null,
-  tab: 'posts'
+  activeTab: 'posts'
 };
 
-function text(el, value) {
-  if (el) el.textContent = value ?? '';
+
+// ============================================================
+// SAFE DOM HELPERS
+// ============================================================
+
+function exists(el) {
+  return !!el;
 }
 
-function display(el, value) {
-  if (el) el.style.display = value;
+
+function setText(el, value) {
+  if (el) {
+    el.textContent = value ?? '';
+  }
 }
 
-function toast(message, type = 'info') {
-  if (!toastBox) return console.log(`[${type}]`, message);
+
+function setDisplay(el, value) {
+  if (el) {
+    el.style.display = value;
+  }
+}
+
+
+// ============================================================
+// TOAST
+// ============================================================
+
+function showToast(message, type = 'info') {
+
+  if (!toastContainer) {
+    console.log(`[${type}] ${message}`);
+    return;
+  }
 
   const icons = {
     success: 'fa-circle-check',
@@ -134,828 +183,2337 @@ function toast(message, type = 'info') {
     info: 'fa-circle-info'
   };
 
-  const el = document.createElement('div');
-  el.className = `toast toast--${type}`;
-  el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span></span>`;
-  el.querySelector('span').textContent = message;
+  const toast = document.createElement('div');
 
-  toastBox.appendChild(el);
+  toast.className = `toast toast--${type}`;
+
+  toast.innerHTML = `
+    <i class="fa-solid ${icons[type] || icons.info}"></i>
+    <span></span>
+  `;
+
+  const span = toast.querySelector('span');
+
+  if (span) {
+    span.textContent = message;
+  }
+
+  toastContainer.appendChild(toast);
 
   setTimeout(() => {
-    el.classList.add('is-leaving');
-    el.addEventListener('animationend', () => el.remove(), { once: true });
-  }, 3500);
+
+    toast.classList.add('is-leaving');
+
+    toast.addEventListener(
+      'animationend',
+      () => toast.remove(),
+      { once: true }
+    );
+
+  }, 3800);
 }
 
-function count(n) {
-  n = Number(n) || 0;
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1).replace('.0', '')}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace('.0', '')}K`;
-  return String(n);
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function formatCount(num) {
+
+  num = Number(num) || 0;
+
+  if (num >= 1000000) {
+    return `${(num / 1000000)
+      .toFixed(1)
+      .replace(/\.0$/, '')}M`;
+  }
+
+  if (num >= 1000) {
+    return `${(num / 1000)
+      .toFixed(1)
+      .replace(/\.0$/, '')}K`;
+  }
+
+  return String(num);
 }
 
-function initials(name = '') {
-  return name.trim().charAt(0).toUpperCase() || '?';
+
+function initialsFrom(name) {
+
+  return (name || '?')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
 }
 
-function media(el, url, fallback = '') {
+
+function applyMediaBackground(el, url, fallbackText) {
+
   if (!el) return;
 
   if (url) {
+
     el.style.backgroundImage = `url("${url}")`;
     el.style.backgroundSize = 'cover';
     el.style.backgroundPosition = 'center';
     el.textContent = '';
-  } else {
+
+  } else if (fallbackText !== undefined) {
+
     el.style.backgroundImage = '';
-    el.textContent = fallback;
+    el.textContent = fallbackText;
+
   }
 }
 
-function date(timestamp) {
-  if (!timestamp?.toDate) return 'recently';
 
-  return timestamp.toDate().toLocaleDateString(undefined, {
-    month: 'short',
-    year: 'numeric'
-  });
+function formatDate(timestamp) {
+
+  if (
+    !timestamp ||
+    typeof timestamp.toDate !== 'function'
+  ) {
+    return 'recently';
+  }
+
+  return timestamp
+    .toDate()
+    .toLocaleDateString(undefined, {
+      month: 'short',
+      year: 'numeric'
+    });
 }
+
+
+// ============================================================
+// OWNER / ADMIN DETECTION
+// ============================================================
+
+function isCurrentUserOwner() {
+
+  const uid = state.currentUser?.uid;
+
+  if (!uid || !state.groupData) {
+    return false;
+  }
+
+  const ownerIds = [
+    state.groupData.ownerId,
+    state.groupData.ownerUid,
+    state.groupData.createdBy,
+    state.groupData.creatorId
+  ].filter(Boolean);
+
+  return ownerIds.includes(uid);
+}
+
+
+function isCurrentUserAdmin() {
+
+  const role = state.membership?.role;
+
+  return role === 'admin';
+}
+
+
+function canManageGroup() {
+
+  return (
+    isCurrentUserOwner() ||
+    state.membership?.role === 'owner' ||
+    isCurrentUserAdmin()
+  );
+}
+
+
+// ============================================================
+// LOADING CONTROL
+// ============================================================
 
 function hideLoader() {
-  pageLoader?.classList.add('is-hidden');
+
+  if (pageLoader) {
+    pageLoader.classList.add('is-hidden');
+  }
+
 }
+
 
 function showPage() {
+
   hideLoader();
-  page?.classList.add('is-visible');
+
+  if (groupPageContent) {
+    groupPageContent.classList.add('is-visible');
+  }
+
 }
+
 
 function showNotFound() {
+
   hideLoader();
-  notFound?.classList.add('is-visible');
+
+  if (groupNotFoundState) {
+    groupNotFoundState.classList.add('is-visible');
+  }
+
 }
 
+
 // ============================================================
-// AUTH
+// AUTH GUARD
 // ============================================================
 
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async (user) => {
+
   if (!user) {
-    location.href = 'login.html';
+
+    window.location.href = 'login.html';
+
     return;
   }
 
-  state.user = user;
+  state.currentUser = user;
 
   if (navUserAvatar) {
-    media(navUserAvatar, user.photoURL, initials(user.displayName));
+
+    applyMediaBackground(
+      navUserAvatar,
+      user.photoURL || '',
+      initialsFrom(
+        user.displayName || 'V'
+      )
+    );
+
   }
 
   await loadGroup();
+
 });
+
 
 // ============================================================
 // LOAD GROUP
 // ============================================================
 
 async function loadGroup() {
-  if (!state.id) {
+
+  if (!state.groupId) {
+
+    console.error('No group ID found in URL.');
+
     showNotFound();
+
     return;
   }
 
+
   try {
-    const groupRef = doc(db, 'groups', state.id);
-    const memberRef = doc(db, 'groups', state.id, 'members', state.user.uid);
+
+    const groupRef = doc(
+      db,
+      'groups',
+      state.groupId
+    );
+
+    const memberRef = doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      state.currentUser.uid
+    );
+
+
+    // --------------------------------------------------------
+    // LOAD GROUP
+    // --------------------------------------------------------
 
     const groupSnap = await getDoc(groupRef);
 
+
     if (!groupSnap.exists()) {
+
+      console.error(
+        'Group does not exist:',
+        state.groupId
+      );
+
       showNotFound();
+
       return;
     }
 
-    state.group = {
+
+    state.groupData = {
       id: groupSnap.id,
       ...groupSnap.data()
     };
 
+
+    // --------------------------------------------------------
+    // LOAD MEMBERSHIP
+    // --------------------------------------------------------
+
     try {
+
       const memberSnap = await getDoc(memberRef);
+
       state.membership = memberSnap.exists()
-        ? memberSnap.data()
+        ? {
+            ...memberSnap.data(),
+            uid: state.currentUser.uid
+          }
         : null;
-    } catch {
+
+    } catch (membershipError) {
+
+      console.error(
+        'Membership loading error:',
+        membershipError
+      );
+
       state.membership = null;
     }
 
-    /*
-     * IMPORTANT OWNER FIX
-     *
-     * Some older groups may not have a working owner membership
-     * document. The group's ownerId is therefore also trusted.
-     */
-    if (
-      state.group.ownerId &&
-      state.group.ownerId === state.user.uid
-    ) {
+
+    // --------------------------------------------------------
+    // OWNER FALLBACK
+    // --------------------------------------------------------
+    // The owner is detected directly from the group document.
+    // This protects against missing/incorrect membership docs.
+    // --------------------------------------------------------
+
+    if (isCurrentUserOwner()) {
+
       state.membership = {
         ...(state.membership || {}),
-        uid: state.user.uid,
+        uid: state.currentUser.uid,
         role: 'owner',
         status: 'active'
       };
+
     }
 
-    renderHeader();
-    renderSidebar();
-    applyAccess();
-    setupTabs();
-    bindActions();
 
-    renderAdmins().catch(console.error);
+    // --------------------------------------------------------
+    // RENDER MAIN PAGE
+    // --------------------------------------------------------
+
+    renderHeader();
+
+    renderSidebar();
+
+    applyAccessControl();
+
+    setupTabs();
+
+    bindHeaderActions();
+
+
+    // --------------------------------------------------------
+    // ADMINS ARE SECONDARY CONTENT
+    // --------------------------------------------------------
+
+    renderAdmins().catch(error => {
+
+      console.error(
+        'Admin loading error:',
+        error
+      );
+
+    });
+
+
+    // --------------------------------------------------------
+    // SHOW PAGE
+    // --------------------------------------------------------
 
     showPage();
+
   } catch (error) {
-    console.error('Group load error:', error);
+
+    console.error(
+      'CRITICAL GROUP LOAD ERROR:',
+      error
+    );
+
     showNotFound();
-    toast('Unable to load this group.', 'error');
+
+    showToast(
+      'Unable to load this group. Please try again.',
+      'error'
+    );
+
   } finally {
+
     hideLoader();
+
   }
+
 }
 
+
 // ============================================================
-// HEADER
+// RENDER HEADER
 // ============================================================
 
 function renderHeader() {
-  const g = state.group;
-  if (!g) return;
 
-  document.title = `${g.name || 'Group'} · VitalStar`;
-  text(navGroupTitle, g.name || 'VitalStar Group');
+  const group = state.groupData;
 
-  if (cover) {
-    cover.style.backgroundImage = g.coverURL
-      ? `url("${g.coverURL}")`
-      : '';
-    cover.style.backgroundSize = 'cover';
-    cover.style.backgroundPosition = 'center';
-  }
+  if (!group) return;
 
-  if (avatar) {
-    media(avatar, g.avatarURL, initials(g.name));
-  }
 
-  text(nameEl, g.name || 'VitalStar Group');
+  document.title =
+    `${group.name || 'Group'} · VitalStar`;
 
-  if (privacy) {
-    const isPrivate = g.privacy === 'private';
 
-    privacy.className = `badge badge--${isPrivate ? 'private' : 'public'}`;
-
-    privacy.innerHTML = isPrivate
-      ? '<i class="fa-solid fa-lock"></i> Private'
-      : '<i class="fa-solid fa-globe"></i> Public';
-  }
-
-  display(premium, g.type === 'premium' ? 'inline-flex' : 'none');
-  display(verified, g.verified ? 'inline-flex' : 'none');
-
-  text(
-    category,
-    categories[g.category] || g.category || 'General'
+  setText(
+    navGroupTitle,
+    group.name || 'VitalStar Group'
   );
 
-  text(
-    ownerText,
-    `Owned by ${g.ownerName || 'a member'}`
-  );
 
-  text(createdText, `Created ${date(g.createdAt)}`);
-  text(description, g.description || '');
+  // ----------------------------------------------------------
+  // COVER
+  // ----------------------------------------------------------
 
-  text(memberCount, count(g.memberCount));
-  text(postCount, count(g.postCount));
-  text(onlineCount, count(g.onlineCount));
-  text(level, g.level || 1);
+  if (groupCover) {
 
-  renderJoinState();
+    if (group.coverURL) {
 
-  const owner = isOwner();
-  const admin = isAdmin();
+      groupCover.style.backgroundImage =
+        `url("${group.coverURL}")`;
 
-  coverEdit?.classList.toggle('is-visible', owner || admin);
-}
+      groupCover.style.backgroundSize = 'cover';
+      groupCover.style.backgroundPosition = 'center';
 
-function isOwner() {
-  return (
-    state.group?.ownerId === state.user?.uid ||
-    state.membership?.role === 'owner'
-  );
-}
+    } else {
 
-function isAdmin() {
-  return (
-    state.membership?.role === 'admin' ||
-    state.membership?.role === 'owner'
-  );
-}
+      groupCover.style.backgroundImage = '';
 
-function isActiveMember() {
-  return state.membership?.status === 'active';
-}
+    }
 
-// ============================================================
-// JOIN STATE
-// ============================================================
-
-function renderJoinState() {
-  if (!joinBtn) return;
-
-  if (isOwner()) {
-    joinBtn.style.display = 'none';
-    roleTag?.classList.add('is-visible');
-    text(roleText, 'Owner');
-    display(inviteBtn, 'inline-flex');
-    return;
   }
 
-  if (
-    isActiveMember() &&
-    ['member', 'admin', 'moderator'].includes(state.membership?.role)
-  ) {
-    joinBtn.style.display = 'flex';
-    joinBtn.disabled = false;
-    joinBtn.className = 'btn-join-leave is-member';
-    joinBtn.innerHTML = '<i class="fa-solid fa-check"></i> Joined';
 
-    roleTag?.classList.add('is-visible');
-    text(
-      roleText,
-      state.membership.role.charAt(0).toUpperCase() +
-      state.membership.role.slice(1)
+  // ----------------------------------------------------------
+  // AVATAR
+  // ----------------------------------------------------------
+
+  if (groupAvatar) {
+
+    if (group.avatarURL) {
+
+      applyMediaBackground(
+        groupAvatar,
+        group.avatarURL
+      );
+
+    } else {
+
+      groupAvatar.style.backgroundImage = '';
+
+      groupAvatar.textContent =
+        initialsFrom(group.name);
+
+    }
+
+  }
+
+
+  setText(
+    groupName,
+    group.name || 'VitalStar Group'
+  );
+
+
+  // ----------------------------------------------------------
+  // PRIVACY
+  // ----------------------------------------------------------
+
+  if (groupPrivacyBadge) {
+
+    if (group.privacy === 'private') {
+
+      groupPrivacyBadge.className =
+        'badge badge--private';
+
+      groupPrivacyBadge.innerHTML =
+        '<i class="fa-solid fa-lock" style="font-size:9px;"></i> Private';
+
+    } else {
+
+      groupPrivacyBadge.className =
+        'badge badge--public';
+
+      groupPrivacyBadge.innerHTML =
+        '<i class="fa-solid fa-globe" style="font-size:9px;"></i> Public';
+
+    }
+
+  }
+
+
+  // ----------------------------------------------------------
+  // PREMIUM
+  // ----------------------------------------------------------
+
+  setDisplay(
+    groupPremiumBadge,
+    group.type === 'premium'
+      ? 'inline-flex'
+      : 'none'
+  );
+
+
+  // ----------------------------------------------------------
+  // VERIFIED
+  // ----------------------------------------------------------
+
+  setDisplay(
+    groupVerifiedBadge,
+    group.verified
+      ? 'inline-flex'
+      : 'none'
+  );
+
+
+  // ----------------------------------------------------------
+  // CATEGORY
+  // ----------------------------------------------------------
+
+  setText(
+    groupCategoryChip,
+    CATEGORY_LABELS[group.category] ||
+    group.category ||
+    'General'
+  );
+
+
+  // ----------------------------------------------------------
+  // OWNER NAME
+  // ----------------------------------------------------------
+
+  const ownerDisplayName =
+    group.ownerName ||
+    (
+      isCurrentUserOwner()
+        ? (
+            state.currentUser?.displayName ||
+            'You'
+          )
+        : 'a member'
     );
 
-    display(inviteBtn, 'inline-flex');
-    return;
+
+  setText(
+    groupOwnerText,
+    `Owned by ${ownerDisplayName}`
+  );
+
+
+  // ----------------------------------------------------------
+  // CREATED DATE
+  // ----------------------------------------------------------
+
+  setText(
+    groupCreatedText,
+    `Created ${formatDate(group.createdAt)}`
+  );
+
+
+  // ----------------------------------------------------------
+  // DESCRIPTION
+  // ----------------------------------------------------------
+
+  setText(
+    groupDescription,
+    group.description || ''
+  );
+
+
+  // ----------------------------------------------------------
+  // STATS
+  // ----------------------------------------------------------
+
+  setText(
+    statMemberCount,
+    formatCount(group.memberCount)
+  );
+
+
+  setText(
+    statPostCount,
+    formatCount(group.postCount)
+  );
+
+
+  setText(
+    statOnlineCount,
+    formatCount(group.onlineCount)
+  );
+
+
+  setText(
+    statLevel,
+    group.level || 1
+  );
+
+
+  // ----------------------------------------------------------
+  // JOIN / LEAVE
+  // ----------------------------------------------------------
+
+  renderJoinLeaveState();
+
+
+  // ----------------------------------------------------------
+  // OWNER / ADMIN CONTROLS
+  // ----------------------------------------------------------
+
+  const isOwnerOrAdmin =
+    canManageGroup();
+
+
+  if (coverEditBtn) {
+
+    coverEditBtn.classList.toggle(
+      'is-visible',
+      isOwnerOrAdmin
+    );
+
   }
 
-  if (state.membership?.status === 'pending') {
-    joinBtn.style.display = 'flex';
-    joinBtn.disabled = false;
-    joinBtn.className = 'btn-join-leave is-pending';
-    joinBtn.innerHTML = '<i class="fa-solid fa-clock"></i> Requested';
-
-    roleTag?.classList.remove('is-visible');
-    display(inviteBtn, 'none');
-    return;
-  }
-
-  joinBtn.style.display = 'flex';
-  joinBtn.disabled = false;
-  joinBtn.className = 'btn-join-leave';
-  joinBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Join group';
-
-  roleTag?.classList.remove('is-visible');
-  display(inviteBtn, 'none');
 }
+
+
+// ============================================================
+// JOIN / LEAVE UI
+// ============================================================
+
+function renderJoinLeaveState() {
+
+  if (!joinLeaveBtn) return;
+
+  const membership =
+    state.membership;
+
+
+  // ----------------------------------------------------------
+  // OWNER
+  // ----------------------------------------------------------
+
+  if (
+    isCurrentUserOwner() ||
+    membership?.role === 'owner'
+  ) {
+
+    joinLeaveBtn.style.display =
+      'none';
+
+
+    if (yourRoleTag) {
+
+      yourRoleTag.classList.add(
+        'is-visible'
+      );
+
+    }
+
+
+    setText(
+      yourRoleText,
+      'Owner'
+    );
+
+
+    setDisplay(
+      inviteBtn,
+      'inline-flex'
+    );
+
+
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // ACTIVE MEMBER
+  // ----------------------------------------------------------
+
+  if (
+    membership &&
+    [
+      'admin',
+      'moderator',
+      'member'
+    ].includes(membership.role) &&
+    membership.status === 'active'
+  ) {
+
+    joinLeaveBtn.style.display =
+      'flex';
+
+    joinLeaveBtn.disabled =
+      false;
+
+    joinLeaveBtn.className =
+      'btn-join-leave is-member';
+
+    joinLeaveBtn.innerHTML =
+      '<i class="fa-solid fa-check"></i> Joined';
+
+
+    if (yourRoleTag) {
+
+      yourRoleTag.classList.add(
+        'is-visible'
+      );
+
+    }
+
+
+    setText(
+      yourRoleText,
+      membership.role.charAt(0).toUpperCase() +
+      membership.role.slice(1)
+    );
+
+
+    setDisplay(
+      inviteBtn,
+      'inline-flex'
+    );
+
+
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // PENDING
+  // ----------------------------------------------------------
+
+  if (
+    membership &&
+    membership.status === 'pending'
+  ) {
+
+    joinLeaveBtn.style.display =
+      'flex';
+
+    joinLeaveBtn.disabled =
+      false;
+
+    joinLeaveBtn.className =
+      'btn-join-leave is-pending';
+
+    joinLeaveBtn.innerHTML =
+      '<i class="fa-solid fa-clock"></i> Requested';
+
+
+    if (yourRoleTag) {
+
+      yourRoleTag.classList.remove(
+        'is-visible'
+      );
+
+    }
+
+
+    setDisplay(
+      inviteBtn,
+      'none'
+    );
+
+
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // NOT A MEMBER
+  // ----------------------------------------------------------
+
+  joinLeaveBtn.style.display =
+    'flex';
+
+  joinLeaveBtn.disabled =
+    false;
+
+  joinLeaveBtn.className =
+    'btn-join-leave';
+
+  joinLeaveBtn.innerHTML =
+    '<i class="fa-solid fa-plus"></i> Join group';
+
+
+  if (yourRoleTag) {
+
+    yourRoleTag.classList.remove(
+      'is-visible'
+    );
+
+  }
+
+
+  setDisplay(
+    inviteBtn,
+    'none'
+  );
+
+}
+
 
 // ============================================================
 // SIDEBAR
 // ============================================================
 
 function renderSidebar() {
-  if (!rulesList) return;
 
-  const rules = Array.isArray(state.group.rules)
-    ? state.group.rules
-    : [];
+  if (!rulesListDisplay) return;
 
-  rulesList.innerHTML = '';
+  const rules =
+    Array.isArray(state.groupData.rules)
+      ? state.groupData.rules
+      : [];
 
-  display(rulesEmpty, rules.length ? 'none' : 'block');
+
+  rulesListDisplay.innerHTML = '';
+
+
+  if (rules.length === 0) {
+
+    setDisplay(
+      rulesEmptyDisplay,
+      'block'
+    );
+
+    return;
+  }
+
+
+  setDisplay(
+    rulesEmptyDisplay,
+    'none'
+  );
+
 
   rules.forEach(rule => {
-    const li = document.createElement('li');
-    li.textContent = rule;
-    rulesList.appendChild(li);
+
+    const li =
+      document.createElement('li');
+
+    li.textContent =
+      rule;
+
+    rulesListDisplay.appendChild(li);
+
   });
+
 }
+
 
 // ============================================================
 // ADMINS
 // ============================================================
 
 async function renderAdmins() {
+
   if (!adminsList) return;
 
+
   try {
-    const q = query(
-      collection(db, 'groups', state.id, 'members'),
-      where('role', 'in', ['owner', 'admin', 'moderator']),
+
+    const membersQuery = query(
+      collection(
+        db,
+        'groups',
+        state.groupId,
+        'members'
+      ),
+      where(
+        'role',
+        'in',
+        [
+          'owner',
+          'admin',
+          'moderator'
+        ]
+      ),
       limit(10)
     );
 
-    const snap = await getDocs(q);
+
+    const snapshot =
+      await getDocs(membersQuery);
+
 
     adminsList
       .querySelectorAll('.admin-row')
       .forEach(el => el.remove());
 
-    display(adminsEmpty, snap.empty ? 'block' : 'none');
 
-    const priority = {
+    if (snapshot.empty) {
+
+      setDisplay(
+        adminsEmptyDisplay,
+        'block'
+      );
+
+      return;
+    }
+
+
+    setDisplay(
+      adminsEmptyDisplay,
+      'none'
+    );
+
+
+    const rolePriority = {
       owner: 0,
       admin: 1,
       moderator: 2
     };
 
-    snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .sort(
-        (a, b) =>
-          (priority[a.role] ?? 3) -
-          (priority[b.role] ?? 3)
-      )
-      .forEach(admin => {
-        const row = document.createElement('div');
-        row.className = 'admin-row';
 
-        const av = document.createElement('div');
-        av.className = 'admin-avatar';
-
-        media(
-          av,
-          admin.photoURL,
-          initials(admin.displayName)
+    const admins =
+      snapshot.docs
+        .map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }))
+        .sort(
+          (a, b) =>
+            (rolePriority[a.role] ?? 3) -
+            (rolePriority[b.role] ?? 3)
         );
 
-        const info = document.createElement('div');
-        info.className = 'admin-info';
 
-        const n = document.createElement('div');
-        n.className = 'admin-name';
-        n.textContent = admin.displayName || 'VitalStar Member';
+    admins.forEach(admin => {
 
-        const r = document.createElement('div');
-        r.className = 'admin-role';
-        r.textContent = admin.role || 'member';
+      const row =
+        document.createElement('div');
 
-        info.append(n, r);
-        row.append(av, info);
-        adminsList.appendChild(row);
-      });
+      row.className =
+        'admin-row';
+
+
+      const avatar =
+        document.createElement('div');
+
+      avatar.className =
+        'admin-avatar';
+
+
+      applyMediaBackground(
+        avatar,
+        admin.photoURL || '',
+        initialsFrom(
+          admin.displayName ||
+          admin.fullName ||
+          'V'
+        )
+      );
+
+
+      const info =
+        document.createElement('div');
+
+      info.className =
+        'admin-info';
+
+
+      const name =
+        document.createElement('div');
+
+      name.className =
+        'admin-name';
+
+      name.textContent =
+        admin.displayName ||
+        admin.fullName ||
+        'VitalStar Member';
+
+
+      const role =
+        document.createElement('div');
+
+      role.className =
+        'admin-role';
+
+      role.textContent =
+        admin.role || 'member';
+
+
+      info.appendChild(name);
+      info.appendChild(role);
+
+
+      row.appendChild(avatar);
+      row.appendChild(info);
+
+
+      adminsList.appendChild(row);
+
+    });
+
+
   } catch (error) {
-    console.error('Admin loading error:', error);
-    display(adminsEmpty, 'block');
-  }
-}
 
-// ============================================================
-// ACCESS
-// ============================================================
+    console.error(
+      'Error loading admins:',
+      error
+    );
 
-function applyAccess() {
-  const g = state.group;
-  if (!g) return;
 
-  const active = isActiveMember();
-  const canView = g.privacy === 'public' || active || isOwner();
+    setDisplay(
+      adminsEmptyDisplay,
+      'block'
+    );
 
-  locked?.classList.toggle('is-visible', !canView);
-
-  if (content) {
-    content.style.display = canView ? 'grid' : 'none';
   }
 
-  display(
-    subscriptionTab,
-    g.type === 'premium' ? 'flex' : 'none'
-  );
-
-  // OWNER FIX:
-  // Settings now checks ownerId directly too.
-  display(
-    settingsTab,
-    isOwner() || isAdmin() ? 'flex' : 'none'
-  );
-
-  if (canView) activateTab('posts');
 }
+
+
+// ============================================================
+// ACCESS CONTROL
+// ============================================================
+
+function applyAccessControl() {
+
+  const group =
+    state.groupData;
+
+  if (!group) return;
+
+
+  const isActiveMember =
+    state.membership &&
+    state.membership.status === 'active';
+
+
+  const canView =
+    group.privacy === 'public' ||
+    isActiveMember;
+
+
+  // ----------------------------------------------------------
+  // LOCKED NOTICE
+  // ----------------------------------------------------------
+
+  if (lockedNotice) {
+
+    lockedNotice.classList.toggle(
+      'is-visible',
+      !canView
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // MAIN CONTENT
+  // ----------------------------------------------------------
+
+  if (groupContentGrid) {
+
+    groupContentGrid.style.display =
+      canView
+        ? 'grid'
+        : 'none';
+
+  }
+
+
+  // ----------------------------------------------------------
+  // PREMIUM TAB
+  // ----------------------------------------------------------
+
+  setDisplay(
+    subscriptionTabBtn,
+    group.type === 'premium'
+      ? 'flex'
+      : 'none'
+  );
+
+
+  // ----------------------------------------------------------
+  // SETTINGS TAB
+  // ----------------------------------------------------------
+  // IMPORTANT:
+  // The owner is detected from the group document as well
+  // as membership, so Settings cannot disappear because
+  // the membership document is missing.
+  // ----------------------------------------------------------
+
+  setDisplay(
+    settingsTabBtn,
+    canManageGroup()
+      ? 'flex'
+      : 'none'
+  );
+
+
+  // ----------------------------------------------------------
+  // DEFAULT TAB
+  // ----------------------------------------------------------
+
+  if (canView) {
+
+    activateTab('posts');
+
+  }
+
+}
+
 
 // ============================================================
 // TABS
 // ============================================================
 
 function setupTabs() {
-  if (!tabs || tabsBound) return;
+
+  if (!groupTabsNav || tabsBound) {
+    return;
+  }
 
   tabsBound = true;
 
-  tabs.addEventListener('click', e => {
-    const btn = e.target.closest('.group-tab');
-    if (!btn?.dataset.tab) return;
 
-    activateTab(btn.dataset.tab);
-  });
+  groupTabsNav.addEventListener(
+    'click',
+    event => {
+
+      const tabBtn =
+        event.target.closest('.group-tab');
+
+
+      if (!tabBtn) return;
+
+
+      const tabName =
+        tabBtn.dataset.tab;
+
+
+      if (!tabName) return;
+
+
+      activateTab(tabName);
+
+    }
+  );
+
 }
 
-function activateTab(tab) {
-  if (!tab) return;
 
-  state.tab = tab;
+function activateTab(tabName) {
 
-  tabs?.querySelectorAll('.group-tab').forEach(btn => {
-    btn.classList.toggle(
-      'is-active',
-      btn.dataset.tab === tab
+  if (!tabName) return;
+
+
+  // ----------------------------------------------------------
+  // SECURITY CHECK FOR SETTINGS
+  // ----------------------------------------------------------
+
+  if (
+    tabName === 'settings' &&
+    !canManageGroup()
+  ) {
+
+    showToast(
+      'You do not have permission to manage this group.',
+      'error'
     );
-  });
 
-  document.querySelectorAll('.tab-panel').forEach(panel => {
-    panel.classList.toggle(
-      'is-active',
-      panel.dataset.panel === tab
-    );
-  });
+    return;
+  }
 
-  loadTab(tab);
+
+  // ----------------------------------------------------------
+  // SECURITY CHECK FOR SUBSCRIPTION
+  // ----------------------------------------------------------
+
+  if (
+    tabName === 'subscription' &&
+    state.groupData?.type !== 'premium'
+  ) {
+
+    return;
+  }
+
+
+  state.activeTab =
+    tabName;
+
+
+  // ----------------------------------------------------------
+  // ACTIVE TAB BUTTON
+  // ----------------------------------------------------------
+
+  if (groupTabsNav) {
+
+    groupTabsNav
+      .querySelectorAll('.group-tab')
+      .forEach(btn => {
+
+        btn.classList.toggle(
+          'is-active',
+          btn.dataset.tab === tabName
+        );
+
+      });
+
+  }
+
+
+  // ----------------------------------------------------------
+  // ACTIVE PANEL
+  // ----------------------------------------------------------
+
+  document
+    .querySelectorAll('.tab-panel')
+    .forEach(panel => {
+
+      panel.classList.toggle(
+        'is-active',
+        panel.dataset.panel === tabName
+      );
+
+    });
+
+
+  // ----------------------------------------------------------
+  // LOAD MODULE
+  // ----------------------------------------------------------
+
+  loadTabModuleIfNeeded(
+    tabName
+  );
+
 }
 
-async function loadTab(tab) {
-  if (loadedTabs.has(tab)) return;
 
-  const loader = TAB_LOADERS[tab];
+// ============================================================
+// LOAD TAB MODULE
+// ============================================================
+
+async function loadTabModuleIfNeeded(tabName) {
+
+  if (
+    loadedTabModules.has(tabName)
+  ) {
+    return;
+  }
+
+
+  const loader =
+    TAB_MODULE_LOADERS[tabName];
+
+
   if (!loader) return;
 
-  const panel = $(`${tab}Tab`);
+
+  const panel =
+    document.getElementById(
+      `${tabName}Tab`
+    );
+
 
   try {
-    const mod = await loader();
 
-    loadedTabs.add(tab);
+    const mod =
+      await loader();
 
-    if (typeof mod?.init === 'function') {
-      await mod.init({
-        db,
-        auth,
-        groupId: state.id,
-        groupRef: doc(db, 'groups', state.id),
-        groupData: state.group,
-        currentUser: state.user,
-        membership: state.membership,
-        panelEl: panel,
-        showToast: toast,
-        formatCount: count,
-        initialsFrom: initials,
-        applyMediaBackground: media,
-        refreshHeaderStats
-      });
+
+    loadedTabModules.add(
+      tabName
+    );
+
+
+    if (
+      mod &&
+      typeof mod.init === 'function'
+    ) {
+
+      await mod.init(
+        buildTabContext(panel)
+      );
+
     }
+
+
   } catch (error) {
-    console.error(`Tab ${tab} error:`, error);
+
+    console.error(
+      `Tab "${tabName}" failed to load:`,
+      error
+    );
+
 
     if (panel) {
+
       panel.innerHTML = `
         <div class="tab-panel-placeholder">
           <i class="fa-solid fa-circle-exclamation"></i>
           <p>Unable to load this section.</p>
-          <button type="button" class="retry-tab-btn">Try again</button>
+          <button type="button" class="retry-tab-btn">
+            Try again
+          </button>
         </div>
       `;
 
-      panel
-        .querySelector('.retry-tab-btn')
-        ?.addEventListener('click', () => {
-          loadedTabs.delete(tab);
-          loadTab(tab);
-        });
+
+      const retryBtn =
+        panel.querySelector(
+          '.retry-tab-btn'
+        );
+
+
+      if (retryBtn) {
+
+        retryBtn.addEventListener(
+          'click',
+          () => {
+
+            loadedTabModules.delete(
+              tabName
+            );
+
+            loadTabModuleIfNeeded(
+              tabName
+            );
+
+          }
+        );
+
+      }
+
     }
+
   }
+
 }
 
+
 // ============================================================
-// STATS
+// TAB CONTEXT
+// ============================================================
+
+function buildTabContext(panelEl) {
+
+  return {
+
+    db,
+
+    auth,
+
+    groupId:
+      state.groupId,
+
+    groupRef:
+      doc(
+        db,
+        'groups',
+        state.groupId
+      ),
+
+    groupData:
+      state.groupData,
+
+    currentUser:
+      state.currentUser,
+
+    membership:
+      state.membership,
+
+    panelEl,
+
+    showToast,
+
+    formatCount,
+
+    initialsFrom,
+
+    applyMediaBackground,
+
+    refreshHeaderStats,
+
+    // Permission helpers
+    isCurrentUserOwner,
+
+    isCurrentUserAdmin,
+
+    canManageGroup
+
+  };
+
+}
+
+
+// ============================================================
+// REFRESH HEADER STATS
 // ============================================================
 
 async function refreshHeaderStats() {
+
   try {
-    const snap = await getDoc(
-      doc(db, 'groups', state.id)
-    );
 
-    if (!snap.exists()) return;
+    const groupRef =
+      doc(
+        db,
+        'groups',
+        state.groupId
+      );
 
-    state.group = {
+
+    const snap =
+      await getDoc(groupRef);
+
+
+    if (!snap.exists()) {
+      return;
+    }
+
+
+    state.groupData = {
       id: snap.id,
       ...snap.data()
     };
 
-    text(memberCount, count(state.group.memberCount));
-    text(postCount, count(state.group.postCount));
-    text(onlineCount, count(state.group.onlineCount));
+
+    // Re-check owner after refreshing group data.
+    if (isCurrentUserOwner()) {
+
+      state.membership = {
+        ...(state.membership || {}),
+        uid: state.currentUser.uid,
+        role: 'owner',
+        status: 'active'
+      };
+
+    }
+
+
+    setText(
+      statMemberCount,
+      formatCount(
+        state.groupData.memberCount
+      )
+    );
+
+
+    setText(
+      statPostCount,
+      formatCount(
+        state.groupData.postCount
+      )
+    );
+
+
+    setText(
+      statOnlineCount,
+      formatCount(
+        state.groupData.onlineCount
+      )
+    );
+
+
+    // Refresh management controls too.
+    setDisplay(
+      settingsTabBtn,
+      canManageGroup()
+        ? 'flex'
+        : 'none'
+    );
+
+
+    if (coverEditBtn) {
+
+      coverEditBtn.classList.toggle(
+        'is-visible',
+        canManageGroup()
+      );
+
+    }
+
   } catch (error) {
-    console.error('Stats refresh error:', error);
+
+    console.error(
+      'Error refreshing group stats:',
+      error
+    );
+
   }
+
 }
+
 
 // ============================================================
 // HEADER ACTIONS
 // ============================================================
 
-function bindActions() {
-  if (actionsBound) return;
+function bindHeaderActions() {
 
-  actionsBound = true;
+  if (headerActionsBound) {
+    return;
+  }
 
-  joinBtn?.addEventListener('click', joinLeave);
-  shareBtn?.addEventListener('click', shareGroup);
-  inviteBtn?.addEventListener('click', invite);
-  coverEdit?.addEventListener('click', () => {
-    if (isOwner() || isAdmin()) activateTab('settings');
-  });
+  headerActionsBound = true;
 
-  bell?.addEventListener('click', toggleNotifications);
 
-  closeNotifications?.addEventListener('click', () => {
-    notificationPanel?.classList.remove('is-visible');
-  });
+  // ----------------------------------------------------------
+  // JOIN / LEAVE
+  // ----------------------------------------------------------
 
-  document.addEventListener('click', e => {
-    if (
-      notificationPanel?.classList.contains('is-visible') &&
-      !notificationPanel.contains(e.target) &&
-      !bell?.contains(e.target)
-    ) {
-      notificationPanel.classList.remove('is-visible');
+  if (joinLeaveBtn) {
+
+    joinLeaveBtn.addEventListener(
+      'click',
+      handleJoinLeaveClick
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // SHARE
+  // ----------------------------------------------------------
+
+  if (shareBtn) {
+
+    shareBtn.addEventListener(
+      'click',
+      handleShareClick
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // INVITE
+  // ----------------------------------------------------------
+
+  if (inviteBtn) {
+
+    inviteBtn.addEventListener(
+      'click',
+      handleInviteClick
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // COVER EDIT
+  // ----------------------------------------------------------
+
+  if (coverEditBtn) {
+
+    coverEditBtn.addEventListener(
+      'click',
+      () => {
+
+        if (!canManageGroup()) {
+
+          showToast(
+            'You do not have permission to edit this group.',
+            'error'
+          );
+
+          return;
+        }
+
+        activateTab('settings');
+
+      }
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // NOTIFICATION BELL
+  // ----------------------------------------------------------
+
+  if (notificationBellBtn) {
+
+    notificationBellBtn.addEventListener(
+      'click',
+      toggleNotificationsPanel
+    );
+
+  }
+
+
+  if (closeNotificationsBtn) {
+
+    closeNotificationsBtn.addEventListener(
+      'click',
+      () => {
+
+        if (notificationsPanel) {
+
+          notificationsPanel
+            .classList
+            .remove('is-visible');
+
+        }
+
+      }
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // CLOSE NOTIFICATIONS WHEN CLICKING OUTSIDE
+  // ----------------------------------------------------------
+
+  document.addEventListener(
+    'click',
+    event => {
+
+      if (!notificationsPanel) {
+        return;
+      }
+
+
+      if (!notificationBellBtn) {
+        return;
+      }
+
+
+      if (
+        notificationsPanel.classList.contains(
+          'is-visible'
+        ) &&
+        !notificationsPanel.contains(
+          event.target
+        ) &&
+        !notificationBellBtn.contains(
+          event.target
+        )
+      ) {
+
+        notificationsPanel
+          .classList
+          .remove('is-visible');
+
+      }
+
     }
-  });
+  );
+
 }
+
 
 // ============================================================
 // JOIN / LEAVE
 // ============================================================
 
-async function joinLeave() {
-  if (isOwner()) return;
+async function handleJoinLeaveClick() {
 
-  if (!state.membership) return joinGroup();
+  const membership =
+    state.membership;
 
-  if (state.membership.status === 'pending') {
-    return cancelRequest();
+
+  if (isCurrentUserOwner()) {
+
+    return;
   }
 
-  return leaveGroup();
+
+  if (!membership) {
+
+    await joinGroup();
+
+  } else if (
+    membership.status === 'pending'
+  ) {
+
+    await cancelJoinRequest();
+
+  } else if (
+    membership.role !== 'owner'
+  ) {
+
+    await leaveGroup();
+
+  }
+
 }
 
+
+// ============================================================
+// JOIN GROUP
+// ============================================================
+
 async function joinGroup() {
-  if (!joinBtn) return;
 
-  joinBtn.disabled = true;
+  if (!joinLeaveBtn) return;
 
-  const g = state.group;
-  const privateGroup = g.privacy === 'private';
-  const status = privateGroup ? 'pending' : 'active';
 
-  const memberRef = doc(
-    db,
-    'groups',
-    state.id,
-    'members',
-    state.user.uid
-  );
+  joinLeaveBtn.disabled =
+    true;
 
-  const groupRef = doc(db, 'groups', state.id);
+
+  const group =
+    state.groupData;
+
+  const user =
+    state.currentUser;
+
+
+  const isPrivate =
+    group.privacy === 'private';
+
+
+  const status =
+    isPrivate
+      ? 'pending'
+      : 'active';
+
+
+  const memberRef =
+    doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      user.uid
+    );
+
+
+  const groupRef =
+    doc(
+      db,
+      'groups',
+      state.groupId
+    );
+
 
   try {
-    let exists = false;
 
-    await runTransaction(db, async tx => {
-      const snap = await tx.get(memberRef);
+    let alreadyMember =
+      false;
 
-      if (snap.exists()) {
-        exists = true;
-        return;
+
+    await runTransaction(
+      db,
+      async transaction => {
+
+        const existingMemberSnap =
+          await transaction.get(
+            memberRef
+          );
+
+
+        if (
+          existingMemberSnap.exists()
+        ) {
+
+          alreadyMember =
+            true;
+
+          return;
+        }
+
+
+        transaction.set(
+          memberRef,
+          {
+
+            uid: user.uid,
+
+            displayName:
+              user.displayName ||
+              'VitalStar Member',
+
+            photoURL:
+              user.photoURL ||
+              '',
+
+            role:
+              'member',
+
+            status,
+
+            category:
+              group.category ||
+              '',
+
+            joinedAt:
+              serverTimestamp()
+
+          }
+        );
+
+
+        if (
+          status === 'active'
+        ) {
+
+          transaction.update(
+            groupRef,
+            {
+              memberCount:
+                increment(1)
+            }
+          );
+
+        }
+
       }
+    );
 
-      tx.set(memberRef, {
-        uid: state.user.uid,
-        displayName:
-          state.user.displayName || 'VitalStar Member',
-        photoURL: state.user.photoURL || '',
-        role: 'member',
-        status,
-        category: g.category || '',
-        joinedAt: serverTimestamp()
-      });
 
-      if (status === 'active') {
-        tx.update(groupRef, {
-          memberCount: increment(1)
-        });
-      }
-    });
+    if (
+      alreadyMember
+    ) {
 
-    if (exists) {
-      toast('You are already a member.', 'info');
+      showToast(
+        'You are already a member of this group.',
+        'info'
+      );
+
       return;
     }
 
-    state.membership = {
-      uid: state.user.uid,
-      role: 'member',
-      status,
-      category: g.category || ''
-    };
 
-    if (status === 'active') {
-      state.group.memberCount =
-        (Number(state.group.memberCount) || 0) + 1;
+    if (
+      status === 'active'
+    ) {
 
-      text(memberCount, count(state.group.memberCount));
+      state.groupData.memberCount =
+        (
+          Number(
+            state.groupData.memberCount
+          ) || 0
+        ) + 1;
+
+
+      setText(
+        statMemberCount,
+        formatCount(
+          state.groupData.memberCount
+        )
+      );
+
     }
 
-    renderJoinState();
-    applyAccess();
 
-    toast(
-      privateGroup
-        ? 'Join request sent.'
-        : `You've joined ${g.name}.`,
+    state.membership = {
+
+      uid:
+        user.uid,
+
+      status,
+
+      role:
+        'member',
+
+      category:
+        group.category || ''
+
+    };
+
+
+    renderJoinLeaveState();
+
+    applyAccessControl();
+
+
+    showToast(
+      isPrivate
+        ? 'Request sent! An admin will review it soon.'
+        : `You've joined ${group.name}.`,
       'success'
     );
+
+
   } catch (error) {
-    console.error('Join error:', error);
-    toast('Could not join this group.', 'error');
+
+    console.error(
+      'Error joining group:',
+      error
+    );
+
+
+    showToast(
+      'Could not join this group. Please try again.',
+      'error'
+    );
+
+
   } finally {
-    joinBtn.disabled = false;
+
+    joinLeaveBtn.disabled =
+      false;
+
   }
+
 }
 
-async function cancelRequest() {
-  if (!confirm('Cancel your request to join this group?')) return;
 
-  joinBtn.disabled = true;
+// ============================================================
+// CANCEL JOIN REQUEST
+// ============================================================
+
+async function cancelJoinRequest() {
+
+  if (
+    !window.confirm(
+      'Cancel your request to join this group?'
+    )
+  ) {
+
+    return;
+  }
+
+
+  if (!joinLeaveBtn) return;
+
+
+  joinLeaveBtn.disabled =
+    true;
+
 
   try {
+
     await deleteDoc(
       doc(
         db,
         'groups',
-        state.id,
+        state.groupId,
         'members',
-        state.user.uid
+        state.currentUser.uid
       )
     );
 
-    state.membership = null;
 
-    renderJoinState();
-    applyAccess();
+    state.membership =
+      null;
 
-    toast('Join request cancelled.', 'info');
+
+    renderJoinLeaveState();
+
+    applyAccessControl();
+
+
+    showToast(
+      'Your join request was cancelled.',
+      'info'
+    );
+
+
   } catch (error) {
-    console.error('Cancel request error:', error);
-    toast('Could not cancel the request.', 'error');
+
+    console.error(
+      'Error cancelling request:',
+      error
+    );
+
+
+    showToast(
+      'Could not cancel the request. Please try again.',
+      'error'
+    );
+
+
   } finally {
-    joinBtn.disabled = false;
+
+    joinLeaveBtn.disabled =
+      false;
+
   }
+
 }
+
+
+// ============================================================
+// LEAVE GROUP
+// ============================================================
 
 async function leaveGroup() {
+
   if (
-    !confirm(
-      `Leave ${state.group.name}? You'll need to rejoin to see its posts again.`
+    !window.confirm(
+      `Leave ${state.groupData.name}? You'll need to rejoin to see its posts again.`
     )
-  ) return;
+  ) {
 
-  joinBtn.disabled = true;
+    return;
+  }
 
-  const memberRef = doc(
-    db,
-    'groups',
-    state.id,
-    'members',
-    state.user.uid
-  );
 
-  const groupRef = doc(db, 'groups', state.id);
+  if (!joinLeaveBtn) return;
+
+
+  joinLeaveBtn.disabled =
+    true;
+
+
+  const memberRef =
+    doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      state.currentUser.uid
+    );
+
+
+  const groupRef =
+    doc(
+      db,
+      'groups',
+      state.groupId
+    );
+
 
   try {
-    let active = false;
 
-    await runTransaction(db, async tx => {
-      const snap = await tx.get(memberRef);
+    let wasActiveMember =
+      false;
 
-      if (!snap.exists()) return;
 
-      const data = snap.data();
+    await runTransaction(
+      db,
+      async transaction => {
 
-      if (data.role === 'owner') return;
+        const existingMemberSnap =
+          await transaction.get(
+            memberRef
+          );
 
-      tx.delete(memberRef);
 
-      if (data.status === 'active') {
-        active = true;
+        if (
+          !existingMemberSnap.exists()
+        ) {
 
-        tx.update(groupRef, {
-          memberCount: increment(-1)
-        });
+          return;
+        }
+
+
+        const memberData =
+          existingMemberSnap.data();
+
+
+        // Never allow the owner to be removed.
+        if (
+          memberData.role === 'owner' ||
+          isCurrentUserOwner()
+        ) {
+
+          return;
+        }
+
+
+        transaction.delete(
+          memberRef
+        );
+
+
+        if (
+          memberData.status === 'active'
+        ) {
+
+          wasActiveMember =
+            true;
+
+
+          transaction.update(
+            groupRef,
+            {
+              memberCount:
+                increment(-1)
+            }
+          );
+
+        }
+
       }
-    });
+    );
 
-    state.membership = null;
 
-    if (active) {
-      state.group.memberCount = Math.max(
-        0,
-        (Number(state.group.memberCount) || 1) - 1
+    // Owner protection.
+    if (isCurrentUserOwner()) {
+
+      state.membership = {
+        ...(state.membership || {}),
+        uid: state.currentUser.uid,
+        role: 'owner',
+        status: 'active'
+      };
+
+      renderJoinLeaveState();
+
+      return;
+    }
+
+
+    state.membership =
+      null;
+
+
+    if (
+      wasActiveMember
+    ) {
+
+      state.groupData.memberCount =
+        Math.max(
+          0,
+          (
+            Number(
+              state.groupData.memberCount
+            ) || 1
+          ) - 1
+        );
+
+
+      setText(
+        statMemberCount,
+        formatCount(
+          state.groupData.memberCount
+        )
       );
 
-      text(memberCount, count(state.group.memberCount));
     }
 
-    renderJoinState();
-    applyAccess();
 
-    toast(`You left ${state.group.name}.`, 'info');
+    renderJoinLeaveState();
+
+    applyAccessControl();
+
+
+    showToast(
+      `You left ${state.groupData.name}.`,
+      'info'
+    );
+
+
   } catch (error) {
-    console.error('Leave error:', error);
-    toast('Could not leave this group.', 'error');
+
+    console.error(
+      'Error leaving group:',
+      error
+    );
+
+
+    showToast(
+      'Could not leave the group. Please try again.',
+      'error'
+    );
+
+
   } finally {
-    joinBtn.disabled = false;
+
+    joinLeaveBtn.disabled =
+      false;
+
   }
+
 }
 
+
 // ============================================================
-// SHARE / INVITE
+// SHARE
 // ============================================================
 
-async function shareGroup() {
+async function handleShareClick() {
+
+  const url =
+    window.location.href;
+
+
   try {
-    if (navigator.share) {
+
+    if (
+      navigator.share
+    ) {
+
       await navigator.share({
-        title: state.group.name,
-        url: location.href
+
+        title:
+          state.groupData.name,
+
+        url
+
       });
+
     } else {
-      await navigator.clipboard.writeText(location.href);
-      toast('Group link copied.', 'success');
+
+      await navigator.clipboard.writeText(
+        url
+      );
+
+
+      showToast(
+        'Group link copied to clipboard.',
+        'success'
+      );
+
     }
+
   } catch (error) {
-    if (error.name !== 'AbortError') {
-      console.error('Share error:', error);
+
+    if (
+      error.name !== 'AbortError'
+    ) {
+
+      console.error(
+        'Error sharing group:',
+        error
+      );
+
     }
+
   }
+
 }
 
-async function invite() {
+
+// ============================================================
+// INVITE
+// ============================================================
+
+async function handleInviteClick() {
+
+  const url =
+    window.location.href;
+
+
   try {
-    await navigator.clipboard.writeText(location.href);
-    toast('Invite link copied.', 'success');
+
+    await navigator.clipboard.writeText(
+      url
+    );
+
+
+    showToast(
+      'Invite link copied — share it to invite people.',
+      'success'
+    );
+
+
   } catch (error) {
-    console.error('Invite error:', error);
-    toast('Could not copy the invite link.', 'error');
+
+    console.error(
+      'Error copying invite link:',
+      error
+    );
+
+
+    showToast(
+      'Could not copy the invite link.',
+      'error'
+    );
+
   }
+
 }
+
 
 // ============================================================
 // NOTIFICATIONS
 // ============================================================
 
-async function toggleNotifications() {
-  if (!notificationPanel) return;
+async function toggleNotificationsPanel() {
 
-  const show =
-    !notificationPanel.classList.contains('is-visible');
+  if (!notificationsPanel) {
+    return;
+  }
 
-  notificationPanel.classList.toggle(
-    'is-visible',
-    show
-  );
 
-  if (!show || notificationsLoaded) return;
+  const willShow =
+    !notificationsPanel
+      .classList
+      .contains('is-visible');
+
+
+  notificationsPanel
+    .classList
+    .toggle(
+      'is-visible',
+      willShow
+    );
+
+
+  if (
+    !willShow ||
+    notificationsModuleLoaded
+  ) {
+
+    return;
+  }
+
 
   try {
-    const mod = await import('./group-notifications.js');
 
-    notificationsLoaded = true;
+    const mod =
+      await import(
+        './group-notifications.js'
+      );
 
-    if (typeof mod?.init === 'function') {
+
+    notificationsModuleLoaded =
+      true;
+
+
+    if (
+      mod &&
+      typeof mod.init === 'function'
+    ) {
+
       await mod.init({
+
         db,
+
         auth,
-        currentUser: state.user,
-        groupId: state.id,
-        listEl: notificationList,
-        unreadDotEl: unreadDot,
-        showToast: toast
+
+        currentUser:
+          state.currentUser,
+
+        groupId:
+          state.groupId,
+
+        listEl:
+          notificationsList,
+
+        unreadDotEl:
+          notifUnreadDot,
+
+        showToast
+
       });
+
     }
+
+
   } catch (error) {
-    console.error('Notifications error:', error);
-    toast('Notifications could not be loaded.', 'error');
+
+    console.error(
+      'Group notifications failed to load:',
+      error
+    );
+
+
+    showToast(
+      'Notifications could not be loaded.',
+      'error'
+    );
+
   }
+
 }
+
+
+// ============================================================
+// END OF GROUP.JS
+// ============================================================
