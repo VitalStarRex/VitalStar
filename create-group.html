@@ -1,844 +1,3019 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+/>
+
 <title>Create a Group · VitalStar</title>
-<meta name="description" content="Create a new group on VitalStar — build a community around any topic you're passionate about." />
 
-<!-- Fonts: Space Grotesk (display), Inter (body), JetBrains Mono (stats/counters) -->
+<meta
+  name="description"
+  content="Create a free or premium community on VitalStar."
+/>
+
+<!-- ============================================================
+     FONTS
+     ============================================================ -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-<!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link
+  rel="preconnect"
+  href="https://fonts.gstatic.com"
+  crossorigin
+>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+  rel="stylesheet"
+>
+
+<!-- ============================================================
+     FONT AWESOME
+     ============================================================ -->
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+
 
 <style>
-  /* ============================================================
-     VITALSTAR — DESIGN TOKENS
-     ============================================================ */
-  :root {
-    /* Color: electric blue core with a violet secondary accent for
-       premium / verification, on a deep navy void background */
-    --bg-void: #080B14;
-    --bg-surface: #10151F;
-    --bg-surface-raised: #161C29;
-    --bg-glass: rgba(22, 28, 41, 0.55);
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.16);
 
-    --electric-blue: #2F6FFF;
-    --electric-blue-bright: #5B9DFF;
-    --electric-blue-dim: #1B3E8F;
-    --violet-accent: #8B5CFF;
-    --gold-accent: #FFC24B;
+/* ============================================================
+   VITALSTAR DESIGN TOKENS
+   ============================================================ */
 
-    --text-primary: #F1F5FF;
-    --text-secondary: #A6B0C8;
-    --text-muted: #66708C;
+:root {
 
-    --success: #22D3A5;
-    --danger: #FF5C7A;
-    --warning: #FFC24B;
+  --bg-void:#080B14;
+  --bg-surface:#10151F;
+  --bg-surface-raised:#161C29;
+  --bg-glass:rgba(22,28,41,.55);
 
-    --radius-sm: 10px;
-    --radius-md: 16px;
-    --radius-lg: 24px;
-    --radius-full: 999px;
+  --border-subtle:rgba(255,255,255,.08);
+  --border-strong:rgba(255,255,255,.16);
 
-    --shadow-glow-blue: 0 0 0 1px rgba(47, 111, 255, 0.35), 0 8px 30px rgba(47, 111, 255, 0.25);
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --electric-blue:#2F6FFF;
+  --electric-blue-bright:#5B9DFF;
+  --electric-blue-dim:#1B3E8F;
 
-    --font-display: 'Space Grotesk', sans-serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+  --violet-accent:#8B5CFF;
+  --gold-accent:#FFC24B;
 
-    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --text-primary:#F1F5FF;
+  --text-secondary:#A6B0C8;
+  --text-muted:#66708C;
+
+  --success:#22D3A5;
+  --danger:#FF5C7A;
+  --warning:#FFC24B;
+
+  --radius-sm:10px;
+  --radius-md:16px;
+  --radius-lg:24px;
+  --radius-full:999px;
+
+  --shadow-glow-blue:
+    0 0 0 1px rgba(47,111,255,.35),
+    0 8px 30px rgba(47,111,255,.25);
+
+  --shadow-card:
+    0 4px 24px rgba(0,0,0,.35);
+
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+
+* {
+  box-sizing:border-box;
+}
+
+html {
+  color-scheme:dark;
+  scroll-behavior:smooth;
+}
+
+body {
+
+  margin:0;
+
+  font-family:var(--font-body);
+
+  background:
+    radial-gradient(
+      1200px 600px at 15% -10%,
+      rgba(47,111,255,.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at 100% 0%,
+      rgba(139,92,255,.10),
+      transparent 55%
+    ),
+    var(--bg-void);
+
+  color:var(--text-primary);
+
+  min-height:100vh;
+
+  -webkit-font-smoothing:antialiased;
+}
+
+@media (prefers-reduced-motion:reduce) {
+
+  * {
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
   }
 
-  * { box-sizing: border-box; }
-  html { color-scheme: dark; scroll-behavior: smooth; }
+}
 
-  body {
-    margin: 0;
-    font-family: var(--font-body);
-    background:
-      radial-gradient(1200px 600px at 15% -10%, rgba(47, 111, 255, 0.16), transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, rgba(139, 92, 255, 0.10), transparent 55%),
-      var(--bg-void);
-    color: var(--text-primary);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
+a {
+  color:inherit;
+  text-decoration:none;
+}
+
+button {
+  font-family:inherit;
+  cursor:pointer;
+}
+
+input,
+select,
+textarea {
+  font-family:inherit;
+}
+
+::selection {
+  background:var(--electric-blue);
+  color:#fff;
+}
+
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+
+.vs-navbar {
+
+  position:sticky;
+  top:0;
+  z-index:50;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:16px;
+
+  padding:14px 24px;
+
+  background:rgba(8,11,20,.75);
+
+  backdrop-filter:blur(16px) saturate(140%);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+
+  border-bottom:1px solid var(--border-subtle);
+}
+
+.vs-navbar__left {
+
+  display:flex;
+  align-items:center;
+
+  gap:14px;
+
+  min-width:0;
+}
+
+.vs-back-btn {
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:38px;
+  height:38px;
+
+  border-radius:var(--radius-full);
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  color:var(--text-secondary);
+
+  flex-shrink:0;
+
+  transition:all .2s var(--ease-out);
+}
+
+.vs-back-btn:hover {
+
+  color:var(--text-primary);
+
+  border-color:var(--electric-blue);
+
+  transform:translateX(-2px);
+}
+
+.vs-logo {
+
+  display:flex;
+  align-items:center;
+
+  gap:9px;
+
+  font-family:var(--font-display);
+
+  font-weight:700;
+
+  font-size:18px;
+
+  letter-spacing:-.01em;
+
+  white-space:nowrap;
+}
+
+.vs-logo__mark {
+
+  width:30px;
+  height:30px;
+
+  border-radius:9px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--electric-blue),
+      var(--violet-accent)
+    );
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  box-shadow:var(--shadow-glow-blue);
+
+  font-size:14px;
+
+  flex-shrink:0;
+}
+
+.vs-page-title {
+
+  color:var(--text-muted);
+
+  font-size:14px;
+
+  display:none;
+}
+
+.vs-navbar__right {
+
+  display:flex;
+  align-items:center;
+
+  gap:12px;
+}
+
+.vs-avatar-sm {
+
+  width:34px;
+  height:34px;
+
+  border-radius:var(--radius-full);
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  color:var(--text-secondary);
+
+  font-size:14px;
+}
+
+@media (min-width:720px) {
+
+  .vs-page-title {
+    display:inline;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .vs-page-title::before {
+
+    content:'/';
+
+    margin:0 10px;
+
+    color:var(--border-strong);
   }
 
-  a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; cursor: pointer; }
-  input, select, textarea { font-family: inherit; }
+}
 
-  ::selection { background: var(--electric-blue); color: #fff; }
 
-  /* ============================================================
-     NAVBAR
-     ============================================================ */
-  .vs-navbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 14px 24px;
-    background: rgba(8, 11, 20, 0.75);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border-bottom: 1px solid var(--border-subtle);
-  }
+/* ============================================================
+   LAYOUT
+   ============================================================ */
 
-  .vs-navbar__left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.create-group-layout {
 
-  .vs-back-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-full);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    flex-shrink: 0;
-    transition: all 0.2s var(--ease-out);
-  }
-  .vs-back-btn:hover { color: var(--text-primary); border-color: var(--electric-blue); transform: translateX(-2px); }
+  max-width:1180px;
 
-  .vs-logo { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; white-space: nowrap; }
-  .vs-logo__mark {
-    width: 30px; height: 30px; border-radius: 9px;
-    background: linear-gradient(135deg, var(--electric-blue), var(--violet-accent));
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--shadow-glow-blue);
-    font-size: 14px;
-    flex-shrink: 0;
-  }
-  .vs-page-title { color: var(--text-muted); font-size: 14px; display: none; }
+  margin:0 auto;
 
-  .vs-navbar__right { display: flex; align-items: center; gap: 12px; }
-  .vs-avatar-sm {
-    width: 34px; height: 34px; border-radius: var(--radius-full);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-secondary); font-size: 14px;
-  }
+  padding:28px 20px 100px;
 
-  @media (min-width: 720px) {
-    .vs-page-title { display: inline; }
-    .vs-page-title::before { content: '/'; margin: 0 10px; color: var(--border-strong); }
-  }
+  display:grid;
 
-  /* ============================================================
-     LAYOUT
-     ============================================================ */
+  grid-template-columns:1fr;
+
+  gap:28px;
+}
+
+@media (min-width:980px) {
+
   .create-group-layout {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 28px 20px 100px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 28px;
+
+    grid-template-columns:380px 1fr;
+
+    align-items:start;
+
+    padding:40px 32px 120px;
   }
 
-  @media (min-width: 980px) {
-    .create-group-layout {
-      grid-template-columns: 380px 1fr;
-      align-items: start;
-      padding: 40px 32px 120px;
-    }
+}
+
+.heading-block {
+  margin-bottom:4px;
+}
+
+.heading-block h1 {
+
+  font-family:var(--font-display);
+
+  font-size:clamp(24px,3.4vw,32px);
+
+  font-weight:700;
+
+  margin:0 0 6px;
+
+  letter-spacing:-.015em;
+}
+
+.heading-block p {
+
+  color:var(--text-secondary);
+
+  margin:0;
+
+  font-size:14.5px;
+
+  line-height:1.5;
+}
+
+
+/* ============================================================
+   PREVIEW
+   ============================================================ */
+
+.preview-panel {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:16px;
+}
+
+@media (min-width:980px) {
+
+  .preview-panel {
+
+    position:sticky;
+
+    top:92px;
   }
 
-  .heading-block { margin-bottom: 4px; }
-  .heading-block h1 {
-    font-family: var(--font-display);
-    font-size: clamp(24px, 3.4vw, 32px);
-    font-weight: 700;
-    margin: 0 0 6px;
-    letter-spacing: -0.015em;
-  }
-  .heading-block p { color: var(--text-secondary); margin: 0; font-size: 14.5px; line-height: 1.5; }
+}
 
-  /* ============================================================
-     PREVIEW PANEL (signature element)
-     ============================================================ */
-  .preview-panel { display: flex; flex-direction: column; gap: 16px; }
+.preview-eyebrow {
 
-  @media (min-width: 980px) {
-    .preview-panel { position: sticky; top: 92px; }
-  }
+  display:flex;
 
-  .preview-eyebrow {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--electric-blue-bright);
-  }
-  .preview-eyebrow i { animation: pulse-dot 2s ease-in-out infinite; }
-  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  align-items:center;
 
-  .preview-card {
-    border-radius: var(--radius-lg);
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--shadow-card);
-    overflow: hidden;
-    animation: rise-in 0.5s var(--ease-out);
+  gap:8px;
+
+  font-size:12px;
+
+  font-weight:600;
+
+  letter-spacing:.06em;
+
+  text-transform:uppercase;
+
+  color:var(--electric-blue-bright);
+}
+
+.preview-eyebrow i {
+
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+
+  0%,100% {
+    opacity:1;
   }
 
-  @keyframes rise-in {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
+  50% {
+    opacity:.35;
   }
 
-  .preview-cover {
-    position: relative;
-    height: 130px;
-    background: linear-gradient(135deg, var(--electric-blue-dim), #241640);
-    background-size: cover;
-    background-position: center;
-    transition: background-image 0.3s var(--ease-out);
-  }
-  .preview-cover::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(8,11,20,0) 40%, rgba(8,11,20,0.75) 100%);
+}
+
+.preview-card {
+
+  border-radius:var(--radius-lg);
+
+  background:var(--bg-glass);
+
+  backdrop-filter:blur(20px) saturate(160%);
+
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+
+  border:1px solid var(--border-subtle);
+
+  box-shadow:var(--shadow-card);
+
+  overflow:hidden;
+
+  animation:rise-in .5s var(--ease-out);
+}
+
+@keyframes rise-in {
+
+  from {
+    opacity:0;
+    transform:translateY(14px);
   }
 
-  .preview-body { padding: 0 18px 18px; margin-top: -34px; position: relative; z-index: 1; }
-
-  .preview-avatar {
-    width: 68px; height: 68px;
-    border-radius: 18px;
-    border: 3px solid var(--bg-surface);
-    background: linear-gradient(135deg, var(--electric-blue), var(--violet-accent));
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-weight: 700; font-size: 24px;
-    color: #fff;
-    background-size: cover;
-    background-position: center;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  to {
+    opacity:1;
+    transform:translateY(0);
   }
 
-  .preview-name-row { display: flex; align-items: center; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
-  .preview-name {
-    font-family: var(--font-display); font-weight: 700; font-size: 18px;
-    color: var(--text-primary);
-  }
-  .badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: var(--radius-full);
-    font-size: 11px; font-weight: 600;
-  }
-  .badge--verified { background: rgba(47, 111, 255, 0.16); color: var(--electric-blue-bright); }
-  .badge--premium { background: rgba(255, 194, 75, 0.14); color: var(--gold-accent); }
-  .badge--private { background: rgba(255, 92, 122, 0.14); color: var(--danger); }
-  .badge--public { background: rgba(34, 211, 165, 0.14); color: var(--success); }
+}
 
-  .preview-desc {
-    color: var(--text-secondary); font-size: 13.5px; line-height: 1.55;
-    margin: 8px 0 14px;
-    word-break: break-word;
-  }
-  .preview-desc.is-empty { font-style: italic; color: var(--text-muted); }
+.preview-cover {
 
-  .preview-stats {
-    display: flex; gap: 18px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-subtle);
-    font-family: var(--font-mono);
-  }
-  .preview-stat { display: flex; flex-direction: column; gap: 2px; }
-  .preview-stat b { font-size: 15px; color: var(--text-primary); font-weight: 600; }
-  .preview-stat span { font-size: 10.5px; color: var(--text-muted); font-family: var(--font-body); text-transform: uppercase; letter-spacing: 0.04em; }
+  position:relative;
 
-  .preview-category-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    margin-top: 12px;
-    padding: 5px 12px;
-    border-radius: var(--radius-full);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    font-size: 12px; color: var(--text-secondary);
+  height:130px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--electric-blue-dim),
+      #241640
+    );
+
+  background-size:cover;
+
+  background-position:center;
+
+  transition:background-image .3s var(--ease-out);
+}
+
+.preview-cover::after {
+
+  content:'';
+
+  position:absolute;
+
+  inset:0;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8,11,20,0) 40%,
+      rgba(8,11,20,.75) 100%
+    );
+}
+
+.preview-body {
+
+  padding:0 18px 18px;
+
+  margin-top:-34px;
+
+  position:relative;
+
+  z-index:1;
+}
+
+.preview-avatar {
+
+  width:68px;
+  height:68px;
+
+  border-radius:18px;
+
+  border:3px solid var(--bg-surface);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--electric-blue),
+      var(--violet-accent)
+    );
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-family:var(--font-display);
+
+  font-weight:700;
+
+  font-size:24px;
+
+  color:#fff;
+
+  background-size:cover;
+
+  background-position:center;
+
+  box-shadow:0 6px 18px rgba(0,0,0,.4);
+}
+
+.preview-name-row {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:7px;
+
+  margin-top:12px;
+
+  flex-wrap:wrap;
+}
+
+.preview-name {
+
+  font-family:var(--font-display);
+
+  font-weight:700;
+
+  font-size:18px;
+
+  color:var(--text-primary);
+}
+
+.badge {
+
+  display:inline-flex;
+
+  align-items:center;
+
+  gap:4px;
+
+  padding:2px 8px;
+
+  border-radius:var(--radius-full);
+
+  font-size:11px;
+
+  font-weight:600;
+}
+
+.badge--premium {
+
+  background:rgba(255,194,75,.14);
+
+  color:var(--gold-accent);
+}
+
+.badge--private {
+
+  background:rgba(255,92,122,.14);
+
+  color:var(--danger);
+}
+
+.badge--public {
+
+  background:rgba(34,211,165,.14);
+
+  color:var(--success);
+}
+
+.preview-desc {
+
+  color:var(--text-secondary);
+
+  font-size:13.5px;
+
+  line-height:1.55;
+
+  margin:8px 0 14px;
+
+  word-break:break-word;
+}
+
+.preview-desc.is-empty {
+
+  font-style:italic;
+
+  color:var(--text-muted);
+}
+
+.preview-stats {
+
+  display:flex;
+
+  gap:18px;
+
+  padding-top:14px;
+
+  border-top:1px solid var(--border-subtle);
+
+  font-family:var(--font-mono);
+}
+
+.preview-stat {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:2px;
+}
+
+.preview-stat b {
+
+  font-size:15px;
+
+  color:var(--text-primary);
+
+  font-weight:600;
+}
+
+.preview-stat span {
+
+  font-size:10.5px;
+
+  color:var(--text-muted);
+
+  font-family:var(--font-body);
+
+  text-transform:uppercase;
+
+  letter-spacing:.04em;
+}
+
+.preview-category-chip {
+
+  display:inline-flex;
+
+  align-items:center;
+
+  gap:6px;
+
+  margin-top:12px;
+
+  padding:5px 12px;
+
+  border-radius:var(--radius-full);
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  font-size:12px;
+
+  color:var(--text-secondary);
+}
+
+.preview-help {
+
+  display:flex;
+
+  gap:10px;
+
+  padding:14px 16px;
+
+  border-radius:var(--radius-md);
+
+  background:rgba(47,111,255,.07);
+
+  border:1px solid rgba(47,111,255,.18);
+
+  font-size:12.5px;
+
+  color:var(--text-secondary);
+
+  line-height:1.5;
+}
+
+.preview-help i {
+
+  color:var(--electric-blue-bright);
+
+  margin-top:1px;
+}
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+.form-panel {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:18px;
+}
+
+.form-section {
+
+  border-radius:var(--radius-lg);
+
+  background:var(--bg-surface);
+
+  border:1px solid var(--border-subtle);
+
+  padding:22px 22px 24px;
+
+  animation:rise-in .5s var(--ease-out) backwards;
+}
+
+.form-section:nth-of-type(1) {
+  animation-delay:.02s;
+}
+
+.form-section:nth-of-type(2) {
+  animation-delay:.06s;
+}
+
+.form-section:nth-of-type(3) {
+  animation-delay:.10s;
+}
+
+.form-section:nth-of-type(4) {
+  animation-delay:.14s;
+}
+
+.form-section:nth-of-type(5) {
+  animation-delay:.18s;
+}
+
+.form-section__head {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  margin-bottom:18px;
+}
+
+.form-section__num {
+
+  width:26px;
+  height:26px;
+
+  border-radius:8px;
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-family:var(--font-mono);
+
+  font-size:12px;
+
+  color:var(--electric-blue-bright);
+
+  flex-shrink:0;
+}
+
+.form-section__head h2 {
+
+  font-family:var(--font-display);
+
+  font-size:16.5px;
+
+  font-weight:600;
+
+  margin:0;
+}
+
+.form-section__head p {
+
+  margin:2px 0 0;
+
+  font-size:12.5px;
+
+  color:var(--text-muted);
+}
+
+
+/* ============================================================
+   MEDIA UPLOAD
+   ============================================================ */
+
+.media-upload-row {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:14px;
+}
+
+.cover-dropzone {
+
+  position:relative;
+
+  height:150px;
+
+  border-radius:var(--radius-md);
+
+  border:1.5px dashed var(--border-strong);
+
+  background:
+    var(--bg-surface-raised)
+    center/cover
+    no-repeat;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  overflow:hidden;
+
+  transition:
+    border-color .2s var(--ease-out),
+    transform .2s var(--ease-out);
+
+  cursor:pointer;
+}
+
+.cover-dropzone:hover {
+
+  border-color:var(--electric-blue);
+}
+
+.cover-dropzone.has-image {
+
+  border-style:solid;
+}
+
+.cover-dropzone__hint {
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  gap:6px;
+
+  color:var(--text-muted);
+
+  font-size:12.5px;
+
+  pointer-events:none;
+
+  transition:opacity .2s;
+}
+
+.cover-dropzone__hint i {
+
+  font-size:20px;
+
+  color:var(--electric-blue-bright);
+}
+
+.cover-dropzone.has-image .cover-dropzone__hint {
+
+  opacity:0;
+}
+
+.avatar-upload-row {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:16px;
+}
+
+.avatar-dropzone {
+
+  width:76px;
+  height:76px;
+
+  flex-shrink:0;
+
+  border-radius:20px;
+
+  border:1.5px dashed var(--border-strong);
+
+  background:
+    var(--bg-surface-raised)
+    center/cover
+    no-repeat;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  cursor:pointer;
+
+  transition:border-color .2s var(--ease-out);
+}
+
+.avatar-dropzone:hover {
+
+  border-color:var(--electric-blue);
+}
+
+.avatar-dropzone.has-image {
+
+  border-style:solid;
+}
+
+.avatar-dropzone i {
+
+  font-size:18px;
+
+  color:var(--electric-blue-bright);
+}
+
+.avatar-dropzone.has-image i {
+
+  display:none;
+}
+
+.avatar-upload-copy b {
+
+  display:block;
+
+  font-size:14px;
+
+  margin-bottom:2px;
+}
+
+.avatar-upload-copy span {
+
+  font-size:12px;
+
+  color:var(--text-muted);
+}
+
+input[type=file] {
+
+  display:none;
+}
+
+
+/* ============================================================
+   INPUTS
+   ============================================================ */
+
+.field {
+
+  margin-bottom:16px;
+}
+
+.field:last-child {
+
+  margin-bottom:0;
+}
+
+.field label {
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  font-size:13px;
+
+  font-weight:600;
+
+  color:var(--text-secondary);
+
+  margin-bottom:7px;
+}
+
+.field label .char-count {
+
+  font-family:var(--font-mono);
+
+  font-size:11px;
+
+  color:var(--text-muted);
+
+  font-weight:500;
+}
+
+.text-input,
+.textarea-input,
+.select-input {
+
+  width:100%;
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  border-radius:var(--radius-sm);
+
+  padding:11px 14px;
+
+  color:var(--text-primary);
+
+  font-size:14px;
+
+  outline:none;
+
+  transition:
+    border-color .2s var(--ease-out),
+    box-shadow .2s var(--ease-out);
+}
+
+.text-input:focus,
+.textarea-input:focus,
+.select-input:focus {
+
+  border-color:var(--electric-blue);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(47,111,255,.18);
+}
+
+.textarea-input {
+
+  resize:vertical;
+
+  min-height:84px;
+
+  line-height:1.5;
+
+  font-family:var(--font-body);
+}
+
+.select-input {
+
+  appearance:none;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238B96B3' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+
+  background-repeat:no-repeat;
+
+  background-position:right 14px center;
+
+  padding-right:36px;
+}
+
+.field-hint {
+
+  font-size:11.5px;
+
+  color:var(--text-muted);
+
+  margin-top:6px;
+}
+
+.field-error {
+
+  font-size:11.5px;
+
+  color:var(--danger);
+
+  margin-top:6px;
+
+  display:none;
+
+  align-items:center;
+
+  gap:5px;
+}
+
+.field.has-error .text-input,
+.field.has-error .textarea-input,
+.field.has-error .select-input {
+
+  border-color:var(--danger);
+}
+
+.field.has-error .field-error {
+
+  display:flex;
+}
+
+
+/* ============================================================
+   CHOICE CARDS
+   ============================================================ */
+
+.choice-grid {
+
+  display:grid;
+
+  grid-template-columns:1fr;
+
+  gap:12px;
+}
+
+@media (min-width:520px) {
+
+  .choice-grid {
+
+    grid-template-columns:1fr 1fr;
   }
 
-  .preview-help {
-    display: flex; gap: 10px;
-    padding: 14px 16px;
-    border-radius: var(--radius-md);
-    background: rgba(47, 111, 255, 0.07);
-    border: 1px solid rgba(47, 111, 255, 0.18);
-    font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;
-  }
-  .preview-help i { color: var(--electric-blue-bright); margin-top: 1px; }
+}
 
-  /* ============================================================
-     FORM PANEL
-     ============================================================ */
-  .form-panel { display: flex; flex-direction: column; gap: 18px; }
+.choice-card {
 
-  .form-section {
-    border-radius: var(--radius-lg);
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
-    padding: 22px 22px 24px;
-    animation: rise-in 0.5s var(--ease-out) backwards;
-  }
-  .form-section:nth-of-type(1) { animation-delay: 0.02s; }
-  .form-section:nth-of-type(2) { animation-delay: 0.06s; }
-  .form-section:nth-of-type(3) { animation-delay: 0.10s; }
-  .form-section:nth-of-type(4) { animation-delay: 0.14s; }
-  .form-section:nth-of-type(5) { animation-delay: 0.18s; }
+  position:relative;
 
-  .form-section__head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
-  .form-section__num {
-    width: 26px; height: 26px; border-radius: 8px;
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-mono); font-size: 12px; color: var(--electric-blue-bright);
-    flex-shrink: 0;
-  }
-  .form-section__head h2 { font-family: var(--font-display); font-size: 16.5px; font-weight: 600; margin: 0; }
-  .form-section__head p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-muted); }
+  display:block;
 
-  /* Cover / avatar upload */
-  .media-upload-row { display: flex; flex-direction: column; gap: 14px; }
+  padding:16px 16px 16px 46px;
 
-  .cover-dropzone {
-    position: relative;
-    height: 150px;
-    border-radius: var(--radius-md);
-    border: 1.5px dashed var(--border-strong);
-    background: var(--bg-surface-raised) center/cover no-repeat;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-    transition: border-color 0.2s var(--ease-out), transform 0.2s var(--ease-out);
-    cursor: pointer;
-  }
-  .cover-dropzone:hover { border-color: var(--electric-blue); }
-  .cover-dropzone.has-image { border-style: solid; }
-  .cover-dropzone__hint {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    color: var(--text-muted); font-size: 12.5px; pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .cover-dropzone__hint i { font-size: 20px; color: var(--electric-blue-bright); }
-  .cover-dropzone.has-image .cover-dropzone__hint { opacity: 0; }
+  border-radius:var(--radius-md);
 
-  .avatar-upload-row { display: flex; align-items: center; gap: 16px; }
-  .avatar-dropzone {
-    width: 76px; height: 76px; flex-shrink: 0;
-    border-radius: 20px;
-    border: 1.5px dashed var(--border-strong);
-    background: var(--bg-surface-raised) center/cover no-repeat;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: border-color 0.2s var(--ease-out);
-  }
-  .avatar-dropzone:hover { border-color: var(--electric-blue); }
-  .avatar-dropzone.has-image { border-style: solid; }
-  .avatar-dropzone i { font-size: 18px; color: var(--electric-blue-bright); }
-  .avatar-dropzone.has-image i { display: none; }
-  .avatar-upload-copy b { display: block; font-size: 14px; margin-bottom: 2px; }
-  .avatar-upload-copy span { font-size: 12px; color: var(--text-muted); }
+  border:1.5px solid var(--border-subtle);
 
-  input[type="file"] { display: none; }
+  background:var(--bg-surface-raised);
 
-  /* Text inputs */
-  .field { margin-bottom: 16px; }
-  .field:last-child { margin-bottom: 0; }
-  .field label {
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 7px;
-  }
-  .field label .char-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  cursor:pointer;
 
-  .text-input, .textarea-input, .select-input {
-    width: 100%;
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    padding: 11px 14px;
-    color: var(--text-primary);
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
-  }
-  .text-input:focus, .textarea-input:focus, .select-input:focus {
-    border-color: var(--electric-blue);
-    box-shadow: 0 0 0 3px rgba(47, 111, 255, 0.18);
-  }
-  .textarea-input { resize: vertical; min-height: 84px; line-height: 1.5; font-family: var(--font-body); }
+  transition:
+    border-color .2s var(--ease-out),
+    background .2s var(--ease-out),
+    transform .15s var(--ease-out);
+}
 
-  .select-input {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238B96B3' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
+.choice-card:hover {
+
+  transform:translateY(-1px);
+
+  border-color:var(--border-strong);
+}
+
+.choice-card input {
+
+  position:absolute;
+
+  opacity:0;
+
+  pointer-events:none;
+}
+
+.choice-card__radio {
+
+  position:absolute;
+
+  left:16px;
+
+  top:18px;
+
+  width:18px;
+
+  height:18px;
+
+  border-radius:var(--radius-full);
+
+  border:1.5px solid var(--border-strong);
+
+  transition:all .2s var(--ease-out);
+}
+
+.choice-card__radio::after {
+
+  content:'';
+
+  position:absolute;
+
+  inset:3px;
+
+  border-radius:50%;
+
+  background:var(--electric-blue);
+
+  opacity:0;
+
+  transform:scale(.4);
+
+  transition:all .2s var(--ease-out);
+}
+
+.choice-card input:checked ~ .choice-card__radio {
+
+  border-color:var(--electric-blue);
+}
+
+.choice-card input:checked ~ .choice-card__radio::after {
+
+  opacity:1;
+
+  transform:scale(1);
+}
+
+.choice-card:has(input:checked) {
+
+  border-color:var(--electric-blue);
+
+  background:rgba(47,111,255,.08);
+
+  box-shadow:var(--shadow-glow-blue);
+}
+
+.choice-card__title {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  font-weight:600;
+
+  font-size:14.5px;
+
+  margin-bottom:4px;
+}
+
+.choice-card__title i {
+
+  color:var(--electric-blue-bright);
+}
+
+.choice-card__desc {
+
+  font-size:12.5px;
+
+  color:var(--text-muted);
+
+  line-height:1.45;
+}
+
+
+/* ============================================================
+   PREMIUM
+   ============================================================ */
+
+.premium-price-wrapper {
+
+  max-height:0;
+
+  overflow:hidden;
+
+  opacity:0;
+
+  transition:
+    max-height .35s var(--ease-out),
+    opacity .3s var(--ease-out),
+    margin .35s var(--ease-out);
+}
+
+.premium-price-wrapper.is-visible {
+
+  max-height:420px;
+
+  opacity:1;
+
+  margin-top:16px;
+}
+
+.price-input-wrap {
+
+  position:relative;
+}
+
+.price-input-wrap .currency-prefix {
+
+  position:absolute;
+
+  left:14px;
+
+  top:50%;
+
+  transform:translateY(-50%);
+
+  color:var(--text-muted);
+
+  font-size:14px;
+
+  pointer-events:none;
+
+  z-index:2;
+}
+
+.price-input-wrap .text-input {
+
+  padding-left:32px;
+
+  font-family:var(--font-mono);
+}
+
+.earnings-note {
+
+  display:flex;
+
+  gap:10px;
+
+  margin-top:14px;
+
+  padding:12px 14px;
+
+  border-radius:var(--radius-sm);
+
+  background:
+    rgba(255,194,75,.08);
+
+  border:
+    1px solid
+    rgba(255,194,75,.2);
+
+  font-size:12px;
+
+  color:var(--text-secondary);
+
+  line-height:1.5;
+}
+
+.earnings-note i {
+
+  color:var(--gold-accent);
+
+  margin-top:1px;
+
+  flex-shrink:0;
+}
+
+.premium-owner-fee {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+  margin-top:10px;
+
+  padding:14px;
+
+  border-radius:var(--radius-md);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,194,75,.10),
+      rgba(139,92,255,.08)
+    );
+
+  border:
+    1px solid
+    rgba(255,194,75,.25);
+}
+
+.premium-owner-fee-icon {
+
+  width:40px;
+
+  height:40px;
+
+  flex-shrink:0;
+
+  border-radius:12px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  background:rgba(255,194,75,.12);
+
+  color:var(--gold-accent);
+}
+
+.premium-owner-fee-title {
+
+  font-weight:700;
+
+  font-size:13px;
+
+  color:var(--text-primary);
+
+  margin-bottom:2px;
+}
+
+.premium-owner-fee-text {
+
+  font-size:11.5px;
+
+  color:var(--text-muted);
+
+  line-height:1.45;
+}
+
+
+/* ============================================================
+   RULES
+   ============================================================ */
+
+.rules-list {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+  margin-bottom:14px;
+}
+
+.rule-item {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  border-radius:var(--radius-sm);
+
+  padding:10px 12px;
+
+  animation:rise-in .25s var(--ease-out);
+}
+
+.rule-item__index {
+
+  font-family:var(--font-mono);
+
+  font-size:12px;
+
+  color:var(--electric-blue-bright);
+
+  width:20px;
+
+  flex-shrink:0;
+
+  text-align:center;
+}
+
+.rule-item__text {
+
+  flex:1;
+
+  font-size:13.5px;
+
+  color:var(--text-primary);
+
+  word-break:break-word;
+}
+
+.rule-item__remove {
+
+  background:none;
+
+  border:none;
+
+  color:var(--text-muted);
+
+  width:26px;
+
+  height:26px;
+
+  border-radius:var(--radius-full);
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  transition:all .2s var(--ease-out);
+
+  flex-shrink:0;
+}
+
+.rule-item__remove:hover {
+
+  color:var(--danger);
+
+  background:rgba(255,92,122,.12);
+}
+
+.rules-empty {
+
+  font-size:12.5px;
+
+  color:var(--text-muted);
+
+  font-style:italic;
+
+  padding:4px 2px 14px;
+}
+
+.add-rule-row {
+
+  display:flex;
+
+  gap:10px;
+}
+
+.add-rule-row .text-input {
+
+  flex:1;
+}
+
+.btn-add-rule {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:7px;
+
+  flex-shrink:0;
+
+  padding:0 16px;
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  border-radius:var(--radius-sm);
+
+  color:var(--text-primary);
+
+  font-size:13px;
+
+  font-weight:600;
+
+  transition:all .2s var(--ease-out);
+}
+
+.btn-add-rule:hover {
+
+  border-color:var(--electric-blue);
+
+  color:var(--electric-blue-bright);
+}
+
+
+/* ============================================================
+   SUBMIT BAR
+   ============================================================ */
+
+.submit-bar {
+
+  position:sticky;
+
+  bottom:0;
+
+  margin-top:4px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:16px;
+
+  padding:16px 20px;
+
+  border-radius:var(--radius-lg);
+
+  background:var(--bg-glass);
+
+  backdrop-filter:blur(20px) saturate(160%);
+
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+
+  border:1px solid var(--border-subtle);
+
+  box-shadow:var(--shadow-card);
+}
+
+.submit-bar__status {
+
+  font-size:12.5px;
+
+  color:var(--text-muted);
+
+  display:flex;
+
+  align-items:center;
+
+  gap:7px;
+}
+
+.submit-bar__status i {
+
+  color:var(--electric-blue-bright);
+}
+
+.btn-primary {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:9px;
+
+  padding:13px 26px;
+
+  border-radius:var(--radius-full);
+
+  border:none;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--electric-blue),
+      var(--violet-accent)
+    );
+
+  color:#fff;
+
+  font-weight:600;
+
+  font-size:14.5px;
+
+  box-shadow:var(--shadow-glow-blue);
+
+  transition:
+    transform .2s var(--ease-out),
+    box-shadow .2s var(--ease-out),
+    opacity .2s;
+
+  white-space:nowrap;
+}
+
+.btn-primary:hover:not(:disabled) {
+
+  transform:translateY(-2px);
+
+  box-shadow:
+    0 0 0 1px rgba(47,111,255,.45),
+    0 12px 32px rgba(47,111,255,.32);
+}
+
+.btn-primary:active:not(:disabled) {
+
+  transform:translateY(0);
+}
+
+.btn-primary:disabled {
+
+  opacity:.55;
+
+  cursor:not-allowed;
+}
+
+.spinner {
+
+  width:16px;
+
+  height:16px;
+
+  border-radius:50%;
+
+  border:
+    2px solid
+    rgba(255,255,255,.35);
+
+  border-top-color:#fff;
+
+  animation:spin .7s linear infinite;
+
+  display:none;
+}
+
+.btn-primary.is-loading .spinner {
+
+  display:inline-block;
+}
+
+.btn-primary.is-loading .btn-primary__label {
+
+  display:none;
+}
+
+@keyframes spin {
+
+  to {
+    transform:rotate(360deg);
   }
 
-  .field-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
-  .field-error {
-    font-size: 11.5px; color: var(--danger); margin-top: 6px;
-    display: none; align-items: center; gap: 5px;
-  }
-  .field.has-error .text-input,
-  .field.has-error .textarea-input,
-  .field.has-error .select-input { border-color: var(--danger); }
-  .field.has-error .field-error { display: flex; }
+}
 
-  /* Choice cards (privacy / type) */
-  .choice-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  @media (min-width: 520px) { .choice-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width:560px) {
 
-  .choice-card {
-    position: relative;
-    display: block;
-    padding: 16px 16px 16px 46px;
-    border-radius: var(--radius-md);
-    border: 1.5px solid var(--border-subtle);
-    background: var(--bg-surface-raised);
-    cursor: pointer;
-    transition: border-color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.15s var(--ease-out);
-  }
-  .choice-card:hover { transform: translateY(-1px); border-color: var(--border-strong); }
-  .choice-card input { position: absolute; opacity: 0; pointer-events: none; }
-  .choice-card__radio {
-    position: absolute; left: 16px; top: 18px;
-    width: 18px; height: 18px; border-radius: var(--radius-full);
-    border: 1.5px solid var(--border-strong);
-    transition: all 0.2s var(--ease-out);
-  }
-  .choice-card__radio::after {
-    content: ''; position: absolute; inset: 3px; border-radius: 50%;
-    background: var(--electric-blue); opacity: 0; transform: scale(0.4);
-    transition: all 0.2s var(--ease-out);
-  }
-  .choice-card input:checked ~ .choice-card__radio { border-color: var(--electric-blue); }
-  .choice-card input:checked ~ .choice-card__radio::after { opacity: 1; transform: scale(1); }
-  .choice-card:has(input:checked) {
-    border-color: var(--electric-blue);
-    background: rgba(47, 111, 255, 0.08);
-    box-shadow: var(--shadow-glow-blue);
-  }
-  .choice-card__title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px; margin-bottom: 4px; }
-  .choice-card__title i { color: var(--electric-blue-bright); }
-  .choice-card__desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
-
-  .premium-price-wrapper {
-    max-height: 0; overflow: hidden; opacity: 0;
-    transition: max-height 0.35s var(--ease-out), opacity 0.3s var(--ease-out), margin 0.35s var(--ease-out);
-  }
-  .premium-price-wrapper.is-visible { max-height: 220px; opacity: 1; margin-top: 16px; }
-
-  .price-input-wrap { position: relative; }
-  .price-input-wrap .currency-prefix {
-    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-    color: var(--text-muted); font-size: 14px; pointer-events: none;
-  }
-  .price-input-wrap .text-input { padding-left: 30px; font-family: var(--font-mono); }
-
-  .earnings-note {
-    display: flex; gap: 10px; margin-top: 14px;
-    padding: 12px 14px; border-radius: var(--radius-sm);
-    background: rgba(255, 194, 75, 0.08); border: 1px solid rgba(255, 194, 75, 0.2);
-    font-size: 12px; color: var(--text-secondary); line-height: 1.5;
-  }
-  .earnings-note i { color: var(--gold-accent); margin-top: 1px; }
-
-  /* Rules list */
-  .rules-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-  .rule-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    animation: rise-in 0.25s var(--ease-out);
-  }
-  .rule-item__index {
-    font-family: var(--font-mono); font-size: 12px; color: var(--electric-blue-bright);
-    width: 20px; flex-shrink: 0; text-align: center;
-  }
-  .rule-item__text { flex: 1; font-size: 13.5px; color: var(--text-primary); word-break: break-word; }
-  .rule-item__remove {
-    background: none; border: none; color: var(--text-muted);
-    width: 26px; height: 26px; border-radius: var(--radius-full);
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s var(--ease-out); flex-shrink: 0;
-  }
-  .rule-item__remove:hover { color: var(--danger); background: rgba(255, 92, 122, 0.12); }
-
-  .rules-empty { font-size: 12.5px; color: var(--text-muted); font-style: italic; padding: 4px 2px 14px; }
-
-  .add-rule-row { display: flex; gap: 10px; }
-  .add-rule-row .text-input { flex: 1; }
-  .btn-add-rule {
-    display: flex; align-items: center; gap: 7px; flex-shrink: 0;
-    padding: 0 16px;
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary); font-size: 13px; font-weight: 600;
-    transition: all 0.2s var(--ease-out);
-  }
-  .btn-add-rule:hover { border-color: var(--electric-blue); color: var(--electric-blue-bright); }
-
-  /* Category chips (search-assist) */
-  .category-hint-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .category-hint-chip {
-    font-size: 11.5px; padding: 5px 11px; border-radius: var(--radius-full);
-    background: var(--bg-surface-raised); border: 1px solid var(--border-subtle);
-    color: var(--text-muted);
-  }
-
-  /* Submit bar */
   .submit-bar {
-    position: sticky; bottom: 0;
-    margin-top: 4px;
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 16px 20px;
-    border-radius: var(--radius-lg);
-    background: var(--bg-glass);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--shadow-card);
+
+    flex-direction:column-reverse;
+
+    align-items:stretch;
   }
-  .submit-bar__status { font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
-  .submit-bar__status i { color: var(--electric-blue-bright); }
 
   .btn-primary {
-    display: flex; align-items: center; gap: 9px;
-    padding: 13px 26px;
-    border-radius: var(--radius-full);
-    border: none;
-    background: linear-gradient(135deg, var(--electric-blue), var(--violet-accent));
-    color: #fff; font-weight: 600; font-size: 14.5px;
-    box-shadow: var(--shadow-glow-blue);
-    transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out), opacity 0.2s;
-    white-space: nowrap;
-  }
-  .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(47,111,255,0.45), 0 12px 32px rgba(47,111,255,0.32); }
-  .btn-primary:active:not(:disabled) { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 
-  .spinner {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
-    animation: spin 0.7s linear infinite; display: none;
-  }
-  .btn-primary.is-loading .spinner { display: inline-block; }
-  .btn-primary.is-loading .btn-primary__label { display: none; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 560px) {
-    .submit-bar { flex-direction: column-reverse; align-items: stretch; }
-    .btn-primary { justify-content: center; }
+    justify-content:center;
   }
 
-  /* Toasts */
-  #toast-container {
-    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
-    z-index: 200; display: flex; flex-direction: column; gap: 10px;
-    width: min(360px, calc(100vw - 32px));
+}
+
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+
+#toast-container {
+
+  position:fixed;
+
+  top:18px;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+  z-index:200;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+  width:min(360px,calc(100vw - 32px));
+}
+
+.toast {
+
+  display:flex;
+
+  align-items:flex-start;
+
+  gap:10px;
+
+  padding:13px 16px;
+
+  border-radius:var(--radius-md);
+
+  background:var(--bg-surface-raised);
+
+  border:1px solid var(--border-subtle);
+
+  box-shadow:var(--shadow-card);
+
+  font-size:13.5px;
+
+  animation:toast-in .3s var(--ease-out);
+}
+
+.toast--success {
+
+  border-color:
+    rgba(34,211,165,.35);
+}
+
+.toast--success i {
+
+  color:var(--success);
+}
+
+.toast--error {
+
+  border-color:
+    rgba(255,92,122,.35);
+}
+
+.toast--error i {
+
+  color:var(--danger);
+}
+
+.toast--info i {
+
+  color:var(--electric-blue-bright);
+}
+
+.toast i {
+
+  margin-top:2px;
+}
+
+@keyframes toast-in {
+
+  from {
+    opacity:0;
+    transform:translateY(-10px) scale(.97);
   }
-  .toast {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 13px 16px;
-    border-radius: var(--radius-md);
-    background: var(--bg-surface-raised);
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--shadow-card);
-    font-size: 13.5px;
-    animation: toast-in 0.3s var(--ease-out);
+
+  to {
+    opacity:1;
+    transform:translateY(0) scale(1);
   }
-  .toast--success { border-color: rgba(34,211,165,0.35); }
-  .toast--success i { color: var(--success); }
-  .toast--error { border-color: rgba(255,92,122,0.35); }
-  .toast--error i { color: var(--danger); }
-  .toast--info i { color: var(--electric-blue-bright); }
-  .toast i { margin-top: 2px; }
-  @keyframes toast-in { from { opacity: 0; transform: translateY(-10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  .toast.is-leaving { animation: toast-out 0.25s var(--ease-out) forwards; }
-  @keyframes toast-out { to { opacity: 0; transform: translateY(-8px) scale(0.97); } }
+
+}
+
+.toast.is-leaving {
+
+  animation:
+    toast-out .25s
+    var(--ease-out)
+    forwards;
+}
+
+@keyframes toast-out {
+
+  to {
+    opacity:0;
+    transform:translateY(-8px) scale(.97);
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width:600px) {
+
+  .vs-navbar {
+
+    padding:12px 14px;
+  }
+
+  .create-group-layout {
+
+    padding:
+      22px
+      14px
+      80px;
+  }
+
+  .form-section {
+
+    padding:
+      18px
+      16px
+      20px;
+  }
+
+  .heading-block h1 {
+
+    font-size:25px;
+  }
+
+  .preview-card {
+
+    border-radius:18px;
+  }
+
+}
+
 </style>
+
 </head>
+
+
 <body>
 
-  <nav class="vs-navbar">
-    <div class="vs-navbar__left">
-      <a href="groups.html" class="vs-back-btn" aria-label="Back to Groups">
-        <i class="fa-solid fa-arrow-left"></i>
-      </a>
-      <a href="feed.html" class="vs-logo">
-        <span class="vs-logo__mark"><i class="fa-solid fa-bolt"></i></span>
-        VitalStar
-      </a>
-      <span class="vs-page-title">Create Group</span>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+
+<nav class="vs-navbar">
+
+  <div class="vs-navbar__left">
+
+    <a
+      href="groups.html"
+      class="vs-back-btn"
+      aria-label="Back to Groups"
+    >
+      <i class="fa-solid fa-arrow-left"></i>
+    </a>
+
+    <a
+      href="feed.html"
+      class="vs-logo"
+    >
+
+      <span class="vs-logo__mark">
+        <i class="fa-solid fa-bolt"></i>
+      </span>
+
+      VitalStar
+
+    </a>
+
+    <span class="vs-page-title">
+      Create Group
+    </span>
+
+  </div>
+
+
+  <div class="vs-navbar__right">
+
+    <div
+      class="vs-avatar-sm"
+      id="navUserAvatar"
+    >
+      <i class="fa-solid fa-user"></i>
     </div>
-    <div class="vs-navbar__right">
-      <div class="vs-avatar-sm" id="navUserAvatar"><i class="fa-solid fa-user"></i></div>
+
+  </div>
+
+</nav>
+
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+
+<main class="create-group-layout">
+
+
+  <!-- ==========================================================
+       LIVE PREVIEW
+       ========================================================== -->
+
+  <aside class="preview-panel">
+
+    <div class="preview-eyebrow">
+
+      <i
+        class="fa-solid fa-circle"
+        style="font-size:6px;"
+      ></i>
+
+      Live preview
+
     </div>
-  </nav>
 
-  <main class="create-group-layout">
 
-    <!-- ============================================================
-         LIVE PREVIEW PANEL
-         ============================================================ -->
-    <aside class="preview-panel">
-      <div class="preview-eyebrow"><i class="fa-solid fa-circle" style="font-size:6px;"></i> Live preview</div>
+    <div class="preview-card">
 
-      <div class="preview-card">
-        <div class="preview-cover" id="previewCover"></div>
-        <div class="preview-body">
-          <div class="preview-avatar" id="previewAvatar">
-            <i class="fa-solid fa-users"></i>
-          </div>
-          <div class="preview-name-row">
-            <span class="preview-name" id="previewName">Your group name</span>
-            <span class="badge badge--public" id="previewPrivacyBadge">
-              <i class="fa-solid fa-globe" style="font-size:9px;"></i> Public
-            </span>
-            <span class="badge badge--premium" id="previewPremiumBadge" style="display:none;">
-              <i class="fa-solid fa-crown" style="font-size:9px;"></i> Premium
-            </span>
-          </div>
-          <p class="preview-desc is-empty" id="previewDesc">Your group description will appear here as you type.</p>
-          <div class="preview-stats">
-            <div class="preview-stat"><b>1</b><span>Members</span></div>
-            <div class="preview-stat"><b>0</b><span>Posts</span></div>
-            <div class="preview-stat"><b>1</b><span>Online</span></div>
-          </div>
-          <div class="preview-category-chip" id="previewCategoryChip" style="display:none;">
-            <i class="fa-solid fa-tag" style="font-size:10px;"></i>
-            <span id="previewCategoryText">Category</span>
-          </div>
-        </div>
-      </div>
+      <div
+        class="preview-cover"
+        id="previewCover"
+      ></div>
 
-      <div class="preview-help">
-        <i class="fa-solid fa-circle-info"></i>
-        <span>This is exactly how your group card will look across VitalStar — in search, recommendations, and the Groups directory.</span>
-      </div>
-    </aside>
 
-    <!-- ============================================================
-         FORM PANEL
-         ============================================================ -->
-    <section class="form-panel">
+      <div class="preview-body">
 
-      <div class="heading-block">
-        <h1>Create a group</h1>
-        <p>Build a community around what you care about. You can change any of this later from group settings.</p>
-      </div>
+        <div
+          class="preview-avatar"
+          id="previewAvatar"
+        >
 
-      <form id="createGroupForm" novalidate>
+          <i class="fa-solid fa-users"></i>
 
-        <!-- Section 1: Media -->
-        <div class="form-section">
-          <div class="form-section__head">
-            <span class="form-section__num">01</span>
-            <div>
-              <h2>Cover &amp; profile picture</h2>
-              <p>Recommended cover: 1200×400px. Profile picture: square, at least 300×300px.</p>
-            </div>
-          </div>
-
-          <div class="media-upload-row">
-            <div class="cover-dropzone" id="coverDropzone">
-              <div class="cover-dropzone__hint">
-                <i class="fa-solid fa-image"></i>
-                <span>Click to upload a cover photo</span>
-              </div>
-              <input type="file" id="coverUploadInput" accept="image/*" />
-            </div>
-
-            <div class="avatar-upload-row">
-              <div class="avatar-dropzone" id="avatarDropzone">
-                <i class="fa-solid fa-camera"></i>
-                <input type="file" id="avatarUploadInput" accept="image/*" />
-              </div>
-              <div class="avatar-upload-copy">
-                <b>Group profile picture</b>
-                <span>PNG or JPG, up to 5MB</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- Section 2: Basics -->
-        <div class="form-section">
-          <div class="form-section__head">
-            <span class="form-section__num">02</span>
-            <div>
-              <h2>Basic information</h2>
-              <p>Tell people what this group is about.</p>
-            </div>
-          </div>
 
-          <div class="field" id="groupNameField">
-            <label for="groupNameInput">Group name <span class="char-count" id="nameCharCount">0/60</span></label>
-            <input type="text" class="text-input" id="groupNameInput" maxlength="60" placeholder="e.g. Indie Game Developers" autocomplete="off" />
-            <p class="field-error"><i class="fa-solid fa-circle-exclamation"></i> Give your group a name (2–60 characters).</p>
-          </div>
+        <div class="preview-name-row">
 
-          <div class="field" id="groupDescField">
-            <label for="groupDescInput">Description <span class="char-count" id="descCharCount">0/500</span></label>
-            <textarea class="textarea-input" id="groupDescInput" maxlength="500" placeholder="What is this group about? What should members expect?"></textarea>
-            <p class="field-error"><i class="fa-solid fa-circle-exclamation"></i> Add a short description so people know what to expect.</p>
-          </div>
-
-          <div class="field" id="categoryField">
-            <label for="categorySelect">Category</label>
-            <select class="select-input" id="categorySelect">
-              <option value="" disabled selected>Choose a category</option>
-              <option value="technology">Technology</option>
-              <option value="gaming">Gaming</option>
-              <option value="programming">Programming</option>
-              <option value="music">Music</option>
-              <option value="movies-tv">Movies &amp; TV</option>
-              <option value="anime">Anime</option>
-              <option value="sports">Sports</option>
-              <option value="education">Education</option>
-              <option value="business">Business</option>
-              <option value="entertainment">Entertainment</option>
-              <option value="news">News</option>
-              <option value="science">Science</option>
-              <option value="fashion">Fashion</option>
-              <option value="travel">Travel</option>
-              <option value="politics">Politics</option>
-              <option value="religion">Religion</option>
-              <option value="general">General</option>
-              <option value="other">Other</option>
-            </select>
-            <p class="field-error"><i class="fa-solid fa-circle-exclamation"></i> Pick a category so people can find your group.</p>
-          </div>
-        </div>
-
-        <!-- Section 3: Privacy -->
-        <div class="form-section">
-          <div class="form-section__head">
-            <span class="form-section__num">03</span>
-            <div>
-              <h2>Who can see and join</h2>
-              <p>You can change this later, but member visibility of past posts may be affected.</p>
-            </div>
-          </div>
-
-          <div class="choice-grid">
-            <label class="choice-card">
-              <input type="radio" name="privacy" value="public" checked />
-              <span class="choice-card__radio"></span>
-              <span class="choice-card__title"><i class="fa-solid fa-globe"></i> Public</span>
-              <span class="choice-card__desc">Anyone can see the group, its members, and posts. Anyone can join instantly.</span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="privacy" value="private" />
-              <span class="choice-card__radio"></span>
-              <span class="choice-card__title"><i class="fa-solid fa-lock"></i> Private</span>
-              <span class="choice-card__desc">Only members can see posts. New members must be approved by an admin or moderator.</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Section 4: Type / Premium -->
-        <div class="form-section">
-          <div class="form-section__head">
-            <span class="form-section__num">04</span>
-            <div>
-              <h2>Group type</h2>
-              <p>Premium groups let you charge a monthly membership fee.</p>
-            </div>
-          </div>
-
-          <div class="choice-grid">
-            <label class="choice-card">
-              <input type="radio" name="groupType" value="free" checked />
-              <span class="choice-card__radio"></span>
-              <span class="choice-card__title"><i class="fa-solid fa-hand-holding-heart"></i> Free</span>
-              <span class="choice-card__desc">Open membership at no cost to join.</span>
-            </label>
-            <label class="choice-card">
-              <input type="radio" name="groupType" value="premium" />
-              <span class="choice-card__radio"></span>
-              <span class="choice-card__title"><i class="fa-solid fa-crown"></i> Premium</span>
-              <span class="choice-card__desc">Members pay a monthly subscription to join and stay.</span>
-            </label>
-          </div>
-
-          <div class="premium-price-wrapper" id="premiumPriceWrapper">
-            <div class="field" id="priceField" style="margin-top:16px;">
-              <label for="priceInput">Monthly subscription price (USD)</label>
-              <div class="price-input-wrap">
-                <span class="currency-prefix">$</span>
-                <input type="number" class="text-input" id="priceInput" min="1" step="0.01" placeholder="9.99" />
-              </div>
-              <p class="field-error"><i class="fa-solid fa-circle-exclamation"></i> Enter a monthly price of at least $1.00.</p>
-            </div>
-            <div class="earnings-note">
-              <i class="fa-solid fa-lightbulb"></i>
-              <span>Payment processing isn't live yet — VitalStar is preparing Paystack and Flutterwave support. Your price and subscriber list will be saved now, and billing will activate automatically once payments launch. You keep full ownership of your earnings data.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Section 5: Rules -->
-        <div class="form-section">
-          <div class="form-section__head">
-            <span class="form-section__num">05</span>
-            <div>
-              <h2>Group rules <span style="color:var(--text-muted); font-weight:500; font-size:12.5px;">(optional)</span></h2>
-              <p>Set clear expectations for members. You can add or edit these later.</p>
-            </div>
-          </div>
-
-          <div class="rules-list" id="rulesList"></div>
-          <p class="rules-empty" id="rulesEmptyState">No rules added yet.</p>
-
-          <div class="add-rule-row">
-            <input type="text" class="text-input" id="ruleInput" maxlength="150" placeholder="e.g. Be respectful to all members" />
-            <button type="button" class="btn-add-rule" id="addRuleBtn">
-              <i class="fa-solid fa-plus"></i> Add
-            </button>
-          </div>
-        </div>
-
-        <!-- Submit bar -->
-        <div class="submit-bar">
-          <span class="submit-bar__status">
-            <i class="fa-solid fa-shield-halved"></i>
-            You'll be the Owner of this group
+          <span
+            class="preview-name"
+            id="previewName"
+          >
+            Your group name
           </span>
-          <button type="submit" class="btn-primary" id="createGroupBtn">
-            <span class="spinner"></span>
-            <span class="btn-primary__label"><i class="fa-solid fa-sparkles"></i> Create group</span>
-          </button>
+
+
+          <span
+            class="badge badge--public"
+            id="previewPrivacyBadge"
+          >
+
+            <i
+              class="fa-solid fa-globe"
+              style="font-size:9px;"
+            ></i>
+
+            Public
+
+          </span>
+
+
+          <span
+            class="badge badge--premium"
+            id="previewPremiumBadge"
+            style="display:none;"
+          >
+
+            <i
+              class="fa-solid fa-crown"
+              style="font-size:9px;"
+            ></i>
+
+            Premium
+
+          </span>
+
         </div>
 
-      </form>
-    </section>
-  </main>
 
-  <div id="toast-container"></div>
+        <p
+          class="preview-desc is-empty"
+          id="previewDesc"
+        >
+          Your group description will appear here as you type.
+        </p>
 
-  <script type="module" src="./create-group.js"></script>
+
+        <div class="preview-stats">
+
+          <div class="preview-stat">
+
+            <b>1</b>
+
+            <span>
+              Members
+            </span>
+
+          </div>
+
+
+          <div class="preview-stat">
+
+            <b>0</b>
+
+            <span>
+              Posts
+            </span>
+
+          </div>
+
+
+          <div class="preview-stat">
+
+            <b>1</b>
+
+            <span>
+              Online
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="preview-category-chip"
+          id="previewCategoryChip"
+          style="display:none;"
+        >
+
+          <i
+            class="fa-solid fa-tag"
+            style="font-size:10px;"
+          ></i>
+
+          <span id="previewCategoryText">
+            Category
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="preview-help">
+
+      <i class="fa-solid fa-circle-info"></i>
+
+      <span>
+        This is how your group card can appear across
+        VitalStar in search, recommendations and the
+        Groups directory.
+      </span>
+
+    </div>
+
+  </aside>
+
+
+  <!-- ==========================================================
+       FORM
+       ========================================================== -->
+
+  <section class="form-panel">
+
+
+    <div class="heading-block">
+
+      <h1>
+        Create a group
+      </h1>
+
+      <p>
+        Build a community around what you care about.
+        Premium groups require a ₦1,500 creation payment.
+      </p>
+
+    </div>
+
+
+    <form
+      id="createGroupForm"
+      novalidate
+    >
+
+
+      <!-- ======================================================
+           SECTION 1 — MEDIA
+           ====================================================== -->
+
+      <div class="form-section">
+
+        <div class="form-section__head">
+
+          <span class="form-section__num">
+            01
+          </span>
+
+          <div>
+
+            <h2>
+              Cover &amp; profile picture
+            </h2>
+
+            <p>
+              Recommended cover: 1200×400px.
+              Profile picture: square, at least 300×300px.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="media-upload-row">
+
+
+          <div
+            class="cover-dropzone"
+            id="coverDropzone"
+          >
+
+            <div class="cover-dropzone__hint">
+
+              <i class="fa-solid fa-image"></i>
+
+              <span>
+                Click to upload a cover photo
+              </span>
+
+            </div>
+
+
+            <input
+              type="file"
+              id="coverUploadInput"
+              accept="image/*"
+            />
+
+          </div>
+
+
+          <div class="avatar-upload-row">
+
+
+            <div
+              class="avatar-dropzone"
+              id="avatarDropzone"
+            >
+
+              <i class="fa-solid fa-camera"></i>
+
+              <input
+                type="file"
+                id="avatarUploadInput"
+                accept="image/*"
+              />
+
+            </div>
+
+
+            <div class="avatar-upload-copy">
+
+              <b>
+                Group profile picture
+              </b>
+
+              <span>
+                PNG or JPG, up to 5MB
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================================
+           SECTION 2 — BASIC INFORMATION
+           ====================================================== -->
+
+      <div class="form-section">
+
+        <div class="form-section__head">
+
+          <span class="form-section__num">
+            02
+          </span>
+
+          <div>
+
+            <h2>
+              Basic information
+            </h2>
+
+            <p>
+              Tell people what this group is about.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="field"
+          id="groupNameField"
+        >
+
+          <label for="groupNameInput">
+
+            Group name
+
+            <span
+              class="char-count"
+              id="nameCharCount"
+            >
+              0/60
+            </span>
+
+          </label>
+
+
+          <input
+            type="text"
+            class="text-input"
+            id="groupNameInput"
+            maxlength="60"
+            placeholder="e.g. Indie Game Developers"
+            autocomplete="off"
+          />
+
+
+          <p class="field-error">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            Give your group a name
+            (2–60 characters).
+
+          </p>
+
+        </div>
+
+
+        <div
+          class="field"
+          id="groupDescField"
+        >
+
+          <label for="groupDescInput">
+
+            Description
+
+            <span
+              class="char-count"
+              id="descCharCount"
+            >
+              0/500
+            </span>
+
+          </label>
+
+
+          <textarea
+            class="textarea-input"
+            id="groupDescInput"
+            maxlength="500"
+            placeholder="What is this group about? What should members expect?"
+          ></textarea>
+
+
+          <p class="field-error">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            Add a short description so people know
+            what to expect.
+
+          </p>
+
+        </div>
+
+
+        <div
+          class="field"
+          id="categoryField"
+        >
+
+          <label for="categorySelect">
+            Category
+          </label>
+
+
+          <select
+            class="select-input"
+            id="categorySelect"
+          >
+
+            <option
+              value=""
+              disabled
+              selected
+            >
+              Choose a category
+            </option>
+
+            <option value="technology">
+              Technology
+            </option>
+
+            <option value="gaming">
+              Gaming
+            </option>
+
+            <option value="programming">
+              Programming
+            </option>
+
+            <option value="music">
+              Music
+            </option>
+
+            <option value="movies-tv">
+              Movies &amp; TV
+            </option>
+
+            <option value="anime">
+              Anime
+            </option>
+
+            <option value="sports">
+              Sports
+            </option>
+
+            <option value="education">
+              Education
+            </option>
+
+            <option value="business">
+              Business
+            </option>
+
+            <option value="entertainment">
+              Entertainment
+            </option>
+
+            <option value="news">
+              News
+            </option>
+
+            <option value="science">
+              Science
+            </option>
+
+            <option value="fashion">
+              Fashion
+            </option>
+
+            <option value="travel">
+              Travel
+            </option>
+
+            <option value="politics">
+              Politics
+            </option>
+
+            <option value="religion">
+              Religion
+            </option>
+
+            <option value="general">
+              General
+            </option>
+
+            <option value="other">
+              Other
+            </option>
+
+          </select>
+
+
+          <p class="field-error">
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            Pick a category so people can find your group.
+
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================================
+           SECTION 3 — PRIVACY
+           ====================================================== -->
+
+      <div class="form-section">
+
+        <div class="form-section__head">
+
+          <span class="form-section__num">
+            03
+          </span>
+
+          <div>
+
+            <h2>
+              Who can see and join
+            </h2>
+
+            <p>
+              Control who can access your community.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="choice-grid">
+
+
+          <label class="choice-card">
+
+            <input
+              type="radio"
+              name="privacy"
+              value="public"
+              checked
+            />
+
+            <span class="choice-card__radio"></span>
+
+
+            <span class="choice-card__title">
+
+              <i class="fa-solid fa-globe"></i>
+
+              Public
+
+            </span>
+
+
+            <span class="choice-card__desc">
+
+              Anyone can discover the group.
+              Members can join according to the
+              group's type.
+
+            </span>
+
+          </label>
+
+
+          <label class="choice-card">
+
+            <input
+              type="radio"
+              name="privacy"
+              value="private"
+            />
+
+            <span class="choice-card__radio"></span>
+
+
+            <span class="choice-card__title">
+
+              <i class="fa-solid fa-lock"></i>
+
+              Private
+
+            </span>
+
+
+            <span class="choice-card__desc">
+
+              The group is private and new members
+              must be approved by an admin or moderator.
+
+            </span>
+
+          </label>
+
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================================
+           SECTION 4 — GROUP TYPE
+           ====================================================== -->
+
+      <div class="form-section">
+
+        <div class="form-section__head">
+
+          <span class="form-section__num">
+            04
+          </span>
+
+          <div>
+
+            <h2>
+              Group type
+            </h2>
+
+            <p>
+              Choose whether members join for free
+              or pay ₦100.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="choice-grid">
+
+
+          <!-- FREE -->
+
+          <label class="choice-card">
+
+            <input
+              type="radio"
+              name="groupType"
+              value="free"
+              checked
+            />
+
+            <span class="choice-card__radio"></span>
+
+
+            <span class="choice-card__title">
+
+              <i class="fa-solid fa-hand-holding-heart"></i>
+
+              Free
+
+            </span>
+
+
+            <span class="choice-card__desc">
+
+              Anyone can join this group without
+              paying a membership fee.
+
+            </span>
+
+          </label>
+
+
+          <!-- PREMIUM -->
+
+          <label class="choice-card">
+
+            <input
+              type="radio"
+              name="groupType"
+              value="premium"
+            />
+
+            <span class="choice-card__radio"></span>
+
+
+            <span class="choice-card__title">
+
+              <i class="fa-solid fa-crown"></i>
+
+              Premium
+
+            </span>
+
+
+            <span class="choice-card__desc">
+
+              Members pay ₦100 to join this
+              premium group.
+
+            </span>
+
+          </label>
+
+
+        </div>
+
+
+        <!-- ====================================================
+             PREMIUM SETTINGS
+             ==================================================== -->
+
+        <div
+          class="premium-price-wrapper"
+          id="premiumPriceWrapper"
+        >
+
+
+          <div
+            class="field"
+            id="priceField"
+            style="margin-top:16px;"
+          >
+
+            <label for="priceInput">
+              Member join fee
+            </label>
+
+
+            <div class="price-input-wrap">
+
+              <span class="currency-prefix">
+                ₦
+              </span>
+
+
+              <input
+                type="number"
+                class="text-input"
+                id="priceInput"
+                value="100"
+                min="100"
+                max="100"
+                step="1"
+                readonly
+              />
+
+            </div>
+
+
+            <p
+              class="field-hint"
+              style="color:var(--gold-accent);"
+            >
+
+              Members will pay ₦100 to join
+              this premium group.
+
+            </p>
+
+
+            <p class="field-error">
+
+              <i class="fa-solid fa-circle-exclamation"></i>
+
+              Premium groups require a ₦100
+              member join fee.
+
+            </p>
+
+          </div>
+
+
+          <!-- ==================================================
+               OWNER CREATION FEE
+               ================================================== -->
+
+          <div class="premium-owner-fee">
+
+            <div class="premium-owner-fee-icon">
+
+              <i class="fa-solid fa-crown"></i>
+
+            </div>
+
+
+            <div>
+
+              <div class="premium-owner-fee-title">
+
+                Premium group creation fee: ₦1,500
+
+              </div>
+
+
+              <div class="premium-owner-fee-text">
+
+                The group owner must complete the
+                ₦1,500 VitalStar creation payment
+                before the premium group is created.
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ==================================================
+               MEMBER PAYMENT
+               ================================================== -->
+
+          <div class="earnings-note">
+
+            <i class="fa-solid fa-wallet"></i>
+
+
+            <span>
+
+              <strong style="color:var(--gold-accent);">
+
+                Member join fee: ₦100
+
+              </strong>
+
+              <br>
+
+              Members who want to join this premium
+              group will be required to complete the
+              ₦100 membership payment.
+
+            </span>
+
+          </div>
+
+
+          <!-- ==================================================
+               PAYMENT STATUS
+               ================================================== -->
+
+          <div
+            class="earnings-note"
+            style="
+              margin-top:10px;
+              background:rgba(47,111,255,.07);
+              border-color:rgba(47,111,255,.20);
+            "
+          >
+
+            <i
+              class="fa-solid fa-shield-halved"
+              style="color:var(--electric-blue-bright);"
+            ></i>
+
+
+            <span>
+
+              <strong style="color:var(--text-primary);">
+
+                Payment required before creation
+
+              </strong>
+
+              <br>
+
+              Premium groups will not be finalized
+              until the required owner creation
+              payment has been successfully verified.
+
+            </span>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================================
+           SECTION 5 — RULES
+           ====================================================== -->
+
+      <div class="form-section">
+
+        <div class="form-section__head">
+
+          <span class="form-section__num">
+            05
+          </span>
+
+          <div>
+
+            <h2>
+
+              Group rules
+
+              <span
+                style="
+                  color:var(--text-muted);
+                  font-weight:500;
+                  font-size:12.5px;
+                "
+              >
+                (optional)
+              </span>
+
+            </h2>
+
+
+            <p>
+              Set clear expectations for members.
+              You can edit these later.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="rules-list"
+          id="rulesList"
+        ></div>
+
+
+        <p
+          class="rules-empty"
+          id="rulesEmptyState"
+        >
+          No rules added yet.
+        </p>
+
+
+        <div class="add-rule-row">
+
+          <input
+            type="text"
+            class="text-input"
+            id="ruleInput"
+            maxlength="150"
+            placeholder="e.g. Be respectful to all members"
+          />
+
+
+          <button
+            type="button"
+            class="btn-add-rule"
+            id="addRuleBtn"
+          >
+
+            <i class="fa-solid fa-plus"></i>
+
+            Add
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================================================
+           SUBMIT BAR
+           ====================================================== -->
+
+      <div class="submit-bar">
+
+
+        <span class="submit-bar__status">
+
+          <i class="fa-solid fa-shield-halved"></i>
+
+          <span id="submitStatusText">
+
+            You'll be the Owner of this group
+
+          </span>
+
+        </span>
+
+
+        <button
+          type="submit"
+          class="btn-primary"
+          id="createGroupBtn"
+        >
+
+          <span class="spinner"></span>
+
+
+          <span class="btn-primary__label">
+
+            <i class="fa-solid fa-sparkles"></i>
+
+            Create group
+
+          </span>
+
+        </button>
+
+      </div>
+
+
+    </form>
+
+  </section>
+
+</main>
+
+
+<!-- ============================================================
+     TOAST CONTAINER
+     ============================================================ -->
+
+<div id="toast-container"></div>
+
+
+<!-- ============================================================
+     CREATE GROUP JAVASCRIPT
+     ============================================================ -->
+
+<script
+  type="module"
+  src="./create-group.js"
+></script>
+
+
 </body>
 </html>
