@@ -1,10 +1,6 @@
-:::writing{variant="document" id="48271" title="Updated create-group.js"}
-/* ============================================================
-   VITALSTAR — create-group.js
-   Premium Group:
-   Owner activation fee = ₦1,500 paid to VitalStar
-   Follower fee = ₦100 paid separately to group owner
-   ============================================================ */
+// ============================================================
+// VITALSTAR — create-group.js
+// ============================================================
 
 import { auth, db } from './firebase.js';
 
@@ -20,19 +16,31 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 
-/* ============================================================
-   CLOUDINARY CONFIG
-   ============================================================ */
+// ============================================================
+// CONFIG
+// ============================================================
 
 const CLOUDINARY_CLOUD_NAME = 'm0scmqqv';
 const CLOUDINARY_UPLOAD_PRESET = 'vitalstar_upload';
 
+const PREMIUM_ACTIVATION_FEE = 1500;
+const FOLLOWER_FEE = 100;
+const CURRENCY = 'NGN';
+
+const PAYMENT_FUNCTION_URL =
+  'https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/create-group-payment';
+
+
+// ============================================================
+// CLOUDINARY
+// ============================================================
 
 async function uploadToCloudinary(file) {
 
-  const type = file.type.startsWith('video')
-    ? 'video'
-    : 'image';
+  const type =
+    file.type.startsWith('video')
+      ? 'video'
+      : 'image';
 
   const formData = new FormData();
 
@@ -45,40 +53,31 @@ async function uploadToCloudinary(file) {
   const uploadURL =
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`;
 
-  try {
-
-    const response = await fetch(uploadURL, {
+  const response = await fetch(
+    uploadURL,
+    {
       method: 'POST',
       body: formData
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error?.message ||
-        `Cloudinary upload failed (${response.status})`
-      );
     }
+  );
 
-    return data.secure_url || '';
+  const data =
+    await response.json();
 
-  } catch (error) {
-
-    console.error(
-      'Cloudinary upload error:',
-      error
+  if (!response.ok) {
+    throw new Error(
+      data.error?.message ||
+      'Cloudinary upload failed.'
     );
-
-    throw error;
   }
+
+  return data.secure_url || '';
 }
 
 
-/* ============================================================
-   DOM REFERENCES
-   ============================================================ */
+// ============================================================
+// DOM
+// ============================================================
 
 const form =
   document.getElementById('createGroupForm');
@@ -123,19 +122,27 @@ const avatarUploadInput =
   document.getElementById('avatarUploadInput');
 
 const privacyRadios =
-  document.querySelectorAll('input[name="privacy"]');
+  document.querySelectorAll(
+    'input[name="privacy"]'
+  );
 
 const groupTypeRadios =
-  document.querySelectorAll('input[name="groupType"]');
+  document.querySelectorAll(
+    'input[name="groupType"]'
+  );
 
 const premiumPriceWrapper =
-  document.getElementById('premiumPriceWrapper');
+  document.getElementById(
+    'premiumPriceWrapper'
+  );
 
 const rulesList =
   document.getElementById('rulesList');
 
 const rulesEmptyState =
-  document.getElementById('rulesEmptyState');
+  document.getElementById(
+    'rulesEmptyState'
+  );
 
 const ruleInput =
   document.getElementById('ruleInput');
@@ -145,11 +152,6 @@ const addRuleBtn =
 
 const navUserAvatar =
   document.getElementById('navUserAvatar');
-
-
-/* ============================================================
-   PREVIEW REFERENCES
-   ============================================================ */
 
 const previewCover =
   document.getElementById('previewCover');
@@ -164,33 +166,34 @@ const previewDesc =
   document.getElementById('previewDesc');
 
 const previewPrivacyBadge =
-  document.getElementById('previewPrivacyBadge');
+  document.getElementById(
+    'previewPrivacyBadge'
+  );
 
 const previewPremiumBadge =
-  document.getElementById('previewPremiumBadge');
+  document.getElementById(
+    'previewPremiumBadge'
+  );
 
 const previewCategoryChip =
-  document.getElementById('previewCategoryChip');
+  document.getElementById(
+    'previewCategoryChip'
+  );
 
 const previewCategoryText =
-  document.getElementById('previewCategoryText');
+  document.getElementById(
+    'previewCategoryText'
+  );
 
 const toastContainer =
-  document.getElementById('toast-container');
+  document.getElementById(
+    'toast-container'
+  );
 
 
-/* ============================================================
-   CONSTANTS
-   ============================================================ */
-
-const PREMIUM_ACTIVATION_FEE = 1500;
-const FOLLOWER_FEE = 100;
-const CURRENCY = 'NGN';
-
-
-/* ============================================================
-   STATE
-   ============================================================ */
+// ============================================================
+// STATE
+// ============================================================
 
 const state = {
 
@@ -208,9 +211,9 @@ const state = {
 };
 
 
-/* ============================================================
-   CATEGORY LABELS
-   ============================================================ */
+// ============================================================
+// CATEGORY LABELS
+// ============================================================
 
 const CATEGORY_LABELS = {
 
@@ -236,9 +239,9 @@ const CATEGORY_LABELS = {
 };
 
 
-/* ============================================================
-   TOASTS
-   ============================================================ */
+// ============================================================
+// TOAST
+// ============================================================
 
 function showToast(
   message,
@@ -298,9 +301,9 @@ function escapeHtml(str) {
 }
 
 
-/* ============================================================
-   AUTH GUARD
-   ============================================================ */
+// ============================================================
+// AUTH
+// ============================================================
 
 onAuthStateChanged(
   auth,
@@ -314,7 +317,8 @@ onAuthStateChanged(
       return;
     }
 
-    state.currentUser = user;
+    state.currentUser =
+      user;
 
     if (
       user.photoURL &&
@@ -337,9 +341,9 @@ onAuthStateChanged(
 );
 
 
-/* ============================================================
-   LIVE PREVIEW
-   ============================================================ */
+// ============================================================
+// PREVIEW
+// ============================================================
 
 function syncNamePreview() {
 
@@ -394,7 +398,8 @@ function syncCategoryPreview() {
       'inline-flex';
 
     previewCategoryText.textContent =
-      CATEGORY_LABELS[value] || value;
+      CATEGORY_LABELS[value] ||
+      value;
 
   } else {
 
@@ -413,10 +418,7 @@ function syncPrivacyPreview() {
 
   if (!checked) return;
 
-  const value =
-    checked.value;
-
-  if (value === 'private') {
+  if (checked.value === 'private') {
 
     previewPrivacyBadge.className =
       'badge badge--private';
@@ -434,10 +436,6 @@ function syncPrivacyPreview() {
   }
 }
 
-
-/* ============================================================
-   PREMIUM PREVIEW
-   ============================================================ */
 
 function syncGroupTypePreview() {
 
@@ -463,10 +461,6 @@ function syncGroupTypePreview() {
 }
 
 
-/* ============================================================
-   EVENT LISTENERS
-   ============================================================ */
-
 nameInput.addEventListener(
   'input',
   syncNamePreview
@@ -483,31 +477,36 @@ categorySelect.addEventListener(
 );
 
 privacyRadios.forEach(
-  radio =>
+  radio => {
+
     radio.addEventListener(
       'change',
       syncPrivacyPreview
-    )
+    );
+
+  }
 );
 
 groupTypeRadios.forEach(
-  radio =>
+  radio => {
+
     radio.addEventListener(
       'change',
       syncGroupTypePreview
-    )
+    );
+
+  }
 );
 
 
-/* ============================================================
-   COVER UPLOAD
-   ============================================================ */
+// ============================================================
+// COVER
+// ============================================================
 
 coverDropzone.addEventListener(
   'click',
   () => coverUploadInput.click()
 );
-
 
 coverUploadInput.addEventListener(
   'change',
@@ -521,7 +520,7 @@ coverUploadInput.addEventListener(
     if (!file.type.startsWith('image/')) {
 
       showToast(
-        'Please choose an image file for the cover photo.',
+        'Please choose an image for the cover.',
         'error'
       );
 
@@ -545,7 +544,6 @@ coverUploadInput.addEventListener(
     state.coverFile = file;
 
     if (state.coverObjectUrl) {
-
       URL.revokeObjectURL(
         state.coverObjectUrl
       );
@@ -570,15 +568,14 @@ coverUploadInput.addEventListener(
 );
 
 
-/* ============================================================
-   AVATAR UPLOAD
-   ============================================================ */
+// ============================================================
+// AVATAR
+// ============================================================
 
 avatarDropzone.addEventListener(
   'click',
   () => avatarUploadInput.click()
 );
-
 
 avatarUploadInput.addEventListener(
   'change',
@@ -592,7 +589,7 @@ avatarUploadInput.addEventListener(
     if (!file.type.startsWith('image/')) {
 
       showToast(
-        'Please choose an image file for the profile picture.',
+        'Please choose an image for the profile picture.',
         'error'
       );
 
@@ -616,7 +613,6 @@ avatarUploadInput.addEventListener(
     state.avatarFile = file;
 
     if (state.avatarObjectUrl) {
-
       URL.revokeObjectURL(
         state.avatarObjectUrl
       );
@@ -643,9 +639,9 @@ avatarUploadInput.addEventListener(
 );
 
 
-/* ============================================================
-   RULES
-   ============================================================ */
+// ============================================================
+// RULES
+// ============================================================
 
 function renderRules() {
 
@@ -672,7 +668,6 @@ function renderRules() {
         'rule-item';
 
       item.innerHTML = `
-
         <span class="rule-item__index">
           ${index + 1}
         </span>
@@ -686,7 +681,6 @@ function renderRules() {
         >
           <i class="fa-solid fa-xmark"></i>
         </button>
-
       `;
 
       item.querySelector(
@@ -708,7 +702,9 @@ function renderRules() {
         }
       );
 
-      rulesList.appendChild(item);
+      rulesList.appendChild(
+        item
+      );
     }
   );
 }
@@ -744,10 +740,9 @@ addRuleBtn.addEventListener(
   addRuleFromInput
 );
 
-
 ruleInput.addEventListener(
   'keydown',
-  (event) => {
+  event => {
 
     if (event.key === 'Enter') {
 
@@ -759,16 +754,16 @@ ruleInput.addEventListener(
 );
 
 
-/* ============================================================
-   VALIDATION
-   ============================================================ */
+// ============================================================
+// VALIDATION
+// ============================================================
 
 function setFieldError(
-  fieldEl,
+  field,
   hasError
 ) {
 
-  fieldEl.classList.toggle(
+  field.classList.toggle(
     'has-error',
     hasError
   );
@@ -777,17 +772,14 @@ function setFieldError(
 
 function validateForm() {
 
-  let isValid = true;
+  let valid = true;
 
-
-  /* GROUP NAME */
-
-  const nameValue =
+  const name =
     nameInput.value.trim();
 
   if (
-    nameValue.length < 2 ||
-    nameValue.length > 60
+    name.length < 2 ||
+    name.length > 60
   ) {
 
     setFieldError(
@@ -795,7 +787,7 @@ function validateForm() {
       true
     );
 
-    isValid = false;
+    valid = false;
 
   } else {
 
@@ -806,14 +798,12 @@ function validateForm() {
   }
 
 
-  /* DESCRIPTION */
-
-  const descValue =
+  const description =
     descInput.value.trim();
 
   if (
-    descValue.length < 10 ||
-    descValue.length > 500
+    description.length < 10 ||
+    description.length > 500
   ) {
 
     setFieldError(
@@ -821,7 +811,7 @@ function validateForm() {
       true
     );
 
-    isValid = false;
+    valid = false;
 
   } else {
 
@@ -831,8 +821,6 @@ function validateForm() {
     );
   }
 
-
-  /* CATEGORY */
 
   if (!categorySelect.value) {
 
@@ -841,7 +829,7 @@ function validateForm() {
       true
     );
 
-    isValid = false;
+    valid = false;
 
   } else {
 
@@ -851,35 +839,13 @@ function validateForm() {
     );
   }
 
-
-  /* GROUP TYPE */
-
-  const groupTypeChecked =
-    document.querySelector(
-      'input[name="groupType"]:checked'
-    );
-
-  const groupType =
-    groupTypeChecked
-      ? groupTypeChecked.value
-      : 'free';
-
-  if (
-    !['free', 'premium'].includes(
-      groupType
-    )
-  ) {
-
-    isValid = false;
-  }
-
-  return isValid;
+  return valid;
 }
 
 
-/* ============================================================
-   SLUG
-   ============================================================ */
+// ============================================================
+// SLUG
+// ============================================================
 
 function slugify(text) {
 
@@ -905,9 +871,9 @@ function slugify(text) {
 }
 
 
-/* ============================================================
-   SEARCH TOKENS
-   ============================================================ */
+// ============================================================
+// SEARCH TOKENS
+// ============================================================
 
 function buildSearchTokens(
   name,
@@ -944,33 +910,120 @@ function buildSearchTokens(
 }
 
 
-/* ============================================================
-   CREATE GROUP
-   ============================================================ */
+// ============================================================
+// START PAYMENT
+// ============================================================
+
+async function startPremiumPayment(
+  groupId
+) {
+
+  const user =
+    auth.currentUser;
+
+  if (!user) {
+
+    throw new Error(
+      'Please sign in again.'
+    );
+  }
+
+
+  if (!user.email) {
+
+    throw new Error(
+      'Your account needs an email address before payment.'
+    );
+  }
+
+
+  const idToken =
+    await user.getIdToken(
+      true
+    );
+
+
+  const response =
+    await fetch(
+      PAYMENT_FUNCTION_URL,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+
+          'Authorization':
+            `Bearer ${idToken}`
+        },
+
+        body: JSON.stringify({
+
+          action:
+            'initialize',
+
+          groupId,
+
+          amount:
+            PREMIUM_ACTIVATION_FEE,
+
+          currency:
+            CURRENCY,
+
+          callbackUrl:
+            `${window.location.origin}/create-group.html`
+        })
+      }
+    );
+
+
+  const data =
+    await response.json();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data.error ||
+      'Unable to start Premium payment.'
+    );
+  }
+
+
+  if (!data.authorization_url) {
+
+    throw new Error(
+      'Payment checkout URL was not returned.'
+    );
+  }
+
+
+  window.location.href =
+    data.authorization_url;
+}
+
+
+// ============================================================
+// FORM SUBMISSION
+// ============================================================
 
 form.addEventListener(
   'submit',
-  async (event) => {
+  async event => {
 
     event.preventDefault();
 
     if (state.isSubmitting) return;
 
-
-    /* AUTH */
-
     if (!state.currentUser) {
 
       showToast(
-        'You need to be signed in to create a group.',
+        'You need to be signed in.',
         'error'
       );
 
       return;
     }
-
-
-    /* VALIDATION */
 
     if (!validateForm()) {
 
@@ -983,7 +1036,8 @@ form.addEventListener(
     }
 
 
-    state.isSubmitting = true;
+    state.isSubmitting =
+      true;
 
     createGroupBtn.disabled =
       true;
@@ -995,10 +1049,6 @@ form.addEventListener(
 
     try {
 
-      /* ========================================================
-         UPLOAD MEDIA
-         ======================================================== */
-
       let coverURL = '';
       let avatarURL = '';
 
@@ -1009,13 +1059,6 @@ form.addEventListener(
           await uploadToCloudinary(
             state.coverFile
           );
-
-        if (!coverURL) {
-
-          throw new Error(
-            'Cover photo upload failed. Please try again.'
-          );
-        }
       }
 
 
@@ -1025,19 +1068,8 @@ form.addEventListener(
           await uploadToCloudinary(
             state.avatarFile
           );
-
-        if (!avatarURL) {
-
-          throw new Error(
-            'Profile picture upload failed. Please try again.'
-          );
-        }
       }
 
-
-      /* ========================================================
-         FORM VALUES
-         ======================================================== */
 
       const name =
         nameInput.value.trim();
@@ -1062,10 +1094,6 @@ form.addEventListener(
         groupType === 'premium';
 
 
-      /* ========================================================
-         GROUP REFERENCE
-         ======================================================== */
-
       const groupRef =
         doc(
           collection(
@@ -1080,92 +1108,6 @@ form.addEventListener(
       const user =
         state.currentUser;
 
-
-      /* ========================================================
-         PREMIUM PAYMENT STATUS
-         ======================================================== */
-
-      const premiumActivation =
-        isPremium
-          ? {
-
-              required: true,
-
-              amount:
-                PREMIUM_ACTIVATION_FEE,
-
-              currency:
-                CURRENCY,
-
-              status:
-                'pending_payment',
-
-              paymentId:
-                null,
-
-              paidAt:
-                null
-
-            }
-
-          : {
-
-              required: false,
-
-              amount: 0,
-
-              currency:
-                CURRENCY,
-
-              status:
-                'not_required',
-
-              paymentId:
-                null,
-
-              paidAt:
-                null
-            };
-
-
-      /* ========================================================
-         FOLLOWER PAYMENT
-         ======================================================== */
-
-      const followerFee =
-        isPremium
-          ? {
-
-              enabled: true,
-
-              amount:
-                FOLLOWER_FEE,
-
-              currency:
-                CURRENCY,
-
-              paymentRecipient:
-                'group_owner'
-
-            }
-
-          : {
-
-              enabled: false,
-
-              amount: 0,
-
-              currency:
-                CURRENCY,
-
-              paymentRecipient:
-                null
-            };
-
-
-      /* ========================================================
-         GROUP DOCUMENT
-         ======================================================== */
 
       const groupData = {
 
@@ -1190,19 +1132,10 @@ form.addEventListener(
 
         avatarURL,
 
-
-        /* PRIVACY */
-
         privacy,
-
-
-        /* TYPE */
 
         type:
           groupType,
-
-
-        /* OWNER */
 
         ownerId:
           user.uid,
@@ -1211,17 +1144,11 @@ form.addEventListener(
           user.displayName ||
           'VitalStar Member',
 
-
-        /* STATUS */
-
         verified:
           false,
 
         level:
           1,
-
-
-        /* COUNTERS */
 
         memberCount:
           1,
@@ -1235,38 +1162,65 @@ form.addEventListener(
         onlineCount:
           1,
 
-
-        /* RULES */
-
         rules:
           state.rules,
 
+        premiumActivation: {
 
-        /* PREMIUM ACTIVATION */
+          required:
+            isPremium,
 
-        premiumActivation,
+          amount:
+            isPremium
+              ? PREMIUM_ACTIVATION_FEE
+              : 0,
 
+          currency:
+            CURRENCY,
 
-        /* FOLLOWER FEE */
+          status:
+            isPremium
+              ? 'pending_payment'
+              : 'not_required',
 
-        followerFee,
+          paymentId:
+            null,
 
+          reference:
+            null,
 
-        /* PREMIUM STATUS */
+          paidAt:
+            null
+        },
+
+        followerFee: {
+
+          enabled:
+            isPremium,
+
+          amount:
+            isPremium
+              ? FOLLOWER_FEE
+              : 0,
+
+          currency:
+            CURRENCY,
+
+          paymentRecipient:
+            isPremium
+              ? 'group_owner'
+              : null
+        },
 
         premiumStatus:
           isPremium
             ? 'pending_payment'
             : 'not_applicable',
 
-
-        /* PAYMENT PROVIDER */
-
         paymentProvider:
-          null,
-
-
-        /* CREATED */
+          isPremium
+            ? 'paystack'
+            : null,
 
         createdAt:
           serverTimestamp(),
@@ -1276,19 +1230,11 @@ form.addEventListener(
       };
 
 
-      /* ========================================================
-         SAVE GROUP
-         ======================================================== */
-
       await setDoc(
         groupRef,
         groupData
       );
 
-
-      /* ========================================================
-         OWNER MEMBERSHIP
-         ======================================================== */
 
       const ownerMemberRef =
         doc(
@@ -1327,14 +1273,12 @@ form.addEventListener(
       );
 
 
-      /* ========================================================
-         FREE GROUP
-         ======================================================== */
+      /* FREE GROUP */
 
       if (!isPremium) {
 
         showToast(
-          'Group created successfully! Taking you there now…',
+          'Group created successfully!',
           'success'
         );
 
@@ -1352,51 +1296,28 @@ form.addEventListener(
       }
 
 
-      /* ========================================================
-         PREMIUM GROUP
-         ======================================================== */
+      /* PREMIUM GROUP */
 
       showToast(
-        'Premium Group created. ₦1,500 activation payment is required.',
+        'Starting your ₦1,500 Premium activation payment…',
         'info'
       );
 
 
-      /*
-       * IMPORTANT:
-       *
-       * We DO NOT mark the payment as paid here.
-       *
-       * The next step is to connect the payment provider/backend.
-       *
-       * After verified payment:
-       *
-       * premiumActivation.status = "paid"
-       * premiumStatus = "active"
-       *
-       */
-
-
-      setTimeout(
-        () => {
-
-          window.location.href =
-            `group.html?id=${groupId}&payment=pending`;
-
-        },
-        1200
+      await startPremiumPayment(
+        groupId
       );
 
     } catch (error) {
 
       console.error(
-        'Error creating group:',
+        'Create group error:',
         error
       );
 
       showToast(
         error.message ||
-        'Something went wrong creating your group. Please try again.',
+        'Unable to create the group.',
         'error'
       );
 
@@ -1415,9 +1336,9 @@ form.addEventListener(
 );
 
 
-/* ============================================================
-   INITIALIZATION
-   ============================================================ */
+// ============================================================
+// INIT
+// ============================================================
 
 renderRules();
 
@@ -1430,4 +1351,3 @@ syncCategoryPreview();
 syncPrivacyPreview();
 
 syncGroupTypePreview();
-:::
