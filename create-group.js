@@ -16,6 +16,7 @@ const CLOUDINARY =
   "https://api.cloudinary.com/v1_1/m0scmqqv/image/upload";
 
 const UPLOAD_PRESET = "vitalstar_upload";
+
 const PAYMENT_URL =
   "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/create-group-payment";
 
@@ -69,8 +70,6 @@ const submitStatus = $("submitStatusText");
 let user = null;
 let coverFile = null;
 let avatarFile = null;
-let coverURL = null;
-let avatarURL = null;
 let rules = [];
 let submitting = false;
 
@@ -95,6 +94,11 @@ const categoryLabels = {
   other: "Other"
 };
 
+
+/* ============================================================
+   TOAST
+============================================================ */
+
 function toast(message, type = "info") {
   const icons = {
     success: "fa-circle-check",
@@ -107,7 +111,7 @@ function toast(message, type = "info") {
   el.className = `toast toast--${type}`;
 
   el.innerHTML = `
-    <i class="fa-solid ${icons[type]}"></i>
+    <i class="fa-solid ${icons[type] || icons.info}"></i>
     <span></span>
   `;
 
@@ -115,8 +119,13 @@ function toast(message, type = "info") {
 
   toastContainer.appendChild(el);
 
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(() => el.remove(), 5000);
 }
+
+
+/* ============================================================
+   AUTH
+============================================================ */
 
 onAuthStateChanged(auth, currentUser => {
   if (!currentUser) {
@@ -126,7 +135,7 @@ onAuthStateChanged(auth, currentUser => {
 
   user = currentUser;
 
-  if (currentUser.photoURL) {
+  if (currentUser.photoURL && navAvatar) {
     navAvatar.style.backgroundImage =
       `url("${currentUser.photoURL}")`;
 
@@ -136,17 +145,31 @@ onAuthStateChanged(auth, currentUser => {
   }
 });
 
+
+/* ============================================================
+   RADIO VALUE
+============================================================ */
+
 function selected(name) {
   return document.querySelector(
     `input[name="${name}"]:checked`
   )?.value;
 }
 
+
+/* ============================================================
+   PREVIEW
+============================================================ */
+
 function updatePreview() {
   const name = nameInput.value.trim();
   const desc = descInput.value.trim();
-  const type = selected("groupType");
-  const privacy = selected("privacy");
+
+  const type =
+    selected("groupType");
+
+  const privacy =
+    selected("privacy");
 
   previewName.textContent =
     name || "Your group name";
@@ -167,7 +190,9 @@ function updatePreview() {
     `${descInput.value.length}/500`;
 
   previewPremium.style.display =
-    type === "premium" ? "inline-flex" : "none";
+    type === "premium"
+      ? "inline-flex"
+      : "none";
 
   premiumWrapper.classList.toggle(
     "is-visible",
@@ -194,19 +219,24 @@ function updatePreview() {
   }
 
   if (category.value) {
-    previewCategory.style.display = "inline-flex";
+    previewCategory.style.display =
+      "inline-flex";
 
     previewCategoryText.textContent =
       categoryLabels[category.value] ||
       category.value;
   } else {
-    previewCategory.style.display = "none";
+    previewCategory.style.display =
+      "none";
   }
 }
 
-[nameInput, descInput].forEach(el =>
-  el.addEventListener("input", updatePreview)
-);
+[nameInput, descInput].forEach(el => {
+  el.addEventListener(
+    "input",
+    updatePreview
+  );
+});
 
 category.addEventListener(
   "change",
@@ -217,41 +247,146 @@ document
   .querySelectorAll(
     'input[name="privacy"],input[name="groupType"]'
   )
-  .forEach(el =>
-    el.addEventListener("change", updatePreview)
-  );
-
-function chooseImage(input, zone, callback, maxSize) {
-  input.addEventListener("change", () => {
-    const file = input.files[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast("Please select an image.", "error");
-      input.value = "";
-      return;
-    }
-
-    if (file.size > maxSize) {
-      toast(
-        `Image must be under ${maxSize / 1024 / 1024}MB.`,
-        "error"
-      );
-      input.value = "";
-      return;
-    }
-
-    callback(file);
-
-    const url = URL.createObjectURL(file);
-
-    zone.style.backgroundImage =
-      `url("${url}")`;
-
-    zone.classList.add("has-image");
+  .forEach(el => {
+    el.addEventListener(
+      "change",
+      updatePreview
+    );
   });
+
+
+/* ============================================================
+   IMAGE VALIDATION
+============================================================ */
+
+const allowedImageExtensions = [
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "gif",
+  "bmp",
+  "avif",
+  "heic",
+  "heif",
+  "tif",
+  "tiff"
+];
+
+const allowedImageTypes = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/bmp",
+  "image/avif",
+  "image/heic",
+  "image/heif",
+  "image/tiff"
+];
+
+function getExtension(file) {
+  return file.name
+    .split(".")
+    .pop()
+    .toLowerCase();
 }
+
+function isSupportedImage(file) {
+  if (!file) return false;
+
+  const type =
+    (file.type || "").toLowerCase();
+
+  const extension =
+    getExtension(file);
+
+  return (
+    allowedImageTypes.includes(type) ||
+    allowedImageExtensions.includes(extension) ||
+    type.startsWith("image/")
+  );
+}
+
+function imageTypeName(file) {
+  const extension =
+    getExtension(file);
+
+  if (extension)
+    return extension.toUpperCase();
+
+  if (file.type)
+    return file.type;
+
+  return "unknown";
+}
+
+
+/* ============================================================
+   IMAGE PICKER
+============================================================ */
+
+function chooseImage(
+  input,
+  zone,
+  callback,
+  maxSize,
+  label
+) {
+  input.addEventListener(
+    "change",
+    () => {
+      const file =
+        input.files?.[0];
+
+      if (!file) return;
+
+      if (!isSupportedImage(file)) {
+        toast(
+          `${label}: unsupported image type (${imageTypeName(file)}).`,
+          "error"
+        );
+
+        input.value = "";
+        return;
+      }
+
+      if (file.size > maxSize) {
+        toast(
+          `${label}: image must be under ${maxSize / 1024 / 1024}MB.`,
+          "error"
+        );
+
+        input.value = "";
+        return;
+      }
+
+      callback(file);
+
+      const url =
+        URL.createObjectURL(file);
+
+      zone.style.backgroundImage =
+        `url("${url}")`;
+
+      zone.style.backgroundSize =
+        "cover";
+
+      zone.style.backgroundPosition =
+        "center";
+
+      zone.classList.add(
+        "has-image"
+      );
+    }
+  );
+}
+
+
+/* ============================================================
+   IMAGE ZONES
+============================================================ */
 
 coverZone.addEventListener(
   "click",
@@ -269,12 +404,20 @@ chooseImage(
   file => {
     coverFile = file;
 
-    const url = URL.createObjectURL(file);
+    const url =
+      URL.createObjectURL(file);
 
     previewCover.style.backgroundImage =
       `url("${url}")`;
+
+    previewCover.style.backgroundSize =
+      "cover";
+
+    previewCover.style.backgroundPosition =
+      "center";
   },
-  8 * 1024 * 1024
+  8 * 1024 * 1024,
+  "Group cover"
 );
 
 chooseImage(
@@ -283,107 +426,221 @@ chooseImage(
   file => {
     avatarFile = file;
 
-    const url = URL.createObjectURL(file);
+    const url =
+      URL.createObjectURL(file);
 
     previewAvatar.style.backgroundImage =
       `url("${url}")`;
 
+    previewAvatar.style.backgroundSize =
+      "cover";
+
+    previewAvatar.style.backgroundPosition =
+      "center";
+
     previewAvatar.innerHTML = "";
   },
-  5 * 1024 * 1024
+  5 * 1024 * 1024,
+  "Group profile picture"
 );
 
-async function uploadImage(file) {
-  const data = new FormData();
 
-  data.append("file", file);
-  data.append("upload_preset", UPLOAD_PRESET);
+/* ============================================================
+   CLOUDINARY UPLOAD
+============================================================ */
 
-  const res = await fetch(
-    CLOUDINARY,
-    {
-      method: "POST",
-      body: data
-    }
+async function uploadImage(file, label) {
+  if (!file)
+    return "";
+
+  const data =
+    new FormData();
+
+  data.append(
+    "file",
+    file
   );
 
-  const result = await res.json();
+  data.append(
+    "upload_preset",
+    UPLOAD_PRESET
+  );
 
-  if (!res.ok || !result.secure_url) {
+  let response;
+
+  try {
+    response = await fetch(
+      CLOUDINARY,
+      {
+        method: "POST",
+        body: data
+      }
+    );
+  } catch (error) {
+    console.error(
+      `${label} network error:`,
+      error
+    );
+
     throw new Error(
-      result.error?.message ||
-      "Image upload failed."
+      `${label} upload failed: unable to connect to Cloudinary. Check your internet connection or Cloudinary configuration.`
+    );
+  }
+
+  let result = null;
+  let responseText = "";
+
+  try {
+    responseText =
+      await response.text();
+
+    result =
+      JSON.parse(responseText);
+  } catch {
+    console.error(
+      `${label} invalid Cloudinary response:`,
+      responseText
+    );
+  }
+
+  console.log(
+    `${label} Cloudinary response:`,
+    result
+  );
+
+  if (
+    !response.ok ||
+    !result?.secure_url
+  ) {
+    const cloudinaryError =
+      result?.error?.message;
+
+    if (cloudinaryError) {
+      throw new Error(
+        `${label} upload failed: ${cloudinaryError}`
+      );
+    }
+
+    if (response.status === 400) {
+      throw new Error(
+        `${label} upload failed: Cloudinary rejected the image. Check the file type, upload preset, or file size.`
+      );
+    }
+
+    if (response.status === 401) {
+      throw new Error(
+        `${label} upload failed: Cloudinary authentication/configuration error.`
+      );
+    }
+
+    if (response.status === 413) {
+      throw new Error(
+        `${label} upload failed: image is too large.`
+      );
+    }
+
+    throw new Error(
+      `${label} upload failed: Cloudinary returned HTTP ${response.status}.`
     );
   }
 
   return result.secure_url;
 }
 
+
+/* ============================================================
+   RULES
+============================================================ */
+
 function renderRules() {
   rulesList.innerHTML = "";
 
   rulesEmpty.style.display =
-    rules.length ? "none" : "block";
+    rules.length
+      ? "none"
+      : "block";
 
-  rules.forEach((rule, index) => {
-    const item = document.createElement("div");
+  rules.forEach(
+    (rule, index) => {
+      const item =
+        document.createElement("div");
 
-    item.className = "rule-item";
+      item.className =
+        "rule-item";
 
-    item.innerHTML = `
-      <span class="rule-item__index">
-        ${index + 1}
-      </span>
+      item.innerHTML = `
+        <span class="rule-item__index">
+          ${index + 1}
+        </span>
 
-      <span class="rule-item__text"></span>
+        <span class="rule-item__text"></span>
 
-      <button
-        type="button"
-        class="rule-item__remove"
-      >
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    `;
+        <button
+          type="button"
+          class="rule-item__remove"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
 
-    item.querySelector(
-      ".rule-item__text"
-    ).textContent = rule;
+      item.querySelector(
+        ".rule-item__text"
+      ).textContent = rule;
 
-    item.querySelector(
-      ".rule-item__remove"
-    ).onclick = () => {
-      rules.splice(index, 1);
-      renderRules();
-    };
+      item.querySelector(
+        ".rule-item__remove"
+      ).onclick = () => {
+        rules.splice(
+          index,
+          1
+        );
 
-    rulesList.appendChild(item);
-  });
+        renderRules();
+      };
+
+      rulesList.appendChild(
+        item
+      );
+    }
+  );
 }
 
 function addRule() {
-  const value = ruleInput.value.trim();
+  const value =
+    ruleInput.value.trim();
 
   if (!value) {
-    toast("Enter a rule first.");
+    toast(
+      "Enter a rule first."
+    );
     return;
   }
 
   if (value.length < 3) {
-    toast("Rule must contain at least 3 characters.", "error");
+    toast(
+      "Rule must contain at least 3 characters.",
+      "error"
+    );
     return;
   }
 
   if (rules.length >= 20) {
-    toast("Maximum 20 rules allowed.", "error");
+    toast(
+      "Maximum 20 rules allowed.",
+      "error"
+    );
     return;
   }
 
   rules.push(value);
+
   ruleInput.value = "";
+
   renderRules();
 }
 
-addRuleBtn.onclick = addRule;
+addRuleBtn.onclick =
+  addRule;
 
 ruleInput.addEventListener(
   "keydown",
@@ -395,15 +652,25 @@ ruleInput.addEventListener(
   }
 );
 
+
+/* ============================================================
+   VALIDATION
+============================================================ */
+
 function validate() {
-  const name = nameInput.value.trim();
-  const desc = descInput.value.trim();
+  const name =
+    nameInput.value.trim();
+
+  const desc =
+    descInput.value.trim();
 
   const nameError =
-    name.length < 2 || name.length > 60;
+    name.length < 2 ||
+    name.length > 60;
 
   const descError =
-    desc.length < 10 || desc.length > 500;
+    desc.length < 10 ||
+    desc.length > 500;
 
   const categoryError =
     !category.value;
@@ -430,167 +697,378 @@ function validate() {
   );
 }
 
+
+/* ============================================================
+   SLUG
+============================================================ */
+
 function slugify(text) {
   return text
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 50);
+    .replace(
+      /[^a-z0-9\s-]/g,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      "-"
+    )
+    .replace(
+      /-+/g,
+      "-"
+    )
+    .slice(
+      0,
+      50
+    );
 }
 
-function searchTokens(name, cat) {
-  const set = new Set();
+
+/* ============================================================
+   SEARCH TOKENS
+============================================================ */
+
+function searchTokens(
+  name,
+  cat
+) {
+  const set =
+    new Set();
 
   `${name} ${cat}`
     .toLowerCase()
     .split(/\s+/)
     .forEach(word => {
-      for (let i = 1; i <= word.length; i++)
-        set.add(word.slice(0, i));
+      for (
+        let i = 1;
+        i <= word.length;
+        i++
+      ) {
+        set.add(
+          word.slice(
+            0,
+            i
+          )
+        );
+      }
     });
 
-  return [...set].slice(0, 150);
+  return [
+    ...set
+  ].slice(
+    0,
+    150
+  );
 }
 
-async function initializePayment(groupId) {
-  if (!user?.email)
+
+/* ============================================================
+   PAYMENT
+============================================================ */
+
+async function initializePayment(
+  groupId
+) {
+  if (!user?.email) {
     throw new Error(
       "Your account needs an email address before payment."
     );
+  }
 
-  const res = await fetch(
-    PAYMENT_URL,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: "initialize",
-        groupId,
-        amount: ACTIVATION_FEE,
-        currency: CURRENCY,
-        email: user.email,
-        callbackUrl:
-          `${location.origin}/create-group.html?groupId=${encodeURIComponent(groupId)}`
-      })
-    }
-  );
+  let res;
 
-  const data = await res.json();
-
-  if (!res.ok)
-    throw new Error(
-      data.error || "Unable to start payment."
+  try {
+    res = await fetch(
+      PAYMENT_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+        body: JSON.stringify({
+          action:
+            "initialize",
+          groupId,
+          amount:
+            ACTIVATION_FEE,
+          currency:
+            CURRENCY,
+          email:
+            user.email,
+          callbackUrl:
+            `${location.origin}/create-group.html?groupId=${encodeURIComponent(groupId)}`
+        })
+      }
     );
+  } catch {
+    throw new Error(
+      "Unable to connect to the payment server."
+    );
+  }
 
-  if (!data.authorization_url)
+  let data;
+
+  try {
+    data =
+      await res.json();
+  } catch {
+    throw new Error(
+      "The payment server returned an invalid response."
+    );
+  }
+
+  if (!res.ok) {
+    throw new Error(
+      data.error ||
+      "Unable to start payment."
+    );
+  }
+
+  if (!data.authorization_url) {
     throw new Error(
       "Paystack checkout URL was not returned."
     );
+  }
 
-  location.href = data.authorization_url;
+  location.href =
+    data.authorization_url;
 }
+
+
+/* ============================================================
+   CREATE GROUP
+============================================================ */
 
 async function createGroup() {
   if (!user)
-    throw new Error("You need to be signed in.");
+    throw new Error(
+      "You need to be signed in."
+    );
 
-  const name = nameInput.value.trim();
-  const description = descInput.value.trim();
-  const cat = category.value;
+  const name =
+    nameInput.value.trim();
+
+  const description =
+    descInput.value.trim();
+
+  const cat =
+    category.value;
 
   const privacy =
-    selected("privacy") || "public";
+    selected("privacy") ||
+    "public";
 
   const type =
-    selected("groupType") || "free";
+    selected("groupType") ||
+    "free";
 
   const premium =
     type === "premium";
 
-  const ref = doc(collection(db, "groups"));
-  const groupId = ref.id;
+  const ref =
+    doc(
+      collection(
+        db,
+        "groups"
+      )
+    );
+
+  const groupId =
+    ref.id;
 
   let coverURL = "";
   let avatarURL = "";
 
+
+  /* ---------------------------
+     COVER
+  --------------------------- */
+
   if (coverFile) {
-    toast("Uploading group cover...");
-    coverURL = await uploadImage(coverFile);
+    submitStatus.textContent =
+      "Uploading group cover...";
+
+    toast(
+      "Uploading group cover...",
+      "info"
+    );
+
+    coverURL =
+      await uploadImage(
+        coverFile,
+        "Group cover"
+      );
   }
+
+
+  /* ---------------------------
+     PROFILE PICTURE
+  --------------------------- */
 
   if (avatarFile) {
-    toast("Uploading group picture...");
-    avatarURL = await uploadImage(avatarFile);
+    submitStatus.textContent =
+      "Uploading group profile picture...";
+
+    toast(
+      "Uploading group profile picture...",
+      "info"
+    );
+
+    avatarURL =
+      await uploadImage(
+        avatarFile,
+        "Group profile picture"
+      );
   }
 
-  await setDoc(ref, {
-    groupId,
-    name,
-    slug: `${slugify(name)}-${groupId.slice(0, 6)}`,
-    description,
-    category: cat,
-    searchTokens: searchTokens(name, cat),
-    coverURL,
-    avatarURL,
-    privacy,
-    type,
-    ownerId: user.uid,
-    ownerName: user.displayName || "VitalStar Member",
-    ownerEmail: user.email || null,
-    verified: false,
-    level: 1,
-    memberCount: 1,
-    followerCount: 1,
-    postCount: 0,
-    onlineCount: 1,
-    rules: [...rules],
 
-    members: {
-      [user.uid]: {
-        role: "owner",
-        status: "active",
-        joinedAt: serverTimestamp()
-      }
-    },
+  /* ---------------------------
+     FIRESTORE
+  --------------------------- */
 
-    premiumActivation: {
-      required: premium,
-      amount: premium ? ACTIVATION_FEE : 0,
-      currency: CURRENCY,
-      status: premium
-        ? "pending_payment"
-        : "not_required",
-      paymentId: null,
-      reference: null,
-      paidAt: null
-    },
+  await setDoc(
+    ref,
+    {
+      groupId,
 
-    followerFee: {
-      enabled: premium,
-      amount: premium ? MEMBER_FEE : 0,
-      currency: CURRENCY,
-      paymentRecipient:
-        premium ? "group_owner" : null
-    },
+      name,
 
-    premiumStatus:
-      premium
-        ? "pending_payment"
-        : "not_applicable",
+      slug:
+        `${slugify(name)}-${groupId.slice(0, 6)}`,
 
-    paymentProvider:
-      premium ? "paystack" : null,
+      description,
 
-    status:
-      premium ? "pending_payment" : "active",
+      category:
+        cat,
 
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+      searchTokens:
+        searchTokens(
+          name,
+          cat
+        ),
+
+      coverURL,
+
+      avatarURL,
+
+      privacy,
+
+      type,
+
+      ownerId:
+        user.uid,
+
+      ownerName:
+        user.displayName ||
+        "VitalStar Member",
+
+      ownerEmail:
+        user.email ||
+        null,
+
+      verified:
+        false,
+
+      level:
+        1,
+
+      memberCount:
+        1,
+
+      followerCount:
+        1,
+
+      postCount:
+        0,
+
+      onlineCount:
+        1,
+
+      rules:
+        [...rules],
+
+      members: {
+        [user.uid]: {
+          role:
+            "owner",
+
+          status:
+            "active",
+
+          joinedAt:
+            serverTimestamp()
+        }
+      },
+
+      premiumActivation: {
+        required:
+          premium,
+
+        amount:
+          premium
+            ? ACTIVATION_FEE
+            : 0,
+
+        currency:
+          CURRENCY,
+
+        status:
+          premium
+            ? "pending_payment"
+            : "not_required",
+
+        paymentId:
+          null,
+
+        reference:
+          null,
+
+        paidAt:
+          null
+      },
+
+      followerFee: {
+        enabled:
+          premium,
+
+        amount:
+          premium
+            ? MEMBER_FEE
+            : 0,
+
+        currency:
+          CURRENCY,
+
+        paymentRecipient:
+          premium
+            ? "group_owner"
+            : null
+      },
+
+      premiumStatus:
+        premium
+          ? "pending_payment"
+          : "not_applicable",
+
+      paymentProvider:
+        premium
+          ? "paystack"
+          : null,
+
+      status:
+        premium
+          ? "pending_payment"
+          : "active",
+
+      createdAt:
+        serverTimestamp(),
+
+      updatedAt:
+        serverTimestamp()
+    }
+  );
 
   return {
     groupId,
@@ -598,15 +1076,24 @@ async function createGroup() {
   };
 }
 
+
+/* ============================================================
+   FORM SUBMIT
+============================================================ */
+
 form.addEventListener(
   "submit",
   async e => {
     e.preventDefault();
 
-    if (submitting) return;
+    if (submitting)
+      return;
 
     if (!user) {
-      toast("Please sign in.", "error");
+      toast(
+        "Please sign in.",
+        "error"
+      );
       return;
     }
 
@@ -618,13 +1105,19 @@ form.addEventListener(
       return;
     }
 
-    submitting = true;
+    submitting =
+      true;
 
-    btn.disabled = true;
-    btn.classList.add("is-loading");
+    btn.disabled =
+      true;
+
+    btn.classList.add(
+      "is-loading"
+    );
 
     try {
-      const result = await createGroup();
+      const result =
+        await createGroup();
 
       if (!result.premium) {
         toast(
@@ -633,9 +1126,10 @@ form.addEventListener(
         );
 
         setTimeout(
-          () =>
+          () => {
             location.href =
-              `group.html?id=${result.groupId}`,
+              `group.html?id=${result.groupId}`;
+          },
           800
         );
 
@@ -652,7 +1146,10 @@ form.addEventListener(
       );
 
     } catch (error) {
-      console.error(error);
+      console.error(
+        "CREATE GROUP ERROR:",
+        error
+      );
 
       toast(
         error?.message ||
@@ -660,40 +1157,84 @@ form.addEventListener(
         "error"
       );
 
-      submitting = false;
-      btn.disabled = false;
-      btn.classList.remove("is-loading");
+      submitStatus.textContent =
+        error?.message ||
+        "Unable to create the group.";
+
+      submitting =
+        false;
+
+      btn.disabled =
+        false;
+
+      btn.classList.remove(
+        "is-loading"
+      );
     }
   }
 );
+
+
+/* ============================================================
+   VERIFY PAYMENT
+============================================================ */
 
 async function verifyPayment(
   groupId,
   reference
 ) {
-  const res = await fetch(
-    PAYMENT_URL,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: "verify",
-        reference
-      })
-    }
-  );
+  let res;
 
-  const data = await res.json();
+  try {
+    res = await fetch(
+      PAYMENT_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json"
+        },
+        body: JSON.stringify({
+          action:
+            "verify",
 
-  if (!res.ok || !data.verified)
+          reference
+        })
+      }
+    );
+  } catch {
     throw new Error(
+      "Unable to connect to the payment server."
+    );
+  }
+
+  let data;
+
+  try {
+    data =
+      await res.json();
+  } catch {
+    throw new Error(
+      "The payment server returned an invalid response."
+    );
+  }
+
+  if (
+    !res.ok ||
+    !data.verified
+  ) {
+    throw new Error(
+      data.error ||
       "Payment could not be verified."
     );
+  }
 
   await updateDoc(
-    doc(db, "groups", groupId),
+    doc(
+      db,
+      "groups",
+      groupId
+    ),
     {
       "premiumActivation.status":
         "paid",
@@ -705,7 +1246,8 @@ async function verifyPayment(
         data.reference,
 
       "premiumActivation.paidAt":
-        data.paid_at || serverTimestamp(),
+        data.paid_at ||
+        serverTimestamp(),
 
       premiumStatus:
         "active",
@@ -719,19 +1261,36 @@ async function verifyPayment(
   );
 }
 
+
+/* ============================================================
+   PAYMENT RETURN
+============================================================ */
+
 async function paymentReturn() {
   const params =
-    new URLSearchParams(location.search);
+    new URLSearchParams(
+      location.search
+    );
 
   const groupId =
-    params.get("groupId");
+    params.get(
+      "groupId"
+    );
 
   const reference =
-    params.get("reference") ||
-    params.get("trxref");
+    params.get(
+      "reference"
+    ) ||
+    params.get(
+      "trxref"
+    );
 
-  if (!groupId || !reference)
+  if (
+    !groupId ||
+    !reference
+  ) {
     return;
+  }
 
   try {
     submitStatus.textContent =
@@ -753,14 +1312,18 @@ async function paymentReturn() {
     );
 
     setTimeout(
-      () =>
+      () => {
         location.href =
-          `group.html?id=${encodeURIComponent(groupId)}`,
+          `group.html?id=${encodeURIComponent(groupId)}`;
+      },
       900
     );
 
   } catch (error) {
-    console.error(error);
+    console.error(
+      "PAYMENT VERIFICATION ERROR:",
+      error
+    );
 
     toast(
       error?.message ||
@@ -769,13 +1332,24 @@ async function paymentReturn() {
     );
 
     submitStatus.textContent =
+      error?.message ||
       "Payment verification failed.";
 
-    btn.disabled = false;
-    submitting = false;
+    btn.disabled =
+      false;
+
+    submitting =
+      false;
   }
 }
 
+
+/* ============================================================
+   INITIALIZE
+============================================================ */
+
 updatePreview();
+
 renderRules();
+
 paymentReturn();
