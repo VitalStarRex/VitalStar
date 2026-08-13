@@ -283,6 +283,96 @@ header{
 }
 
 /* =========================================================
+   VITALSTAR GAMES MENU
+   ========================================================= */
+
+.games-menu{
+    display:flex !important;
+    align-items:center;
+    gap:10px;
+    margin:4px 10px;
+    padding:12px 10px !important;
+    border-radius:12px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(24,119,242,.12),
+            rgba(52,199,89,.12)
+        );
+    color:#333 !important;
+    transition:.25s ease;
+}
+
+.games-icon{
+    width:32px;
+    height:32px;
+    min-width:32px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #34c759
+        );
+    color:white;
+    font-size:18px;
+    box-shadow:
+        0 0 8px rgba(24,119,242,.5),
+        0 0 18px rgba(52,199,89,.25);
+    transition:.25s ease;
+}
+
+.games-name{
+    font-size:15px;
+    font-weight:800;
+}
+
+.games-badge{
+    margin-left:auto;
+    padding:4px 8px;
+    border-radius:8px;
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #34c759
+        );
+    color:white;
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.5px;
+}
+
+.games-menu:hover{
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #34c759
+        ) !important;
+    color:white !important;
+    transform:translateX(3px);
+    box-shadow:
+        0 5px 15px rgba(24,119,242,.3);
+}
+
+.games-menu:hover .games-icon{
+    background:white;
+    color:#1877f2;
+    transform:
+        rotate(-8deg)
+        scale(1.08);
+}
+
+.games-menu:hover .games-badge{
+    background:white;
+    color:#1877f2;
+}
+
+/* =========================================================
    DARK MODE BUTTON
    ========================================================= */
 
@@ -462,6 +552,26 @@ body.dark-mode .pinky-menu:hover{
     color:white !important;
 }
 
+body.dark-mode .games-menu{
+    background:
+        linear-gradient(
+            135deg,
+            rgba(24,119,242,.18),
+            rgba(52,199,89,.14)
+        );
+    color:#e4e4e4 !important;
+}
+
+body.dark-mode .games-menu:hover{
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #34c759
+        ) !important;
+    color:white !important;
+}
+
 </style>
 
 </head>
@@ -527,6 +637,7 @@ body.dark-mode .pinky-menu:hover{
 
 </header>
 
+
 <!-- =========================================================
      SIDEBAR
      ========================================================= -->
@@ -547,6 +658,7 @@ body.dark-mode .pinky-menu:hover{
 <a href="messages.html">
     💬 Messages
 </a>
+
 
 <!-- =======================================================
      ORION PAX
@@ -571,6 +683,7 @@ body.dark-mode .pinky-menu:hover{
 
 </a>
 
+
 <!-- =======================================================
      PINKY SPARK
      ======================================================= -->
@@ -594,6 +707,31 @@ body.dark-mode .pinky-menu:hover{
 
 </a>
 
+
+<!-- =======================================================
+     VITALSTAR GAMES
+     ======================================================= -->
+
+<a
+    href="games.html"
+    class="games-menu"
+>
+
+    <span class="games-icon">
+        🎮
+    </span>
+
+    <span class="games-name">
+        Games
+    </span>
+
+    <span class="games-badge">
+        PLAY
+    </span>
+
+</a>
+
+
 <a href="edit-profile.html">
     ⚙️ Settings
 </a>
@@ -612,6 +750,7 @@ body.dark-mode .pinky-menu:hover{
 </button>
 
 </div>
+
 
 <!-- =========================================================
      MENU SCRIPT
@@ -639,6 +778,7 @@ function openMenu(){
 }
 
 </script>
+
 
 <!-- =========================================================
      MAIN CONTENT
@@ -674,6 +814,7 @@ function openMenu(){
 
 </div>
 
+
 <!-- STORIES -->
 
 <div class="stories">
@@ -700,6 +841,7 @@ function openMenu(){
 
 </div>
 
+
 <!-- LATEST -->
 
 <center>
@@ -720,6 +862,7 @@ function openMenu(){
 <div id="feed"></div>
 
 </div>
+
 
 <style>
 
@@ -854,6 +997,7 @@ function openMenu(){
 
 </style>
 
+
 <!-- =========================================================
      FOOTER
      ========================================================= -->
@@ -900,6 +1044,7 @@ function openMenu(){
 </p>
 
 </footer>
+
 
 <style>
 
@@ -963,10 +1108,12 @@ function openMenu(){
 
 </style>
 
+
 <br>
 <br>
 <br>
 <br>
+
 
 <!-- =========================================================
      BOTTOM NAVIGATION
@@ -1025,6 +1172,7 @@ function openMenu(){
 
 </div>
 
+
 <style>
 
 .bottom-nav{
@@ -1077,6 +1225,7 @@ body.dark-mode .bottom-nav{
 }
 
 </style>
+
 
 <!-- =========================================================
      FIREBASE / VITALSTAR SCRIPTS
