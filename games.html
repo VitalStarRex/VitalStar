@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>VitalStar Games</title>
 
 <style>
@@ -20,15 +21,21 @@ body{
 }
 
 header{
-    padding:18px 16px;
+    position:sticky;
+    top:0;
+    z-index:20;
     background:#101522;
+    border-bottom:1px solid #252d40;
+    padding:15px;
+}
+
+.header-inner{
+    max-width:1000px;
+    margin:auto;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    border-bottom:1px solid #20283a;
-    position:sticky;
-    top:0;
-    z-index:10;
+    gap:10px;
 }
 
 .logo{
@@ -40,26 +47,44 @@ header{
     color:#7c5cff;
 }
 
+.header-right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
 .coins{
-    background:#191f30;
-    padding:9px 13px;
+    background:#1a2030;
+    border:1px solid #30394e;
+    padding:8px 12px;
     border-radius:20px;
-    font-weight:bold;
     color:#ffd84d;
+    font-weight:bold;
+    font-size:13px;
+}
+
+.premium-mini{
+    background:#7c5cff;
+    color:white;
+    border:0;
+    padding:9px 12px;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
 }
 
 .container{
-    max-width:900px;
+    max-width:1000px;
     margin:auto;
-    padding:18px 14px 40px;
+    padding:18px 14px 50px;
 }
 
 .hero{
-    background:linear-gradient(135deg,#171d35,#24164b);
-    border:1px solid #343b60;
+    background:linear-gradient(135deg,#171d35,#29174e);
+    border:1px solid #393f64;
     border-radius:22px;
     padding:24px 18px;
-    margin-bottom:22px;
+    margin-bottom:18px;
 }
 
 .hero h1{
@@ -68,46 +93,72 @@ header{
 }
 
 .hero p{
-    color:#b9c0d2;
+    color:#b6bed0;
     line-height:1.5;
-}
-
-.premium{
-    margin-top:18px;
-    padding:16px;
-    border-radius:16px;
-    background:#111727;
-    border:1px solid #6553c8;
-}
-
-.premium h2{
-    font-size:19px;
-    margin-bottom:6px;
-}
-
-.premium p{
     font-size:14px;
-    margin-bottom:13px;
 }
 
-.premium button{
+.hero-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:18px;
+    flex-wrap:wrap;
+}
+
+.premium-button{
     border:0;
     background:#7c5cff;
     color:#fff;
-    padding:11px 17px;
-    border-radius:12px;
+    padding:11px 16px;
+    border-radius:11px;
     font-weight:bold;
     cursor:pointer;
 }
 
+.search{
+    width:100%;
+    margin:4px 0 18px;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1px solid #30394e;
+    background:#101522;
+    color:#fff;
+    outline:none;
+}
+
+.tabs{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin-bottom:18px;
+}
+
+.tab{
+    flex:none;
+    padding:9px 14px;
+    border-radius:20px;
+    border:1px solid #30394e;
+    background:#111622;
+    color:#b7bfd0;
+    cursor:pointer;
+}
+
+.tab.active{
+    background:#7c5cff;
+    color:#fff;
+    border-color:#7c5cff;
+}
+
 .section-title{
-    margin:25px 2px 12px;
     font-size:20px;
+    margin-bottom:12px;
 }
 
 .games{
     display:grid;
-    grid-template-columns:repeat(2,1fr);
+    grid-template-columns:repeat(3,1fr);
     gap:12px;
 }
 
@@ -116,15 +167,19 @@ header{
     background:#111622;
     border:1px solid #252d40;
     border-radius:17px;
-    padding:17px 14px;
-    min-height:155px;
+    padding:16px;
+    min-height:205px;
     display:flex;
     flex-direction:column;
 }
 
-.icon{
-    font-size:35px;
-    margin-bottom:10px;
+.game:hover{
+    border-color:#51448d;
+}
+
+.game-icon{
+    font-size:38px;
+    margin-bottom:9px;
 }
 
 .game h3{
@@ -133,62 +188,74 @@ header{
 }
 
 .game p{
-    color:#929bb0;
+    color:#929caf;
     font-size:12px;
-    line-height:1.4;
+    line-height:1.45;
     flex:1;
 }
 
+.badges{
+    display:flex;
+    gap:5px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+}
+
+.badge{
+    font-size:9px;
+    font-weight:bold;
+    padding:4px 7px;
+    border-radius:7px;
+    background:#172b23;
+    color:#72e5a2;
+}
+
+.badge.premium{
+    background:#29213f;
+    color:#d5c6ff;
+}
+
 .play{
-    margin-top:12px;
     width:100%;
     padding:10px;
+    margin-top:12px;
     border:0;
     border-radius:10px;
-    background:#252d40;
+    background:#2367e8;
     color:#fff;
     font-weight:bold;
     cursor:pointer;
 }
 
-.free .play{
-    background:#2367e8;
-}
-
 .locked{
-    opacity:.75;
+    opacity:.78;
 }
 
 .lock{
     position:absolute;
-    top:12px;
-    right:12px;
-    background:#252034;
-    color:#d7caff;
-    padding:5px 8px;
-    border-radius:8px;
-    font-size:11px;
-    font-weight:bold;
-}
-
-.badge{
-    display:inline-block;
-    margin-bottom:7px;
+    right:10px;
+    top:10px;
     font-size:10px;
-    color:#71e3a2;
     font-weight:bold;
+    padding:5px 7px;
+    border-radius:7px;
+    background:#29213f;
+    color:#d7caff;
 }
 
-.premium-badge{
-    color:#d0bcff;
+.empty{
+    display:none;
+    text-align:center;
+    padding:30px;
+    color:#8e97aa;
 }
 
 .modal{
     display:none;
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,.75);
-    z-index:50;
+    z-index:100;
+    background:rgba(0,0,0,.78);
     align-items:center;
     justify-content:center;
     padding:20px;
@@ -198,15 +265,15 @@ header{
     width:100%;
     max-width:390px;
     background:#111622;
-    border:1px solid #343b60;
+    border:1px solid #383f5d;
     border-radius:20px;
-    padding:24px;
+    padding:23px;
     text-align:center;
 }
 
-.modal-box .big{
+.modal-icon{
     font-size:48px;
-    margin-bottom:12px;
+    margin-bottom:10px;
 }
 
 .modal-box h2{
@@ -214,38 +281,64 @@ header{
 }
 
 .modal-box p{
-    color:#aeb5c7;
+    color:#aab2c4;
     font-size:14px;
     line-height:1.5;
-    margin-bottom:18px;
+    margin-bottom:15px;
 }
 
 .modal-box button{
     width:100%;
     padding:12px;
+    margin-top:8px;
     border:0;
     border-radius:11px;
     background:#7c5cff;
     color:#fff;
     font-weight:bold;
-    margin-top:8px;
 }
 
-.close{
-    background:#272d3b !important;
+.modal-box .close{
+    background:#252d40;
 }
 
-@media(max-width:420px){
+@media(max-width:700px){
     .games{
-        grid-template-columns:1fr 1fr;
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:430px){
+    .games{
+        grid-template-columns:repeat(2,1fr);
+        gap:9px;
     }
 
     .game{
-        min-height:160px;
+        padding:13px;
+        min-height:195px;
+    }
+
+    .game-icon{
+        font-size:32px;
     }
 
     .hero h1{
         font-size:24px;
+    }
+
+    .header-right{
+        gap:5px;
+    }
+
+    .premium-mini{
+        padding:8px;
+        font-size:11px;
+    }
+
+    .coins{
+        padding:7px 9px;
+        font-size:11px;
     }
 }
 </style>
@@ -254,180 +347,159 @@ header{
 <body>
 
 <header>
-    <div class="logo">⭐ Vital<span>Star</span> Games</div>
-    <div class="coins">🪙 <span id="coinBalance">1000</span></div>
+    <div class="header-inner">
+
+        <div class="logo">
+            ⭐ Vital<span>Star</span> Games
+        </div>
+
+        <div class="header-right">
+
+            <div class="coins">
+                🪙 <span id="coinBalance">1000</span>
+            </div>
+
+            <button
+                class="premium-mini"
+                id="premiumTopButton"
+            >
+                👑 Premium
+            </button>
+
+        </div>
+
+    </div>
 </header>
 
 <main class="container">
 
-<section class="hero">
-    <h1>🎮 Play. Connect. Compete.</h1>
-    <p>
-        Play VitalStar games, challenge your friends,
-        earn virtual rewards and unlock premium games.
-    </p>
+    <section class="hero">
 
-    <div class="premium">
-        <h2>👑 VitalStar Games Premium</h2>
+        <h1>🎮 Play. Connect. Compete.</h1>
+
         <p>
-            Unlock the premium game library and access
-            exclusive multiplayer features.
+            Play VitalStar games, challenge your friends,
+            earn virtual rewards and unlock premium games.
         </p>
-        <button onclick="showPremium()">View Premium</button>
-    </div>
-</section>
 
-<h2 class="section-title">🆓 Free Games</h2>
+        <div class="hero-bottom">
 
-<div class="games">
+            <strong>
+                👥 Multiplayer games available
+            </strong>
 
-    <div class="game free">
-        <div class="icon">⚡</div>
-        <span class="badge">FREE • MULTIPLAYER</span>
-        <h3>Quick Tap</h3>
-        <p>Challenge another player to see who taps fastest.</p>
-        <button class="play" onclick="playGame('Quick Tap')">PLAY</button>
-    </div>
-
-    <div class="game free">
-        <div class="icon">🧠</div>
-        <span class="badge">FREE • 2 PLAYERS</span>
-        <h3>Memory Master</h3>
-        <p>Remember the cards and beat your opponent.</p>
-        <button class="play" onclick="playGame('Memory Master')">PLAY</button>
-    </div>
-
-    <div class="game free">
-        <div class="icon">🧩</div>
-        <span class="badge">FREE</span>
-        <h3>Brain Rush</h3>
-        <p>Solve quick puzzles before the timer runs out.</p>
-        <button class="play" onclick="playGame('Brain Rush')">PLAY</button>
-    </div>
-
-    <div class="game free">
-        <div class="icon">🏀</div>
-        <span class="badge">FREE • MULTIPLAYER</span>
-        <h3>Hoop Master</h3>
-        <p>Compete for the highest virtual score.</p>
-        <button class="play" onclick="playGame('Hoop Master')">PLAY</button>
-    </div>
-
-    <div class="game free">
-        <div class="icon">🔤</div>
-        <span class="badge">FREE • MULTIPLAYER</span>
-        <h3>Word Sprint</h3>
-        <p>Find words faster than your opponent.</p>
-        <button class="play" onclick="playGame('Word Sprint')">PLAY</button>
-    </div>
-
-</div>
-
-<h2 class="section-title">👑 Premium Games</h2>
-
-<div class="games">
-
-<script>
-const premiumGames = [
-    ["🎯","Target Master","2–4 PLAYERS"],
-    ["🏓","Paddle Smash","2 PLAYERS"],
-    ["🏆","Quiz Battle","2–8 PLAYERS"],
-    ["⚔️","Trivia Battle","2–8 PLAYERS"],
-    ["🔷","Shape Match","2–4 PLAYERS"],
-    ["🚀","Star Runner Race","2–8 PLAYERS"],
-    ["🧩","Puzzle Battle","2 PLAYERS"],
-    ["🌌","Galaxy Quest","MULTIPLAYER"],
-    ["🗺️","Star Explorer","MULTIPLAYER"],
-    ["🏰","Castle Quest","MULTIPLAYER"],
-    ["🤖","Robot Run","MULTIPLAYER"],
-    ["🐉","Dragon Quest","MULTIPLAYER"],
-    ["🛸","Space Defender","2 PLAYERS"],
-    ["🌀","Gravity Flip","2 PLAYERS"],
-    ["🟣","Color Rush","2–4 PLAYERS"],
-    ["🏁","Speed Challenge","MULTIPLAYER"],
-    ["👑","Champion Challenge","MULTIPLAYER"],
-    ["🌟","Star Tournament","MULTIPLAYER"],
-    ["⚽","Goal Rush","2 PLAYERS"],
-    ["🪙","Coin Clash","2 PLAYERS"]
-];
-
-premiumGames.forEach(game => {
-    document.write(`
-        <div class="game locked">
-            <div class="lock">🔒 PREMIUM</div>
-            <div class="icon">${game[0]}</div>
-            <span class="badge premium-badge">${game[2]}</span>
-            <h3>${game[1]}</h3>
-            <p>Unlock this game with VitalStar Games Premium.</p>
-            <button class="play" onclick="showPremium()">
-                🔒 UNLOCK
+            <button
+                class="premium-button"
+                id="premiumButton"
+            >
+                👑 Explore Premium
             </button>
-        </div>
-    `);
-});
-</script>
 
-</div>
+        </div>
+
+    </section>
+
+
+    <input
+        type="search"
+        id="gameSearch"
+        class="search"
+        placeholder="🔎 Search games..."
+    >
+
+
+    <div class="tabs">
+
+        <button
+            class="tab active"
+            data-category="all"
+        >
+            All
+        </button>
+
+        <button
+            class="tab"
+            data-category="free"
+        >
+            🆓 Free
+        </button>
+
+        <button
+            class="tab"
+            data-category="premium"
+        >
+            👑 Premium
+        </button>
+
+        <button
+            class="tab"
+            data-category="multiplayer"
+        >
+            👥 Multiplayer
+        </button>
+
+    </div>
+
+
+    <h2 class="section-title">
+        🎮 Games
+    </h2>
+
+    <div
+        id="gamesGrid"
+        class="games"
+    ></div>
+
+    <div
+        id="emptyMessage"
+        class="empty"
+    >
+        No games found.
+    </div>
 
 </main>
 
-<div class="modal" id="premiumModal">
+
+<!-- PREMIUM MODAL -->
+
+<div
+    class="modal"
+    id="premiumModal"
+>
+
     <div class="modal-box">
-        <div class="big">👑</div>
-        <h2>VitalStar Games Premium</h2>
+
+        <div class="modal-icon">
+            👑
+        </div>
+
+        <h2>
+            VitalStar Games Premium
+        </h2>
+
         <p>
-            Unlock the premium game library and
-            access exclusive multiplayer features.
+            Unlock the premium game library,
+            exclusive multiplayer features and
+            future Premium games.
         </p>
 
-        <button onclick="startSubscription()">
+        <button id="subscribeButton">
             👑 Continue to Premium
         </button>
 
-        <button class="close" onclick="closePremium()">
-            Cancel
+        <button
+            class="close"
+            id="closePremium"
+        >
+            Close
         </button>
+
     </div>
+
 </div>
 
-<script>
-let coins = Number(localStorage.getItem("vitalstarCoins"));
 
-if(!coins){
-    coins = 1000;
-    localStorage.setItem("vitalstarCoins", coins);
-}
-
-document.getElementById("coinBalance").textContent = coins;
-
-function playGame(name){
-    alert(
-        "🎮 " + name +
-        "\\n\\nThe game engine will be connected in the next step."
-    );
-}
-
-function showPremium(){
-    document.getElementById("premiumModal").style.display = "flex";
-}
-
-function closePremium(){
-    document.getElementById("premiumModal").style.display = "none";
-}
-
-function startSubscription(){
-    alert(
-        "👑 Premium subscription\\n\\n" +
-        "Payment will be connected after the secure payment system is configured."
-    );
-}
-
-document.getElementById("premiumModal").addEventListener("click", function(e){
-    if(e.target === this){
-        closePremium();
-    }
-});
-</script>
+<script type="module" src="./games.js"></script>
 
 </body>
 </html>
