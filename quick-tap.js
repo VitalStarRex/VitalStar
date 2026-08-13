@@ -15,7 +15,9 @@ import {
     onValue,
     remove,
     onDisconnect,
-    runTransaction
+    runTransaction,
+    push,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
@@ -24,49 +26,43 @@ import {
 ========================================================= */
 
 const connectionStatus =
-    document.getElementById(
-        "connectionStatus"
-    );
+    document.getElementById("connectionStatus");
 
 const roomStatus =
-    document.getElementById(
-        "roomStatus"
-    );
+    document.getElementById("roomStatus");
 
 const myScoreElement =
-    document.getElementById(
-        "myScore"
-    );
+    document.getElementById("myScore");
 
 const opponentScoreElement =
-    document.getElementById(
-        "opponentScore"
-    );
+    document.getElementById("opponentScore");
 
 const timerElement =
-    document.getElementById(
-        "timer"
-    );
+    document.getElementById("timer");
 
 const tapButton =
-    document.getElementById(
-        "tapButton"
-    );
+    document.getElementById("tapButton");
 
 const startButton =
-    document.getElementById(
-        "startButton"
-    );
+    document.getElementById("startButton");
 
 const leaveButton =
-    document.getElementById(
-        "leaveButton"
-    );
+    document.getElementById("leaveButton");
 
 const messageElement =
-    document.getElementById(
-        "message"
-    );
+    document.getElementById("message");
+
+const chatMessages =
+    document.getElementById("chatMessages");
+
+const chatForm =
+    document.getElementById("chatForm");
+
+const chatInput =
+    document.getElementById("chatInput");
+
+const chatSend =
+    document.getElementById("chatSend");
 
 
 /* =========================================================
@@ -81,11 +77,11 @@ let roomId = null;
 
 let roomRef = null;
 
-let roomListener = null;
-
 let countdownInterval = null;
 
 let gameFinished = false;
+
+let chatStarted = false;
 
 
 /* =========================================================
@@ -101,26 +97,22 @@ onAuthStateChanged(
             messageElement.textContent =
                 "Please log in to play.";
 
-            startButton.disabled =
-                true;
+            startButton.disabled = true;
 
             connectionStatus.textContent =
                 "● Login required";
 
             return;
-
         }
 
         currentUser = user;
 
-        playerId =
-            user.uid;
+        playerId = user.uid;
 
         connectionStatus.textContent =
             "● Online";
 
-        startButton.disabled =
-            false;
+        startButton.disabled = false;
 
         messageElement.textContent =
             "Ready to find an opponent.";
@@ -147,11 +139,9 @@ async function findOpponent(){
             "Please log in first.";
 
         return;
-
     }
 
-    startButton.disabled =
-        true;
+    startButton.disabled = true;
 
     messageElement.textContent =
         "Searching for another player...";
@@ -168,7 +158,6 @@ async function findOpponent(){
                 "quickTapWaiting"
             );
 
-
         const waitingSnapshot =
             await get(waitingRef);
 
@@ -181,17 +170,14 @@ async function findOpponent(){
             const waiting =
                 waitingSnapshot.val();
 
-
             roomId =
                 waiting.roomId;
-
 
             await createRoomWithOpponent(
                 roomId,
                 waiting.uid,
                 waiting.name || "Player"
             );
-
 
             await remove(
                 waitingRef
@@ -206,18 +192,14 @@ async function findOpponent(){
         }
 
     }
-
     catch(error){
 
-        console.error(
-            error
-        );
+        console.error(error);
 
         messageElement.textContent =
             "Unable to find a game. Try again.";
 
-        startButton.disabled =
-            false;
+        startButton.disabled = false;
 
     }
 
@@ -245,9 +227,11 @@ async function createWaitingRoom(){
         waitingRef,
         {
             uid:playerId,
+
             name:
                 currentUser.displayName ||
                 "Player",
+
             roomId:roomId
         }
     );
@@ -263,7 +247,6 @@ async function createWaitingRoom(){
 
     messageElement.textContent =
         "Keep this page open while we find an opponent.";
-
 
     startListeningToRoom(
         roomId
@@ -282,9 +265,7 @@ async function createRoomWithOpponent(
     opponentName
 ){
 
-    roomId =
-        id;
-
+    roomId = id;
 
     roomRef =
         ref(
@@ -346,31 +327,35 @@ function startListeningToRoom(id){
         );
 
 
-    roomListener =
-        onValue(
-            roomRef,
-            snapshot => {
+    onValue(
+        roomRef,
+        snapshot => {
 
-                const room =
-                    snapshot.val();
-
-
-                if(!room){
-
-                    messageElement.textContent =
-                        "Room closed.";
-
-                    return;
-
-                }
+            const room =
+                snapshot.val();
 
 
-                updateRoomUI(
-                    room
-                );
+            if(!room){
+
+                messageElement.textContent =
+                    "Room closed.";
+
+                return;
 
             }
-        );
+
+
+            updateRoomUI(
+                room
+            );
+
+        }
+    );
+
+
+    startChatListener(
+        id
+    );
 
 }
 
@@ -385,9 +370,7 @@ function updateRoomUI(room){
         room.players || {};
 
     const playerIds =
-        Object.keys(
-            players
-        );
+        Object.keys(players);
 
 
     const opponentId =
@@ -400,7 +383,6 @@ function updateRoomUI(room){
     const me =
         players[playerId];
 
-
     const opponent =
         opponentId
         ? players[opponentId]
@@ -409,7 +391,6 @@ function updateRoomUI(room){
 
     myScoreElement.textContent =
         me?.score || 0;
-
 
     opponentScoreElement.textContent =
         opponent?.score || 0;
@@ -428,9 +409,7 @@ function updateRoomUI(room){
     }
 
 
-    if(
-        room.status === "ready"
-    ){
+    if(room.status === "ready"){
 
         roomStatus.textContent =
             "👥 Opponent found!";
@@ -444,9 +423,7 @@ function updateRoomUI(room){
     }
 
 
-    if(
-        room.status === "playing"
-    ){
+    if(room.status === "playing"){
 
         tapButton.disabled =
             false;
@@ -461,9 +438,7 @@ function updateRoomUI(room){
     }
 
 
-    if(
-        room.status === "finished"
-    ){
+    if(room.status === "finished"){
 
         tapButton.disabled =
             true;
@@ -487,10 +462,7 @@ async function startGame(){
 
 
     const snapshot =
-        await get(
-            roomRef
-        );
-
+        await get(roomRef);
 
     const room =
         snapshot.val();
@@ -498,12 +470,7 @@ async function startGame(){
 
     if(!room) return;
 
-
-    if(room.status !== "ready"){
-
-        return;
-
-    }
+    if(room.status !== "ready") return;
 
 
     const endTime =
@@ -556,8 +523,7 @@ tapButton.addEventListener(
                 score => {
 
                     if(
-                        typeof score !==
-                        "number"
+                        typeof score !== "number"
                     ){
 
                         return 1;
@@ -570,7 +536,6 @@ tapButton.addEventListener(
             );
 
         }
-
         catch(error){
 
             console.error(
@@ -593,16 +558,10 @@ let countdownStarted = false;
 
 function startCountdown(endTime){
 
-    if(countdownStarted){
-
-        return;
-
-    }
+    if(countdownStarted) return;
 
 
-    countdownStarted =
-        true;
-
+    countdownStarted = true;
 
     clearInterval(
         countdownInterval
@@ -626,18 +585,14 @@ function startCountdown(endTime){
                     );
 
 
-                if(
-                    remaining <= 0
-                ){
+                if(remaining <= 0){
 
                     clearInterval(
                         countdownInterval
                     );
 
-
                     countdownStarted =
                         false;
-
 
                     await finishRoom();
 
@@ -660,10 +615,7 @@ async function finishRoom(){
 
 
     const snapshot =
-        await get(
-            roomRef
-        );
-
+        await get(roomRef);
 
     const room =
         snapshot.val();
@@ -672,10 +624,7 @@ async function finishRoom(){
     if(!room) return;
 
 
-    if(
-        room.status ===
-        "finished"
-    ){
+    if(room.status === "finished"){
 
         return;
 
@@ -698,25 +647,17 @@ async function finishRoom(){
 
 function finishGame(room){
 
-    if(gameFinished){
-
-        return;
-
-    }
+    if(gameFinished) return;
 
 
-    gameFinished =
-        true;
+    gameFinished = true;
 
 
     const players =
         room.players || {};
 
-
     const ids =
-        Object.keys(
-            players
-        );
+        Object.keys(players);
 
 
     if(ids.length < 2){
@@ -744,14 +685,10 @@ function finishGame(room){
         players[opponentId]?.score || 0;
 
 
-    timerElement.textContent =
-        "0";
+    timerElement.textContent = "0";
 
 
-    if(
-        myScore >
-        opponentScore
-    ){
+    if(myScore > opponentScore){
 
         roomStatus.textContent =
             "🏆 YOU WIN!";
@@ -760,11 +697,7 @@ function finishGame(room){
             `You scored ${myScore} taps.`;
 
     }
-
-    else if(
-        myScore <
-        opponentScore
-    ){
+    else if(myScore < opponentScore){
 
         roomStatus.textContent =
             "😅 YOU LOST";
@@ -773,7 +706,6 @@ function finishGame(room){
             `You scored ${myScore} taps.`;
 
     }
-
     else{
 
         roomStatus.textContent =
@@ -785,12 +717,300 @@ function finishGame(room){
     }
 
 
-    tapButton.disabled =
-        true;
-
+    tapButton.disabled = true;
 
     leaveButton.classList.remove(
         "hidden"
+    );
+
+}
+
+
+/* =========================================================
+   ROOM CHAT
+========================================================= */
+
+function startChatListener(id){
+
+    if(chatStarted) return;
+
+    chatStarted = true;
+
+
+    const chatRef =
+        ref(
+            rtdb,
+            `quickTapRooms/${id}/chat`
+        );
+
+
+    onValue(
+        chatRef,
+        snapshot => {
+
+            const data =
+                snapshot.val();
+
+
+            chatMessages.innerHTML = "";
+
+
+            if(!data){
+
+                chatMessages.innerHTML = `
+                    <div class="chat-empty">
+                        No messages yet.
+                        Say hello 👋
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            const messages =
+                Object.entries(data)
+                .sort(
+                    (a,b) =>
+                        (a[1].createdAt || 0) -
+                        (b[1].createdAt || 0)
+                )
+                .slice(-50);
+
+
+            messages.forEach(
+                ([id,message]) => {
+
+                    addChatMessage(
+                        message
+                    );
+
+                }
+            );
+
+
+            chatMessages.scrollTop =
+                chatMessages.scrollHeight;
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   DISPLAY CHAT MESSAGE
+========================================================= */
+
+function addChatMessage(message){
+
+    const wrapper =
+        document.createElement("div");
+
+
+    wrapper.className =
+        "chat-message" +
+        (
+            message.uid === playerId
+            ? " mine"
+            : ""
+        );
+
+
+    const safeName =
+        escapeHTML(
+            message.name || "Player"
+        );
+
+
+    const safeText =
+        escapeHTML(
+            message.text || ""
+        );
+
+
+    const time =
+        formatTime(
+            message.createdAt
+        );
+
+
+    wrapper.innerHTML = `
+
+        <div class="chat-name">
+            ${safeName}
+        </div>
+
+        <div class="chat-bubble">
+            ${safeText}
+        </div>
+
+        <div class="chat-time">
+            ${time}
+        </div>
+
+    `;
+
+
+    chatMessages.appendChild(
+        wrapper
+    );
+
+}
+
+
+/* =========================================================
+   SEND CHAT
+========================================================= */
+
+chatForm.addEventListener(
+    "submit",
+    async event => {
+
+        event.preventDefault();
+
+
+        if(
+            !roomId ||
+            !currentUser
+        ){
+
+            return;
+
+        }
+
+
+        const text =
+            chatInput.value.trim();
+
+
+        if(!text) return;
+
+
+        if(text.length > 200){
+
+            return;
+
+        }
+
+
+        chatInput.disabled = true;
+
+        chatSend.disabled = true;
+
+
+        try{
+
+            const messagesRef =
+                ref(
+                    rtdb,
+                    `quickTapRooms/${roomId}/chat`
+                );
+
+
+            const newMessage =
+                push(messagesRef);
+
+
+            await set(
+                newMessage,
+                {
+
+                    uid:playerId,
+
+                    name:
+                        currentUser.displayName ||
+                        "Player",
+
+                    text:text,
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+            chatInput.value = "";
+
+        }
+        catch(error){
+
+            console.error(
+                "Chat error:",
+                error
+            );
+
+        }
+        finally{
+
+            chatInput.disabled = false;
+
+            chatSend.disabled = false;
+
+            chatInput.focus();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ENABLE CHAT WHEN ROOM EXISTS
+========================================================= */
+
+function enableChat(){
+
+    chatInput.disabled = false;
+
+    chatSend.disabled = false;
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHTML(value){
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value;
+
+    return div.innerHTML;
+
+}
+
+
+/* =========================================================
+   TIME
+========================================================= */
+
+function formatTime(timestamp){
+
+    if(
+        !timestamp ||
+        typeof timestamp !== "number"
+    ){
+
+        return "now";
+
+    }
+
+
+    return new Date(
+        timestamp
+    ).toLocaleTimeString(
+        [],
+        {
+            hour:"2-digit",
+            minute:"2-digit"
+        }
     );
 
 }
@@ -822,7 +1042,6 @@ async function leaveGame(){
             );
 
         }
-
         catch(error){
 
             console.error(
@@ -841,7 +1060,7 @@ async function leaveGame(){
 
 
 /* =========================================================
-   PAGE CLEANUP
+   CLEANUP
 ========================================================= */
 
 window.addEventListener(
@@ -857,7 +1076,7 @@ window.addEventListener(
 
 
 /* =========================================================
-   READY BUTTON MONITOR
+   WATCH FOR READY ROOM
 ========================================================= */
 
 setInterval(
@@ -876,10 +1095,7 @@ setInterval(
         try{
 
             const snapshot =
-                await get(
-                    roomRef
-                );
-
+                await get(roomRef);
 
             const room =
                 snapshot.val();
@@ -887,21 +1103,19 @@ setInterval(
 
             if(
                 room &&
-                room.status ===
-                "ready"
+                room.status === "ready"
             ){
+
+                enableChat();
 
                 await startGame();
 
             }
 
         }
-
         catch(error){
 
-            console.error(
-                error
-            );
+            console.error(error);
 
         }
 
