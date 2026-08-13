@@ -1,25 +1,4 @@
-// ============================================================
-// VITALSTAR — group-posts.js
-// Complete Group Posts System
-//
-// Handles:
-// - Text posts
-// - Image uploads via Cloudinary
-// - Video uploads via Cloudinary
-// - HTML5 video playback
-// - Full author name from users/{uid}
-// - Profile picture from users/{uid}
-// - Yellow author names
-// - Likes
-// - Comments
-// - Replies
-// - Edit / Delete
-// - Pin / Unpin
-// - Report
-// - Repost
-// - Share
-// - Pagination
-// ============================================================
+
 
 import {
   addDoc,
