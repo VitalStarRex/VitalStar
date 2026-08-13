@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
@@ -46,8 +47,10 @@ button {
 .app {
     width: 100%;
     height: 100vh;
+
     display: flex;
     flex-direction: column;
+
     background:
         radial-gradient(
             circle at top right,
@@ -70,7 +73,6 @@ button {
     align-items: center;
 
     padding: 0 12px;
-
     gap: 10px;
 
     background: rgba(255, 255, 255, 0.96);
@@ -230,6 +232,8 @@ button {
     color: #9d1764;
 
     font-size: 20px;
+
+    cursor: pointer;
 }
 
 .new-chat-btn {
@@ -765,6 +769,183 @@ button {
     background: #e52e87;
 
     color: white;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   FREE TRIAL LOCK
+========================================================= */
+
+.trial-lock {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 200;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(255, 247, 252, .97);
+
+    backdrop-filter: blur(10px);
+}
+
+.trial-lock.show {
+    display: flex;
+}
+
+.trial-card {
+    width: min(430px, 100%);
+
+    padding: 30px 24px;
+
+    text-align: center;
+
+    background: white;
+
+    border: 1px solid #f0dce8;
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 15px 45px rgba(180, 40, 110, .15);
+}
+
+.trial-icon {
+    width: 75px;
+    height: 75px;
+
+    margin: 0 auto 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff3e9f,
+            #ff9dd0
+        );
+
+    color: white;
+
+    font-size: 32px;
+
+    box-shadow:
+        0 8px 25px rgba(255, 62, 159, .25);
+}
+
+.trial-card h2 {
+    margin: 0 0 10px;
+
+    font-size: 23px;
+
+    color: #281621;
+}
+
+.trial-card p {
+    margin: 8px 0;
+
+    color: #755f6d;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+}
+
+.trial-price {
+    margin: 20px 0;
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+    color: #d92b83;
+}
+
+.trial-pay-btn {
+    width: 100%;
+
+    padding: 14px;
+
+    border: none;
+
+    border-radius: 25px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e42e87,
+            #ff5cae
+        );
+
+    color: white;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 18px rgba(228, 46, 135, .22);
+}
+
+.trial-pay-btn:disabled {
+    opacity: .6;
+
+    cursor: not-allowed;
+}
+
+.trial-note {
+    margin-top: 12px;
+
+    font-size: 11px;
+
+    color: #a88e9b;
+}
+
+
+/* =========================================================
+   TRIAL STATUS
+========================================================= */
+
+.trial-status {
+    position: fixed;
+
+    top: 70px;
+    right: 12px;
+
+    z-index: 30;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    background: #fff0f8;
+
+    border: 1px solid #ffd1e6;
+
+    color: #9d1764;
+
+    font-size: 10px;
+
+    display: none;
+}
+
+.trial-status.show {
+    display: block;
 }
 
 
@@ -812,9 +993,15 @@ button {
 
     #messageInput {
         min-height: 40px;
+
         padding-top: 10px;
         padding-bottom: 10px;
     }
+
+    .trial-card {
+        padding: 25px 18px;
+    }
+
 }
 
 </style>
@@ -915,6 +1102,18 @@ button {
 
 
     <!-- =====================================================
+         TRIAL STATUS
+    ====================================================== -->
+
+    <div
+        class="trial-status"
+        id="trialStatus"
+    >
+        Free trial active
+    </div>
+
+
+    <!-- =====================================================
          CHAT
     ====================================================== -->
 
@@ -993,8 +1192,6 @@ button {
         <div class="composer-inner">
 
 
-            <!-- FILE -->
-
             <button
                 class="icon-btn"
                 id="fileBtn"
@@ -1012,8 +1209,6 @@ button {
             >
 
 
-            <!-- VOICE -->
-
             <button
                 class="icon-btn"
                 id="voiceBtn"
@@ -1024,8 +1219,6 @@ button {
             </button>
 
 
-            <!-- TEXT -->
-
             <textarea
                 id="messageInput"
                 rows="1"
@@ -1033,8 +1226,6 @@ button {
                 placeholder="Message Pinky Spark..."
             ></textarea>
 
-
-            <!-- SEND -->
 
             <button
                 id="sendBtn"
@@ -1056,7 +1247,56 @@ button {
 </div>
 
 
+<!-- =========================================================
+     FREE TRIAL LOCK
+========================================================= -->
+
+<div
+    class="trial-lock"
+    id="trialLock"
+>
+
+    <div class="trial-card">
+
+        <div class="trial-icon">
+            ✦
+        </div>
+
+        <h2>
+            Your free day has ended
+        </h2>
+
+        <p>
+            Thanks for trying Pinky Spark! ✨
+        </p>
+
+        <p>
+            Continue chatting with your VitalStar AI
+            for:
+        </p>
+
+        <div class="trial-price">
+            ₦1,500
+        </div>
+
+        <button
+            class="trial-pay-btn"
+            id="trialPayBtn"
+        >
+            Continue with Pinky Spark
+        </button>
+
+        <div class="trial-note">
+            Secure payment will be connected next.
+        </div>
+
+    </div>
+
+</div>
+
+
 <script type="module">
+
 
 /* =========================================================
    FIREBASE
@@ -1091,11 +1331,19 @@ import {
 
 
 /* =========================================================
-   SUPABASE EDGE FUNCTION
+   SUPABASE PINKY SPARK AI
 ========================================================= */
 
 const PINKY_API =
     "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/pinky-spark";
+
+
+/* =========================================================
+   PAYMENT FUNCTION
+========================================================= */
+
+const PINKY_PAYMENT_API =
+    "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/pinky-spark-payment";
 
 
 /* =========================================================
@@ -1156,6 +1404,15 @@ const newChatBtn =
 const backBtn =
     document.getElementById("backBtn");
 
+const trialLock =
+    document.getElementById("trialLock");
+
+const trialPayBtn =
+    document.getElementById("trialPayBtn");
+
+const trialStatus =
+    document.getElementById("trialStatus");
+
 
 /* =========================================================
    STATE
@@ -1169,12 +1426,26 @@ let selectedFile = null;
 
 let isSending = false;
 
+let trialExpired = false;
+
+
+/* =========================================================
+   FREE TRIAL SETTINGS
+========================================================= */
+
+const FREE_TRIAL_DURATION =
+    24 * 60 * 60 * 1000;
+
 
 /* =========================================================
    OPEN / CLOSE HISTORY
 ========================================================= */
 
 function openHistory() {
+
+    if (trialExpired) {
+        return;
+    }
 
     sidePanel.classList.add("open");
 
@@ -1250,9 +1521,350 @@ onAuthStateChanged(
             return;
         }
 
+
+        const allowed =
+            await checkFreeTrial();
+
+
+        if (!allowed) {
+
+            return;
+
+        }
+
+
         await loadConversations();
 
         await createConversationIfNeeded();
+
+    }
+);
+
+
+/* =========================================================
+   FREE TRIAL CHECK
+========================================================= */
+
+async function checkFreeTrial() {
+
+    if (!currentUser) {
+
+        return false;
+
+    }
+
+
+    try {
+
+        const userRef =
+            doc(
+                db,
+                "pinkySparkUsers",
+                currentUser.uid
+            );
+
+
+        const snapshot =
+            await getDoc(userRef);
+
+
+        let trialStartedAt;
+
+
+        /*
+         * FIRST VISIT
+         */
+
+        if (!snapshot.exists()) {
+
+            trialStartedAt =
+                Date.now();
+
+
+            await setDoc(
+                userRef,
+                {
+                    userId:
+                        currentUser.uid,
+
+                    trialStartedAt:
+                        trialStartedAt,
+
+                    trialActive:
+                        true,
+
+                    paid:
+                        false,
+
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
+
+        }
+
+
+        /*
+         * EXISTING USER
+         */
+
+        else {
+
+            const data =
+                snapshot.data();
+
+
+            /*
+             * If user has already paid,
+             * allow access.
+             */
+
+            if (
+                data?.paid === true
+            ) {
+
+                trialExpired =
+                    false;
+
+                hideTrialLock();
+
+                return true;
+
+            }
+
+
+            trialStartedAt =
+                data?.trialStartedAt;
+
+
+            /*
+             * Older user without
+             * trial timestamp.
+             */
+
+            if (!trialStartedAt) {
+
+                trialStartedAt =
+                    Date.now();
+
+
+                await updateDoc(
+                    userRef,
+                    {
+                        trialStartedAt:
+                            trialStartedAt,
+
+                        trialActive:
+                            true
+                    }
+                );
+
+            }
+
+        }
+
+
+        /*
+         * Calculate elapsed time.
+         */
+
+        const elapsed =
+            Date.now() -
+            Number(trialStartedAt);
+
+
+        /*
+         * FREE DAY EXPIRED
+         */
+
+        if (
+            elapsed >=
+            FREE_TRIAL_DURATION
+        ) {
+
+            trialExpired =
+                true;
+
+
+            await updateDoc(
+                userRef,
+                {
+                    trialActive:
+                        false
+                }
+            ).catch(
+                () => {}
+            );
+
+
+            showTrialLock();
+
+            return false;
+
+        }
+
+
+        /*
+         * FREE DAY STILL ACTIVE
+         */
+
+        trialExpired =
+            false;
+
+        hideTrialLock();
+
+        showTrialStatus();
+
+        return true;
+
+
+    } catch (error) {
+
+        console.error(
+            "Free trial check error:",
+            error
+        );
+
+
+        /*
+         * Fail closed rather than
+         * accidentally giving access
+         * when the trial state cannot
+         * be verified.
+         */
+
+        addMessage(
+            "Pinky Spark could not verify your access. Please try again.",
+            "pinky",
+            true
+        );
+
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
+   SHOW TRIAL STATUS
+========================================================= */
+
+function showTrialStatus() {
+
+    trialStatus.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   HIDE TRIAL STATUS
+========================================================= */
+
+function hideTrialStatus() {
+
+    trialStatus.classList.remove(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   SHOW TRIAL LOCK
+========================================================= */
+
+function showTrialLock() {
+
+    hideTrialStatus();
+
+    trialLock.classList.add(
+        "show"
+    );
+
+
+    input.disabled =
+        true;
+
+    sendBtn.disabled =
+        true;
+
+    fileBtn.disabled =
+        true;
+
+    voiceBtn.disabled =
+        true;
+
+    menuBtn.disabled =
+        true;
+
+    newChatBtn.disabled =
+        true;
+
+}
+
+
+/* =========================================================
+   HIDE TRIAL LOCK
+========================================================= */
+
+function hideTrialLock() {
+
+    trialLock.classList.remove(
+        "show"
+    );
+
+
+    input.disabled =
+        false;
+
+    sendBtn.disabled =
+        false;
+
+    fileBtn.disabled =
+        false;
+
+    voiceBtn.disabled =
+        false;
+
+    menuBtn.disabled =
+        false;
+
+    newChatBtn.disabled =
+        false;
+
+}
+
+
+/* =========================================================
+   PAYMENT BUTTON
+========================================================= */
+
+trialPayBtn.addEventListener(
+    "click",
+    async () => {
+
+        if (!currentUser) {
+
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        /*
+         * Payment integration will be
+         * completed in the next step.
+         */
+
+        alert(
+            "Pinky Spark payment is being prepared. Your payment will be ₦1,500."
+        );
 
     }
 );
@@ -1274,24 +1886,30 @@ function showLoginRequired() {
 
     box.innerHTML = `
         <h2>🔐 Login required</h2>
+
         <p>
             Please log in to VitalStar to use Pinky Spark
             and save your conversation history.
         </p>
+
         <button id="loginButton">
             Go to Login
         </button>
     `;
 
+
     messages.appendChild(box);
+
 
     document
         .getElementById("loginButton")
         .addEventListener(
             "click",
             () => {
+
                 window.location.href =
                     "login.html";
+
             }
         );
 
@@ -1311,6 +1929,7 @@ async function createConversationIfNeeded() {
     if (currentConversationId) {
         return;
     }
+
 
     const conversationRef =
         await addDoc(
@@ -1336,6 +1955,7 @@ async function createConversationIfNeeded() {
             }
         );
 
+
     currentConversationId =
         conversationRef.id;
 
@@ -1348,12 +1968,17 @@ async function createConversationIfNeeded() {
 
 async function loadConversations() {
 
-    if (!currentUser) {
+    if (
+        !currentUser ||
+        trialExpired
+    ) {
         return;
     }
 
+
     historyList.innerHTML =
         "Loading...";
+
 
     try {
 
@@ -1375,12 +2000,15 @@ async function loadConversations() {
                 limit(50)
             );
 
+
         const snapshot =
             await getDocs(
                 conversationsQuery
             );
 
+
         historyList.innerHTML = "";
+
 
         if (snapshot.empty) {
 
@@ -1395,6 +2023,7 @@ async function loadConversations() {
                 </div>`;
 
             return;
+
         }
 
 
@@ -1404,18 +2033,23 @@ async function loadConversations() {
                 const data =
                     conversationDoc.data();
 
+
                 const item =
                     document.createElement("div");
 
+
                 item.className =
                     "history-item";
+
 
                 if (
                     conversationDoc.id ===
                     currentConversationId
                 ) {
 
-                    item.classList.add("active");
+                    item.classList.add(
+                        "active"
+                    );
 
                 }
 
@@ -1465,9 +2099,11 @@ async function loadConversations() {
                             return;
                         }
 
+
                         await openConversation(
                             conversationDoc.id
                         );
+
 
                         closeHistory();
 
@@ -1485,6 +2121,7 @@ async function loadConversations() {
 
                             event.stopPropagation();
 
+
                             await deleteConversation(
                                 conversationDoc.id
                             );
@@ -1500,12 +2137,14 @@ async function loadConversations() {
             }
         );
 
+
     } catch (error) {
 
         console.error(
             "Conversation loading error:",
             error
         );
+
 
         historyList.innerHTML =
             `<div style="
@@ -1529,14 +2168,20 @@ async function openConversation(
     conversationId
 ) {
 
-    if (!currentUser) {
+    if (
+        !currentUser ||
+        trialExpired
+    ) {
         return;
     }
+
 
     currentConversationId =
         conversationId;
 
+
     messages.innerHTML = "";
+
 
     typingRow.style.display =
         "none";
@@ -1559,6 +2204,7 @@ async function openConversation(
                 limit(200)
             );
 
+
         const snapshot =
             await getDocs(
                 messagesQuery
@@ -1580,6 +2226,7 @@ async function openConversation(
                 const data =
                     messageDoc.data();
 
+
                 addMessage(
                     data.content || "",
                     data.role === "user"
@@ -1595,12 +2242,14 @@ async function openConversation(
 
         scrollToBottom();
 
+
     } catch (error) {
 
         console.error(
             "Message history error:",
             error
         );
+
 
         addMessage(
             "I couldn't load this conversation.",
@@ -1621,20 +2270,29 @@ newChatBtn.addEventListener(
     "click",
     async () => {
 
-        if (!currentUser) {
+        if (
+            !currentUser ||
+            trialExpired
+        ) {
             return;
         }
+
 
         currentConversationId =
             null;
 
+
         messages.innerHTML = "";
+
 
         showWelcome();
 
+
         await createConversationIfNeeded();
 
+
         closeHistory();
+
 
         await loadConversations();
 
@@ -1650,14 +2308,19 @@ async function deleteConversation(
     conversationId
 ) {
 
-    if (!currentUser) {
+    if (
+        !currentUser ||
+        trialExpired
+    ) {
         return;
     }
+
 
     const confirmed =
         confirm(
             "Delete this conversation?"
         );
+
 
     if (!confirmed) {
         return;
@@ -1683,9 +2346,12 @@ async function deleteConversation(
             currentConversationId =
                 null;
 
+
             messages.innerHTML = "";
 
+
             showWelcome();
+
 
             await createConversationIfNeeded();
 
@@ -1694,6 +2360,7 @@ async function deleteConversation(
 
         await loadConversations();
 
+
     } catch (error) {
 
         console.error(
@@ -1701,8 +2368,9 @@ async function deleteConversation(
             error
         );
 
+
         alert(
-            "Unable to delete this conversation."
+            "Unable to delete conversation."
         );
 
     }
@@ -1718,9 +2386,11 @@ function showWelcome() {
 
     messages.innerHTML = "";
 
+
     messages.appendChild(
         createWelcome()
     );
+
 
     messages.appendChild(
         typingRow
@@ -1738,11 +2408,14 @@ function createWelcome() {
     const div =
         document.createElement("div");
 
+
     div.className =
         "welcome";
 
+
     div.id =
         "welcome";
+
 
     div.innerHTML = `
 
@@ -1761,6 +2434,7 @@ function createWelcome() {
         </p>
 
     `;
+
 
     return div;
 
@@ -1783,6 +2457,7 @@ function addMessage(
             ".welcome"
         );
 
+
     if (existingWelcome) {
         existingWelcome.remove();
     }
@@ -1791,6 +2466,7 @@ function addMessage(
     const row =
         document.createElement("div");
 
+
     row.className =
         "message-row " + sender;
 
@@ -1798,12 +2474,17 @@ function addMessage(
     const bubble =
         document.createElement("div");
 
+
     bubble.className =
         "message " + sender;
 
 
     if (isError) {
-        bubble.classList.add("error");
+
+        bubble.classList.add(
+            "error"
+        );
+
     }
 
 
@@ -1814,6 +2495,7 @@ function addMessage(
     row.appendChild(
         bubble
     );
+
 
     messages.insertBefore(
         row,
@@ -1885,6 +2567,7 @@ async function saveMessage(
             }
         );
 
+
     } catch (error) {
 
         console.error(
@@ -1912,11 +2595,14 @@ async function getConversationTitle() {
                 currentConversationId
             );
 
+
         const snapshot =
             await getDoc(ref);
 
+
         const data =
             snapshot.data();
+
 
         if (
             data?.title &&
@@ -1969,7 +2655,8 @@ async function sendMessage() {
 
     if (
         isSending ||
-        !currentUser
+        !currentUser ||
+        trialExpired
     ) {
 
         return;
@@ -2000,19 +2687,17 @@ async function sendMessage() {
     isSending =
         true;
 
+
     sendBtn.disabled =
         true;
+
 
     input.disabled =
         true;
 
 
-    /* Make sure conversation exists */
-
     await createConversationIfNeeded();
 
-
-    /* Show user message */
 
     addMessage(
         text,
@@ -2020,25 +2705,20 @@ async function sendMessage() {
     );
 
 
-    /* Save user message */
-
     await saveMessage(
         "user",
         text
     );
 
 
-    /* Clear input */
-
     input.value = "";
+
 
     input.style.height =
         "43px";
 
 
-    showTyping(
-        true
-    );
+    showTyping(true);
 
 
     try {
@@ -2065,6 +2745,7 @@ async function sendMessage() {
 
         let data;
 
+
         try {
 
             data =
@@ -2080,9 +2761,7 @@ async function sendMessage() {
         }
 
 
-        showTyping(
-            false
-        );
+        showTyping(false);
 
 
         if (!response.ok) {
@@ -2099,6 +2778,7 @@ async function sendMessage() {
                 "pinky",
                 true
             );
+
 
             return;
 
@@ -2121,6 +2801,7 @@ async function sendMessage() {
                 true
             );
 
+
             return;
 
         }
@@ -2131,8 +2812,6 @@ async function sendMessage() {
             "pinky"
         );
 
-
-        /* Save AI response */
 
         await saveMessage(
             "assistant",
@@ -2151,9 +2830,7 @@ async function sendMessage() {
         );
 
 
-        showTyping(
-            false
-        );
+        showTyping(false);
 
 
         addMessage(
@@ -2162,16 +2839,20 @@ async function sendMessage() {
             true
         );
 
+
     } finally {
 
         isSending =
             false;
 
+
         sendBtn.disabled =
             false;
 
+
         input.disabled =
             false;
+
 
         input.focus();
 
@@ -2265,6 +2946,7 @@ input.addEventListener(
         this.style.height =
             "43px";
 
+
         this.style.height =
             Math.min(
                 this.scrollHeight,
@@ -2282,6 +2964,11 @@ input.addEventListener(
 fileBtn.addEventListener(
     "click",
     () => {
+
+        if (trialExpired) {
+            return;
+        }
+
 
         fileInput.click();
 
@@ -2303,6 +2990,7 @@ fileInput.addEventListener(
             attachmentPreview
                 .classList
                 .remove("show");
+
 
             return;
 
@@ -2333,8 +3021,10 @@ removeAttachment.addEventListener(
         selectedFile =
             null;
 
+
         fileInput.value =
             "";
+
 
         attachmentPreview
             .classList
@@ -2362,11 +3052,14 @@ if (SpeechRecognition) {
     recognition =
         new SpeechRecognition();
 
+
     recognition.lang =
         "en-US";
 
+
     recognition.interimResults =
         false;
+
 
     recognition.continuous =
         false;
@@ -2407,12 +3100,14 @@ if (SpeechRecognition) {
                     .results[0][0]
                     .transcript;
 
+
             input.value =
                 (
                     input.value
                     ? input.value + " "
                     : ""
                 ) + transcript;
+
 
             input.dispatchEvent(
                 new Event("input")
@@ -2425,6 +3120,11 @@ if (SpeechRecognition) {
         "click",
         () => {
 
+            if (trialExpired) {
+                return;
+            }
+
+
             try {
 
                 recognition.start();
@@ -2435,6 +3135,7 @@ if (SpeechRecognition) {
 
         }
     );
+
 
 } else {
 
@@ -2461,22 +3162,27 @@ function escapeHtml(
 ) {
 
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
@@ -2487,4 +3193,5 @@ function escapeHtml(
 </script>
 
 </body>
+
 </html>
