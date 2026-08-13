@@ -1,3197 +1,968 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
->
-
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>Pinky Spark — VitalStar AI</title>
 
 <style>
-
-* {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background: #fff7fc;
-    color: #17121a;
-}
-
-button,
-textarea,
-input {
-    font-family: inherit;
-}
-
-button {
-    -webkit-tap-highlight-color: transparent;
-}
-
-
-/* =========================================================
-   APP
-========================================================= */
-
-.app {
-    width: 100%;
-    height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-
-    background:
-        radial-gradient(
-            circle at top right,
-            rgba(255, 105, 180, 0.10),
-            transparent 35%
-        ),
-        #fff7fc;
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-.header {
-    height: 64px;
-    flex-shrink: 0;
-
-    display: flex;
-    align-items: center;
-
-    padding: 0 12px;
-    gap: 10px;
-
-    background: rgba(255, 255, 255, 0.96);
-
-    border-bottom: 1px solid #f0dce8;
-
-    z-index: 10;
-}
-
-.back-btn,
-.menu-btn {
-    width: 40px;
-    height: 40px;
-
-    border: none;
-    border-radius: 50%;
-
-    background: #fff0f8;
-
-    color: #9d1764;
-
-    font-size: 20px;
-
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.menu-btn {
-    font-size: 21px;
-}
-
-.spark-avatar {
-    width: 43px;
-    height: 43px;
-
-    flex-shrink: 0;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff4fa3,
-            #ff8bc8
-        );
-
-    color: white;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 20px;
-    font-weight: bold;
-
-    box-shadow:
-        0 4px 14px rgba(255, 79, 163, 0.30);
-}
-
-.header-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.header-info h1 {
-    margin: 0;
-
-    font-size: 17px;
-    font-weight: 700;
-}
-
-.status {
-    margin-top: 3px;
-
-    font-size: 12px;
-
-    color: #8b7180;
-
-    white-space: nowrap;
-}
-
-.status-dot {
-    display: inline-block;
-
-    width: 7px;
-    height: 7px;
-
-    margin-right: 4px;
-
-    border-radius: 50%;
-
-    background: #22c55e;
-}
-
-
-/* =========================================================
-   SIDE PANEL
-========================================================= */
-
-.side-panel {
-    position: fixed;
-
-    top: 0;
-    left: 0;
-    bottom: 0;
-
-    width: min(310px, 86vw);
-
-    background: white;
-
-    z-index: 100;
-
-    transform: translateX(-105%);
-
-    transition: transform .25s ease;
-
-    box-shadow: 5px 0 25px rgba(0, 0, 0, .10);
-
-    display: flex;
-    flex-direction: column;
-}
-
-.side-panel.open {
-    transform: translateX(0);
-}
-
-.panel-header {
-    height: 64px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 0 15px;
-
-    border-bottom: 1px solid #f0dce8;
-}
-
-.panel-title {
-    flex: 1;
-
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.close-panel {
-    width: 38px;
-    height: 38px;
-
-    border: none;
-    border-radius: 50%;
-
-    background: #fff0f8;
-
-    color: #9d1764;
-
-    font-size: 20px;
-
-    cursor: pointer;
-}
-
-.new-chat-btn {
-    margin: 14px;
-
-    padding: 12px;
-
-    border: none;
-    border-radius: 12px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff4fa3,
-            #ff7fbd
-        );
-
-    color: white;
-
-    font-weight: bold;
-
-    cursor: pointer;
-}
-
-.history-list {
-    flex: 1;
-
-    overflow-y: auto;
-
-    padding: 0 10px 15px;
-}
-
-.history-item {
-    position: relative;
-
-    padding: 12px 40px 12px 12px;
-
-    margin-bottom: 6px;
-
-    border-radius: 11px;
-
-    cursor: pointer;
-
-    background: #fff8fc;
-
-    border: 1px solid transparent;
-}
-
-.history-item:hover {
-    border-color: #ffd1e8;
-}
-
-.history-item.active {
-    background: #ffe8f3;
-    border-color: #ffc1df;
-}
-
-.history-title {
-    font-size: 14px;
-    font-weight: 600;
-
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.history-date {
-    margin-top: 4px;
-
-    font-size: 10px;
-
-    color: #9d8190;
-}
-
-.delete-history {
-    position: absolute;
-
-    right: 8px;
-    top: 50%;
-
-    transform: translateY(-50%);
-
-    width: 30px;
-    height: 30px;
-
-    border: none;
-    border-radius: 50%;
-
-    background: transparent;
-
-    color: #b14c7f;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
-   OVERLAY
-========================================================= */
-
-.overlay {
-    position: fixed;
-
-    inset: 0;
-
-    background: rgba(20, 10, 18, .30);
-
-    z-index: 90;
-
-    display: none;
-}
-
-.overlay.show {
-    display: block;
-}
-
-
-/* =========================================================
-   MESSAGES
-========================================================= */
-
-.messages {
-    flex: 1;
-
-    overflow-y: auto;
-
-    padding: 20px 13px 145px;
-
-    scroll-behavior: smooth;
-}
-
-.welcome {
-    max-width: 600px;
-
-    margin: 45px auto 30px;
-
-    text-align: center;
-
-    color: #755f6d;
-}
-
-.welcome-avatar {
-    width: 78px;
-    height: 78px;
-
-    margin: 0 auto 15px;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff3e9f,
-            #ff9dd0
-        );
-
-    color: white;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 33px;
-    font-weight: bold;
-
-    box-shadow:
-        0 8px 25px rgba(255, 62, 159, .25);
-}
-
-.welcome h2 {
-    margin: 0 0 8px;
-
-    font-size: 23px;
-
-    color: #281621;
-}
-
-.welcome p {
-    margin: 0;
-
-    font-size: 14px;
-
-    line-height: 1.6;
-}
-
-.message-row {
-    display: flex;
-
-    margin: 10px 0;
-}
-
-.message-row.user {
-    justify-content: flex-end;
-}
-
-.message-row.pinky {
-    justify-content: flex-start;
-}
-
-.message {
-    max-width: min(82%, 680px);
-
-    padding: 11px 14px;
-
-    border-radius: 17px;
-
-    font-size: 15px;
-
-    line-height: 1.5;
-
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-.message.user {
-    color: white;
-
-    background:
-        linear-gradient(
-            135deg,
-            #d92b83,
-            #ff5aac
-        );
-
-    border-bottom-right-radius: 5px;
-
-    box-shadow:
-        0 3px 10px rgba(217, 43, 131, .15);
-}
-
-.message.pinky {
-    color: #281621;
-
-    background: white;
-
-    border: 1px solid #f1d9e6;
-
-    border-bottom-left-radius: 5px;
-
-    box-shadow:
-        0 2px 8px rgba(0, 0, 0, .03);
-}
-
-.message.error {
-    color: #a51f43;
-
-    background: #fff0f3;
-
-    border-color: #ffc7d4;
-}
-
-
-/* =========================================================
-   TYPING
-========================================================= */
-
-.typing-row {
-    display: none;
-
-    justify-content: flex-start;
-
-    margin: 10px 0;
-}
-
-.typing-row.show {
-    display: flex;
-}
-
-.typing-bubble {
-    padding: 12px 16px;
-
-    background: white;
-
-    border: 1px solid #f1d9e6;
-
-    border-radius: 17px;
-
-    border-bottom-left-radius: 5px;
-}
-
-.dots {
-    display: flex;
-    gap: 4px;
-}
-
-.dots span {
-    width: 7px;
-    height: 7px;
-
-    border-radius: 50%;
-
-    background: #ff5aac;
-
-    animation: bounce 1.2s infinite;
-}
-
-.dots span:nth-child(2) {
-    animation-delay: .15s;
-}
-
-.dots span:nth-child(3) {
-    animation-delay: .30s;
-}
-
-@keyframes bounce {
-
-    0%,
-    60%,
-    100% {
-        transform: translateY(0);
-        opacity: .45;
-    }
-
-    30% {
-        transform: translateY(-5px);
-        opacity: 1;
-    }
-}
-
-
-/* =========================================================
-   ATTACHMENT PREVIEW
-========================================================= */
-
-.attachment-preview {
-    display: none;
-
-    max-width: 900px;
-
-    margin: 0 auto 7px;
-
-    padding: 7px 10px;
-
-    border-radius: 10px;
-
-    background: #fff0f8;
-
-    border: 1px solid #ffd1e6;
-
-    font-size: 12px;
-
-    color: #8d315f;
-}
-
-.attachment-preview.show {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-}
-
-.remove-attachment {
-    margin-left: auto;
-
-    border: none;
-
-    background: transparent;
-
-    color: #a11d5e;
-
-    font-size: 18px;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
-   COMPOSER
-========================================================= */
-
-.composer {
-    position: fixed;
-
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    z-index: 20;
-
-    padding: 9px 10px 7px;
-
-    background:
-        rgba(255, 255, 255, .97);
-
-    border-top: 1px solid #f0dce8;
-
-    backdrop-filter: blur(8px);
-}
-
-.composer-inner {
-    max-width: 900px;
-
-    margin: auto;
-
-    display: flex;
-
-    gap: 6px;
-
-    align-items: flex-end;
-}
-
-.icon-btn {
-    width: 43px;
-    height: 43px;
-
-    flex-shrink: 0;
-
-    border: none;
-
-    border-radius: 50%;
-
-    background: #fff0f8;
-
-    color: #a51b67;
-
-    font-size: 18px;
-
-    cursor: pointer;
-}
-
-#messageInput {
-    flex: 1;
-
-    min-height: 43px;
-    max-height: 130px;
-
-    resize: none;
-
-    outline: none;
-
-    padding: 12px 14px;
-
-    border: 1px solid #dfcbd6;
-
-    border-radius: 22px;
-
-    background: #fffafd;
-
-    font-size: 15px;
-
-    color: #241720;
-}
-
-#messageInput:focus {
-    border-color: #ff73b7;
-
-    background: white;
-}
-
-#sendBtn {
-    width: 43px;
-    height: 43px;
-
-    flex-shrink: 0;
-
-    border: none;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #e42e87,
-            #ff5cae
-        );
-
-    color: white;
-
-    font-size: 18px;
-
-    cursor: pointer;
-}
-
-#sendBtn:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-}
-
-.footer-note {
-    max-width: 900px;
-
-    margin: 4px auto 0;
-
-    text-align: center;
-
-    font-size: 9px;
-
-    color: #a88e9b;
-}
-
-
-/* =========================================================
-   HIDDEN INPUTS
-========================================================= */
-
-.hidden-input {
-    display: none;
-}
-
-
-/* =========================================================
-   LOGIN MESSAGE
-========================================================= */
-
-.login-message {
-    max-width: 500px;
-
-    margin: 80px auto;
-
-    padding: 25px;
-
-    text-align: center;
-
-    border-radius: 18px;
-
-    background: white;
-
-    border: 1px solid #f0dce8;
-}
-
-.login-message h2 {
-    margin-top: 0;
-}
-
-.login-message button {
-    padding: 11px 20px;
-
-    border: none;
-
-    border-radius: 20px;
-
-    background: #e52e87;
-
-    color: white;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
-   FREE TRIAL LOCK
-========================================================= */
-
-.trial-lock {
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 200;
-
-    display: none;
-
-    align-items: center;
-    justify-content: center;
-
-    padding: 20px;
-
-    background:
-        rgba(255, 247, 252, .97);
-
-    backdrop-filter: blur(10px);
-}
-
-.trial-lock.show {
-    display: flex;
-}
-
-.trial-card {
-    width: min(430px, 100%);
-
-    padding: 30px 24px;
-
-    text-align: center;
-
-    background: white;
-
-    border: 1px solid #f0dce8;
-
-    border-radius: 24px;
-
-    box-shadow:
-        0 15px 45px rgba(180, 40, 110, .15);
-}
-
-.trial-icon {
-    width: 75px;
-    height: 75px;
-
-    margin: 0 auto 16px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff3e9f,
-            #ff9dd0
-        );
-
-    color: white;
-
-    font-size: 32px;
-
-    box-shadow:
-        0 8px 25px rgba(255, 62, 159, .25);
-}
-
-.trial-card h2 {
-    margin: 0 0 10px;
-
-    font-size: 23px;
-
-    color: #281621;
-}
-
-.trial-card p {
-    margin: 8px 0;
-
-    color: #755f6d;
-
-    font-size: 14px;
-
-    line-height: 1.6;
-}
-
-.trial-price {
-    margin: 20px 0;
-
-    font-size: 28px;
-
-    font-weight: bold;
-
-    color: #d92b83;
-}
-
-.trial-pay-btn {
-    width: 100%;
-
-    padding: 14px;
-
-    border: none;
-
-    border-radius: 25px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #e42e87,
-            #ff5cae
-        );
-
-    color: white;
-
-    font-size: 15px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    box-shadow:
-        0 6px 18px rgba(228, 46, 135, .22);
-}
-
-.trial-pay-btn:disabled {
-    opacity: .6;
-
-    cursor: not-allowed;
-}
-
-.trial-note {
-    margin-top: 12px;
-
-    font-size: 11px;
-
-    color: #a88e9b;
-}
-
-
-/* =========================================================
-   TRIAL STATUS
-========================================================= */
-
-.trial-status {
-    position: fixed;
-
-    top: 70px;
-    right: 12px;
-
-    z-index: 30;
-
-    padding: 6px 10px;
-
-    border-radius: 20px;
-
-    background: #fff0f8;
-
-    border: 1px solid #ffd1e6;
-
-    color: #9d1764;
-
-    font-size: 10px;
-
-    display: none;
-}
-
-.trial-status.show {
-    display: block;
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 600px) {
-
-    .header {
-        height: 60px;
-    }
-
-    .messages {
-        padding:
-            15px
-            9px
-            145px;
-    }
-
-    .message {
-        max-width: 88%;
-    }
-
-    .welcome {
-        margin-top: 40px;
-
-        padding: 0 18px;
-    }
-
-    .composer {
-        padding-left: 7px;
-        padding-right: 7px;
-    }
-
-    .icon-btn {
-        width: 40px;
-        height: 40px;
-    }
-
-    #sendBtn {
-        width: 40px;
-        height: 40px;
-    }
-
-    #messageInput {
-        min-height: 40px;
-
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    .trial-card {
-        padding: 25px 18px;
-    }
-
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#fff7fc;color:#17121a}
+button,textarea,input{font-family:inherit}
+.app{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at top right,#ff69b41a,transparent 35%),#fff7fc}
+
+.header{height:64px;display:flex;align-items:center;padding:0 12px;gap:10px;background:#fffffff5;border-bottom:1px solid #f0dce8;z-index:10}
+.back-btn,.menu-btn,.icon-btn{border:0;border-radius:50%;background:#fff0f8;color:#9d1764;cursor:pointer}
+.back-btn,.menu-btn{width:40px;height:40px;font-size:20px}
+.spark-avatar,.welcome-avatar{border-radius:50%;background:linear-gradient(135deg,#ff4fa3,#ff8bc8);color:white;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.spark-avatar{width:43px;height:43px;font-size:20px}
+.header-info{flex:1}.header-info h1{margin:0;font-size:17px}.status{margin-top:3px;font-size:12px;color:#8b7180}.status-dot{display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;background:#22c55e}
+
+.side-panel{position:fixed;top:0;left:0;bottom:0;width:min(310px,86vw);background:white;z-index:100;transform:translateX(-105%);transition:.25s;box-shadow:5px 0 25px #0002;display:flex;flex-direction:column}
+.side-panel.open{transform:translateX(0)}
+.panel-header{height:64px;display:flex;align-items:center;padding:0 15px;border-bottom:1px solid #f0dce8}
+.panel-title{flex:1;font-size:18px;font-weight:bold}.close-panel{width:38px;height:38px;border:0;border-radius:50%;background:#fff0f8;color:#9d1764;font-size:20px}
+.new-chat-btn{margin:14px;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,#ff4fa3,#ff7fbd);color:white;font-weight:bold}
+.history-list{flex:1;overflow-y:auto;padding:0 10px 15px}
+.history-item{position:relative;padding:12px 40px 12px 12px;margin-bottom:6px;border-radius:11px;background:#fff8fc;cursor:pointer}
+.history-item.active{background:#ffe8f3}.history-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.history-date{font-size:10px;color:#9d8190;margin-top:4px}
+.delete-history{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#b14c7f;cursor:pointer}
+.overlay{position:fixed;inset:0;background:#140a121f;z-index:90;display:none}.overlay.show{display:block}
+
+.messages{flex:1;overflow-y:auto;padding:20px 13px 145px;scroll-behavior:smooth}
+.welcome{max-width:600px;margin:45px auto 30px;text-align:center;color:#755f6d}
+.welcome-avatar{width:78px;height:78px;margin:auto auto 15px;font-size:33px;box-shadow:0 8px 25px #ff3e9f40}
+.welcome h2{margin:0 0 8px;font-size:23px;color:#281621}.welcome p{margin:0;font-size:14px;line-height:1.6}
+
+.message-row{display:flex;margin:10px 0}.message-row.user{justify-content:flex-end}.message-row.pinky{justify-content:flex-start}
+.message{max-width:min(82%,680px);padding:11px 14px;border-radius:17px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.message.user{color:white;background:linear-gradient(135deg,#d92b83,#ff5aac);border-bottom-right-radius:5px}
+.message.pinky{color:#281621;background:white;border:1px solid #f1d9e6;border-bottom-left-radius:5px}
+.message.error{color:#a51f43;background:#fff0f3;border-color:#ffc7d4}
+
+.media-img,.media-video{display:block;max-width:260px;max-height:260px;border-radius:12px;margin-bottom:7px}
+.file-card{padding:9px 11px;border-radius:10px;background:#fff0f8;color:#8d315f;margin-bottom:7px}
+
+.typing-row{display:none;justify-content:flex-start;margin:10px 0}.typing-row.show{display:flex}
+.typing-bubble{padding:12px 16px;background:white;border:1px solid #f1d9e6;border-radius:17px}
+.dots{display:flex;gap:4px}.dots span{width:7px;height:7px;border-radius:50%;background:#ff5aac;animation:b 1.2s infinite}.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-5px);opacity:1}}
+
+.attachment-preview{display:none;max-width:900px;margin:0 auto 7px;padding:7px 10px;border-radius:10px;background:#fff0f8;border:1px solid #ffd1e6;font-size:12px;color:#8d315f}
+.attachment-preview.show{display:flex;align-items:center;gap:8px}.remove-attachment{margin-left:auto;border:0;background:transparent;color:#a11d5e;font-size:18px}
+
+.preview-media{max-width:70px;max-height:55px;border-radius:7px;object-fit:cover}
+
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:9px 10px 7px;background:#fffffff7;border-top:1px solid #f0dce8;backdrop-filter:blur(8px)}
+.composer-inner{max-width:900px;margin:auto;display:flex;gap:6px;align-items:flex-end}
+.icon-btn{width:43px;height:43px;flex-shrink:0;font-size:18px}
+#messageInput{flex:1;min-height:43px;max-height:130px;resize:none;outline:none;padding:12px 14px;border:1px solid #dfcbd6;border-radius:22px;background:#fffafd;font-size:15px}
+#sendBtn{width:43px;height:43px;border:0;border-radius:50%;background:linear-gradient(135deg,#e42e87,#ff5cae);color:white;font-size:18px}
+.footer-note{text-align:center;font-size:9px;color:#a88e9b;margin-top:4px}
+.hidden-input{display:none}
+
+.login-message{max-width:500px;margin:80px auto;padding:25px;text-align:center;border-radius:18px;background:white;border:1px solid #f0dce8}
+.login-message button{padding:11px 20px;border:0;border-radius:20px;background:#e52e87;color:white}
+
+.trial-lock{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:#fff7fcf7;backdrop-filter:blur(10px)}
+.trial-lock.show{display:flex}.trial-card{width:min(430px,100%);padding:30px 24px;text-align:center;background:white;border:1px solid #f0dce8;border-radius:24px;box-shadow:0 15px 45px #b4286e26}
+.trial-icon{width:75px;height:75px;margin:auto auto 16px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#ff3e9f,#ff9dd0);color:white;font-size:32px}
+.trial-card h2{margin:0 0 10px}.trial-card p{color:#755f6d;font-size:14px;line-height:1.6}.trial-price{margin:20px 0;font-size:28px;font-weight:bold;color:#d92b83}
+.trial-pay-btn{width:100%;padding:14px;border:0;border-radius:25px;background:linear-gradient(135deg,#e42e87,#ff5cae);color:white;font-weight:bold}
+.trial-note{margin-top:12px;font-size:11px;color:#a88e9b}
+
+.trial-status{position:fixed;top:70px;right:12px;z-index:30;padding:6px 10px;border-radius:20px;background:#fff0f8;border:1px solid #ffd1e6;color:#9d1764;font-size:10px;display:none}
+.trial-status.show{display:block}
+
+@media(max-width:600px){
+.header{height:60px}.messages{padding:15px 9px 145px}.message{max-width:88%}.welcome{margin-top:40px;padding:0 18px}
+.composer{padding-left:7px;padding-right:7px}.icon-btn,#sendBtn{width:40px;height:40px}
+#messageInput{min-height:40px;padding-top:10px;padding-bottom:10px}
 }
-
 </style>
-
 </head>
-
 
 <body>
 
 <div class="app">
 
-
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-    <header class="header">
-
-        <button
-            class="back-btn"
-            id="backBtn"
-            aria-label="Go back"
-        >
-            ←
-        </button>
-
-        <button
-            class="menu-btn"
-            id="menuBtn"
-            aria-label="Conversation history"
-        >
-            ☰
-        </button>
-
-        <div class="spark-avatar">
-            ✦
-        </div>
-
-        <div class="header-info">
-
-            <h1>Pinky Spark</h1>
-
-            <div class="status">
-                <span class="status-dot"></span>
-                VitalStar AI
-            </div>
-
-        </div>
-
-    </header>
-
-
-    <!-- =====================================================
-         SIDE PANEL
-    ====================================================== -->
-
-    <aside
-        class="side-panel"
-        id="sidePanel"
-    >
-
-        <div class="panel-header">
-
-            <div class="panel-title">
-                Conversations
-            </div>
-
-            <button
-                class="close-panel"
-                id="closePanel"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <button
-            class="new-chat-btn"
-            id="newChatBtn"
-        >
-            ＋ New conversation
-        </button>
-
-
-        <div
-            class="history-list"
-            id="historyList"
-        ></div>
-
-    </aside>
-
-
-    <div
-        class="overlay"
-        id="overlay"
-    ></div>
-
-
-    <!-- =====================================================
-         TRIAL STATUS
-    ====================================================== -->
-
-    <div
-        class="trial-status"
-        id="trialStatus"
-    >
-        Free trial active
-    </div>
-
-
-    <!-- =====================================================
-         CHAT
-    ====================================================== -->
-
-    <main
-        class="messages"
-        id="messages"
-    >
-
-        <div
-            class="welcome"
-            id="welcome"
-        >
-
-            <div class="welcome-avatar">
-                ✦
-            </div>
-
-            <h2>
-                Hi! I'm Pinky Spark ✨
-            </h2>
-
-            <p>
-                Your cheerful VitalStar AI.
-                Ask me anything, explore ideas,
-                learn something new, or create something amazing.
-            </p>
-
-        </div>
-
-
-        <div
-            class="typing-row"
-            id="typingRow"
-        >
-
-            <div class="typing-bubble">
-
-                <div class="dots">
-
-                    <span></span>
-                    <span></span>
-                    <span></span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </main>
-
-
-    <!-- =====================================================
-         COMPOSER
-    ====================================================== -->
-
-    <div class="composer">
-
-        <div
-            class="attachment-preview"
-            id="attachmentPreview"
-        >
-
-            <span id="attachmentName"></span>
-
-            <button
-                class="remove-attachment"
-                id="removeAttachment"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <div class="composer-inner">
-
-
-            <button
-                class="icon-btn"
-                id="fileBtn"
-                type="button"
-                title="Attach file"
-            >
-                📎
-            </button>
-
-            <input
-                class="hidden-input"
-                type="file"
-                id="fileInput"
-                accept="image/*,.pdf,.txt,.doc,.docx"
-            >
-
-
-            <button
-                class="icon-btn"
-                id="voiceBtn"
-                type="button"
-                title="Voice input"
-            >
-                🎙️
-            </button>
-
-
-            <textarea
-                id="messageInput"
-                rows="1"
-                autocomplete="off"
-                placeholder="Message Pinky Spark..."
-            ></textarea>
-
-
-            <button
-                id="sendBtn"
-                type="button"
-                aria-label="Send message"
-            >
-                ➤
-            </button>
-
-        </div>
-
-
-        <div class="footer-note">
-            Pinky Spark is a VitalStar AI.
-        </div>
-
-    </div>
-
+<header class="header">
+<button class="back-btn" id="backBtn">←</button>
+<button class="menu-btn" id="menuBtn">☰</button>
+<div class="spark-avatar">✦</div>
+<div class="header-info">
+<h1>Pinky Spark</h1>
+<div class="status"><span class="status-dot"></span>VitalStar AI</div>
+</div>
+</header>
+
+<aside class="side-panel" id="sidePanel">
+<div class="panel-header">
+<div class="panel-title">Conversations</div>
+<button class="close-panel" id="closePanel">×</button>
+</div>
+<button class="new-chat-btn" id="newChatBtn">＋ New conversation</button>
+<div class="history-list" id="historyList"></div>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+<div class="trial-status" id="trialStatus">Free trial active</div>
+
+<main class="messages" id="messages">
+<div class="welcome" id="welcome">
+<div class="welcome-avatar">✦</div>
+<h2>Hi! I'm Pinky Spark ✨</h2>
+<p>Your cheerful VitalStar AI. Ask me anything, explore ideas, learn something new, or create something amazing.</p>
 </div>
 
+<div class="typing-row" id="typingRow">
+<div class="typing-bubble">
+<div class="dots"><span></span><span></span><span></span></div>
+</div>
+</div>
+</main>
 
-<!-- =========================================================
-     FREE TRIAL LOCK
-========================================================= -->
+<div class="composer">
 
-<div
-    class="trial-lock"
-    id="trialLock"
+<div class="attachment-preview" id="attachmentPreview">
+<div id="previewBox"></div>
+<span id="attachmentName"></span>
+<button class="remove-attachment" id="removeAttachment">×</button>
+</div>
+
+<div class="composer-inner">
+
+<button class="icon-btn" id="fileBtn">📎</button>
+
+<input
+class="hidden-input"
+type="file"
+id="fileInput"
+accept="image/*,video/*,.pdf,.txt,.doc,.docx"
 >
 
-    <div class="trial-card">
+<button class="icon-btn" id="voiceBtn">🎙️</button>
 
-        <div class="trial-icon">
-            ✦
-        </div>
+<textarea
+id="messageInput"
+rows="1"
+autocomplete="off"
+placeholder="Message Pinky Spark..."
+></textarea>
 
-        <h2>
-            Your free day has ended
-        </h2>
-
-        <p>
-            Thanks for trying Pinky Spark! ✨
-        </p>
-
-        <p>
-            Continue chatting with your VitalStar AI
-            for:
-        </p>
-
-        <div class="trial-price">
-            ₦1,500
-        </div>
-
-        <button
-            class="trial-pay-btn"
-            id="trialPayBtn"
-        >
-            Continue with Pinky Spark
-        </button>
-
-        <div class="trial-note">
-            Secure payment will be connected next.
-        </div>
-
-    </div>
+<button id="sendBtn">➤</button>
 
 </div>
 
+<div class="footer-note">Pinky Spark is a VitalStar AI.</div>
+</div>
+</div>
+
+<div class="trial-lock" id="trialLock">
+<div class="trial-card">
+<div class="trial-icon">✦</div>
+<h2>Your free day has ended</h2>
+<p>Thanks for trying Pinky Spark! ✨</p>
+<p>Continue chatting with your VitalStar AI for:</p>
+<div class="trial-price">₦1,500</div>
+<button class="trial-pay-btn" id="trialPayBtn">Continue with Pinky Spark</button>
+<div class="trial-note">Secure payment will be connected next.</div>
+</div>
+</div>
 
 <script type="module">
 
+import {auth,db} from "./firebase.js";
 
-/* =========================================================
-   FIREBASE
-========================================================= */
-
-import {
-    auth,
-    db
-} from "./firebase.js";
-
+import {onAuthStateChanged}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+collection,addDoc,getDocs,query,where,orderBy,limit,
+doc,getDoc,setDoc,updateDoc,deleteDoc,serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const PINKY_API=
+"https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/pinky-spark";
+
+const $=id=>document.getElementById(id);
+
+const messages=$("messages");
+const input=$("messageInput");
+const sendBtn=$("sendBtn");
+const fileInput=$("fileInput");
+const attachmentPreview=$("attachmentPreview");
+const attachmentName=$("attachmentName");
+const previewBox=$("previewBox");
+const typingRow=$("typingRow");
+
+let currentUser=null;
+let currentConversationId=null;
+let selectedFile=null;
+let isSending=false;
+let trialExpired=false;
+
+const FREE_TRIAL_DURATION=24*60*60*1000;
 
 
-import {
-    collection,
-    addDoc,
-    getDocs,
-    query,
-    where,
-    orderBy,
-    limit,
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc,
-    deleteDoc,
-    serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+/* ================= HISTORY ================= */
+
+$("menuBtn").onclick=()=>{
+if(!trialExpired){
+$("sidePanel").classList.add("open");
+$("overlay").classList.add("show");
+loadConversations();
+}
+};
+
+function closeHistory(){
+$("sidePanel").classList.remove("open");
+$("overlay").classList.remove("show");
+}
+
+$("closePanel").onclick=closeHistory;
+$("overlay").onclick=closeHistory;
 
 
-/* =========================================================
-   SUPABASE PINKY SPARK AI
-========================================================= */
+/* ================= BACK ================= */
 
-const PINKY_API =
-    "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/pinky-spark";
-
-
-/* =========================================================
-   PAYMENT FUNCTION
-========================================================= */
-
-const PINKY_PAYMENT_API =
-    "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/pinky-spark-payment";
+$("backBtn").onclick=()=>{
+if(history.length>1) history.back();
+else location.href="home.html";
+};
 
 
-/* =========================================================
-   ELEMENTS
-========================================================= */
+/* ================= AUTH ================= */
 
-const messages =
-    document.getElementById("messages");
+onAuthStateChanged(auth,async user=>{
+currentUser=user;
 
-const welcome =
-    document.getElementById("welcome");
+if(!user){
+showLoginRequired();
+return;
+}
 
-const typingRow =
-    document.getElementById("typingRow");
-
-const input =
-    document.getElementById("messageInput");
-
-const sendBtn =
-    document.getElementById("sendBtn");
-
-const fileBtn =
-    document.getElementById("fileBtn");
-
-const fileInput =
-    document.getElementById("fileInput");
-
-const voiceBtn =
-    document.getElementById("voiceBtn");
-
-const attachmentPreview =
-    document.getElementById("attachmentPreview");
-
-const attachmentName =
-    document.getElementById("attachmentName");
-
-const removeAttachment =
-    document.getElementById("removeAttachment");
-
-const menuBtn =
-    document.getElementById("menuBtn");
-
-const closePanel =
-    document.getElementById("closePanel");
-
-const sidePanel =
-    document.getElementById("sidePanel");
-
-const overlay =
-    document.getElementById("overlay");
-
-const historyList =
-    document.getElementById("historyList");
-
-const newChatBtn =
-    document.getElementById("newChatBtn");
-
-const backBtn =
-    document.getElementById("backBtn");
-
-const trialLock =
-    document.getElementById("trialLock");
-
-const trialPayBtn =
-    document.getElementById("trialPayBtn");
-
-const trialStatus =
-    document.getElementById("trialStatus");
+if(await checkFreeTrial()){
+await loadConversations();
+await createConversationIfNeeded();
+}
+});
 
 
-/* =========================================================
-   STATE
-========================================================= */
+/* ================= TRIAL ================= */
 
-let currentUser = null;
+async function checkFreeTrial(){
 
-let currentConversationId = null;
+const ref=doc(db,"pinkySparkUsers",currentUser.uid);
+const snap=await getDoc(ref);
 
-let selectedFile = null;
+let started;
 
-let isSending = false;
+if(!snap.exists()){
 
-let trialExpired = false;
+started=Date.now();
 
+await setDoc(ref,{
+userId:currentUser.uid,
+trialStartedAt:started,
+trialActive:true,
+paid:false,
+createdAt:serverTimestamp()
+});
 
-/* =========================================================
-   FREE TRIAL SETTINGS
-========================================================= */
+}else{
 
-const FREE_TRIAL_DURATION =
-    24 * 60 * 60 * 1000;
+const data=snap.data();
 
+if(data.paid===true){
+trialExpired=false;
+hideTrialLock();
+return true;
+}
 
-/* =========================================================
-   OPEN / CLOSE HISTORY
-========================================================= */
+started=data.trialStartedAt;
 
-function openHistory() {
+if(!started){
+started=Date.now();
+await updateDoc(ref,{trialStartedAt:started,trialActive:true});
+}
+}
 
-    if (trialExpired) {
-        return;
-    }
+if(Date.now()-Number(started)>=FREE_TRIAL_DURATION){
 
-    sidePanel.classList.add("open");
+trialExpired=true;
 
-    overlay.classList.add("show");
+await updateDoc(ref,{trialActive:false}).catch(()=>{});
 
-    loadConversations();
+$("trialLock").classList.add("show");
+
+input.disabled=true;
+sendBtn.disabled=true;
+
+return false;
+}
+
+trialExpired=false;
+$("trialStatus").classList.add("show");
+
+return true;
 }
 
 
-function closeHistory() {
-
-    sidePanel.classList.remove("open");
-
-    overlay.classList.remove("show");
+function hideTrialLock(){
+$("trialLock").classList.remove("show");
+input.disabled=false;
+sendBtn.disabled=false;
 }
 
 
-menuBtn.addEventListener(
-    "click",
-    openHistory
+/* ================= PAYMENT ================= */
+
+$("trialPayBtn").onclick=()=>{
+alert("Pinky Spark payment is being prepared. Your payment will be ₦1,500.");
+};
+
+
+/* ================= LOGIN ================= */
+
+function showLoginRequired(){
+
+messages.innerHTML=`
+<div class="login-message">
+<h2>🔐 Login required</h2>
+<p>Please log in to VitalStar to use Pinky Spark.</p>
+<button id="loginButton">Go to Login</button>
+</div>`;
+
+$("loginButton").onclick=()=>location.href="login.html";
+}
+
+
+/* ================= CONVERSATION ================= */
+
+async function createConversationIfNeeded(){
+
+if(!currentUser||currentConversationId)return;
+
+const ref=await addDoc(
+collection(db,"pinkySparkConversations"),
+{
+userId:currentUser.uid,
+title:"New conversation",
+ai:"pinky-spark",
+createdAt:serverTimestamp(),
+updatedAt:serverTimestamp()
+});
+
+currentConversationId=ref.id;
+}
+
+
+async function loadConversations(){
+
+if(!currentUser||trialExpired)return;
+
+const list=$("historyList");
+list.innerHTML="Loading...";
+
+try{
+
+const q=query(
+collection(db,"pinkySparkConversations"),
+where("userId","==",currentUser.uid),
+orderBy("updatedAt","desc"),
+limit(50)
 );
 
+const snap=await getDocs(q);
+list.innerHTML="";
 
-closePanel.addEventListener(
-    "click",
-    closeHistory
+if(snap.empty){
+list.innerHTML='<div style="padding:20px;text-align:center;color:#9d8190">No conversations yet.</div>';
+return;
+}
+
+snap.forEach(d=>{
+
+const data=d.data();
+const item=document.createElement("div");
+
+item.className="history-item";
+if(d.id===currentConversationId)item.classList.add("active");
+
+item.innerHTML=`
+<div class="history-title">${escapeHtml(data.title||"New conversation")}</div>
+<div class="history-date">${data.updatedAt?.toDate?data.updatedAt.toDate().toLocaleString():""}</div>
+<button class="delete-history">🗑️</button>`;
+
+item.onclick=async e=>{
+if(e.target.closest(".delete-history"))return;
+await openConversation(d.id);
+closeHistory();
+};
+
+item.querySelector(".delete-history").onclick=async e=>{
+e.stopPropagation();
+await deleteConversation(d.id);
+};
+
+list.appendChild(item);
+
+});
+
+}catch(e){
+
+console.error(e);
+list.innerHTML="Unable to load conversations.";
+
+}
+}
+
+
+async function openConversation(id){
+
+if(!currentUser||trialExpired)return;
+
+currentConversationId=id;
+messages.innerHTML="";
+messages.appendChild(typingRow);
+
+try{
+
+const q=query(
+collection(db,"pinkySparkConversations",id,"messages"),
+orderBy("createdAt","asc"),
+limit(200)
 );
 
+const snap=await getDocs(q);
 
-overlay.addEventListener(
-    "click",
-    closeHistory
+if(snap.empty){
+showWelcome();
+return;
+}
+
+snap.forEach(d=>{
+const data=d.data();
+
+addMessage(
+data.content||"",
+data.role==="user"?"user":"pinky",
+false,
+false,
+data.media
+);
+});
+
+scrollBottom();
+
+}catch(e){
+
+addMessage("I couldn't load this conversation.","pinky",true);
+
+}
+}
+
+
+function showWelcome(){
+
+messages.innerHTML="";
+
+const w=document.createElement("div");
+
+w.className="welcome";
+
+w.innerHTML=`
+<div class="welcome-avatar">✦</div>
+<h2>Hi! I'm Pinky Spark ✨</h2>
+<p>Your cheerful VitalStar AI. Ask me anything, explore ideas, learn something new, or create something amazing.</p>`;
+
+messages.appendChild(w);
+messages.appendChild(typingRow);
+}
+
+
+$("newChatBtn").onclick=async()=>{
+
+if(!currentUser||trialExpired)return;
+
+currentConversationId=null;
+showWelcome();
+await createConversationIfNeeded();
+closeHistory();
+await loadConversations();
+};
+
+
+async function deleteConversation(id){
+
+if(!confirm("Delete this conversation?"))return;
+
+try{
+
+await deleteDoc(doc(db,"pinkySparkConversations",id));
+
+if(id===currentConversationId){
+
+currentConversationId=null;
+showWelcome();
+await createConversationIfNeeded();
+
+}
+
+await loadConversations();
+
+}catch(e){
+
+alert("Unable to delete conversation.");
+
+}
+}
+
+
+/* ================= MESSAGES ================= */
+
+function addMessage(text,sender,error=false,save=false,media=null){
+
+document.querySelector(".welcome")?.remove();
+
+const row=document.createElement("div");
+row.className=`message-row ${sender}`;
+
+const bubble=document.createElement("div");
+bubble.className=`message ${sender}`;
+
+if(error)bubble.classList.add("error");
+
+if(media)renderMedia(bubble,media);
+
+if(text)bubble.append(document.createTextNode(text));
+
+row.appendChild(bubble);
+
+messages.insertBefore(row,typingRow);
+
+scrollBottom();
+}
+
+
+/* ================= MEDIA DISPLAY ================= */
+
+function renderMedia(container,media){
+
+if(typeof media==="string"){
+try{media=JSON.parse(media)}catch{}
+}
+
+if(!media)return;
+
+const type=media.type||"";
+const url=media.data||media.url;
+
+if(!url)return;
+
+if(type.startsWith("image/")){
+
+const img=document.createElement("img");
+img.src=url;
+img.className="media-img";
+img.alt="Uploaded image";
+container.appendChild(img);
+
+}
+
+else if(type.startsWith("video/")){
+
+const video=document.createElement("video");
+video.src=url;
+video.className="media-video";
+video.controls=true;
+container.appendChild(video);
+
+}
+
+else{
+
+const div=document.createElement("div");
+div.className="file-card";
+div.textContent="📎 "+(media.name||"Attached file");
+container.appendChild(div);
+
+}
+}
+
+
+/* ================= SAVE ================= */
+
+async function saveMessage(role,content,media=null){
+
+if(!currentUser||!currentConversationId)return;
+
+await addDoc(
+collection(
+db,
+"pinkySparkConversations",
+currentConversationId,
+"messages"
+),
+{
+userId:currentUser.uid,
+role,
+content,
+media:media||null,
+createdAt:serverTimestamp()
+}
 );
 
+await updateDoc(
+doc(db,"pinkySparkConversations",currentConversationId),
+{
+updatedAt:serverTimestamp(),
+title:await getConversationTitle()
+}
+);
+}
 
-/* =========================================================
-   BACK
-========================================================= */
 
-backBtn.addEventListener(
-    "click",
-    () => {
+async function getConversationTitle(){
 
-        if (history.length > 1) {
+const visible=messages.querySelectorAll(".message.user");
 
-            history.back();
+if(!visible.length)return"New conversation";
 
-        } else {
+const text=visible[0].textContent.trim();
 
-            window.location.href =
-                "home.html";
+return text.length>45?text.substring(0,45)+"...":text;
+}
 
-        }
 
-    }
+/* ================= FILE ================= */
+
+$("fileBtn").onclick=()=>{
+if(!trialExpired)fileInput.click();
+};
+
+
+fileInput.onchange=()=>{
+
+selectedFile=fileInput.files?.[0]||null;
+
+if(!selectedFile){
+
+attachmentPreview.classList.remove("show");
+return;
+}
+
+attachmentName.textContent=selectedFile.name;
+previewBox.innerHTML="";
+
+if(selectedFile.type.startsWith("image/")){
+
+const img=document.createElement("img");
+img.src=URL.createObjectURL(selectedFile);
+img.className="preview-media";
+previewBox.appendChild(img);
+
+}
+
+else if(selectedFile.type.startsWith("video/")){
+
+const video=document.createElement("video");
+video.src=URL.createObjectURL(selectedFile);
+video.className="preview-media";
+previewBox.appendChild(video);
+
+}
+
+else{
+
+previewBox.textContent="📎";
+}
+
+attachmentPreview.classList.add("show");
+};
+
+
+$("removeAttachment").onclick=clearFile;
+
+
+function clearFile(){
+
+selectedFile=null;
+fileInput.value="";
+previewBox.innerHTML="";
+attachmentName.textContent="";
+attachmentPreview.classList.remove("show");
+
+}
+
+
+/* ================= FILE TO BASE64 ================= */
+
+function fileToBase64(file){
+
+return new Promise((resolve,reject)=>{
+
+const reader=new FileReader();
+
+reader.onload=()=>resolve(reader.result);
+reader.onerror=reject;
+
+reader.readAsDataURL(file);
+
+});
+
+}
+
+
+/* ================= SEND ================= */
+
+async function sendMessage(){
+
+if(isSending||!currentUser||trialExpired)return;
+
+const text=input.value.trim();
+
+if(!text&&!selectedFile)return;
+
+isSending=true;
+sendBtn.disabled=true;
+input.disabled=true;
+
+await createConversationIfNeeded();
+
+let media=null;
+
+try{
+
+/* MEDIA */
+
+if(selectedFile){
+
+const data=await fileToBase64(selectedFile);
+
+media={
+name:selectedFile.name,
+type:selectedFile.type||"application/octet-stream",
+size:selectedFile.size,
+data:data
+};
+
+}
+
+/* USER MESSAGE */
+
+addMessage(text,"user",false,false,media);
+
+await saveMessage("user",text,media);
+
+input.value="";
+input.style.height="43px";
+
+clearFile();
+
+showTyping(true);
+
+
+/* AI REQUEST */
+
+const response=await fetch(
+PINKY_API,
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+
+message:text,
+
+/*
+Pinky Spark now receives media
+when an attachment exists.
+*/
+
+media:media
+
+})
+}
 );
 
+let data;
 
-/* =========================================================
-   AUTH
-========================================================= */
+try{
+data=await response.json();
+}catch{
+data={error:"Invalid response from Pinky Spark."};
+}
 
-onAuthStateChanged(
-    auth,
-    async (user) => {
+showTyping(false);
 
-        currentUser = user;
+if(!response.ok){
 
-        if (!user) {
-
-            showLoginRequired();
-
-            return;
-        }
-
-
-        const allowed =
-            await checkFreeTrial();
-
-
-        if (!allowed) {
-
-            return;
-
-        }
-
-
-        await loadConversations();
-
-        await createConversationIfNeeded();
-
-    }
+addMessage(
+data.error||"Pinky Spark could not respond.",
+"pinky",
+true
 );
 
-
-/* =========================================================
-   FREE TRIAL CHECK
-========================================================= */
-
-async function checkFreeTrial() {
-
-    if (!currentUser) {
-
-        return false;
-
-    }
-
-
-    try {
-
-        const userRef =
-            doc(
-                db,
-                "pinkySparkUsers",
-                currentUser.uid
-            );
-
-
-        const snapshot =
-            await getDoc(userRef);
-
-
-        let trialStartedAt;
-
-
-        /*
-         * FIRST VISIT
-         */
-
-        if (!snapshot.exists()) {
-
-            trialStartedAt =
-                Date.now();
-
-
-            await setDoc(
-                userRef,
-                {
-                    userId:
-                        currentUser.uid,
-
-                    trialStartedAt:
-                        trialStartedAt,
-
-                    trialActive:
-                        true,
-
-                    paid:
-                        false,
-
-                    createdAt:
-                        serverTimestamp()
-                }
-            );
-
-        }
-
-
-        /*
-         * EXISTING USER
-         */
-
-        else {
-
-            const data =
-                snapshot.data();
-
-
-            /*
-             * If user has already paid,
-             * allow access.
-             */
-
-            if (
-                data?.paid === true
-            ) {
-
-                trialExpired =
-                    false;
-
-                hideTrialLock();
-
-                return true;
-
-            }
-
-
-            trialStartedAt =
-                data?.trialStartedAt;
-
-
-            /*
-             * Older user without
-             * trial timestamp.
-             */
-
-            if (!trialStartedAt) {
-
-                trialStartedAt =
-                    Date.now();
-
-
-                await updateDoc(
-                    userRef,
-                    {
-                        trialStartedAt:
-                            trialStartedAt,
-
-                        trialActive:
-                            true
-                    }
-                );
-
-            }
-
-        }
-
-
-        /*
-         * Calculate elapsed time.
-         */
-
-        const elapsed =
-            Date.now() -
-            Number(trialStartedAt);
-
-
-        /*
-         * FREE DAY EXPIRED
-         */
-
-        if (
-            elapsed >=
-            FREE_TRIAL_DURATION
-        ) {
-
-            trialExpired =
-                true;
-
-
-            await updateDoc(
-                userRef,
-                {
-                    trialActive:
-                        false
-                }
-            ).catch(
-                () => {}
-            );
-
-
-            showTrialLock();
-
-            return false;
-
-        }
-
-
-        /*
-         * FREE DAY STILL ACTIVE
-         */
-
-        trialExpired =
-            false;
-
-        hideTrialLock();
-
-        showTrialStatus();
-
-        return true;
-
-
-    } catch (error) {
-
-        console.error(
-            "Free trial check error:",
-            error
-        );
-
-
-        /*
-         * Fail closed rather than
-         * accidentally giving access
-         * when the trial state cannot
-         * be verified.
-         */
-
-        addMessage(
-            "Pinky Spark could not verify your access. Please try again.",
-            "pinky",
-            true
-        );
-
-
-        return false;
-
-    }
-
+return;
 }
 
 
-/* =========================================================
-   SHOW TRIAL STATUS
-========================================================= */
+/* AI RESPONSE */
 
-function showTrialStatus() {
+const answer=data?.answer||"";
 
-    trialStatus.classList.add(
-        "show"
-    );
+if(!answer.trim()){
 
-}
-
-
-/* =========================================================
-   HIDE TRIAL STATUS
-========================================================= */
-
-function hideTrialStatus() {
-
-    trialStatus.classList.remove(
-        "show"
-    );
-
-}
-
-
-/* =========================================================
-   SHOW TRIAL LOCK
-========================================================= */
-
-function showTrialLock() {
-
-    hideTrialStatus();
-
-    trialLock.classList.add(
-        "show"
-    );
-
-
-    input.disabled =
-        true;
-
-    sendBtn.disabled =
-        true;
-
-    fileBtn.disabled =
-        true;
-
-    voiceBtn.disabled =
-        true;
-
-    menuBtn.disabled =
-        true;
-
-    newChatBtn.disabled =
-        true;
-
-}
-
-
-/* =========================================================
-   HIDE TRIAL LOCK
-========================================================= */
-
-function hideTrialLock() {
-
-    trialLock.classList.remove(
-        "show"
-    );
-
-
-    input.disabled =
-        false;
-
-    sendBtn.disabled =
-        false;
-
-    fileBtn.disabled =
-        false;
-
-    voiceBtn.disabled =
-        false;
-
-    menuBtn.disabled =
-        false;
-
-    newChatBtn.disabled =
-        false;
-
-}
-
-
-/* =========================================================
-   PAYMENT BUTTON
-========================================================= */
-
-trialPayBtn.addEventListener(
-    "click",
-    async () => {
-
-        if (!currentUser) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        /*
-         * Payment integration will be
-         * completed in the next step.
-         */
-
-        alert(
-            "Pinky Spark payment is being prepared. Your payment will be ₦1,500."
-        );
-
-    }
+addMessage(
+"Pinky Spark returned an empty response.",
+"pinky",
+true
 );
 
-
-/* =========================================================
-   LOGIN REQUIRED
-========================================================= */
-
-function showLoginRequired() {
-
-    messages.innerHTML = "";
-
-    const box =
-        document.createElement("div");
-
-    box.className =
-        "login-message";
-
-    box.innerHTML = `
-        <h2>🔐 Login required</h2>
-
-        <p>
-            Please log in to VitalStar to use Pinky Spark
-            and save your conversation history.
-        </p>
-
-        <button id="loginButton">
-            Go to Login
-        </button>
-    `;
-
-
-    messages.appendChild(box);
-
-
-    document
-        .getElementById("loginButton")
-        .addEventListener(
-            "click",
-            () => {
-
-                window.location.href =
-                    "login.html";
-
-            }
-        );
-
+return;
 }
 
+addMessage(answer.trim(),"pinky");
 
-/* =========================================================
-   CREATE CONVERSATION
-========================================================= */
+await saveMessage("assistant",answer.trim());
 
-async function createConversationIfNeeded() {
+await loadConversations();
 
-    if (!currentUser) {
-        return;
-    }
+}catch(error){
 
-    if (currentConversationId) {
-        return;
-    }
+console.error("Pinky media error:",error);
 
+showTyping(false);
 
-    const conversationRef =
-        await addDoc(
-            collection(
-                db,
-                "pinkySparkConversations"
-            ),
-            {
-                userId:
-                    currentUser.uid,
-
-                title:
-                    "New conversation",
-
-                ai:
-                    "pinky-spark",
-
-                createdAt:
-                    serverTimestamp(),
-
-                updatedAt:
-                    serverTimestamp()
-            }
-        );
-
-
-    currentConversationId =
-        conversationRef.id;
-
-}
-
-
-/* =========================================================
-   LOAD CONVERSATIONS
-========================================================= */
-
-async function loadConversations() {
-
-    if (
-        !currentUser ||
-        trialExpired
-    ) {
-        return;
-    }
-
-
-    historyList.innerHTML =
-        "Loading...";
-
-
-    try {
-
-        const conversationsQuery =
-            query(
-                collection(
-                    db,
-                    "pinkySparkConversations"
-                ),
-                where(
-                    "userId",
-                    "==",
-                    currentUser.uid
-                ),
-                orderBy(
-                    "updatedAt",
-                    "desc"
-                ),
-                limit(50)
-            );
-
-
-        const snapshot =
-            await getDocs(
-                conversationsQuery
-            );
-
-
-        historyList.innerHTML = "";
-
-
-        if (snapshot.empty) {
-
-            historyList.innerHTML =
-                `<div style="
-                    padding:20px;
-                    text-align:center;
-                    color:#9d8190;
-                    font-size:13px;
-                ">
-                    No conversations yet.
-                </div>`;
-
-            return;
-
-        }
-
-
-        snapshot.forEach(
-            (conversationDoc) => {
-
-                const data =
-                    conversationDoc.data();
-
-
-                const item =
-                    document.createElement("div");
-
-
-                item.className =
-                    "history-item";
-
-
-                if (
-                    conversationDoc.id ===
-                    currentConversationId
-                ) {
-
-                    item.classList.add(
-                        "active"
-                    );
-
-                }
-
-
-                const title =
-                    data.title ||
-                    "New conversation";
-
-
-                const date =
-                    data.updatedAt?.toDate
-                        ? data.updatedAt
-                              .toDate()
-                              .toLocaleString()
-                        : "";
-
-
-                item.innerHTML = `
-
-                    <div class="history-title">
-                        ${escapeHtml(title)}
-                    </div>
-
-                    <div class="history-date">
-                        ${escapeHtml(date)}
-                    </div>
-
-                    <button
-                        class="delete-history"
-                        title="Delete conversation"
-                    >
-                        🗑️
-                    </button>
-
-                `;
-
-
-                item.addEventListener(
-                    "click",
-                    async (event) => {
-
-                        if (
-                            event.target.closest(
-                                ".delete-history"
-                            )
-                        ) {
-                            return;
-                        }
-
-
-                        await openConversation(
-                            conversationDoc.id
-                        );
-
-
-                        closeHistory();
-
-                    }
-                );
-
-
-                item
-                    .querySelector(
-                        ".delete-history"
-                    )
-                    .addEventListener(
-                        "click",
-                        async (event) => {
-
-                            event.stopPropagation();
-
-
-                            await deleteConversation(
-                                conversationDoc.id
-                            );
-
-                        }
-                    );
-
-
-                historyList.appendChild(
-                    item
-                );
-
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Conversation loading error:",
-            error
-        );
-
-
-        historyList.innerHTML =
-            `<div style="
-                padding:20px;
-                color:#b91c1c;
-                font-size:13px;
-            ">
-                Unable to load conversation history.
-            </div>`;
-
-    }
-
-}
-
-
-/* =========================================================
-   OPEN CONVERSATION
-========================================================= */
-
-async function openConversation(
-    conversationId
-) {
-
-    if (
-        !currentUser ||
-        trialExpired
-    ) {
-        return;
-    }
-
-
-    currentConversationId =
-        conversationId;
-
-
-    messages.innerHTML = "";
-
-
-    typingRow.style.display =
-        "none";
-
-
-    try {
-
-        const messagesQuery =
-            query(
-                collection(
-                    db,
-                    "pinkySparkConversations",
-                    conversationId,
-                    "messages"
-                ),
-                orderBy(
-                    "createdAt",
-                    "asc"
-                ),
-                limit(200)
-            );
-
-
-        const snapshot =
-            await getDocs(
-                messagesQuery
-            );
-
-
-        if (snapshot.empty) {
-
-            showWelcome();
-
-            return;
-
-        }
-
-
-        snapshot.forEach(
-            (messageDoc) => {
-
-                const data =
-                    messageDoc.data();
-
-
-                addMessage(
-                    data.content || "",
-                    data.role === "user"
-                        ? "user"
-                        : "pinky",
-                    false,
-                    false
-                );
-
-            }
-        );
-
-
-        scrollToBottom();
-
-
-    } catch (error) {
-
-        console.error(
-            "Message history error:",
-            error
-        );
-
-
-        addMessage(
-            "I couldn't load this conversation.",
-            "pinky",
-            true
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   NEW CONVERSATION
-========================================================= */
-
-newChatBtn.addEventListener(
-    "click",
-    async () => {
-
-        if (
-            !currentUser ||
-            trialExpired
-        ) {
-            return;
-        }
-
-
-        currentConversationId =
-            null;
-
-
-        messages.innerHTML = "";
-
-
-        showWelcome();
-
-
-        await createConversationIfNeeded();
-
-
-        closeHistory();
-
-
-        await loadConversations();
-
-    }
+addMessage(
+"Unable to connect to Pinky Spark. Please try again.",
+"pinky",
+true
 );
 
+}finally{
 
-/* =========================================================
-   DELETE CONVERSATION
-========================================================= */
+isSending=false;
+sendBtn.disabled=false;
+input.disabled=false;
+input.focus();
 
-async function deleteConversation(
-    conversationId
-) {
-
-    if (
-        !currentUser ||
-        trialExpired
-    ) {
-        return;
-    }
+}
+}
 
 
-    const confirmed =
-        confirm(
-            "Delete this conversation?"
-        );
+/* ================= TYPING ================= */
+
+function showTyping(show){
+
+typingRow.classList.toggle("show",show);
+
+if(show)scrollBottom();
+}
 
 
-    if (!confirmed) {
-        return;
-    }
+/* ================= SCROLL ================= */
 
+function scrollBottom(){
 
-    try {
-
-        await deleteDoc(
-            doc(
-                db,
-                "pinkySparkConversations",
-                conversationId
-            )
-        );
-
-
-        if (
-            conversationId ===
-            currentConversationId
-        ) {
-
-            currentConversationId =
-                null;
-
-
-            messages.innerHTML = "";
-
-
-            showWelcome();
-
-
-            await createConversationIfNeeded();
-
-        }
-
-
-        await loadConversations();
-
-
-    } catch (error) {
-
-        console.error(
-            "Delete conversation error:",
-            error
-        );
-
-
-        alert(
-            "Unable to delete conversation."
-        );
-
-    }
+requestAnimationFrame(()=>{
+messages.scrollTop=messages.scrollHeight;
+});
 
 }
 
 
-/* =========================================================
-   SHOW WELCOME
-========================================================= */
+/* ================= BUTTONS ================= */
 
-function showWelcome() {
+sendBtn.onclick=sendMessage;
 
-    messages.innerHTML = "";
+input.onkeydown=e=>{
+
+if(e.key==="Enter"&&!e.shiftKey){
+
+e.preventDefault();
+sendMessage();
+
+}
+};
 
 
-    messages.appendChild(
-        createWelcome()
-    );
+input.oninput=function(){
+
+this.style.height="43px";
+this.style.height=Math.min(this.scrollHeight,130)+"px";
+
+};
 
 
-    messages.appendChild(
-        typingRow
-    );
+/* ================= VOICE ================= */
+
+const SpeechRecognition=
+window.SpeechRecognition||
+window.webkitSpeechRecognition;
+
+if(SpeechRecognition){
+
+const recognition=new SpeechRecognition();
+
+recognition.lang="en-US";
+recognition.interimResults=false;
+
+recognition.onstart=()=>{
+$("voiceBtn").textContent="🔴";
+};
+
+recognition.onend=()=>{
+$("voiceBtn").textContent="🎙️";
+};
+
+recognition.onresult=e=>{
+
+const text=e.results[0][0].transcript;
+
+input.value+=(input.value?" ":"")+text;
+
+input.dispatchEvent(new Event("input"));
+
+};
+
+$("voiceBtn").onclick=()=>{
+
+if(!trialExpired){
+
+try{recognition.start()}catch{}
+
+}
+
+};
+
+}else{
+
+$("voiceBtn").onclick=()=>{
+alert("Voice input is not supported by this browser.");
+};
 
 }
 
 
-/* =========================================================
-   CREATE WELCOME
-========================================================= */
-
-function createWelcome() {
-
-    const div =
-        document.createElement("div");
-
-
-    div.className =
-        "welcome";
-
-
-    div.id =
-        "welcome";
-
-
-    div.innerHTML = `
-
-        <div class="welcome-avatar">
-            ✦
-        </div>
-
-        <h2>
-            Hi! I'm Pinky Spark ✨
-        </h2>
-
-        <p>
-            Your cheerful VitalStar AI.
-            Ask me anything, explore ideas,
-            learn something new, or create something amazing.
-        </p>
-
-    `;
-
-
-    return div;
-
-}
-
-
-/* =========================================================
-   ADD MESSAGE
-========================================================= */
-
-function addMessage(
-    text,
-    sender,
-    isError = false,
-    save = false
-) {
-
-    const existingWelcome =
-        document.querySelector(
-            ".welcome"
-        );
-
-
-    if (existingWelcome) {
-        existingWelcome.remove();
-    }
-
-
-    const row =
-        document.createElement("div");
-
-
-    row.className =
-        "message-row " + sender;
-
-
-    const bubble =
-        document.createElement("div");
-
-
-    bubble.className =
-        "message " + sender;
-
-
-    if (isError) {
-
-        bubble.classList.add(
-            "error"
-        );
-
-    }
-
-
-    bubble.textContent =
-        text;
-
-
-    row.appendChild(
-        bubble
-    );
-
-
-    messages.insertBefore(
-        row,
-        typingRow
-    );
-
-
-    scrollToBottom();
-
-}
-
-
-/* =========================================================
-   SAVE MESSAGE
-========================================================= */
-
-async function saveMessage(
-    role,
-    content
-) {
-
-    if (
-        !currentUser ||
-        !currentConversationId
-    ) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await addDoc(
-            collection(
-                db,
-                "pinkySparkConversations",
-                currentConversationId,
-                "messages"
-            ),
-            {
-                userId:
-                    currentUser.uid,
-
-                role:
-                    role,
-
-                content:
-                    content,
-
-                createdAt:
-                    serverTimestamp()
-            }
-        );
-
-
-        await updateDoc(
-            doc(
-                db,
-                "pinkySparkConversations",
-                currentConversationId
-            ),
-            {
-                updatedAt:
-                    serverTimestamp(),
-
-                title:
-                    await getConversationTitle()
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Save message error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   CONVERSATION TITLE
-========================================================= */
-
-async function getConversationTitle() {
-
-    try {
-
-        const ref =
-            doc(
-                db,
-                "pinkySparkConversations",
-                currentConversationId
-            );
-
-
-        const snapshot =
-            await getDoc(ref);
-
-
-        const data =
-            snapshot.data();
-
-
-        if (
-            data?.title &&
-            data.title !==
-                "New conversation"
-        ) {
-
-            return data.title;
-
-        }
-
-    } catch {
-
-    }
-
-
-    const visibleMessages =
-        messages.querySelectorAll(
-            ".message.user"
-        );
-
-
-    if (
-        visibleMessages.length === 0
-    ) {
-
-        return "New conversation";
-
-    }
-
-
-    const first =
-        visibleMessages[0]
-            .textContent
-            .trim();
-
-
-    return first.length > 45
-        ? first.substring(0, 45) + "..."
-        : first;
-
-}
-
-
-/* =========================================================
-   SEND MESSAGE
-========================================================= */
-
-async function sendMessage() {
-
-    if (
-        isSending ||
-        !currentUser ||
-        trialExpired
-    ) {
-
-        return;
-
-    }
-
-
-    const text =
-        input.value.trim();
-
-
-    if (!text) {
-
-        if (selectedFile) {
-
-            addMessage(
-                "File selected. File processing will be connected in the next upload stage.",
-                "pinky"
-            );
-
-        }
-
-        return;
-
-    }
-
-
-    isSending =
-        true;
-
-
-    sendBtn.disabled =
-        true;
-
-
-    input.disabled =
-        true;
-
-
-    await createConversationIfNeeded();
-
-
-    addMessage(
-        text,
-        "user"
-    );
-
-
-    await saveMessage(
-        "user",
-        text
-    );
-
-
-    input.value = "";
-
-
-    input.style.height =
-        "43px";
-
-
-    showTyping(true);
-
-
-    try {
-
-        const response =
-            await fetch(
-                PINKY_API,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            message:
-                                text
-                        })
-                }
-            );
-
-
-        let data;
-
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch {
-
-            data = {
-                error:
-                    "Pinky Spark returned an invalid response."
-            };
-
-        }
-
-
-        showTyping(false);
-
-
-        if (!response.ok) {
-
-            console.error(
-                "Pinky Spark server error:",
-                data
-            );
-
-
-            addMessage(
-                data.error ||
-                    "Pinky Spark could not respond.",
-                "pinky",
-                true
-            );
-
-
-            return;
-
-        }
-
-
-        const answer =
-            data?.answer;
-
-
-        if (
-            typeof answer !==
-                "string" ||
-            !answer.trim()
-        ) {
-
-            addMessage(
-                "Pinky Spark returned an empty response.",
-                "pinky",
-                true
-            );
-
-
-            return;
-
-        }
-
-
-        addMessage(
-            answer.trim(),
-            "pinky"
-        );
-
-
-        await saveMessage(
-            "assistant",
-            answer.trim()
-        );
-
-
-        await loadConversations();
-
-
-    } catch (error) {
-
-        console.error(
-            "Pinky connection error:",
-            error
-        );
-
-
-        showTyping(false);
-
-
-        addMessage(
-            "Unable to connect to Pinky Spark. Please try again.",
-            "pinky",
-            true
-        );
-
-
-    } finally {
-
-        isSending =
-            false;
-
-
-        sendBtn.disabled =
-            false;
-
-
-        input.disabled =
-            false;
-
-
-        input.focus();
-
-    }
-
-}
-
-
-/* =========================================================
-   TYPING
-========================================================= */
-
-function showTyping(
-    show
-) {
-
-    typingRow.classList.toggle(
-        "show",
-        show
-    );
-
-
-    if (show) {
-
-        scrollToBottom();
-
-    }
-
-}
-
-
-/* =========================================================
-   SCROLL
-========================================================= */
-
-function scrollToBottom() {
-
-    requestAnimationFrame(
-        () => {
-
-            messages.scrollTop =
-                messages.scrollHeight;
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   SEND BUTTON
-========================================================= */
-
-sendBtn.addEventListener(
-    "click",
-    sendMessage
-);
-
-
-/* =========================================================
-   ENTER
-========================================================= */
-
-input.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-
-            event.preventDefault();
-
-            sendMessage();
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   AUTO RESIZE
-========================================================= */
-
-input.addEventListener(
-    "input",
-    function () {
-
-        this.style.height =
-            "43px";
-
-
-        this.style.height =
-            Math.min(
-                this.scrollHeight,
-                130
-            ) + "px";
-
-    }
-);
-
-
-/* =========================================================
-   FILE PICKER
-========================================================= */
-
-fileBtn.addEventListener(
-    "click",
-    () => {
-
-        if (trialExpired) {
-            return;
-        }
-
-
-        fileInput.click();
-
-    }
-);
-
-
-fileInput.addEventListener(
-    "change",
-    () => {
-
-        selectedFile =
-            fileInput.files?.[0] ||
-            null;
-
-
-        if (!selectedFile) {
-
-            attachmentPreview
-                .classList
-                .remove("show");
-
-
-            return;
-
-        }
-
-
-        attachmentName.textContent =
-            "📎 " +
-            selectedFile.name;
-
-
-        attachmentPreview
-            .classList
-            .add("show");
-
-    }
-);
-
-
-/* =========================================================
-   REMOVE FILE
-========================================================= */
-
-removeAttachment.addEventListener(
-    "click",
-    () => {
-
-        selectedFile =
-            null;
-
-
-        fileInput.value =
-            "";
-
-
-        attachmentPreview
-            .classList
-            .remove("show");
-
-    }
-);
-
-
-/* =========================================================
-   VOICE INPUT
-========================================================= */
-
-let recognition =
-    null;
-
-
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-
-if (SpeechRecognition) {
-
-    recognition =
-        new SpeechRecognition();
-
-
-    recognition.lang =
-        "en-US";
-
-
-    recognition.interimResults =
-        false;
-
-
-    recognition.continuous =
-        false;
-
-
-    recognition.onstart =
-        () => {
-
-            voiceBtn.textContent =
-                "🔴";
-
-        };
-
-
-    recognition.onend =
-        () => {
-
-            voiceBtn.textContent =
-                "🎙️";
-
-        };
-
-
-    recognition.onerror =
-        () => {
-
-            voiceBtn.textContent =
-                "🎙️";
-
-        };
-
-
-    recognition.onresult =
-        (event) => {
-
-            const transcript =
-                event
-                    .results[0][0]
-                    .transcript;
-
-
-            input.value =
-                (
-                    input.value
-                    ? input.value + " "
-                    : ""
-                ) + transcript;
-
-
-            input.dispatchEvent(
-                new Event("input")
-            );
-
-        };
-
-
-    voiceBtn.addEventListener(
-        "click",
-        () => {
-
-            if (trialExpired) {
-                return;
-            }
-
-
-            try {
-
-                recognition.start();
-
-            } catch {
-
-            }
-
-        }
-    );
-
-
-} else {
-
-    voiceBtn.addEventListener(
-        "click",
-        () => {
-
-            alert(
-                "Voice input is not supported by this browser."
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
-
-function escapeHtml(
-    value
-) {
-
-    return String(value)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+/* ================= ESCAPE ================= */
+
+function escapeHtml(value){
+
+return String(value)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
 
 }
 
 </script>
 
 </body>
-
 </html>
