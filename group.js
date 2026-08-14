@@ -1,6 +1,6 @@
 // ============================================================
 // VITALSTAR — group.js
-// Core controller for group.html
+// Main controller for group.html
 // ============================================================
 
 import { auth, db } from '../firebase.js';
@@ -46,7 +46,7 @@ let tabsBound = false;
 
 
 // ============================================================
-// DOM REFERENCES
+// DOM
 // ============================================================
 
 const navUserAvatar = document.getElementById('navUserAvatar');
@@ -60,7 +60,6 @@ const groupCover = document.getElementById('groupCover');
 const coverEditBtn = document.getElementById('coverEditBtn');
 const groupAvatar = document.getElementById('groupAvatar');
 
-const groupHeaderActions = document.getElementById('groupHeaderActions');
 const yourRoleTag = document.getElementById('yourRoleTag');
 const yourRoleText = document.getElementById('yourRoleText');
 
@@ -139,99 +138,39 @@ const state = {
   groupId: new URLSearchParams(window.location.search).get('id'),
   groupData: null,
   membership: null,
-  activeTab: 'posts'
+  activeTab: 'posts',
+  loading: false
 };
 
 
 // ============================================================
-// SAFE DOM HELPERS
+// HELPERS
 // ============================================================
 
-function exists(el) {
-  return !!el;
-}
-
-
 function setText(el, value) {
-  if (el) {
-    el.textContent = value ?? '';
-  }
+  if (el) el.textContent = value ?? '';
 }
 
 
 function setDisplay(el, value) {
-  if (el) {
-    el.style.display = value;
-  }
+  if (el) el.style.display = value;
 }
 
 
-// ============================================================
-// TOAST
-// ============================================================
+function formatCount(value) {
 
-function showToast(message, type = 'info') {
-
-  if (!toastContainer) {
-    console.log(`[${type}] ${message}`);
-    return;
-  }
-
-  const icons = {
-    success: 'fa-circle-check',
-    error: 'fa-circle-exclamation',
-    info: 'fa-circle-info'
-  };
-
-  const toast = document.createElement('div');
-
-  toast.className = `toast toast--${type}`;
-
-  toast.innerHTML = `
-    <i class="fa-solid ${icons[type] || icons.info}"></i>
-    <span></span>
-  `;
-
-  const span = toast.querySelector('span');
-
-  if (span) {
-    span.textContent = message;
-  }
-
-  toastContainer.appendChild(toast);
-
-  setTimeout(() => {
-
-    toast.classList.add('is-leaving');
-
-    toast.addEventListener(
-      'animationend',
-      () => toast.remove(),
-      { once: true }
-    );
-
-  }, 3800);
-}
-
-
-// ============================================================
-// UTILITIES
-// ============================================================
-
-function formatCount(num) {
-
-  num = Number(num) || 0;
+  const num = Number(value) || 0;
 
   if (num >= 1000000) {
     return `${(num / 1000000)
       .toFixed(1)
-      .replace(/\.0$/, '')}M`;
+      .replace('.0', '')}M`;
   }
 
   if (num >= 1000) {
     return `${(num / 1000)
       .toFixed(1)
-      .replace(/\.0$/, '')}K`;
+      .replace('.0', '')}K`;
   }
 
   return String(num);
@@ -240,28 +179,30 @@ function formatCount(num) {
 
 function initialsFrom(name) {
 
-  return (name || '?')
+  return String(name || '?')
     .trim()
     .charAt(0)
     .toUpperCase();
 }
 
 
-function applyMediaBackground(el, url, fallbackText) {
+function applyMediaBackground(el, url, fallbackText = '') {
 
   if (!el) return;
 
   if (url) {
 
-    el.style.backgroundImage = `url("${url}")`;
+    el.style.backgroundImage =
+      `url("${String(url).replace(/"/g, '\\"')}")`;
+
     el.style.backgroundSize = 'cover';
     el.style.backgroundPosition = 'center';
     el.textContent = '';
 
-  } else if (fallbackText !== undefined) {
+  } else {
 
     el.style.backgroundImage = '';
-    el.textContent = fallbackText;
+    el.textContent = fallbackText || '';
 
   }
 }
@@ -286,7 +227,50 @@ function formatDate(timestamp) {
 
 
 // ============================================================
-// OWNER / ADMIN DETECTION
+// TOAST
+// ============================================================
+
+function showToast(message, type = 'info') {
+
+  if (!toastContainer) {
+    console.log(`[${type}] ${message}`);
+    return;
+  }
+
+  const icons = {
+    success: 'fa-circle-check',
+    error: 'fa-circle-exclamation',
+    info: 'fa-circle-info'
+  };
+
+  const toast = document.createElement('div');
+
+  toast.className = `toast toast--${type}`;
+
+  const icon = document.createElement('i');
+  icon.className =
+    `fa-solid ${icons[type] || icons.info}`;
+
+  const text = document.createElement('span');
+  text.textContent = message;
+
+  toast.append(icon, text);
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => {
+
+    toast.classList.add('is-leaving');
+
+    setTimeout(() => {
+      toast.remove();
+    }, 400);
+
+  }, 3800);
+}
+
+
+// ============================================================
+// OWNER / ADMIN
 // ============================================================
 
 function isCurrentUserOwner() {
@@ -297,22 +281,25 @@ function isCurrentUserOwner() {
     return false;
   }
 
-  const ownerIds = [
+  return [
     state.groupData.ownerId,
     state.groupData.ownerUid,
     state.groupData.createdBy,
     state.groupData.creatorId
-  ].filter(Boolean);
-
-  return ownerIds.includes(uid);
+  ]
+    .filter(Boolean)
+    .includes(uid);
 }
 
 
 function isCurrentUserAdmin() {
 
-  const role = state.membership?.role;
-
-  return role === 'admin';
+  return [
+    'admin',
+    'moderator'
+  ].includes(
+    state.membership?.role
+  );
 }
 
 
@@ -326,8 +313,32 @@ function canManageGroup() {
 }
 
 
+function isActiveMember() {
+
+  return (
+    state.membership?.status === 'active'
+  );
+}
+
+
+function canViewGroup() {
+
+  if (!state.groupData) {
+    return false;
+  }
+
+  if (
+    state.groupData.privacy !== 'private'
+  ) {
+    return true;
+  }
+
+  return isActiveMember() || canManageGroup();
+}
+
+
 // ============================================================
-// LOADING CONTROL
+// LOADING
 // ============================================================
 
 function hideLoader() {
@@ -335,7 +346,6 @@ function hideLoader() {
   if (pageLoader) {
     pageLoader.classList.add('is-hidden');
   }
-
 }
 
 
@@ -346,7 +356,6 @@ function showPage() {
   if (groupPageContent) {
     groupPageContent.classList.add('is-visible');
   }
-
 }
 
 
@@ -358,39 +367,44 @@ function showNotFound() {
     groupNotFoundState.classList.add('is-visible');
   }
 
+  if (groupPageContent) {
+    groupPageContent.classList.remove('is-visible');
+  }
 }
 
 
 // ============================================================
-// AUTH GUARD
+// AUTH
 // ============================================================
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, async user => {
 
   if (!user) {
-
     window.location.href = 'login.html';
-
     return;
   }
 
   state.currentUser = user;
 
-  if (navUserAvatar) {
-
-    applyMediaBackground(
-      navUserAvatar,
-      user.photoURL || '',
-      initialsFrom(
-        user.displayName || 'V'
-      )
-    );
-
-  }
+  applyUserAvatar(user);
 
   await loadGroup();
 
 });
+
+
+function applyUserAvatar(user) {
+
+  if (!navUserAvatar) return;
+
+  applyMediaBackground(
+    navUserAvatar,
+    user.photoURL || '',
+    initialsFrom(
+      user.displayName || 'V'
+    )
+  );
+}
 
 
 // ============================================================
@@ -399,15 +413,18 @@ onAuthStateChanged(auth, async (user) => {
 
 async function loadGroup() {
 
+  if (state.loading) return;
+
   if (!state.groupId) {
 
-    console.error('No group ID found in URL.');
+    console.error('Missing group ID.');
 
     showNotFound();
 
     return;
   }
 
+  state.loading = true;
 
   try {
 
@@ -427,20 +444,20 @@ async function loadGroup() {
 
 
     // --------------------------------------------------------
-    // LOAD GROUP
+    // GROUP
     // --------------------------------------------------------
 
-    const groupSnap = await getDoc(groupRef);
-
+    const groupSnap =
+      await getDoc(groupRef);
 
     if (!groupSnap.exists()) {
 
-      console.error(
-        'Group does not exist:',
-        state.groupId
-      );
-
       showNotFound();
+
+      showToast(
+        'This group no longer exists.',
+        'error'
+      );
 
       return;
     }
@@ -453,25 +470,27 @@ async function loadGroup() {
 
 
     // --------------------------------------------------------
-    // LOAD MEMBERSHIP
+    // MEMBERSHIP
     // --------------------------------------------------------
 
     try {
 
-      const memberSnap = await getDoc(memberRef);
+      const memberSnap =
+        await getDoc(memberRef);
 
-      state.membership = memberSnap.exists()
-        ? {
-            ...memberSnap.data(),
-            uid: state.currentUser.uid
-          }
-        : null;
+      state.membership =
+        memberSnap.exists()
+          ? {
+              uid: state.currentUser.uid,
+              ...memberSnap.data()
+            }
+          : null;
 
-    } catch (membershipError) {
+    } catch (error) {
 
       console.error(
-        'Membership loading error:',
-        membershipError
+        'Membership error:',
+        error
       );
 
       state.membership = null;
@@ -480,9 +499,6 @@ async function loadGroup() {
 
     // --------------------------------------------------------
     // OWNER FALLBACK
-    // --------------------------------------------------------
-    // The owner is detected directly from the group document.
-    // This protects against missing/incorrect membership docs.
     // --------------------------------------------------------
 
     if (isCurrentUserOwner()) {
@@ -497,66 +513,46 @@ async function loadGroup() {
     }
 
 
-    // --------------------------------------------------------
-    // RENDER MAIN PAGE
-    // --------------------------------------------------------
-
     renderHeader();
-
     renderSidebar();
-
     applyAccessControl();
-
     setupTabs();
-
     bindHeaderActions();
 
-
-    // --------------------------------------------------------
-    // ADMINS ARE SECONDARY CONTENT
-    // --------------------------------------------------------
-
     renderAdmins().catch(error => {
-
       console.error(
-        'Admin loading error:',
+        'Admin rendering error:',
         error
       );
-
     });
-
-
-    // --------------------------------------------------------
-    // SHOW PAGE
-    // --------------------------------------------------------
 
     showPage();
 
   } catch (error) {
 
     console.error(
-      'CRITICAL GROUP LOAD ERROR:',
+      'GROUP LOAD ERROR:',
       error
     );
 
     showNotFound();
 
     showToast(
-      'Unable to load this group. Please try again.',
+      'Unable to load this group.',
       'error'
     );
 
   } finally {
 
+    state.loading = false;
     hideLoader();
 
   }
-
 }
 
 
 // ============================================================
-// RENDER HEADER
+// HEADER
 // ============================================================
 
 function renderHeader() {
@@ -580,49 +576,27 @@ function renderHeader() {
   // COVER
   // ----------------------------------------------------------
 
-  if (groupCover) {
-
-    if (group.coverURL) {
-
-      groupCover.style.backgroundImage =
-        `url("${group.coverURL}")`;
-
-      groupCover.style.backgroundSize = 'cover';
-      groupCover.style.backgroundPosition = 'center';
-
-    } else {
-
-      groupCover.style.backgroundImage = '';
-
-    }
-
-  }
+  applyMediaBackground(
+    groupCover,
+    group.coverURL || group.coverUrl || '',
+    ''
+  );
 
 
   // ----------------------------------------------------------
   // AVATAR
   // ----------------------------------------------------------
 
-  if (groupAvatar) {
+  applyMediaBackground(
+    groupAvatar,
+    group.avatarURL || group.avatarUrl || '',
+    initialsFrom(group.name)
+  );
 
-    if (group.avatarURL) {
 
-      applyMediaBackground(
-        groupAvatar,
-        group.avatarURL
-      );
-
-    } else {
-
-      groupAvatar.style.backgroundImage = '';
-
-      groupAvatar.textContent =
-        initialsFrom(group.name);
-
-    }
-
-  }
-
+  // ----------------------------------------------------------
+  // NAME
+  // ----------------------------------------------------------
 
   setText(
     groupName,
@@ -642,7 +616,7 @@ function renderHeader() {
         'badge badge--private';
 
       groupPrivacyBadge.innerHTML =
-        '<i class="fa-solid fa-lock" style="font-size:9px;"></i> Private';
+        '<i class="fa-solid fa-lock"></i> Private';
 
     } else {
 
@@ -650,10 +624,9 @@ function renderHeader() {
         'badge badge--public';
 
       groupPrivacyBadge.innerHTML =
-        '<i class="fa-solid fa-globe" style="font-size:9px;"></i> Public';
+        '<i class="fa-solid fa-globe"></i> Public';
 
     }
-
   }
 
 
@@ -675,7 +648,7 @@ function renderHeader() {
 
   setDisplay(
     groupVerifiedBadge,
-    group.verified
+    group.verified === true
       ? 'inline-flex'
       : 'none'
   );
@@ -694,11 +667,12 @@ function renderHeader() {
 
 
   // ----------------------------------------------------------
-  // OWNER NAME
+  // OWNER
   // ----------------------------------------------------------
 
-  const ownerDisplayName =
+  const ownerName =
     group.ownerName ||
+    group.ownerDisplayName ||
     (
       isCurrentUserOwner()
         ? (
@@ -708,15 +682,14 @@ function renderHeader() {
         : 'a member'
     );
 
-
   setText(
     groupOwnerText,
-    `Owned by ${ownerDisplayName}`
+    `Owned by ${ownerName}`
   );
 
 
   // ----------------------------------------------------------
-  // CREATED DATE
+  // CREATED
   // ----------------------------------------------------------
 
   setText(
@@ -744,18 +717,15 @@ function renderHeader() {
     formatCount(group.memberCount)
   );
 
-
   setText(
     statPostCount,
     formatCount(group.postCount)
   );
 
-
   setText(
     statOnlineCount,
     formatCount(group.onlineCount)
   );
-
 
   setText(
     statLevel,
@@ -763,26 +733,18 @@ function renderHeader() {
   );
 
 
-  // ----------------------------------------------------------
-  // JOIN / LEAVE
-  // ----------------------------------------------------------
-
   renderJoinLeaveState();
 
 
   // ----------------------------------------------------------
-  // OWNER / ADMIN CONTROLS
+  // MANAGEMENT
   // ----------------------------------------------------------
-
-  const isOwnerOrAdmin =
-    canManageGroup();
-
 
   if (coverEditBtn) {
 
     coverEditBtn.classList.toggle(
       'is-visible',
-      isOwnerOrAdmin
+      canManageGroup()
     );
 
   }
@@ -798,9 +760,6 @@ function renderJoinLeaveState() {
 
   if (!joinLeaveBtn) return;
 
-  const membership =
-    state.membership;
-
 
   // ----------------------------------------------------------
   // OWNER
@@ -808,33 +767,25 @@ function renderJoinLeaveState() {
 
   if (
     isCurrentUserOwner() ||
-    membership?.role === 'owner'
+    state.membership?.role === 'owner'
   ) {
 
-    joinLeaveBtn.style.display =
-      'none';
+    joinLeaveBtn.style.display = 'none';
 
-
-    if (yourRoleTag) {
-
-      yourRoleTag.classList.add(
-        'is-visible'
-      );
-
-    }
-
+    setDisplay(
+      yourRoleTag,
+      'inline-flex'
+    );
 
     setText(
       yourRoleText,
       'Owner'
     );
 
-
     setDisplay(
       inviteBtn,
       'inline-flex'
     );
-
 
     return;
   }
@@ -845,20 +796,13 @@ function renderJoinLeaveState() {
   // ----------------------------------------------------------
 
   if (
-    membership &&
-    [
-      'admin',
-      'moderator',
-      'member'
-    ].includes(membership.role) &&
-    membership.status === 'active'
+    state.membership &&
+    state.membership.status === 'active'
   ) {
 
-    joinLeaveBtn.style.display =
-      'flex';
+    joinLeaveBtn.style.display = 'flex';
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
     joinLeaveBtn.className =
       'btn-join-leave is-member';
@@ -866,28 +810,22 @@ function renderJoinLeaveState() {
     joinLeaveBtn.innerHTML =
       '<i class="fa-solid fa-check"></i> Joined';
 
-
-    if (yourRoleTag) {
-
-      yourRoleTag.classList.add(
-        'is-visible'
-      );
-
-    }
-
+    setDisplay(
+      yourRoleTag,
+      'inline-flex'
+    );
 
     setText(
       yourRoleText,
-      membership.role.charAt(0).toUpperCase() +
-      membership.role.slice(1)
+      capitalize(
+        state.membership.role || 'member'
+      )
     );
-
 
     setDisplay(
       inviteBtn,
       'inline-flex'
     );
-
 
     return;
   }
@@ -898,15 +836,12 @@ function renderJoinLeaveState() {
   // ----------------------------------------------------------
 
   if (
-    membership &&
-    membership.status === 'pending'
+    state.membership?.status === 'pending'
   ) {
 
-    joinLeaveBtn.style.display =
-      'flex';
+    joinLeaveBtn.style.display = 'flex';
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
     joinLeaveBtn.className =
       'btn-join-leave is-pending';
@@ -914,35 +849,27 @@ function renderJoinLeaveState() {
     joinLeaveBtn.innerHTML =
       '<i class="fa-solid fa-clock"></i> Requested';
 
-
-    if (yourRoleTag) {
-
-      yourRoleTag.classList.remove(
-        'is-visible'
-      );
-
-    }
-
+    setDisplay(
+      yourRoleTag,
+      'none'
+    );
 
     setDisplay(
       inviteBtn,
       'none'
     );
 
-
     return;
   }
 
 
   // ----------------------------------------------------------
-  // NOT A MEMBER
+  // NOT MEMBER
   // ----------------------------------------------------------
 
-  joinLeaveBtn.style.display =
-    'flex';
+  joinLeaveBtn.style.display = 'flex';
 
-  joinLeaveBtn.disabled =
-    false;
+  joinLeaveBtn.disabled = false;
 
   joinLeaveBtn.className =
     'btn-join-leave';
@@ -950,21 +877,27 @@ function renderJoinLeaveState() {
   joinLeaveBtn.innerHTML =
     '<i class="fa-solid fa-plus"></i> Join group';
 
-
-  if (yourRoleTag) {
-
-    yourRoleTag.classList.remove(
-      'is-visible'
-    );
-
-  }
-
+  setDisplay(
+    yourRoleTag,
+    'none'
+  );
 
   setDisplay(
     inviteBtn,
     'none'
   );
 
+}
+
+
+function capitalize(value) {
+
+  const text = String(value || 'member');
+
+  return (
+    text.charAt(0).toUpperCase() +
+    text.slice(1)
+  );
 }
 
 
@@ -977,15 +910,13 @@ function renderSidebar() {
   if (!rulesListDisplay) return;
 
   const rules =
-    Array.isArray(state.groupData.rules)
+    Array.isArray(state.groupData?.rules)
       ? state.groupData.rules
       : [];
 
-
   rulesListDisplay.innerHTML = '';
 
-
-  if (rules.length === 0) {
+  if (!rules.length) {
 
     setDisplay(
       rulesEmptyDisplay,
@@ -994,7 +925,6 @@ function renderSidebar() {
 
     return;
   }
-
 
   setDisplay(
     rulesEmptyDisplay,
@@ -1008,7 +938,7 @@ function renderSidebar() {
       document.createElement('li');
 
     li.textContent =
-      rule;
+      String(rule);
 
     rulesListDisplay.appendChild(li);
 
@@ -1028,7 +958,7 @@ async function renderAdmins() {
 
   try {
 
-    const membersQuery = query(
+    const q = query(
       collection(
         db,
         'groups',
@@ -1049,12 +979,12 @@ async function renderAdmins() {
 
 
     const snapshot =
-      await getDocs(membersQuery);
+      await getDocs(q);
 
 
     adminsList
       .querySelectorAll('.admin-row')
-      .forEach(el => el.remove());
+      .forEach(row => row.remove());
 
 
     if (snapshot.empty) {
@@ -1074,7 +1004,7 @@ async function renderAdmins() {
     );
 
 
-    const rolePriority = {
+    const priority = {
       owner: 0,
       admin: 1,
       moderator: 2
@@ -1083,14 +1013,14 @@ async function renderAdmins() {
 
     const admins =
       snapshot.docs
-        .map(docSnap => ({
-          id: docSnap.id,
-          ...docSnap.data()
+        .map(item => ({
+          id: item.id,
+          ...item.data()
         }))
         .sort(
           (a, b) =>
-            (rolePriority[a.role] ?? 3) -
-            (rolePriority[b.role] ?? 3)
+            (priority[a.role] ?? 9) -
+            (priority[b.role] ?? 9)
         );
 
 
@@ -1099,8 +1029,7 @@ async function renderAdmins() {
       const row =
         document.createElement('div');
 
-      row.className =
-        'admin-row';
+      row.className = 'admin-row';
 
 
       const avatar =
@@ -1147,29 +1076,31 @@ async function renderAdmins() {
         'admin-role';
 
       role.textContent =
-        admin.role || 'member';
+        capitalize(
+          admin.role || 'member'
+        );
 
 
-      info.appendChild(name);
-      info.appendChild(role);
+      info.append(
+        name,
+        role
+      );
 
-
-      row.appendChild(avatar);
-      row.appendChild(info);
-
+      row.append(
+        avatar,
+        info
+      );
 
       adminsList.appendChild(row);
 
     });
 
-
   } catch (error) {
 
     console.error(
-      'Error loading admins:',
+      'Admin loading error:',
       error
     );
-
 
     setDisplay(
       adminsEmptyDisplay,
@@ -1187,24 +1118,12 @@ async function renderAdmins() {
 
 function applyAccessControl() {
 
-  const group =
-    state.groupData;
-
-  if (!group) return;
-
-
-  const isActiveMember =
-    state.membership &&
-    state.membership.status === 'active';
-
-
   const canView =
-    group.privacy === 'public' ||
-    isActiveMember;
+    canViewGroup();
 
 
   // ----------------------------------------------------------
-  // LOCKED NOTICE
+  // LOCK
   // ----------------------------------------------------------
 
   if (lockedNotice) {
@@ -1218,38 +1137,31 @@ function applyAccessControl() {
 
 
   // ----------------------------------------------------------
-  // MAIN CONTENT
+  // CONTENT
   // ----------------------------------------------------------
 
   if (groupContentGrid) {
 
     groupContentGrid.style.display =
-      canView
-        ? 'grid'
-        : 'none';
+      canView ? 'grid' : 'none';
 
   }
 
 
   // ----------------------------------------------------------
-  // PREMIUM TAB
+  // SUBSCRIPTION
   // ----------------------------------------------------------
 
   setDisplay(
     subscriptionTabBtn,
-    group.type === 'premium'
+    state.groupData?.type === 'premium'
       ? 'flex'
       : 'none'
   );
 
 
   // ----------------------------------------------------------
-  // SETTINGS TAB
-  // ----------------------------------------------------------
-  // IMPORTANT:
-  // The owner is detected from the group document as well
-  // as membership, so Settings cannot disappear because
-  // the membership document is missing.
+  // SETTINGS
   // ----------------------------------------------------------
 
   setDisplay(
@@ -1266,7 +1178,9 @@ function applyAccessControl() {
 
   if (canView) {
 
-    activateTab('posts');
+    activateTab(
+      state.activeTab || 'posts'
+    );
 
   }
 
@@ -1290,21 +1204,17 @@ function setupTabs() {
     'click',
     event => {
 
-      const tabBtn =
+      const button =
         event.target.closest('.group-tab');
 
+      if (!button) return;
 
-      if (!tabBtn) return;
+      const tab =
+        button.dataset.tab;
 
+      if (!tab) return;
 
-      const tabName =
-        tabBtn.dataset.tab;
-
-
-      if (!tabName) return;
-
-
-      activateTab(tabName);
+      activateTab(tab);
 
     }
   );
@@ -1318,7 +1228,25 @@ function activateTab(tabName) {
 
 
   // ----------------------------------------------------------
-  // SECURITY CHECK FOR SETTINGS
+  // PRIVATE GROUP
+  // ----------------------------------------------------------
+
+  if (
+    !canViewGroup() &&
+    tabName !== 'posts'
+  ) {
+
+    showToast(
+      'Join the group to access this section.',
+      'info'
+    );
+
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // SETTINGS
   // ----------------------------------------------------------
 
   if (
@@ -1336,14 +1264,13 @@ function activateTab(tabName) {
 
 
   // ----------------------------------------------------------
-  // SECURITY CHECK FOR SUBSCRIPTION
+  // SUBSCRIPTION
   // ----------------------------------------------------------
 
   if (
     tabName === 'subscription' &&
     state.groupData?.type !== 'premium'
   ) {
-
     return;
   }
 
@@ -1353,18 +1280,18 @@ function activateTab(tabName) {
 
 
   // ----------------------------------------------------------
-  // ACTIVE TAB BUTTON
+  // BUTTONS
   // ----------------------------------------------------------
 
   if (groupTabsNav) {
 
     groupTabsNav
       .querySelectorAll('.group-tab')
-      .forEach(btn => {
+      .forEach(button => {
 
-        btn.classList.toggle(
+        button.classList.toggle(
           'is-active',
-          btn.dataset.tab === tabName
+          button.dataset.tab === tabName
         );
 
       });
@@ -1373,7 +1300,7 @@ function activateTab(tabName) {
 
 
   // ----------------------------------------------------------
-  // ACTIVE PANEL
+  // PANELS
   // ----------------------------------------------------------
 
   document
@@ -1388,19 +1315,13 @@ function activateTab(tabName) {
     });
 
 
-  // ----------------------------------------------------------
-  // LOAD MODULE
-  // ----------------------------------------------------------
-
-  loadTabModuleIfNeeded(
-    tabName
-  );
+  loadTabModuleIfNeeded(tabName);
 
 }
 
 
 // ============================================================
-// LOAD TAB MODULE
+// TAB MODULE LOADER
 // ============================================================
 
 async function loadTabModuleIfNeeded(tabName) {
@@ -1415,7 +1336,6 @@ async function loadTabModuleIfNeeded(tabName) {
   const loader =
     TAB_MODULE_LOADERS[tabName];
 
-
   if (!loader) return;
 
 
@@ -1427,72 +1347,71 @@ async function loadTabModuleIfNeeded(tabName) {
 
   try {
 
-    const mod =
+    const module =
       await loader();
 
 
-    loadedTabModules.add(
-      tabName
-    );
+    loadedTabModules.add(tabName);
 
 
     if (
-      mod &&
-      typeof mod.init === 'function'
+      module &&
+      typeof module.init === 'function'
     ) {
 
-      await mod.init(
+      await module.init(
         buildTabContext(panel)
       );
 
     }
 
-
   } catch (error) {
 
     console.error(
-      `Tab "${tabName}" failed to load:`,
+      `Failed to load ${tabName}:`,
       error
     );
 
 
-    if (panel) {
-
-      panel.innerHTML = `
-        <div class="tab-panel-placeholder">
-          <i class="fa-solid fa-circle-exclamation"></i>
-          <p>Unable to load this section.</p>
-          <button type="button" class="retry-tab-btn">
-            Try again
-          </button>
-        </div>
-      `;
+    if (!panel) return;
 
 
-      const retryBtn =
-        panel.querySelector(
-          '.retry-tab-btn'
-        );
+    panel.innerHTML = `
+      <div class="tab-panel-placeholder">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <p>Unable to load this section.</p>
+        <button
+          type="button"
+          class="retry-tab-btn"
+        >
+          Try again
+        </button>
+      </div>
+    `;
 
 
-      if (retryBtn) {
+    const retry =
+      panel.querySelector(
+        '.retry-tab-btn'
+      );
 
-        retryBtn.addEventListener(
-          'click',
-          () => {
 
-            loadedTabModules.delete(
-              tabName
-            );
+    if (retry) {
 
-            loadTabModuleIfNeeded(
-              tabName
-            );
+      retry.addEventListener(
+        'click',
+        () => {
 
-          }
-        );
+          loadedTabModules.delete(
+            tabName
+          );
 
-      }
+          loadTabModuleIfNeeded(
+            tabName
+          );
+
+        }
+      );
 
     }
 
@@ -1510,7 +1429,6 @@ function buildTabContext(panelEl) {
   return {
 
     db,
-
     auth,
 
     groupId:
@@ -1535,21 +1453,17 @@ function buildTabContext(panelEl) {
     panelEl,
 
     showToast,
-
     formatCount,
-
     initialsFrom,
-
     applyMediaBackground,
 
     refreshHeaderStats,
 
-    // Permission helpers
     isCurrentUserOwner,
-
     isCurrentUserAdmin,
-
-    canManageGroup
+    canManageGroup,
+    isActiveMember,
+    canViewGroup
 
   };
 
@@ -1557,7 +1471,7 @@ function buildTabContext(panelEl) {
 
 
 // ============================================================
-// REFRESH HEADER STATS
+// REFRESH STATS
 // ============================================================
 
 async function refreshHeaderStats() {
@@ -1587,7 +1501,6 @@ async function refreshHeaderStats() {
     };
 
 
-    // Re-check owner after refreshing group data.
     if (isCurrentUserOwner()) {
 
       state.membership = {
@@ -1624,7 +1537,12 @@ async function refreshHeaderStats() {
     );
 
 
-    // Refresh management controls too.
+    setText(
+      statLevel,
+      state.groupData.level || 1
+    );
+
+
     setDisplay(
       settingsTabBtn,
       canManageGroup()
@@ -1645,7 +1563,7 @@ async function refreshHeaderStats() {
   } catch (error) {
 
     console.error(
-      'Error refreshing group stats:',
+      'Stats refresh error:',
       error
     );
 
@@ -1667,148 +1585,110 @@ function bindHeaderActions() {
   headerActionsBound = true;
 
 
-  // ----------------------------------------------------------
   // JOIN / LEAVE
-  // ----------------------------------------------------------
 
-  if (joinLeaveBtn) {
-
-    joinLeaveBtn.addEventListener(
-      'click',
-      handleJoinLeaveClick
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // SHARE
-  // ----------------------------------------------------------
-
-  if (shareBtn) {
-
-    shareBtn.addEventListener(
-      'click',
-      handleShareClick
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // INVITE
-  // ----------------------------------------------------------
-
-  if (inviteBtn) {
-
-    inviteBtn.addEventListener(
-      'click',
-      handleInviteClick
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // COVER EDIT
-  // ----------------------------------------------------------
-
-  if (coverEditBtn) {
-
-    coverEditBtn.addEventListener(
-      'click',
-      () => {
-
-        if (!canManageGroup()) {
-
-          showToast(
-            'You do not have permission to edit this group.',
-            'error'
-          );
-
-          return;
-        }
-
-        activateTab('settings');
-
-      }
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // NOTIFICATION BELL
-  // ----------------------------------------------------------
-
-  if (notificationBellBtn) {
-
-    notificationBellBtn.addEventListener(
-      'click',
-      toggleNotificationsPanel
-    );
-
-  }
-
-
-  if (closeNotificationsBtn) {
-
-    closeNotificationsBtn.addEventListener(
-      'click',
-      () => {
-
-        if (notificationsPanel) {
-
-          notificationsPanel
-            .classList
-            .remove('is-visible');
-
-        }
-
-      }
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // CLOSE NOTIFICATIONS WHEN CLICKING OUTSIDE
-  // ----------------------------------------------------------
-
-  document.addEventListener(
+  joinLeaveBtn?.addEventListener(
     'click',
-    event => {
+    handleJoinLeaveClick
+  );
 
-      if (!notificationsPanel) {
+
+  // SHARE
+
+  shareBtn?.addEventListener(
+    'click',
+    handleShareClick
+  );
+
+
+  // INVITE
+
+  inviteBtn?.addEventListener(
+    'click',
+    handleInviteClick
+  );
+
+
+  // COVER EDIT
+
+  coverEditBtn?.addEventListener(
+    'click',
+    () => {
+
+      if (!canManageGroup()) {
+
+        showToast(
+          'You do not have permission to edit this group.',
+          'error'
+        );
+
         return;
       }
 
-
-      if (!notificationBellBtn) {
-        return;
-      }
-
-
-      if (
-        notificationsPanel.classList.contains(
-          'is-visible'
-        ) &&
-        !notificationsPanel.contains(
-          event.target
-        ) &&
-        !notificationBellBtn.contains(
-          event.target
-        )
-      ) {
-
-        notificationsPanel
-          .classList
-          .remove('is-visible');
-
-      }
+      activateTab('settings');
 
     }
   );
+
+
+  // NOTIFICATIONS
+
+  notificationBellBtn?.addEventListener(
+    'click',
+    toggleNotificationsPanel
+  );
+
+
+  closeNotificationsBtn?.addEventListener(
+    'click',
+    closeNotifications
+  );
+
+
+  // OUTSIDE CLICK
+
+  document.addEventListener(
+    'click',
+    handleOutsideNotificationClick
+  );
+
+}
+
+
+function closeNotifications() {
+
+  notificationsPanel
+    ?.classList
+    .remove('is-visible');
+
+}
+
+
+function handleOutsideNotificationClick(event) {
+
+  if (
+    !notificationsPanel ||
+    !notificationBellBtn
+  ) {
+    return;
+  }
+
+
+  if (
+    notificationsPanel.classList.contains(
+      'is-visible'
+    ) &&
+    !notificationsPanel.contains(
+      event.target
+    ) &&
+    !notificationBellBtn.contains(
+      event.target
+    )
+  ) {
+
+    closeNotifications();
+
+  }
 
 }
 
@@ -1819,27 +1699,37 @@ function bindHeaderActions() {
 
 async function handleJoinLeaveClick() {
 
-  const membership =
-    state.membership;
-
-
-  if (isCurrentUserOwner()) {
-
+  if (
+    isCurrentUserOwner()
+  ) {
     return;
   }
+
+
+  const membership =
+    state.membership;
 
 
   if (!membership) {
 
     await joinGroup();
 
-  } else if (
+    return;
+  }
+
+
+  if (
     membership.status === 'pending'
   ) {
 
     await cancelJoinRequest();
 
-  } else if (
+    return;
+  }
+
+
+  if (
+    membership.status === 'active' &&
     membership.role !== 'owner'
   ) {
 
@@ -1851,16 +1741,21 @@ async function handleJoinLeaveClick() {
 
 
 // ============================================================
-// JOIN GROUP
+// JOIN
 // ============================================================
 
 async function joinGroup() {
 
-  if (!joinLeaveBtn) return;
+  if (
+    !joinLeaveBtn ||
+    !state.groupData ||
+    !state.currentUser
+  ) {
+    return;
+  }
 
 
-  joinLeaveBtn.disabled =
-    true;
+  joinLeaveBtn.disabled = true;
 
 
   const group =
@@ -1870,12 +1765,8 @@ async function joinGroup() {
     state.currentUser;
 
 
-  const isPrivate =
-    group.privacy === 'private';
-
-
   const status =
-    isPrivate
+    group.privacy === 'private'
       ? 'pending'
       : 'active';
 
@@ -1900,26 +1791,22 @@ async function joinGroup() {
 
   try {
 
-    let alreadyMember =
-      false;
+    let alreadyExists = false;
 
 
     await runTransaction(
       db,
       async transaction => {
 
-        const existingMemberSnap =
+        const memberSnap =
           await transaction.get(
             memberRef
           );
 
 
-        if (
-          existingMemberSnap.exists()
-        ) {
+        if (memberSnap.exists()) {
 
-          alreadyMember =
-            true;
+          alreadyExists = true;
 
           return;
         }
@@ -1928,10 +1815,13 @@ async function joinGroup() {
         transaction.set(
           memberRef,
           {
-
             uid: user.uid,
 
             displayName:
+              user.displayName ||
+              'VitalStar Member',
+
+            fullName:
               user.displayName ||
               'VitalStar Member',
 
@@ -1939,25 +1829,20 @@ async function joinGroup() {
               user.photoURL ||
               '',
 
-            role:
-              'member',
+            role: 'member',
 
             status,
 
             category:
-              group.category ||
-              '',
+              group.category || '',
 
             joinedAt:
               serverTimestamp()
-
           }
         );
 
 
-        if (
-          status === 'active'
-        ) {
+        if (status === 'active') {
 
           transaction.update(
             groupRef,
@@ -1973,9 +1858,7 @@ async function joinGroup() {
     );
 
 
-    if (
-      alreadyMember
-    ) {
+    if (alreadyExists) {
 
       showToast(
         'You are already a member of this group.',
@@ -1986,9 +1869,32 @@ async function joinGroup() {
     }
 
 
-    if (
-      status === 'active'
-    ) {
+    state.membership = {
+
+      uid: user.uid,
+
+      displayName:
+        user.displayName ||
+        'VitalStar Member',
+
+      fullName:
+        user.displayName ||
+        'VitalStar Member',
+
+      photoURL:
+        user.photoURL || '',
+
+      role: 'member',
+
+      status,
+
+      category:
+        group.category || ''
+
+    };
+
+
+    if (status === 'active') {
 
       state.groupData.memberCount =
         (
@@ -1997,64 +1903,38 @@ async function joinGroup() {
           ) || 0
         ) + 1;
 
-
-      setText(
-        statMemberCount,
-        formatCount(
-          state.groupData.memberCount
-        )
-      );
-
     }
-
-
-    state.membership = {
-
-      uid:
-        user.uid,
-
-      status,
-
-      role:
-        'member',
-
-      category:
-        group.category || ''
-
-    };
 
 
     renderJoinLeaveState();
 
     applyAccessControl();
 
+    renderHeader();
+
 
     showToast(
-      isPrivate
-        ? 'Request sent! An admin will review it soon.'
-        : `You've joined ${group.name}.`,
+      status === 'active'
+        ? `You've joined ${group.name}.`
+        : 'Join request sent for approval.',
       'success'
     );
-
 
   } catch (error) {
 
     console.error(
-      'Error joining group:',
+      'Join group error:',
       error
     );
 
-
     showToast(
-      'Could not join this group. Please try again.',
+      'Could not join this group.',
       'error'
     );
 
-
   } finally {
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
   }
 
@@ -2062,7 +1942,7 @@ async function joinGroup() {
 
 
 // ============================================================
-// CANCEL JOIN REQUEST
+// CANCEL REQUEST
 // ============================================================
 
 async function cancelJoinRequest() {
@@ -2072,16 +1952,13 @@ async function cancelJoinRequest() {
       'Cancel your request to join this group?'
     )
   ) {
-
     return;
   }
 
 
   if (!joinLeaveBtn) return;
 
-
-  joinLeaveBtn.disabled =
-    true;
+  joinLeaveBtn.disabled = true;
 
 
   try {
@@ -2097,9 +1974,7 @@ async function cancelJoinRequest() {
     );
 
 
-    state.membership =
-      null;
-
+    state.membership = null;
 
     renderJoinLeaveState();
 
@@ -2107,29 +1982,25 @@ async function cancelJoinRequest() {
 
 
     showToast(
-      'Your join request was cancelled.',
+      'Join request cancelled.',
       'info'
     );
-
 
   } catch (error) {
 
     console.error(
-      'Error cancelling request:',
+      'Cancel request error:',
       error
     );
 
-
     showToast(
-      'Could not cancel the request. Please try again.',
+      'Could not cancel the request.',
       'error'
     );
 
-
   } finally {
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
   }
 
@@ -2137,26 +2008,26 @@ async function cancelJoinRequest() {
 
 
 // ============================================================
-// LEAVE GROUP
+// LEAVE
 // ============================================================
 
 async function leaveGroup() {
 
+  if (!state.groupData) return;
+
+
   if (
     !window.confirm(
-      `Leave ${state.groupData.name}? You'll need to rejoin to see its posts again.`
+      `Leave ${state.groupData.name}?`
     )
   ) {
-
     return;
   }
 
 
   if (!joinLeaveBtn) return;
 
-
-  joinLeaveBtn.disabled =
-    true;
+  joinLeaveBtn.disabled = true;
 
 
   const memberRef =
@@ -2179,38 +2050,33 @@ async function leaveGroup() {
 
   try {
 
-    let wasActiveMember =
-      false;
+    let removed = false;
+    let wasActive = false;
 
 
     await runTransaction(
       db,
       async transaction => {
 
-        const existingMemberSnap =
+        const memberSnap =
           await transaction.get(
             memberRef
           );
 
 
-        if (
-          !existingMemberSnap.exists()
-        ) {
-
+        if (!memberSnap.exists()) {
           return;
         }
 
 
-        const memberData =
-          existingMemberSnap.data();
+        const member =
+          memberSnap.data();
 
 
-        // Never allow the owner to be removed.
         if (
-          memberData.role === 'owner' ||
+          member.role === 'owner' ||
           isCurrentUserOwner()
         ) {
-
           return;
         }
 
@@ -2220,13 +2086,14 @@ async function leaveGroup() {
         );
 
 
+        removed = true;
+
+
         if (
-          memberData.status === 'active'
+          member.status === 'active'
         ) {
 
-          wasActiveMember =
-            true;
-
+          wasActive = true;
 
           transaction.update(
             groupRef,
@@ -2242,15 +2109,14 @@ async function leaveGroup() {
     );
 
 
-    // Owner protection.
     if (isCurrentUserOwner()) {
+      return;
+    }
 
-      state.membership = {
-        ...(state.membership || {}),
-        uid: state.currentUser.uid,
-        role: 'owner',
-        status: 'active'
-      };
+
+    if (!removed) {
+
+      state.membership = null;
 
       renderJoinLeaveState();
 
@@ -2258,13 +2124,10 @@ async function leaveGroup() {
     }
 
 
-    state.membership =
-      null;
+    state.membership = null;
 
 
-    if (
-      wasActiveMember
-    ) {
+    if (wasActive) {
 
       state.groupData.memberCount =
         Math.max(
@@ -2272,17 +2135,9 @@ async function leaveGroup() {
           (
             Number(
               state.groupData.memberCount
-            ) || 1
+            ) || 0
           ) - 1
         );
-
-
-      setText(
-        statMemberCount,
-        formatCount(
-          state.groupData.memberCount
-        )
-      );
 
     }
 
@@ -2291,31 +2146,29 @@ async function leaveGroup() {
 
     applyAccessControl();
 
+    renderHeader();
+
 
     showToast(
       `You left ${state.groupData.name}.`,
       'info'
     );
 
-
   } catch (error) {
 
     console.error(
-      'Error leaving group:',
+      'Leave group error:',
       error
     );
 
-
     showToast(
-      'Could not leave the group. Please try again.',
+      'Could not leave this group.',
       'error'
     );
 
-
   } finally {
 
-    joinLeaveBtn.disabled =
-      false;
+    joinLeaveBtn.disabled = false;
 
   }
 
@@ -2335,40 +2188,39 @@ async function handleShareClick() {
   try {
 
     if (
-      navigator.share
+      typeof navigator.share === 'function'
     ) {
 
       await navigator.share({
-
         title:
-          state.groupData.name,
-
+          state.groupData?.name ||
+          'VitalStar Group',
+        text:
+          state.groupData?.description ||
+          '',
         url
-
       });
 
-    } else {
-
-      await navigator.clipboard.writeText(
-        url
-      );
-
-
-      showToast(
-        'Group link copied to clipboard.',
-        'success'
-      );
-
+      return;
     }
+
+
+    await copyText(url);
+
+
+    showToast(
+      'Group link copied.',
+      'success'
+    );
 
   } catch (error) {
 
     if (
-      error.name !== 'AbortError'
+      error?.name !== 'AbortError'
     ) {
 
       console.error(
-        'Error sharing group:',
+        'Share error:',
         error
       );
 
@@ -2385,36 +2237,75 @@ async function handleShareClick() {
 
 async function handleInviteClick() {
 
-  const url =
-    window.location.href;
-
-
   try {
 
-    await navigator.clipboard.writeText(
-      url
+    await copyText(
+      window.location.href
     );
 
 
     showToast(
-      'Invite link copied — share it to invite people.',
+      'Invite link copied.',
       'success'
     );
-
 
   } catch (error) {
 
     console.error(
-      'Error copying invite link:',
+      'Invite copy error:',
       error
     );
-
 
     showToast(
       'Could not copy the invite link.',
       'error'
     );
 
+  }
+
+}
+
+
+// ============================================================
+// COPY
+// ============================================================
+
+async function copyText(text) {
+
+  if (
+    navigator.clipboard &&
+    window.isSecureContext
+  ) {
+
+    await navigator.clipboard.writeText(
+      text
+    );
+
+    return;
+  }
+
+
+  const textarea =
+    document.createElement('textarea');
+
+  textarea.value = text;
+
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+
+  document.body.appendChild(textarea);
+
+  textarea.select();
+
+  const copied =
+    document.execCommand('copy');
+
+  textarea.remove();
+
+  if (!copied) {
+    throw new Error(
+      'Clipboard copy failed'
+    );
   }
 
 }
@@ -2431,7 +2322,7 @@ async function toggleNotificationsPanel() {
   }
 
 
-  const willShow =
+  const opening =
     !notificationsPanel
       .classList
       .contains('is-visible');
@@ -2441,37 +2332,35 @@ async function toggleNotificationsPanel() {
     .classList
     .toggle(
       'is-visible',
-      willShow
+      opening
     );
 
 
   if (
-    !willShow ||
+    !opening ||
     notificationsModuleLoaded
   ) {
-
     return;
   }
 
 
   try {
 
-    const mod =
+    const module =
       await import(
         './group-notifications.js'
       );
 
 
-    notificationsModuleLoaded =
-      true;
+    notificationsModuleLoaded = true;
 
 
     if (
-      mod &&
-      typeof mod.init === 'function'
+      module &&
+      typeof module.init === 'function'
     ) {
 
-      await mod.init({
+      await module.init({
 
         db,
 
@@ -2495,14 +2384,12 @@ async function toggleNotificationsPanel() {
 
     }
 
-
   } catch (error) {
 
     console.error(
-      'Group notifications failed to load:',
+      'Notifications error:',
       error
     );
-
 
     showToast(
       'Notifications could not be loaded.',
@@ -2512,6 +2399,23 @@ async function toggleNotificationsPanel() {
   }
 
 }
+
+
+// ============================================================
+// GLOBAL ERROR PROTECTION
+// ============================================================
+
+window.addEventListener(
+  'unhandledrejection',
+  event => {
+
+    console.error(
+      'Unhandled group promise:',
+      event.reason
+    );
+
+  }
+);
 
 
 // ============================================================
