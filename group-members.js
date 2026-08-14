@@ -45,7 +45,6 @@ export async function init(context) {
   }
 
   renderShell();
-
   bindEvents();
 
   await loadMembers();
@@ -59,11 +58,13 @@ export async function init(context) {
 function renderShell() {
 
   ctx.panelEl.innerHTML = `
+
     <div class="members-module">
 
       <div class="members-head">
 
         <div>
+
           <h2 class="members-title">
             <i class="fa-solid fa-users"></i>
             Group Members
@@ -72,6 +73,7 @@ function renderShell() {
           <p class="members-subtitle">
             <span id="gmMemberCount">0</span> members
           </p>
+
         </div>
 
         <button
@@ -111,14 +113,13 @@ function renderShell() {
       </div>
 
 
-      <div
-        id="gmList"
-        class="gm-list"
-      >
+      <div id="gmList" class="gm-list">
+
         <div class="gm-loading">
           <span class="gm-spinner"></span>
           Loading members...
         </div>
+
       </div>
 
     </div>
@@ -127,396 +128,360 @@ function renderShell() {
     <style>
 
       .members-module {
-        width: 100%;
+        width:100%;
       }
-
 
       .members-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 18px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+        margin-bottom:18px;
       }
-
 
       .members-title {
-        margin: 0;
-        font-family: var(--font-display);
-        font-size: 18px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        color: var(--text-primary);
+        margin:0;
+        font-family:var(--font-display);
+        font-size:18px;
+        font-weight:700;
+        display:flex;
+        align-items:center;
+        gap:9px;
+        color:var(--text-primary);
       }
-
 
       .members-title i {
-        color: var(--electric-blue-bright);
+        color:var(--electric-blue-bright);
       }
-
 
       .members-subtitle {
-        margin: 5px 0 0;
-        color: var(--text-muted);
-        font-size: 12.5px;
+        margin:5px 0 0;
+        color:var(--text-muted);
+        font-size:12.5px;
       }
-
 
       .gm-refresh-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius-full);
-        border: 1px solid var(--border-subtle);
-        background: var(--bg-surface-raised);
-        color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: .2s;
+        width:40px;
+        height:40px;
+        border-radius:var(--radius-full);
+        border:1px solid var(--border-subtle);
+        background:var(--bg-surface-raised);
+        color:var(--text-secondary);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transition:.2s;
       }
-
 
       .gm-refresh-btn:hover {
-        color: var(--text-primary);
-        border-color: var(--electric-blue);
+        color:var(--text-primary);
+        border-color:var(--electric-blue);
       }
-
 
       .gm-refresh-btn.is-loading i {
-        animation: gm-spin .7s linear infinite;
+        animation:gm-spin .7s linear infinite;
       }
-
 
       .gm-search-wrap {
-        position: relative;
-        margin-bottom: 18px;
+        position:relative;
+        margin-bottom:18px;
       }
-
 
       .gm-search-wrap > i {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-muted);
-        font-size: 13px;
-        pointer-events: none;
+        position:absolute;
+        left:15px;
+        top:50%;
+        transform:translateY(-50%);
+        color:var(--text-muted);
+        font-size:13px;
+        pointer-events:none;
       }
-
 
       .gm-search {
-        width: 100%;
-        height: 46px;
-        padding: 0 42px 0 42px;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-subtle);
-        outline: none;
-        background: var(--bg-surface);
-        color: var(--text-primary);
-        font-family: var(--font-body);
-        font-size: 13.5px;
-        transition: .2s;
+        width:100%;
+        height:46px;
+        padding:0 42px;
+        border-radius:var(--radius-md);
+        border:1px solid var(--border-subtle);
+        outline:none;
+        background:var(--bg-surface);
+        color:var(--text-primary);
+        font-family:var(--font-body);
+        font-size:13.5px;
+        transition:.2s;
       }
-
 
       .gm-search:focus {
-        border-color: var(--electric-blue);
-        box-shadow: 0 0 0 3px rgba(47,111,255,.10);
+        border-color:var(--electric-blue);
+        box-shadow:0 0 0 3px rgba(47,111,255,.10);
       }
-
 
       .gm-clear-search {
-        position: absolute;
-        right: 9px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        border: 0;
-        background: transparent;
-        color: var(--text-muted);
+        position:absolute;
+        right:9px;
+        top:50%;
+        transform:translateY(-50%);
+        width:30px;
+        height:30px;
+        border-radius:50%;
+        border:0;
+        background:transparent;
+        color:var(--text-muted);
       }
-
 
       .gm-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        display:flex;
+        flex-direction:column;
+        gap:8px;
       }
-
 
       .gm-card {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: var(--radius-md);
-        background: var(--bg-surface);
-        border: 1px solid var(--border-subtle);
-        transition: .2s;
-        animation: gm-rise .3s var(--ease-out);
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:12px;
+        border-radius:var(--radius-md);
+        background:var(--bg-surface);
+        border:1px solid var(--border-subtle);
+        transition:.2s;
+        animation:gm-rise .3s var(--ease-out);
       }
-
 
       .gm-card:hover {
-        border-color: var(--border-strong);
-        background: var(--bg-surface-raised);
+        border-color:var(--border-strong);
+        background:var(--bg-surface-raised);
       }
 
+      .gm-profile-link {
+        display:flex;
+        align-items:center;
+        gap:12px;
+        min-width:0;
+        flex:1;
+        text-decoration:none;
+        color:inherit;
+      }
 
       .gm-avatar-wrap {
-        position: relative;
-        flex-shrink: 0;
+        position:relative;
+        flex-shrink:0;
       }
 
-
       .gm-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 15px;
+        width:48px;
+        height:48px;
+        border-radius:15px;
         background:
           linear-gradient(
             135deg,
             var(--electric-blue),
             var(--violet-accent)
           );
-        background-size: cover;
-        background-position: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-family: var(--font-display);
-        font-weight: 700;
-        font-size: 16px;
+        background-size:cover;
+        background-position:center;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#fff;
+        font-family:var(--font-display);
+        font-weight:700;
+        font-size:16px;
       }
-
 
       .gm-online {
-        position: absolute;
-        right: -2px;
-        bottom: -2px;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: var(--success);
-        border: 3px solid var(--bg-surface);
-        display: none;
+        position:absolute;
+        right:-2px;
+        bottom:-2px;
+        width:12px;
+        height:12px;
+        border-radius:50%;
+        background:var(--success);
+        border:3px solid var(--bg-surface);
+        display:none;
       }
-
 
       .gm-online.is-online {
-        display: block;
+        display:block;
       }
-
 
       .gm-info {
-        min-width: 0;
-        flex: 1;
+        min-width:0;
+        flex:1;
       }
-
 
       .gm-name-row {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        flex-wrap: wrap;
+        display:flex;
+        align-items:center;
+        gap:7px;
+        flex-wrap:wrap;
       }
-
 
       .gm-name {
-        color: var(--text-primary);
-        font-size: 14px;
-        font-weight: 600;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        color:var(--text-primary);
+        font-size:14px;
+        font-weight:600;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
       }
 
+      .gm-profile-link:hover .gm-name {
+        color:var(--electric-blue-bright);
+      }
 
       .gm-username {
-        margin-top: 3px;
-        color: var(--text-muted);
-        font-size: 11.5px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        margin-top:3px;
+        color:var(--text-muted);
+        font-size:11.5px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
       }
-
 
       .gm-role {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 7px;
-        border-radius: var(--radius-full);
-        font-size: 9.5px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .03em;
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        padding:3px 7px;
+        border-radius:var(--radius-full);
+        font-size:9.5px;
+        font-weight:700;
+        text-transform:uppercase;
+        letter-spacing:.03em;
       }
-
 
       .gm-role.owner {
-        color: var(--gold-accent);
-        background: rgba(255,194,75,.12);
+        color:var(--gold-accent);
+        background:rgba(255,194,75,.12);
       }
-
 
       .gm-role.admin {
-        color: var(--electric-blue-bright);
-        background: rgba(47,111,255,.12);
+        color:var(--electric-blue-bright);
+        background:rgba(47,111,255,.12);
       }
-
 
       .gm-role.moderator {
-        color: var(--violet-accent);
-        background: rgba(139,92,255,.12);
+        color:var(--violet-accent);
+        background:rgba(139,92,255,.12);
       }
-
 
       .gm-role.member {
-        color: var(--text-muted);
-        background: rgba(255,255,255,.05);
+        color:var(--text-muted);
+        background:rgba(255,255,255,.05);
       }
-
 
       .gm-actions {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex-shrink: 0;
+        display:flex;
+        align-items:center;
+        gap:5px;
+        flex-shrink:0;
       }
-
 
       .gm-action {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        border: 1px solid var(--border-subtle);
-        background: var(--bg-surface-raised);
-        color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: .2s;
+        width:34px;
+        height:34px;
+        border-radius:50%;
+        border:1px solid var(--border-subtle);
+        background:var(--bg-surface-raised);
+        color:var(--text-secondary);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transition:.2s;
       }
-
 
       .gm-action:hover {
-        color: var(--text-primary);
-        border-color: var(--border-strong);
+        color:var(--text-primary);
+        border-color:var(--border-strong);
       }
-
 
       .gm-action.danger:hover {
-        color: var(--danger);
-        border-color: rgba(255,92,122,.4);
+        color:var(--danger);
+        border-color:rgba(255,92,122,.4);
       }
-
 
       .gm-action.blue:hover {
-        color: var(--electric-blue-bright);
-        border-color: rgba(47,111,255,.4);
+        color:var(--electric-blue-bright);
+        border-color:rgba(47,111,255,.4);
       }
-
 
       .gm-loading,
       .gm-empty,
       .gm-error {
-        min-height: 180px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        gap: 9px;
-        color: var(--text-muted);
-        font-size: 13px;
-        padding: 30px;
+        min-height:180px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        gap:9px;
+        color:var(--text-muted);
+        font-size:13px;
+        padding:30px;
       }
-
 
       .gm-empty i,
       .gm-error i {
-        font-size: 28px;
-        opacity: .7;
+        font-size:28px;
+        opacity:.7;
       }
-
 
       .gm-error i {
-        color: var(--danger);
+        color:var(--danger);
       }
-
 
       .gm-spinner {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: 2px solid rgba(91,157,255,.2);
-        border-top-color: var(--electric-blue-bright);
-        animation: gm-spin .7s linear infinite;
+        width:20px;
+        height:20px;
+        border-radius:50%;
+        border:2px solid rgba(91,157,255,.2);
+        border-top-color:var(--electric-blue-bright);
+        animation:gm-spin .7s linear infinite;
       }
-
-
-      .gm-loading-more {
-        text-align: center;
-        color: var(--text-muted);
-        font-size: 12px;
-        padding: 12px;
-      }
-
 
       @keyframes gm-spin {
         to {
-          transform: rotate(360deg);
+          transform:rotate(360deg);
         }
       }
-
 
       @keyframes gm-rise {
         from {
-          opacity: 0;
-          transform: translateY(8px);
+          opacity:0;
+          transform:translateY(8px);
         }
-
         to {
-          opacity: 1;
-          transform: translateY(0);
+          opacity:1;
+          transform:translateY(0);
         }
       }
 
-
-      @media (max-width: 520px) {
+      @media(max-width:520px) {
 
         .gm-card {
-          padding: 10px;
+          padding:10px;
         }
 
         .gm-avatar {
-          width: 44px;
-          height: 44px;
-          border-radius: 13px;
+          width:44px;
+          height:44px;
+          border-radius:13px;
         }
 
         .gm-actions {
-          gap: 3px;
+          gap:3px;
         }
 
         .gm-action {
-          width: 31px;
-          height: 31px;
-          font-size: 11px;
+          width:31px;
+          height:31px;
+          font-size:11px;
         }
 
       }
 
     </style>
   `;
-
 }
 
 
@@ -546,10 +511,12 @@ function bindEvents() {
           search.value.trim().toLowerCase();
 
         if (clear) {
+
           clear.style.display =
             state.search
               ? 'flex'
               : 'none';
+
         }
 
         filterMembers();
@@ -657,13 +624,83 @@ async function loadMembers() {
       await getDocs(membersQuery);
 
 
-    state.members =
-      snapshot.docs.map(
-        memberDoc => ({
-          id: memberDoc.id,
-          ...memberDoc.data()
-        })
+    // --------------------------------------------------------
+    // LOAD MEMBER PROFILES
+    // --------------------------------------------------------
+
+    const loadedMembers =
+      await Promise.all(
+
+        snapshot.docs.map(
+          async memberDoc => {
+
+            const data =
+              memberDoc.data();
+
+            const uid =
+              data.uid || memberDoc.id;
+
+            let profile = {};
+
+            try {
+
+              const userSnap =
+                await getDoc(
+                  doc(
+                    ctx.db,
+                    'users',
+                    uid
+                  )
+                );
+
+              if (userSnap.exists()) {
+                profile = userSnap.data();
+              }
+
+            } catch (profileError) {
+
+              console.warn(
+                'Could not load profile:',
+                uid,
+                profileError
+              );
+
+            }
+
+
+            return {
+
+              id: memberDoc.id,
+
+              ...data,
+
+              // Profile data wins over
+              // old member fallback data.
+              ...profile,
+
+              uid,
+
+              // Keep membership role.
+              role:
+                data.role || profile.role || 'member'
+
+            };
+
+          }
+        )
+
       );
+
+
+    state.members =
+      loadedMembers;
+
+
+    // --------------------------------------------------------
+    // ADD OWNER IF OWNER DOCUMENT IS MISSING
+    // --------------------------------------------------------
+
+    await addMissingOwner();
 
 
     sortMembers();
@@ -695,9 +732,112 @@ async function loadMembers() {
       'error'
     );
 
+
   } finally {
 
     state.loading = false;
+
+  }
+
+}
+
+
+// ============================================================
+// ADD MISSING OWNER
+// ============================================================
+
+async function addMissingOwner() {
+
+  const group =
+    ctx.groupData;
+
+  if (!group) return;
+
+
+  const ownerId =
+    group.ownerId ||
+    group.ownerUid ||
+    group.createdBy ||
+    group.creatorId;
+
+
+  if (!ownerId) {
+    return;
+  }
+
+
+  const alreadyExists =
+    state.members.some(
+      member =>
+        member.uid === ownerId ||
+        member.id === ownerId
+    );
+
+
+  if (alreadyExists) {
+    return;
+  }
+
+
+  try {
+
+    const userSnap =
+      await getDoc(
+        doc(
+          ctx.db,
+          'users',
+          ownerId
+        )
+      );
+
+
+    const profile =
+      userSnap.exists()
+        ? userSnap.data()
+        : {};
+
+
+    state.members.push({
+
+      id: ownerId,
+
+      uid: ownerId,
+
+      role: 'owner',
+
+      status: 'active',
+
+      displayName:
+        profile.displayName ||
+        profile.fullName ||
+        group.ownerName ||
+        'Group Owner',
+
+      fullName:
+        profile.fullName ||
+        profile.displayName ||
+        group.ownerName ||
+        'Group Owner',
+
+      username:
+        profile.username ||
+        '',
+
+      photoURL:
+        profile.photoURL ||
+        profile.profilePhoto ||
+        profile.avatarURL ||
+        ''
+
+    });
+
+
+  } catch (error) {
+
+    console.warn(
+      'Could not load group owner profile:',
+      error
+    );
 
   }
 
@@ -722,10 +862,14 @@ function sortMembers() {
     (a, b) => {
 
       const roleA =
-        priority[a.role] ?? 9;
+        priority[
+          normalizeRole(a.role)
+        ] ?? 9;
 
       const roleB =
-        priority[b.role] ?? 9;
+        priority[
+          normalizeRole(b.role)
+        ] ?? 9;
 
 
       if (roleA !== roleB) {
@@ -733,11 +877,10 @@ function sortMembers() {
       }
 
 
-      return (
-        getMemberName(a).localeCompare(
+      return getMemberName(a)
+        .localeCompare(
           getMemberName(b)
-        )
-      );
+        );
 
     }
   );
@@ -772,9 +915,9 @@ function filterMembers() {
 
           const username =
             String(
-              member.username ||
-              ''
+              member.username || ''
             ).toLowerCase();
+
 
           return (
             name.includes(search) ||
@@ -857,7 +1000,6 @@ function renderMembers() {
     `;
 
     return;
-
   }
 
 
@@ -884,7 +1026,10 @@ function renderMembers() {
 // MEMBER CARD
 // ============================================================
 
-function createMemberCard(member, index) {
+function createMemberCard(
+  member,
+  index
+) {
 
   const card =
     document.createElement('article');
@@ -896,9 +1041,34 @@ function createMemberCard(member, index) {
     `${Math.min(index * 25, 250)}ms`;
 
 
-  // ----------------------------------------------------------
+  const name =
+    getMemberName(member);
+
+  const uid =
+    member.uid ||
+    member.id;
+
+
+  // ==========================================================
+  // PROFILE LINK
+  // ==========================================================
+
+  const profileLink =
+    document.createElement('a');
+
+  profileLink.className =
+    'gm-profile-link';
+
+  profileLink.href =
+    `../profile.html?id=${encodeURIComponent(uid)}`;
+
+  profileLink.title =
+    `View ${name}'s profile`;
+
+
+  // ==========================================================
   // AVATAR
-  // ----------------------------------------------------------
+  // ==========================================================
 
   const avatarWrap =
     document.createElement('div');
@@ -914,14 +1084,18 @@ function createMemberCard(member, index) {
     'gm-avatar';
 
 
-  const name =
-    getMemberName(member);
+  const photo =
+    member.photoURL ||
+    member.profilePhoto ||
+    member.avatarURL ||
+    member.photo ||
+    '';
 
 
-  if (member.photoURL) {
+  if (photo) {
 
     avatar.style.backgroundImage =
-      `url("${escapeCssUrl(member.photoURL)}")`;
+      `url("${escapeCssUrl(photo)}")`;
 
     avatar.textContent = '';
 
@@ -955,9 +1129,9 @@ function createMemberCard(member, index) {
   avatarWrap.appendChild(online);
 
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // INFO
-  // ----------------------------------------------------------
+  // ==========================================================
 
   const info =
     document.createElement('div');
@@ -997,15 +1171,30 @@ function createMemberCard(member, index) {
 
 
   const roleIcons = {
-    owner: 'fa-crown',
-    admin: 'fa-shield-halved',
-    moderator: 'fa-user-shield',
-    member: 'fa-user'
+
+    owner:
+      'fa-crown',
+
+    admin:
+      'fa-shield-halved',
+
+    moderator:
+      'fa-user-shield',
+
+    member:
+      'fa-user'
+
   };
 
 
   roleBadge.innerHTML =
-    `<i class="fa-solid ${roleIcons[role] || roleIcons.member}"></i> ${capitalize(role)}`;
+    `
+      <i class="fa-solid ${
+        roleIcons[role] ||
+        roleIcons.member
+      }"></i>
+      ${capitalize(role)}
+    `;
 
 
   nameRow.appendChild(nameEl);
@@ -1022,10 +1211,13 @@ function createMemberCard(member, index) {
   if (member.username) {
 
     username.textContent =
-      `@${String(member.username).replace(/^@/, '')}`;
+      `@${String(
+        member.username
+      ).replace(/^@/, '')}`;
 
   } else if (
-    member.uid === ctx.currentUser?.uid
+    member.uid ===
+    ctx.currentUser?.uid
   ) {
 
     username.textContent =
@@ -1034,7 +1226,7 @@ function createMemberCard(member, index) {
   } else {
 
     username.textContent =
-      'VitalStar member';
+      'View profile';
 
   }
 
@@ -1043,9 +1235,18 @@ function createMemberCard(member, index) {
   info.appendChild(username);
 
 
-  // ----------------------------------------------------------
+  profileLink.appendChild(
+    avatarWrap
+  );
+
+  profileLink.appendChild(
+    info
+  );
+
+
+  // ==========================================================
   // ACTIONS
-  // ----------------------------------------------------------
+  // ==========================================================
 
   const actions =
     document.createElement('div');
@@ -1057,6 +1258,7 @@ function createMemberCard(member, index) {
   if (
     canManageMember(member)
   ) {
+
 
     // --------------------------------------------------------
     // PROMOTE / DEMOTE
@@ -1090,9 +1292,10 @@ function createMemberCard(member, index) {
 
       roleBtn.addEventListener(
         'click',
-        () => handleRoleChange(
-          member
-        )
+        () =>
+          handleRoleChange(
+            member
+          )
       );
 
 
@@ -1125,9 +1328,10 @@ function createMemberCard(member, index) {
 
     removeBtn.addEventListener(
       'click',
-      () => handleRemoveMember(
-        member
-      )
+      () =>
+        handleRemoveMember(
+          member
+        )
     );
 
 
@@ -1139,14 +1343,13 @@ function createMemberCard(member, index) {
 
 
   card.appendChild(
-    avatarWrap
+    profileLink
   );
 
-  card.appendChild(
-    info
-  );
 
-  if (actions.children.length) {
+  if (
+    actions.children.length
+  ) {
 
     card.appendChild(
       actions
@@ -1175,8 +1378,6 @@ function canManageMember(member) {
   }
 
 
-  // Never show management buttons
-  // for yourself.
   if (
     member.uid === current ||
     member.id === current
@@ -1187,7 +1388,6 @@ function canManageMember(member) {
   }
 
 
-  // Nobody can manage the owner.
   if (
     normalizeRole(member.role) ===
     'owner'
@@ -1198,7 +1398,6 @@ function canManageMember(member) {
   }
 
 
-  // Owner can manage everybody except owner.
   if (
     typeof ctx.isCurrentUserOwner ===
       'function' &&
@@ -1210,8 +1409,6 @@ function canManageMember(member) {
   }
 
 
-  // Admin can manage normal members
-  // and moderators, but not other admins.
   if (
     typeof ctx.isCurrentUserAdmin ===
       'function' &&
@@ -1222,7 +1419,9 @@ function canManageMember(member) {
       'admin',
       'owner'
     ].includes(
-      normalizeRole(member.role)
+      normalizeRole(
+        member.role
+      )
     );
 
   }
@@ -1237,9 +1436,13 @@ function canManageMember(member) {
 // ROLE CHANGE
 // ============================================================
 
-async function handleRoleChange(member) {
+async function handleRoleChange(
+  member
+) {
 
-  if (!canManageMember(member)) {
+  if (
+    !canManageMember(member)
+  ) {
 
     ctx.showToast?.(
       'You do not have permission to manage this member.',
@@ -1252,35 +1455,31 @@ async function handleRoleChange(member) {
 
 
   const currentRole =
-    normalizeRole(member.role);
+    normalizeRole(
+      member.role
+    );
 
 
-  let newRole;
-
-
-  if (currentRole === 'admin') {
-
-    newRole = 'member';
-
-  } else {
-
-    newRole = 'admin';
-
-  }
+  const newRole =
+    currentRole === 'admin'
+      ? 'member'
+      : 'admin';
 
 
   const memberName =
     getMemberName(member);
 
 
-  const message =
-    newRole === 'admin'
-      ? `Promote ${memberName} to admin?`
-      : `Demote ${memberName} to member?`;
+  if (
+    !window.confirm(
+      newRole === 'admin'
+        ? `Promote ${memberName} to admin?`
+        : `Demote ${memberName} to member?`
+    )
+  ) {
 
-
-  if (!window.confirm(message)) {
     return;
+
   }
 
 
@@ -1299,7 +1498,7 @@ async function handleRoleChange(member) {
     await updateDoc(
       memberRef,
       {
-        role: newRole,
+        role:newRole,
         roleUpdatedAt:
           serverTimestamp(),
         roleUpdatedBy:
@@ -1317,14 +1516,12 @@ async function handleRoleChange(member) {
 
 
     if (local) {
-
-      local.role =
-        newRole;
-
+      local.role = newRole;
     }
 
 
     sortMembers();
+
     filterMembers();
 
 
@@ -1358,9 +1555,13 @@ async function handleRoleChange(member) {
 // REMOVE MEMBER
 // ============================================================
 
-async function handleRemoveMember(member) {
+async function handleRemoveMember(
+  member
+) {
 
-  if (!canManageMember(member)) {
+  if (
+    !canManageMember(member)
+  ) {
 
     ctx.showToast?.(
       'You do not have permission to remove this member.',
@@ -1390,7 +1591,8 @@ async function handleRemoveMember(member) {
   try {
 
     const uid =
-      member.uid || member.id;
+      member.uid ||
+      member.id;
 
 
     const memberRef =
@@ -1425,10 +1627,6 @@ async function handleRemoveMember(member) {
       memberSnap.data();
 
 
-    // --------------------------------------------------------
-    // OWNER PROTECTION
-    // --------------------------------------------------------
-
     if (
       normalizeRole(
         memberData.role
@@ -1444,13 +1642,6 @@ async function handleRemoveMember(member) {
 
     }
 
-
-    // --------------------------------------------------------
-    // ADMIN PROTECTION
-    // --------------------------------------------------------
-    // A normal admin cannot remove another admin.
-    // The owner can.
-    // --------------------------------------------------------
 
     if (
       normalizeRole(
@@ -1473,10 +1664,6 @@ async function handleRemoveMember(member) {
       memberRef
     );
 
-
-    // --------------------------------------------------------
-    // UPDATE GROUP MEMBER COUNT
-    // --------------------------------------------------------
 
     try {
 
@@ -1507,11 +1694,12 @@ async function handleRemoveMember(member) {
 
 
     sortMembers();
+
     filterMembers();
+
     updateCount();
 
 
-    // Refresh group header stats.
     if (
       typeof ctx.refreshHeaderStats ===
       'function'
@@ -1553,10 +1741,15 @@ async function handleRemoveMember(member) {
 function getMemberName(member) {
 
   return (
-    member.displayName ||
+
     member.fullName ||
+
+    member.displayName ||
+
     member.name ||
+
     'VitalStar Member'
+
   );
 
 }
@@ -1609,10 +1802,6 @@ function capitalize(value) {
 
 function isOnline(member) {
 
-  // Supports several possible presence
-  // fields without breaking older
-  // member documents.
-
   if (
     member.online === true ||
     member.isOnline === true
@@ -1623,8 +1812,6 @@ function isOnline(member) {
   }
 
 
-  // If your member document stores
-  // presence as a string.
   if (
     String(
       member.presence || ''
@@ -1636,9 +1823,6 @@ function isOnline(member) {
   }
 
 
-  // Optional lastSeen support.
-  // A member is considered online when
-  // lastSeen is very recent.
   if (
     member.lastSeen &&
     typeof member.lastSeen.toDate ===
@@ -1646,11 +1830,14 @@ function isOnline(member) {
   ) {
 
     const lastSeen =
-      member.lastSeen.toDate().getTime();
+      member.lastSeen
+        .toDate()
+        .getTime();
 
 
     const difference =
-      Date.now() - lastSeen;
+      Date.now() -
+      lastSeen;
 
 
     return (
@@ -1672,10 +1859,17 @@ function isOnline(member) {
 
 function escapeCssUrl(url) {
 
-  return String(url || '')
+  return String(
+    url || ''
+  )
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"')
     .replace(/\n/g, '')
     .replace(/\r/g, '');
 
 }
+
+
+// ============================================================
+// END
+// ============================================================
