@@ -1,3 +1,12 @@
+// ============================================================
+// VITALSTAR — notifications-page.js
+// General notification system
+// Supports:
+// likes, comments, follows, messages,
+// group joins, group invites, group posts,
+// group messages, admin actions, etc.
+// ============================================================
+
 import { auth, db } from "./firebase.js";
 
 import {
@@ -15,198 +24,587 @@ import {
 
 const notifications = document.getElementById("notifications");
 
+if (!notifications) {
+    console.error("Notifications container not found.");
+}
 
-// MARK ALL AS READ LINK
 
-const markAllReadLink = document.createElement("a");
-markAllReadLink.href = "#";
-markAllReadLink.id = "markAllReadLink";
-markAllReadLink.textContent = "Mark all as read";
-markAllReadLink.style.cssText = "display:block;text-align:right;padding:8px 12px;color:#1565c0;text-decoration:none;font-size:14px;";
+// ============================================================
+// MARK ALL AS READ
+// ============================================================
 
-notifications.parentNode.insertBefore(markAllReadLink, notifications);
+let markAllReadLink = document.getElementById("markAllReadLink");
 
-markAllReadLink.addEventListener("click", async (e) => {
+if (!markAllReadLink && notifications) {
 
-    e.preventDefault();
+    markAllReadLink = document.createElement("a");
 
-    const user = auth.currentUser;
+    markAllReadLink.href = "#";
+    markAllReadLink.id = "markAllReadLink";
+    markAllReadLink.textContent = "Mark all as read";
 
-    if (!user) {
-        return;
+    markAllReadLink.style.cssText = `
+        display:block;
+        text-align:right;
+        padding:8px 12px;
+        color:#1565c0;
+        text-decoration:none;
+        font-size:14px;
+        cursor:pointer;
+    `;
+
+    notifications.parentNode.insertBefore(
+        markAllReadLink,
+        notifications
+    );
+}
+
+
+// ============================================================
+// MARK ALL READ ACTION
+// ============================================================
+
+if (markAllReadLink) {
+
+    markAllReadLink.addEventListener("click", async (e) => {
+
+        e.preventDefault();
+
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        try {
+
+            const unreadQuery = query(
+                collection(db, "notifications"),
+                where("receiverId", "==", user.uid),
+                where("read", "==", false)
+            );
+
+            const snapshot =
+                await getDocs(unreadQuery);
+
+            if (snapshot.empty) return;
+
+            const batch = writeBatch(db);
+
+            snapshot.forEach((notificationDoc) => {
+
+                batch.update(
+                    notificationDoc.ref,
+                    {
+                        read: true
+                    }
+                );
+
+            });
+
+            await batch.commit();
+
+        } catch (error) {
+
+            console.error(
+                "Failed to mark all as read:",
+                error
+            );
+
+            alert(
+                "Failed to mark notifications as read."
+            );
+
+        }
+
+    });
+
+}
+
+
+// ============================================================
+// NOTIFICATION ICON
+// ============================================================
+
+function getNotificationIcon(type) {
+
+    switch (type) {
+
+        // General
+        case "like":
+            return "❤️";
+
+        case "comment":
+            return "💬";
+
+        case "follow":
+            return "👤";
+
+        case "message":
+            return "📩";
+
+
+        // Groups
+        case "group":
+            return "👥";
+
+        case "group_join":
+            return "👋";
+
+        case "group_join_request":
+            return "🙋";
+
+        case "group_invite":
+            return "📨";
+
+        case "group_post":
+            return "📝";
+
+        case "group_message":
+            return "💬";
+
+        case "group_admin":
+            return "🛡️";
+
+        case "group_member":
+            return "👥";
+
+        case "group_mention":
+            return "🔔";
+
+        case "group_subscription":
+            return "⭐";
+
+
+        // Other
+        case "mention":
+            return "🔔";
+
+        case "system":
+            return "⚙️";
+
+        default:
+            return "🔔";
+    }
+
+}
+
+
+// ============================================================
+// DATE FORMAT
+// ============================================================
+
+function formatNotificationTime(timestamp) {
+
+    if (!timestamp) {
+        return "Just now";
     }
 
     try {
 
-        const unreadQuery = query(
-            collection(db, "notifications"),
-            where("receiverId", "==", user.uid),
-            where("read", "==", false)
+        if (typeof timestamp.toDate === "function") {
+
+            return timestamp
+                .toDate()
+                .toLocaleString();
+
+        }
+
+        return "Just now";
+
+    } catch (error) {
+
+        return "Just now";
+
+    }
+
+}
+
+
+// ============================================================
+// SAFE TEXT
+// ============================================================
+
+function escapeHTML(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value ?? "";
+
+    return div.innerHTML;
+
+}
+
+
+// ============================================================
+// OPEN NOTIFICATION
+// ============================================================
+
+async function openNotification(
+    notificationDoc,
+    notification
+) {
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "notifications",
+                notificationDoc.id
+            ),
+            {
+                read: true
+            }
         );
 
-        const snapshot = await getDocs(unreadQuery);
 
-        if (snapshot.empty) {
+        // ----------------------------------------------------
+        // GROUP NOTIFICATION
+        // ----------------------------------------------------
+
+        if (notification.groupId) {
+
+            window.location.href =
+                `group.html?id=${encodeURIComponent(
+                    notification.groupId
+                )}`;
+
             return;
         }
 
-        const batch = writeBatch(db);
 
-        snapshot.forEach((notificationDoc) => {
-            batch.update(notificationDoc.ref, { read: true });
-        });
+        // ----------------------------------------------------
+        // POST NOTIFICATION
+        // ----------------------------------------------------
 
-        await batch.commit();
+        if (notification.postId) {
+
+            window.location.href =
+                `comments.html?postId=${encodeURIComponent(
+                    notification.postId
+                )}`;
+
+            return;
+        }
+
+
+        // ----------------------------------------------------
+        // CHAT / MESSAGE
+        // ----------------------------------------------------
+
+        if (
+            notification.chatId ||
+            notification.conversationId
+        ) {
+
+            const chatId =
+                notification.chatId ||
+                notification.conversationId;
+
+            window.location.href =
+                `chat.html?id=${encodeURIComponent(
+                    chatId
+                )}`;
+
+            return;
+        }
+
+
+        // ----------------------------------------------------
+        // SENDER PROFILE
+        // ----------------------------------------------------
+
+        if (notification.senderId) {
+
+            window.location.href =
+                `profile.html?uid=${encodeURIComponent(
+                    notification.senderId
+                )}`;
+
+            return;
+        }
+
 
     } catch (error) {
-        console.error("Failed to mark all as read:", error);
-        alert("Failed to mark notifications as read.");
+
+        console.error(
+            "Failed to open notification:",
+            error
+        );
+
+        alert(
+            "Failed to open notification."
+        );
+
     }
 
-});
+}
 
+
+// ============================================================
+// AUTH
+// ============================================================
 
 auth.onAuthStateChanged((user) => {
 
     if (!user) {
-        window.location.href = "login.html";
+
+        window.location.href =
+            "login.html";
+
         return;
     }
 
+
+    if (!notifications) {
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // GENERAL NOTIFICATIONS
+    // --------------------------------------------------------
+
     const q = query(
         collection(db, "notifications"),
-        where("receiverId", "==", user.uid),
-        orderBy("createdAt", "desc"),
+        where(
+            "receiverId",
+            "==",
+            user.uid
+        ),
+        orderBy(
+            "createdAt",
+            "desc"
+        ),
         limit(50)
     );
 
+
     onSnapshot(
+
         q,
+
         (snapshot) => {
 
             notifications.innerHTML = "";
 
+
+            // ------------------------------------------------
+            // EMPTY
+            // ------------------------------------------------
+
             if (snapshot.empty) {
+
                 notifications.innerHTML = `
                     <div class="loading">
                         No notifications yet.
                     </div>
                 `;
+
                 return;
             }
 
-            snapshot.forEach((notificationDoc) => {
 
-                const notification = notificationDoc.data();
+            // ------------------------------------------------
+            // RENDER
+            // ------------------------------------------------
 
-                let time = "Just now";
+            snapshot.forEach(
+                (notificationDoc) => {
 
-                if (notification.createdAt) {
-                    try {
-                        time = notification.createdAt
-                            .toDate()
-                            .toLocaleString();
-                    } catch (e) {}
-                }
+                    const notification =
+                        notificationDoc.data();
 
-                let icon = "🔔";
 
-                switch (notification.type) {
-                    case "like":
-                        icon = "❤️";
-                        break;
-
-                    case "comment":
-                        icon = "💬";
-                        break;
-
-                    case "follow":
-                        icon = "👤";
-                        break;
-
-                    case "message":
-                        icon = "📩";
-                        break;
-                }
-
-                const card = document.createElement("div");
-                card.className = "notification-card";
-
-                if (!notification.read) {
-                    card.style.background = "#eef5ff";
-                }
-
-                card.innerHTML = `
-                    <img
-                        src="${notification.senderPhoto || 'https://via.placeholder.com/50'}"
-                        style="
-                            width:40px;
-                            height:40px;
-                            border-radius:50%;
-                            object-fit:cover;
-                        ">
-
-                    <div class="notification-text">
-                        <b>${notification.senderName || "Someone"}</b>
-                        <br>
-                        ${icon} ${notification.text || "New notification"}
-                        <br>
-                        <small>${time}</small>
-                    </div>
-
-                    ${
-                        notification.read
-                            ? ""
-                            : `<span class="unread-dot">●</span>`
-                    }
-                `;
-
-                card.onclick = async () => {
-
-                    try {
-
-                        await updateDoc(
-                            doc(db, "notifications", notificationDoc.id),
-                            {
-                                read: true
-                            }
+                    const icon =
+                        getNotificationIcon(
+                            notification.type
                         );
 
-                        if (notification.postId) {
-                            window.location.href =
-                                `comments.html?postId=${notification.postId}`;
-                        } else if (notification.senderId) {
-                            window.location.href =
-                                `profile.html?uid=${notification.senderId}`;
-                        }
 
-                    } catch (error) {
-                        console.error(error);
-                        alert("Failed to open notification.");
+                    const time =
+                        formatNotificationTime(
+                            notification.createdAt
+                        );
+
+
+                    const senderName =
+                        escapeHTML(
+                            notification.senderName ||
+                            "Someone"
+                        );
+
+
+                    const text =
+                        escapeHTML(
+                            notification.text ||
+                            "New notification"
+                        );
+
+
+                    const senderPhoto =
+                        notification.senderPhoto ||
+                        notification.photoURL ||
+                        "https://via.placeholder.com/50";
+
+
+                    // ------------------------------------------------
+                    // CARD
+                    // ------------------------------------------------
+
+                    const card =
+                        document.createElement("div");
+
+                    card.className =
+                        "notification-card";
+
+
+                    // Unread
+                    if (!notification.read) {
+
+                        card.classList.add(
+                            "is-unread"
+                        );
+
+                        card.style.background =
+                            "#eef5ff";
+
                     }
 
-                };
 
-                notifications.appendChild(card);
+                    // ------------------------------------------------
+                    // GROUP BADGE
+                    // ------------------------------------------------
 
-            });
+                    let groupLabel = "";
+
+                    if (
+                        notification.groupId &&
+                        notification.groupName
+                    ) {
+
+                        groupLabel = `
+                            <div style="
+                                font-size:12px;
+                                color:#777;
+                                margin-top:3px;
+                            ">
+                                👥 ${escapeHTML(
+                                    notification.groupName
+                                )}
+                            </div>
+                        `;
+
+                    }
+
+
+                    // ------------------------------------------------
+                    // CARD HTML
+                    // ------------------------------------------------
+
+                    card.innerHTML = `
+
+                        <img
+                            src="${senderPhoto}"
+                            alt=""
+                            style="
+                                width:40px;
+                                height:40px;
+                                border-radius:50%;
+                                object-fit:cover;
+                                flex-shrink:0;
+                            "
+                            onerror="
+                                this.src='https://via.placeholder.com/50';
+                            "
+                        >
+
+                        <div class="notification-text">
+
+                            <b>
+                                ${senderName}
+                            </b>
+
+                            <br>
+
+                            <span>
+                                ${icon}
+                                ${text}
+                            </span>
+
+                            ${groupLabel}
+
+                            <br>
+
+                            <small>
+                                ${escapeHTML(time)}
+                            </small>
+
+                        </div>
+
+                        ${
+                            !notification.read
+                                ? `
+                                    <span
+                                        class="unread-dot"
+                                        title="Unread"
+                                    >
+                                        ●
+                                    </span>
+                                `
+                                : ""
+                        }
+
+                    `;
+
+
+                    // ------------------------------------------------
+                    // CLICK
+                    // ------------------------------------------------
+
+                    card.addEventListener(
+                        "click",
+                        () => {
+
+                            openNotification(
+                                notificationDoc,
+                                notification
+                            );
+
+                        }
+                    );
+
+
+                    notifications.appendChild(
+                        card
+                    );
+
+                }
+            );
 
         },
 
-(error) => {
-    console.error("Notifications Error:", error);
-    alert(error.code + "\n\n" + error.message);
 
-    notifications.innerHTML = `
-        <div class="loading">
-            ${error.message}
-        </div>
-    `;
-}
+        // ----------------------------------------------------
+        // ERROR
+        // ----------------------------------------------------
+
+        (error) => {
+
+            console.error(
+                "Notifications Error:",
+                error
+            );
 
 
+            notifications.innerHTML = `
+                <div class="loading">
+                    Unable to load notifications.
+                </div>
+            `;
 
-
+        }
 
     );
 
