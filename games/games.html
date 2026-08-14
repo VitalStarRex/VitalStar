@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
 
 <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width,initial-scale=1.0"
 >
 
 <title>VitalStar Games</title>
@@ -38,10 +39,10 @@ button{
 header{
     position:sticky;
     top:0;
-    z-index:20;
+    z-index:50;
     background:#101522;
     border-bottom:1px solid #252d40;
-    padding:15px;
+    padding:12px;
 }
 
 .header-inner{
@@ -54,7 +55,7 @@ header{
 }
 
 .logo{
-    font-size:21px;
+    font-size:18px;
     font-weight:800;
 }
 
@@ -65,59 +66,64 @@ header{
 .header-right{
     display:flex;
     align-items:center;
-    gap:8px;
+    gap:7px;
 }
 
 .coins{
     background:#1a2030;
     border:1px solid #30394e;
-    padding:8px 12px;
+    padding:7px 10px;
     border-radius:20px;
     color:#ffd84d;
     font-weight:bold;
-    font-size:13px;
+    font-size:12px;
 }
 
 .premium-mini{
     background:#7c5cff;
     color:#fff;
     border:0;
-    padding:9px 12px;
-    border-radius:10px;
+    padding:8px 10px;
+    border-radius:9px;
     font-weight:bold;
+    font-size:11px;
 }
 
 .container{
     max-width:1050px;
     margin:auto;
-    padding:18px 14px 60px;
+    padding:15px 12px 50px;
 }
 
 .hero{
-    background:linear-gradient(135deg,#171d35,#29174e);
+    background:linear-gradient(
+        135deg,
+        #171d35,
+        #29174e
+    );
     border:1px solid #393f64;
-    border-radius:22px;
-    padding:24px 18px;
-    margin-bottom:18px;
+    border-radius:20px;
+    padding:21px 16px;
+    margin-bottom:16px;
 }
 
 .hero h1{
-    font-size:28px;
-    margin-bottom:8px;
+    font-size:25px;
+    margin-bottom:7px;
 }
 
 .hero p{
     color:#b6bed0;
     line-height:1.5;
-    font-size:14px;
+    font-size:13px;
 }
 
 .hero-bottom{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:12px;
-    margin-top:18px;
+    gap:10px;
+    margin-top:15px;
     flex-wrap:wrap;
 }
 
@@ -125,40 +131,39 @@ header{
     border:0;
     background:#7c5cff;
     color:#fff;
-    padding:11px 16px;
-    border-radius:11px;
+    padding:10px 14px;
+    border-radius:10px;
     font-weight:bold;
+    font-size:12px;
 }
 
 .search{
     width:100%;
-    margin:4px 0 18px;
-    padding:13px 14px;
-    border-radius:12px;
+    margin:3px 0 12px;
+    padding:12px;
+    border-radius:11px;
     border:1px solid #30394e;
     background:#101522;
     color:#fff;
     outline:none;
 }
 
-.search:focus{
-    border-color:#7c5cff;
-}
-
 .tabs{
     display:flex;
-    gap:8px;
+    gap:7px;
     overflow-x:auto;
-    margin-bottom:18px;
+    margin-bottom:15px;
 }
 
 .tab{
     flex:none;
-    padding:9px 14px;
+    padding:8px 12px;
     border-radius:20px;
     border:1px solid #30394e;
     background:#111622;
     color:#b7bfd0;
+    cursor:pointer;
+    font-size:11px;
 }
 
 .tab.active{
@@ -168,163 +173,64 @@ header{
 }
 
 .section{
-    margin-top:24px;
+    margin-top:20px;
 }
 
 .section-title{
-    font-size:20px;
-    margin-bottom:12px;
+    font-size:19px;
+    margin-bottom:11px;
 }
-
-/* =========================================================
-   MY GAME STATS
-========================================================= */
-
-.stats-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
-    margin-bottom:20px;
-}
-
-.stat{
-    background:#111622;
-    border:1px solid #252d40;
-    border-radius:15px;
-    padding:15px;
-}
-
-.stat-icon{
-    font-size:22px;
-    margin-bottom:7px;
-}
-
-.stat strong{
-    display:block;
-    font-size:20px;
-}
-
-.stat span{
-    color:#8f98aa;
-    font-size:11px;
-    margin-top:4px;
-    display:block;
-}
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-.profile-card{
-    background:linear-gradient(
-        135deg,
-        #111827,
-        #17142a
-    );
-    border:1px solid #303653;
-    border-radius:20px;
-    padding:18px;
-    display:flex;
-    align-items:center;
-    gap:15px;
-    margin-bottom:14px;
-}
-
-.profile-avatar{
-    width:72px;
-    height:72px;
-    border-radius:50%;
-    object-fit:cover;
-    border:3px solid #7c5cff;
-    background:#20283b;
-}
-
-.profile-info{
-    flex:1;
-}
-
-.profile-info h2{
-    font-size:20px;
-    margin-bottom:4px;
-}
-
-.profile-info p{
-    color:#8993a8;
-    font-size:12px;
-}
-
-.profile-meta{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    margin-top:9px;
-}
-
-.profile-tag{
-    background:#1d2435;
-    border:1px solid #30394e;
-    border-radius:8px;
-    padding:6px 8px;
-    font-size:11px;
-    color:#c4ccda;
-}
-
-/* =========================================================
-   GAMES
-========================================================= */
 
 .games{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:12px;
+    gap:10px;
 }
 
 .game{
     position:relative;
     background:#111622;
     border:1px solid #252d40;
-    border-radius:17px;
-    padding:16px;
-    min-height:205px;
+    border-radius:15px;
+    padding:13px;
+    min-height:200px;
     display:flex;
     flex-direction:column;
-    transition:.2s;
 }
 
 .game:hover{
     border-color:#51448d;
-    transform:translateY(-2px);
 }
 
 .game-icon{
-    font-size:38px;
-    margin-bottom:9px;
+    font-size:34px;
+    margin-bottom:7px;
 }
 
 .game h3{
-    font-size:16px;
+    font-size:14px;
     margin-bottom:5px;
 }
 
 .game p{
     color:#929caf;
-    font-size:12px;
-    line-height:1.45;
+    font-size:11px;
+    line-height:1.4;
     flex:1;
 }
 
 .badges{
     display:flex;
-    gap:5px;
+    gap:4px;
     flex-wrap:wrap;
-    margin-bottom:8px;
+    margin-bottom:7px;
 }
 
 .badge{
-    font-size:9px;
+    font-size:8px;
     font-weight:bold;
-    padding:4px 7px;
-    border-radius:7px;
+    padding:3px 5px;
+    border-radius:6px;
     background:#172b23;
     color:#72e5a2;
 }
@@ -336,13 +242,14 @@ header{
 
 .play{
     width:100%;
-    padding:10px;
-    margin-top:12px;
+    padding:9px;
+    margin-top:10px;
     border:0;
-    border-radius:10px;
+    border-radius:9px;
     background:#2367e8;
     color:#fff;
     font-weight:bold;
+    font-size:11px;
 }
 
 .locked{
@@ -351,45 +258,112 @@ header{
 
 .lock{
     position:absolute;
-    right:10px;
-    top:10px;
-    font-size:10px;
+    right:8px;
+    top:8px;
+    font-size:8px;
     font-weight:bold;
-    padding:5px 7px;
-    border-radius:7px;
+    padding:4px 5px;
+    border-radius:6px;
     background:#29213f;
     color:#d7caff;
 }
 
-.empty{
+.empty,
+.loading{
     text-align:center;
-    padding:30px;
+    padding:25px;
     color:#8e97aa;
+    font-size:13px;
 }
 
-#emptyMessage{
+.empty{
     display:none;
 }
 
-/* =========================================================
+
+/* =====================================================
+   PROFILE
+===================================================== */
+
+.profile-card{
+    background:#111622;
+    border:1px solid #252d40;
+    border-radius:18px;
+    padding:16px;
+}
+
+.profile-top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:15px;
+}
+
+.game-avatar{
+    width:65px;
+    height:65px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid #7c5cff;
+}
+
+.profile-name{
+    font-size:18px;
+    font-weight:bold;
+}
+
+.profile-username{
+    color:#8993a8;
+    font-size:12px;
+    margin-top:3px;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:7px;
+}
+
+.stat{
+    background:#0b0f19;
+    border:1px solid #252d40;
+    border-radius:10px;
+    padding:10px 5px;
+    text-align:center;
+}
+
+.stat strong{
+    display:block;
+    font-size:16px;
+    color:#fff;
+}
+
+.stat span{
+    color:#7f899e;
+    font-size:9px;
+    display:block;
+    margin-top:3px;
+}
+
+
+/* =====================================================
    LEADERBOARD
-========================================================= */
+===================================================== */
 
 .leaderboard-box{
     background:#111622;
     border:1px solid #252d40;
-    border-radius:18px;
+    border-radius:17px;
     overflow:hidden;
 }
 
 .leaderboard-player{
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:12px;
-    border-bottom:1px solid #20283a;
+    gap:9px;
+    padding:10px;
+    border-bottom:1px solid #202738;
     cursor:pointer;
-    transition:.15s;
 }
 
 .leaderboard-player:last-child{
@@ -397,22 +371,21 @@ header{
 }
 
 .leaderboard-player:hover{
-    background:#171d2b;
+    background:#171d2a;
 }
 
 .leader-rank{
-    width:38px;
+    width:30px;
     text-align:center;
+    font-size:13px;
     font-weight:bold;
-    color:#d6dbea;
 }
 
 .leader-avatar{
-    width:42px;
-    height:42px;
+    width:38px;
+    height:38px;
     border-radius:50%;
     object-fit:cover;
-    background:#20283b;
 }
 
 .leader-info{
@@ -422,126 +395,108 @@ header{
 
 .leader-info strong{
     display:block;
-    font-size:13px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    font-size:12px;
 }
 
 .leader-info small{
-    display:block;
-    color:#7f899d;
-    margin-top:3px;
+    color:#7e889c;
+    font-size:9px;
 }
 
 .leader-stats{
     text-align:right;
-    min-width:55px;
 }
 
 .leader-stats strong{
     display:block;
     color:#72e5a2;
+    font-size:12px;
 }
 
 .leader-stats small{
-    color:#7f899d;
-    font-size:10px;
+    color:#7e889c;
+    font-size:8px;
 }
 
 .leader-rating{
-    font-size:12px;
     color:#ffd84d;
-    min-width:65px;
+    font-size:10px;
+    min-width:55px;
     text-align:right;
 }
 
-/* =========================================================
-   TOP 10
-========================================================= */
 
-.top-ten{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:8px;
-}
-
-.top-ten .leaderboard-player{
-    background:#111622;
-    border:1px solid #252d40;
-    border-radius:13px;
-}
-
-/* =========================================================
-   PLAYER SEARCH
-========================================================= */
+/* =====================================================
+   SEARCH PLAYERS
+===================================================== */
 
 .player-search{
-    margin-bottom:10px;
+    width:100%;
+    padding:11px;
+    background:#0b0f19;
+    border:1px solid #30394e;
+    border-radius:10px;
+    color:#fff;
+    outline:none;
+    margin-bottom:8px;
 }
 
-.player-search-results{
-    display:flex;
-    flex-direction:column;
-    gap:7px;
+#playerSearchResults{
+    background:#111622;
+    border-radius:12px;
+    overflow:hidden;
 }
 
-/* =========================================================
+
+/* =====================================================
    ACHIEVEMENTS
-========================================================= */
+===================================================== */
 
 .achievements{
     display:grid;
     grid-template-columns:repeat(2,1fr);
-    gap:9px;
+    gap:8px;
 }
 
 .achievement{
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:12px;
-    border-radius:13px;
-    background:#111622;
+    gap:9px;
+    padding:10px;
+    border-radius:11px;
     border:1px solid #252d40;
+    background:#111622;
+}
+
+.achievement.locked{
+    opacity:.4;
 }
 
 .achievement-icon{
-    width:40px;
-    height:40px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:11px;
-    background:#1b2232;
-    font-size:22px;
+    font-size:24px;
 }
 
 .achievement strong{
     display:block;
-    font-size:12px;
+    font-size:11px;
 }
 
 .achievement small{
     display:block;
-    color:#7f899d;
-    font-size:10px;
-    line-height:1.4;
+    color:#818b9e;
+    font-size:9px;
     margin-top:3px;
 }
 
-.achievement.locked{
-    opacity:.45;
-}
 
-/* =========================================================
-   GAME HISTORY
-========================================================= */
+/* =====================================================
+   HISTORY
+===================================================== */
 
 .history{
     background:#111622;
     border:1px solid #252d40;
-    border-radius:17px;
+    border-radius:15px;
     overflow:hidden;
 }
 
@@ -549,8 +504,8 @@ header{
     display:flex;
     align-items:center;
     gap:10px;
-    padding:12px;
-    border-bottom:1px solid #20283a;
+    padding:11px;
+    border-bottom:1px solid #202738;
 }
 
 .game-history-item:last-child{
@@ -558,14 +513,7 @@ header{
 }
 
 .history-icon{
-    width:40px;
-    height:40px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:11px;
-    background:#1b2232;
-    font-size:21px;
+    font-size:24px;
 }
 
 .history-info{
@@ -574,14 +522,12 @@ header{
 
 .history-info strong{
     display:block;
-    font-size:13px;
+    font-size:12px;
 }
 
 .history-info small{
-    display:block;
     color:#7f899d;
-    font-size:10px;
-    margin-top:3px;
+    font-size:9px;
 }
 
 .history-result{
@@ -590,77 +536,67 @@ header{
 }
 
 .history-result.win{
-    color:#72e5a2;
+    color:#65e69a;
 }
 
 .history-result.loss{
-    color:#ff7584;
+    color:#ff7070;
 }
 
 .history-result.draw{
     color:#ffd84d;
 }
 
-/* =========================================================
-   LOADING
-========================================================= */
 
-.loading{
-    padding:25px;
-    text-align:center;
-    color:#8791a6;
-    font-size:13px;
-}
-
-/* =========================================================
+/* =====================================================
    MODALS
-========================================================= */
+===================================================== */
 
 .modal{
     display:none;
     position:fixed;
     inset:0;
     z-index:100;
-    background:rgba(0,0,0,.78);
+    background:rgba(0,0,0,.8);
     align-items:center;
     justify-content:center;
-    padding:20px;
+    padding:15px;
 }
 
 .modal-box{
     width:100%;
     max-width:390px;
     max-height:90vh;
-    overflow-y:auto;
+    overflow:auto;
     background:#111622;
     border:1px solid #383f5d;
-    border-radius:20px;
-    padding:23px;
+    border-radius:19px;
+    padding:20px;
     text-align:center;
 }
 
 .modal-icon{
-    font-size:48px;
-    margin-bottom:10px;
+    font-size:43px;
+    margin-bottom:8px;
 }
 
 .modal-box h2{
-    margin-bottom:8px;
+    margin-bottom:7px;
 }
 
 .modal-box p{
     color:#aab2c4;
-    font-size:14px;
+    font-size:13px;
     line-height:1.5;
-    margin-bottom:15px;
+    margin-bottom:12px;
 }
 
 .modal-box button{
     width:100%;
-    padding:12px;
-    margin-top:8px;
+    padding:11px;
+    margin-top:7px;
     border:0;
-    border-radius:11px;
+    border-radius:10px;
     background:#7c5cff;
     color:#fff;
     font-weight:bold;
@@ -670,92 +606,97 @@ header{
     background:#252d40;
 }
 
-/* =========================================================
-   PLAYER PROFILE MODAL
-========================================================= */
 
-.player-modal-avatar{
-    width:82px;
-    height:82px;
+/* =====================================================
+   PLAYER PROFILE MODAL
+===================================================== */
+
+.player-profile-avatar{
+    width:75px;
+    height:75px;
     border-radius:50%;
     object-fit:cover;
-    border:3px solid #7c5cff;
-    margin-bottom:10px;
+    border:2px solid #7c5cff;
+    margin-bottom:8px;
 }
 
-.profile-stats{
+.player-profile-username{
+    color:#8993a8;
+    font-size:11px;
+    margin-bottom:15px;
+}
+
+.profile-grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
     gap:8px;
-    margin-top:15px;
 }
 
 .profile-stat{
-    background:#191f2d;
-    border:1px solid #293247;
-    border-radius:12px;
-    padding:12px;
+    background:#0b0f19;
+    border:1px solid #252d40;
+    border-radius:10px;
+    padding:10px;
 }
 
 .profile-stat strong{
     display:block;
-    font-size:17px;
+    font-size:16px;
 }
 
-.profile-stat span{
-    color:#7f899d;
-    font-size:10px;
-    margin-top:4px;
-    display:block;
+.profile-stat small{
+    color:#7f899e;
+    font-size:9px;
 }
 
-/* =========================================================
-   ACHIEVEMENT POPUP
-========================================================= */
+
+/* =====================================================
+   NOTIFICATION
+===================================================== */
 
 .achievement-notification{
     position:fixed;
     left:50%;
-    bottom:25px;
+    bottom:20px;
     transform:translateX(-50%);
-    z-index:500;
-    width:calc(100% - 30px);
-    max-width:380px;
+    z-index:300;
+    background:#171d2c;
+    border:1px solid #7c5cff;
+    border-radius:13px;
+    padding:12px 15px;
     display:flex;
     align-items:center;
-    gap:12px;
-    padding:14px;
-    background:#171d2b;
-    border:1px solid #6953ba;
-    border-radius:15px;
-    box-shadow:0 10px 35px rgba(0,0,0,.4);
+    gap:10px;
+    box-shadow:0 10px 30px #000;
+    width:calc(100% - 30px);
+    max-width:350px;
 }
 
-.achievement-notification>div:first-child{
-    font-size:30px;
+.achievement-notification div:first-child{
+    font-size:25px;
+}
+
+.achievement-notification strong,
+.achievement-notification span{
+    display:block;
 }
 
 .achievement-notification strong{
-    display:block;
-    font-size:12px;
+    font-size:11px;
 }
 
 .achievement-notification span{
-    display:block;
-    color:#aab3c6;
-    font-size:11px;
+    color:#b7bfd0;
+    font-size:10px;
     margin-top:3px;
 }
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
 
-@media(max-width:800px){
+/* =====================================================
+   MOBILE
+===================================================== */
 
-    .stats-grid{
-        grid-template-columns:repeat(2,1fr);
-    }
+@media(max-width:700px){
 
     .games{
         grid-template-columns:repeat(2,1fr);
@@ -763,64 +704,40 @@ header{
 
 }
 
-@media(max-width:520px){
+@media(max-width:430px){
 
     .container{
-        padding-left:10px;
-        padding-right:10px;
-    }
-
-    .logo{
-        font-size:16px;
+        padding-left:9px;
+        padding-right:9px;
     }
 
     .games{
-        grid-template-columns:repeat(2,1fr);
-        gap:9px;
+        gap:8px;
     }
 
     .game{
-        padding:13px;
-        min-height:195px;
+        padding:11px;
+        min-height:190px;
     }
 
     .game-icon{
-        font-size:32px;
+        font-size:31px;
     }
 
-    .hero h1{
-        font-size:24px;
+    .stats{
+        grid-template-columns:repeat(4,1fr);
     }
 
-    .header-right{
-        gap:5px;
-    }
-
-    .premium-mini{
-        padding:8px;
-        font-size:11px;
-    }
-
-    .coins{
-        padding:7px 9px;
-        font-size:11px;
-    }
-
-    .profile-card{
-        align-items:flex-start;
-    }
-
-    .profile-avatar{
-        width:58px;
-        height:58px;
+    .stat strong{
+        font-size:14px;
     }
 
     .achievements{
         grid-template-columns:1fr;
     }
 
-    .leader-rating{
-        min-width:55px;
+    .hero h1{
+        font-size:22px;
     }
 
 }
@@ -829,11 +746,9 @@ header{
 
 </head>
 
+
 <body>
 
-<!-- =======================================================
-     HEADER
-======================================================== -->
 
 <header>
 
@@ -866,9 +781,9 @@ header{
 <main class="container">
 
 
-<!-- =======================================================
+<!-- =====================================================
      HERO
-======================================================== -->
+===================================================== -->
 
 <section class="hero">
 
@@ -878,8 +793,7 @@ header{
 
     <p>
         Play VitalStar games, challenge your friends,
-        earn virtual rewards, build your gaming profile
-        and climb the leaderboard.
+        earn virtual rewards and climb the leaderboard.
     </p>
 
     <div class="hero-bottom">
@@ -900,49 +814,41 @@ header{
 </section>
 
 
-<!-- =======================================================
+<!-- =====================================================
      MY GAME PROFILE
-======================================================== -->
+===================================================== -->
 
 <section class="section">
 
-    <h2 class="section-title">
-        👤 My Game Profile
-    </h2>
+<h2 class="section-title">
+    👤 My Game Profile
+</h2>
 
-    <div class="profile-card">
+<div class="profile-card">
+
+    <div class="profile-top">
 
         <img
             id="myGameAvatar"
-            class="profile-avatar"
+            class="game-avatar"
             src="https://ui-avatars.com/api/?name=Player"
             alt="Player"
         >
 
-        <div class="profile-info">
+        <div>
 
-            <h2 id="myGameName">
+            <div
+                id="myGameName"
+                class="profile-name"
+            >
                 VitalStar Player
-            </h2>
+            </div>
 
-            <p id="myGameUsername">
+            <div
+                id="myGameUsername"
+                class="profile-username"
+            >
                 @player
-            </p>
-
-            <div class="profile-meta">
-
-                <div class="profile-tag">
-                    🏆 <span id="myWins">0</span> Wins
-                </div>
-
-                <div class="profile-tag">
-                    ⭐ <span id="myRating">1000</span> Rating
-                </div>
-
-                <div class="profile-tag">
-                    🔥 <span id="myStreak">0</span> Streak
-                </div>
-
             </div>
 
         </div>
@@ -950,334 +856,232 @@ header{
     </div>
 
 
-    <div class="stats-grid">
+    <div class="stats">
 
         <div class="stat">
-
-            <div class="stat-icon">
-                🎮
-            </div>
-
-            <strong id="myGamesPlayed">
-                0
-            </strong>
-
-            <span>
-                Games Played
-            </span>
-
+            <strong id="myGamesPlayed">0</strong>
+            <span>Games</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                🏆
-            </div>
-
-            <strong id="myWins">
-                0
-            </strong>
-
-            <span>
-                Wins
-            </span>
-
+            <strong id="myWins">0</strong>
+            <span>Wins</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                📉
-            </div>
-
-            <strong id="myLosses">
-                0
-            </strong>
-
-            <span>
-                Losses
-            </span>
-
+            <strong id="myLosses">0</strong>
+            <span>Losses</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                📊
-            </div>
-
-            <strong id="myWinRate">
-                0%
-            </strong>
-
-            <span>
-                Win Rate
-            </span>
-
+            <strong id="myWinRate">0%</strong>
+            <span>Win Rate</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                ⭐
-            </div>
-
-            <strong id="myRating">
-                1000
-            </strong>
-
-            <span>
-                Rating
-            </span>
-
+            <strong id="myRating">1000</strong>
+            <span>Rating</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                🎯
-            </div>
-
-            <strong id="myBestScore">
-                0
-            </strong>
-
-            <span>
-                Best Score
-            </span>
-
+            <strong id="myBestScore">0</strong>
+            <span>Best Score</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                🔥
-            </div>
-
-            <strong id="myBestStreak">
-                0
-            </strong>
-
-            <span>
-                Best Streak
-            </span>
-
+            <strong id="myStreak">0</strong>
+            <span>Streak</span>
         </div>
 
-
         <div class="stat">
-
-            <div class="stat-icon">
-                🪙
-            </div>
-
-            <strong id="myCoins">
-                0
-            </strong>
-
-            <span>
-                Game Coins
-            </span>
-
+            <strong id="myCoins">0</strong>
+            <span>Coins</span>
         </div>
 
     </div>
+
+</div>
 
 </section>
 
 
-<!-- =======================================================
-     TOP 10
-======================================================== -->
+<!-- =====================================================
+     SEARCH / GAMES
+===================================================== -->
 
 <section class="section">
 
-    <h2 class="section-title">
-        🔥 Top 10 Best Winners
-    </h2>
+<input
+    type="search"
+    id="gameSearch"
+    class="search"
+    placeholder="🔎 Search games..."
+>
+
+
+<div class="tabs">
+
+    <button
+        class="tab active"
+        data-category="all"
+    >
+        All
+    </button>
+
+    <button
+        class="tab"
+        data-category="free"
+    >
+        🆓 Free
+    </button>
+
+    <button
+        class="tab"
+        data-category="premium"
+    >
+        👑 Premium
+    </button>
+
+    <button
+        class="tab"
+        data-category="multiplayer"
+    >
+        👥 Multiplayer
+    </button>
+
+</div>
+
+
+<h2 class="section-title">
+    🎮 Games
+</h2>
+
+<div
+    id="gamesGrid"
+    class="games"
+></div>
+
+<div
+    id="emptyMessage"
+    class="empty"
+>
+    No games found.
+</div>
+
+</section>
+
+
+<!-- =====================================================
+     TOP 10 WINNERS
+===================================================== -->
+
+<section class="section">
+
+<h2 class="section-title">
+    🏆 Top 10 Best Winners
+</h2>
+
+<div
+    id="topWinners"
+    class="leaderboard-box"
+>
+
+    <div class="loading">
+        Loading top players...
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- =====================================================
+     GLOBAL LEADERBOARD
+===================================================== -->
+
+<section class="section">
+
+<h2 class="section-title">
+    🌎 Global Leaderboard
+</h2>
+
+<div class="leaderboard-box">
 
     <div
-        id="topWinners"
-        class="top-ten"
+        id="leaderboard"
     >
 
         <div class="loading">
-            Loading top players...
+            Loading leaderboard...
         </div>
 
     </div>
 
-</section>
-
-
-<!-- =======================================================
-     LEADERBOARD
-======================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        🏆 Global Leaderboard
-    </h2>
-
-    <div class="leaderboard-box">
-
-        <div
-            id="leaderboard"
-        >
-
-            <div class="loading">
-                Loading leaderboard...
-            </div>
-
-        </div>
-
-    </div>
+</div>
 
 </section>
 
 
-<!-- =======================================================
+<!-- =====================================================
      PLAYER SEARCH
-======================================================== -->
+===================================================== -->
 
 <section class="section">
 
-    <h2 class="section-title">
-        🔎 Find Players
-    </h2>
+<h2 class="section-title">
+    🔎 Find Players
+</h2>
 
-    <input
-        id="playerSearch"
-        class="search player-search"
-        type="search"
-        placeholder="Search username..."
-    >
+<input
+    id="playerSearch"
+    class="player-search"
+    type="search"
+    placeholder="Search username..."
+>
 
-    <div
-        id="playerSearchResults"
-        class="player-search-results"
-    ></div>
+<div id="playerSearchResults"></div>
 
 </section>
 
 
-<!-- =======================================================
-     GAMES
-======================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        🎮 Games
-    </h2>
-
-    <input
-        type="search"
-        id="gameSearch"
-        class="search"
-        placeholder="🔎 Search games..."
-    >
-
-    <div class="tabs">
-
-        <button
-            class="tab active"
-            data-category="all"
-        >
-            All
-        </button>
-
-        <button
-            class="tab"
-            data-category="free"
-        >
-            🆓 Free
-        </button>
-
-        <button
-            class="tab"
-            data-category="premium"
-        >
-            👑 Premium
-        </button>
-
-        <button
-            class="tab"
-            data-category="multiplayer"
-        >
-            👥 Multiplayer
-        </button>
-
-    </div>
-
-
-    <div
-        id="gamesGrid"
-        class="games"
-    ></div>
-
-
-    <div
-        id="emptyMessage"
-        class="empty"
-    >
-        No games found.
-    </div>
-
-</section>
-
-
-<!-- =======================================================
+<!-- =====================================================
      ACHIEVEMENTS
-======================================================== -->
+===================================================== -->
 
 <section class="section">
 
-    <h2 class="section-title">
-        🏅 Achievements
-    </h2>
+<h2 class="section-title">
+    🏅 Achievements
+</h2>
 
-    <div
-        id="achievements"
-        class="achievements"
-    >
-
-        <div class="loading">
-            Loading achievements...
-        </div>
-
-    </div>
+<div
+    id="achievements"
+    class="achievements"
+></div>
 
 </section>
 
 
-<!-- =======================================================
+<!-- =====================================================
      GAME HISTORY
-======================================================== -->
+===================================================== -->
 
 <section class="section">
 
-    <h2 class="section-title">
-        📜 Recent Game History
-    </h2>
+<h2 class="section-title">
+    📜 My Game History
+</h2>
 
-    <div
-        id="gameHistory"
-        class="history"
-    >
+<div
+    id="gameHistory"
+    class="history"
+>
 
-        <div class="loading">
-            Loading game history...
-        </div>
-
+    <div class="loading">
+        Loading game history...
     </div>
+
+</div>
 
 </section>
 
@@ -1285,179 +1089,125 @@ header{
 </main>
 
 
-<!-- =======================================================
+<!-- =====================================================
      PREMIUM MODAL
-======================================================== -->
+===================================================== -->
 
 <div
     class="modal"
     id="premiumModal"
 >
 
-    <div class="modal-box">
+<div class="modal-box">
 
-        <div class="modal-icon">
-            👑
-        </div>
-
-        <h2>
-            VitalStar Games Premium
-        </h2>
-
-        <p>
-            Unlock the premium game library,
-            exclusive multiplayer features and
-            future Premium games.
-        </p>
-
-        <button
-            id="subscribeButton"
-        >
-            👑 Continue to Premium
-        </button>
-
-        <button
-            class="close"
-            id="closePremium"
-        >
-            Close
-        </button>
-
+    <div class="modal-icon">
+        👑
     </div>
+
+    <h2>
+        VitalStar Games Premium
+    </h2>
+
+    <p>
+        Unlock premium games, exclusive
+        multiplayer features and future
+        Premium content.
+    </p>
+
+    <button id="subscribeButton">
+        👑 Continue to Premium
+    </button>
+
+    <button
+        class="close"
+        id="closePremium"
+    >
+        Close
+    </button>
+
+</div>
 
 </div>
 
 
-<!-- =======================================================
+<!-- =====================================================
      PLAYER PROFILE MODAL
-======================================================== -->
+===================================================== -->
 
 <div
     class="modal"
     id="playerProfileModal"
 >
 
-    <div class="modal-box">
+<div class="modal-box">
 
-        <img
-            id="profilePlayerAvatar"
-            class="player-modal-avatar"
-            src="https://ui-avatars.com/api/?name=Player"
-            alt="Player"
-        >
+    <img
+        id="profilePlayerAvatar"
+        class="player-profile-avatar"
+        src="https://ui-avatars.com/api/?name=Player"
+        alt="Player"
+    >
 
-        <h2 id="profilePlayerName">
-            Player
-        </h2>
+    <h2 id="profilePlayerName">
+        Player
+    </h2>
 
-        <p id="profilePlayerUsername">
-            @player
-        </p>
-
-
-        <div class="profile-stats">
-
-            <div class="profile-stat">
-
-                <strong id="profileGamesPlayed">
-                    0
-                </strong>
-
-                <span>
-                    Games
-                </span>
-
-            </div>
+    <div
+        id="profilePlayerUsername"
+        class="player-profile-username"
+    >
+        @player
+    </div>
 
 
-            <div class="profile-stat">
+    <div class="profile-grid">
 
-                <strong id="profileWins">
-                    0
-                </strong>
-
-                <span>
-                    Wins
-                </span>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-                <strong id="profileLosses">
-                    0
-                </strong>
-
-                <span>
-                    Losses
-                </span>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-                <strong id="profileWinRate">
-                    0%
-                </strong>
-
-                <span>
-                    Win Rate
-                </span>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-                <strong id="profileRating">
-                    1000
-                </strong>
-
-                <span>
-                    Rating
-                </span>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-                <strong id="profileBestScore">
-                    0
-                </strong>
-
-                <span>
-                    Best Score
-                </span>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-                <strong id="profileStreak">
-                    0
-                </strong>
-
-                <span>
-                    Best Streak
-                </span>
-
-            </div>
-
+        <div class="profile-stat">
+            <strong id="profileGamesPlayed">0</strong>
+            <small>Games</small>
         </div>
 
+        <div class="profile-stat">
+            <strong id="profileWins">0</strong>
+            <small>Wins</small>
+        </div>
 
-        <button
-            class="close"
-            id="closePlayerProfile"
-        >
-            Close
-        </button>
+        <div class="profile-stat">
+            <strong id="profileLosses">0</strong>
+            <small>Losses</small>
+        </div>
+
+        <div class="profile-stat">
+            <strong id="profileWinRate">0%</strong>
+            <small>Win Rate</small>
+        </div>
+
+        <div class="profile-stat">
+            <strong id="profileRating">1000</strong>
+            <small>Rating</small>
+        </div>
+
+        <div class="profile-stat">
+            <strong id="profileBestScore">0</strong>
+            <small>Best Score</small>
+        </div>
+
+        <div class="profile-stat">
+            <strong id="profileStreak">0</strong>
+            <small>Best Streak</small>
+        </div>
 
     </div>
+
+
+    <button
+        class="close"
+        id="closePlayerProfile"
+    >
+        Close
+    </button>
+
+</div>
 
 </div>
 
@@ -1468,4 +1218,5 @@ header{
 ></script>
 
 </body>
+
 </html>
