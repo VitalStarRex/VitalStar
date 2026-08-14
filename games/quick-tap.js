@@ -1,7 +1,7 @@
 import {
     auth,
     rtdb
-} from "./firebase.js";
+} from "../firebase.js";
 
 import {
     onAuthStateChanged
