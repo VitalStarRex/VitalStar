@@ -1,478 +1,1471 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>VitalStar Games</title>  <style>  
-*{  
-    box-sizing:border-box;  
-    margin:0;  
-    padding:0;  
-}  
-  
-body{  
-    font-family:Arial,sans-serif;  
-    background:#080b14;  
-    color:#fff;  
-    min-height:100vh;  
-}  
-  
-header{  
-    position:sticky;  
-    top:0;  
-    z-index:20;  
-    background:#101522;  
-    border-bottom:1px solid #252d40;  
-    padding:15px;  
-}  
-  
-.header-inner{  
-    max-width:1000px;  
-    margin:auto;  
-    display:flex;  
-    align-items:center;  
-    justify-content:space-between;  
-    gap:10px;  
-}  
-  
-.logo{  
-    font-size:21px;  
-    font-weight:800;  
-}  
-  
-.logo span{  
-    color:#7c5cff;  
-}  
-  
-.header-right{  
-    display:flex;  
-    align-items:center;  
-    gap:8px;  
-}  
-  
-.coins{  
-    background:#1a2030;  
-    border:1px solid #30394e;  
-    padding:8px 12px;  
-    border-radius:20px;  
-    color:#ffd84d;  
-    font-weight:bold;  
-    font-size:13px;  
-}  
-  
-.premium-mini{  
-    background:#7c5cff;  
-    color:white;  
-    border:0;  
-    padding:9px 12px;  
-    border-radius:10px;  
-    font-weight:bold;  
-    cursor:pointer;  
-}  
-  
-.container{  
-    max-width:1000px;  
-    margin:auto;  
-    padding:18px 14px 50px;  
-}  
-  
-.hero{  
-    background:linear-gradient(135deg,#171d35,#29174e);  
-    border:1px solid #393f64;  
-    border-radius:22px;  
-    padding:24px 18px;  
-    margin-bottom:18px;  
-}  
-  
-.hero h1{  
-    font-size:28px;  
-    margin-bottom:8px;  
-}  
-  
-.hero p{  
-    color:#b6bed0;  
-    line-height:1.5;  
-    font-size:14px;  
-}  
-  
-.hero-bottom{  
-    display:flex;  
-    align-items:center;  
-    justify-content:space-between;  
-    gap:12px;  
-    margin-top:18px;  
-    flex-wrap:wrap;  
-}  
-  
-.premium-button{  
-    border:0;  
-    background:#7c5cff;  
-    color:#fff;  
-    padding:11px 16px;  
-    border-radius:11px;  
-    font-weight:bold;  
-    cursor:pointer;  
-}  
-  
-.search{  
-    width:100%;  
-    margin:4px 0 18px;  
-    padding:13px 14px;  
-    border-radius:12px;  
-    border:1px solid #30394e;  
-    background:#101522;  
-    color:#fff;  
-    outline:none;  
-}  
-  
-.tabs{  
-    display:flex;  
-    gap:8px;  
-    overflow-x:auto;  
-    margin-bottom:18px;  
-}  
-  
-.tab{  
-    flex:none;  
-    padding:9px 14px;  
-    border-radius:20px;  
-    border:1px solid #30394e;  
-    background:#111622;  
-    color:#b7bfd0;  
-    cursor:pointer;  
-}  
-  
-.tab.active{  
-    background:#7c5cff;  
-    color:#fff;  
-    border-color:#7c5cff;  
-}  
-  
-.section-title{  
-    font-size:20px;  
-    margin-bottom:12px;  
-}  
-  
-.games{  
-    display:grid;  
-    grid-template-columns:repeat(3,1fr);  
-    gap:12px;  
-}  
-  
-.game{  
-    position:relative;  
-    background:#111622;  
-    border:1px solid #252d40;  
-    border-radius:17px;  
-    padding:16px;  
-    min-height:205px;  
-    display:flex;  
-    flex-direction:column;  
-}  
-  
-.game:hover{  
-    border-color:#51448d;  
-}  
-  
-.game-icon{  
-    font-size:38px;  
-    margin-bottom:9px;  
-}  
-  
-.game h3{  
-    font-size:16px;  
-    margin-bottom:5px;  
-}  
-  
-.game p{  
-    color:#929caf;  
-    font-size:12px;  
-    line-height:1.45;  
-    flex:1;  
-}  
-  
-.badges{  
-    display:flex;  
-    gap:5px;  
-    flex-wrap:wrap;  
-    margin-bottom:8px;  
-}  
-  
-.badge{  
-    font-size:9px;  
-    font-weight:bold;  
-    padding:4px 7px;  
-    border-radius:7px;  
-    background:#172b23;  
-    color:#72e5a2;  
-}  
-  
-.badge.premium{  
-    background:#29213f;  
-    color:#d5c6ff;  
-}  
-  
-.play{  
-    width:100%;  
-    padding:10px;  
-    margin-top:12px;  
-    border:0;  
-    border-radius:10px;  
-    background:#2367e8;  
-    color:#fff;  
-    font-weight:bold;  
-    cursor:pointer;  
-}  
-  
-.locked{  
-    opacity:.78;  
-}  
-  
-.lock{  
-    position:absolute;  
-    right:10px;  
-    top:10px;  
-    font-size:10px;  
-    font-weight:bold;  
-    padding:5px 7px;  
-    border-radius:7px;  
-    background:#29213f;  
-    color:#d7caff;  
-}  
-  
-.empty{  
-    display:none;  
-    text-align:center;  
-    padding:30px;  
-    color:#8e97aa;  
-}  
-  
-.modal{  
-    display:none;  
-    position:fixed;  
-    inset:0;  
-    z-index:100;  
-    background:rgba(0,0,0,.78);  
-    align-items:center;  
-    justify-content:center;  
-    padding:20px;  
-}  
-  
-.modal-box{  
-    width:100%;  
-    max-width:390px;  
-    background:#111622;  
-    border:1px solid #383f5d;  
-    border-radius:20px;  
-    padding:23px;  
-    text-align:center;  
-}  
-  
-.modal-icon{  
-    font-size:48px;  
-    margin-bottom:10px;  
-}  
-  
-.modal-box h2{  
-    margin-bottom:8px;  
-}  
-  
-.modal-box p{  
-    color:#aab2c4;  
-    font-size:14px;  
-    line-height:1.5;  
-    margin-bottom:15px;  
-}  
-  
-.modal-box button{  
-    width:100%;  
-    padding:12px;  
-    margin-top:8px;  
-    border:0;  
-    border-radius:11px;  
-    background:#7c5cff;  
-    color:#fff;  
-    font-weight:bold;  
-}  
-  
-.modal-box .close{  
-    background:#252d40;  
-}  
-  
-@media(max-width:700px){  
-    .games{  
-        grid-template-columns:repeat(2,1fr);  
-    }  
-}  
-  
-@media(max-width:430px){  
-    .games{  
-        grid-template-columns:repeat(2,1fr);  
-        gap:9px;  
-    }  
-  
-    .game{  
-        padding:13px;  
-        min-height:195px;  
-    }  
-  
-    .game-icon{  
-        font-size:32px;  
-    }  
-  
-    .hero h1{  
-        font-size:24px;  
-    }  
-  
-    .header-right{  
-        gap:5px;  
-    }  
-  
-    .premium-mini{  
-        padding:8px;  
-        font-size:11px;  
-    }  
-  
-    .coins{  
-        padding:7px 9px;  
-        font-size:11px;  
-    }  
-}  
-</style>  </head>  <body>  <header>  
-    <div class="header-inner">  <div class="logo">  
-        ⭐ Vital<span>Star</span> Games  
-    </div>  
+<!DOCTYPE html>
+<html lang="en">
+<head>
 
-    <div class="header-right">  
+<meta charset="UTF-8">
 
-        <div class="coins">  
-            🪙 <span id="coinBalance">1000</span>  
-        </div>  
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-        <button  
-            class="premium-mini"  
-            id="premiumTopButton"  
-        >  
-            👑 Premium  
-        </button>  
+<title>VitalStar Games</title>
 
-    </div>  
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#080b14;
+    color:#fff;
+    min-height:100vh;
+}
+
+button,
+input{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:#101522;
+    border-bottom:1px solid #252d40;
+    padding:15px;
+}
+
+.header-inner{
+    max-width:1050px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+}
+
+.logo{
+    font-size:21px;
+    font-weight:800;
+}
+
+.logo span{
+    color:#7c5cff;
+}
+
+.header-right{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+.coins{
+    background:#1a2030;
+    border:1px solid #30394e;
+    padding:8px 12px;
+    border-radius:20px;
+    color:#ffd84d;
+    font-weight:bold;
+    font-size:13px;
+}
+
+.premium-mini{
+    background:#7c5cff;
+    color:#fff;
+    border:0;
+    padding:9px 12px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+.container{
+    max-width:1050px;
+    margin:auto;
+    padding:18px 14px 60px;
+}
+
+.hero{
+    background:linear-gradient(135deg,#171d35,#29174e);
+    border:1px solid #393f64;
+    border-radius:22px;
+    padding:24px 18px;
+    margin-bottom:18px;
+}
+
+.hero h1{
+    font-size:28px;
+    margin-bottom:8px;
+}
+
+.hero p{
+    color:#b6bed0;
+    line-height:1.5;
+    font-size:14px;
+}
+
+.hero-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:18px;
+    flex-wrap:wrap;
+}
+
+.premium-button{
+    border:0;
+    background:#7c5cff;
+    color:#fff;
+    padding:11px 16px;
+    border-radius:11px;
+    font-weight:bold;
+}
+
+.search{
+    width:100%;
+    margin:4px 0 18px;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1px solid #30394e;
+    background:#101522;
+    color:#fff;
+    outline:none;
+}
+
+.search:focus{
+    border-color:#7c5cff;
+}
+
+.tabs{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin-bottom:18px;
+}
+
+.tab{
+    flex:none;
+    padding:9px 14px;
+    border-radius:20px;
+    border:1px solid #30394e;
+    background:#111622;
+    color:#b7bfd0;
+}
+
+.tab.active{
+    background:#7c5cff;
+    color:#fff;
+    border-color:#7c5cff;
+}
+
+.section{
+    margin-top:24px;
+}
+
+.section-title{
+    font-size:20px;
+    margin-bottom:12px;
+}
+
+/* =========================================================
+   MY GAME STATS
+========================================================= */
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.stat{
+    background:#111622;
+    border:1px solid #252d40;
+    border-radius:15px;
+    padding:15px;
+}
+
+.stat-icon{
+    font-size:22px;
+    margin-bottom:7px;
+}
+
+.stat strong{
+    display:block;
+    font-size:20px;
+}
+
+.stat span{
+    color:#8f98aa;
+    font-size:11px;
+    margin-top:4px;
+    display:block;
+}
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.profile-card{
+    background:linear-gradient(
+        135deg,
+        #111827,
+        #17142a
+    );
+    border:1px solid #303653;
+    border-radius:20px;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-bottom:14px;
+}
+
+.profile-avatar{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    object-fit:cover;
+    border:3px solid #7c5cff;
+    background:#20283b;
+}
+
+.profile-info{
+    flex:1;
+}
+
+.profile-info h2{
+    font-size:20px;
+    margin-bottom:4px;
+}
+
+.profile-info p{
+    color:#8993a8;
+    font-size:12px;
+}
+
+.profile-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:9px;
+}
+
+.profile-tag{
+    background:#1d2435;
+    border:1px solid #30394e;
+    border-radius:8px;
+    padding:6px 8px;
+    font-size:11px;
+    color:#c4ccda;
+}
+
+/* =========================================================
+   GAMES
+========================================================= */
+
+.games{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+
+.game{
+    position:relative;
+    background:#111622;
+    border:1px solid #252d40;
+    border-radius:17px;
+    padding:16px;
+    min-height:205px;
+    display:flex;
+    flex-direction:column;
+    transition:.2s;
+}
+
+.game:hover{
+    border-color:#51448d;
+    transform:translateY(-2px);
+}
+
+.game-icon{
+    font-size:38px;
+    margin-bottom:9px;
+}
+
+.game h3{
+    font-size:16px;
+    margin-bottom:5px;
+}
+
+.game p{
+    color:#929caf;
+    font-size:12px;
+    line-height:1.45;
+    flex:1;
+}
+
+.badges{
+    display:flex;
+    gap:5px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+}
+
+.badge{
+    font-size:9px;
+    font-weight:bold;
+    padding:4px 7px;
+    border-radius:7px;
+    background:#172b23;
+    color:#72e5a2;
+}
+
+.badge.premium{
+    background:#29213f;
+    color:#d5c6ff;
+}
+
+.play{
+    width:100%;
+    padding:10px;
+    margin-top:12px;
+    border:0;
+    border-radius:10px;
+    background:#2367e8;
+    color:#fff;
+    font-weight:bold;
+}
+
+.locked{
+    opacity:.78;
+}
+
+.lock{
+    position:absolute;
+    right:10px;
+    top:10px;
+    font-size:10px;
+    font-weight:bold;
+    padding:5px 7px;
+    border-radius:7px;
+    background:#29213f;
+    color:#d7caff;
+}
+
+.empty{
+    text-align:center;
+    padding:30px;
+    color:#8e97aa;
+}
+
+#emptyMessage{
+    display:none;
+}
+
+/* =========================================================
+   LEADERBOARD
+========================================================= */
+
+.leaderboard-box{
+    background:#111622;
+    border:1px solid #252d40;
+    border-radius:18px;
+    overflow:hidden;
+}
+
+.leaderboard-player{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    border-bottom:1px solid #20283a;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.leaderboard-player:last-child{
+    border-bottom:0;
+}
+
+.leaderboard-player:hover{
+    background:#171d2b;
+}
+
+.leader-rank{
+    width:38px;
+    text-align:center;
+    font-weight:bold;
+    color:#d6dbea;
+}
+
+.leader-avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    object-fit:cover;
+    background:#20283b;
+}
+
+.leader-info{
+    flex:1;
+    min-width:0;
+}
+
+.leader-info strong{
+    display:block;
+    font-size:13px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.leader-info small{
+    display:block;
+    color:#7f899d;
+    margin-top:3px;
+}
+
+.leader-stats{
+    text-align:right;
+    min-width:55px;
+}
+
+.leader-stats strong{
+    display:block;
+    color:#72e5a2;
+}
+
+.leader-stats small{
+    color:#7f899d;
+    font-size:10px;
+}
+
+.leader-rating{
+    font-size:12px;
+    color:#ffd84d;
+    min-width:65px;
+    text-align:right;
+}
+
+/* =========================================================
+   TOP 10
+========================================================= */
+
+.top-ten{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+}
+
+.top-ten .leaderboard-player{
+    background:#111622;
+    border:1px solid #252d40;
+    border-radius:13px;
+}
+
+/* =========================================================
+   PLAYER SEARCH
+========================================================= */
+
+.player-search{
+    margin-bottom:10px;
+}
+
+.player-search-results{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+}
+
+/* =========================================================
+   ACHIEVEMENTS
+========================================================= */
+
+.achievements{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:9px;
+}
+
+.achievement{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    border-radius:13px;
+    background:#111622;
+    border:1px solid #252d40;
+}
+
+.achievement-icon{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#1b2232;
+    font-size:22px;
+}
+
+.achievement strong{
+    display:block;
+    font-size:12px;
+}
+
+.achievement small{
+    display:block;
+    color:#7f899d;
+    font-size:10px;
+    line-height:1.4;
+    margin-top:3px;
+}
+
+.achievement.locked{
+    opacity:.45;
+}
+
+/* =========================================================
+   GAME HISTORY
+========================================================= */
+
+.history{
+    background:#111622;
+    border:1px solid #252d40;
+    border-radius:17px;
+    overflow:hidden;
+}
+
+.game-history-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    border-bottom:1px solid #20283a;
+}
+
+.game-history-item:last-child{
+    border-bottom:0;
+}
+
+.history-icon{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#1b2232;
+    font-size:21px;
+}
+
+.history-info{
+    flex:1;
+}
+
+.history-info strong{
+    display:block;
+    font-size:13px;
+}
+
+.history-info small{
+    display:block;
+    color:#7f899d;
+    font-size:10px;
+    margin-top:3px;
+}
+
+.history-result{
+    font-size:10px;
+    font-weight:bold;
+}
+
+.history-result.win{
+    color:#72e5a2;
+}
+
+.history-result.loss{
+    color:#ff7584;
+}
+
+.history-result.draw{
+    color:#ffd84d;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading{
+    padding:25px;
+    text-align:center;
+    color:#8791a6;
+    font-size:13px;
+}
+
+/* =========================================================
+   MODALS
+========================================================= */
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:100;
+    background:rgba(0,0,0,.78);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.modal-box{
+    width:100%;
+    max-width:390px;
+    max-height:90vh;
+    overflow-y:auto;
+    background:#111622;
+    border:1px solid #383f5d;
+    border-radius:20px;
+    padding:23px;
+    text-align:center;
+}
+
+.modal-icon{
+    font-size:48px;
+    margin-bottom:10px;
+}
+
+.modal-box h2{
+    margin-bottom:8px;
+}
+
+.modal-box p{
+    color:#aab2c4;
+    font-size:14px;
+    line-height:1.5;
+    margin-bottom:15px;
+}
+
+.modal-box button{
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    border:0;
+    border-radius:11px;
+    background:#7c5cff;
+    color:#fff;
+    font-weight:bold;
+}
+
+.modal-box .close{
+    background:#252d40;
+}
+
+/* =========================================================
+   PLAYER PROFILE MODAL
+========================================================= */
+
+.player-modal-avatar{
+    width:82px;
+    height:82px;
+    border-radius:50%;
+    object-fit:cover;
+    border:3px solid #7c5cff;
+    margin-bottom:10px;
+}
+
+.profile-stats{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    margin-top:15px;
+}
+
+.profile-stat{
+    background:#191f2d;
+    border:1px solid #293247;
+    border-radius:12px;
+    padding:12px;
+}
+
+.profile-stat strong{
+    display:block;
+    font-size:17px;
+}
+
+.profile-stat span{
+    color:#7f899d;
+    font-size:10px;
+    margin-top:4px;
+    display:block;
+}
+
+/* =========================================================
+   ACHIEVEMENT POPUP
+========================================================= */
+
+.achievement-notification{
+    position:fixed;
+    left:50%;
+    bottom:25px;
+    transform:translateX(-50%);
+    z-index:500;
+    width:calc(100% - 30px);
+    max-width:380px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px;
+    background:#171d2b;
+    border:1px solid #6953ba;
+    border-radius:15px;
+    box-shadow:0 10px 35px rgba(0,0,0,.4);
+}
+
+.achievement-notification>div:first-child{
+    font-size:30px;
+}
+
+.achievement-notification strong{
+    display:block;
+    font-size:12px;
+}
+
+.achievement-notification span{
+    display:block;
+    color:#aab3c6;
+    font-size:11px;
+    margin-top:3px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:800px){
+
+    .stats-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .games{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+@media(max-width:520px){
+
+    .container{
+        padding-left:10px;
+        padding-right:10px;
+    }
+
+    .logo{
+        font-size:16px;
+    }
+
+    .games{
+        grid-template-columns:repeat(2,1fr);
+        gap:9px;
+    }
+
+    .game{
+        padding:13px;
+        min-height:195px;
+    }
+
+    .game-icon{
+        font-size:32px;
+    }
+
+    .hero h1{
+        font-size:24px;
+    }
+
+    .header-right{
+        gap:5px;
+    }
+
+    .premium-mini{
+        padding:8px;
+        font-size:11px;
+    }
+
+    .coins{
+        padding:7px 9px;
+        font-size:11px;
+    }
+
+    .profile-card{
+        align-items:flex-start;
+    }
+
+    .profile-avatar{
+        width:58px;
+        height:58px;
+    }
+
+    .achievements{
+        grid-template-columns:1fr;
+    }
+
+    .leader-rating{
+        min-width:55px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- =======================================================
+     HEADER
+======================================================== -->
+
+<header>
+
+<div class="header-inner">
+
+    <div class="logo">
+        ⭐ Vital<span>Star</span> Games
+    </div>
+
+    <div class="header-right">
+
+        <div class="coins">
+            🪙 <span id="coinBalance">1000</span>
+        </div>
+
+        <button
+            class="premium-mini"
+            id="premiumTopButton"
+        >
+            👑 Premium
+        </button>
+
+    </div>
 
 </div>
 
-</header>  <main class="container">  <section class="hero">  
-
-    <h1>🎮 Play. Connect. Compete.</h1>  
-
-    <p>  
-        Play VitalStar games, challenge your friends,  
-        earn virtual rewards and unlock premium games.  
-    </p>  
-
-    <div class="hero-bottom">  
-
-        <strong>  
-            👥 Multiplayer games available  
-        </strong>  
-
-        <button  
-            class="premium-button"  
-            id="premiumButton"  
-        >  
-            👑 Explore Premium  
-        </button>  
-
-    </div>  
-
-</section>  
+</header>
 
 
-<input  
-    type="search"  
-    id="gameSearch"  
-    class="search"  
-    placeholder="🔎 Search games..."  
->  
+<main class="container">
 
 
-<div class="tabs">  
+<!-- =======================================================
+     HERO
+======================================================== -->
 
-    <button  
-        class="tab active"  
-        data-category="all"  
-    >  
-        All  
-    </button>  
+<section class="hero">
 
-    <button  
-        class="tab"  
-        data-category="free"  
-    >  
-        🆓 Free  
-    </button>  
+    <h1>
+        🎮 Play. Connect. Compete.
+    </h1>
 
-    <button  
-        class="tab"  
-        data-category="premium"  
-    >  
-        👑 Premium  
-    </button>  
+    <p>
+        Play VitalStar games, challenge your friends,
+        earn virtual rewards, build your gaming profile
+        and climb the leaderboard.
+    </p>
 
-    <button  
-        class="tab"  
-        data-category="multiplayer"  
-    >  
-        👥 Multiplayer  
-    </button>  
+    <div class="hero-bottom">
 
-</div>  
+        <strong>
+            👥 Multiplayer games available
+        </strong>
+
+        <button
+            class="premium-button"
+            id="premiumButton"
+        >
+            👑 Explore Premium
+        </button>
+
+    </div>
+
+</section>
 
 
-<h2 class="section-title">  
-    🎮 Games  
-</h2>  
+<!-- =======================================================
+     MY GAME PROFILE
+======================================================== -->
 
-<div  
-    id="gamesGrid"  
-    class="games"  
-></div>  
+<section class="section">
 
-<div  
-    id="emptyMessage"  
-    class="empty"  
->  
-    No games found.  
+    <h2 class="section-title">
+        👤 My Game Profile
+    </h2>
+
+    <div class="profile-card">
+
+        <img
+            id="myGameAvatar"
+            class="profile-avatar"
+            src="https://ui-avatars.com/api/?name=Player"
+            alt="Player"
+        >
+
+        <div class="profile-info">
+
+            <h2 id="myGameName">
+                VitalStar Player
+            </h2>
+
+            <p id="myGameUsername">
+                @player
+            </p>
+
+            <div class="profile-meta">
+
+                <div class="profile-tag">
+                    🏆 <span id="myWins">0</span> Wins
+                </div>
+
+                <div class="profile-tag">
+                    ⭐ <span id="myRating">1000</span> Rating
+                </div>
+
+                <div class="profile-tag">
+                    🔥 <span id="myStreak">0</span> Streak
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="stats-grid">
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                🎮
+            </div>
+
+            <strong id="myGamesPlayed">
+                0
+            </strong>
+
+            <span>
+                Games Played
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                🏆
+            </div>
+
+            <strong id="myWins">
+                0
+            </strong>
+
+            <span>
+                Wins
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                📉
+            </div>
+
+            <strong id="myLosses">
+                0
+            </strong>
+
+            <span>
+                Losses
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                📊
+            </div>
+
+            <strong id="myWinRate">
+                0%
+            </strong>
+
+            <span>
+                Win Rate
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                ⭐
+            </div>
+
+            <strong id="myRating">
+                1000
+            </strong>
+
+            <span>
+                Rating
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                🎯
+            </div>
+
+            <strong id="myBestScore">
+                0
+            </strong>
+
+            <span>
+                Best Score
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                🔥
+            </div>
+
+            <strong id="myBestStreak">
+                0
+            </strong>
+
+            <span>
+                Best Streak
+            </span>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-icon">
+                🪙
+            </div>
+
+            <strong id="myCoins">
+                0
+            </strong>
+
+            <span>
+                Game Coins
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =======================================================
+     TOP 10
+======================================================== -->
+
+<section class="section">
+
+    <h2 class="section-title">
+        🔥 Top 10 Best Winners
+    </h2>
+
+    <div
+        id="topWinners"
+        class="top-ten"
+    >
+
+        <div class="loading">
+            Loading top players...
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =======================================================
+     LEADERBOARD
+======================================================== -->
+
+<section class="section">
+
+    <h2 class="section-title">
+        🏆 Global Leaderboard
+    </h2>
+
+    <div class="leaderboard-box">
+
+        <div
+            id="leaderboard"
+        >
+
+            <div class="loading">
+                Loading leaderboard...
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =======================================================
+     PLAYER SEARCH
+======================================================== -->
+
+<section class="section">
+
+    <h2 class="section-title">
+        🔎 Find Players
+    </h2>
+
+    <input
+        id="playerSearch"
+        class="search player-search"
+        type="search"
+        placeholder="Search username..."
+    >
+
+    <div
+        id="playerSearchResults"
+        class="player-search-results"
+    ></div>
+
+</section>
+
+
+<!-- =======================================================
+     GAMES
+======================================================== -->
+
+<section class="section">
+
+    <h2 class="section-title">
+        🎮 Games
+    </h2>
+
+    <input
+        type="search"
+        id="gameSearch"
+        class="search"
+        placeholder="🔎 Search games..."
+    >
+
+    <div class="tabs">
+
+        <button
+            class="tab active"
+            data-category="all"
+        >
+            All
+        </button>
+
+        <button
+            class="tab"
+            data-category="free"
+        >
+            🆓 Free
+        </button>
+
+        <button
+            class="tab"
+            data-category="premium"
+        >
+            👑 Premium
+        </button>
+
+        <button
+            class="tab"
+            data-category="multiplayer"
+        >
+            👥 Multiplayer
+        </button>
+
+    </div>
+
+
+    <div
+        id="gamesGrid"
+        class="games"
+    ></div>
+
+
+    <div
+        id="emptyMessage"
+        class="empty"
+    >
+        No games found.
+    </div>
+
+</section>
+
+
+<!-- =======================================================
+     ACHIEVEMENTS
+======================================================== -->
+
+<section class="section">
+
+    <h2 class="section-title">
+        🏅 Achievements
+    </h2>
+
+    <div
+        id="achievements"
+        class="achievements"
+    >
+
+        <div class="loading">
+            Loading achievements...
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =======================================================
+     GAME HISTORY
+======================================================== -->
+
+<section class="section">
+
+    <h2 class="section-title">
+        📜 Recent Game History
+    </h2>
+
+    <div
+        id="gameHistory"
+        class="history"
+    >
+
+        <div class="loading">
+            Loading game history...
+        </div>
+
+    </div>
+
+</section>
+
+
+</main>
+
+
+<!-- =======================================================
+     PREMIUM MODAL
+======================================================== -->
+
+<div
+    class="modal"
+    id="premiumModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-icon">
+            👑
+        </div>
+
+        <h2>
+            VitalStar Games Premium
+        </h2>
+
+        <p>
+            Unlock the premium game library,
+            exclusive multiplayer features and
+            future Premium games.
+        </p>
+
+        <button
+            id="subscribeButton"
+        >
+            👑 Continue to Premium
+        </button>
+
+        <button
+            class="close"
+            id="closePremium"
+        >
+            Close
+        </button>
+
+    </div>
+
 </div>
 
-</main>  <!-- PREMIUM MODAL -->  <div  
-    class="modal"  
-    id="premiumModal"  
->  <div class="modal-box">  
 
-    <div class="modal-icon">  
-        👑  
-    </div>  
+<!-- =======================================================
+     PLAYER PROFILE MODAL
+======================================================== -->
 
-    <h2>  
-        VitalStar Games Premium  
-    </h2>  
+<div
+    class="modal"
+    id="playerProfileModal"
+>
 
-    <p>  
-        Unlock the premium game library,  
-        exclusive multiplayer features and  
-        future Premium games.  
-    </p>  
+    <div class="modal-box">
 
-    <button id="subscribeButton">  
-        👑 Continue to Premium  
-    </button>  
+        <img
+            id="profilePlayerAvatar"
+            class="player-modal-avatar"
+            src="https://ui-avatars.com/api/?name=Player"
+            alt="Player"
+        >
 
-    <button  
-        class="close"  
-        id="closePremium"  
-    >  
-        Close  
-    </button>  
+        <h2 id="profilePlayerName">
+            Player
+        </h2>
+
+        <p id="profilePlayerUsername">
+            @player
+        </p>
+
+
+        <div class="profile-stats">
+
+            <div class="profile-stat">
+
+                <strong id="profileGamesPlayed">
+                    0
+                </strong>
+
+                <span>
+                    Games
+                </span>
+
+            </div>
+
+
+            <div class="profile-stat">
+
+                <strong id="profileWins">
+                    0
+                </strong>
+
+                <span>
+                    Wins
+                </span>
+
+            </div>
+
+
+            <div class="profile-stat">
+
+                <strong id="profileLosses">
+                    0
+                </strong>
+
+                <span>
+                    Losses
+                </span>
+
+            </div>
+
+
+            <div class="profile-stat">
+
+                <strong id="profileWinRate">
+                    0%
+                </strong>
+
+                <span>
+                    Win Rate
+                </span>
+
+            </div>
+
+
+            <div class="profile-stat">
+
+                <strong id="profileRating">
+                    1000
+                </strong>
+
+                <span>
+                    Rating
+                </span>
+
+            </div>
+
+
+            <div class="profile-stat">
+
+                <strong id="profileBestScore">
+                    0
+                </strong>
+
+                <span>
+                    Best Score
+                </span>
+
+            </div>
+
+
+            <div class="profile-stat">
+
+                <strong id="profileStreak">
+                    0
+                </strong>
+
+                <span>
+                    Best Streak
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="close"
+            id="closePlayerProfile"
+        >
+            Close
+        </button>
+
+    </div>
 
 </div>
 
-</div>  <script type="module" src="./games.js"></script>  </body>  
+
+<script
+    type="module"
+    src="./games.js"
+></script>
+
+</body>
 </html>
