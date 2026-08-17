@@ -15,6 +15,7 @@ import {
   setDoc,
   deleteDoc,
   updateDoc,
+  addDoc,
   collection,
   query,
   where,
@@ -1903,6 +1904,15 @@ async function joinGroup() {
           ) || 0
         ) + 1;
 
+      // --------------------------------------------------------
+      // NEW MEMBER JOINED NOTIFICATION
+      // --------------------------------------------------------
+
+      await createGroupJoinNotification(
+        group,
+        user
+      );
+
     }
 
 
@@ -1935,6 +1945,89 @@ async function joinGroup() {
   } finally {
 
     joinLeaveBtn.disabled = false;
+
+  }
+
+}
+
+
+// ============================================================
+// GROUP JOIN NOTIFICATION
+// ============================================================
+
+async function createGroupJoinNotification(
+  group,
+  user
+) {
+
+  const ownerId =
+    group.ownerId ||
+    group.ownerUid ||
+    group.createdBy ||
+    group.creatorId;
+
+
+  // No owner ID or user is the owner
+  if (
+    !ownerId ||
+    ownerId === user.uid
+  ) {
+    return;
+  }
+
+
+  try {
+
+    await addDoc(
+      collection(
+        db,
+        'groupNotifications'
+      ),
+      {
+
+        receiverId:
+          ownerId,
+
+        groupId:
+          state.groupId,
+
+        groupName:
+          group.name ||
+          'VitalStar Group',
+
+        senderId:
+          user.uid,
+
+        senderName:
+          user.displayName ||
+          'VitalStar Member',
+
+        senderPhotoURL:
+          user.photoURL ||
+          '',
+
+        type:
+          'member_joined',
+
+        message:
+          `${user.displayName || 'A member'} joined your group.`,
+
+        read:
+          false,
+
+        createdAt:
+          serverTimestamp()
+
+      }
+    );
+
+  } catch (error) {
+
+    // Notification failure must not undo a successful join
+    console.error(
+      'Group join notification error:',
+      error
+    );
 
   }
 
