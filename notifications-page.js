@@ -1,10 +1,21 @@
 // ============================================================
 // VITALSTAR — notifications-page.js
 // General notification system
+//
 // Supports:
-// likes, comments, follows, messages,
-// group joins, group invites, group posts,
-// group messages, admin actions, etc.
+// likes
+// comments
+// follows
+// messages
+// group joins
+// group join requests
+// group invites
+// group posts
+// group messages
+// group mentions
+// group admin actions
+// group subscriptions
+// etc.
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -22,26 +33,50 @@ import {
     writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const notifications = document.getElementById("notifications");
+
+// ============================================================
+// DOM
+// ============================================================
+
+const notifications =
+    document.getElementById("notifications");
 
 if (!notifications) {
-    console.error("Notifications container not found.");
+
+    console.error(
+        "Notifications container not found."
+    );
+
 }
 
 
 // ============================================================
-// MARK ALL AS READ
+// MARK ALL AS READ LINK
 // ============================================================
 
-let markAllReadLink = document.getElementById("markAllReadLink");
+let markAllReadLink =
+    document.getElementById(
+        "markAllReadLink"
+    );
 
-if (!markAllReadLink && notifications) {
 
-    markAllReadLink = document.createElement("a");
+if (
+    !markAllReadLink &&
+    notifications
+) {
+
+    markAllReadLink =
+        document.createElement("a");
+
 
     markAllReadLink.href = "#";
-    markAllReadLink.id = "markAllReadLink";
-    markAllReadLink.textContent = "Mark all as read";
+
+    markAllReadLink.id =
+        "markAllReadLink";
+
+    markAllReadLink.textContent =
+        "Mark all as read";
+
 
     markAllReadLink.style.cssText = `
         display:block;
@@ -53,69 +88,108 @@ if (!markAllReadLink && notifications) {
         cursor:pointer;
     `;
 
+
     notifications.parentNode.insertBefore(
         markAllReadLink,
         notifications
     );
+
 }
 
 
 // ============================================================
-// MARK ALL READ ACTION
+// MARK ALL READ
 // ============================================================
 
 if (markAllReadLink) {
 
-    markAllReadLink.addEventListener("click", async (e) => {
+    markAllReadLink.addEventListener(
+        "click",
+        async event => {
 
-        e.preventDefault();
+            event.preventDefault();
 
-        const user = auth.currentUser;
 
-        if (!user) return;
+            const user =
+                auth.currentUser;
 
-        try {
 
-            const unreadQuery = query(
-                collection(db, "notifications"),
-                where("receiverId", "==", user.uid),
-                where("read", "==", false)
-            );
+            if (!user) {
+                return;
+            }
 
-            const snapshot =
-                await getDocs(unreadQuery);
 
-            if (snapshot.empty) return;
+            try {
 
-            const batch = writeBatch(db);
+                const unreadQuery =
+                    query(
+                        collection(
+                            db,
+                            "notifications"
+                        ),
 
-            snapshot.forEach((notificationDoc) => {
+                        where(
+                            "receiverId",
+                            "==",
+                            user.uid
+                        ),
 
-                batch.update(
-                    notificationDoc.ref,
-                    {
-                        read: true
+                        where(
+                            "read",
+                            "==",
+                            false
+                        )
+                    );
+
+
+                const snapshot =
+                    await getDocs(
+                        unreadQuery
+                    );
+
+
+                if (snapshot.empty) {
+                    return;
+                }
+
+
+                const batch =
+                    writeBatch(db);
+
+
+                snapshot.forEach(
+                    notificationDoc => {
+
+                        batch.update(
+                            notificationDoc.ref,
+                            {
+                                read: true
+                            }
+                        );
+
                     }
                 );
 
-            });
 
-            await batch.commit();
+                await batch.commit();
 
-        } catch (error) {
 
-            console.error(
-                "Failed to mark all as read:",
-                error
-            );
+            } catch (error) {
 
-            alert(
-                "Failed to mark notifications as read."
-            );
+                console.error(
+                    "Failed to mark all as read:",
+                    error
+                );
+
+
+                alert(
+                    "Failed to mark notifications as read."
+                );
+
+            }
 
         }
-
-    });
+    );
 
 }
 
@@ -128,7 +202,10 @@ function getNotificationIcon(type) {
 
     switch (type) {
 
-        // General
+        // ----------------------------------------------------
+        // GENERAL
+        // ----------------------------------------------------
+
         case "like":
             return "❤️";
 
@@ -142,7 +219,10 @@ function getNotificationIcon(type) {
             return "📩";
 
 
-        // Groups
+        // ----------------------------------------------------
+        // GROUPS
+        // ----------------------------------------------------
+
         case "group":
             return "👥";
 
@@ -157,6 +237,12 @@ function getNotificationIcon(type) {
 
         case "group_post":
             return "📝";
+
+        case "group_post_like":
+            return "❤️";
+
+        case "group_post_comment":
+            return "💬";
 
         case "group_message":
             return "💬";
@@ -174,7 +260,10 @@ function getNotificationIcon(type) {
             return "⭐";
 
 
-        // Other
+        // ----------------------------------------------------
+        // OTHER
+        // ----------------------------------------------------
+
         case "mention":
             return "🔔";
 
@@ -183,6 +272,7 @@ function getNotificationIcon(type) {
 
         default:
             return "🔔";
+
     }
 
 }
@@ -192,21 +282,28 @@ function getNotificationIcon(type) {
 // DATE FORMAT
 // ============================================================
 
-function formatNotificationTime(timestamp) {
+function formatNotificationTime(
+    timestamp
+) {
 
     if (!timestamp) {
         return "Just now";
     }
 
+
     try {
 
-        if (typeof timestamp.toDate === "function") {
+        if (
+            typeof timestamp.toDate ===
+            "function"
+        ) {
 
             return timestamp
                 .toDate()
                 .toLocaleString();
 
         }
+
 
         return "Just now";
 
@@ -220,7 +317,7 @@ function formatNotificationTime(timestamp) {
 
 
 // ============================================================
-// SAFE TEXT
+// SAFE HTML
 // ============================================================
 
 function escapeHTML(value) {
@@ -228,10 +325,194 @@ function escapeHTML(value) {
     const div =
         document.createElement("div");
 
+
     div.textContent =
         value ?? "";
 
+
     return div.innerHTML;
+
+}
+
+
+// ============================================================
+// GET NOTIFICATION TEXT
+// Supports both "text" and old "message"
+// ============================================================
+
+function getNotificationText(
+    notification
+) {
+
+    return (
+        notification.text ||
+        notification.message ||
+        "New notification"
+    );
+
+}
+
+
+// ============================================================
+// GET SENDER PHOTO
+// Supports multiple field names
+// ============================================================
+
+function getSenderPhoto(
+    notification
+) {
+
+    return (
+        notification.senderPhoto ||
+        notification.senderPhotoURL ||
+        notification.photoURL ||
+        "https://via.placeholder.com/50"
+    );
+
+}
+
+
+// ============================================================
+// GET DESTINATION
+// ============================================================
+
+function getNotificationDestination(
+    notification
+) {
+
+    // --------------------------------------------------------
+    // GROUP
+    // --------------------------------------------------------
+
+    if (
+        notification.groupId
+    ) {
+
+        // If notification contains a post,
+        // open that post's comments page.
+
+        if (
+            notification.postId
+        ) {
+
+            return (
+                `comments.html?postId=${
+                    encodeURIComponent(
+                        notification.postId
+                    )
+                }`
+            );
+
+        }
+
+
+        // If it contains a chat ID,
+        // open the group chat.
+
+        if (
+            notification.chatId
+        ) {
+
+            return (
+                `group.html?id=${
+                    encodeURIComponent(
+                        notification.groupId
+                    )}&tab=chat`
+            );
+
+        }
+
+
+        // Default group destination
+
+        return (
+            `group.html?id=${
+                encodeURIComponent(
+                    notification.groupId
+                )
+            }`
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // POST
+    // --------------------------------------------------------
+
+    if (
+        notification.postId
+    ) {
+
+        return (
+            `comments.html?postId=${
+                encodeURIComponent(
+                    notification.postId
+                )
+            }`
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // CHAT
+    // --------------------------------------------------------
+
+    if (
+        notification.chatId ||
+        notification.conversationId
+    ) {
+
+        const chatId =
+            notification.chatId ||
+            notification.conversationId;
+
+
+        return (
+            `chat.html?id=${
+                encodeURIComponent(
+                    chatId
+                )
+            }`
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // CUSTOM URL
+    // --------------------------------------------------------
+
+    if (
+        notification.url
+    ) {
+
+        return notification.url;
+
+    }
+
+
+    // --------------------------------------------------------
+    // SENDER PROFILE
+    // --------------------------------------------------------
+
+    if (
+        notification.senderId
+    ) {
+
+        return (
+            `profile.html?uid=${
+                encodeURIComponent(
+                    notification.senderId
+                )
+            }`
+        );
+
+    }
+
+
+    return null;
 
 }
 
@@ -247,6 +528,10 @@ async function openNotification(
 
     try {
 
+        // ----------------------------------------------------
+        // MARK AS READ
+        // ----------------------------------------------------
+
         await updateDoc(
             doc(
                 db,
@@ -260,69 +545,24 @@ async function openNotification(
 
 
         // ----------------------------------------------------
-        // GROUP NOTIFICATION
+        // DESTINATION
         // ----------------------------------------------------
 
-        if (notification.groupId) {
+        const destination =
+            getNotificationDestination(
+                notification
+            );
 
-            window.location.href =
-                `group.html?id=${encodeURIComponent(
-                    notification.groupId
-                )}`;
-
-            return;
-        }
-
-
-        // ----------------------------------------------------
-        // POST NOTIFICATION
-        // ----------------------------------------------------
-
-        if (notification.postId) {
-
-            window.location.href =
-                `comments.html?postId=${encodeURIComponent(
-                    notification.postId
-                )}`;
-
-            return;
-        }
-
-
-        // ----------------------------------------------------
-        // CHAT / MESSAGE
-        // ----------------------------------------------------
 
         if (
-            notification.chatId ||
-            notification.conversationId
+            destination
         ) {
 
-            const chatId =
-                notification.chatId ||
-                notification.conversationId;
-
             window.location.href =
-                `chat.html?id=${encodeURIComponent(
-                    chatId
-                )}`;
+                destination;
 
             return;
-        }
 
-
-        // ----------------------------------------------------
-        // SENDER PROFILE
-        // ----------------------------------------------------
-
-        if (notification.senderId) {
-
-            window.location.href =
-                `profile.html?uid=${encodeURIComponent(
-                    notification.senderId
-                )}`;
-
-            return;
         }
 
 
@@ -332,6 +572,7 @@ async function openNotification(
             "Failed to open notification:",
             error
         );
+
 
         alert(
             "Failed to open notification."
@@ -346,266 +587,337 @@ async function openNotification(
 // AUTH
 // ============================================================
 
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(
+    user => {
 
-    if (!user) {
+        if (!user) {
 
-        window.location.href =
-            "login.html";
+            window.location.href =
+                "login.html";
 
-        return;
-    }
-
-
-    if (!notifications) {
-        return;
-    }
+            return;
+        }
 
 
-    // --------------------------------------------------------
-    // GENERAL NOTIFICATIONS
-    // --------------------------------------------------------
-
-    const q = query(
-        collection(db, "notifications"),
-        where(
-            "receiverId",
-            "==",
-            user.uid
-        ),
-        orderBy(
-            "createdAt",
-            "desc"
-        ),
-        limit(50)
-    );
+        if (!notifications) {
+            return;
+        }
 
 
-    onSnapshot(
+        // ----------------------------------------------------
+        // GENERAL NOTIFICATIONS QUERY
+        // ----------------------------------------------------
 
-        q,
+        const q =
+            query(
+                collection(
+                    db,
+                    "notifications"
+                ),
 
-        (snapshot) => {
+                where(
+                    "receiverId",
+                    "==",
+                    user.uid
+                ),
 
-            notifications.innerHTML = "";
+                orderBy(
+                    "createdAt",
+                    "desc"
+                ),
 
-
-            // ------------------------------------------------
-            // EMPTY
-            // ------------------------------------------------
-
-            if (snapshot.empty) {
-
-                notifications.innerHTML = `
-                    <div class="loading">
-                        No notifications yet.
-                    </div>
-                `;
-
-                return;
-            }
-
-
-            // ------------------------------------------------
-            // RENDER
-            // ------------------------------------------------
-
-            snapshot.forEach(
-                (notificationDoc) => {
-
-                    const notification =
-                        notificationDoc.data();
+                limit(50)
+            );
 
 
-                    const icon =
-                        getNotificationIcon(
-                            notification.type
-                        );
+        // ----------------------------------------------------
+        // REALTIME LISTENER
+        // ----------------------------------------------------
+
+        onSnapshot(
+
+            q,
+
+            snapshot => {
+
+                notifications.innerHTML =
+                    "";
 
 
-                    const time =
-                        formatNotificationTime(
-                            notification.createdAt
-                        );
+                // ------------------------------------------------
+                // EMPTY
+                // ------------------------------------------------
 
+                if (
+                    snapshot.empty
+                ) {
 
-                    const senderName =
-                        escapeHTML(
-                            notification.senderName ||
-                            "Someone"
-                        );
-
-
-                    const text =
-                        escapeHTML(
-                            notification.text ||
-                            "New notification"
-                        );
-
-
-                    const senderPhoto =
-                        notification.senderPhoto ||
-                        notification.photoURL ||
-                        "https://via.placeholder.com/50";
-
-
-                    // ------------------------------------------------
-                    // CARD
-                    // ------------------------------------------------
-
-                    const card =
-                        document.createElement("div");
-
-                    card.className =
-                        "notification-card";
-
-
-                    // Unread
-                    if (!notification.read) {
-
-                        card.classList.add(
-                            "is-unread"
-                        );
-
-                        card.style.background =
-                            "#eef5ff";
-
-                    }
-
-
-                    // ------------------------------------------------
-                    // GROUP BADGE
-                    // ------------------------------------------------
-
-                    let groupLabel = "";
-
-                    if (
-                        notification.groupId &&
-                        notification.groupName
-                    ) {
-
-                        groupLabel = `
-                            <div style="
-                                font-size:12px;
-                                color:#777;
-                                margin-top:3px;
-                            ">
-                                👥 ${escapeHTML(
-                                    notification.groupName
-                                )}
-                            </div>
-                        `;
-
-                    }
-
-
-                    // ------------------------------------------------
-                    // CARD HTML
-                    // ------------------------------------------------
-
-                    card.innerHTML = `
-
-                        <img
-                            src="${senderPhoto}"
-                            alt=""
-                            style="
-                                width:40px;
-                                height:40px;
-                                border-radius:50%;
-                                object-fit:cover;
-                                flex-shrink:0;
-                            "
-                            onerror="
-                                this.src='https://via.placeholder.com/50';
-                            "
-                        >
-
-                        <div class="notification-text">
-
-                            <b>
-                                ${senderName}
-                            </b>
-
-                            <br>
-
-                            <span>
-                                ${icon}
-                                ${text}
-                            </span>
-
-                            ${groupLabel}
-
-                            <br>
-
-                            <small>
-                                ${escapeHTML(time)}
-                            </small>
-
+                    notifications.innerHTML = `
+                        <div class="loading">
+                            No notifications yet.
                         </div>
-
-                        ${
-                            !notification.read
-                                ? `
-                                    <span
-                                        class="unread-dot"
-                                        title="Unread"
-                                    >
-                                        ●
-                                    </span>
-                                `
-                                : ""
-                        }
-
                     `;
 
+                    return;
 
-                    // ------------------------------------------------
-                    // CLICK
-                    // ------------------------------------------------
+                }
 
-                    card.addEventListener(
-                        "click",
-                        () => {
 
-                            openNotification(
-                                notificationDoc,
+                // ------------------------------------------------
+                // RENDER
+                // ------------------------------------------------
+
+                snapshot.forEach(
+                    notificationDoc => {
+
+                        const notification =
+                            notificationDoc.data();
+
+
+                        const icon =
+                            getNotificationIcon(
+                                notification.type
+                            );
+
+
+                        const time =
+                            formatNotificationTime(
+                                notification.createdAt
+                            );
+
+
+                        const senderName =
+                            escapeHTML(
+                                notification.senderName ||
+                                "Someone"
+                            );
+
+
+                        const text =
+                            escapeHTML(
+                                getNotificationText(
+                                    notification
+                                )
+                            );
+
+
+                        const senderPhoto =
+                            getSenderPhoto(
                                 notification
                             );
 
+
+                        const safeSenderPhoto =
+                            escapeHTML(
+                                senderPhoto
+                            );
+
+
+                        // ------------------------------------------------
+                        // CARD
+                        // ------------------------------------------------
+
+                        const card =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        card.className =
+                            "notification-card";
+
+
+                        // ------------------------------------------------
+                        // UNREAD
+                        // ------------------------------------------------
+
+                        if (
+                            notification.read !== true
+                        ) {
+
+                            card.classList.add(
+                                "is-unread"
+                            );
+
+
+                            card.style.background =
+                                "#eef5ff";
+
                         }
-                    );
 
 
-                    notifications.appendChild(
-                        card
-                    );
+                        // ------------------------------------------------
+                        // GROUP BADGE
+                        // ------------------------------------------------
 
-                }
-            );
-
-        },
+                        let groupLabel =
+                            "";
 
 
-        // ----------------------------------------------------
-        // ERROR
-        // ----------------------------------------------------
+                        if (
+                            notification.groupId &&
+                            notification.groupName
+                        ) {
 
-        (error) => {
+                            groupLabel = `
+                                <div style="
+                                    font-size:12px;
+                                    color:#777;
+                                    margin-top:3px;
+                                ">
+                                    👥 ${escapeHTML(
+                                        notification.groupName
+                                    )}
+                                </div>
+                            `;
 
-            console.error(
-                "Notifications Error:",
-                error
-            );
+                        }
 
 
-            notifications.innerHTML = `
-                <div class="loading">
-                    Unable to load notifications.
-                </div>
-            `;
+                        // ------------------------------------------------
+                        // POST INDICATOR
+                        // ------------------------------------------------
 
-        }
+                        let postLabel =
+                            "";
 
-    );
 
-});
+                        if (
+                            notification.postId
+                        ) {
+
+                            postLabel = `
+                                <div style="
+                                    font-size:12px;
+                                    color:#777;
+                                    margin-top:2px;
+                                ">
+                                    📝 View post
+                                </div>
+                            `;
+
+                        }
+
+
+                        // ------------------------------------------------
+                        // CARD HTML
+                        // ------------------------------------------------
+
+                        card.innerHTML = `
+
+                            <img
+                                src="${safeSenderPhoto}"
+                                alt=""
+                                style="
+                                    width:40px;
+                                    height:40px;
+                                    border-radius:50%;
+                                    object-fit:cover;
+                                    flex-shrink:0;
+                                "
+                                onerror="
+                                    this.src='https://via.placeholder.com/50';
+                                "
+                            >
+
+                            <div
+                                class="notification-text"
+                            >
+
+                                <b>
+                                    ${senderName}
+                                </b>
+
+                                <br>
+
+                                <span>
+                                    ${icon}
+                                    ${text}
+                                </span>
+
+                                ${groupLabel}
+
+                                ${postLabel}
+
+                                <br>
+
+                                <small>
+                                    ${escapeHTML(
+                                        time
+                                    )}
+                                </small>
+
+                            </div>
+
+                            ${
+                                notification.read !== true
+                                    ? `
+                                        <span
+                                            class="unread-dot"
+                                            title="Unread"
+                                        >
+                                            ●
+                                        </span>
+                                    `
+                                    : ""
+                            }
+
+                        `;
+
+
+                        // ------------------------------------------------
+                        // CLICK
+                        // ------------------------------------------------
+
+                        card.addEventListener(
+                            "click",
+                            () => {
+
+                                openNotification(
+                                    notificationDoc,
+                                    notification
+                                );
+
+                            }
+                        );
+
+
+                        notifications.appendChild(
+                            card
+                        );
+
+                    }
+                );
+
+            },
+
+
+            // ------------------------------------------------
+            // ERROR
+            // ------------------------------------------------
+
+            error => {
+
+                console.error(
+                    "Notifications Error:",
+                    error
+                );
+
+
+                notifications.innerHTML = `
+                    <div class="loading">
+                        Unable to load notifications.
+                    </div>
+                `;
+
+            }
+
+        );
+
+    }
+);
+
+
+// ============================================================
+// END OF NOTIFICATIONS-PAGE.JS
+// ============================================================
