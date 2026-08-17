@@ -50,58 +50,141 @@ let tabsBound = false;
 // DOM
 // ============================================================
 
-const navUserAvatar = document.getElementById('navUserAvatar');
-const navGroupTitle = document.getElementById('navGroupTitle');
+const navUserAvatar =
+  document.getElementById('navUserAvatar');
 
-const pageLoader = document.getElementById('pageLoader');
-const groupNotFoundState = document.getElementById('groupNotFoundState');
-const groupPageContent = document.getElementById('groupPageContent');
+const navGroupTitle =
+  document.getElementById('navGroupTitle');
 
-const groupCover = document.getElementById('groupCover');
-const coverEditBtn = document.getElementById('coverEditBtn');
-const groupAvatar = document.getElementById('groupAvatar');
+const pageLoader =
+  document.getElementById('pageLoader');
 
-const yourRoleTag = document.getElementById('yourRoleTag');
-const yourRoleText = document.getElementById('yourRoleText');
+const groupNotFoundState =
+  document.getElementById('groupNotFoundState');
 
-const shareBtn = document.getElementById('shareBtn');
-const inviteBtn = document.getElementById('inviteBtn');
-const joinLeaveBtn = document.getElementById('joinLeaveBtn');
+const groupPageContent =
+  document.getElementById('groupPageContent');
 
-const groupName = document.getElementById('groupName');
-const groupPrivacyBadge = document.getElementById('groupPrivacyBadge');
-const groupPremiumBadge = document.getElementById('groupPremiumBadge');
-const groupVerifiedBadge = document.getElementById('groupVerifiedBadge');
-const groupCategoryChip = document.getElementById('groupCategoryChip');
-const groupOwnerText = document.getElementById('groupOwnerText');
-const groupCreatedText = document.getElementById('groupCreatedText');
-const groupDescription = document.getElementById('groupDescription');
+const groupCover =
+  document.getElementById('groupCover');
 
-const statMemberCount = document.getElementById('statMemberCount');
-const statPostCount = document.getElementById('statPostCount');
-const statOnlineCount = document.getElementById('statOnlineCount');
-const statLevel = document.getElementById('statLevel');
+const coverEditBtn =
+  document.getElementById('coverEditBtn');
 
-const lockedNotice = document.getElementById('lockedNotice');
-const groupContentGrid = document.getElementById('groupContentGrid');
+const groupAvatar =
+  document.getElementById('groupAvatar');
 
-const groupTabsNav = document.getElementById('groupTabsNav');
-const subscriptionTabBtn = document.getElementById('subscriptionTabBtn');
-const settingsTabBtn = document.getElementById('settingsTabBtn');
+const yourRoleTag =
+  document.getElementById('yourRoleTag');
 
-const rulesListDisplay = document.getElementById('rulesListDisplay');
-const rulesEmptyDisplay = document.getElementById('rulesEmptyDisplay');
+const yourRoleText =
+  document.getElementById('yourRoleText');
 
-const adminsList = document.getElementById('adminsList');
-const adminsEmptyDisplay = document.getElementById('adminsEmptyDisplay');
+const shareBtn =
+  document.getElementById('shareBtn');
 
-const notificationBellBtn = document.getElementById('notificationBellBtn');
-const notifUnreadDot = document.getElementById('notifUnreadDot');
-const notificationsPanel = document.getElementById('notificationsPanel');
-const closeNotificationsBtn = document.getElementById('closeNotificationsBtn');
-const notificationsList = document.getElementById('notificationsList');
+const inviteBtn =
+  document.getElementById('inviteBtn');
 
-const toastContainer = document.getElementById('toast-container');
+const joinLeaveBtn =
+  document.getElementById('joinLeaveBtn');
+
+const groupName =
+  document.getElementById('groupName');
+
+const groupPrivacyBadge =
+  document.getElementById('groupPrivacyBadge');
+
+const groupPremiumBadge =
+  document.getElementById('groupPremiumBadge');
+
+const groupVerifiedBadge =
+  document.getElementById('groupVerifiedBadge');
+
+const groupCategoryChip =
+  document.getElementById('groupCategoryChip');
+
+const groupOwnerText =
+  document.getElementById('groupOwnerText');
+
+const groupCreatedText =
+  document.getElementById('groupCreatedText');
+
+const groupDescription =
+  document.getElementById('groupDescription');
+
+const statMemberCount =
+  document.getElementById('statMemberCount');
+
+const statPostCount =
+  document.getElementById('statPostCount');
+
+const statOnlineCount =
+  document.getElementById('statOnlineCount');
+
+const statLevel =
+  document.getElementById('statLevel');
+
+const lockedNotice =
+  document.getElementById('lockedNotice');
+
+const groupContentGrid =
+  document.getElementById('groupContentGrid');
+
+const groupTabsNav =
+  document.getElementById('groupTabsNav');
+
+const subscriptionTabBtn =
+  document.getElementById('subscriptionTabBtn');
+
+const settingsTabBtn =
+  document.getElementById('settingsTabBtn');
+
+const rulesListDisplay =
+  document.getElementById('rulesListDisplay');
+
+const rulesEmptyDisplay =
+  document.getElementById('rulesEmptyDisplay');
+
+const adminsList =
+  document.getElementById('adminsList');
+
+const adminsEmptyDisplay =
+  document.getElementById('adminsEmptyDisplay');
+
+const notificationBellBtn =
+  document.getElementById('notificationBellBtn');
+
+const notifUnreadDot =
+  document.getElementById('notifUnreadDot');
+
+const notificationsPanel =
+  document.getElementById('notificationsPanel');
+
+const closeNotificationsBtn =
+  document.getElementById('closeNotificationsBtn');
+
+const notificationsList =
+  document.getElementById('notificationsList');
+
+const toastContainer =
+  document.getElementById('toast-container');
+
+
+// ============================================================
+// URL STATE
+// ============================================================
+
+const urlParams =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const requestedPostId =
+  urlParams.get('postId');
+
+const requestedTab =
+  urlParams.get('tab');
 
 
 // ============================================================
@@ -135,12 +218,28 @@ const CATEGORY_LABELS = {
 // ============================================================
 
 const state = {
+
   currentUser: null,
-  groupId: new URLSearchParams(window.location.search).get('id'),
+
+  groupId:
+    urlParams.get('id'),
+
   groupData: null,
+
   membership: null,
-  activeTab: 'posts',
+
+  activeTab:
+    requestedTab || (
+      requestedPostId
+        ? 'posts'
+        : 'posts'
+    ),
+
+  postId:
+    requestedPostId || null,
+
   loading: false
+
 };
 
 
@@ -149,29 +248,48 @@ const state = {
 // ============================================================
 
 function setText(el, value) {
-  if (el) el.textContent = value ?? '';
+
+  if (el) {
+    el.textContent =
+      value ?? '';
+  }
+
 }
 
 
 function setDisplay(el, value) {
-  if (el) el.style.display = value;
+
+  if (el) {
+    el.style.display =
+      value;
+  }
+
 }
 
 
 function formatCount(value) {
 
-  const num = Number(value) || 0;
+  const num =
+    Number(value) || 0;
 
   if (num >= 1000000) {
-    return `${(num / 1000000)
+
+    return `${(
+      num / 1000000
+    )
       .toFixed(1)
       .replace('.0', '')}M`;
+
   }
 
   if (num >= 1000) {
-    return `${(num / 1000)
+
+    return `${(
+      num / 1000
+    )
       .toFixed(1)
       .replace('.0', '')}K`;
+
   }
 
   return String(num);
@@ -184,28 +302,42 @@ function initialsFrom(name) {
     .trim()
     .charAt(0)
     .toUpperCase();
+
 }
 
 
-function applyMediaBackground(el, url, fallbackText = '') {
+function applyMediaBackground(
+  el,
+  url,
+  fallbackText = ''
+) {
 
   if (!el) return;
 
   if (url) {
 
     el.style.backgroundImage =
-      `url("${String(url).replace(/"/g, '\\"')}")`;
+      `url("${String(url)
+        .replace(/"/g, '\\"')}")`;
 
-    el.style.backgroundSize = 'cover';
-    el.style.backgroundPosition = 'center';
+    el.style.backgroundSize =
+      'cover';
+
+    el.style.backgroundPosition =
+      'center';
+
     el.textContent = '';
 
   } else {
 
-    el.style.backgroundImage = '';
-    el.textContent = fallbackText || '';
+    el.style.backgroundImage =
+      '';
+
+    el.textContent =
+      fallbackText || '';
 
   }
+
 }
 
 
@@ -220,10 +352,13 @@ function formatDate(timestamp) {
 
   return timestamp
     .toDate()
-    .toLocaleDateString(undefined, {
-      month: 'short',
-      year: 'numeric'
-    });
+    .toLocaleDateString(
+      undefined,
+      {
+        month: 'short',
+        year: 'numeric'
+      }
+    );
 }
 
 
@@ -231,42 +366,87 @@ function formatDate(timestamp) {
 // TOAST
 // ============================================================
 
-function showToast(message, type = 'info') {
+function showToast(
+  message,
+  type = 'info'
+) {
 
   if (!toastContainer) {
-    console.log(`[${type}] ${message}`);
+
+    console.log(
+      `[${type}] ${message}`
+    );
+
     return;
   }
 
   const icons = {
-    success: 'fa-circle-check',
-    error: 'fa-circle-exclamation',
-    info: 'fa-circle-info'
+
+    success:
+      'fa-circle-check',
+
+    error:
+      'fa-circle-exclamation',
+
+    info:
+      'fa-circle-info'
+
   };
 
-  const toast = document.createElement('div');
 
-  toast.className = `toast toast--${type}`;
+  const toast =
+    document.createElement('div');
 
-  const icon = document.createElement('i');
+  toast.className =
+    `toast toast--${type}`;
+
+
+  const icon =
+    document.createElement('i');
+
   icon.className =
-    `fa-solid ${icons[type] || icons.info}`;
+    `fa-solid ${
+      icons[type] ||
+      icons.info
+    }`;
 
-  const text = document.createElement('span');
-  text.textContent = message;
 
-  toast.append(icon, text);
-  toastContainer.appendChild(toast);
+  const text =
+    document.createElement('span');
 
-  setTimeout(() => {
+  text.textContent =
+    message;
 
-    toast.classList.add('is-leaving');
 
-    setTimeout(() => {
-      toast.remove();
-    }, 400);
+  toast.append(
+    icon,
+    text
+  );
 
-  }, 3800);
+
+  toastContainer.appendChild(
+    toast
+  );
+
+
+  setTimeout(
+    () => {
+
+      toast.classList.add(
+        'is-leaving'
+      );
+
+      setTimeout(
+        () => {
+          toast.remove();
+        },
+        400
+      );
+
+    },
+    3800
+  );
+
 }
 
 
@@ -276,20 +456,27 @@ function showToast(message, type = 'info') {
 
 function isCurrentUserOwner() {
 
-  const uid = state.currentUser?.uid;
+  const uid =
+    state.currentUser?.uid;
 
-  if (!uid || !state.groupData) {
+  if (
+    !uid ||
+    !state.groupData
+  ) {
     return false;
   }
 
   return [
+
     state.groupData.ownerId,
     state.groupData.ownerUid,
     state.groupData.createdBy,
     state.groupData.creatorId
+
   ]
     .filter(Boolean)
     .includes(uid);
+
 }
 
 
@@ -301,6 +488,7 @@ function isCurrentUserAdmin() {
   ].includes(
     state.membership?.role
   );
+
 }
 
 
@@ -311,14 +499,17 @@ function canManageGroup() {
     state.membership?.role === 'owner' ||
     isCurrentUserAdmin()
   );
+
 }
 
 
 function isActiveMember() {
 
   return (
-    state.membership?.status === 'active'
+    state.membership?.status ===
+    'active'
   );
+
 }
 
 
@@ -329,12 +520,17 @@ function canViewGroup() {
   }
 
   if (
-    state.groupData.privacy !== 'private'
+    state.groupData.privacy !==
+    'private'
   ) {
     return true;
   }
 
-  return isActiveMember() || canManageGroup();
+  return (
+    isActiveMember() ||
+    canManageGroup()
+  );
+
 }
 
 
@@ -345,8 +541,11 @@ function canViewGroup() {
 function hideLoader() {
 
   if (pageLoader) {
-    pageLoader.classList.add('is-hidden');
+    pageLoader.classList.add(
+      'is-hidden'
+    );
   }
+
 }
 
 
@@ -355,8 +554,13 @@ function showPage() {
   hideLoader();
 
   if (groupPageContent) {
-    groupPageContent.classList.add('is-visible');
+
+    groupPageContent.classList.add(
+      'is-visible'
+    );
+
   }
+
 }
 
 
@@ -365,12 +569,21 @@ function showNotFound() {
   hideLoader();
 
   if (groupNotFoundState) {
-    groupNotFoundState.classList.add('is-visible');
+
+    groupNotFoundState.classList.add(
+      'is-visible'
+    );
+
   }
 
   if (groupPageContent) {
-    groupPageContent.classList.remove('is-visible');
+
+    groupPageContent.classList.remove(
+      'is-visible'
+    );
+
   }
+
 }
 
 
@@ -378,25 +591,34 @@ function showNotFound() {
 // AUTH
 // ============================================================
 
-onAuthStateChanged(auth, async user => {
+onAuthStateChanged(
+  auth,
+  async user => {
 
-  if (!user) {
-    window.location.href = 'login.html';
-    return;
+    if (!user) {
+
+      window.location.href =
+        'login.html';
+
+      return;
+    }
+
+    state.currentUser =
+      user;
+
+    applyUserAvatar(user);
+
+    await loadGroup();
+
   }
-
-  state.currentUser = user;
-
-  applyUserAvatar(user);
-
-  await loadGroup();
-
-});
+);
 
 
 function applyUserAvatar(user) {
 
-  if (!navUserAvatar) return;
+  if (!navUserAvatar) {
+    return;
+  }
 
   applyMediaBackground(
     navUserAvatar,
@@ -405,6 +627,7 @@ function applyUserAvatar(user) {
       user.displayName || 'V'
     )
   );
+
 }
 
 
@@ -414,11 +637,15 @@ function applyUserAvatar(user) {
 
 async function loadGroup() {
 
-  if (state.loading) return;
+  if (state.loading) {
+    return;
+  }
 
   if (!state.groupId) {
 
-    console.error('Missing group ID.');
+    console.error(
+      'Missing group ID.'
+    );
 
     showNotFound();
 
@@ -427,25 +654,32 @@ async function loadGroup() {
 
   state.loading = true;
 
+
   try {
 
-    const groupRef = doc(
-      db,
-      'groups',
-      state.groupId
-    );
+    const groupRef =
+      doc(
+        db,
+        'groups',
+        state.groupId
+      );
 
-    const memberRef = doc(
-      db,
-      'groups',
-      state.groupId,
-      'members',
-      state.currentUser.uid
-    );
+
+    const memberRef =
+      doc(
+        db,
+        'groups',
+        state.groupId,
+        'members',
+        state.currentUser.uid
+      );
 
 
     const groupSnap =
-      await getDoc(groupRef);
+      await getDoc(
+        groupRef
+      );
+
 
     if (!groupSnap.exists()) {
 
@@ -461,23 +695,35 @@ async function loadGroup() {
 
 
     state.groupData = {
-      id: groupSnap.id,
+
+      id:
+        groupSnap.id,
+
       ...groupSnap.data()
+
     };
 
 
     try {
 
       const memberSnap =
-        await getDoc(memberRef);
+        await getDoc(
+          memberRef
+        );
+
 
       state.membership =
         memberSnap.exists()
           ? {
-              uid: state.currentUser.uid,
+
+              uid:
+                state.currentUser.uid,
+
               ...memberSnap.data()
+
             }
           : null;
+
 
     } catch (error) {
 
@@ -486,36 +732,60 @@ async function loadGroup() {
         error
       );
 
-      state.membership = null;
+      state.membership =
+        null;
+
     }
 
 
-    if (isCurrentUserOwner()) {
+    if (
+      isCurrentUserOwner()
+    ) {
 
       state.membership = {
+
         ...(state.membership || {}),
-        uid: state.currentUser.uid,
-        role: 'owner',
-        status: 'active'
+
+        uid:
+          state.currentUser.uid,
+
+        role:
+          'owner',
+
+        status:
+          'active'
+
       };
 
     }
 
 
     renderHeader();
+
     renderSidebar();
+
     applyAccessControl();
+
     setupTabs();
+
     bindHeaderActions();
 
-    renderAdmins().catch(error => {
-      console.error(
-        'Admin rendering error:',
-        error
+
+    renderAdmins()
+      .catch(
+        error => {
+
+          console.error(
+            'Admin rendering error:',
+            error
+          );
+
+        }
       );
-    });
+
 
     showPage();
+
 
   } catch (error) {
 
@@ -531,9 +801,11 @@ async function loadGroup() {
       'error'
     );
 
+
   } finally {
 
     state.loading = false;
+
     hideLoader();
 
   }
@@ -547,9 +819,12 @@ async function loadGroup() {
 
 function renderHeader() {
 
-  const group = state.groupData;
+  const group =
+    state.groupData;
 
-  if (!group) return;
+  if (!group) {
+    return;
+  }
 
 
   document.title =
@@ -558,33 +833,44 @@ function renderHeader() {
 
   setText(
     navGroupTitle,
-    group.name || 'VitalStar Group'
+    group.name ||
+    'VitalStar Group'
   );
 
 
   applyMediaBackground(
     groupCover,
-    group.coverURL || group.coverUrl || '',
+    group.coverURL ||
+    group.coverUrl ||
+    '',
     ''
   );
 
 
   applyMediaBackground(
     groupAvatar,
-    group.avatarURL || group.avatarUrl || '',
-    initialsFrom(group.name)
+    group.avatarURL ||
+    group.avatarUrl ||
+    '',
+    initialsFrom(
+      group.name
+    )
   );
 
 
   setText(
     groupName,
-    group.name || 'VitalStar Group'
+    group.name ||
+    'VitalStar Group'
   );
 
 
   if (groupPrivacyBadge) {
 
-    if (group.privacy === 'private') {
+    if (
+      group.privacy ===
+      'private'
+    ) {
 
       groupPrivacyBadge.className =
         'badge badge--private';
@@ -601,6 +887,7 @@ function renderHeader() {
         '<i class="fa-solid fa-globe"></i> Public';
 
     }
+
   }
 
 
@@ -622,7 +909,9 @@ function renderHeader() {
 
   setText(
     groupCategoryChip,
-    CATEGORY_LABELS[group.category] ||
+    CATEGORY_LABELS[
+      group.category
+    ] ||
     group.category ||
     'General'
   );
@@ -634,11 +923,13 @@ function renderHeader() {
     (
       isCurrentUserOwner()
         ? (
-            state.currentUser?.displayName ||
+            state.currentUser
+              ?.displayName ||
             'You'
           )
         : 'a member'
     );
+
 
   setText(
     groupOwnerText,
@@ -648,34 +939,47 @@ function renderHeader() {
 
   setText(
     groupCreatedText,
-    `Created ${formatDate(group.createdAt)}`
+    `Created ${formatDate(
+      group.createdAt
+    )}`
   );
 
 
   setText(
     groupDescription,
-    group.description || ''
+    group.description ||
+    ''
   );
 
 
   setText(
     statMemberCount,
-    formatCount(group.memberCount)
+    formatCount(
+      group.memberCount
+    )
   );
+
 
   setText(
     statPostCount,
-    formatCount(group.postCount)
+    formatCount(
+      group.postCount
+    )
   );
+
 
   setText(
     statOnlineCount,
-    formatCount(group.onlineCount)
+    formatCount(
+      group.onlineCount
+    )
   );
+
 
   setText(
     statLevel,
-    group.level || 1
+    group.level ||
+    1
   );
 
 
@@ -700,15 +1004,19 @@ function renderHeader() {
 
 function renderJoinLeaveState() {
 
-  if (!joinLeaveBtn) return;
+  if (!joinLeaveBtn) {
+    return;
+  }
 
 
   if (
     isCurrentUserOwner() ||
-    state.membership?.role === 'owner'
+    state.membership?.role ===
+      'owner'
   ) {
 
-    joinLeaveBtn.style.display = 'none';
+    joinLeaveBtn.style.display =
+      'none';
 
     setDisplay(
       yourRoleTag,
@@ -731,18 +1039,22 @@ function renderJoinLeaveState() {
 
   if (
     state.membership &&
-    state.membership.status === 'active'
+    state.membership.status ===
+      'active'
   ) {
 
-    joinLeaveBtn.style.display = 'flex';
+    joinLeaveBtn.style.display =
+      'flex';
 
-    joinLeaveBtn.disabled = false;
+    joinLeaveBtn.disabled =
+      false;
 
     joinLeaveBtn.className =
       'btn-join-leave is-member';
 
     joinLeaveBtn.innerHTML =
       '<i class="fa-solid fa-check"></i> Joined';
+
 
     setDisplay(
       yourRoleTag,
@@ -752,9 +1064,11 @@ function renderJoinLeaveState() {
     setText(
       yourRoleText,
       capitalize(
-        state.membership.role || 'member'
+        state.membership.role ||
+        'member'
       )
     );
+
 
     setDisplay(
       inviteBtn,
@@ -766,18 +1080,22 @@ function renderJoinLeaveState() {
 
 
   if (
-    state.membership?.status === 'pending'
+    state.membership?.status ===
+      'pending'
   ) {
 
-    joinLeaveBtn.style.display = 'flex';
+    joinLeaveBtn.style.display =
+      'flex';
 
-    joinLeaveBtn.disabled = false;
+    joinLeaveBtn.disabled =
+      false;
 
     joinLeaveBtn.className =
       'btn-join-leave is-pending';
 
     joinLeaveBtn.innerHTML =
       '<i class="fa-solid fa-clock"></i> Requested';
+
 
     setDisplay(
       yourRoleTag,
@@ -793,15 +1111,18 @@ function renderJoinLeaveState() {
   }
 
 
-  joinLeaveBtn.style.display = 'flex';
+  joinLeaveBtn.style.display =
+    'flex';
 
-  joinLeaveBtn.disabled = false;
+  joinLeaveBtn.disabled =
+    false;
 
   joinLeaveBtn.className =
     'btn-join-leave';
 
   joinLeaveBtn.innerHTML =
     '<i class="fa-solid fa-plus"></i> Join group';
+
 
   setDisplay(
     yourRoleTag,
@@ -818,12 +1139,17 @@ function renderJoinLeaveState() {
 
 function capitalize(value) {
 
-  const text = String(value || 'member');
+  const text =
+    String(
+      value ||
+      'member'
+    );
 
   return (
     text.charAt(0).toUpperCase() +
     text.slice(1)
   );
+
 }
 
 
@@ -833,14 +1159,22 @@ function capitalize(value) {
 
 function renderSidebar() {
 
-  if (!rulesListDisplay) return;
+  if (!rulesListDisplay) {
+    return;
+  }
+
 
   const rules =
-    Array.isArray(state.groupData?.rules)
+    Array.isArray(
+      state.groupData?.rules
+    )
       ? state.groupData.rules
       : [];
 
-  rulesListDisplay.innerHTML = '';
+
+  rulesListDisplay.innerHTML =
+    '';
+
 
   if (!rules.length) {
 
@@ -852,23 +1186,29 @@ function renderSidebar() {
     return;
   }
 
+
   setDisplay(
     rulesEmptyDisplay,
     'none'
   );
 
 
-  rules.forEach(rule => {
+  rules.forEach(
+    rule => {
 
-    const li =
-      document.createElement('li');
+      const li =
+        document.createElement(
+          'li'
+        );
 
-    li.textContent =
-      String(rule);
+      li.textContent =
+        String(rule);
 
-    rulesListDisplay.appendChild(li);
+      rulesListDisplay
+        .appendChild(li);
 
-  });
+    }
+  );
 
 }
 
@@ -879,29 +1219,34 @@ function renderSidebar() {
 
 async function renderAdmins() {
 
-  if (!adminsList) return;
+  if (!adminsList) {
+    return;
+  }
 
 
   try {
 
-    const q = query(
-      collection(
-        db,
-        'groups',
-        state.groupId,
-        'members'
-      ),
-      where(
-        'role',
-        'in',
-        [
-          'owner',
-          'admin',
-          'moderator'
-        ]
-      ),
-      limit(10)
-    );
+    const q =
+      query(
+        collection(
+          db,
+          'groups',
+          state.groupId,
+          'members'
+        ),
+
+        where(
+          'role',
+          'in',
+          [
+            'owner',
+            'admin',
+            'moderator'
+          ]
+        ),
+
+        limit(10)
+      );
 
 
     const snapshot =
@@ -909,8 +1254,13 @@ async function renderAdmins() {
 
 
     adminsList
-      .querySelectorAll('.admin-row')
-      .forEach(row => row.remove());
+      .querySelectorAll(
+        '.admin-row'
+      )
+      .forEach(
+        row =>
+          row.remove()
+      );
 
 
     if (snapshot.empty) {
@@ -931,95 +1281,131 @@ async function renderAdmins() {
 
 
     const priority = {
+
       owner: 0,
+
       admin: 1,
+
       moderator: 2
+
     };
 
 
     const admins =
       snapshot.docs
-        .map(item => ({
-          id: item.id,
-          ...item.data()
-        }))
+        .map(
+          item => ({
+
+            id:
+              item.id,
+
+            ...item.data()
+
+          })
+        )
         .sort(
           (a, b) =>
-            (priority[a.role] ?? 9) -
-            (priority[b.role] ?? 9)
+            (
+              priority[a.role] ??
+              9
+            ) -
+            (
+              priority[b.role] ??
+              9
+            )
         );
 
 
-    admins.forEach(admin => {
+    admins.forEach(
+      admin => {
 
-      const row =
-        document.createElement('div');
+        const row =
+          document.createElement(
+            'div'
+          );
 
-      row.className = 'admin-row';
-
-
-      const avatar =
-        document.createElement('div');
-
-      avatar.className =
-        'admin-avatar';
+        row.className =
+          'admin-row';
 
 
-      applyMediaBackground(
-        avatar,
-        admin.photoURL || '',
-        initialsFrom(
+        const avatar =
+          document.createElement(
+            'div'
+          );
+
+        avatar.className =
+          'admin-avatar';
+
+
+        applyMediaBackground(
+          avatar,
+          admin.photoURL ||
+          '',
+          initialsFrom(
+            admin.displayName ||
+            admin.fullName ||
+            'V'
+          )
+        );
+
+
+        const info =
+          document.createElement(
+            'div'
+          );
+
+        info.className =
+          'admin-info';
+
+
+        const name =
+          document.createElement(
+            'div'
+          );
+
+        name.className =
+          'admin-name';
+
+        name.textContent =
           admin.displayName ||
           admin.fullName ||
-          'V'
-        )
-      );
+          'VitalStar Member';
 
 
-      const info =
-        document.createElement('div');
+        const role =
+          document.createElement(
+            'div'
+          );
 
-      info.className =
-        'admin-info';
+        role.className =
+          'admin-role';
 
-
-      const name =
-        document.createElement('div');
-
-      name.className =
-        'admin-name';
-
-      name.textContent =
-        admin.displayName ||
-        admin.fullName ||
-        'VitalStar Member';
+        role.textContent =
+          capitalize(
+            admin.role ||
+            'member'
+          );
 
 
-      const role =
-        document.createElement('div');
-
-      role.className =
-        'admin-role';
-
-      role.textContent =
-        capitalize(
-          admin.role || 'member'
+        info.append(
+          name,
+          role
         );
 
 
-      info.append(
-        name,
-        role
-      );
+        row.append(
+          avatar,
+          info
+        );
 
-      row.append(
-        avatar,
-        info
-      );
 
-      adminsList.appendChild(row);
+        adminsList.appendChild(
+          row
+        );
 
-    });
+      }
+    );
+
 
   } catch (error) {
 
@@ -1061,14 +1447,17 @@ function applyAccessControl() {
   if (groupContentGrid) {
 
     groupContentGrid.style.display =
-      canView ? 'grid' : 'none';
+      canView
+        ? 'grid'
+        : 'none';
 
   }
 
 
   setDisplay(
     subscriptionTabBtn,
-    state.groupData?.type === 'premium'
+    state.groupData?.type ===
+      'premium'
       ? 'flex'
       : 'none'
   );
@@ -1085,7 +1474,8 @@ function applyAccessControl() {
   if (canView) {
 
     activateTab(
-      state.activeTab || 'posts'
+      state.activeTab ||
+      'posts'
     );
 
   }
@@ -1099,9 +1489,13 @@ function applyAccessControl() {
 
 function setupTabs() {
 
-  if (!groupTabsNav || tabsBound) {
+  if (
+    !groupTabsNav ||
+    tabsBound
+  ) {
     return;
   }
+
 
   tabsBound = true;
 
@@ -1111,14 +1505,24 @@ function setupTabs() {
     event => {
 
       const button =
-        event.target.closest('.group-tab');
+        event.target.closest(
+          '.group-tab'
+        );
 
-      if (!button) return;
+
+      if (!button) {
+        return;
+      }
+
 
       const tab =
         button.dataset.tab;
 
-      if (!tab) return;
+
+      if (!tab) {
+        return;
+      }
+
 
       activateTab(tab);
 
@@ -1130,7 +1534,9 @@ function setupTabs() {
 
 function activateTab(tabName) {
 
-  if (!tabName) return;
+  if (!tabName) {
+    return;
+  }
 
 
   if (
@@ -1163,7 +1569,8 @@ function activateTab(tabName) {
 
   if (
     tabName === 'subscription' &&
-    state.groupData?.type !== 'premium'
+    state.groupData?.type !==
+      'premium'
   ) {
     return;
   }
@@ -1176,32 +1583,44 @@ function activateTab(tabName) {
   if (groupTabsNav) {
 
     groupTabsNav
-      .querySelectorAll('.group-tab')
-      .forEach(button => {
+      .querySelectorAll(
+        '.group-tab'
+      )
+      .forEach(
+        button => {
 
-        button.classList.toggle(
-          'is-active',
-          button.dataset.tab === tabName
-        );
+          button.classList.toggle(
+            'is-active',
+            button.dataset.tab ===
+              tabName
+          );
 
-      });
+        }
+      );
 
   }
 
 
   document
-    .querySelectorAll('.tab-panel')
-    .forEach(panel => {
+    .querySelectorAll(
+      '.tab-panel'
+    )
+    .forEach(
+      panel => {
 
-      panel.classList.toggle(
-        'is-active',
-        panel.dataset.panel === tabName
-      );
+        panel.classList.toggle(
+          'is-active',
+          panel.dataset.panel ===
+            tabName
+        );
 
-    });
+      }
+    );
 
 
-  loadTabModuleIfNeeded(tabName);
+  loadTabModuleIfNeeded(
+    tabName
+  );
 
 }
 
@@ -1210,10 +1629,14 @@ function activateTab(tabName) {
 // TAB MODULE LOADER
 // ============================================================
 
-async function loadTabModuleIfNeeded(tabName) {
+async function loadTabModuleIfNeeded(
+  tabName
+) {
 
   if (
-    loadedTabModules.has(tabName)
+    loadedTabModules.has(
+      tabName
+    )
   ) {
     return;
   }
@@ -1222,7 +1645,10 @@ async function loadTabModuleIfNeeded(tabName) {
   const loader =
     TAB_MODULE_LOADERS[tabName];
 
-  if (!loader) return;
+
+  if (!loader) {
+    return;
+  }
 
 
   const panel =
@@ -1237,12 +1663,15 @@ async function loadTabModuleIfNeeded(tabName) {
       await loader();
 
 
-    loadedTabModules.add(tabName);
+    loadedTabModules.add(
+      tabName
+    );
 
 
     if (
       module &&
-      typeof module.init === 'function'
+      typeof module.init ===
+        'function'
     ) {
 
       await module.init(
@@ -1259,19 +1688,30 @@ async function loadTabModuleIfNeeded(tabName) {
     );
 
 
-    if (!panel) return;
+    if (!panel) {
+      return;
+    }
 
 
     panel.innerHTML = `
       <div class="tab-panel-placeholder">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <p>Unable to load this section.</p>
+
+        <i class="
+          fa-solid
+          fa-circle-exclamation
+        "></i>
+
+        <p>
+          Unable to load this section.
+        </p>
+
         <button
           type="button"
           class="retry-tab-btn"
         >
           Try again
         </button>
+
       </div>
     `;
 
@@ -1310,11 +1750,14 @@ async function loadTabModuleIfNeeded(tabName) {
 // TAB CONTEXT
 // ============================================================
 
-function buildTabContext(panelEl) {
+function buildTabContext(
+  panelEl
+) {
 
   return {
 
     db,
+
     auth,
 
     groupId:
@@ -1338,21 +1781,39 @@ function buildTabContext(panelEl) {
 
     panelEl,
 
+    // --------------------------------------------------------
+    // IMPORTANT:
+    // Exact group post opened from notification
+    // --------------------------------------------------------
+
+    postId:
+      state.postId,
+
+    requestedPostId:
+      state.postId,
+
     showToast,
+
     formatCount,
+
     initialsFrom,
+
     applyMediaBackground,
 
     refreshHeaderStats,
 
     isCurrentUserOwner,
+
     isCurrentUserAdmin,
+
     canManageGroup,
+
     isActiveMember,
+
     canViewGroup,
 
     // --------------------------------------------------------
-    // GENERAL NOTIFICATION FUNCTION
+    // GROUP NOTIFICATIONS
     // --------------------------------------------------------
 
     sendGroupNotification
@@ -1379,7 +1840,9 @@ async function refreshHeaderStats() {
 
 
     const snap =
-      await getDoc(groupRef);
+      await getDoc(
+        groupRef
+      );
 
 
     if (!snap.exists()) {
@@ -1388,18 +1851,32 @@ async function refreshHeaderStats() {
 
 
     state.groupData = {
-      id: snap.id,
+
+      id:
+        snap.id,
+
       ...snap.data()
+
     };
 
 
-    if (isCurrentUserOwner()) {
+    if (
+      isCurrentUserOwner()
+    ) {
 
       state.membership = {
+
         ...(state.membership || {}),
-        uid: state.currentUser.uid,
-        role: 'owner',
-        status: 'active'
+
+        uid:
+          state.currentUser.uid,
+
+        role:
+          'owner',
+
+        status:
+          'active'
+
       };
 
     }
@@ -1431,7 +1908,8 @@ async function refreshHeaderStats() {
 
     setText(
       statLevel,
-      state.groupData.level || 1
+      state.groupData.level ||
+      1
     );
 
 
@@ -1474,6 +1952,7 @@ function bindHeaderActions() {
     return;
   }
 
+
   headerActionsBound = true;
 
 
@@ -1509,7 +1988,10 @@ function bindHeaderActions() {
         return;
       }
 
-      activateTab('settings');
+
+      activateTab(
+        'settings'
+      );
 
     }
   );
@@ -1539,12 +2021,16 @@ function closeNotifications() {
 
   notificationsPanel
     ?.classList
-    .remove('is-visible');
+    .remove(
+      'is-visible'
+    );
 
 }
 
 
-function handleOutsideNotificationClick(event) {
+function handleOutsideNotificationClick(
+  event
+) {
 
   if (
     !notificationsPanel ||
@@ -1555,9 +2041,8 @@ function handleOutsideNotificationClick(event) {
 
 
   if (
-    notificationsPanel.classList.contains(
-      'is-visible'
-    ) &&
+    notificationsPanel.classList
+      .contains('is-visible') &&
     !notificationsPanel.contains(
       event.target
     ) &&
@@ -1599,7 +2084,8 @@ async function handleJoinLeaveClick() {
 
 
   if (
-    membership.status === 'pending'
+    membership.status ===
+      'pending'
   ) {
 
     await cancelJoinRequest();
@@ -1609,8 +2095,10 @@ async function handleJoinLeaveClick() {
 
 
   if (
-    membership.status === 'active' &&
-    membership.role !== 'owner'
+    membership.status ===
+      'active' &&
+    membership.role !==
+      'owner'
   ) {
 
     await leaveGroup();
@@ -1621,20 +2109,94 @@ async function handleJoinLeaveClick() {
 
 
 // ============================================================
+// GET USER PROFILE
+//
+// This prevents "VitalStar User" from being used when
+// Firestore has the real full name/profile photo.
+// ============================================================
+
+async function getUserProfile(
+  uid
+) {
+
+  if (!uid) {
+    return null;
+  }
+
+
+  try {
+
+    const userSnap =
+      await getDoc(
+        doc(
+          db,
+          'users',
+          uid
+        )
+      );
+
+
+    if (
+      userSnap.exists()
+    ) {
+
+      return {
+
+        uid,
+
+        ...userSnap.data()
+
+      };
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      'User profile lookup error:',
+      error
+    );
+
+  }
+
+
+  return null;
+}
+
+
+// ============================================================
 // GENERAL GROUP NOTIFICATION
 // ============================================================
 
 async function sendGroupNotification({
+
   recipientId,
+
   type,
+
   text,
+
   senderId = null,
+
   senderName = 'VitalStar Member',
+
   senderPhoto = '',
-  groupId = state.groupId,
-  groupName = state.groupData?.name || 'VitalStar Group',
+
+  groupId =
+    state.groupId,
+
+  groupName =
+    state.groupData?.name ||
+    'VitalStar Group',
+
   postId = null,
-  chatId = null
+
+  chatId = null,
+
+  requesterId = null,
+
+  applicantId = null
+
 }) {
 
   if (!recipientId) {
@@ -1646,74 +2208,133 @@ async function sendGroupNotification({
 
     const notificationData = {
 
-      // Receiver
       receiverId:
         recipientId,
 
-      // Compatibility
       recipientId:
         recipientId,
 
 
-      // Sender
       senderId:
         senderId ||
         state.currentUser?.uid ||
         null,
 
-      senderName,
 
-      senderPhoto,
+      senderName:
+        senderName ||
+        'VitalStar Member',
 
-      // Compatibility
+
+      senderPhoto:
+        senderPhoto ||
+        '',
+
+
       senderPhotoURL:
-        senderPhoto,
+        senderPhoto ||
+        '',
 
 
-      // Notification
       type,
 
       text,
 
-      // Compatibility
       message:
         text,
 
 
-      // Group
       groupId,
 
       groupName,
 
 
-      // Optional destination data
-      ...(postId
-        ? { postId }
-        : {}),
-
-      ...(chatId
-        ? { chatId }
-        : {}),
+      read:
+        false,
 
 
-      // Read state
-      read: false,
-
-
-      // Time
       createdAt:
         serverTimestamp(),
 
 
-      // Destination
+      // ------------------------------------------------------
+      // DEFAULT DESTINATION
+      // ------------------------------------------------------
+
       url:
         groupId
-          ? `group.html?id=${encodeURIComponent(
-              groupId
-            )}`
+          ? `group.html?id=${
+              encodeURIComponent(
+                groupId
+              )
+            }`
           : 'notifications.html'
 
     };
+
+
+    // --------------------------------------------------------
+    // POST
+    // --------------------------------------------------------
+
+    if (postId) {
+
+      notificationData.postId =
+        postId;
+
+
+      if (groupId) {
+
+        notificationData.url =
+          `group.html?id=${
+            encodeURIComponent(
+              groupId
+            )
+          }&tab=posts&postId=${
+            encodeURIComponent(
+              postId
+            )
+          }`;
+
+      }
+
+    }
+
+
+    // --------------------------------------------------------
+    // CHAT
+    // --------------------------------------------------------
+
+    if (chatId) {
+
+      notificationData.chatId =
+        chatId;
+
+    }
+
+
+    // --------------------------------------------------------
+    // JOIN REQUEST
+    // --------------------------------------------------------
+
+    if (
+      requesterId
+    ) {
+
+      notificationData.requesterId =
+        requesterId;
+
+    }
+
+
+    if (
+      applicantId
+    ) {
+
+      notificationData.applicantId =
+        applicantId;
+
+    }
 
 
     await addDoc(
@@ -1750,7 +2371,10 @@ async function sendJoinRequestNotification() {
     state.currentUser;
 
 
-  if (!group || !user) {
+  if (
+    !group ||
+    !user
+  ) {
     return;
   }
 
@@ -1799,7 +2423,9 @@ async function sendJoinRequestNotification() {
 
     const adminsQuery =
       query(
+
         membersRef,
+
         where(
           'role',
           'in',
@@ -1808,11 +2434,13 @@ async function sendJoinRequestNotification() {
             'moderator'
           ]
         ),
+
         where(
           'status',
           '==',
           'active'
         )
+
       );
 
 
@@ -1854,12 +2482,29 @@ async function sendJoinRequestNotification() {
     }
 
 
+    // --------------------------------------------------------
+    // GET REAL USER PROFILE
+    // --------------------------------------------------------
+
+    const profile =
+      await getUserProfile(
+        user.uid
+      );
+
+
     const senderName =
+      profile?.fullName ||
+      profile?.displayName ||
+      profile?.name ||
       user.displayName ||
       'VitalStar Member';
 
 
     const senderPhoto =
+      profile?.photoURL ||
+      profile?.photoUrl ||
+      profile?.profilePhoto ||
+      profile?.profilePicture ||
       user.photoURL ||
       '';
 
@@ -1870,7 +2515,7 @@ async function sendJoinRequestNotification() {
 
 
     // --------------------------------------------------------
-    // SEND TO GENERAL NOTIFICATION SYSTEM
+    // SEND
     // --------------------------------------------------------
 
     await Promise.all(
@@ -1898,7 +2543,13 @@ async function sendJoinRequestNotification() {
             groupId:
               state.groupId,
 
-            groupName
+            groupName,
+
+            requesterId:
+              user.uid,
+
+            applicantId:
+              user.uid
 
           })
 
@@ -1934,7 +2585,8 @@ async function joinGroup() {
   }
 
 
-  joinLeaveBtn.disabled = true;
+  joinLeaveBtn.disabled =
+    true;
 
 
   const group =
@@ -1945,7 +2597,8 @@ async function joinGroup() {
 
 
   const status =
-    group.privacy === 'private'
+    group.privacy ===
+      'private'
       ? 'pending'
       : 'active';
 
@@ -1970,7 +2623,8 @@ async function joinGroup() {
 
   try {
 
-    let alreadyExists = false;
+    let alreadyExists =
+      false;
 
 
     await runTransaction(
@@ -1983,51 +2637,84 @@ async function joinGroup() {
           );
 
 
-        if (memberSnap.exists()) {
+        if (
+          memberSnap.exists()
+        ) {
 
-          alreadyExists = true;
+          alreadyExists =
+            true;
 
           return;
         }
 
 
+        const profile =
+          await getUserProfile(
+            user.uid
+          );
+
+
+        const fullName =
+          profile?.fullName ||
+          profile?.displayName ||
+          profile?.name ||
+          user.displayName ||
+          'VitalStar Member';
+
+
+        const photoURL =
+          profile?.photoURL ||
+          profile?.photoUrl ||
+          profile?.profilePhoto ||
+          profile?.profilePicture ||
+          user.photoURL ||
+          '';
+
+
         transaction.set(
           memberRef,
           {
-            uid: user.uid,
+
+            uid:
+              user.uid,
 
             displayName:
-              user.displayName ||
-              'VitalStar Member',
+              fullName,
 
             fullName:
-              user.displayName ||
-              'VitalStar Member',
+              fullName,
 
             photoURL:
-              user.photoURL ||
-              '',
+              photoURL,
 
-            role: 'member',
+            role:
+              'member',
 
             status,
 
             category:
-              group.category || '',
+              group.category ||
+              '',
 
             joinedAt:
               serverTimestamp()
+
           }
         );
 
 
-        if (status === 'active') {
+        if (
+          status ===
+          'active'
+        ) {
 
           transaction.update(
             groupRef,
             {
+
               memberCount:
                 increment(1)
+
             }
           );
 
@@ -2037,7 +2724,9 @@ async function joinGroup() {
     );
 
 
-    if (alreadyExists) {
+    if (
+      alreadyExists
+    ) {
 
       showToast(
         'You are already a member of this group.',
@@ -2048,32 +2737,59 @@ async function joinGroup() {
     }
 
 
+    const profile =
+      await getUserProfile(
+        user.uid
+      );
+
+
+    const fullName =
+      profile?.fullName ||
+      profile?.displayName ||
+      profile?.name ||
+      user.displayName ||
+      'VitalStar Member';
+
+
+    const photoURL =
+      profile?.photoURL ||
+      profile?.photoUrl ||
+      profile?.profilePhoto ||
+      profile?.profilePicture ||
+      user.photoURL ||
+      '';
+
+
     state.membership = {
 
-      uid: user.uid,
+      uid:
+        user.uid,
 
       displayName:
-        user.displayName ||
-        'VitalStar Member',
+        fullName,
 
       fullName:
-        user.displayName ||
-        'VitalStar Member',
+        fullName,
 
       photoURL:
-        user.photoURL || '',
+        photoURL,
 
-      role: 'member',
+      role:
+        'member',
 
       status,
 
       category:
-        group.category || ''
+        group.category ||
+        ''
 
     };
 
 
-    if (status === 'active') {
+    if (
+      status ===
+      'active'
+    ) {
 
       state.groupData.memberCount =
         (
@@ -2086,7 +2802,8 @@ async function joinGroup() {
 
 
     if (
-      status === 'pending'
+      status ===
+      'pending'
     ) {
 
       await sendJoinRequestNotification();
@@ -2108,6 +2825,7 @@ async function joinGroup() {
       'success'
     );
 
+
   } catch (error) {
 
     console.error(
@@ -2120,9 +2838,11 @@ async function joinGroup() {
       'error'
     );
 
+
   } finally {
 
-    joinLeaveBtn.disabled = false;
+    joinLeaveBtn.disabled =
+      false;
 
   }
 
@@ -2144,9 +2864,13 @@ async function cancelJoinRequest() {
   }
 
 
-  if (!joinLeaveBtn) return;
+  if (!joinLeaveBtn) {
+    return;
+  }
 
-  joinLeaveBtn.disabled = true;
+
+  joinLeaveBtn.disabled =
+    true;
 
 
   try {
@@ -2162,7 +2886,9 @@ async function cancelJoinRequest() {
     );
 
 
-    state.membership = null;
+    state.membership =
+      null;
+
 
     renderJoinLeaveState();
 
@@ -2173,6 +2899,7 @@ async function cancelJoinRequest() {
       'Join request cancelled.',
       'info'
     );
+
 
   } catch (error) {
 
@@ -2186,9 +2913,11 @@ async function cancelJoinRequest() {
       'error'
     );
 
+
   } finally {
 
-    joinLeaveBtn.disabled = false;
+    joinLeaveBtn.disabled =
+      false;
 
   }
 
@@ -2201,7 +2930,9 @@ async function cancelJoinRequest() {
 
 async function leaveGroup() {
 
-  if (!state.groupData) return;
+  if (!state.groupData) {
+    return;
+  }
 
 
   if (
@@ -2213,9 +2944,13 @@ async function leaveGroup() {
   }
 
 
-  if (!joinLeaveBtn) return;
+  if (!joinLeaveBtn) {
+    return;
+  }
 
-  joinLeaveBtn.disabled = true;
+
+  joinLeaveBtn.disabled =
+    true;
 
 
   const memberRef =
@@ -2238,8 +2973,11 @@ async function leaveGroup() {
 
   try {
 
-    let removed = false;
-    let wasActive = false;
+    let removed =
+      false;
+
+    let wasActive =
+      false;
 
 
     await runTransaction(
@@ -2252,7 +2990,9 @@ async function leaveGroup() {
           );
 
 
-        if (!memberSnap.exists()) {
+        if (
+          !memberSnap.exists()
+        ) {
           return;
         }
 
@@ -2262,7 +3002,8 @@ async function leaveGroup() {
 
 
         if (
-          member.role === 'owner' ||
+          member.role ===
+            'owner' ||
           isCurrentUserOwner()
         ) {
           return;
@@ -2274,20 +3015,26 @@ async function leaveGroup() {
         );
 
 
-        removed = true;
+        removed =
+          true;
 
 
         if (
-          member.status === 'active'
+          member.status ===
+            'active'
         ) {
 
-          wasActive = true;
+          wasActive =
+            true;
+
 
           transaction.update(
             groupRef,
             {
+
               memberCount:
                 increment(-1)
+
             }
           );
 
@@ -2297,14 +3044,17 @@ async function leaveGroup() {
     );
 
 
-    if (isCurrentUserOwner()) {
+    if (
+      isCurrentUserOwner()
+    ) {
       return;
     }
 
 
     if (!removed) {
 
-      state.membership = null;
+      state.membership =
+        null;
 
       renderJoinLeaveState();
 
@@ -2312,7 +3062,8 @@ async function leaveGroup() {
     }
 
 
-    state.membership = null;
+    state.membership =
+      null;
 
 
     if (wasActive) {
@@ -2342,6 +3093,7 @@ async function leaveGroup() {
       'info'
     );
 
+
   } catch (error) {
 
     console.error(
@@ -2350,13 +3102,15 @@ async function leaveGroup() {
     );
 
     showToast(
-      'Could not leave this group.',
+      'Could not leave the group.',
       'error'
     );
 
+
   } finally {
 
-    joinLeaveBtn.disabled = false;
+    joinLeaveBtn.disabled =
+      false;
 
   }
 
@@ -2376,17 +3130,22 @@ async function handleShareClick() {
   try {
 
     if (
-      typeof navigator.share === 'function'
+      typeof navigator.share ===
+        'function'
     ) {
 
       await navigator.share({
+
         title:
           state.groupData?.name ||
           'VitalStar Group',
+
         text:
           state.groupData?.description ||
           '',
+
         url
+
       });
 
       return;
@@ -2401,10 +3160,12 @@ async function handleShareClick() {
       'success'
     );
 
+
   } catch (error) {
 
     if (
-      error?.name !== 'AbortError'
+      error?.name !==
+      'AbortError'
     ) {
 
       console.error(
@@ -2437,12 +3198,14 @@ async function handleInviteClick() {
       'success'
     );
 
+
   } catch (error) {
 
     console.error(
       'Invite copy error:',
       error
     );
+
 
     showToast(
       'Could not copy the invite link.',
@@ -2474,26 +3237,45 @@ async function copyText(text) {
 
 
   const textarea =
-    document.createElement('textarea');
+    document.createElement(
+      'textarea'
+    );
 
-  textarea.value = text;
 
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
+  textarea.value =
+    text;
 
-  document.body.appendChild(textarea);
+
+  textarea.style.position =
+    'fixed';
+
+  textarea.style.opacity =
+    '0';
+
+
+  document.body.appendChild(
+    textarea
+  );
+
 
   textarea.select();
 
+
   const copied =
-    document.execCommand('copy');
+    document.execCommand(
+      'copy'
+    );
+
 
   textarea.remove();
 
+
   if (!copied) {
+
     throw new Error(
       'Clipboard copy failed'
     );
+
   }
 
 }
@@ -2513,7 +3295,9 @@ async function toggleNotificationsPanel() {
   const opening =
     !notificationsPanel
       .classList
-      .contains('is-visible');
+      .contains(
+        'is-visible'
+      );
 
 
   notificationsPanel
@@ -2540,12 +3324,14 @@ async function toggleNotificationsPanel() {
       );
 
 
-    notificationsModuleLoaded = true;
+    notificationsModuleLoaded =
+      true;
 
 
     if (
       module &&
-      typeof module.init === 'function'
+      typeof module.init ===
+        'function'
     ) {
 
       await module.init({
@@ -2572,12 +3358,14 @@ async function toggleNotificationsPanel() {
 
     }
 
+
   } catch (error) {
 
     console.error(
       'Notifications error:',
       error
     );
+
 
     showToast(
       'Notifications could not be loaded.',
