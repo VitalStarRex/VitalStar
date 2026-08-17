@@ -1,69 +1,151 @@
 // ============================================================
 // VITALSTAR — groups.js
-// Handles: auth guard, trending rail, category filtering,
-// search (via searchTokens), Discover / Recommended / My Groups
-// tabs, join / request-to-join logic, and pagination.
+// ============================================================
+// Handles:
+//   • Authentication
+//   • Trending groups
+//   • Top 5 most active groups
+//   • New groups
+//   • Category filtering
+//   • Search
+//   • Discover
+//   • Recommended
+//   • My Groups
+//       ├── Groups I Created
+//       └── Groups I Joined
+//   • Join / request-to-join
+//   • Better pagination
+//   • Skeleton loading
 //
-// This file preserves the exact Firestore field names, collection
-// paths, and DOM element IDs used elsewhere in the VitalStar
-// project (as established by the previous version of this file
-// and by create-group.js's data shape). Nothing has been renamed.
+// Existing Firestore paths are preserved:
+//
+//   groups/{groupId}
+//   groups/{groupId}/members/{uid}
+//
+// Existing group fields are preserved:
+//
+//   name
+//   description
+//   avatarURL
+//   coverURL
+//   privacy
+//   type
+//   category
+//   verified
+//   memberCount
+//   postCount
+//   onlineCount
+//   createdAt
+//   searchTokens
+//
 // ============================================================
 
 import { auth, db } from './firebase.js';
+
 import {
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
 import {
   collection,
   collectionGroup,
   doc,
   getDoc,
   getDocs,
-  runTransaction,
-  updateDoc,
   query,
   where,
   orderBy,
   limit,
   startAfter,
   increment,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-const PAGE_SIZE = 12;
 
 // ============================================================
-// DOM REFERENCES
-// (Every reference below is looked up once. Some of these elements
-// are optional depending on which page/version of groups.html is
-// loaded, so every place we USE them checks for null first — see
-// the safe$() helpers below. This means a missing optional element
-// degrades a feature gracefully instead of throwing and killing
-// the whole script.)
+// CONFIG
 // ============================================================
+
+const PAGE_SIZE = 12;
+const RAIL_LIMIT = 5;
+const TRENDING_LIMIT = 6;
+
+
+// ============================================================
+// DOM
+// ============================================================
+
 const navUserAvatar = document.getElementById('navUserAvatar');
 
 const searchInput = document.getElementById('searchInput');
 const searchClearBtn = document.getElementById('searchClearBtn');
 const searchLoading = document.getElementById('searchLoading');
 
-const categoryChipsContainer = document.getElementById('categoryChips');
-const tabsContainer = document.getElementById('groupTabs');
+const categoryChipsContainer =
+  document.getElementById('categoryChips');
 
-const trendingList = document.getElementById('trendingList');
-const trendingSection = document.getElementById('trendingSection');
+const tabsContainer =
+  document.getElementById('groupTabs');
 
-const groupsGrid = document.getElementById('groupsGrid');
-const groupsEmptyState = document.getElementById('groupsEmptyState');
-const groupsEmptyMessage = document.getElementById('groupsEmptyMessage');
-const loadMoreBtn = document.getElementById('loadMoreBtn');
+const groupsGrid =
+  document.getElementById('groupsGrid');
 
-const toastContainer = document.getElementById('toast-container');
+const groupsEmptyState =
+  document.getElementById('groupsEmptyState');
 
-const groupCardTemplate = document.getElementById('groupCardTemplate');
-const trendingCardTemplate = document.getElementById('trendingCardTemplate');
-const skeletonCardTemplate = document.getElementById('skeletonCardTemplate');
+const groupsEmptyMessage =
+  document.getElementById('groupsEmptyMessage');
+
+const loadMoreBtn =
+  document.getElementById('loadMoreBtn');
+
+const toastContainer =
+  document.getElementById('toast-container');
+
+
+// Optional sections
+
+const trendingList =
+  document.getElementById('trendingList');
+
+const trendingSection =
+  document.getElementById('trendingSection');
+
+const activeGroupsList =
+  document.getElementById('activeGroupsList');
+
+const activeGroupsSection =
+  document.getElementById('activeGroupsSection');
+
+const newGroupsList =
+  document.getElementById('newGroupsList');
+
+const newGroupsSection =
+  document.getElementById('newGroupsSection');
+
+const recommendedList =
+  document.getElementById('recommendedList');
+
+const recommendedSection =
+  document.getElementById('recommendedSection');
+
+
+// Templates
+
+const groupCardTemplate =
+  document.getElementById('groupCardTemplate');
+
+const trendingCardTemplate =
+  document.getElementById('trendingCardTemplate');
+
+const skeletonCardTemplate =
+  document.getElementById('skeletonCardTemplate');
+
+
+// ============================================================
+// CATEGORY LABELS
+// ============================================================
 
 const CATEGORY_LABELS = {
   technology: 'Technology',
@@ -86,711 +168,2565 @@ const CATEGORY_LABELS = {
   other: 'Other'
 };
 
+
 // ============================================================
 // STATE
 // ============================================================
+
 const state = {
+
   currentUser: null,
-  activeTab: 'discover',       // discover | recommended | my-groups
+
+  activeTab: 'discover',
+
   activeCategory: 'all',
+
   searchQuery: '',
+
   searchDebounceHandle: null,
 
   lastVisibleDoc: null,
+
   hasMore: false,
+
   isLoading: false,
 
-  // groupId -> { status: 'active' | 'pending', role, category }
+  // Prevents repeated requests while changing tabs/categories.
+  requestVersion: 0,
+
+  // groupId -> membership
   membershipMap: new Map(),
-  // sorted array of { groupId, status, role, category, joinedAt } for My Groups tab
+
+  // Membership records.
   membershipList: [],
-  myGroupsPageIndex: 0
+
+  // Groups created by the current user.
+  createdGroups: [],
+
+  // Pagination for My Groups.
+  myGroupsPageIndex: 0,
+
+  // IDs already displayed in the current grid.
+  displayedGroupIds: new Set()
 };
 
+
 // ============================================================
-// TOASTS
+// TOAST
 // ============================================================
+
 function showToast(message, type = 'info') {
-  if (!toastContainer) return; // toast container is optional UI chrome
-  const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
+
+  if (!toastContainer) return;
+
+  const icons = {
+    success: 'fa-circle-check',
+    error: 'fa-circle-exclamation',
+    info: 'fa-circle-info'
+  };
+
   const toast = document.createElement('div');
+
   toast.className = `toast toast--${type}`;
-  toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span></span>`;
-  toast.querySelector('span').textContent = message;
+
+  toast.innerHTML = `
+    <i class="fa-solid ${icons[type] || icons.info}"></i>
+    <span></span>
+  `;
+
+  const span = toast.querySelector('span');
+
+  if (span) {
+    span.textContent = message;
+  }
+
   toastContainer.appendChild(toast);
+
   setTimeout(() => {
+
     toast.classList.add('is-leaving');
-    toast.addEventListener('animationend', () => toast.remove(), { once: true });
+
+    toast.addEventListener(
+      'animationend',
+      () => toast.remove(),
+      { once: true }
+    );
+
   }, 3800);
 }
 
+
 // ============================================================
-// FIRESTORE ERROR LOGGING
-//
-// When a Firestore query needs a composite index that doesn't exist yet,
-// the SDK rejects with code 'failed-precondition' and a message that
-// embeds a direct console link to create that exact index. That link is
-// the single most useful piece of debugging info you'll get from
-// Firestore, so it must never be swallowed — every catch block below
-// that touches a Firestore call passes its error through this function
-// FIRST, before showing the generic user-facing toast.
-//
-// This never replaces the toast — it runs alongside it. The toast is for
-// the user; this console output is for you (or whoever's debugging).
+// FIRESTORE ERROR LOGGER
 // ============================================================
+
 function logFirestoreError(context, error) {
+
   console.error(`[Firestore error] ${context}`);
-  console.error(error); // full error object — preserves stack trace, code, everything
 
-  if (error && error.code) {
-    console.error(`  code: ${error.code}`);
+  console.error(error);
+
+  if (error?.code) {
+    console.error(`code: ${error.code}`);
   }
-  if (error && error.message) {
-    console.error(`  message: ${error.message}`);
 
-    // 'failed-precondition' index errors embed a console URL in the message
-    // that looks like: https://console.firebase.google.com/project/.../firestore/indexes?create_composite=...
-    const urlMatch = error.message.match(/https:\/\/console\.firebase\.google\.com\S*/);
-    if (urlMatch) {
-      console.error(`  ➜ This looks like a missing-index error. Create it here: ${urlMatch[0]}`);
-    } else if (error.code === 'failed-precondition') {
-      console.error('  ➜ This is a failed-precondition error but no index-creation URL was found in the message — check the message above for details.');
+  if (error?.message) {
+
+    console.error(`message: ${error.message}`);
+
+    const match =
+      error.message.match(
+        /https:\/\/console\.firebase\.google\.com\S*/
+      );
+
+    if (match) {
+
+      console.error(
+        `Create the required Firestore index here: ${match[0]}`
+      );
     }
   }
 }
+
 
 // ============================================================
 // UTILITIES
 // ============================================================
+
 function formatCount(num) {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1).replace(/\.0$/, '')}K`;
-  return `${num}`;
+
+  num = Number(num) || 0;
+
+  if (num >= 1000000) {
+    return `${(num / 1000000)
+      .toFixed(1)
+      .replace(/\.0$/, '')}M`;
+  }
+
+  if (num >= 1000) {
+    return `${(num / 1000)
+      .toFixed(1)
+      .replace(/\.0$/, '')}K`;
+  }
+
+  return String(num);
 }
+
 
 function initialsFrom(name) {
-  return (name || '?').trim().charAt(0).toUpperCase();
+
+  return (name || '?')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
 }
 
-function applyMediaBackground(el, url, fallbackText) {
+
+function applyMediaBackground(
+  el,
+  url,
+  fallbackText = ''
+) {
+
   if (!el) return;
+
   if (url) {
-    el.style.backgroundImage = `url(${url})`;
+
+    el.style.backgroundImage =
+      `url("${url}")`;
+
     el.style.backgroundSize = 'cover';
-    el.style.backgroundPosition = 'center';
+
+    el.style.backgroundPosition =
+      'center';
+
     el.textContent = '';
-  } else if (fallbackText !== undefined) {
+
+  } else {
+
+    el.style.backgroundImage = '';
+
     el.textContent = fallbackText;
   }
 }
 
-// Safe text-setter — no-ops if the node wasn't found in a template
-// (protects against a template markup change breaking the whole script).
+
 function setText(root, selector, value) {
-  const el = root.querySelector(selector);
-  if (el) el.textContent = value;
+
+  if (!root) return;
+
+  const el =
+    root.querySelector(selector);
+
+  if (el) {
+    el.textContent = value ?? '';
+  }
 }
 
+
+function getTimestampValue(value) {
+
+  if (!value) return 0;
+
+  if (typeof value.toMillis === 'function') {
+    return value.toMillis();
+  }
+
+  if (value.seconds) {
+    return value.seconds * 1000;
+  }
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  return 0;
+}
+
+
 // ============================================================
-// AUTH GUARD
+// CREATOR DETECTION
 // ============================================================
+//
+// Different versions of create-group.js may have used one of these
+// creator fields. This helper supports them without changing the
+// existing group document.
+//
+// ============================================================
+
+function isGroupCreatedByUser(group, uid) {
+
+  if (!group || !uid) return false;
+
+  const creatorFields = [
+    'ownerId',
+    'creatorId',
+    'createdBy',
+    'createdByUid',
+    'creatorUid'
+  ];
+
+  return creatorFields.some(
+    field => group[field] === uid
+  );
+}
+
+
+// ============================================================
+// AUTH
+// ============================================================
+
 onAuthStateChanged(auth, async (user) => {
+
   if (!user) {
+
     window.location.href = 'login.html';
+
     return;
   }
+
   state.currentUser = user;
 
   if (user.photoURL) {
-    applyMediaBackground(navUserAvatar, user.photoURL);
+
+    applyMediaBackground(
+      navUserAvatar,
+      user.photoURL
+    );
   }
 
   try {
+
     await loadUserMemberships();
-    await loadTrending();
+
+    await Promise.all([
+      loadTrending(),
+      loadTopActiveGroups(),
+      loadNewGroups(),
+      loadRecommendedRail()
+    ]);
+
     await loadGroupsForActiveView(true);
+
   } catch (error) {
-    logFirestoreError('Initializing groups page (auth guard)', error);
-    showToast('Something went wrong loading groups. Please refresh.', 'error');
+
+    logFirestoreError(
+      'Initializing Groups page',
+      error
+    );
+
+    showToast(
+      'Something went wrong loading groups.',
+      'error'
+    );
   }
 });
 
+
 // ============================================================
-// LOAD THE CURRENT USER'S MEMBERSHIPS
-// (used for join-button state, My Groups tab, and Recommended)
+// LOAD USER MEMBERSHIPS
 // ============================================================
+
 async function loadUserMemberships() {
+
   try {
+
     const membersQuery = query(
       collectionGroup(db, 'members'),
-      where('uid', '==', state.currentUser.uid),
-      limit(300)
+      where(
+        'uid',
+        '==',
+        state.currentUser.uid
+      ),
+      limit(500)
     );
-    const snapshot = await getDocs(membersQuery);
+
+    const snapshot =
+      await getDocs(membersQuery);
 
     state.membershipMap.clear();
+
     const list = [];
 
-    snapshot.forEach((memberDoc) => {
-      const groupId = memberDoc.ref.parent.parent.id;
-      const data = memberDoc.data();
-      state.membershipMap.set(groupId, {
-        status: data.status,
-        role: data.role,
-        category: data.category || ''
-      });
-      list.push({
+    snapshot.forEach(memberDoc => {
+
+      const parentGroup =
+        memberDoc.ref.parent.parent;
+
+      if (!parentGroup) return;
+
+      const groupId =
+        parentGroup.id;
+
+      const data =
+        memberDoc.data();
+
+      state.membershipMap.set(
         groupId,
-        status: data.status,
-        role: data.role,
-        category: data.category || '',
-        joinedAt: data.joinedAt ? data.joinedAt.toMillis() : 0
+        {
+          status: data.status || 'active',
+          role: data.role || 'member',
+          category: data.category || ''
+        }
+      );
+
+      list.push({
+
+        groupId,
+
+        status:
+          data.status || 'active',
+
+        role:
+          data.role || 'member',
+
+        category:
+          data.category || '',
+
+        joinedAt:
+          getTimestampValue(data.joinedAt)
       });
     });
 
-    list.sort((a, b) => b.joinedAt - a.joinedAt);
+    list.sort(
+      (a, b) => b.joinedAt - a.joinedAt
+    );
+
     state.membershipList = list;
+
+    // Now find groups the user created.
+    await loadCreatedGroups();
+
   } catch (error) {
-    // Memberships silently degrade (join buttons just show as "not joined")
-    // rather than blocking the page, but the real error still needs to be
-    // visible for debugging — never swallow it.
-    logFirestoreError('Loading user memberships (collectionGroup "members" query)', error);
+
+    logFirestoreError(
+      'Loading user memberships',
+      error
+    );
+
+    state.membershipMap.clear();
+    state.membershipList = [];
+
+    await loadCreatedGroups();
   }
 }
 
+
 // ============================================================
-// TRENDING RAIL
+// LOAD CREATED GROUPS
 // ============================================================
+//
+// We intentionally check several possible creator field names.
+//
+// This means My Groups can still work if create-group.js stored:
+//   ownerId
+//   creatorId
+//   createdBy
+//   createdByUid
+//   creatorUid
+//
+// ============================================================
+
+async function loadCreatedGroups() {
+
+  const uid =
+    state.currentUser?.uid;
+
+  if (!uid) return;
+
+  const found =
+    new Map();
+
+  const creatorFields = [
+    'ownerId',
+    'creatorId',
+    'createdBy',
+    'createdByUid',
+    'creatorUid'
+  ];
+
+  for (const field of creatorFields) {
+
+    try {
+
+      const q = query(
+        collection(db, 'groups'),
+        where(field, '==', uid),
+        limit(100)
+      );
+
+      const snapshot =
+        await getDocs(q);
+
+      snapshot.forEach(groupDoc => {
+
+        found.set(
+          groupDoc.id,
+          {
+            id: groupDoc.id,
+            ...groupDoc.data()
+          }
+        );
+      });
+
+    } catch (error) {
+
+      // Some fields may not exist in the current schema.
+      // We log the error but continue checking the others.
+
+      logFirestoreError(
+        `Checking created groups using "${field}"`,
+        error
+      );
+    }
+  }
+
+  state.createdGroups =
+    Array.from(found.values());
+
+  state.createdGroups.sort(
+    (a, b) =>
+      getTimestampValue(b.createdAt) -
+      getTimestampValue(a.createdAt)
+  );
+}
+
+
+// ============================================================
+// TRENDING
+// ============================================================
+
 async function loadTrending() {
-  if (!trendingList || !trendingSection || !trendingCardTemplate) return; // optional section
+
+  if (
+    !trendingList ||
+    !trendingSection ||
+    !trendingCardTemplate
+  ) {
+    return;
+  }
 
   try {
-    const trendingQuery = query(
+
+    const q = query(
       collection(db, 'groups'),
       where('privacy', '==', 'public'),
       orderBy('memberCount', 'desc'),
-      limit(6)
+      limit(TRENDING_LIMIT)
     );
-    const snapshot = await getDocs(trendingQuery);
+
+    const snapshot =
+      await getDocs(q);
 
     trendingList.innerHTML = '';
 
     if (snapshot.empty) {
-      trendingSection.style.display = 'none';
+
+      trendingSection.style.display =
+        'none';
+
       return;
     }
-    trendingSection.style.display = 'block';
+
+    trendingSection.style.display =
+      'block';
 
     let rank = 0;
-    snapshot.forEach((groupDoc) => {
-      rank += 1;
-      const group = { id: groupDoc.id, ...groupDoc.data() };
-      const card = buildTrendingCard(group, rank);
-      if (card) trendingList.appendChild(card);
+
+    snapshot.forEach(groupDoc => {
+
+      rank++;
+
+      const group = {
+        id: groupDoc.id,
+        ...groupDoc.data()
+      };
+
+      const card =
+        buildTrendingCard(
+          group,
+          rank
+        );
+
+      if (card) {
+        trendingList.appendChild(card);
+      }
     });
+
   } catch (error) {
-    // Trending is optional — never let it block the main Groups page.
-    logFirestoreError('Loading trending groups (privacy + memberCount query)', error);
-    trendingSection.style.display = 'none';
+
+    logFirestoreError(
+      'Loading trending groups',
+      error
+    );
+
+    trendingSection.style.display =
+      'none';
   }
 }
 
-function buildTrendingCard(group, rank) {
-  const template = trendingCardTemplate.content.firstElementChild;
-  if (!template) return null;
-  const node = template.cloneNode(true);
-  node.href = `group.html?id=${group.id}`;
-  setText(node, '.trending-card__rank', `#${rank}`);
 
-  const cover = node.querySelector('.trending-card__cover');
-  if (cover && group.coverURL) {
-    cover.style.backgroundImage = `url(${group.coverURL})`;
+// ============================================================
+// TOP 5 MOST ACTIVE GROUPS
+// ============================================================
+//
+// Activity score:
+//
+//   posts + members + online users
+//
+// If activityScore already exists, it is used first.
+//
+// ============================================================
+
+async function loadTopActiveGroups() {
+
+  if (
+    !activeGroupsList ||
+    !activeGroupsSection
+  ) {
+    return;
   }
 
-  const avatar = node.querySelector('.trending-card__avatar');
-  applyMediaBackground(avatar, group.avatarURL, initialsFrom(group.name));
+  try {
 
-  setText(node, '.trending-card__name', group.name || 'Untitled group');
-  setText(node, '.trending-card__member-count', formatCount(group.memberCount || 0));
+    const q = query(
+      collection(db, 'groups'),
+      where('privacy', '==', 'public'),
+      orderBy('postCount', 'desc'),
+      limit(10)
+    );
+
+    const snapshot =
+      await getDocs(q);
+
+    const groups =
+      snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+
+    groups.sort((a, b) => {
+
+      const scoreA =
+        Number(a.activityScore ?? (
+          Number(a.postCount || 0) * 3 +
+          Number(a.memberCount || 0) +
+          Number(a.onlineCount || 0) * 2
+        ));
+
+      const scoreB =
+        Number(b.activityScore ?? (
+          Number(b.postCount || 0) * 3 +
+          Number(b.memberCount || 0) +
+          Number(b.onlineCount || 0) * 2
+        ));
+
+      return scoreB - scoreA;
+    });
+
+    const topFive =
+      groups.slice(0, 5);
+
+    activeGroupsList.innerHTML = '';
+
+    if (!topFive.length) {
+
+      activeGroupsSection.style.display =
+        'none';
+
+      return;
+    }
+
+    activeGroupsSection.style.display =
+      'block';
+
+    topFive.forEach(group => {
+
+      const card =
+        buildRailCard(group);
+
+      if (card) {
+        activeGroupsList.appendChild(card);
+      }
+    });
+
+  } catch (error) {
+
+    logFirestoreError(
+      'Loading Top 5 Most Active Groups',
+      error
+    );
+
+    activeGroupsSection.style.display =
+      'none';
+  }
+}
+
+
+// ============================================================
+// NEW GROUPS
+// ============================================================
+
+async function loadNewGroups() {
+
+  if (
+    !newGroupsList ||
+    !newGroupsSection
+  ) {
+    return;
+  }
+
+  try {
+
+    const q = query(
+      collection(db, 'groups'),
+      where('privacy', '==', 'public'),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
+
+    const snapshot =
+      await getDocs(q);
+
+    newGroupsList.innerHTML = '';
+
+    if (snapshot.empty) {
+
+      newGroupsSection.style.display =
+        'none';
+
+      return;
+    }
+
+    newGroupsSection.style.display =
+      'block';
+
+    snapshot.forEach(groupDoc => {
+
+      const group = {
+        id: groupDoc.id,
+        ...groupDoc.data()
+      };
+
+      const card =
+        buildRailCard(group);
+
+      if (card) {
+        newGroupsList.appendChild(card);
+      }
+    });
+
+  } catch (error) {
+
+    logFirestoreError(
+      'Loading New Groups',
+      error
+    );
+
+    newGroupsSection.style.display =
+      'none';
+  }
+}
+
+
+// ============================================================
+// RECOMMENDED RAIL
+// ============================================================
+
+async function loadRecommendedRail() {
+
+  if (
+    !recommendedList ||
+    !recommendedSection
+  ) {
+    return;
+  }
+
+  try {
+
+    const joinedCategories =
+      Array.from(
+        new Set(
+          state.membershipList
+            .map(m => m.category)
+            .filter(Boolean)
+        )
+      ).slice(0, 10);
+
+    let snapshot;
+
+    if (joinedCategories.length) {
+
+      const q = query(
+        collection(db, 'groups'),
+        where('privacy', '==', 'public'),
+        where(
+          'category',
+          'in',
+          joinedCategories
+        ),
+        orderBy(
+          'memberCount',
+          'desc'
+        ),
+        limit(10)
+      );
+
+      snapshot =
+        await getDocs(q);
+
+    } else {
+
+      const q = query(
+        collection(db, 'groups'),
+        where('privacy', '==', 'public'),
+        orderBy(
+          'memberCount',
+          'desc'
+        ),
+        limit(10)
+      );
+
+      snapshot =
+        await getDocs(q);
+    }
+
+    const groups =
+      snapshot.docs
+        .map(d => ({
+          id: d.id,
+          ...d.data()
+        }))
+        .filter(
+          group =>
+            !state.membershipMap.has(
+              group.id
+            )
+        )
+        .slice(0, 5);
+
+    recommendedList.innerHTML = '';
+
+    if (!groups.length) {
+
+      recommendedSection.style.display =
+        'none';
+
+      return;
+    }
+
+    recommendedSection.style.display =
+      'block';
+
+    groups.forEach(group => {
+
+      const card =
+        buildRailCard(group);
+
+      if (card) {
+        recommendedList.appendChild(card);
+      }
+    });
+
+  } catch (error) {
+
+    logFirestoreError(
+      'Loading Recommended Groups',
+      error
+    );
+
+    recommendedSection.style.display =
+      'none';
+  }
+}
+
+
+// ============================================================
+// TRENDING CARD
+// ============================================================
+
+function buildTrendingCard(
+  group,
+  rank
+) {
+
+  if (!trendingCardTemplate) {
+    return null;
+  }
+
+  const template =
+    trendingCardTemplate
+      .content
+      .firstElementChild;
+
+  if (!template) return null;
+
+  const node =
+    template.cloneNode(true);
+
+  if ('href' in node) {
+    node.href =
+      `group.html?id=${encodeURIComponent(group.id)}`;
+  }
+
+  setText(
+    node,
+    '.trending-card__rank',
+    `#${rank}`
+  );
+
+  const cover =
+    node.querySelector(
+      '.trending-card__cover'
+    );
+
+  if (cover && group.coverURL) {
+
+    cover.style.backgroundImage =
+      `url("${group.coverURL}")`;
+
+    cover.style.backgroundSize =
+      'cover';
+
+    cover.style.backgroundPosition =
+      'center';
+  }
+
+  const avatar =
+    node.querySelector(
+      '.trending-card__avatar'
+    );
+
+  applyMediaBackground(
+    avatar,
+    group.avatarURL,
+    initialsFrom(group.name)
+  );
+
+  setText(
+    node,
+    '.trending-card__name',
+    group.name || 'Untitled group'
+  );
+
+  setText(
+    node,
+    '.trending-card__member-count',
+    `${formatCount(group.memberCount || 0)} members`
+  );
 
   return node;
 }
 
+
 // ============================================================
-// GROUP CARD BUILDER (Discover / Recommended / My Groups grid)
+// GENERIC RAIL CARD
 // ============================================================
+
+function buildRailCard(group) {
+
+  const a =
+    document.createElement('a');
+
+  a.className =
+    'group-rail-card';
+
+  a.href =
+    `group.html?id=${encodeURIComponent(group.id)}`;
+
+  const avatar =
+    document.createElement('div');
+
+  avatar.className =
+    'group-rail-card__avatar';
+
+  applyMediaBackground(
+    avatar,
+    group.avatarURL,
+    initialsFrom(group.name)
+  );
+
+  const content =
+    document.createElement('div');
+
+  content.className =
+    'group-rail-card__content';
+
+  const name =
+    document.createElement('div');
+
+  name.className =
+    'group-rail-card__name';
+
+  name.textContent =
+    group.name || 'Untitled group';
+
+  const meta =
+    document.createElement('div');
+
+  meta.className =
+    'group-rail-card__meta';
+
+  meta.textContent =
+    `${formatCount(group.memberCount || 0)} members`;
+
+  content.appendChild(name);
+  content.appendChild(meta);
+
+  a.appendChild(avatar);
+  a.appendChild(content);
+
+  return a;
+}
+
+
+// ============================================================
+// MAIN GROUP CARD
+// ============================================================
+
 function buildGroupCard(group) {
-  if (!groupCardTemplate) return null;
-  const template = groupCardTemplate.content.firstElementChild;
+
+  if (!groupCardTemplate) {
+    return null;
+  }
+
+  const template =
+    groupCardTemplate
+      .content
+      .firstElementChild;
+
   if (!template) return null;
-  const node = template.cloneNode(true);
-  node.href = `group.html?id=${group.id}`;
-  node.dataset.groupId = group.id;
 
-  const cover = node.querySelector('.group-card__cover');
-  if (cover && group.coverURL) cover.style.backgroundImage = `url(${group.coverURL})`;
+  const node =
+    template.cloneNode(true);
 
-  const avatar = node.querySelector('.group-card__avatar');
-  applyMediaBackground(avatar, group.avatarURL, initialsFrom(group.name));
+  node.href =
+    `group.html?id=${encodeURIComponent(group.id)}`;
 
-  setText(node, '.group-card__name', group.name || 'Untitled group');
+  node.dataset.groupId =
+    group.id;
 
-  const privacyBadge = node.querySelector('.group-card__privacy-badge');
+  const cover =
+    node.querySelector(
+      '.group-card__cover'
+    );
+
+  if (cover && group.coverURL) {
+
+    cover.style.backgroundImage =
+      `url("${group.coverURL}")`;
+
+    cover.style.backgroundSize =
+      'cover';
+
+    cover.style.backgroundPosition =
+      'center';
+  }
+
+  const avatar =
+    node.querySelector(
+      '.group-card__avatar'
+    );
+
+  applyMediaBackground(
+    avatar,
+    group.avatarURL,
+    initialsFrom(group.name)
+  );
+
+  setText(
+    node,
+    '.group-card__name',
+    group.name || 'Untitled group'
+  );
+
+  const privacyBadge =
+    node.querySelector(
+      '.group-card__privacy-badge'
+    );
+
   if (privacyBadge) {
+
     if (group.privacy === 'private') {
-      privacyBadge.className = 'badge badge--private group-card__privacy-badge';
-      privacyBadge.innerHTML = '<i class="fa-solid fa-lock" style="font-size:9px;"></i> Private';
+
+      privacyBadge.className =
+        'badge badge--private group-card__privacy-badge';
+
+      privacyBadge.innerHTML =
+        '<i class="fa-solid fa-lock"></i> Private';
+
     } else {
-      privacyBadge.className = 'badge badge--public group-card__privacy-badge';
-      privacyBadge.innerHTML = '<i class="fa-solid fa-globe" style="font-size:9px;"></i> Public';
+
+      privacyBadge.className =
+        'badge badge--public group-card__privacy-badge';
+
+      privacyBadge.innerHTML =
+        '<i class="fa-solid fa-globe"></i> Public';
     }
   }
 
-  const premiumBadge = node.querySelector('.group-card__premium-badge');
-  if (premiumBadge) premiumBadge.style.display = group.type === 'premium' ? 'inline-flex' : 'none';
+  const premiumBadge =
+    node.querySelector(
+      '.group-card__premium-badge'
+    );
 
-  const verifiedBadge = node.querySelector('.group-card__verified-badge');
-  if (verifiedBadge) verifiedBadge.style.display = group.verified ? 'inline-flex' : 'none';
+  if (premiumBadge) {
 
-  setText(node, '.group-card__desc', group.description || '');
-  setText(node, '.group-card__member-count', formatCount(group.memberCount || 0));
-  setText(node, '.group-card__post-count', formatCount(group.postCount || 0));
-  setText(node, '.group-card__online-count', formatCount(group.onlineCount || 0));
+    premiumBadge.style.display =
+      group.type === 'premium'
+        ? 'inline-flex'
+        : 'none';
+  }
 
-  const joinBtn = node.querySelector('.group-card__join-btn');
+  const verifiedBadge =
+    node.querySelector(
+      '.group-card__verified-badge'
+    );
+
+  if (verifiedBadge) {
+
+    verifiedBadge.style.display =
+      group.verified
+        ? 'inline-flex'
+        : 'none';
+  }
+
+  setText(
+    node,
+    '.group-card__desc',
+    group.description || ''
+  );
+
+  setText(
+    node,
+    '.group-card__member-count',
+    formatCount(group.memberCount || 0)
+  );
+
+  setText(
+    node,
+    '.group-card__post-count',
+    formatCount(group.postCount || 0)
+  );
+
+  setText(
+    node,
+    '.group-card__online-count',
+    formatCount(group.onlineCount || 0)
+  );
+
+
+  // ==========================================================
+  // CREATED / JOINED BADGES
+  // ==========================================================
+
+  const membership =
+    state.membershipMap.get(group.id);
+
+  const createdByMe =
+    isGroupCreatedByUser(
+      group,
+      state.currentUser?.uid
+    );
+
+  const statusBadge =
+    node.querySelector(
+      '.group-card__status'
+    );
+
+  if (statusBadge) {
+
+    if (createdByMe) {
+
+      statusBadge.textContent =
+        'Created by you';
+
+      statusBadge.style.display =
+        'inline-flex';
+
+    } else if (
+      membership?.status === 'active'
+    ) {
+
+      statusBadge.textContent =
+        'Joined';
+
+      statusBadge.style.display =
+        'inline-flex';
+
+    } else if (
+      membership?.status === 'pending'
+    ) {
+
+      statusBadge.textContent =
+        'Requested';
+
+      statusBadge.style.display =
+        'inline-flex';
+
+    } else {
+
+      statusBadge.style.display =
+        'none';
+    }
+  }
+
+
+  // ==========================================================
+  // JOIN BUTTON
+  // ==========================================================
+
+  const joinBtn =
+    node.querySelector(
+      '.group-card__join-btn'
+    );
+
   if (joinBtn) {
-    applyJoinButtonState(joinBtn, group.id);
-    joinBtn.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      handleJoinClick(group, joinBtn);
-    });
+
+    // Creator does not need a Join button.
+    if (createdByMe) {
+
+      joinBtn.textContent =
+        'Your group';
+
+      joinBtn.disabled =
+        true;
+
+      joinBtn.className =
+        'btn-join group-card__join-btn is-owner';
+
+    } else {
+
+      applyJoinButtonState(
+        joinBtn,
+        group.id
+      );
+
+      joinBtn.addEventListener(
+        'click',
+        event => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          handleJoinClick(
+            group,
+            joinBtn
+          );
+        }
+      );
+    }
   }
 
   return node;
 }
 
-function applyJoinButtonState(buttonEl, groupId) {
-  const membership = state.membershipMap.get(groupId);
 
-  buttonEl.className = 'btn-join group-card__join-btn';
-  buttonEl.disabled = false;
+// ============================================================
+// JOIN BUTTON STATE
+// ============================================================
+
+function applyJoinButtonState(
+  buttonEl,
+  groupId
+) {
+
+  if (!buttonEl) return;
+
+  const membership =
+    state.membershipMap.get(groupId);
+
+  buttonEl.className =
+    'btn-join group-card__join-btn';
+
+  buttonEl.disabled =
+    false;
 
   if (!membership) {
-    buttonEl.textContent = 'Join group';
-    buttonEl.classList.add('is-primary');
-  } else if (membership.status === 'pending') {
-    buttonEl.textContent = 'Requested';
-    buttonEl.classList.add('is-pending');
-    buttonEl.disabled = true;
-  } else {
-    buttonEl.textContent = '✓ Joined';
-    buttonEl.disabled = true;
+
+    buttonEl.textContent =
+      'Join group';
+
+    buttonEl.classList.add(
+      'is-primary'
+    );
+
+    return;
   }
+
+  if (
+    membership.status === 'pending'
+  ) {
+
+    buttonEl.textContent =
+      'Requested';
+
+    buttonEl.classList.add(
+      'is-pending'
+    );
+
+    buttonEl.disabled =
+      true;
+
+    return;
+  }
+
+  buttonEl.textContent =
+    '✓ Joined';
+
+  buttonEl.disabled =
+    true;
 }
 
+
 // ============================================================
-// JOIN / REQUEST TO JOIN
-//
-// This runs as a Firestore transaction so that:
-//   1) A double-click, or the same user joining from two open tabs,
-//      can never create two member docs or double-increment memberCount.
-//   2) The memberCount increment and the member doc creation succeed
-//      or fail together — never one without the other.
-//
-// A pending (private-group) request never touches memberCount; only
-// an 'active' (public-group) join does, and only once, because the
-// transaction re-checks membership existence server-side before
-// writing anything.
+// JOIN GROUP
 // ============================================================
-async function handleJoinClick(group, buttonEl) {
-  if (state.membershipMap.has(group.id)) return; // already joined or pending (client-side fast path)
 
-  const originalText = buttonEl.textContent;
-  buttonEl.disabled = true;
-  buttonEl.textContent = 'Joining…';
+async function handleJoinClick(
+  group,
+  buttonEl
+) {
 
-  const user = state.currentUser;
-  const isPrivate = group.privacy === 'private';
-  const status = isPrivate ? 'pending' : 'active';
+  if (
+    state.membershipMap.has(
+      group.id
+    )
+  ) {
+    return;
+  }
 
-  const memberRef = doc(db, 'groups', group.id, 'members', user.uid);
-  const groupRef = doc(db, 'groups', group.id);
+  const originalText =
+    buttonEl.textContent;
+
+  buttonEl.disabled =
+    true;
+
+  buttonEl.textContent =
+    'Joining…';
+
+  const user =
+    state.currentUser;
+
+  const isPrivate =
+    group.privacy === 'private';
+
+  const status =
+    isPrivate
+      ? 'pending'
+      : 'active';
+
+  const memberRef =
+    doc(
+      db,
+      'groups',
+      group.id,
+      'members',
+      user.uid
+    );
+
+  const groupRef =
+    doc(
+      db,
+      'groups',
+      group.id
+    );
 
   try {
-    await runTransaction(db, async (transaction) => {
-      const existingMemberSnap = await transaction.get(memberRef);
-      if (existingMemberSnap.exists()) {
-        // Someone/something already created this membership — do nothing further.
-        return;
-      }
 
-      transaction.set(memberRef, {
-        uid: user.uid,
-        displayName: user.displayName || 'VitalStar Member',
-        photoURL: user.photoURL || '',
-        role: 'member',
+    await runTransaction(
+      db,
+      async transaction => {
+
+        const existing =
+          await transaction.get(
+            memberRef
+          );
+
+        if (existing.exists()) {
+          return;
+        }
+
+        transaction.set(
+          memberRef,
+          {
+            uid: user.uid,
+
+            displayName:
+              user.displayName ||
+              'VitalStar Member',
+
+            photoURL:
+              user.photoURL || '',
+
+            role: 'member',
+
+            status,
+
+            category:
+              group.category || '',
+
+            joinedAt:
+              serverTimestamp()
+          }
+        );
+
+        if (status === 'active') {
+
+          transaction.update(
+            groupRef,
+            {
+              memberCount:
+                increment(1)
+            }
+          );
+        }
+      }
+    );
+
+    state.membershipMap.set(
+      group.id,
+      {
         status,
-        category: group.category || '',
-        joinedAt: serverTimestamp()
-      });
-
-      // Only bump memberCount for immediate (public) joins — a pending
-      // private-group request must NOT count as a member yet.
-      if (status === 'active') {
-        transaction.update(groupRef, { memberCount: increment(1) });
+        role: 'member',
+        category:
+          group.category || ''
       }
-    });
+    );
 
-    state.membershipMap.set(group.id, { status, role: 'member', category: group.category || '' });
     state.membershipList.unshift({
       groupId: group.id,
       status,
       role: 'member',
-      category: group.category || '',
+      category:
+        group.category || '',
       joinedAt: Date.now()
     });
 
-    applyJoinButtonState(buttonEl, group.id);
+    applyJoinButtonState(
+      buttonEl,
+      group.id
+    );
+
     showToast(
-      isPrivate ? 'Request sent! An admin will review it soon.' : `You've joined ${group.name}.`,
+      isPrivate
+        ? 'Request sent! An admin will review it.'
+        : `You've joined ${group.name}.`,
       'success'
     );
+
+    // Refresh recommendations.
+    loadRecommendedRail();
+
   } catch (error) {
-    // Not an index-related error (this is a transaction, not a query), but
-    // still logged in full — a generic toast alone would hide the real cause
-    // (e.g. permission-denied from security rules) from anyone debugging.
-    console.error('[Firestore error] Joining group (transaction)');
-    console.error(error);
-    buttonEl.disabled = false;
-    buttonEl.textContent = originalText;
-    showToast('Could not join this group. Please try again.', 'error');
+
+    logFirestoreError(
+      'Joining group',
+      error
+    );
+
+    buttonEl.disabled =
+      false;
+
+    buttonEl.textContent =
+      originalText;
+
+    showToast(
+      'Could not join this group. Please try again.',
+      'error'
+    );
   }
 }
 
+
 // ============================================================
-// MAIN GRID LOADING — routes to the right query for the active tab
+// LOAD MAIN GROUP GRID
 // ============================================================
-async function loadGroupsForActiveView(reset) {
-  if (state.isLoading || !groupsGrid) return;
-  state.isLoading = true;
+
+async function loadGroupsForActiveView(
+  reset = false
+) {
+
+  if (
+    state.isLoading ||
+    !groupsGrid
+  ) {
+    return;
+  }
+
+  state.isLoading =
+    true;
+
+  const requestId =
+    ++state.requestVersion;
 
   if (reset) {
-    state.lastVisibleDoc = null;
+
+    state.lastVisibleDoc =
+      null;
+
+    state.hasMore =
+      false;
+
+    state.myGroupsPageIndex =
+      0;
+
+    state.displayedGroupIds.clear();
+
     groupsGrid.innerHTML = '';
+
     renderSkeletons(6);
-    if (groupsEmptyState) groupsEmptyState.style.display = 'none';
+
+    if (groupsEmptyState) {
+      groupsEmptyState.style.display =
+        'none';
+    }
   }
+
   if (loadMoreBtn) {
-    loadMoreBtn.style.display = 'none';
-    loadMoreBtn.classList.add('is-loading');
+
+    loadMoreBtn.disabled =
+      true;
+
+    loadMoreBtn.classList.add(
+      'is-loading'
+    );
   }
 
   try {
+
     let groups = [];
 
     if (state.searchQuery) {
-      groups = await fetchSearchResults(reset);
-    } else if (state.activeTab === 'discover') {
-      groups = await fetchDiscoverGroups(reset);
-    } else if (state.activeTab === 'recommended') {
-      groups = await fetchRecommendedGroups(reset);
-    } else if (state.activeTab === 'my-groups') {
-      groups = await fetchMyGroups(reset);
+
+      groups =
+        await fetchSearchResults(reset);
+
+    } else if (
+      state.activeTab === 'discover'
+    ) {
+
+      groups =
+        await fetchDiscoverGroups(reset);
+
+    } else if (
+      state.activeTab === 'recommended'
+    ) {
+
+      groups =
+        await fetchRecommendedGroups(reset);
+
+    } else if (
+      state.activeTab === 'my-groups'
+    ) {
+
+      groups =
+        await fetchMyGroups(reset);
     }
 
-    if (reset) groupsGrid.innerHTML = '';
+
+    // Ignore stale request.
+    if (
+      requestId !==
+      state.requestVersion
+    ) {
+      return;
+    }
+
     clearSkeletons();
 
-    if (groups.length === 0 && reset) {
-      if (groupsEmptyMessage) groupsEmptyMessage.textContent = buildEmptyMessage();
-      if (groupsEmptyState) groupsEmptyState.style.display = 'flex';
-    } else if (groupsEmptyState) {
-      groupsEmptyState.style.display = 'none';
+    if (reset) {
+      groupsGrid.innerHTML = '';
     }
 
-    groups.forEach((group) => {
-      const card = buildGroupCard(group);
-      if (card) groupsGrid.appendChild(card);
+
+    // Remove duplicate cards.
+    const uniqueGroups = [];
+
+    for (const group of groups) {
+
+      if (
+        state.displayedGroupIds.has(
+          group.id
+        )
+      ) {
+        continue;
+      }
+
+      state.displayedGroupIds.add(
+        group.id
+      );
+
+      uniqueGroups.push(group);
+    }
+
+
+    if (
+      uniqueGroups.length === 0 &&
+      reset
+    ) {
+
+      if (groupsEmptyMessage) {
+
+        groupsEmptyMessage.textContent =
+          buildEmptyMessage();
+      }
+
+      if (groupsEmptyState) {
+
+        groupsEmptyState.style.display =
+          'flex';
+      }
+
+    } else if (groupsEmptyState) {
+
+      groupsEmptyState.style.display =
+        'none';
+    }
+
+
+    uniqueGroups.forEach(group => {
+
+      const card =
+        buildGroupCard(group);
+
+      if (card) {
+        groupsGrid.appendChild(card);
+      }
     });
 
-    if (loadMoreBtn) loadMoreBtn.style.display = state.hasMore ? 'block' : 'none';
+
+    if (loadMoreBtn) {
+
+      loadMoreBtn.style.display =
+        state.hasMore
+          ? 'block'
+          : 'none';
+
+      loadMoreBtn.disabled =
+        false;
+    }
+
   } catch (error) {
-    // This catches errors from fetchDiscoverGroups / fetchRecommendedGroups /
-    // fetchMyGroups / fetchSearchResults, whichever ran for the active tab.
-    // Include the active tab + category + search query in the log so a
-    // missing-index error can be traced straight back to the exact query
-    // shape that triggered it.
+
     logFirestoreError(
-      `Loading groups (tab: ${state.activeTab}, category: ${state.activeCategory}, search: "${state.searchQuery}")`,
+      `Loading groups — tab=${state.activeTab}, category=${state.activeCategory}, search=${state.searchQuery}`,
       error
     );
+
     clearSkeletons();
-    showToast('Could not load groups right now. Please try again.', 'error');
+
+    if (reset) {
+
+      groupsGrid.innerHTML = '';
+    }
+
+    showToast(
+      'Could not load groups right now.',
+      'error'
+    );
+
   } finally {
-    if (loadMoreBtn) loadMoreBtn.classList.remove('is-loading');
-    state.isLoading = false;
+
+    state.isLoading =
+      false;
+
+    if (loadMoreBtn) {
+
+      loadMoreBtn.classList.remove(
+        'is-loading'
+      );
+
+      loadMoreBtn.disabled =
+        false;
+    }
   }
 }
 
+
+// ============================================================
+// EMPTY MESSAGE
+// ============================================================
+
 function buildEmptyMessage() {
-  if (state.searchQuery) return `No groups matched "${state.searchQuery}". Try a different search.`;
-  if (state.activeTab === 'my-groups') return "You haven't joined or created any groups yet.";
-  if (state.activeCategory !== 'all') return `No groups in ${CATEGORY_LABELS[state.activeCategory] || state.activeCategory} yet — be the first!`;
-  return 'Try a different category, or start your own community.';
+
+  if (state.searchQuery) {
+
+    return `No groups matched "${state.searchQuery}".`;
+  }
+
+  if (
+    state.activeTab === 'my-groups'
+  ) {
+
+    return 'You have not created or joined any groups yet.';
+  }
+
+  if (
+    state.activeCategory !== 'all'
+  ) {
+
+    return `No groups in ${
+      CATEGORY_LABELS[
+        state.activeCategory
+      ] ||
+      state.activeCategory
+    } yet.`;
+  }
+
+  if (
+    state.activeTab === 'recommended'
+  ) {
+
+    return 'No recommended groups available right now.';
+  }
+
+  return 'No groups available right now.';
 }
 
-// ---- Discover ----
-// where(privacy) + optional where(category) + orderBy(createdAt) is a
-// standard composite query. Firestore will prompt you (via a console
-// link in the error message) to create the needed composite index the
-// first time this runs in a fresh project — that's expected and correct,
-// not a bug to work around. Errors here propagate up to
-// loadGroupsForActiveView's catch block, which logs them in full.
-async function fetchDiscoverGroups(reset) {
-  const constraints = [where('privacy', '==', 'public')];
-  if (state.activeCategory !== 'all') constraints.push(where('category', '==', state.activeCategory));
-  constraints.push(orderBy('createdAt', 'desc'));
-  if (!reset && state.lastVisibleDoc) constraints.push(startAfter(state.lastVisibleDoc));
-  constraints.push(limit(PAGE_SIZE));
 
-  const snapshot = await getDocs(query(collection(db, 'groups'), ...constraints));
-  return consumeSnapshot(snapshot);
+// ============================================================
+// DISCOVER
+// ============================================================
+
+async function fetchDiscoverGroups(
+  reset
+) {
+
+  const constraints = [
+    where(
+      'privacy',
+      '==',
+      'public'
+    )
+  ];
+
+  if (
+    state.activeCategory !==
+    'all'
+  ) {
+
+    constraints.push(
+      where(
+        'category',
+        '==',
+        state.activeCategory
+      )
+    );
+  }
+
+  constraints.push(
+    orderBy(
+      'createdAt',
+      'desc'
+    )
+  );
+
+  if (
+    !reset &&
+    state.lastVisibleDoc
+  ) {
+
+    constraints.push(
+      startAfter(
+        state.lastVisibleDoc
+      )
+    );
+  }
+
+  constraints.push(
+    limit(PAGE_SIZE)
+  );
+
+  const snapshot =
+    await getDocs(
+      query(
+        collection(db, 'groups'),
+        ...constraints
+      )
+    );
+
+  return consumeSnapshot(
+    snapshot
+  );
 }
 
-// ---- Recommended ----
-// IMPORTANT FIX: Firestore does not allow two different inequality-style
-// filters on the SAME field in one query — specifically, you cannot mix
-// `where('category', 'in', [...])` with `where('category', '==', x)` on
-// the same field at once (this combination is invalid and previously
-// would have thrown at runtime whenever a category chip was active on
-// the Recommended tab). The fix: if a specific category chip is active,
-// that single '==' filter is strictly more precise than the 'in' list,
-// so we use ONLY the '==' filter in that case and skip the 'in' filter
-// entirely. The 'in' filter (recommend from the user's joined
-// categories) is only used when the chip is on "All". Errors here also
-// propagate up to loadGroupsForActiveView's catch block.
-async function fetchRecommendedGroups(reset) {
-  const constraints = [where('privacy', '==', 'public')];
 
-  if (state.activeCategory !== 'all') {
-    constraints.push(where('category', '==', state.activeCategory));
+// ============================================================
+// RECOMMENDED
+// ============================================================
+
+async function fetchRecommendedGroups(
+  reset
+) {
+
+  const constraints = [
+    where(
+      'privacy',
+      '==',
+      'public'
+    )
+  ];
+
+  if (
+    state.activeCategory !==
+    'all'
+  ) {
+
+    constraints.push(
+      where(
+        'category',
+        '==',
+        state.activeCategory
+      )
+    );
+
   } else {
-    const joinedCategories = Array.from(
-      new Set(state.membershipList.map((m) => m.category).filter(Boolean))
-    ).slice(0, 10); // 'in' supports a maximum of 10 values
-    if (joinedCategories.length > 0) {
-      constraints.push(where('category', 'in', joinedCategories));
+
+    const categories =
+      Array.from(
+        new Set(
+          state.membershipList
+            .map(
+              m => m.category
+            )
+            .filter(Boolean)
+        )
+      ).slice(0, 10);
+
+    if (categories.length) {
+
+      constraints.push(
+        where(
+          'category',
+          'in',
+          categories
+        )
+      );
     }
   }
 
-  constraints.push(orderBy('memberCount', 'desc'));
-  if (!reset && state.lastVisibleDoc) constraints.push(startAfter(state.lastVisibleDoc));
-  constraints.push(limit(PAGE_SIZE));
+  constraints.push(
+    orderBy(
+      'memberCount',
+      'desc'
+    )
+  );
 
-  const snapshot = await getDocs(query(collection(db, 'groups'), ...constraints));
-  const groups = consumeSnapshot(snapshot);
+  if (
+    !reset &&
+    state.lastVisibleDoc
+  ) {
 
-  // Don't recommend groups the user already belongs to or has requested to join
-  // (membershipMap holds an entry for BOTH 'active' and 'pending' statuses).
-  // Note: this client-side filter can shrink a page below PAGE_SIZE; hasMore
-  // is still driven by the raw (pre-filter) snapshot size in consumeSnapshot,
-  // so "Load More" will keep fetching until either results run out or the
-  // grid is full — this is the safest behavior without a backend function.
-  return groups.filter((group) => !state.membershipMap.has(group.id));
-}
-
-// ---- My Groups (client-paginated over the already-loaded membership list) ----
-// No Firestore query index is needed here — this reads individual docs by
-// ID (getDoc), not a filtered/ordered query, so there's nothing for
-// logFirestoreError's index-URL matching to find. Errors here (e.g. a
-// permission-denied on one of the getDoc calls) still propagate up to
-// loadGroupsForActiveView's catch block and get logged in full there.
-async function fetchMyGroups(reset) {
-  if (reset) state.myGroupsPageIndex = 0;
-
-  let list = state.membershipList;
-  if (state.activeCategory !== 'all') {
-    list = list.filter((m) => m.category === state.activeCategory);
+    constraints.push(
+      startAfter(
+        state.lastVisibleDoc
+      )
+    );
   }
 
-  const start = state.myGroupsPageIndex * PAGE_SIZE;
-  const pageIds = list.slice(start, start + PAGE_SIZE).map((m) => m.groupId);
-  state.myGroupsPageIndex += 1;
-  state.hasMore = start + PAGE_SIZE < list.length;
+  constraints.push(
+    limit(PAGE_SIZE)
+  );
 
-  if (pageIds.length === 0) {
-    state.hasMore = false;
+  const snapshot =
+    await getDocs(
+      query(
+        collection(db, 'groups'),
+        ...constraints
+      )
+    );
+
+  const groups =
+    consumeSnapshot(snapshot);
+
+  return groups.filter(
+    group =>
+      !state.membershipMap.has(
+        group.id
+      )
+  );
+}
+
+
+// ============================================================
+// MY GROUPS
+// ============================================================
+//
+// IMPORTANT:
+//
+// This is the main fix.
+//
+// My Groups now combines:
+//
+//   1. Groups created by the current user
+//   2. Groups the current user joined
+//
+// It also keeps pending requests separate from actual joined groups.
+//
+// The creator's group is shown even if there is no member document.
+// If the creator is also in the members collection, duplicates are
+// removed automatically.
+//
+// ============================================================
+
+async function fetchMyGroups(reset) {
+
+  if (reset) {
+
+    state.myGroupsPageIndex =
+      0;
+  }
+
+
+  // ----------------------------------------------------------
+  // Get all created groups.
+  // ----------------------------------------------------------
+
+  const created =
+    [...state.createdGroups];
+
+
+  // ----------------------------------------------------------
+  // Get active joined groups.
+  // Pending requests are intentionally excluded from "joined".
+  // ----------------------------------------------------------
+
+  const joinedMemberships =
+    state.membershipList.filter(
+      member => {
+
+        if (
+          member.status !==
+          'active'
+        ) {
+          return false;
+        }
+
+        if (
+          state.activeCategory !==
+          'all'
+        ) {
+
+          return (
+            member.category ===
+            state.activeCategory
+          );
+        }
+
+        return true;
+      }
+    );
+
+
+  // ----------------------------------------------------------
+  // Category filter for created groups.
+  // ----------------------------------------------------------
+
+  const filteredCreated =
+    created.filter(group => {
+
+      if (
+        state.activeCategory ===
+        'all'
+      ) {
+        return true;
+      }
+
+      return (
+        group.category ===
+        state.activeCategory
+      );
+    });
+
+
+  // ----------------------------------------------------------
+  // Build unique ID list.
+  // Created groups are placed first.
+  // ----------------------------------------------------------
+
+  const idMap =
+    new Map();
+
+  filteredCreated.forEach(group => {
+
+    idMap.set(
+      group.id,
+      {
+        id: group.id,
+        source: 'created'
+      }
+    );
+  });
+
+  joinedMemberships.forEach(member => {
+
+    if (!idMap.has(member.groupId)) {
+
+      idMap.set(
+        member.groupId,
+        {
+          id: member.groupId,
+          source: 'joined'
+        }
+      );
+    }
+  });
+
+
+  const allEntries =
+    Array.from(
+      idMap.values()
+    );
+
+
+  // ----------------------------------------------------------
+  // Better pagination.
+  //
+  // We paginate the merged My Groups list instead of separately
+  // paginating created and joined groups.
+  // ----------------------------------------------------------
+
+  const start =
+    state.myGroupsPageIndex *
+    PAGE_SIZE;
+
+  const page =
+    allEntries.slice(
+      start,
+      start + PAGE_SIZE
+    );
+
+  state.myGroupsPageIndex += 1;
+
+  state.hasMore =
+    start + PAGE_SIZE <
+    allEntries.length;
+
+
+  if (!page.length) {
+
     return [];
   }
 
-  const docs = await Promise.all(pageIds.map((id) => getDoc(doc(db, 'groups', id))));
-  return docs.filter((d) => d.exists()).map((d) => ({ id: d.id, ...d.data() }));
+
+  // ----------------------------------------------------------
+  // Fetch group documents.
+  // ----------------------------------------------------------
+
+  const docs =
+    await Promise.all(
+      page.map(entry =>
+        getDoc(
+          doc(
+            db,
+            'groups',
+            entry.id
+          )
+        )
+      )
+    );
+
+
+  const groups =
+    docs
+      .filter(
+        snapshot =>
+          snapshot.exists()
+      )
+      .map(
+        snapshot => ({
+          id: snapshot.id,
+          ...snapshot.data()
+        })
+      );
+
+
+  // ----------------------------------------------------------
+  // Created groups first, then joined groups.
+  // ----------------------------------------------------------
+
+  groups.sort(
+    (a, b) => {
+
+      const aCreated =
+        isGroupCreatedByUser(
+          a,
+          state.currentUser.uid
+        );
+
+      const bCreated =
+        isGroupCreatedByUser(
+          b,
+          state.currentUser.uid
+        );
+
+      if (
+        aCreated &&
+        !bCreated
+      ) {
+        return -1;
+      }
+
+      if (
+        !aCreated &&
+        bCreated
+      ) {
+        return 1;
+      }
+
+      return (
+        getTimestampValue(
+          b.createdAt
+        ) -
+        getTimestampValue(
+          a.createdAt
+        )
+      );
+    }
+  );
+
+
+  return groups;
 }
 
-// ---- Search (uses the searchTokens array built at group-creation time) ----
-//
-// create-group.js builds PROGRESSIVE PREFIX tokens per word, e.g. for the
-// word "gaming" it stores: g, ga, gam, gami, gamin, gaming.
-//
-// KNOWN LIMITATION (please read before changing this):
-// searchTokens only stores per-word prefixes — it has no concept of word
-// ORDER or of requiring ALL typed words to match. That means Firestore's
-// `array-contains-any` can only give us an OR match: "does this group
-// contain AT LEAST ONE of the typed words as a prefix token?" There is no
-// Firestore-native way to require ALL words to match without either a
-// dedicated search service (Algolia/Meilisearch/etc — explicitly out of
-// scope here) or a Cloud Function (also out of scope). Introducing either
-// would mean inventing a new backend, which the project rules for this
-// file forbid.
-//
-// The safest compatible fix, using only the existing searchTokens data:
-//   1. Query Firestore with array-contains-any over the typed words
-//      (server-side OR pre-filter, keeps reads bounded to PAGE_SIZE).
-//   2. Client-side, narrow that page down to only groups whose
-//      searchTokens actually contain EVERY typed word (AND refinement).
-// This makes a multi-word query like "cool gaming" behave the way users
-// expect (both words must match) instead of matching any group containing
-// either word alone — without adding any new backend or index type.
-//
-// Trade-off: because step 2 filters after the Firestore read, a returned
-// page can contain fewer than PAGE_SIZE cards even when more matches exist
-// further down the collection. "Load More" still works correctly (it just
-// continues fetching subsequent raw pages via the same cursor), so no
-// results are silently lost — they just arrive across more "Load More"
-// clicks. This is the standard trade-off of doing AND-refinement on top of
-// an OR-only index, and is normal/expected without a real search backend.
-// Errors here propagate up to loadGroupsForActiveView's catch block.
-async function fetchSearchResults(reset) {
-  const words = state.searchQuery
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 10); // array-contains-any supports a maximum of 10 values
-
-  if (words.length === 0) return [];
-
-  const constraints = [where('searchTokens', 'array-contains-any', words)];
-  if (state.activeCategory !== 'all') constraints.push(where('category', '==', state.activeCategory));
-  constraints.push(limit(PAGE_SIZE));
-  if (!reset && state.lastVisibleDoc) constraints.push(startAfter(state.lastVisibleDoc));
-
-  const snapshot = await getDocs(query(collection(db, 'groups'), ...constraints));
-  const groups = consumeSnapshot(snapshot);
-
-  // AND-refinement: keep only groups whose searchTokens contain every
-  // typed word (not just at least one of them).
-  return groups.filter((group) => {
-    const tokens = group.searchTokens || [];
-    return words.every((word) => tokens.includes(word));
-  });
-}
-
-function consumeSnapshot(snapshot) {
-  const docs = snapshot.docs;
-  state.lastVisibleDoc = docs.length > 0 ? docs[docs.length - 1] : state.lastVisibleDoc;
-  state.hasMore = docs.length === PAGE_SIZE;
-  return docs.map((d) => ({ id: d.id, ...d.data() }));
-}
-
-// ============================================================
-// SKELETON LOADING STATE
-// ============================================================
-function renderSkeletons(count) {
-  if (!skeletonCardTemplate || !groupsGrid) return;
-  const template = skeletonCardTemplate.content.firstElementChild;
-  if (!template) return;
-  for (let i = 0; i < count; i++) {
-    const node = template.cloneNode(true);
-    node.dataset.skeleton = 'true';
-    groupsGrid.appendChild(node);
-  }
-}
-
-function clearSkeletons() {
-  if (!groupsGrid) return;
-  groupsGrid.querySelectorAll('[data-skeleton="true"]').forEach((el) => el.remove());
-}
-
-// ============================================================
-// TABS
-// (Switching tabs always resets: searchQuery, the pagination cursor,
-// and myGroupsPageIndex — via loadGroupsForActiveView(true) — so no
-// pagination state leaks between Discover / Recommended / My Groups.)
-// ============================================================
-if (tabsContainer) {
-  tabsContainer.addEventListener('click', (event) => {
-    const tabBtn = event.target.closest('.tab');
-    if (!tabBtn || tabBtn.classList.contains('is-active')) return;
-
-    tabsContainer.querySelectorAll('.tab').forEach((t) => t.classList.remove('is-active'));
-    tabBtn.classList.add('is-active');
-
-    state.activeTab = tabBtn.dataset.tab;
-    state.searchQuery = '';
-    if (searchInput) searchInput.value = '';
-    if (searchClearBtn) searchClearBtn.classList.remove('is-visible');
-
-    loadGroupsForActiveView(true);
-  });
-}
-
-// ============================================================
-// CATEGORY CHIPS
-// ============================================================
-if (categoryChipsContainer) {
-  categoryChipsContainer.addEventListener('click', (event) => {
-    const chip = event.target.closest('.category-chip');
-    if (!chip || chip.classList.contains('is-active')) return;
-
-    categoryChipsContainer.querySelectorAll('.category-chip').forEach((c) => c.classList.remove('is-active'));
-    chip.classList.add('is-active');
-
-    state.activeCategory = chip.dataset.category;
-    loadGroupsForActiveView(true);
-  });
-}
 
 // ============================================================
 // SEARCH
 // ============================================================
-if (searchInput) {
-  searchInput.addEventListener('input', () => {
-    const value = searchInput.value.trim();
-    if (searchClearBtn) searchClearBtn.classList.toggle('is-visible', value.length > 0);
 
-    clearTimeout(state.searchDebounceHandle);
+async function fetchSearchResults(
+  reset
+) {
 
-    if (value.length === 0) {
-      state.searchQuery = '';
-      if (searchLoading) searchLoading.classList.remove('is-visible');
-      loadGroupsForActiveView(true);
-      return;
+  const words =
+    state.searchQuery
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 10);
+
+  if (!words.length) {
+
+    state.hasMore = false;
+
+    return [];
+  }
+
+
+  const constraints = [
+    where(
+      'searchTokens',
+      'array-contains-any',
+      words
+    )
+  ];
+
+  if (
+    state.activeCategory !==
+    'all'
+  ) {
+
+    constraints.push(
+      where(
+        'category',
+        '==',
+        state.activeCategory
+      )
+    );
+  }
+
+
+  if (
+    !reset &&
+    state.lastVisibleDoc
+  ) {
+
+    constraints.push(
+      startAfter(
+        state.lastVisibleDoc
+      )
+    );
+  }
+
+
+  constraints.push(
+    limit(PAGE_SIZE)
+  );
+
+
+  const snapshot =
+    await getDocs(
+      query(
+        collection(db, 'groups'),
+        ...constraints
+      )
+    );
+
+
+  const groups =
+    consumeSnapshot(
+      snapshot
+    );
+
+
+  // AND refinement.
+  return groups.filter(
+    group => {
+
+      const tokens =
+        Array.isArray(
+          group.searchTokens
+        )
+          ? group.searchTokens
+          : [];
+
+      return words.every(
+        word =>
+          tokens.includes(word)
+      );
     }
-
-    if (searchLoading) searchLoading.classList.add('is-visible');
-    state.searchDebounceHandle = setTimeout(() => {
-      state.searchQuery = value.toLowerCase();
-      if (searchLoading) searchLoading.classList.remove('is-visible');
-      loadGroupsForActiveView(true);
-    }, 400);
-  });
+  );
 }
+
+
+// ============================================================
+// SNAPSHOT PAGINATION
+// ============================================================
+
+function consumeSnapshot(
+  snapshot
+) {
+
+  const docs =
+    snapshot.docs;
+
+  if (docs.length) {
+
+    state.lastVisibleDoc =
+      docs[docs.length - 1];
+  }
+
+  state.hasMore =
+    docs.length === PAGE_SIZE;
+
+  return docs.map(
+    d => ({
+      id: d.id,
+      ...d.data()
+    })
+  );
+}
+
+
+// ============================================================
+// SKELETONS
+// ============================================================
+
+function renderSkeletons(count) {
+
+  if (
+    !skeletonCardTemplate ||
+    !groupsGrid
+  ) {
+    return;
+  }
+
+  const template =
+    skeletonCardTemplate
+      .content
+      .firstElementChild;
+
+  if (!template) return;
+
+  for (
+    let i = 0;
+    i < count;
+    i++
+  ) {
+
+    const node =
+      template.cloneNode(true);
+
+    node.dataset.skeleton =
+      'true';
+
+    groupsGrid.appendChild(node);
+  }
+}
+
+
+function clearSkeletons() {
+
+  if (!groupsGrid) return;
+
+  groupsGrid
+    .querySelectorAll(
+      '[data-skeleton="true"]'
+    )
+    .forEach(
+      el => el.remove()
+    );
+}
+
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+
+if (tabsContainer) {
+
+  tabsContainer.addEventListener(
+    'click',
+    event => {
+
+      const tabBtn =
+        event.target.closest(
+          '.tab'
+        );
+
+      if (!tabBtn) return;
+
+      const newTab =
+        tabBtn.dataset.tab;
+
+      if (!newTab) return;
+
+      if (
+        newTab ===
+        state.activeTab
+      ) {
+        return;
+      }
+
+      tabsContainer
+        .querySelectorAll(
+          '.tab'
+        )
+        .forEach(
+          tab =>
+            tab.classList.remove(
+              'is-active'
+            )
+        );
+
+      tabBtn.classList.add(
+        'is-active'
+      );
+
+      state.activeTab =
+        newTab;
+
+      state.searchQuery =
+        '';
+
+      if (searchInput) {
+        searchInput.value =
+          '';
+      }
+
+      if (searchClearBtn) {
+
+        searchClearBtn.classList.remove(
+          'is-visible'
+        );
+      }
+
+      state.requestVersion++;
+
+      loadGroupsForActiveView(
+        true
+      );
+    }
+  );
+}
+
+
+// ============================================================
+// CATEGORY CHIPS
+// ============================================================
+
+if (categoryChipsContainer) {
+
+  categoryChipsContainer.addEventListener(
+    'click',
+    event => {
+
+      const chip =
+        event.target.closest(
+          '.category-chip'
+        );
+
+      if (!chip) return;
+
+      const category =
+        chip.dataset.category;
+
+      if (!category) return;
+
+      if (
+        category ===
+        state.activeCategory
+      ) {
+        return;
+      }
+
+      categoryChipsContainer
+        .querySelectorAll(
+          '.category-chip'
+        )
+        .forEach(
+          c =>
+            c.classList.remove(
+              'is-active'
+            )
+        );
+
+      chip.classList.add(
+        'is-active'
+      );
+
+      state.activeCategory =
+        category;
+
+      state.requestVersion++;
+
+      loadGroupsForActiveView(
+        true
+      );
+    }
+  );
+}
+
+
+// ============================================================
+// SEARCH INPUT
+// ============================================================
+
+if (searchInput) {
+
+  searchInput.addEventListener(
+    'input',
+    () => {
+
+      const value =
+        searchInput.value.trim();
+
+      if (searchClearBtn) {
+
+        searchClearBtn.classList.toggle(
+          'is-visible',
+          value.length > 0
+        );
+      }
+
+      clearTimeout(
+        state.searchDebounceHandle
+      );
+
+
+      if (!value) {
+
+        state.searchQuery =
+          '';
+
+        if (searchLoading) {
+
+          searchLoading.classList.remove(
+            'is-visible'
+          );
+        }
+
+        loadGroupsForActiveView(
+          true
+        );
+
+        return;
+      }
+
+
+      if (searchLoading) {
+
+        searchLoading.classList.add(
+          'is-visible'
+        );
+      }
+
+
+      state.searchDebounceHandle =
+        setTimeout(
+          () => {
+
+            state.searchQuery =
+              value.toLowerCase();
+
+            if (searchLoading) {
+
+              searchLoading.classList.remove(
+                'is-visible'
+              );
+            }
+
+            loadGroupsForActiveView(
+              true
+            );
+
+          },
+          400
+        );
+    }
+  );
+}
+
+
+// ============================================================
+// CLEAR SEARCH
+// ============================================================
 
 if (searchClearBtn) {
-  searchClearBtn.addEventListener('click', () => {
-    if (searchInput) searchInput.value = '';
-    searchClearBtn.classList.remove('is-visible');
-    state.searchQuery = '';
-    loadGroupsForActiveView(true);
-  });
+
+  searchClearBtn.addEventListener(
+    'click',
+    () => {
+
+      if (searchInput) {
+
+        searchInput.value =
+          '';
+      }
+
+      searchClearBtn.classList.remove(
+        'is-visible'
+      );
+
+      state.searchQuery =
+        '';
+
+      clearTimeout(
+        state.searchDebounceHandle
+      );
+
+      loadGroupsForActiveView(
+        true
+      );
+    }
+  );
 }
+
 
 // ============================================================
 // LOAD MORE
 // ============================================================
+
 if (loadMoreBtn) {
-  loadMoreBtn.addEventListener('click', () => {
-    loadGroupsForActiveView(false);
-  });
+
+  loadMoreBtn.addEventListener(
+    'click',
+    async () => {
+
+      if (
+        state.isLoading ||
+        !state.hasMore
+      ) {
+        return;
+      }
+
+      await loadGroupsForActiveView(
+        false
+      );
+    }
+  );
+}
+
+
+// ============================================================
+// OPTIONAL REFRESH
+// ============================================================
+//
+// If groups.html has a button with:
+//
+//   id="refreshGroupsBtn"
+//
+// it can refresh everything without requiring a page reload.
+//
+// ============================================================
+
+const refreshGroupsBtn =
+  document.getElementById(
+    'refreshGroupsBtn'
+  );
+
+if (refreshGroupsBtn) {
+
+  refreshGroupsBtn.addEventListener(
+    'click',
+    async () => {
+
+      if (state.isLoading) return;
+
+      refreshGroupsBtn.disabled =
+        true;
+
+      try {
+
+        await loadUserMemberships();
+
+        await Promise.all([
+          loadTrending(),
+          loadTopActiveGroups(),
+          loadNewGroups(),
+          loadRecommendedRail()
+        ]);
+
+        await loadGroupsForActiveView(
+          true
+        );
+
+      } finally {
+
+        refreshGroupsBtn.disabled =
+          false;
+      }
+    }
+  );
 }
