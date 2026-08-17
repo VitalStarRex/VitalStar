@@ -11,6 +11,8 @@
 // group join requests
 // group invites
 // group posts
+// group post likes
+// group post comments
 // group messages
 // group mentions
 // group admin actions
@@ -28,9 +30,13 @@ import {
     limit,
     onSnapshot,
     updateDoc,
+    deleteDoc,
     doc,
+    getDoc,
     getDocs,
-    writeBatch
+    writeBatch,
+    runTransaction,
+    increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -68,7 +74,6 @@ if (
     markAllReadLink =
         document.createElement("a");
 
-
     markAllReadLink.href = "#";
 
     markAllReadLink.id =
@@ -76,7 +81,6 @@ if (
 
     markAllReadLink.textContent =
         "Mark all as read";
-
 
     markAllReadLink.style.cssText = `
         display:block;
@@ -87,7 +91,6 @@ if (
         font-size:14px;
         cursor:pointer;
     `;
-
 
     notifications.parentNode.insertBefore(
         markAllReadLink,
@@ -109,15 +112,12 @@ if (markAllReadLink) {
 
             event.preventDefault();
 
-
             const user =
                 auth.currentUser;
-
 
             if (!user) {
                 return;
             }
-
 
             try {
 
@@ -141,21 +141,17 @@ if (markAllReadLink) {
                         )
                     );
 
-
                 const snapshot =
                     await getDocs(
                         unreadQuery
                     );
 
-
                 if (snapshot.empty) {
                     return;
                 }
 
-
                 const batch =
                     writeBatch(db);
-
 
                 snapshot.forEach(
                     notificationDoc => {
@@ -170,9 +166,7 @@ if (markAllReadLink) {
                     }
                 );
 
-
                 await batch.commit();
-
 
             } catch (error) {
 
@@ -180,7 +174,6 @@ if (markAllReadLink) {
                     "Failed to mark all as read:",
                     error
                 );
-
 
                 alert(
                     "Failed to mark notifications as read."
@@ -202,10 +195,6 @@ function getNotificationIcon(type) {
 
     switch (type) {
 
-        // ----------------------------------------------------
-        // GENERAL
-        // ----------------------------------------------------
-
         case "like":
             return "❤️";
 
@@ -217,11 +206,6 @@ function getNotificationIcon(type) {
 
         case "message":
             return "📩";
-
-
-        // ----------------------------------------------------
-        // GROUPS
-        // ----------------------------------------------------
 
         case "group":
             return "👥";
@@ -259,11 +243,6 @@ function getNotificationIcon(type) {
         case "group_subscription":
             return "⭐";
 
-
-        // ----------------------------------------------------
-        // OTHER
-        // ----------------------------------------------------
-
         case "mention":
             return "🔔";
 
@@ -282,14 +261,11 @@ function getNotificationIcon(type) {
 // DATE FORMAT
 // ============================================================
 
-function formatNotificationTime(
-    timestamp
-) {
+function formatNotificationTime(timestamp) {
 
     if (!timestamp) {
         return "Just now";
     }
-
 
     try {
 
@@ -303,7 +279,6 @@ function formatNotificationTime(
                 .toLocaleString();
 
         }
-
 
         return "Just now";
 
@@ -325,10 +300,8 @@ function escapeHTML(value) {
     const div =
         document.createElement("div");
 
-
     div.textContent =
         value ?? "";
-
 
     return div.innerHTML;
 
@@ -337,7 +310,6 @@ function escapeHTML(value) {
 
 // ============================================================
 // GET NOTIFICATION TEXT
-// Supports both "text" and old "message"
 // ============================================================
 
 function getNotificationText(
@@ -355,7 +327,6 @@ function getNotificationText(
 
 // ============================================================
 // GET SENDER PHOTO
-// Supports multiple field names
 // ============================================================
 
 function getSenderPhoto(
@@ -373,6 +344,22 @@ function getSenderPhoto(
 
 
 // ============================================================
+// IS GROUP POST NOTIFICATION
+// ============================================================
+
+function isGroupPostNotification(
+    notification
+) {
+
+    return Boolean(
+        notification.groupId &&
+        notification.postId
+    );
+
+}
+
+
+// ============================================================
 // GET DESTINATION
 // ============================================================
 
@@ -381,49 +368,59 @@ function getNotificationDestination(
 ) {
 
     // --------------------------------------------------------
+    // GROUP POST
+    // IMPORTANT:
+    // Group post notifications MUST stay inside group.html.
+    // --------------------------------------------------------
+
+    if (
+        isGroupPostNotification(
+            notification
+        )
+    ) {
+
+        return (
+            `group.html?id=${
+                encodeURIComponent(
+                    notification.groupId
+                )
+            }&tab=posts&postId=${
+                encodeURIComponent(
+                    notification.postId
+                )
+            }`
+        );
+
+    }
+
+
+    // --------------------------------------------------------
+    // GROUP CHAT
+    // --------------------------------------------------------
+
+    if (
+        notification.groupId &&
+        notification.chatId
+    ) {
+
+        return (
+            `group.html?id=${
+                encodeURIComponent(
+                    notification.groupId
+                )
+            }&tab=chat`
+        );
+
+    }
+
+
+    // --------------------------------------------------------
     // GROUP
     // --------------------------------------------------------
 
     if (
         notification.groupId
     ) {
-
-        // If notification contains a post,
-        // open that post's comments page.
-
-        if (
-            notification.postId
-        ) {
-
-            return (
-                `comments.html?postId=${
-                    encodeURIComponent(
-                        notification.postId
-                    )
-                }`
-            );
-
-        }
-
-
-        // If it contains a chat ID,
-        // open the group chat.
-
-        if (
-            notification.chatId
-        ) {
-
-            return (
-                `group.html?id=${
-                    encodeURIComponent(
-                        notification.groupId
-                    )}&tab=chat`
-            );
-
-        }
-
-
-        // Default group destination
 
         return (
             `group.html?id=${
@@ -437,7 +434,7 @@ function getNotificationDestination(
 
 
     // --------------------------------------------------------
-    // POST
+    // NORMAL POST
     // --------------------------------------------------------
 
     if (
@@ -468,7 +465,6 @@ function getNotificationDestination(
             notification.chatId ||
             notification.conversationId;
 
-
         return (
             `chat.html?id=${
                 encodeURIComponent(
@@ -494,7 +490,7 @@ function getNotificationDestination(
 
 
     // --------------------------------------------------------
-    // SENDER PROFILE
+    // PROFILE
     // --------------------------------------------------------
 
     if (
@@ -518,6 +514,572 @@ function getNotificationDestination(
 
 
 // ============================================================
+// GET GROUP OWNER / ADMIN PERMISSION
+// ============================================================
+
+async function canManageJoinRequest(
+    notification
+) {
+
+    const user =
+        auth.currentUser;
+
+    if (
+        !user ||
+        !notification.groupId
+    ) {
+        return false;
+    }
+
+    try {
+
+        const groupRef =
+            doc(
+                db,
+                "groups",
+                notification.groupId
+            );
+
+        const groupSnap =
+            await getDoc(groupRef);
+
+        if (!groupSnap.exists()) {
+            return false;
+        }
+
+        const group =
+            groupSnap.data();
+
+        const ownerId =
+            group.ownerId ||
+            group.ownerUid ||
+            group.createdBy ||
+            group.creatorId;
+
+        if (
+            ownerId === user.uid
+        ) {
+            return true;
+        }
+
+
+        const memberRef =
+            doc(
+                db,
+                "groups",
+                notification.groupId,
+                "members",
+                user.uid
+            );
+
+        const memberSnap =
+            await getDoc(memberRef);
+
+        if (!memberSnap.exists()) {
+            return false;
+        }
+
+        const member =
+            memberSnap.data();
+
+        return (
+            member.status === "active" &&
+            (
+                member.role === "admin" ||
+                member.role === "moderator"
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Permission check error:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+
+// ============================================================
+// APPROVE JOIN REQUEST
+// ============================================================
+
+async function approveJoinRequest(
+    notificationDoc,
+    notification,
+    button
+) {
+
+    const user =
+        auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+
+        const allowed =
+            await canManageJoinRequest(
+                notification
+            );
+
+        if (!allowed) {
+
+            alert(
+                "You do not have permission to approve this request."
+            );
+
+            button.disabled = false;
+
+            return;
+        }
+
+
+        const groupId =
+            notification.groupId;
+
+        const requesterId =
+            notification.senderId;
+
+        if (
+            !groupId ||
+            !requesterId
+        ) {
+
+            throw new Error(
+                "Missing group or requester ID."
+            );
+
+        }
+
+
+        const memberRef =
+            doc(
+                db,
+                "groups",
+                groupId,
+                "members",
+                requesterId
+            );
+
+        const groupRef =
+            doc(
+                db,
+                "groups",
+                groupId
+            );
+
+
+        let approved = false;
+
+
+        await runTransaction(
+            db,
+            async transaction => {
+
+                const memberSnap =
+                    await transaction.get(
+                        memberRef
+                    );
+
+                if (!memberSnap.exists()) {
+                    return;
+                }
+
+
+                const member =
+                    memberSnap.data();
+
+
+                if (
+                    member.status !== "pending"
+                ) {
+                    return;
+                }
+
+
+                transaction.update(
+                    memberRef,
+                    {
+                        status: "active",
+                        approvedAt:
+                            new Date()
+                    }
+                );
+
+
+                transaction.update(
+                    groupRef,
+                    {
+                        memberCount:
+                            increment(1)
+                    }
+                );
+
+
+                approved = true;
+
+            }
+        );
+
+
+        if (!approved) {
+
+            alert(
+                "This join request is no longer pending."
+            );
+
+            button.disabled = false;
+
+            return;
+        }
+
+
+        // ----------------------------------------------------
+        // Mark original notification as handled
+        // ----------------------------------------------------
+
+        await updateDoc(
+            notificationDoc.ref,
+            {
+                read: true,
+                action: "approved",
+                actionAt: new Date()
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // Notify requester
+        // ----------------------------------------------------
+
+        await createGeneralNotification({
+            receiverId:
+                requesterId,
+
+            senderId:
+                user.uid,
+
+            senderName:
+                user.displayName ||
+                "Group Admin",
+
+            senderPhoto:
+                user.photoURL || "",
+
+            type:
+                "group_join",
+
+            groupId,
+
+            groupName:
+                notification.groupName ||
+                "the group",
+
+            text:
+                `Your request to join ${
+                    notification.groupName ||
+                    "the group"
+                } was approved.`,
+
+            url:
+                `group.html?id=${encodeURIComponent(
+                    groupId
+                )}`
+        });
+
+
+        const card =
+            button.closest(
+                ".notification-card"
+            );
+
+        if (card) {
+
+            const actions =
+                card.querySelector(
+                    ".join-request-actions"
+                );
+
+            if (actions) {
+                actions.innerHTML = `
+                    <span style="
+                        color:#16803c;
+                        font-size:13px;
+                        font-weight:600;
+                    ">
+                        ✓ Approved
+                    </span>
+                `;
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Approve join request error:",
+            error
+        );
+
+        alert(
+            "Could not approve the join request."
+        );
+
+        button.disabled = false;
+
+    }
+
+}
+
+
+// ============================================================
+// REJECT / CANCEL JOIN REQUEST
+// ============================================================
+
+async function rejectJoinRequest(
+    notificationDoc,
+    notification,
+    button
+) {
+
+    const user =
+        auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+    button.disabled = true;
+
+    try {
+
+        const allowed =
+            await canManageJoinRequest(
+                notification
+            );
+
+        if (!allowed) {
+
+            alert(
+                "You do not have permission to reject this request."
+            );
+
+            button.disabled = false;
+
+            return;
+        }
+
+
+        const groupId =
+            notification.groupId;
+
+        const requesterId =
+            notification.senderId;
+
+
+        if (
+            !groupId ||
+            !requesterId
+        ) {
+
+            throw new Error(
+                "Missing group or requester ID."
+            );
+
+        }
+
+
+        const memberRef =
+            doc(
+                db,
+                "groups",
+                groupId,
+                "members",
+                requesterId
+            );
+
+
+        const memberSnap =
+            await getDoc(
+                memberRef
+            );
+
+
+        if (
+            memberSnap.exists()
+        ) {
+
+            const member =
+                memberSnap.data();
+
+            if (
+                member.status === "pending"
+            ) {
+
+                await deleteDoc(
+                    memberRef
+                );
+
+            }
+
+        }
+
+
+        await updateDoc(
+            notificationDoc.ref,
+            {
+                read: true,
+                action: "rejected",
+                actionAt: new Date()
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // Notify requester
+        // ----------------------------------------------------
+
+        await createGeneralNotification({
+            receiverId:
+                requesterId,
+
+            senderId:
+                user.uid,
+
+            senderName:
+                user.displayName ||
+                "Group Admin",
+
+            senderPhoto:
+                user.photoURL || "",
+
+            type:
+                "group_admin",
+
+            groupId,
+
+            groupName:
+                notification.groupName ||
+                "the group",
+
+            text:
+                `Your request to join ${
+                    notification.groupName ||
+                    "the group"
+                } was declined.`,
+
+            url:
+                `group.html?id=${encodeURIComponent(
+                    groupId
+                )}`
+        });
+
+
+        const card =
+            button.closest(
+                ".notification-card"
+            );
+
+        if (card) {
+
+            const actions =
+                card.querySelector(
+                    ".join-request-actions"
+                );
+
+            if (actions) {
+
+                actions.innerHTML = `
+                    <span style="
+                        color:#b42318;
+                        font-size:13px;
+                        font-weight:600;
+                    ">
+                        ✕ Declined
+                    </span>
+                `;
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Reject join request error:",
+            error
+        );
+
+        alert(
+            "Could not reject the join request."
+        );
+
+        button.disabled = false;
+
+    }
+
+}
+
+
+// ============================================================
+// CREATE GENERAL NOTIFICATION
+// ============================================================
+
+async function createGeneralNotification(
+    data
+) {
+
+    try {
+
+        const {
+            addDoc
+        } = await import(
+            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+        );
+
+        await addDoc(
+            collection(
+                db,
+                "notifications"
+            ),
+            {
+                ...data,
+
+                recipientId:
+                    data.receiverId,
+
+                receiverId:
+                    data.receiverId,
+
+                read:
+                    false,
+
+                createdAt:
+                    new Date()
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Create notification error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ============================================================
 // OPEN NOTIFICATION
 // ============================================================
 
@@ -527,10 +1089,6 @@ async function openNotification(
 ) {
 
     try {
-
-        // ----------------------------------------------------
-        // MARK AS READ
-        // ----------------------------------------------------
 
         await updateDoc(
             doc(
@@ -544,27 +1102,18 @@ async function openNotification(
         );
 
 
-        // ----------------------------------------------------
-        // DESTINATION
-        // ----------------------------------------------------
-
         const destination =
             getNotificationDestination(
                 notification
             );
 
 
-        if (
-            destination
-        ) {
+        if (destination) {
 
             window.location.href =
                 destination;
 
-            return;
-
         }
-
 
     } catch (error) {
 
@@ -572,7 +1121,6 @@ async function openNotification(
             "Failed to open notification:",
             error
         );
-
 
         alert(
             "Failed to open notification."
@@ -604,10 +1152,6 @@ auth.onAuthStateChanged(
         }
 
 
-        // ----------------------------------------------------
-        // GENERAL NOTIFICATIONS QUERY
-        // ----------------------------------------------------
-
         const q =
             query(
                 collection(
@@ -630,10 +1174,6 @@ auth.onAuthStateChanged(
             );
 
 
-        // ----------------------------------------------------
-        // REALTIME LISTENER
-        // ----------------------------------------------------
-
         onSnapshot(
 
             q,
@@ -643,10 +1183,6 @@ auth.onAuthStateChanged(
                 notifications.innerHTML =
                     "";
 
-
-                // ------------------------------------------------
-                // EMPTY
-                // ------------------------------------------------
 
                 if (
                     snapshot.empty
@@ -659,13 +1195,8 @@ auth.onAuthStateChanged(
                     `;
 
                     return;
-
                 }
 
-
-                // ------------------------------------------------
-                // RENDER
-                // ------------------------------------------------
 
                 snapshot.forEach(
                     notificationDoc => {
@@ -713,10 +1244,6 @@ auth.onAuthStateChanged(
                             );
 
 
-                        // ------------------------------------------------
-                        // CARD
-                        // ------------------------------------------------
-
                         const card =
                             document.createElement(
                                 "div"
@@ -727,10 +1254,6 @@ auth.onAuthStateChanged(
                             "notification-card";
 
 
-                        // ------------------------------------------------
-                        // UNREAD
-                        // ------------------------------------------------
-
                         if (
                             notification.read !== true
                         ) {
@@ -739,7 +1262,6 @@ auth.onAuthStateChanged(
                                 "is-unread"
                             );
 
-
                             card.style.background =
                                 "#eef5ff";
 
@@ -747,7 +1269,7 @@ auth.onAuthStateChanged(
 
 
                         // ------------------------------------------------
-                        // GROUP BADGE
+                        // GROUP LABEL
                         // ------------------------------------------------
 
                         let groupLabel =
@@ -775,7 +1297,7 @@ auth.onAuthStateChanged(
 
 
                         // ------------------------------------------------
-                        // POST INDICATOR
+                        // POST LABEL
                         // ------------------------------------------------
 
                         let postLabel =
@@ -792,7 +1314,7 @@ auth.onAuthStateChanged(
                                     color:#777;
                                     margin-top:2px;
                                 ">
-                                    📝 View post
+                                    📝 View group post
                                 </div>
                             `;
 
@@ -800,7 +1322,74 @@ auth.onAuthStateChanged(
 
 
                         // ------------------------------------------------
-                        // CARD HTML
+                        // JOIN REQUEST ACTIONS
+                        // ------------------------------------------------
+
+                        let joinRequestActions =
+                            "";
+
+
+                        if (
+                            notification.type ===
+                            "group_join_request" &&
+                            notification.groupId &&
+                            notification.senderId &&
+                            notification.action !==
+                                "approved" &&
+                            notification.action !==
+                                "rejected"
+                        ) {
+
+                            joinRequestActions = `
+                                <div
+                                    class="join-request-actions"
+                                    style="
+                                        display:flex;
+                                        gap:8px;
+                                        margin-top:10px;
+                                    "
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="approve-join-btn"
+                                        style="
+                                            border:0;
+                                            border-radius:8px;
+                                            padding:7px 12px;
+                                            background:#16803c;
+                                            color:white;
+                                            cursor:pointer;
+                                            font-weight:600;
+                                        "
+                                    >
+                                        ✓ Approve
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="reject-join-btn"
+                                        style="
+                                            border:0;
+                                            border-radius:8px;
+                                            padding:7px 12px;
+                                            background:#b42318;
+                                            color:white;
+                                            cursor:pointer;
+                                            font-weight:600;
+                                        "
+                                    >
+                                        ✕ Cancel
+                                    </button>
+
+                                </div>
+                            `;
+
+                        }
+
+
+                        // ------------------------------------------------
+                        // CARD
                         // ------------------------------------------------
 
                         card.innerHTML = `
@@ -839,6 +1428,8 @@ auth.onAuthStateChanged(
 
                                 ${postLabel}
 
+                                ${joinRequestActions}
+
                                 <br>
 
                                 <small>
@@ -866,12 +1457,85 @@ auth.onAuthStateChanged(
 
 
                         // ------------------------------------------------
-                        // CLICK
+                        // APPROVE BUTTON
+                        // ------------------------------------------------
+
+                        const approveButton =
+                            card.querySelector(
+                                ".approve-join-btn"
+                            );
+
+
+                        if (
+                            approveButton
+                        ) {
+
+                            approveButton.addEventListener(
+                                "click",
+                                event => {
+
+                                    event.stopPropagation();
+
+                                    approveJoinRequest(
+                                        notificationDoc,
+                                        notification,
+                                        approveButton
+                                    );
+
+                                }
+                            );
+
+                        }
+
+
+                        // ------------------------------------------------
+                        // REJECT BUTTON
+                        // ------------------------------------------------
+
+                        const rejectButton =
+                            card.querySelector(
+                                ".reject-join-btn"
+                            );
+
+
+                        if (
+                            rejectButton
+                        ) {
+
+                            rejectButton.addEventListener(
+                                "click",
+                                event => {
+
+                                    event.stopPropagation();
+
+                                    rejectJoinRequest(
+                                        notificationDoc,
+                                        notification,
+                                        rejectButton
+                                    );
+
+                                }
+                            );
+
+                        }
+
+
+                        // ------------------------------------------------
+                        // CARD CLICK
                         // ------------------------------------------------
 
                         card.addEventListener(
                             "click",
-                            () => {
+                            event => {
+
+                                if (
+                                    event.target.closest(
+                                        "button"
+                                    )
+                                ) {
+                                    return;
+                                }
+
 
                                 openNotification(
                                     notificationDoc,
@@ -891,10 +1555,6 @@ auth.onAuthStateChanged(
 
             },
 
-
-            // ------------------------------------------------
-            // ERROR
-            // ------------------------------------------------
 
             error => {
 
@@ -919,5 +1579,5 @@ auth.onAuthStateChanged(
 
 
 // ============================================================
-// END OF NOTIFICATIONS-PAGE.JS
+// END OF notifications-page.js
 // ============================================================
