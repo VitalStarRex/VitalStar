@@ -1,26 +1,9 @@
 // ============================================================
 // VITALSTAR — groups.js
-// UPDATED / FIXED VERSION
 // ============================================================
+// Stable version
 //
-// Handles:
-//
-// • Authentication
-// • Top 5 Most Active Groups
-// • New Groups
-// • Recommended Groups
-// • My Groups
-// • Trending Groups
-// • Search
-// • Category filtering
-// • Public / Private joining
-// • Pagination
-// • Skeleton loading
-// • Premium groups
-// • Old members MAP compatibility
-// • members subcollection compatibility
-//
-// Supported group structure:
+// Designed to work with:
 //
 // groups/{groupId}
 //
@@ -41,31 +24,21 @@
 // premiumStatus
 // createdAt
 // updatedAt
-//
-// Old membership format:
-//
 // members: {
-//   [uid]: {
-//      role,
-//      status,
-//      joinedAt
-//   }
+//    [uid]: {
+//       role,
+//       status,
+//       joinedAt
+//    }
 // }
 //
-// New membership format:
+// Also supports:
 //
 // groups/{groupId}/members/{uid}
 //
-// {
-//   uid,
-//   displayName,
-//   photoURL,
-//   role,
-//   status,
-//   category,
-//   joinedAt
-// }
-//
+// IMPORTANT:
+// This version avoids most Firestore composite queries.
+// Filtering, searching and sorting are performed client-side.
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -82,11 +55,10 @@ import {
   getDocs,
   runTransaction,
   updateDoc,
+  setDoc,
   query,
   where,
-  orderBy,
   limit,
-  startAfter,
   increment,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -104,7 +76,7 @@ const NEW_GROUPS_LIMIT = 5;
 
 const TRENDING_LIMIT = 6;
 
-const MEMBERSHIP_SCAN_LIMIT = 500;
+const MAX_GROUPS_TO_LOAD = 500;
 
 
 // ============================================================
@@ -238,11 +210,11 @@ const state = {
 
   searchDebounceHandle: null,
 
-  lastVisibleDoc: null,
+  isLoading: false,
 
   hasMore: false,
 
-  isLoading: false,
+  currentPage: 0,
 
   membershipMap: new Map(),
 
@@ -250,11 +222,11 @@ const state = {
 
   myGroups: [],
 
-  myGroupsPageIndex: 0,
+  allGroupsCache: [],
 
-  renderedGroupIds: new Set(),
+  groupsCacheLoaded: false,
 
-  initialized: false
+  renderedGroupIds: new Set()
 
 };
 
@@ -287,9 +259,7 @@ function showToast(
     `toast toast--${type}`;
 
   toast.innerHTML = `
-    <i class="fa-solid ${
-      icons[type] || icons.info
-    }"></i>
+    <i class="fa-solid ${icons[type] || icons.info}"></i>
     <span></span>
   `;
 
@@ -297,8 +267,10 @@ function showToast(
     toast.querySelector("span");
 
   if (text) {
+
     text.textContent =
       message;
+
   }
 
   toastContainer.appendChild(
@@ -334,7 +306,7 @@ function logFirestoreError(
 ) {
 
   console.error(
-    `[Firestore error] ${context}`
+    `[VITALSTAR GROUPS] ${context}`
   );
 
   console.error(error);
@@ -342,7 +314,7 @@ function logFirestoreError(
   if (error?.code) {
 
     console.error(
-      "Code:",
+      "Firestore code:",
       error.code
     );
 
@@ -351,23 +323,9 @@ function logFirestoreError(
   if (error?.message) {
 
     console.error(
-      "Message:",
+      "Firestore message:",
       error.message
     );
-
-    const match =
-      error.message.match(
-        /https:\/\/console\.firebase\.google\.com\S*/
-      );
-
-    if (match) {
-
-      console.error(
-        "Firestore index:",
-        match[0]
-      );
-
-    }
 
   }
 
@@ -430,15 +388,59 @@ function setText(
 
   if (!root) return;
 
-  const el =
+  const element =
     root.querySelector(selector);
 
-  if (el) {
+  if (element) {
 
-    el.textContent =
+    element.textContent =
       value ?? "";
 
   }
+
+}
+
+
+function getTimestampMillis(value) {
+
+  if (!value) return 0;
+
+  if (
+    typeof value.toMillis ===
+    "function"
+  ) {
+
+    return value.toMillis();
+
+  }
+
+  if (
+    typeof value.seconds ===
+    "number"
+  ) {
+
+    return value.seconds * 1000;
+
+  }
+
+  if (
+    value instanceof Date
+  ) {
+
+    return value.getTime();
+
+  }
+
+  return 0;
+
+}
+
+
+function getCreatedTime(group) {
+
+  return getTimestampMillis(
+    group?.createdAt
+  );
 
 }
 
@@ -478,66 +480,90 @@ function applyMediaBackground(
 }
 
 
-function getCreatedTime(group) {
+function normalizeText(value) {
 
-  if (!group?.createdAt) {
-    return 0;
-  }
-
-  if (
-    typeof group.createdAt.toMillis ===
-    "function"
-  ) {
-
-    return group.createdAt.toMillis();
-
-  }
-
-  if (
-    typeof group.createdAt.seconds ===
-    "number"
-  ) {
-
-    return group.createdAt.seconds * 1000;
-
-  }
-
-  return 0;
+  return String(
+    value || ""
+  )
+    .toLowerCase()
+    .trim();
 
 }
 
 
-function getTimestampMillis(value) {
+// ============================================================
+// GET ALL GROUPS
+// ============================================================
+//
+// IMPORTANT:
+//
+// We intentionally use a simple collection read here.
+//
+// This prevents failures caused by Firestore composite indexes.
+//
+// ============================================================
 
-  if (!value) return 0;
+async function loadAllGroups(
+  forceReload = false
+) {
 
   if (
-    typeof value.toMillis ===
-    "function"
+    state.groupsCacheLoaded &&
+    !forceReload
   ) {
 
-    return value.toMillis();
+    return state.allGroupsCache;
 
   }
 
-  if (
-    typeof value.seconds ===
-    "number"
-  ) {
+  try {
 
-    return value.seconds * 1000;
+    const groupsRef =
+      collection(
+        db,
+        "groups"
+      );
+
+    const snapshot =
+      await getDocs(
+        query(
+          groupsRef,
+          limit(
+            MAX_GROUPS_TO_LOAD
+          )
+        )
+      );
+
+    const groups =
+      snapshot.docs.map(
+        groupDoc => ({
+
+          id:
+            groupDoc.id,
+
+          ...groupDoc.data()
+
+        })
+      );
+
+    state.allGroupsCache =
+      groups;
+
+    state.groupsCacheLoaded =
+      true;
+
+    return groups;
+
+  } catch (error) {
+
+    logFirestoreError(
+      "Loading groups collection",
+      error
+    );
+
+    throw error;
 
   }
-
-  if (
-    value instanceof Date
-  ) {
-
-    return value.getTime();
-
-  }
-
-  return 0;
 
 }
 
@@ -578,6 +604,8 @@ onAuthStateChanged(
 
       await loadUserMemberships();
 
+      await loadAllGroups();
+
       await Promise.all([
         loadTopActiveGroups(),
         loadNewGroups(),
@@ -587,9 +615,6 @@ onAuthStateChanged(
       await loadGroupsForActiveView(
         true
       );
-
-      state.initialized =
-        true;
 
     } catch (error) {
 
@@ -613,19 +638,14 @@ onAuthStateChanged(
 // LOAD USER MEMBERSHIPS
 // ============================================================
 //
-// FIX:
-//
-// Supports BOTH:
+// Supports:
 //
 // A. groups/{groupId}/members/{uid}
 //
 // B. groups/{groupId}.members[uid]
 //
-// C. ownerId == current user
+// C. groups owned by current user
 //
-// This fixes the issue where create-group.js stores the owner
-// inside the members MAP instead of creating a subcollection
-// document.
 // ============================================================
 
 async function loadUserMemberships() {
@@ -641,7 +661,7 @@ async function loadUserMemberships() {
 
 
   // ----------------------------------------------------------
-  // 1. MEMBERS SUBCOLLECTION
+  // 1. READ MEMBERS SUBCOLLECTION
   // ----------------------------------------------------------
 
   try {
@@ -657,9 +677,7 @@ async function loadUserMemberships() {
           "==",
           uid
         ),
-        limit(
-          MEMBERSHIP_SCAN_LIMIT
-        )
+        limit(500)
       );
 
     const snapshot =
@@ -675,111 +693,32 @@ async function loadUserMemberships() {
 
         if (!parentGroup) return;
 
+        const data =
+          memberDoc.data();
+
         const groupId =
           parentGroup.id;
 
-        const data =
-          memberDoc.data() || {};
-
-        const membership = {
-
-          groupId,
-
-          status:
-            data.status ||
-            "active",
-
-          role:
-            data.role ||
-            "member",
-
-          category:
-            data.category ||
-            "",
-
-          joinedAt:
-            data.joinedAt ||
-            null
-
-        };
-
         state.membershipMap.set(
           groupId,
-          membership
-        );
-
-      }
-    );
-
-  } catch (error) {
-
-    logFirestoreError(
-      "Loading members subcollections",
-      error
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // 2. OWNED GROUPS
-  // ----------------------------------------------------------
-
-  try {
-
-    const ownerQuery =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        where(
-          "ownerId",
-          "==",
-          uid
-        ),
-        limit(
-          MEMBERSHIP_SCAN_LIMIT
-        )
-      );
-
-    const snapshot =
-      await getDocs(
-        ownerQuery
-      );
-
-    snapshot.forEach(
-      groupDoc => {
-
-        const group =
-          groupDoc.data() || {};
-
-        const existing =
-          state.membershipMap.get(
-            groupDoc.id
-          );
-
-        state.membershipMap.set(
-          groupDoc.id,
           {
 
-            groupId:
-              groupDoc.id,
+            groupId,
 
             status:
+              data.status ||
               "active",
 
             role:
-              "owner",
+              data.role ||
+              "member",
 
             category:
-              group.category ||
-              existing?.category ||
+              data.category ||
               "",
 
             joinedAt:
-              group.createdAt ||
-              existing?.joinedAt ||
+              data.joinedAt ||
               null
 
           }
@@ -790,8 +729,9 @@ async function loadUserMemberships() {
 
   } catch (error) {
 
+    // Do not break the entire groups page.
     logFirestoreError(
-      "Loading owned groups",
+      "Reading members subcollections",
       error
     );
 
@@ -799,74 +739,33 @@ async function loadUserMemberships() {
 
 
   // ----------------------------------------------------------
-  // 3. OLD MEMBERS MAP
-  // ----------------------------------------------------------
-  //
-  // This is the important compatibility fix.
-  //
-  // We scan groups and check:
-  //
-  // group.members[currentUser.uid]
-  //
+  // 2. LOAD GROUPS AND CHECK MEMBERS MAP
   // ----------------------------------------------------------
 
   try {
 
-    const groupsQuery =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        limit(
-          MEMBERSHIP_SCAN_LIMIT
-        )
-      );
+    const groups =
+      await loadAllGroups();
 
-    const snapshot =
-      await getDocs(
-        groupsQuery
-      );
-
-    snapshot.forEach(
-      groupDoc => {
-
-        const group =
-          groupDoc.data() || {};
-
-        const members =
-          group.members;
-
-        if (
-          !members ||
-          typeof members !==
-            "object"
-        ) {
-          return;
-        }
+    groups.forEach(
+      group => {
 
         const member =
-          members[uid];
+          group.members?.[uid];
 
-        if (
-          !member ||
-          typeof member !==
-            "object"
-        ) {
-          return;
-        }
+        if (!member) return;
 
         const existing =
           state.membershipMap.get(
-            groupDoc.id
+            group.id
           );
 
         state.membershipMap.set(
-          groupDoc.id,
+          group.id,
           {
 
             groupId:
-              groupDoc.id,
+              group.id,
 
             status:
               member.status ||
@@ -898,7 +797,62 @@ async function loadUserMemberships() {
   } catch (error) {
 
     logFirestoreError(
-      "Loading old members maps",
+      "Reading members map",
+      error
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // 3. OWNER GROUPS
+  // ----------------------------------------------------------
+
+  try {
+
+    const groups =
+      await loadAllGroups();
+
+    groups.forEach(
+      group => {
+
+        if (
+          group.ownerId !== uid
+        ) {
+          return;
+        }
+
+        state.membershipMap.set(
+          group.id,
+          {
+
+            groupId:
+              group.id,
+
+            status:
+              "active",
+
+            role:
+              "owner",
+
+            category:
+              group.category ||
+              "",
+
+            joinedAt:
+              group.createdAt ||
+              null
+
+          }
+        );
+
+      }
+    );
+
+  } catch (error) {
+
+    logFirestoreError(
+      "Loading owned groups",
       error
     );
 
@@ -933,7 +887,7 @@ async function loadUserMemberships() {
 
 
 // ============================================================
-// TOP ACTIVE GROUPS
+// TOP 5 MOST ACTIVE
 // ============================================================
 
 async function loadTopActiveGroups() {
@@ -948,40 +902,20 @@ async function loadTopActiveGroups() {
 
   try {
 
-    const q =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        where(
-          "privacy",
-          "==",
-          "public"
-        ),
-        where(
-          "status",
-          "==",
-          "active"
-        ),
-        orderBy(
-          "memberCount",
-          "desc"
-        ),
-        limit(20)
-      );
-
-    const snapshot =
-      await getDocs(q);
+    const allGroups =
+      await loadAllGroups();
 
     const groups =
-      snapshot.docs
-        .map(
-          d => ({
-            id: d.id,
-            ...d.data()
-          })
+      allGroups
+
+        .filter(
+          group =>
+            group.privacy ===
+              "public" &&
+            group.status !==
+              "inactive"
         )
+
         .map(
           group => ({
 
@@ -1011,11 +945,13 @@ async function loadTopActiveGroups() {
 
           })
         )
+
         .sort(
           (a, b) =>
             b.activityScore -
             a.activityScore
         )
+
         .slice(
           0,
           TOP_ACTIVE_LIMIT
@@ -1024,6 +960,7 @@ async function loadTopActiveGroups() {
 
     topActiveList.innerHTML =
       "";
+
 
     if (!groups.length) {
 
@@ -1034,8 +971,10 @@ async function loadTopActiveGroups() {
 
     }
 
+
     topActiveSection.style.display =
       "";
+
 
     groups.forEach(
       (group, index) => {
@@ -1060,7 +999,7 @@ async function loadTopActiveGroups() {
   } catch (error) {
 
     logFirestoreError(
-      "Loading Top Active Groups",
+      "Loading top active groups",
       error
     );
 
@@ -1088,33 +1027,35 @@ async function loadNewGroups() {
 
   try {
 
-    const q =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        where(
-          "status",
-          "==",
-          "active"
-        ),
-        orderBy(
-          "createdAt",
-          "desc"
-        ),
-        limit(
-          NEW_GROUPS_LIMIT
-        )
-      );
+    const groups =
+      await loadAllGroups();
 
-    const snapshot =
-      await getDocs(q);
+    const newGroups =
+      groups
+
+        .filter(
+          group =>
+            group.status !==
+            "inactive"
+        )
+
+        .sort(
+          (a, b) =>
+            getCreatedTime(b) -
+            getCreatedTime(a)
+        )
+
+        .slice(
+          0,
+          NEW_GROUPS_LIMIT
+        );
+
 
     newGroupsList.innerHTML =
       "";
 
-    if (snapshot.empty) {
+
+    if (!newGroups.length) {
 
       newGroupsSection.style.display =
         "none";
@@ -1123,20 +1064,13 @@ async function loadNewGroups() {
 
     }
 
+
     newGroupsSection.style.display =
       "";
 
-    snapshot.forEach(
-      groupDoc => {
 
-        const group = {
-
-          id:
-            groupDoc.id,
-
-          ...groupDoc.data()
-
-        };
+    newGroups.forEach(
+      group => {
 
         const card =
           buildGroupCard(
@@ -1185,38 +1119,83 @@ async function loadTrendingGroups() {
 
   try {
 
-    const q =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        where(
-          "privacy",
-          "==",
-          "public"
-        ),
-        where(
-          "status",
-          "==",
-          "active"
-        ),
-        orderBy(
-          "memberCount",
-          "desc"
-        ),
-        limit(
-          TRENDING_LIMIT
-        )
-      );
+    const groups =
+      await loadAllGroups();
 
-    const snapshot =
-      await getDocs(q);
+    const trending =
+      groups
+
+        .filter(
+          group =>
+            group.privacy ===
+              "public" &&
+            group.status !==
+              "inactive"
+        )
+
+        .sort(
+          (a, b) => {
+
+            const scoreA =
+
+              (Number(
+                a.memberCount
+              ) || 0)
+
+              +
+
+              (
+                Number(
+                  a.postCount
+                ) || 0
+              ) * 2
+
+              +
+
+              (
+                Number(
+                  a.onlineCount
+                ) || 0
+              );
+
+            const scoreB =
+
+              (Number(
+                b.memberCount
+              ) || 0)
+
+              +
+
+              (
+                Number(
+                  b.postCount
+                ) || 0
+              ) * 2
+
+              +
+
+              (
+                Number(
+                  b.onlineCount
+                ) || 0
+              );
+
+            return scoreB - scoreA;
+
+          }
+        )
+
+        .slice(
+          0,
+          TRENDING_LIMIT
+        );
+
 
     trendingList.innerHTML =
       "";
 
-    if (snapshot.empty) {
+
+    if (!trending.length) {
 
       trendingSection.style.display =
         "none";
@@ -1225,20 +1204,13 @@ async function loadTrendingGroups() {
 
     }
 
+
     trendingSection.style.display =
       "";
 
-    snapshot.docs.forEach(
-      (groupDoc, index) => {
 
-        const group = {
-
-          id:
-            groupDoc.id,
-
-          ...groupDoc.data()
-
-        };
+    trending.forEach(
+      (group, index) => {
 
         const card =
           buildTrendingCard(
@@ -1286,18 +1258,23 @@ function buildTrendingCard(
       ?.content
       ?.firstElementChild;
 
-  if (!template) return null;
+  if (!template) {
+    return null;
+  }
 
   const node =
     template.cloneNode(true);
+
 
   node.href =
     `group.html?id=${encodeURIComponent(
       group.id
     )}`;
 
+
   node.dataset.groupId =
     group.id;
+
 
   setText(
     node,
@@ -1305,10 +1282,12 @@ function buildTrendingCard(
     `#${rank}`
   );
 
+
   const cover =
     node.querySelector(
       ".trending-card__cover"
     );
+
 
   if (cover) {
 
@@ -1332,16 +1311,21 @@ function buildTrendingCard(
 
   }
 
+
   const avatar =
     node.querySelector(
       ".trending-card__avatar"
     );
 
+
   applyMediaBackground(
     avatar,
     group.avatarURL,
-    initialsFrom(group.name)
+    initialsFrom(
+      group.name
+    )
   );
+
 
   setText(
     node,
@@ -1349,6 +1333,7 @@ function buildTrendingCard(
     group.name ||
       "Untitled group"
   );
+
 
   setText(
     node,
@@ -1358,13 +1343,14 @@ function buildTrendingCard(
     )
   );
 
+
   return node;
 
 }
 
 
 // ============================================================
-// SPECIAL CARD
+// SPECIAL GROUP CARD
 // ============================================================
 
 function buildSpecialGroupCard(
@@ -1373,17 +1359,24 @@ function buildSpecialGroupCard(
 ) {
 
   const card =
-    buildGroupCard(group);
+    buildGroupCard(
+      group
+    );
 
-  if (!card) return null;
+  if (!card) {
+    return null;
+  }
+
 
   card.dataset.rank =
     String(rank);
+
 
   const rankElement =
     card.querySelector(
       ".group-card__rank"
     );
+
 
   if (rankElement) {
 
@@ -1391,6 +1384,7 @@ function buildSpecialGroupCard(
       `#${rank}`;
 
   }
+
 
   return card;
 
@@ -1409,22 +1403,27 @@ function buildGroupCard(
     return null;
   }
 
+
   const template =
     groupCardTemplate
       .content
       ?.firstElementChild;
 
+
   if (!template) {
     return null;
   }
 
+
   const node =
     template.cloneNode(true);
+
 
   node.href =
     `group.html?id=${encodeURIComponent(
       group.id
     )}`;
+
 
   node.dataset.groupId =
     group.id;
@@ -1438,6 +1437,7 @@ function buildGroupCard(
     node.querySelector(
       ".group-card__cover"
     );
+
 
   if (cover) {
 
@@ -1471,10 +1471,13 @@ function buildGroupCard(
       ".group-card__avatar"
     );
 
+
   applyMediaBackground(
     avatar,
     group.avatarURL,
-    initialsFrom(group.name)
+    initialsFrom(
+      group.name
+    )
   );
 
 
@@ -1514,6 +1517,7 @@ function buildGroupCard(
     )
   );
 
+
   setText(
     node,
     ".group-card__post-count",
@@ -1521,6 +1525,7 @@ function buildGroupCard(
       group.postCount
     )
   );
+
 
   setText(
     node,
@@ -1539,6 +1544,7 @@ function buildGroupCard(
     node.querySelector(
       ".group-card__privacy-badge"
     );
+
 
   if (privacyBadge) {
 
@@ -1579,13 +1585,24 @@ function buildGroupCard(
       ".group-card__premium-badge"
     );
 
+
   if (premiumBadge) {
 
     const isPremium =
-      group.type === "premium" ||
-      group.premiumStatus === "active" ||
+
+      group.type ===
+        "premium"
+
+      ||
+
+      group.premiumStatus ===
+        "active"
+
+      ||
+
       group.premiumActivation
         ?.required === true;
+
 
     premiumBadge.style.display =
       isPremium
@@ -1603,6 +1620,7 @@ function buildGroupCard(
     node.querySelector(
       ".group-card__verified-badge"
     );
+
 
   if (verifiedBadge) {
 
@@ -1623,12 +1641,14 @@ function buildGroupCard(
       ".group-card__join-btn"
     );
 
+
   if (joinBtn) {
 
     applyJoinButtonState(
       joinBtn,
       group
     );
+
 
     joinBtn.addEventListener(
       "click",
@@ -1665,6 +1685,7 @@ function applyJoinButtonState(
 
   if (!button) return;
 
+
   const membership =
     state.membershipMap.get(
       group.id
@@ -1674,14 +1695,12 @@ function applyJoinButtonState(
   button.disabled =
     false;
 
+
   button.className =
     "btn-join group-card__join-btn";
 
 
-  // ----------------------------------------------------------
   // OWNER
-  // ----------------------------------------------------------
-
   if (
     group.ownerId ===
     state.currentUser?.uid
@@ -1699,10 +1718,7 @@ function applyJoinButtonState(
   }
 
 
-  // ----------------------------------------------------------
   // PENDING
-  // ----------------------------------------------------------
-
   if (
     membership?.status ===
     "pending"
@@ -1723,10 +1739,7 @@ function applyJoinButtonState(
   }
 
 
-  // ----------------------------------------------------------
   // JOINED
-  // ----------------------------------------------------------
-
   if (
     membership?.status ===
     "active"
@@ -1747,31 +1760,7 @@ function applyJoinButtonState(
   }
 
 
-  // ----------------------------------------------------------
-  // REJECTED
-  // ----------------------------------------------------------
-
-  if (
-    membership?.status ===
-    "rejected"
-  ) {
-
-    button.textContent =
-      "Request again";
-
-    button.classList.add(
-      "is-primary"
-    );
-
-    return;
-
-  }
-
-
-  // ----------------------------------------------------------
-  // PREMIUM NOT ACTIVE
-  // ----------------------------------------------------------
-
+  // PREMIUM GROUP WAITING FOR PAYMENT
   if (
     group.status ===
     "pending_payment"
@@ -1788,10 +1777,7 @@ function applyJoinButtonState(
   }
 
 
-  // ----------------------------------------------------------
   // PRIVATE
-  // ----------------------------------------------------------
-
   if (
     group.privacy ===
     "private"
@@ -1809,10 +1795,7 @@ function applyJoinButtonState(
   }
 
 
-  // ----------------------------------------------------------
   // PUBLIC
-  // ----------------------------------------------------------
-
   button.textContent =
     "Join group";
 
@@ -1864,21 +1847,12 @@ async function handleJoinClick(
 
 
   // ----------------------------------------------------------
-  // EXISTING MEMBERSHIP
+  // ALREADY MEMBER
   // ----------------------------------------------------------
 
-  const existingMembership =
-    state.membershipMap.get(
-      group.id
-    );
-
   if (
-    existingMembership &&
-    (
-      existingMembership.status ===
-        "active" ||
-      existingMembership.status ===
-        "pending"
+    state.membershipMap.has(
+      group.id
     )
   ) {
 
@@ -1888,7 +1862,7 @@ async function handleJoinClick(
 
 
   // ----------------------------------------------------------
-  // PREMIUM NOT ACTIVE
+  // PREMIUM INACTIVE
   // ----------------------------------------------------------
 
   if (
@@ -1909,8 +1883,10 @@ async function handleJoinClick(
   const originalText =
     button.textContent;
 
+
   button.disabled =
     true;
+
 
   button.textContent =
     "Joining…";
@@ -1919,9 +1895,11 @@ async function handleJoinClick(
   const user =
     state.currentUser;
 
+
   const isPrivate =
     group.privacy ===
     "private";
+
 
   const status =
     isPrivate
@@ -1938,6 +1916,7 @@ async function handleJoinClick(
       user.uid
     );
 
+
   const groupRef =
     doc(
       db,
@@ -1952,33 +1931,14 @@ async function handleJoinClick(
       db,
       async transaction => {
 
-        const [
-          memberSnapshot,
-          groupSnapshot
-        ] = await Promise.all([
-
-          transaction.get(
+        const existing =
+          await transaction.get(
             memberRef
-          ),
-
-          transaction.get(
-            groupRef
-          )
-
-        ]);
-
-
-        if (!groupSnapshot.exists()) {
-
-          throw new Error(
-            "Group does not exist."
           );
-
-        }
 
 
         if (
-          memberSnapshot.exists()
+          existing.exists()
         ) {
 
           return;
@@ -2071,25 +2031,40 @@ async function handleJoinClick(
     );
 
 
-    state.membershipList =
-      Array.from(
-        state.membershipMap.values()
+    state.membershipList.unshift(
+      membership
+    );
+
+
+    // Update local group cache
+    const cachedGroup =
+      state.allGroupsCache.find(
+        item =>
+          item.id ===
+          group.id
       );
 
 
-    // --------------------------------------------------------
-    // UPDATE BUTTON
-    // --------------------------------------------------------
+    if (
+      cachedGroup &&
+      status === "active"
+    ) {
+
+      cachedGroup.memberCount =
+        (
+          Number(
+            cachedGroup.memberCount
+          ) || 0
+        ) + 1;
+
+    }
+
 
     applyJoinButtonState(
       button,
       group
     );
 
-
-    // --------------------------------------------------------
-    // TOAST
-    // --------------------------------------------------------
 
     if (isPrivate) {
 
@@ -2108,14 +2083,12 @@ async function handleJoinClick(
     }
 
 
-    // --------------------------------------------------------
-    // REFRESH MY GROUPS
-    // --------------------------------------------------------
-
     if (
       state.activeTab ===
       "my-groups"
     ) {
+
+      await rebuildMyGroups();
 
       await loadGroupsForActiveView(
         true
@@ -2130,19 +2103,753 @@ async function handleJoinClick(
       error
     );
 
+
     button.disabled =
       false;
+
 
     button.textContent =
       originalText;
 
+
     showToast(
-      error?.message ||
-        "Could not join this group. Please try again.",
+      "Could not join this group. Please try again.",
       "error"
     );
 
   }
+
+}
+
+
+// ============================================================
+// FILTER GROUPS
+// ============================================================
+
+function filterGroups(
+  groups
+) {
+
+  let result =
+    [...groups];
+
+
+  // ----------------------------------------------------------
+  // STATUS
+  // ----------------------------------------------------------
+
+  result =
+    result.filter(
+      group => {
+
+        if (
+          group.ownerId ===
+          state.currentUser?.uid
+        ) {
+
+          return true;
+
+        }
+
+        return (
+          group.status !==
+          "inactive"
+        );
+
+      }
+    );
+
+
+  // ----------------------------------------------------------
+  // CATEGORY
+  // ----------------------------------------------------------
+
+  if (
+    state.activeCategory !==
+    "all"
+  ) {
+
+    result =
+      result.filter(
+        group =>
+          normalizeText(
+            group.category
+          ) ===
+          normalizeText(
+            state.activeCategory
+          )
+      );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // SEARCH
+  // ----------------------------------------------------------
+
+  if (
+    state.searchQuery
+  ) {
+
+    const words =
+      state.searchQuery
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 10);
+
+
+    result =
+      result.filter(
+        group => {
+
+          const name =
+            normalizeText(
+              group.name
+            );
+
+          const description =
+            normalizeText(
+              group.description
+            );
+
+          const category =
+            normalizeText(
+              group.category
+            );
+
+          const tokens =
+            Array.isArray(
+              group.searchTokens
+            )
+              ? group.searchTokens.map(
+                  normalizeText
+                )
+              : [];
+
+
+          return words.every(
+            word =>
+
+              name.includes(
+                word
+              )
+
+              ||
+
+              description.includes(
+                word
+              )
+
+              ||
+
+              category.includes(
+                word
+              )
+
+              ||
+
+              tokens.includes(
+                word
+              )
+          );
+
+        }
+      );
+
+  }
+
+
+  return result;
+
+}
+
+
+// ============================================================
+// DISCOVER
+// ============================================================
+
+async function fetchDiscoverGroups() {
+
+  const groups =
+    await loadAllGroups();
+
+
+  const filtered =
+    filterGroups(
+      groups
+    );
+
+
+  filtered.sort(
+    (a, b) =>
+      getCreatedTime(b) -
+      getCreatedTime(a)
+  );
+
+
+  return paginateGroups(
+    filtered
+  );
+
+}
+
+
+// ============================================================
+// RECOMMENDED
+// ============================================================
+
+async function fetchRecommendedGroups() {
+
+  const groups =
+    await loadAllGroups();
+
+
+  const joinedCategories =
+    [
+      ...new Set(
+        state.membershipList
+          .map(
+            item =>
+              normalizeText(
+                item.category
+              )
+          )
+          .filter(Boolean)
+      )
+    ];
+
+
+  let recommended =
+    filterGroups(
+      groups
+    );
+
+
+  // Remove groups already joined.
+  recommended =
+    recommended.filter(
+      group =>
+        !state.membershipMap.has(
+          group.id
+        )
+    );
+
+
+  if (
+    state.activeCategory ===
+    "all"
+  ) {
+
+    if (
+      joinedCategories.length
+    ) {
+
+      const matching =
+        recommended.filter(
+          group =>
+            joinedCategories.includes(
+              normalizeText(
+                group.category
+              )
+            )
+        );
+
+
+      // Use category matches first,
+      // then popular groups.
+      recommended =
+        [
+          ...matching,
+          ...recommended.filter(
+            group =>
+              !matching.includes(
+                group
+              )
+          )
+        ];
+
+    }
+
+  }
+
+
+  recommended.sort(
+    (a, b) => {
+
+      const scoreA =
+        getRecommendedScore(
+          a,
+          joinedCategories
+        );
+
+      const scoreB =
+        getRecommendedScore(
+          b,
+          joinedCategories
+        );
+
+      return scoreB - scoreA;
+
+    }
+  );
+
+
+  return paginateGroups(
+    recommended
+  );
+
+}
+
+
+// ============================================================
+// RECOMMENDED SCORE
+// ============================================================
+
+function getRecommendedScore(
+  group,
+  joinedCategories
+) {
+
+  let score = 0;
+
+
+  if (
+    joinedCategories.includes(
+      normalizeText(
+        group.category
+      )
+    )
+  ) {
+
+    score += 100;
+
+  }
+
+
+  score +=
+    (Number(
+      group.memberCount
+    ) || 0) * 2;
+
+
+  score +=
+    Number(
+      group.postCount
+    ) || 0;
+
+
+  score +=
+    Number(
+      group.onlineCount
+    ) || 0;
+
+
+  return score;
+
+}
+
+
+// ============================================================
+// MY GROUPS
+// ============================================================
+
+async function fetchMyGroups() {
+
+  if (
+    !state.myGroups.length
+  ) {
+
+    await rebuildMyGroups();
+
+  }
+
+
+  let groups =
+    [...state.myGroups];
+
+
+  if (
+    state.activeCategory !==
+    "all"
+  ) {
+
+    groups =
+      groups.filter(
+        group =>
+          normalizeText(
+            group.category
+          ) ===
+          normalizeText(
+            state.activeCategory
+          )
+      );
+
+  }
+
+
+  groups.sort(
+    (a, b) => {
+
+      const aOwned =
+        a.ownerId ===
+        state.currentUser?.uid;
+
+      const bOwned =
+        b.ownerId ===
+        state.currentUser?.uid;
+
+
+      if (
+        aOwned &&
+        !bOwned
+      ) {
+        return -1;
+      }
+
+
+      if (
+        !aOwned &&
+        bOwned
+      ) {
+        return 1;
+      }
+
+
+      return (
+        getCreatedTime(b) -
+        getCreatedTime(a)
+      );
+
+    }
+  );
+
+
+  return paginateGroups(
+    groups
+  );
+
+}
+
+
+// ============================================================
+// REBUILD MY GROUPS
+// ============================================================
+
+async function rebuildMyGroups() {
+
+  const uid =
+    state.currentUser?.uid;
+
+  if (!uid) {
+
+    state.myGroups = [];
+
+    return;
+
+  }
+
+
+  const groups =
+    await loadAllGroups();
+
+
+  const result = [];
+
+
+  groups.forEach(
+    group => {
+
+      const isOwner =
+        group.ownerId === uid;
+
+
+      const memberMap =
+        group.members?.[uid];
+
+
+      const membership =
+        state.membershipMap.get(
+          group.id
+        );
+
+
+      const isMember =
+        Boolean(
+          membership ||
+          memberMap
+        );
+
+
+      if (
+        isOwner ||
+        isMember
+      ) {
+
+        // Don't hide the owner's group.
+        // For other users, hide inactive groups.
+        if (
+          !isOwner &&
+          group.status ===
+            "inactive"
+        ) {
+
+          return;
+
+        }
+
+
+        result.push(
+          group
+        );
+
+      }
+
+    }
+  );
+
+
+  // ----------------------------------------------------------
+  // Make sure groups discovered through the
+  // members subcollection are also included.
+  // ----------------------------------------------------------
+
+  const knownIds =
+    new Set(
+      result.map(
+        group =>
+          group.id
+      )
+    );
+
+
+  for (
+    const membership
+    of state.membershipList
+  ) {
+
+    if (
+      knownIds.has(
+        membership.groupId
+      )
+    ) {
+      continue;
+    }
+
+
+    try {
+
+      const snapshot =
+        await getDoc(
+          doc(
+            db,
+            "groups",
+            membership.groupId
+          )
+        );
+
+
+      if (
+        !snapshot.exists()
+      ) {
+        continue;
+      }
+
+
+      const group = {
+
+        id:
+          snapshot.id,
+
+        ...snapshot.data()
+
+      };
+
+
+      if (
+        group.status !==
+          "inactive" ||
+        group.ownerId === uid
+      ) {
+
+        result.push(
+          group
+        );
+
+        knownIds.add(
+          group.id
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Could not load member group:",
+        membership.groupId,
+        error
+      );
+
+    }
+
+  }
+
+
+  result.sort(
+    (a, b) => {
+
+      const aOwned =
+        a.ownerId === uid;
+
+      const bOwned =
+        b.ownerId === uid;
+
+
+      if (
+        aOwned &&
+        !bOwned
+      ) {
+        return -1;
+      }
+
+
+      if (
+        !aOwned &&
+        bOwned
+      ) {
+        return 1;
+      }
+
+
+      return (
+        getCreatedTime(b) -
+        getCreatedTime(a)
+      );
+
+    }
+  );
+
+
+  state.myGroups =
+    result;
+
+}
+
+
+// ============================================================
+// SEARCH
+// ============================================================
+
+async function fetchSearchResults() {
+
+  const groups =
+    await loadAllGroups();
+
+
+  const filtered =
+    filterGroups(
+      groups
+    );
+
+
+  filtered.sort(
+    (a, b) => {
+
+      const aName =
+        normalizeText(
+          a.name
+        );
+
+      const bName =
+        normalizeText(
+          b.name
+        );
+
+
+      const search =
+        normalizeText(
+          state.searchQuery
+        );
+
+
+      const aStarts =
+        aName.startsWith(
+          search
+        );
+
+      const bStarts =
+        bName.startsWith(
+          search
+        );
+
+
+      if (
+        aStarts &&
+        !bStarts
+      ) {
+        return -1;
+      }
+
+
+      if (
+        !aStarts &&
+        bStarts
+      ) {
+        return 1;
+      }
+
+
+      return (
+        getCreatedTime(b) -
+        getCreatedTime(a)
+      );
+
+    }
+  );
+
+
+  return paginateGroups(
+    filtered
+  );
+
+}
+
+
+// ============================================================
+// PAGINATION
+// ============================================================
+
+function paginateGroups(
+  groups
+) {
+
+  const start =
+    state.currentPage *
+    PAGE_SIZE;
+
+
+  const end =
+    start +
+    PAGE_SIZE;
+
+
+  const page =
+    groups.slice(
+      start,
+      end
+    );
+
+
+  state.currentPage++;
+
+
+  state.hasMore =
+    end <
+    groups.length;
+
+
+  return page;
 
 }
 
@@ -2169,14 +2876,11 @@ async function loadGroupsForActiveView(
 
   if (reset) {
 
-    state.lastVisibleDoc =
-      null;
+    state.currentPage =
+      0;
 
     state.hasMore =
       false;
-
-    state.myGroupsPageIndex =
-      0;
 
     state.renderedGroupIds.clear();
 
@@ -2217,9 +2921,7 @@ async function loadGroupsForActiveView(
     ) {
 
       groups =
-        await fetchSearchResults(
-          reset
-        );
+        await fetchSearchResults();
 
     } else {
 
@@ -2230,9 +2932,7 @@ async function loadGroupsForActiveView(
         case "recommended":
 
           groups =
-            await fetchRecommendedGroups(
-              reset
-            );
+            await fetchRecommendedGroups();
 
           break;
 
@@ -2240,9 +2940,7 @@ async function loadGroupsForActiveView(
         case "my-groups":
 
           groups =
-            await fetchMyGroups(
-              reset
-            );
+            await fetchMyGroups();
 
           break;
 
@@ -2252,9 +2950,7 @@ async function loadGroupsForActiveView(
         default:
 
           groups =
-            await fetchDiscoverGroups(
-              reset
-            );
+            await fetchDiscoverGroups();
 
           break;
 
@@ -2299,22 +2995,31 @@ async function loadGroupsForActiveView(
             group
           );
 
-        if (!card) return;
+
+        if (!card) {
+          return;
+        }
 
 
         state.renderedGroupIds.add(
           group.id
         );
 
+
         groupsGrid.appendChild(
           card
         );
+
 
         added++;
 
       }
     );
 
+
+    // --------------------------------------------------------
+    // EMPTY STATE
+    // --------------------------------------------------------
 
     if (
       reset &&
@@ -2327,6 +3032,7 @@ async function loadGroupsForActiveView(
           buildEmptyMessage();
 
       }
+
 
       if (groupsEmptyState) {
 
@@ -2345,6 +3051,10 @@ async function loadGroupsForActiveView(
     }
 
 
+    // --------------------------------------------------------
+    // LOAD MORE
+    // --------------------------------------------------------
+
     if (loadMoreBtn) {
 
       loadMoreBtn.style.display =
@@ -2361,25 +3071,20 @@ async function loadGroupsForActiveView(
       error
     );
 
+
     clearSkeletons();
 
-    if (reset) {
 
-      if (groupsEmptyMessage) {
+    if (
+      reset &&
+      groupsEmptyState
+    ) {
 
-        groupsEmptyMessage.textContent =
-          "Could not load groups.";
-
-      }
-
-      if (groupsEmptyState) {
-
-        groupsEmptyState.style.display =
-          "flex";
-
-      }
+      groupsEmptyState.style.display =
+        "none";
 
     }
+
 
     showToast(
       "Could not load groups right now.",
@@ -2390,6 +3095,7 @@ async function loadGroupsForActiveView(
 
     state.isLoading =
       false;
+
 
     if (loadMoreBtn) {
 
@@ -2473,906 +3179,6 @@ function buildEmptyMessage() {
 
 
 // ============================================================
-// DISCOVER
-// ============================================================
-
-async function fetchDiscoverGroups(
-  reset
-) {
-
-  const constraints = [
-
-    where(
-      "status",
-      "==",
-      "active"
-    )
-
-  ];
-
-
-  if (
-    state.activeCategory !==
-    "all"
-  ) {
-
-    constraints.push(
-      where(
-        "category",
-        "==",
-        state.activeCategory
-      )
-    );
-
-  }
-
-
-  constraints.push(
-    orderBy(
-      "createdAt",
-      "desc"
-    )
-  );
-
-
-  if (
-    !reset &&
-    state.lastVisibleDoc
-  ) {
-
-    constraints.push(
-      startAfter(
-        state.lastVisibleDoc
-      )
-    );
-
-  }
-
-
-  constraints.push(
-    limit(PAGE_SIZE)
-  );
-
-
-  const snapshot =
-    await getDocs(
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        ...constraints
-      )
-    );
-
-
-  return consumeSnapshot(
-    snapshot
-  );
-
-}
-
-
-// ============================================================
-// RECOMMENDED
-// ============================================================
-
-async function fetchRecommendedGroups(
-  reset
-) {
-
-  const joinedCategories =
-    [
-      ...new Set(
-        state.membershipList
-          .map(
-            item =>
-              item.category
-          )
-          .filter(Boolean)
-      )
-    ]
-    .slice(0, 10);
-
-
-  let groups = [];
-
-
-  // ----------------------------------------------------------
-  // CATEGORY-BASED RECOMMENDATIONS
-  // ----------------------------------------------------------
-
-  if (
-    state.activeCategory !==
-    "all"
-  ) {
-
-    groups =
-      await queryRecommendedGroups(
-        [
-          where(
-            "privacy",
-            "==",
-            "public"
-          ),
-
-          where(
-            "status",
-            "==",
-            "active"
-          ),
-
-          where(
-            "category",
-            "==",
-            state.activeCategory
-          )
-        ],
-        reset
-      );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // USER CATEGORY RECOMMENDATIONS
-  // ----------------------------------------------------------
-
-  else if (
-    joinedCategories.length
-  ) {
-
-    try {
-
-      groups =
-        await queryRecommendedGroups(
-          [
-            where(
-              "privacy",
-              "==",
-              "public"
-            ),
-
-            where(
-              "status",
-              "==",
-              "active"
-            ),
-
-            where(
-              "category",
-              "in",
-              joinedCategories
-            )
-          ],
-          reset
-        );
-
-    } catch (error) {
-
-      logFirestoreError(
-        "Category recommendations",
-        error
-      );
-
-      groups = [];
-
-    }
-
-  }
-
-
-  // ----------------------------------------------------------
-  // FALLBACK TO POPULAR PUBLIC GROUPS
-  // ----------------------------------------------------------
-
-  if (!groups.length) {
-
-    groups =
-      await queryRecommendedGroups(
-        [
-          where(
-            "privacy",
-            "==",
-            "public"
-          ),
-
-          where(
-            "status",
-            "==",
-            "active"
-          )
-        ],
-        reset,
-        "memberCount"
-      );
-
-  }
-
-
-  return groups.filter(
-    group => {
-
-      const membership =
-        state.membershipMap.get(
-          group.id
-        );
-
-      return !membership ||
-        membership.status ===
-          "rejected";
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// RECOMMENDED QUERY
-// ============================================================
-
-async function queryRecommendedGroups(
-  constraints,
-  reset,
-  sortField = "memberCount"
-) {
-
-  const finalConstraints =
-    [...constraints];
-
-
-  finalConstraints.push(
-    orderBy(
-      sortField,
-      "desc"
-    )
-  );
-
-
-  if (
-    !reset &&
-    state.lastVisibleDoc
-  ) {
-
-    finalConstraints.push(
-      startAfter(
-        state.lastVisibleDoc
-      )
-    );
-
-  }
-
-
-  finalConstraints.push(
-    limit(PAGE_SIZE)
-  );
-
-
-  const snapshot =
-    await getDocs(
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        ...finalConstraints
-      )
-    );
-
-
-  return consumeSnapshot(
-    snapshot
-  );
-
-}
-
-
-// ============================================================
-// MY GROUPS
-// ============================================================
-//
-// Uses:
-//
-// 1. ownerId
-// 2. members subcollection
-// 3. old members map
-//
-// Therefore groups created by create-group.js are included.
-// ============================================================
-
-async function fetchMyGroups(
-  reset
-) {
-
-  if (reset) {
-
-    await rebuildMyGroups();
-
-    state.myGroupsPageIndex =
-      0;
-
-  }
-
-
-  let list =
-    [...state.myGroups];
-
-
-  if (
-    state.activeCategory !==
-    "all"
-  ) {
-
-    list =
-      list.filter(
-        group =>
-          group.category ===
-          state.activeCategory
-      );
-
-  }
-
-
-  const start =
-    state.myGroupsPageIndex *
-    PAGE_SIZE;
-
-  const end =
-    start +
-    PAGE_SIZE;
-
-
-  const page =
-    list.slice(
-      start,
-      end
-    );
-
-
-  state.myGroupsPageIndex++;
-
-
-  state.hasMore =
-    end < list.length;
-
-
-  return page;
-
-}
-
-
-// ============================================================
-// REBUILD MY GROUPS
-// ============================================================
-
-async function rebuildMyGroups() {
-
-  const uid =
-    state.currentUser?.uid;
-
-  if (!uid) {
-
-    state.myGroups =
-      [];
-
-    return;
-
-  }
-
-
-  const ids =
-    new Set();
-
-
-  // ----------------------------------------------------------
-  // 1. OWNED GROUPS
-  // ----------------------------------------------------------
-
-  try {
-
-    const ownerQuery =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        where(
-          "ownerId",
-          "==",
-          uid
-        ),
-        limit(
-          MEMBERSHIP_SCAN_LIMIT
-        )
-      );
-
-    const snapshot =
-      await getDocs(
-        ownerQuery
-      );
-
-    snapshot.forEach(
-      d => ids.add(d.id)
-    );
-
-  } catch (error) {
-
-    logFirestoreError(
-      "Finding owned groups",
-      error
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // 2. MEMBERS SUBCOLLECTION
-  // ----------------------------------------------------------
-
-  try {
-
-    const memberQuery =
-      query(
-        collectionGroup(
-          db,
-          "members"
-        ),
-        where(
-          "uid",
-          "==",
-          uid
-        ),
-        limit(
-          MEMBERSHIP_SCAN_LIMIT
-        )
-      );
-
-    const snapshot =
-      await getDocs(
-        memberQuery
-      );
-
-    snapshot.forEach(
-      memberDoc => {
-
-        const parent =
-          memberDoc.ref.parent.parent;
-
-        if (parent) {
-
-          ids.add(
-            parent.id
-          );
-
-        }
-
-      }
-    );
-
-  } catch (error) {
-
-    logFirestoreError(
-      "Finding joined groups",
-      error
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // 3. OLD MEMBERS MAP
-  // ----------------------------------------------------------
-
-  try {
-
-    const groupsQuery =
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        limit(
-          MEMBERSHIP_SCAN_LIMIT
-        )
-      );
-
-    const snapshot =
-      await getDocs(
-        groupsQuery
-      );
-
-    snapshot.forEach(
-      groupDoc => {
-
-        const group =
-          groupDoc.data() || {};
-
-        const member =
-          group.members?.[uid];
-
-        if (
-          member
-        ) {
-
-          ids.add(
-            groupDoc.id
-          );
-
-        }
-
-      }
-    );
-
-  } catch (error) {
-
-    logFirestoreError(
-      "Finding old-map memberships",
-      error
-    );
-
-  }
-
-
-  // ----------------------------------------------------------
-  // 4. LOAD GROUP DOCUMENTS
-  // ----------------------------------------------------------
-
-  const idArray =
-    [...ids];
-
-
-  if (!idArray.length) {
-
-    state.myGroups =
-      [];
-
-    return;
-
-  }
-
-
-  const groups = [];
-
-
-  const documents =
-    await Promise.all(
-      idArray.map(
-        async groupId => {
-
-          try {
-
-            const snapshot =
-              await getDoc(
-                doc(
-                  db,
-                  "groups",
-                  groupId
-                )
-              );
-
-            if (!snapshot.exists()) {
-              return null;
-            }
-
-            return {
-
-              id:
-                snapshot.id,
-
-              ...snapshot.data()
-
-            };
-
-          } catch (error) {
-
-            console.error(
-              "Could not load group:",
-              groupId,
-              error
-            );
-
-            return null;
-
-          }
-
-        }
-      )
-    );
-
-
-  // ----------------------------------------------------------
-  // 5. FILTER
-  // ----------------------------------------------------------
-
-  documents.forEach(
-    group => {
-
-      if (!group) return;
-
-
-      const membership =
-        state.membershipMap.get(
-          group.id
-        );
-
-
-      const isOwner =
-        group.ownerId === uid;
-
-
-      const isActiveMember =
-        membership?.status ===
-        "active";
-
-
-      const isPending =
-        membership?.status ===
-        "pending";
-
-
-      // Owner always sees their group.
-      //
-      // Active members see the group.
-      //
-      // Pending private requests are NOT treated as joined.
-      if (
-        !isOwner &&
-        !isActiveMember
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        group.status !==
-          "active" &&
-        !isOwner
-      ) {
-
-        return;
-
-      }
-
-
-      groups.push(group);
-
-    }
-  );
-
-
-  // ----------------------------------------------------------
-  // 6. SORT
-  // ----------------------------------------------------------
-
-  groups.sort(
-    (a, b) => {
-
-      const aOwned =
-        a.ownerId === uid;
-
-      const bOwned =
-        b.ownerId === uid;
-
-
-      if (
-        aOwned &&
-        !bOwned
-      ) {
-
-        return -1;
-
-      }
-
-
-      if (
-        !aOwned &&
-        bOwned
-      ) {
-
-        return 1;
-
-      }
-
-
-      return (
-        getCreatedTime(b) -
-        getCreatedTime(a)
-      );
-
-    }
-  );
-
-
-  state.myGroups =
-    groups;
-
-}
-
-
-// ============================================================
-// SEARCH
-// ============================================================
-//
-// Uses searchTokens.
-//
-// Supports multi-word searches.
-//
-// Example:
-//
-// "football group"
-//
-// Firestore finds groups containing at least one token.
-// Client-side filtering then requires ALL tokens.
-// ============================================================
-
-async function fetchSearchResults(
-  reset
-) {
-
-  const words =
-    state.searchQuery
-      .toLowerCase()
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 10);
-
-
-  if (!words.length) {
-
-    state.hasMore =
-      false;
-
-    return [];
-
-  }
-
-
-  const constraints = [
-
-    where(
-      "searchTokens",
-      "array-contains-any",
-      words
-    )
-
-  ];
-
-
-  if (
-    state.activeCategory !==
-    "all"
-  ) {
-
-    constraints.push(
-      where(
-        "category",
-        "==",
-        state.activeCategory
-      )
-    );
-
-  }
-
-
-  if (
-    !reset &&
-    state.lastVisibleDoc
-  ) {
-
-    constraints.push(
-      startAfter(
-        state.lastVisibleDoc
-      )
-    );
-
-  }
-
-
-  constraints.push(
-    limit(PAGE_SIZE)
-  );
-
-
-  const snapshot =
-    await getDocs(
-      query(
-        collection(
-          db,
-          "groups"
-        ),
-        ...constraints
-      )
-    );
-
-
-  const groups =
-    consumeSnapshot(
-      snapshot
-    );
-
-
-  const filtered =
-    groups.filter(
-      group => {
-
-        const tokens =
-          Array.isArray(
-            group.searchTokens
-          )
-            ? group.searchTokens
-            : [];
-
-
-        const normalizedTokens =
-          tokens.map(
-            token =>
-              String(token)
-                .toLowerCase()
-          );
-
-
-        return words.every(
-          word =>
-            normalizedTokens.includes(
-              word
-            )
-        );
-
-      }
-    );
-
-
-  return filtered;
-
-}
-
-
-// ============================================================
-// SNAPSHOT PAGINATION
-// ============================================================
-
-function consumeSnapshot(
-  snapshot
-) {
-
-  const docs =
-    snapshot.docs;
-
-
-  if (docs.length) {
-
-    state.lastVisibleDoc =
-      docs[
-        docs.length - 1
-      ];
-
-  }
-
-
-  state.hasMore =
-    docs.length ===
-    PAGE_SIZE;
-
-
-  return docs.map(
-    d => ({
-
-      id:
-        d.id,
-
-      ...d.data()
-
-    })
-  );
-
-}
-
-
-// ============================================================
 // SKELETONS
 // ============================================================
 
@@ -3393,7 +3199,10 @@ function renderSkeletons(
       .content
       ?.firstElementChild;
 
-  if (!template) return;
+
+  if (!template) {
+    return;
+  }
 
 
   for (
@@ -3405,8 +3214,10 @@ function renderSkeletons(
     const node =
       template.cloneNode(true);
 
+
     node.dataset.skeleton =
       "true";
+
 
     groupsGrid.appendChild(
       node
@@ -3419,7 +3230,10 @@ function renderSkeletons(
 
 function clearSkeletons() {
 
-  if (!groupsGrid) return;
+  if (!groupsGrid) {
+    return;
+  }
+
 
   groupsGrid
     .querySelectorAll(
@@ -3448,12 +3262,19 @@ if (tabsContainer) {
           ".tab"
         );
 
-      if (!tab) return;
+
+      if (!tab) {
+        return;
+      }
+
 
       const tabName =
         tab.dataset.tab;
 
-      if (!tabName) return;
+
+      if (!tabName) {
+        return;
+      }
 
 
       if (
@@ -3489,12 +3310,6 @@ if (tabsContainer) {
 
       state.searchQuery =
         "";
-
-      state.lastVisibleDoc =
-        null;
-
-      state.hasMore =
-        false;
 
 
       if (searchInput) {
@@ -3541,13 +3356,19 @@ if (
           ".category-chip"
         );
 
-      if (!chip) return;
+
+      if (!chip) {
+        return;
+      }
 
 
       const category =
         chip.dataset.category;
 
-      if (!category) return;
+
+      if (!category) {
+        return;
+      }
 
 
       categoryChipsContainer
@@ -3571,13 +3392,6 @@ if (
         category;
 
 
-      state.lastVisibleDoc =
-        null;
-
-      state.hasMore =
-        false;
-
-
       loadGroupsForActiveView(
         true
       );
@@ -3589,7 +3403,7 @@ if (
 
 
 // ============================================================
-// SEARCH INPUT
+// SEARCH
 // ============================================================
 
 if (searchInput) {
@@ -3622,12 +3436,6 @@ if (searchInput) {
         state.searchQuery =
           "";
 
-        state.lastVisibleDoc =
-          null;
-
-        state.hasMore =
-          false;
-
 
         if (searchLoading) {
 
@@ -3641,6 +3449,7 @@ if (searchInput) {
         loadGroupsForActiveView(
           true
         );
+
 
         return;
 
@@ -3663,12 +3472,6 @@ if (searchInput) {
             state.searchQuery =
               value.toLowerCase();
 
-            state.lastVisibleDoc =
-              null;
-
-            state.hasMore =
-              false;
-
 
             if (searchLoading) {
 
@@ -3684,7 +3487,7 @@ if (searchInput) {
             );
 
           },
-          400
+          350
         );
 
     }
@@ -3711,33 +3514,13 @@ if (searchClearBtn) {
       }
 
 
-      clearTimeout(
-        state.searchDebounceHandle
-      );
-
-
       state.searchQuery =
         "";
-
-      state.lastVisibleDoc =
-        null;
-
-      state.hasMore =
-        false;
 
 
       searchClearBtn.classList.remove(
         "is-visible"
       );
-
-
-      if (searchLoading) {
-
-        searchLoading.classList.remove(
-          "is-visible"
-        );
-
-      }
 
 
       loadGroupsForActiveView(
@@ -3798,3 +3581,8 @@ if (loadMoreBtn) {
     "none";
 
 }
+
+
+// ============================================================
+// END
+// ============================================================
