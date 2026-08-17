@@ -444,10 +444,6 @@ async function loadGroup() {
     );
 
 
-    // --------------------------------------------------------
-    // GROUP
-    // --------------------------------------------------------
-
     const groupSnap =
       await getDoc(groupRef);
 
@@ -469,10 +465,6 @@ async function loadGroup() {
       ...groupSnap.data()
     };
 
-
-    // --------------------------------------------------------
-    // MEMBERSHIP
-    // --------------------------------------------------------
 
     try {
 
@@ -497,10 +489,6 @@ async function loadGroup() {
       state.membership = null;
     }
 
-
-    // --------------------------------------------------------
-    // OWNER FALLBACK
-    // --------------------------------------------------------
 
     if (isCurrentUserOwner()) {
 
@@ -549,6 +537,7 @@ async function loadGroup() {
     hideLoader();
 
   }
+
 }
 
 
@@ -573,20 +562,12 @@ function renderHeader() {
   );
 
 
-  // ----------------------------------------------------------
-  // COVER
-  // ----------------------------------------------------------
-
   applyMediaBackground(
     groupCover,
     group.coverURL || group.coverUrl || '',
     ''
   );
 
-
-  // ----------------------------------------------------------
-  // AVATAR
-  // ----------------------------------------------------------
 
   applyMediaBackground(
     groupAvatar,
@@ -595,19 +576,11 @@ function renderHeader() {
   );
 
 
-  // ----------------------------------------------------------
-  // NAME
-  // ----------------------------------------------------------
-
   setText(
     groupName,
     group.name || 'VitalStar Group'
   );
 
-
-  // ----------------------------------------------------------
-  // PRIVACY
-  // ----------------------------------------------------------
 
   if (groupPrivacyBadge) {
 
@@ -631,10 +604,6 @@ function renderHeader() {
   }
 
 
-  // ----------------------------------------------------------
-  // PREMIUM
-  // ----------------------------------------------------------
-
   setDisplay(
     groupPremiumBadge,
     group.type === 'premium'
@@ -642,10 +611,6 @@ function renderHeader() {
       : 'none'
   );
 
-
-  // ----------------------------------------------------------
-  // VERIFIED
-  // ----------------------------------------------------------
 
   setDisplay(
     groupVerifiedBadge,
@@ -655,10 +620,6 @@ function renderHeader() {
   );
 
 
-  // ----------------------------------------------------------
-  // CATEGORY
-  // ----------------------------------------------------------
-
   setText(
     groupCategoryChip,
     CATEGORY_LABELS[group.category] ||
@@ -666,10 +627,6 @@ function renderHeader() {
     'General'
   );
 
-
-  // ----------------------------------------------------------
-  // OWNER
-  // ----------------------------------------------------------
 
   const ownerName =
     group.ownerName ||
@@ -689,29 +646,17 @@ function renderHeader() {
   );
 
 
-  // ----------------------------------------------------------
-  // CREATED
-  // ----------------------------------------------------------
-
   setText(
     groupCreatedText,
     `Created ${formatDate(group.createdAt)}`
   );
 
 
-  // ----------------------------------------------------------
-  // DESCRIPTION
-  // ----------------------------------------------------------
-
   setText(
     groupDescription,
     group.description || ''
   );
 
-
-  // ----------------------------------------------------------
-  // STATS
-  // ----------------------------------------------------------
 
   setText(
     statMemberCount,
@@ -737,10 +682,6 @@ function renderHeader() {
   renderJoinLeaveState();
 
 
-  // ----------------------------------------------------------
-  // MANAGEMENT
-  // ----------------------------------------------------------
-
   if (coverEditBtn) {
 
     coverEditBtn.classList.toggle(
@@ -761,10 +702,6 @@ function renderJoinLeaveState() {
 
   if (!joinLeaveBtn) return;
 
-
-  // ----------------------------------------------------------
-  // OWNER
-  // ----------------------------------------------------------
 
   if (
     isCurrentUserOwner() ||
@@ -791,10 +728,6 @@ function renderJoinLeaveState() {
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // ACTIVE MEMBER
-  // ----------------------------------------------------------
 
   if (
     state.membership &&
@@ -832,10 +765,6 @@ function renderJoinLeaveState() {
   }
 
 
-  // ----------------------------------------------------------
-  // PENDING
-  // ----------------------------------------------------------
-
   if (
     state.membership?.status === 'pending'
   ) {
@@ -863,10 +792,6 @@ function renderJoinLeaveState() {
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // NOT MEMBER
-  // ----------------------------------------------------------
 
   joinLeaveBtn.style.display = 'flex';
 
@@ -1123,10 +1048,6 @@ function applyAccessControl() {
     canViewGroup();
 
 
-  // ----------------------------------------------------------
-  // LOCK
-  // ----------------------------------------------------------
-
   if (lockedNotice) {
 
     lockedNotice.classList.toggle(
@@ -1137,10 +1058,6 @@ function applyAccessControl() {
   }
 
 
-  // ----------------------------------------------------------
-  // CONTENT
-  // ----------------------------------------------------------
-
   if (groupContentGrid) {
 
     groupContentGrid.style.display =
@@ -1148,10 +1065,6 @@ function applyAccessControl() {
 
   }
 
-
-  // ----------------------------------------------------------
-  // SUBSCRIPTION
-  // ----------------------------------------------------------
 
   setDisplay(
     subscriptionTabBtn,
@@ -1161,10 +1074,6 @@ function applyAccessControl() {
   );
 
 
-  // ----------------------------------------------------------
-  // SETTINGS
-  // ----------------------------------------------------------
-
   setDisplay(
     settingsTabBtn,
     canManageGroup()
@@ -1172,10 +1081,6 @@ function applyAccessControl() {
       : 'none'
   );
 
-
-  // ----------------------------------------------------------
-  // DEFAULT TAB
-  // ----------------------------------------------------------
 
   if (canView) {
 
@@ -1228,10 +1133,6 @@ function activateTab(tabName) {
   if (!tabName) return;
 
 
-  // ----------------------------------------------------------
-  // PRIVATE GROUP
-  // ----------------------------------------------------------
-
   if (
     !canViewGroup() &&
     tabName !== 'posts'
@@ -1245,10 +1146,6 @@ function activateTab(tabName) {
     return;
   }
 
-
-  // ----------------------------------------------------------
-  // SETTINGS
-  // ----------------------------------------------------------
 
   if (
     tabName === 'settings' &&
@@ -1264,10 +1161,6 @@ function activateTab(tabName) {
   }
 
 
-  // ----------------------------------------------------------
-  // SUBSCRIPTION
-  // ----------------------------------------------------------
-
   if (
     tabName === 'subscription' &&
     state.groupData?.type !== 'premium'
@@ -1279,10 +1172,6 @@ function activateTab(tabName) {
   state.activeTab =
     tabName;
 
-
-  // ----------------------------------------------------------
-  // BUTTONS
-  // ----------------------------------------------------------
 
   if (groupTabsNav) {
 
@@ -1299,10 +1188,6 @@ function activateTab(tabName) {
 
   }
 
-
-  // ----------------------------------------------------------
-  // PANELS
-  // ----------------------------------------------------------
 
   document
     .querySelectorAll('.tab-panel')
@@ -1586,15 +1471,11 @@ function bindHeaderActions() {
   headerActionsBound = true;
 
 
-  // JOIN / LEAVE
-
   joinLeaveBtn?.addEventListener(
     'click',
     handleJoinLeaveClick
   );
 
-
-  // SHARE
 
   shareBtn?.addEventListener(
     'click',
@@ -1602,15 +1483,11 @@ function bindHeaderActions() {
   );
 
 
-  // INVITE
-
   inviteBtn?.addEventListener(
     'click',
     handleInviteClick
   );
 
-
-  // COVER EDIT
 
   coverEditBtn?.addEventListener(
     'click',
@@ -1632,8 +1509,6 @@ function bindHeaderActions() {
   );
 
 
-  // NOTIFICATIONS
-
   notificationBellBtn?.addEventListener(
     'click',
     toggleNotificationsPanel
@@ -1645,8 +1520,6 @@ function bindHeaderActions() {
     closeNotifications
   );
 
-
-  // OUTSIDE CLICK
 
   document.addEventListener(
     'click',
@@ -1735,6 +1608,229 @@ async function handleJoinLeaveClick() {
   ) {
 
     await leaveGroup();
+
+  }
+
+}
+
+
+// ============================================================
+// GROUP JOIN REQUEST NOTIFICATION
+// ============================================================
+
+async function sendJoinRequestNotification() {
+
+  const group =
+    state.groupData;
+
+  const user =
+    state.currentUser;
+
+
+  if (!group || !user) {
+    return;
+  }
+
+
+  try {
+
+    const recipients =
+      new Set();
+
+
+    // --------------------------------------------------------
+    // OWNER
+    // --------------------------------------------------------
+
+    const ownerId =
+      group.ownerId ||
+      group.ownerUid ||
+      group.createdBy ||
+      group.creatorId;
+
+
+    if (
+      ownerId &&
+      ownerId !== user.uid
+    ) {
+
+      recipients.add(
+        ownerId
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // ADMINS / MODERATORS
+    // --------------------------------------------------------
+
+    const membersRef =
+      collection(
+        db,
+        'groups',
+        state.groupId,
+        'members'
+      );
+
+
+    const adminsQuery =
+      query(
+        membersRef,
+        where(
+          'role',
+          'in',
+          [
+            'admin',
+            'moderator'
+          ]
+        ),
+        where(
+          'status',
+          '==',
+          'active'
+        )
+      );
+
+
+    const adminsSnapshot =
+      await getDocs(
+        adminsQuery
+      );
+
+
+    adminsSnapshot.forEach(
+      memberDoc => {
+
+        const member =
+          memberDoc.data();
+
+
+        const uid =
+          member.uid ||
+          memberDoc.id;
+
+
+        if (
+          uid &&
+          uid !== user.uid
+        ) {
+
+          recipients.add(
+            uid
+          );
+
+        }
+
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // NO RECIPIENTS
+    // --------------------------------------------------------
+
+    if (!recipients.size) {
+      return;
+    }
+
+
+    const senderName =
+      user.displayName ||
+      'VitalStar Member';
+
+
+    const groupName =
+      group.name ||
+      'your group';
+
+
+    // --------------------------------------------------------
+    // CREATE NOTIFICATIONS
+    // --------------------------------------------------------
+
+    await Promise.all(
+
+      [...recipients].map(
+        async recipientId => {
+
+          await addDoc(
+            collection(
+              db,
+              'notifications'
+            ),
+            {
+
+              // Receiver
+              recipientId,
+
+              // Compatibility with
+              // existing notification systems
+              receiverId:
+                recipientId,
+
+
+              // Sender
+              senderId:
+                user.uid,
+
+              senderName,
+
+              senderPhotoURL:
+                user.photoURL || '',
+
+
+              // Notification type
+              type:
+                'group_join_request',
+
+
+              // Group
+              groupId:
+                state.groupId,
+
+              groupName,
+
+
+              // Message
+              message:
+                `${senderName} requested to join ${groupName}.`,
+
+
+              // Status
+              read:
+                false,
+
+
+              // Timestamp
+              createdAt:
+                serverTimestamp(),
+
+
+              // Destination
+              url:
+                `group.html?id=${encodeURIComponent(
+                  state.groupId
+                )}`
+
+            }
+          );
+
+        }
+      )
+
+    );
+
+
+  } catch (error) {
+
+    // Notification failure should
+    // never cancel the join request.
+
+    console.error(
+      'Join request notification error:',
+      error
+    );
 
   }
 
@@ -1904,14 +2000,18 @@ async function joinGroup() {
           ) || 0
         ) + 1;
 
-      // --------------------------------------------------------
-      // NEW MEMBER JOINED NOTIFICATION
-      // --------------------------------------------------------
+    }
 
-      await createGroupJoinNotification(
-        group,
-        user
-      );
+
+    // --------------------------------------------------------
+    // PRIVATE GROUP NOTIFICATION
+    // --------------------------------------------------------
+
+    if (
+      status === 'pending'
+    ) {
+
+      await sendJoinRequestNotification();
 
     }
 
@@ -1945,89 +2045,6 @@ async function joinGroup() {
   } finally {
 
     joinLeaveBtn.disabled = false;
-
-  }
-
-}
-
-
-// ============================================================
-// GROUP JOIN NOTIFICATION
-// ============================================================
-
-async function createGroupJoinNotification(
-  group,
-  user
-) {
-
-  const ownerId =
-    group.ownerId ||
-    group.ownerUid ||
-    group.createdBy ||
-    group.creatorId;
-
-
-  // No owner ID or user is the owner
-  if (
-    !ownerId ||
-    ownerId === user.uid
-  ) {
-    return;
-  }
-
-
-  try {
-
-    await addDoc(
-      collection(
-        db,
-        'groupNotifications'
-      ),
-      {
-
-        receiverId:
-          ownerId,
-
-        groupId:
-          state.groupId,
-
-        groupName:
-          group.name ||
-          'VitalStar Group',
-
-        senderId:
-          user.uid,
-
-        senderName:
-          user.displayName ||
-          'VitalStar Member',
-
-        senderPhotoURL:
-          user.photoURL ||
-          '',
-
-        type:
-          'member_joined',
-
-        message:
-          `${user.displayName || 'A member'} joined your group.`,
-
-        read:
-          false,
-
-        createdAt:
-          serverTimestamp()
-
-      }
-    );
-
-  } catch (error) {
-
-    // Notification failure must not undo a successful join
-    console.error(
-      'Group join notification error:',
-      error
-    );
 
   }
 
