@@ -30,13 +30,14 @@ import {
     limit,
     onSnapshot,
     updateDoc,
-    deleteDoc,
     doc,
     getDoc,
     getDocs,
     writeBatch,
+    deleteDoc,
     runTransaction,
-    increment
+    increment,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -48,22 +49,18 @@ const notifications =
     document.getElementById("notifications");
 
 if (!notifications) {
-
     console.error(
         "Notifications container not found."
     );
-
 }
 
 
 // ============================================================
-// MARK ALL AS READ LINK
+// MARK ALL AS READ
 // ============================================================
 
 let markAllReadLink =
-    document.getElementById(
-        "markAllReadLink"
-    );
+    document.getElementById("markAllReadLink");
 
 
 if (
@@ -75,12 +72,8 @@ if (
         document.createElement("a");
 
     markAllReadLink.href = "#";
-
-    markAllReadLink.id =
-        "markAllReadLink";
-
-    markAllReadLink.textContent =
-        "Mark all as read";
+    markAllReadLink.id = "markAllReadLink";
+    markAllReadLink.textContent = "Mark all as read";
 
     markAllReadLink.style.cssText = `
         display:block;
@@ -96,7 +89,6 @@ if (
         markAllReadLink,
         notifications
     );
-
 }
 
 
@@ -188,7 +180,7 @@ if (markAllReadLink) {
 
 
 // ============================================================
-// NOTIFICATION ICON
+// ICON
 // ============================================================
 
 function getNotificationIcon(type) {
@@ -251,14 +243,12 @@ function getNotificationIcon(type) {
 
         default:
             return "🔔";
-
     }
-
 }
 
 
 // ============================================================
-// DATE FORMAT
+// DATE
 // ============================================================
 
 function formatNotificationTime(timestamp) {
@@ -270,8 +260,7 @@ function formatNotificationTime(timestamp) {
     try {
 
         if (
-            typeof timestamp.toDate ===
-            "function"
+            typeof timestamp.toDate === "function"
         ) {
 
             return timestamp
@@ -282,17 +271,14 @@ function formatNotificationTime(timestamp) {
 
         return "Just now";
 
-    } catch (error) {
-
+    } catch {
         return "Just now";
-
     }
-
 }
 
 
 // ============================================================
-// SAFE HTML
+// ESCAPE HTML
 // ============================================================
 
 function escapeHTML(value) {
@@ -304,34 +290,28 @@ function escapeHTML(value) {
         value ?? "";
 
     return div.innerHTML;
-
 }
 
 
 // ============================================================
-// GET NOTIFICATION TEXT
+// TEXT
 // ============================================================
 
-function getNotificationText(
-    notification
-) {
+function getNotificationText(notification) {
 
     return (
         notification.text ||
         notification.message ||
         "New notification"
     );
-
 }
 
 
 // ============================================================
-// GET SENDER PHOTO
+// SENDER PHOTO
 // ============================================================
 
-function getSenderPhoto(
-    notification
-) {
+function getSenderPhoto(notification) {
 
     return (
         notification.senderPhoto ||
@@ -339,44 +319,44 @@ function getSenderPhoto(
         notification.photoURL ||
         "https://via.placeholder.com/50"
     );
-
 }
 
 
 // ============================================================
-// IS GROUP POST NOTIFICATION
+// GROUP POST NOTIFICATION CHECK
 // ============================================================
 
-function isGroupPostNotification(
-    notification
-) {
+function isGroupPostNotification(notification) {
 
-    return Boolean(
-        notification.groupId &&
-        notification.postId
+    return (
+        Boolean(notification.groupId) &&
+        Boolean(notification.postId) &&
+        [
+            "group_post",
+            "group_post_like",
+            "group_post_comment",
+            "group_mention"
+        ].includes(notification.type)
     );
-
 }
 
 
 // ============================================================
-// GET DESTINATION
+// DESTINATION
 // ============================================================
 
-function getNotificationDestination(
-    notification
-) {
+function getNotificationDestination(notification) {
 
     // --------------------------------------------------------
     // GROUP POST
+    //
     // IMPORTANT:
-    // Group post notifications MUST stay inside group.html.
+    // Group post notifications MUST open group.html.
+    // They must NOT open comments.html.
     // --------------------------------------------------------
 
     if (
-        isGroupPostNotification(
-            notification
-        )
+        isGroupPostNotification(notification)
     ) {
 
         return (
@@ -390,7 +370,6 @@ function getNotificationDestination(
                 )
             }`
         );
-
     }
 
 
@@ -410,12 +389,30 @@ function getNotificationDestination(
                 )
             }&tab=chat`
         );
-
     }
 
 
     // --------------------------------------------------------
-    // GROUP
+    // GROUP JOIN REQUEST
+    // --------------------------------------------------------
+
+    if (
+        notification.type ===
+        "group_join_request"
+    ) {
+
+        return (
+            `group.html?id=${
+                encodeURIComponent(
+                    notification.groupId
+                )
+            }&tab=members`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // OTHER GROUP NOTIFICATION
     // --------------------------------------------------------
 
     if (
@@ -429,7 +426,6 @@ function getNotificationDestination(
                 )
             }`
         );
-
     }
 
 
@@ -448,7 +444,6 @@ function getNotificationDestination(
                 )
             }`
         );
-
     }
 
 
@@ -467,12 +462,9 @@ function getNotificationDestination(
 
         return (
             `chat.html?id=${
-                encodeURIComponent(
-                    chatId
-                )
+                encodeURIComponent(chatId)
             }`
         );
-
     }
 
 
@@ -485,7 +477,6 @@ function getNotificationDestination(
     ) {
 
         return notification.url;
-
     }
 
 
@@ -504,44 +495,36 @@ function getNotificationDestination(
                 )
             }`
         );
-
     }
 
 
     return null;
-
 }
 
 
 // ============================================================
-// GET GROUP OWNER / ADMIN PERMISSION
+// CURRENT USER CAN MANAGE GROUP
 // ============================================================
 
-async function canManageJoinRequest(
-    notification
+async function canManageGroup(
+    groupId,
+    uid
 ) {
 
-    const user =
-        auth.currentUser;
-
-    if (
-        !user ||
-        !notification.groupId
-    ) {
+    if (!groupId || !uid) {
         return false;
     }
 
     try {
 
-        const groupRef =
-            doc(
-                db,
-                "groups",
-                notification.groupId
-            );
-
         const groupSnap =
-            await getDoc(groupRef);
+            await getDoc(
+                doc(
+                    db,
+                    "groups",
+                    groupId
+                )
+            );
 
         if (!groupSnap.exists()) {
             return false;
@@ -550,43 +533,50 @@ async function canManageJoinRequest(
         const group =
             groupSnap.data();
 
+
         const ownerId =
             group.ownerId ||
             group.ownerUid ||
             group.createdBy ||
             group.creatorId;
 
+
         if (
-            ownerId === user.uid
+            ownerId === uid
         ) {
             return true;
         }
 
 
-        const memberRef =
-            doc(
-                db,
-                "groups",
-                notification.groupId,
-                "members",
-                user.uid
+        const memberSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "groups",
+                    groupId,
+                    "members",
+                    uid
+                )
             );
 
-        const memberSnap =
-            await getDoc(memberRef);
 
         if (!memberSnap.exists()) {
             return false;
         }
 
+
         const member =
             memberSnap.data();
 
+
         return (
             member.status === "active" &&
-            (
-                member.role === "admin" ||
-                member.role === "moderator"
+            [
+                "owner",
+                "admin",
+                "moderator"
+            ].includes(
+                member.role
             )
         );
 
@@ -598,9 +588,7 @@ async function canManageJoinRequest(
         );
 
         return false;
-
     }
-
 }
 
 
@@ -611,54 +599,57 @@ async function canManageJoinRequest(
 async function approveJoinRequest(
     notificationDoc,
     notification,
-    button
+    card
 ) {
 
-    const user =
+    const currentUser =
         auth.currentUser;
 
-    if (!user) {
+    if (!currentUser) {
         return;
     }
 
-    button.disabled = true;
+
+    const groupId =
+        notification.groupId;
+
+    const applicantId =
+        notification.requesterId ||
+        notification.applicantId ||
+        notification.senderId;
+
+
+    if (
+        !groupId ||
+        !applicantId
+    ) {
+
+        alert(
+            "This join request is missing required information."
+        );
+
+        return;
+    }
+
+
+    const allowed =
+        await canManageGroup(
+            groupId,
+            currentUser.uid
+        );
+
+
+    if (!allowed) {
+
+        alert(
+            "You do not have permission to approve this request."
+        );
+
+        return;
+    }
+
 
     try {
-
-        const allowed =
-            await canManageJoinRequest(
-                notification
-            );
-
-        if (!allowed) {
-
-            alert(
-                "You do not have permission to approve this request."
-            );
-
-            button.disabled = false;
-
-            return;
-        }
-
-
-        const groupId =
-            notification.groupId;
-
-        const requesterId =
-            notification.senderId;
-
-        if (
-            !groupId ||
-            !requesterId
-        ) {
-
-            throw new Error(
-                "Missing group or requester ID."
-            );
-
-        }
-
 
         const memberRef =
             doc(
@@ -666,8 +657,9 @@ async function approveJoinRequest(
                 "groups",
                 groupId,
                 "members",
-                requesterId
+                applicantId
             );
+
 
         const groupRef =
             doc(
@@ -689,8 +681,12 @@ async function approveJoinRequest(
                         memberRef
                     );
 
+
                 if (!memberSnap.exists()) {
-                    return;
+
+                    throw new Error(
+                        "Join request no longer exists."
+                    );
                 }
 
 
@@ -701,7 +697,10 @@ async function approveJoinRequest(
                 if (
                     member.status !== "pending"
                 ) {
-                    return;
+
+                    throw new Error(
+                        "This request has already been processed."
+                    );
                 }
 
 
@@ -709,8 +708,9 @@ async function approveJoinRequest(
                     memberRef,
                     {
                         status: "active",
-                        approvedAt:
-                            new Date()
+                        role: "member",
+                        joinedAt:
+                            serverTimestamp()
                     }
                 );
 
@@ -725,19 +725,11 @@ async function approveJoinRequest(
 
 
                 approved = true;
-
             }
         );
 
 
         if (!approved) {
-
-            alert(
-                "This join request is no longer pending."
-            );
-
-            button.disabled = false;
-
             return;
         }
 
@@ -750,77 +742,114 @@ async function approveJoinRequest(
             notificationDoc.ref,
             {
                 read: true,
-                action: "approved",
-                actionAt: new Date()
+                requestStatus: "approved",
+                processedAt:
+                    serverTimestamp(),
+                processedBy:
+                    currentUser.uid
             }
         );
 
 
         // ----------------------------------------------------
-        // Notify requester
+        // Notify applicant
         // ----------------------------------------------------
 
-        await createGeneralNotification({
-            receiverId:
-                requesterId,
-
-            senderId:
-                user.uid,
-
-            senderName:
-                user.displayName ||
-                "Group Admin",
-
-            senderPhoto:
-                user.photoURL || "",
-
-            type:
-                "group_join",
-
-            groupId,
-
-            groupName:
-                notification.groupName ||
-                "the group",
-
-            text:
-                `Your request to join ${
-                    notification.groupName ||
-                    "the group"
-                } was approved.`,
-
-            url:
-                `group.html?id=${encodeURIComponent(
-                    groupId
-                )}`
-        });
+        let groupName =
+            notification.groupName ||
+            "the group";
 
 
-        const card =
-            button.closest(
-                ".notification-card"
+        const groupSnap =
+            await getDoc(
+                groupRef
             );
 
-        if (card) {
 
-            const actions =
-                card.querySelector(
-                    ".join-request-actions"
-                );
+        if (groupSnap.exists()) {
 
-            if (actions) {
-                actions.innerHTML = `
-                    <span style="
-                        color:#16803c;
-                        font-size:13px;
-                        font-weight:600;
-                    ">
-                        ✓ Approved
-                    </span>
-                `;
-            }
-
+            groupName =
+                groupSnap.data().name ||
+                groupName;
         }
+
+
+        await addDoc(
+            collection(
+                db,
+                "notifications"
+            ),
+            {
+                receiverId:
+                    applicantId,
+
+                recipientId:
+                    applicantId,
+
+                senderId:
+                    currentUser.uid,
+
+                senderName:
+                    currentUser.displayName ||
+                    "Group Admin",
+
+                senderPhoto:
+                    currentUser.photoURL ||
+                    "",
+
+                senderPhotoURL:
+                    currentUser.photoURL ||
+                    "",
+
+                type:
+                    "group_join",
+
+                text:
+                    `Your request to join ${groupName} was approved.`,
+
+                message:
+                    `Your request to join ${groupName} was approved.`,
+
+                groupId,
+
+                groupName,
+
+                read: false,
+
+                createdAt:
+                    serverTimestamp(),
+
+                url:
+                    `group.html?id=${encodeURIComponent(
+                        groupId
+                    )}`
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // Update card
+        // ----------------------------------------------------
+
+        const actionArea =
+            card.querySelector(
+                ".join-request-actions"
+            );
+
+        if (actionArea) {
+
+            actionArea.innerHTML = `
+                <div style="
+                    color:#16803c;
+                    font-size:13px;
+                    font-weight:600;
+                    padding-top:8px;
+                ">
+                    ✓ Request approved
+                </div>
+            `;
+        }
+
 
     } catch (error) {
 
@@ -830,13 +859,10 @@ async function approveJoinRequest(
         );
 
         alert(
-            "Could not approve the join request."
+            error.message ||
+            "Could not approve this request."
         );
-
-        button.disabled = false;
-
     }
-
 }
 
 
@@ -847,55 +873,57 @@ async function approveJoinRequest(
 async function rejectJoinRequest(
     notificationDoc,
     notification,
-    button
+    card
 ) {
 
-    const user =
+    const currentUser =
         auth.currentUser;
 
-    if (!user) {
+    if (!currentUser) {
         return;
     }
 
-    button.disabled = true;
+
+    const groupId =
+        notification.groupId;
+
+    const applicantId =
+        notification.requesterId ||
+        notification.applicantId ||
+        notification.senderId;
+
+
+    if (
+        !groupId ||
+        !applicantId
+    ) {
+
+        alert(
+            "This join request is missing required information."
+        );
+
+        return;
+    }
+
+
+    const allowed =
+        await canManageGroup(
+            groupId,
+            currentUser.uid
+        );
+
+
+    if (!allowed) {
+
+        alert(
+            "You do not have permission to reject this request."
+        );
+
+        return;
+    }
+
 
     try {
-
-        const allowed =
-            await canManageJoinRequest(
-                notification
-            );
-
-        if (!allowed) {
-
-            alert(
-                "You do not have permission to reject this request."
-            );
-
-            button.disabled = false;
-
-            return;
-        }
-
-
-        const groupId =
-            notification.groupId;
-
-        const requesterId =
-            notification.senderId;
-
-
-        if (
-            !groupId ||
-            !requesterId
-        ) {
-
-            throw new Error(
-                "Missing group or requester ID."
-            );
-
-        }
-
 
         const memberRef =
             doc(
@@ -903,7 +931,7 @@ async function rejectJoinRequest(
                 "groups",
                 groupId,
                 "members",
-                requesterId
+                applicantId
             );
 
 
@@ -914,22 +942,13 @@ async function rejectJoinRequest(
 
 
         if (
-            memberSnap.exists()
+            memberSnap.exists() &&
+            memberSnap.data().status === "pending"
         ) {
 
-            const member =
-                memberSnap.data();
-
-            if (
-                member.status === "pending"
-            ) {
-
-                await deleteDoc(
-                    memberRef
-                );
-
-            }
-
+            await deleteDoc(
+                memberRef
+            );
         }
 
 
@@ -937,79 +956,114 @@ async function rejectJoinRequest(
             notificationDoc.ref,
             {
                 read: true,
-                action: "rejected",
-                actionAt: new Date()
+                requestStatus: "rejected",
+                processedAt:
+                    serverTimestamp(),
+                processedBy:
+                    currentUser.uid
             }
         );
 
 
         // ----------------------------------------------------
-        // Notify requester
+        // Notify applicant
         // ----------------------------------------------------
 
-        await createGeneralNotification({
-            receiverId:
-                requesterId,
-
-            senderId:
-                user.uid,
-
-            senderName:
-                user.displayName ||
-                "Group Admin",
-
-            senderPhoto:
-                user.photoURL || "",
-
-            type:
-                "group_admin",
-
-            groupId,
-
-            groupName:
-                notification.groupName ||
-                "the group",
-
-            text:
-                `Your request to join ${
-                    notification.groupName ||
-                    "the group"
-                } was declined.`,
-
-            url:
-                `group.html?id=${encodeURIComponent(
+        const groupSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "groups",
                     groupId
-                )}`
-        });
-
-
-        const card =
-            button.closest(
-                ".notification-card"
+                )
             );
 
-        if (card) {
 
-            const actions =
-                card.querySelector(
-                    ".join-request-actions"
+        const groupName =
+            groupSnap.exists()
+                ? (
+                    groupSnap.data().name ||
+                    notification.groupName ||
+                    "the group"
+                )
+                : (
+                    notification.groupName ||
+                    "the group"
                 );
 
-            if (actions) {
 
-                actions.innerHTML = `
-                    <span style="
-                        color:#b42318;
-                        font-size:13px;
-                        font-weight:600;
-                    ">
-                        ✕ Declined
-                    </span>
-                `;
+        await addDoc(
+            collection(
+                db,
+                "notifications"
+            ),
+            {
+                receiverId:
+                    applicantId,
 
+                recipientId:
+                    applicantId,
+
+                senderId:
+                    currentUser.uid,
+
+                senderName:
+                    currentUser.displayName ||
+                    "Group Admin",
+
+                senderPhoto:
+                    currentUser.photoURL ||
+                    "",
+
+                senderPhotoURL:
+                    currentUser.photoURL ||
+                    "",
+
+                type:
+                    "group_join",
+
+                text:
+                    `Your request to join ${groupName} was declined.`,
+
+                message:
+                    `Your request to join ${groupName} was declined.`,
+
+                groupId,
+
+                groupName,
+
+                read: false,
+
+                createdAt:
+                    serverTimestamp(),
+
+                url:
+                    `group.html?id=${encodeURIComponent(
+                        groupId
+                    )}`
             }
+        );
 
+
+        const actionArea =
+            card.querySelector(
+                ".join-request-actions"
+            );
+
+        if (actionArea) {
+
+            actionArea.innerHTML = `
+                <div style="
+                    color:#b42318;
+                    font-size:13px;
+                    font-weight:600;
+                    padding-top:8px;
+                ">
+                    ✕ Request declined
+                </div>
+            `;
         }
+
 
     } catch (error) {
 
@@ -1019,63 +1073,192 @@ async function rejectJoinRequest(
         );
 
         alert(
-            "Could not reject the join request."
+            error.message ||
+            "Could not reject this request."
         );
-
-        button.disabled = false;
-
     }
-
 }
 
 
 // ============================================================
-// CREATE GENERAL NOTIFICATION
+// JOIN REQUEST ACTIONS
 // ============================================================
 
-async function createGeneralNotification(
-    data
+function renderJoinRequestActions(
+    card,
+    notificationDoc,
+    notification
 ) {
 
-    try {
-
-        const {
-            addDoc
-        } = await import(
-            "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
-        );
-
-        await addDoc(
-            collection(
-                db,
-                "notifications"
-            ),
-            {
-                ...data,
-
-                recipientId:
-                    data.receiverId,
-
-                receiverId:
-                    data.receiverId,
-
-                read:
-                    false,
-
-                createdAt:
-                    new Date()
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Create notification error:",
-            error
-        );
-
+    if (
+        notification.type !==
+        "group_join_request"
+    ) {
+        return;
     }
 
+
+    const actionArea =
+        document.createElement("div");
+
+    actionArea.className =
+        "join-request-actions";
+
+
+    actionArea.style.cssText = `
+        display:flex;
+        gap:8px;
+        margin-top:9px;
+        flex-wrap:wrap;
+    `;
+
+
+    // Already processed
+
+    if (
+        notification.requestStatus ===
+        "approved"
+    ) {
+
+        actionArea.innerHTML = `
+            <span style="
+                color:#16803c;
+                font-size:13px;
+                font-weight:600;
+            ">
+                ✓ Request approved
+            </span>
+        `;
+
+        card.appendChild(actionArea);
+
+        return;
+    }
+
+
+    if (
+        notification.requestStatus ===
+        "rejected"
+    ) {
+
+        actionArea.innerHTML = `
+            <span style="
+                color:#b42318;
+                font-size:13px;
+                font-weight:600;
+            ">
+                ✕ Request declined
+            </span>
+        `;
+
+        card.appendChild(actionArea);
+
+        return;
+    }
+
+
+    const approveBtn =
+        document.createElement("button");
+
+    approveBtn.type = "button";
+
+    approveBtn.textContent =
+        "Approve";
+
+    approveBtn.style.cssText = `
+        border:0;
+        border-radius:7px;
+        padding:7px 13px;
+        background:#16803c;
+        color:white;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+    `;
+
+
+    const rejectBtn =
+        document.createElement("button");
+
+    rejectBtn.type = "button";
+
+    rejectBtn.textContent =
+        "Cancel";
+
+    rejectBtn.style.cssText = `
+        border:1px solid #d0d5dd;
+        border-radius:7px;
+        padding:7px 13px;
+        background:white;
+        color:#b42318;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+    `;
+
+
+    approveBtn.addEventListener(
+        "click",
+        async event => {
+
+            event.stopPropagation();
+
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+
+            await approveJoinRequest(
+                notificationDoc,
+                notification,
+                card
+            );
+
+            approveBtn.disabled = false;
+            rejectBtn.disabled = false;
+
+        }
+    );
+
+
+    rejectBtn.addEventListener(
+        "click",
+        async event => {
+
+            event.stopPropagation();
+
+
+            const confirmed =
+                window.confirm(
+                    "Reject this join request?"
+                );
+
+
+            if (!confirmed) {
+                return;
+            }
+
+
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+
+            await rejectJoinRequest(
+                notificationDoc,
+                notification,
+                card
+            );
+
+        }
+    );
+
+
+    actionArea.append(
+        approveBtn,
+        rejectBtn
+    );
+
+
+    card.appendChild(
+        actionArea
+    );
 }
 
 
@@ -1091,11 +1274,7 @@ async function openNotification(
     try {
 
         await updateDoc(
-            doc(
-                db,
-                "notifications",
-                notificationDoc.id
-            ),
+            notificationDoc.ref,
             {
                 read: true
             }
@@ -1113,6 +1292,7 @@ async function openNotification(
             window.location.href =
                 destination;
 
+            return;
         }
 
     } catch (error) {
@@ -1125,9 +1305,260 @@ async function openNotification(
         alert(
             "Failed to open notification."
         );
+    }
+}
 
+
+// ============================================================
+// RENDER NOTIFICATION
+// ============================================================
+
+function renderNotification(
+    notificationDoc
+) {
+
+    const notification =
+        notificationDoc.data();
+
+
+    const icon =
+        getNotificationIcon(
+            notification.type
+        );
+
+
+    const time =
+        formatNotificationTime(
+            notification.createdAt
+        );
+
+
+    const senderName =
+        escapeHTML(
+            notification.senderName ||
+            notification.fullName ||
+            "Someone"
+        );
+
+
+    const text =
+        escapeHTML(
+            getNotificationText(
+                notification
+            )
+        );
+
+
+    const senderPhoto =
+        escapeHTML(
+            getSenderPhoto(
+                notification
+            )
+        );
+
+
+    const card =
+        document.createElement("div");
+
+
+    card.className =
+        "notification-card";
+
+
+    card.style.cursor =
+        "pointer";
+
+
+    if (
+        notification.read !== true
+    ) {
+
+        card.classList.add(
+            "is-unread"
+        );
+
+        card.style.background =
+            "#eef5ff";
     }
 
+
+    // --------------------------------------------------------
+    // GROUP LABEL
+    // --------------------------------------------------------
+
+    let groupLabel = "";
+
+
+    if (
+        notification.groupId &&
+        notification.groupName
+    ) {
+
+        groupLabel = `
+            <div style="
+                font-size:12px;
+                color:#777;
+                margin-top:3px;
+            ">
+                👥 ${escapeHTML(
+                    notification.groupName
+                )}
+            </div>
+        `;
+    }
+
+
+    // --------------------------------------------------------
+    // POST LABEL
+    // --------------------------------------------------------
+
+    let postLabel = "";
+
+
+    if (
+        isGroupPostNotification(
+            notification
+        )
+    ) {
+
+        postLabel = `
+            <div style="
+                font-size:12px;
+                color:#777;
+                margin-top:2px;
+            ">
+                📝 View post in group
+            </div>
+        `;
+
+    } else if (
+        notification.postId
+    ) {
+
+        postLabel = `
+            <div style="
+                font-size:12px;
+                color:#777;
+                margin-top:2px;
+            ">
+                📝 View post
+            </div>
+        `;
+    }
+
+
+    // --------------------------------------------------------
+    // CARD
+    // --------------------------------------------------------
+
+    card.innerHTML = `
+
+        <div style="
+            display:flex;
+            gap:10px;
+            align-items:flex-start;
+        ">
+
+            <img
+                src="${senderPhoto}"
+                alt=""
+                style="
+                    width:40px;
+                    height:40px;
+                    border-radius:50%;
+                    object-fit:cover;
+                    flex-shrink:0;
+                "
+                onerror="
+                    this.src='https://via.placeholder.com/50';
+                "
+            >
+
+            <div
+                class="notification-text"
+                style="flex:1;"
+            >
+
+                <b>
+                    ${senderName}
+                </b>
+
+                <br>
+
+                <span>
+                    ${icon}
+                    ${text}
+                </span>
+
+                ${groupLabel}
+
+                ${postLabel}
+
+                <br>
+
+                <small>
+                    ${escapeHTML(time)}
+                </small>
+
+            </div>
+
+            ${
+                notification.read !== true
+                    ? `
+                        <span
+                            class="unread-dot"
+                            title="Unread"
+                        >
+                            ●
+                        </span>
+                    `
+                    : ""
+            }
+
+        </div>
+    `;
+
+
+    // --------------------------------------------------------
+    // JOIN REQUEST ACTIONS
+    // --------------------------------------------------------
+
+    renderJoinRequestActions(
+        card,
+        notificationDoc,
+        notification
+    );
+
+
+    // --------------------------------------------------------
+    // CLICK
+    // --------------------------------------------------------
+
+    card.addEventListener(
+        "click",
+        event => {
+
+            // Don't navigate when clicking buttons.
+
+            if (
+                event.target.closest(
+                    ".join-request-actions"
+                )
+            ) {
+                return;
+            }
+
+
+            openNotification(
+                notificationDoc,
+                notification
+            );
+
+        }
+    );
+
+
+    return card;
 }
 
 
@@ -1201,350 +1632,10 @@ auth.onAuthStateChanged(
                 snapshot.forEach(
                     notificationDoc => {
 
-                        const notification =
-                            notificationDoc.data();
-
-
-                        const icon =
-                            getNotificationIcon(
-                                notification.type
-                            );
-
-
-                        const time =
-                            formatNotificationTime(
-                                notification.createdAt
-                            );
-
-
-                        const senderName =
-                            escapeHTML(
-                                notification.senderName ||
-                                "Someone"
-                            );
-
-
-                        const text =
-                            escapeHTML(
-                                getNotificationText(
-                                    notification
-                                )
-                            );
-
-
-                        const senderPhoto =
-                            getSenderPhoto(
-                                notification
-                            );
-
-
-                        const safeSenderPhoto =
-                            escapeHTML(
-                                senderPhoto
-                            );
-
-
                         const card =
-                            document.createElement(
-                                "div"
+                            renderNotification(
+                                notificationDoc
                             );
-
-
-                        card.className =
-                            "notification-card";
-
-
-                        if (
-                            notification.read !== true
-                        ) {
-
-                            card.classList.add(
-                                "is-unread"
-                            );
-
-                            card.style.background =
-                                "#eef5ff";
-
-                        }
-
-
-                        // ------------------------------------------------
-                        // GROUP LABEL
-                        // ------------------------------------------------
-
-                        let groupLabel =
-                            "";
-
-
-                        if (
-                            notification.groupId &&
-                            notification.groupName
-                        ) {
-
-                            groupLabel = `
-                                <div style="
-                                    font-size:12px;
-                                    color:#777;
-                                    margin-top:3px;
-                                ">
-                                    👥 ${escapeHTML(
-                                        notification.groupName
-                                    )}
-                                </div>
-                            `;
-
-                        }
-
-
-                        // ------------------------------------------------
-                        // POST LABEL
-                        // ------------------------------------------------
-
-                        let postLabel =
-                            "";
-
-
-                        if (
-                            notification.postId
-                        ) {
-
-                            postLabel = `
-                                <div style="
-                                    font-size:12px;
-                                    color:#777;
-                                    margin-top:2px;
-                                ">
-                                    📝 View group post
-                                </div>
-                            `;
-
-                        }
-
-
-                        // ------------------------------------------------
-                        // JOIN REQUEST ACTIONS
-                        // ------------------------------------------------
-
-                        let joinRequestActions =
-                            "";
-
-
-                        if (
-                            notification.type ===
-                            "group_join_request" &&
-                            notification.groupId &&
-                            notification.senderId &&
-                            notification.action !==
-                                "approved" &&
-                            notification.action !==
-                                "rejected"
-                        ) {
-
-                            joinRequestActions = `
-                                <div
-                                    class="join-request-actions"
-                                    style="
-                                        display:flex;
-                                        gap:8px;
-                                        margin-top:10px;
-                                    "
-                                >
-
-                                    <button
-                                        type="button"
-                                        class="approve-join-btn"
-                                        style="
-                                            border:0;
-                                            border-radius:8px;
-                                            padding:7px 12px;
-                                            background:#16803c;
-                                            color:white;
-                                            cursor:pointer;
-                                            font-weight:600;
-                                        "
-                                    >
-                                        ✓ Approve
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        class="reject-join-btn"
-                                        style="
-                                            border:0;
-                                            border-radius:8px;
-                                            padding:7px 12px;
-                                            background:#b42318;
-                                            color:white;
-                                            cursor:pointer;
-                                            font-weight:600;
-                                        "
-                                    >
-                                        ✕ Cancel
-                                    </button>
-
-                                </div>
-                            `;
-
-                        }
-
-
-                        // ------------------------------------------------
-                        // CARD
-                        // ------------------------------------------------
-
-                        card.innerHTML = `
-
-                            <img
-                                src="${safeSenderPhoto}"
-                                alt=""
-                                style="
-                                    width:40px;
-                                    height:40px;
-                                    border-radius:50%;
-                                    object-fit:cover;
-                                    flex-shrink:0;
-                                "
-                                onerror="
-                                    this.src='https://via.placeholder.com/50';
-                                "
-                            >
-
-                            <div
-                                class="notification-text"
-                            >
-
-                                <b>
-                                    ${senderName}
-                                </b>
-
-                                <br>
-
-                                <span>
-                                    ${icon}
-                                    ${text}
-                                </span>
-
-                                ${groupLabel}
-
-                                ${postLabel}
-
-                                ${joinRequestActions}
-
-                                <br>
-
-                                <small>
-                                    ${escapeHTML(
-                                        time
-                                    )}
-                                </small>
-
-                            </div>
-
-                            ${
-                                notification.read !== true
-                                    ? `
-                                        <span
-                                            class="unread-dot"
-                                            title="Unread"
-                                        >
-                                            ●
-                                        </span>
-                                    `
-                                    : ""
-                            }
-
-                        `;
-
-
-                        // ------------------------------------------------
-                        // APPROVE BUTTON
-                        // ------------------------------------------------
-
-                        const approveButton =
-                            card.querySelector(
-                                ".approve-join-btn"
-                            );
-
-
-                        if (
-                            approveButton
-                        ) {
-
-                            approveButton.addEventListener(
-                                "click",
-                                event => {
-
-                                    event.stopPropagation();
-
-                                    approveJoinRequest(
-                                        notificationDoc,
-                                        notification,
-                                        approveButton
-                                    );
-
-                                }
-                            );
-
-                        }
-
-
-                        // ------------------------------------------------
-                        // REJECT BUTTON
-                        // ------------------------------------------------
-
-                        const rejectButton =
-                            card.querySelector(
-                                ".reject-join-btn"
-                            );
-
-
-                        if (
-                            rejectButton
-                        ) {
-
-                            rejectButton.addEventListener(
-                                "click",
-                                event => {
-
-                                    event.stopPropagation();
-
-                                    rejectJoinRequest(
-                                        notificationDoc,
-                                        notification,
-                                        rejectButton
-                                    );
-
-                                }
-                            );
-
-                        }
-
-
-                        // ------------------------------------------------
-                        // CARD CLICK
-                        // ------------------------------------------------
-
-                        card.addEventListener(
-                            "click",
-                            event => {
-
-                                if (
-                                    event.target.closest(
-                                        "button"
-                                    )
-                                ) {
-                                    return;
-                                }
-
-
-                                openNotification(
-                                    notificationDoc,
-                                    notification
-                                );
-
-                            }
-                        );
-
 
                         notifications.appendChild(
                             card
@@ -1555,11 +1646,10 @@ auth.onAuthStateChanged(
 
             },
 
-
             error => {
 
                 console.error(
-                    "Notifications Error:",
+                    "Notification listener error:",
                     error
                 );
 
@@ -1569,9 +1659,7 @@ auth.onAuthStateChanged(
                         Unable to load notifications.
                     </div>
                 `;
-
             }
-
         );
 
     }
@@ -1579,5 +1667,5 @@ auth.onAuthStateChanged(
 
 
 // ============================================================
-// END OF notifications-page.js
+// END OF NOTIFICATIONS-PAGE.JS
 // ============================================================
