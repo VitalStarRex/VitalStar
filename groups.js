@@ -2,49 +2,59 @@
 // VITALSTAR — groups.js
 // ============================================================
 // Handles:
-//   • Authentication
-//   • Trending groups
-//   • Top 5 most active groups
-//   • New groups
-//   • Category filtering
-//   • Search
-//   • Discover
-//   • Recommended
-//   • My Groups
-//       ├── Groups I Created
-//       └── Groups I Joined
-//   • Join / request-to-join
-//   • Better pagination
-//   • Skeleton loading
 //
-// Existing Firestore paths are preserved:
+// • Authentication
+// • Top 5 Most Active Groups
+// • New Groups
+// • Recommended Groups
+// • My Groups
+// • Trending Groups
+// • Search
+// • Category filtering
+// • Public / Private joining
+// • Pagination
+// • Skeleton loading
+// • Premium groups
 //
-//   groups/{groupId}
-//   groups/{groupId}/members/{uid}
+// Compatible with create-group.js data:
 //
-// Existing group fields are preserved:
+// groups/{groupId}
 //
-//   name
-//   description
-//   avatarURL
-//   coverURL
-//   privacy
-//   type
-//   category
-//   verified
-//   memberCount
-//   postCount
-//   onlineCount
-//   createdAt
-//   searchTokens
+// ownerId
+// name
+// description
+// category
+// searchTokens
+// coverURL
+// avatarURL
+// privacy
+// type
+// memberCount
+// followerCount
+// postCount
+// onlineCount
+// status
+// premiumStatus
+// createdAt
+// updatedAt
+// members: {
+//    [uid]: {
+//       role,
+//       status,
+//       joinedAt
+//    }
+// }
 //
+// Also supports:
+//
+// groups/{groupId}/members/{uid}
 // ============================================================
 
-import { auth, db } from './firebase.js';
+import { auth, db } from "./firebase.js";
 
 import {
   onAuthStateChanged
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
   collection,
@@ -52,15 +62,16 @@ import {
   doc,
   getDoc,
   getDocs,
+  runTransaction,
+  updateDoc,
   query,
   where,
   orderBy,
   limit,
   startAfter,
   increment,
-  serverTimestamp,
-  runTransaction
-} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
 // ============================================================
@@ -68,7 +79,8 @@ import {
 // ============================================================
 
 const PAGE_SIZE = 12;
-const RAIL_LIMIT = 5;
+const TOP_ACTIVE_LIMIT = 5;
+const NEW_GROUPS_LIMIT = 5;
 const TRENDING_LIMIT = 6;
 
 
@@ -76,71 +88,70 @@ const TRENDING_LIMIT = 6;
 // DOM
 // ============================================================
 
-const navUserAvatar = document.getElementById('navUserAvatar');
+const navUserAvatar =
+  document.getElementById("navUserAvatar");
 
-const searchInput = document.getElementById('searchInput');
-const searchClearBtn = document.getElementById('searchClearBtn');
-const searchLoading = document.getElementById('searchLoading');
+const searchInput =
+  document.getElementById("searchInput");
+
+const searchClearBtn =
+  document.getElementById("searchClearBtn");
+
+const searchLoading =
+  document.getElementById("searchLoading");
 
 const categoryChipsContainer =
-  document.getElementById('categoryChips');
+  document.getElementById("categoryChips");
 
 const tabsContainer =
-  document.getElementById('groupTabs');
-
-const groupsGrid =
-  document.getElementById('groupsGrid');
-
-const groupsEmptyState =
-  document.getElementById('groupsEmptyState');
-
-const groupsEmptyMessage =
-  document.getElementById('groupsEmptyMessage');
-
-const loadMoreBtn =
-  document.getElementById('loadMoreBtn');
-
-const toastContainer =
-  document.getElementById('toast-container');
-
-
-// Optional sections
+  document.getElementById("groupTabs");
 
 const trendingList =
-  document.getElementById('trendingList');
+  document.getElementById("trendingList");
 
 const trendingSection =
-  document.getElementById('trendingSection');
+  document.getElementById("trendingSection");
 
-const activeGroupsList =
-  document.getElementById('activeGroupsList');
+const groupsGrid =
+  document.getElementById("groupsGrid");
 
-const activeGroupsSection =
-  document.getElementById('activeGroupsSection');
+const groupsEmptyState =
+  document.getElementById("groupsEmptyState");
 
-const newGroupsList =
-  document.getElementById('newGroupsList');
+const groupsEmptyMessage =
+  document.getElementById("groupsEmptyMessage");
 
-const newGroupsSection =
-  document.getElementById('newGroupsSection');
+const loadMoreBtn =
+  document.getElementById("loadMoreBtn");
 
-const recommendedList =
-  document.getElementById('recommendedList');
-
-const recommendedSection =
-  document.getElementById('recommendedSection');
-
-
-// Templates
+const toastContainer =
+  document.getElementById("toast-container");
 
 const groupCardTemplate =
-  document.getElementById('groupCardTemplate');
+  document.getElementById("groupCardTemplate");
 
 const trendingCardTemplate =
-  document.getElementById('trendingCardTemplate');
+  document.getElementById("trendingCardTemplate");
 
 const skeletonCardTemplate =
-  document.getElementById('skeletonCardTemplate');
+  document.getElementById("skeletonCardTemplate");
+
+
+// ============================================================
+// OPTIONAL SECTION ELEMENTS
+// ============================================================
+
+const topActiveList =
+  document.getElementById("topActiveList");
+
+const topActiveSection =
+  document.getElementById("topActiveSection");
+
+const newGroupsList =
+  document.getElementById("newGroupsList");
+
+const newGroupsSection =
+  document.getElementById("newGroupsSection");
 
 
 // ============================================================
@@ -148,24 +159,43 @@ const skeletonCardTemplate =
 // ============================================================
 
 const CATEGORY_LABELS = {
-  technology: 'Technology',
-  gaming: 'Gaming',
-  programming: 'Programming',
-  music: 'Music',
-  'movies-tv': 'Movies & TV',
-  anime: 'Anime',
-  sports: 'Sports',
-  education: 'Education',
-  business: 'Business',
-  entertainment: 'Entertainment',
-  news: 'News',
-  science: 'Science',
-  fashion: 'Fashion',
-  travel: 'Travel',
-  politics: 'Politics',
-  religion: 'Religion',
-  general: 'General',
-  other: 'Other'
+
+  technology: "Technology",
+
+  gaming: "Gaming",
+
+  programming: "Programming",
+
+  music: "Music",
+
+  "movies-tv": "Movies & TV",
+
+  anime: "Anime",
+
+  sports: "Sports",
+
+  education: "Education",
+
+  business: "Business",
+
+  entertainment: "Entertainment",
+
+  news: "News",
+
+  science: "Science",
+
+  fashion: "Fashion",
+
+  travel: "Travel",
+
+  politics: "Politics",
+
+  religion: "Religion",
+
+  general: "General",
+
+  other: "Other"
+
 };
 
 
@@ -177,11 +207,11 @@ const state = {
 
   currentUser: null,
 
-  activeTab: 'discover',
+  activeTab: "discover",
 
-  activeCategory: 'all',
+  activeCategory: "all",
 
-  searchQuery: '',
+  searchQuery: "",
 
   searchDebounceHandle: null,
 
@@ -191,23 +221,16 @@ const state = {
 
   isLoading: false,
 
-  // Prevents repeated requests while changing tabs/categories.
-  requestVersion: 0,
-
-  // groupId -> membership
   membershipMap: new Map(),
 
-  // Membership records.
   membershipList: [],
 
-  // Groups created by the current user.
-  createdGroups: [],
+  myGroups: [],
 
-  // Pagination for My Groups.
   myGroupsPageIndex: 0,
 
-  // IDs already displayed in the current grid.
-  displayedGroupIds: new Set()
+  renderedGroupIds: new Set()
+
 };
 
 
@@ -215,64 +238,77 @@ const state = {
 // TOAST
 // ============================================================
 
-function showToast(message, type = 'info') {
+function showToast(message, type = "info") {
 
   if (!toastContainer) return;
 
   const icons = {
-    success: 'fa-circle-check',
-    error: 'fa-circle-exclamation',
-    info: 'fa-circle-info'
+
+    success: "fa-circle-check",
+
+    error: "fa-circle-exclamation",
+
+    info: "fa-circle-info"
+
   };
 
-  const toast = document.createElement('div');
+  const toast =
+    document.createElement("div");
 
-  toast.className = `toast toast--${type}`;
+  toast.className =
+    `toast toast--${type}`;
 
   toast.innerHTML = `
     <i class="fa-solid ${icons[type] || icons.info}"></i>
     <span></span>
   `;
 
-  const span = toast.querySelector('span');
+  const text =
+    toast.querySelector("span");
 
-  if (span) {
-    span.textContent = message;
+  if (text) {
+    text.textContent = message;
   }
 
   toastContainer.appendChild(toast);
 
   setTimeout(() => {
 
-    toast.classList.add('is-leaving');
+    toast.classList.add("is-leaving");
 
-    toast.addEventListener(
-      'animationend',
-      () => toast.remove(),
-      { once: true }
-    );
+    setTimeout(() => {
+      toast.remove();
+    }, 400);
 
-  }, 3800);
+  }, 3500);
 }
 
 
 // ============================================================
-// FIRESTORE ERROR LOGGER
+// FIRESTORE ERROR
 // ============================================================
 
 function logFirestoreError(context, error) {
 
-  console.error(`[Firestore error] ${context}`);
+  console.error(
+    `[Firestore error] ${context}`
+  );
 
   console.error(error);
 
   if (error?.code) {
-    console.error(`code: ${error.code}`);
+    console.error(
+      "Code:",
+      error.code
+    );
   }
 
   if (error?.message) {
 
-    console.error(`message: ${error.message}`);
+    console.error(
+      "Message:",
+      error.message
+    );
 
     const match =
       error.message.match(
@@ -282,9 +318,12 @@ function logFirestoreError(context, error) {
     if (match) {
 
       console.error(
-        `Create the required Firestore index here: ${match[0]}`
+        "Firestore index:",
+        match[0]
       );
+
     }
+
   }
 }
 
@@ -293,20 +332,31 @@ function logFirestoreError(context, error) {
 // UTILITIES
 // ============================================================
 
-function formatCount(num) {
+function formatCount(value) {
 
-  num = Number(num) || 0;
+  const num =
+    Number(value) || 0;
 
   if (num >= 1000000) {
-    return `${(num / 1000000)
-      .toFixed(1)
-      .replace(/\.0$/, '')}M`;
+
+    return (
+      (num / 1000000)
+        .toFixed(1)
+        .replace(/\.0$/, "") +
+      "M"
+    );
+
   }
 
   if (num >= 1000) {
-    return `${(num / 1000)
-      .toFixed(1)
-      .replace(/\.0$/, '')}K`;
+
+    return (
+      (num / 1000)
+        .toFixed(1)
+        .replace(/\.0$/, "") +
+      "K"
+    );
+
   }
 
   return String(num);
@@ -315,39 +365,13 @@ function formatCount(num) {
 
 function initialsFrom(name) {
 
-  return (name || '?')
-    .trim()
-    .charAt(0)
-    .toUpperCase();
-}
+  return (
+    String(name || "?")
+      .trim()
+      .charAt(0)
+      .toUpperCase()
+  );
 
-
-function applyMediaBackground(
-  el,
-  url,
-  fallbackText = ''
-) {
-
-  if (!el) return;
-
-  if (url) {
-
-    el.style.backgroundImage =
-      `url("${url}")`;
-
-    el.style.backgroundSize = 'cover';
-
-    el.style.backgroundPosition =
-      'center';
-
-    el.textContent = '';
-
-  } else {
-
-    el.style.backgroundImage = '';
-
-    el.textContent = fallbackText;
-  }
 }
 
 
@@ -359,25 +383,66 @@ function setText(root, selector, value) {
     root.querySelector(selector);
 
   if (el) {
-    el.textContent = value ?? '';
+    el.textContent =
+      value ?? "";
   }
+
 }
 
 
-function getTimestampValue(value) {
+function applyMediaBackground(
+  element,
+  url,
+  fallback = ""
+) {
 
-  if (!value) return 0;
+  if (!element) return;
 
-  if (typeof value.toMillis === 'function') {
-    return value.toMillis();
+  if (url) {
+
+    element.style.backgroundImage =
+      `url("${url}")`;
+
+    element.style.backgroundSize =
+      "cover";
+
+    element.style.backgroundPosition =
+      "center";
+
+    element.textContent = "";
+
+  } else {
+
+    element.style.backgroundImage =
+      "";
+
+    element.textContent =
+      fallback;
+
   }
 
-  if (value.seconds) {
-    return value.seconds * 1000;
+}
+
+
+function getCreatedTime(group) {
+
+  if (!group?.createdAt) return 0;
+
+  if (
+    typeof group.createdAt.toMillis ===
+    "function"
+  ) {
+
+    return group.createdAt.toMillis();
+
   }
 
-  if (typeof value === 'number') {
-    return value;
+  if (
+    group.createdAt.seconds
+  ) {
+
+    return group.createdAt.seconds * 1000;
+
   }
 
   return 0;
@@ -385,324 +450,269 @@ function getTimestampValue(value) {
 
 
 // ============================================================
-// CREATOR DETECTION
-// ============================================================
-//
-// Different versions of create-group.js may have used one of these
-// creator fields. This helper supports them without changing the
-// existing group document.
-//
-// ============================================================
-
-function isGroupCreatedByUser(group, uid) {
-
-  if (!group || !uid) return false;
-
-  const creatorFields = [
-    'ownerId',
-    'creatorId',
-    'createdBy',
-    'createdByUid',
-    'creatorUid'
-  ];
-
-  return creatorFields.some(
-    field => group[field] === uid
-  );
-}
-
-
-// ============================================================
 // AUTH
 // ============================================================
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+  auth,
+  async user => {
 
-  if (!user) {
+    if (!user) {
 
-    window.location.href = 'login.html';
+      window.location.href =
+        "login.html";
 
-    return;
+      return;
+
+    }
+
+    state.currentUser =
+      user;
+
+    if (
+      user.photoURL &&
+      navUserAvatar
+    ) {
+
+      applyMediaBackground(
+        navUserAvatar,
+        user.photoURL
+      );
+
+    }
+
+    try {
+
+      await loadUserMemberships();
+
+      await Promise.all([
+        loadTopActiveGroups(),
+        loadNewGroups(),
+        loadTrendingGroups()
+      ]);
+
+      await loadGroupsForActiveView(true);
+
+    } catch (error) {
+
+      logFirestoreError(
+        "Groups page initialization",
+        error
+      );
+
+      showToast(
+        "Could not load groups. Please refresh.",
+        "error"
+      );
+
+    }
+
   }
-
-  state.currentUser = user;
-
-  if (user.photoURL) {
-
-    applyMediaBackground(
-      navUserAvatar,
-      user.photoURL
-    );
-  }
-
-  try {
-
-    await loadUserMemberships();
-
-    await Promise.all([
-      loadTrending(),
-      loadTopActiveGroups(),
-      loadNewGroups(),
-      loadRecommendedRail()
-    ]);
-
-    await loadGroupsForActiveView(true);
-
-  } catch (error) {
-
-    logFirestoreError(
-      'Initializing Groups page',
-      error
-    );
-
-    showToast(
-      'Something went wrong loading groups.',
-      'error'
-    );
-  }
-});
+);
 
 
 // ============================================================
 // LOAD USER MEMBERSHIPS
 // ============================================================
+//
+// Supports:
+//
+// 1. groups/{groupId}/members/{uid}
+//
+// 2. groups where ownerId == current user
+//
+// The second part is important because create-group.js creates
+// the owner inside the group's `members` MAP and sets ownerId.
+// ============================================================
 
 async function loadUserMemberships() {
 
-  try {
+  state.membershipMap.clear();
 
-    const membersQuery = query(
-      collectionGroup(db, 'members'),
-      where(
-        'uid',
-        '==',
-        state.currentUser.uid
-      ),
-      limit(500)
-    );
-
-    const snapshot =
-      await getDocs(membersQuery);
-
-    state.membershipMap.clear();
-
-    const list = [];
-
-    snapshot.forEach(memberDoc => {
-
-      const parentGroup =
-        memberDoc.ref.parent.parent;
-
-      if (!parentGroup) return;
-
-      const groupId =
-        parentGroup.id;
-
-      const data =
-        memberDoc.data();
-
-      state.membershipMap.set(
-        groupId,
-        {
-          status: data.status || 'active',
-          role: data.role || 'member',
-          category: data.category || ''
-        }
-      );
-
-      list.push({
-
-        groupId,
-
-        status:
-          data.status || 'active',
-
-        role:
-          data.role || 'member',
-
-        category:
-          data.category || '',
-
-        joinedAt:
-          getTimestampValue(data.joinedAt)
-      });
-    });
-
-    list.sort(
-      (a, b) => b.joinedAt - a.joinedAt
-    );
-
-    state.membershipList = list;
-
-    // Now find groups the user created.
-    await loadCreatedGroups();
-
-  } catch (error) {
-
-    logFirestoreError(
-      'Loading user memberships',
-      error
-    );
-
-    state.membershipMap.clear();
-    state.membershipList = [];
-
-    await loadCreatedGroups();
-  }
-}
-
-
-// ============================================================
-// LOAD CREATED GROUPS
-// ============================================================
-//
-// We intentionally check several possible creator field names.
-//
-// This means My Groups can still work if create-group.js stored:
-//   ownerId
-//   creatorId
-//   createdBy
-//   createdByUid
-//   creatorUid
-//
-// ============================================================
-
-async function loadCreatedGroups() {
+  state.membershipList = [];
 
   const uid =
-    state.currentUser?.uid;
-
-  if (!uid) return;
-
-  const found =
-    new Map();
-
-  const creatorFields = [
-    'ownerId',
-    'creatorId',
-    'createdBy',
-    'createdByUid',
-    'creatorUid'
-  ];
-
-  for (const field of creatorFields) {
-
-    try {
-
-      const q = query(
-        collection(db, 'groups'),
-        where(field, '==', uid),
-        limit(100)
-      );
-
-      const snapshot =
-        await getDocs(q);
-
-      snapshot.forEach(groupDoc => {
-
-        found.set(
-          groupDoc.id,
-          {
-            id: groupDoc.id,
-            ...groupDoc.data()
-          }
-        );
-      });
-
-    } catch (error) {
-
-      // Some fields may not exist in the current schema.
-      // We log the error but continue checking the others.
-
-      logFirestoreError(
-        `Checking created groups using "${field}"`,
-        error
-      );
-    }
-  }
-
-  state.createdGroups =
-    Array.from(found.values());
-
-  state.createdGroups.sort(
-    (a, b) =>
-      getTimestampValue(b.createdAt) -
-      getTimestampValue(a.createdAt)
-  );
-}
+    state.currentUser.uid;
 
 
-// ============================================================
-// TRENDING
-// ============================================================
-
-async function loadTrending() {
-
-  if (
-    !trendingList ||
-    !trendingSection ||
-    !trendingCardTemplate
-  ) {
-    return;
-  }
+  // ----------------------------------------------------------
+  // SUBCOLLECTION MEMBERS
+  // ----------------------------------------------------------
 
   try {
 
-    const q = query(
-      collection(db, 'groups'),
-      where('privacy', '==', 'public'),
-      orderBy('memberCount', 'desc'),
-      limit(TRENDING_LIMIT)
-    );
+    const membersQuery =
+      query(
+        collectionGroup(
+          db,
+          "members"
+        ),
+        where(
+          "uid",
+          "==",
+          uid
+        ),
+        limit(500)
+      );
 
     const snapshot =
-      await getDocs(q);
+      await getDocs(
+        membersQuery
+      );
 
-    trendingList.innerHTML = '';
+    snapshot.forEach(
+      memberDoc => {
 
-    if (snapshot.empty) {
+        const parentGroup =
+          memberDoc.ref.parent.parent;
 
-      trendingSection.style.display =
-        'none';
+        if (!parentGroup) return;
 
-      return;
-    }
+        const groupId =
+          parentGroup.id;
 
-    trendingSection.style.display =
-      'block';
+        const data =
+          memberDoc.data();
 
-    let rank = 0;
+        const membership = {
 
-    snapshot.forEach(groupDoc => {
+          groupId,
 
-      rank++;
+          status:
+            data.status ||
+            "active",
 
-      const group = {
-        id: groupDoc.id,
-        ...groupDoc.data()
-      };
+          role:
+            data.role ||
+            "member",
 
-      const card =
-        buildTrendingCard(
-          group,
-          rank
+          category:
+            data.category ||
+            "",
+
+          joinedAt:
+            data.joinedAt || null
+
+        };
+
+        state.membershipMap.set(
+          groupId,
+          membership
         );
 
-      if (card) {
-        trendingList.appendChild(card);
       }
-    });
+    );
 
   } catch (error) {
 
     logFirestoreError(
-      'Loading trending groups',
+      "Loading members subcollections",
       error
     );
 
-    trendingSection.style.display =
-      'none';
   }
+
+
+  // ----------------------------------------------------------
+  // GROUPS CREATED BY USER
+  // ----------------------------------------------------------
+
+  try {
+
+    const ownerQuery =
+      query(
+        collection(
+          db,
+          "groups"
+        ),
+        where(
+          "ownerId",
+          "==",
+          uid
+        ),
+        limit(500)
+      );
+
+    const snapshot =
+      await getDocs(
+        ownerQuery
+      );
+
+    snapshot.forEach(
+      groupDoc => {
+
+        const group =
+          groupDoc.data();
+
+        const existing =
+          state.membershipMap.get(
+            groupDoc.id
+          );
+
+        state.membershipMap.set(
+          groupDoc.id,
+          {
+
+            groupId:
+              groupDoc.id,
+
+            status:
+              "active",
+
+            role:
+              "owner",
+
+            category:
+              group.category ||
+              existing?.category ||
+              "",
+
+            joinedAt:
+              group.createdAt ||
+              existing?.joinedAt ||
+              null
+
+          }
+        );
+
+      }
+    );
+
+  } catch (error) {
+
+    logFirestoreError(
+      "Loading groups owned by user",
+      error
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // BUILD SORTED LIST
+  // ----------------------------------------------------------
+
+  state.membershipList =
+    Array.from(
+      state.membershipMap.values()
+    );
+
+  state.membershipList.sort(
+    (a, b) => {
+
+      const aTime =
+        a.joinedAt?.toMillis?.() ||
+        0;
+
+      const bTime =
+        b.joinedAt?.toMillis?.() ||
+        0;
+
+      return bTime - aTime;
+
+    }
+  );
+
 }
 
 
@@ -712,94 +722,146 @@ async function loadTrending() {
 //
 // Activity score:
 //
-//   posts + members + online users
+// memberCount
+// + postCount * 3
+// + onlineCount * 2
 //
-// If activityScore already exists, it is used first.
-//
+// We retrieve public groups by memberCount and then calculate
+// the final activity score client-side. This avoids introducing
+// a new Firestore field.
 // ============================================================
 
 async function loadTopActiveGroups() {
 
   if (
-    !activeGroupsList ||
-    !activeGroupsSection
+    !topActiveList ||
+    !topActiveSection ||
+    !groupCardTemplate
   ) {
     return;
   }
 
   try {
 
-    const q = query(
-      collection(db, 'groups'),
-      where('privacy', '==', 'public'),
-      orderBy('postCount', 'desc'),
-      limit(10)
-    );
+    const q =
+      query(
+        collection(
+          db,
+          "groups"
+        ),
+        where(
+          "privacy",
+          "==",
+          "public"
+        ),
+        where(
+          "status",
+          "==",
+          "active"
+        ),
+        orderBy(
+          "memberCount",
+          "desc"
+        ),
+        limit(20)
+      );
 
     const snapshot =
       await getDocs(q);
 
     const groups =
-      snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
+      snapshot.docs
+        .map(
+          d => ({
+            id: d.id,
+            ...d.data()
+          })
+        )
+        .map(
+          group => ({
 
-    groups.sort((a, b) => {
+            ...group,
 
-      const scoreA =
-        Number(a.activityScore ?? (
-          Number(a.postCount || 0) * 3 +
-          Number(a.memberCount || 0) +
-          Number(a.onlineCount || 0) * 2
-        ));
+            activityScore:
 
-      const scoreB =
-        Number(b.activityScore ?? (
-          Number(b.postCount || 0) * 3 +
-          Number(b.memberCount || 0) +
-          Number(b.onlineCount || 0) * 2
-        ));
+              (Number(
+                group.memberCount
+              ) || 0)
 
-      return scoreB - scoreA;
-    });
+              +
 
-    const topFive =
-      groups.slice(0, 5);
+              (
+                Number(
+                  group.postCount
+                ) || 0
+              ) * 3
 
-    activeGroupsList.innerHTML = '';
+              +
 
-    if (!topFive.length) {
+              (
+                Number(
+                  group.onlineCount
+                ) || 0
+              ) * 2
 
-      activeGroupsSection.style.display =
-        'none';
+          })
+        )
+        .sort(
+          (a, b) =>
+            b.activityScore -
+            a.activityScore
+        )
+        .slice(
+          0,
+          TOP_ACTIVE_LIMIT
+        );
+
+
+    topActiveList.innerHTML =
+      "";
+
+    if (!groups.length) {
+
+      topActiveSection.style.display =
+        "none";
 
       return;
+
     }
 
-    activeGroupsSection.style.display =
-      'block';
+    topActiveSection.style.display =
+      "";
 
-    topFive.forEach(group => {
+    groups.forEach(
+      (group, index) => {
 
-      const card =
-        buildRailCard(group);
+        const card =
+          buildSpecialGroupCard(
+            group,
+            index + 1
+          );
 
-      if (card) {
-        activeGroupsList.appendChild(card);
+        if (card) {
+          topActiveList.appendChild(
+            card
+          );
+        }
+
       }
-    });
+    );
 
   } catch (error) {
 
     logFirestoreError(
-      'Loading Top 5 Most Active Groups',
+      "Loading Top 5 Most Active Groups",
       error
     );
 
-    activeGroupsSection.style.display =
-      'none';
+    topActiveSection.style.display =
+      "none";
+
   }
+
 }
 
 
@@ -811,173 +873,191 @@ async function loadNewGroups() {
 
   if (
     !newGroupsList ||
-    !newGroupsSection
+    !newGroupsSection ||
+    !groupCardTemplate
   ) {
     return;
   }
 
   try {
 
-    const q = query(
-      collection(db, 'groups'),
-      where('privacy', '==', 'public'),
-      orderBy('createdAt', 'desc'),
-      limit(5)
-    );
+    const q =
+      query(
+        collection(
+          db,
+          "groups"
+        ),
+        where(
+          "status",
+          "==",
+          "active"
+        ),
+        orderBy(
+          "createdAt",
+          "desc"
+        ),
+        limit(
+          NEW_GROUPS_LIMIT
+        )
+      );
 
     const snapshot =
       await getDocs(q);
 
-    newGroupsList.innerHTML = '';
+    newGroupsList.innerHTML =
+      "";
 
     if (snapshot.empty) {
 
       newGroupsSection.style.display =
-        'none';
+        "none";
 
       return;
+
     }
 
     newGroupsSection.style.display =
-      'block';
+      "";
 
-    snapshot.forEach(groupDoc => {
+    snapshot.forEach(
+      groupDoc => {
 
-      const group = {
-        id: groupDoc.id,
-        ...groupDoc.data()
-      };
+        const group = {
 
-      const card =
-        buildRailCard(group);
+          id:
+            groupDoc.id,
 
-      if (card) {
-        newGroupsList.appendChild(card);
+          ...groupDoc.data()
+
+        };
+
+        const card =
+          buildGroupCard(
+            group
+          );
+
+        if (card) {
+          newGroupsList.appendChild(
+            card
+          );
+        }
+
       }
-    });
+    );
 
   } catch (error) {
 
     logFirestoreError(
-      'Loading New Groups',
+      "Loading new groups",
       error
     );
 
     newGroupsSection.style.display =
-      'none';
+      "none";
+
   }
+
 }
 
 
 // ============================================================
-// RECOMMENDED RAIL
+// TRENDING
 // ============================================================
 
-async function loadRecommendedRail() {
+async function loadTrendingGroups() {
 
   if (
-    !recommendedList ||
-    !recommendedSection
+    !trendingList ||
+    !trendingSection ||
+    !trendingCardTemplate
   ) {
     return;
   }
 
   try {
 
-    const joinedCategories =
-      Array.from(
-        new Set(
-          state.membershipList
-            .map(m => m.category)
-            .filter(Boolean)
-        )
-      ).slice(0, 10);
-
-    let snapshot;
-
-    if (joinedCategories.length) {
-
-      const q = query(
-        collection(db, 'groups'),
-        where('privacy', '==', 'public'),
+    const q =
+      query(
+        collection(
+          db,
+          "groups"
+        ),
         where(
-          'category',
-          'in',
-          joinedCategories
+          "privacy",
+          "==",
+          "public"
+        ),
+        where(
+          "status",
+          "==",
+          "active"
         ),
         orderBy(
-          'memberCount',
-          'desc'
+          "memberCount",
+          "desc"
         ),
-        limit(10)
-      );
-
-      snapshot =
-        await getDocs(q);
-
-    } else {
-
-      const q = query(
-        collection(db, 'groups'),
-        where('privacy', '==', 'public'),
-        orderBy(
-          'memberCount',
-          'desc'
-        ),
-        limit(10)
-      );
-
-      snapshot =
-        await getDocs(q);
-    }
-
-    const groups =
-      snapshot.docs
-        .map(d => ({
-          id: d.id,
-          ...d.data()
-        }))
-        .filter(
-          group =>
-            !state.membershipMap.has(
-              group.id
-            )
+        limit(
+          TRENDING_LIMIT
         )
-        .slice(0, 5);
+      );
 
-    recommendedList.innerHTML = '';
+    const snapshot =
+      await getDocs(q);
 
-    if (!groups.length) {
+    trendingList.innerHTML =
+      "";
 
-      recommendedSection.style.display =
-        'none';
+    if (snapshot.empty) {
+
+      trendingSection.style.display =
+        "none";
 
       return;
+
     }
 
-    recommendedSection.style.display =
-      'block';
+    trendingSection.style.display =
+      "";
 
-    groups.forEach(group => {
+    snapshot.docs.forEach(
+      (groupDoc, index) => {
 
-      const card =
-        buildRailCard(group);
+        const group = {
 
-      if (card) {
-        recommendedList.appendChild(card);
+          id:
+            groupDoc.id,
+
+          ...groupDoc.data()
+
+        };
+
+        const card =
+          buildTrendingCard(
+            group,
+            index + 1
+          );
+
+        if (card) {
+          trendingList.appendChild(
+            card
+          );
+        }
+
       }
-    });
+    );
 
   } catch (error) {
 
     logFirestoreError(
-      'Loading Recommended Groups',
+      "Loading trending groups",
       error
     );
 
-    recommendedSection.style.display =
-      'none';
+    trendingSection.style.display =
+      "none";
+
   }
+
 }
 
 
@@ -990,150 +1070,10 @@ function buildTrendingCard(
   rank
 ) {
 
-  if (!trendingCardTemplate) {
-    return null;
-  }
-
   const template =
     trendingCardTemplate
-      .content
-      .firstElementChild;
-
-  if (!template) return null;
-
-  const node =
-    template.cloneNode(true);
-
-  if ('href' in node) {
-    node.href =
-      `group.html?id=${encodeURIComponent(group.id)}`;
-  }
-
-  setText(
-    node,
-    '.trending-card__rank',
-    `#${rank}`
-  );
-
-  const cover =
-    node.querySelector(
-      '.trending-card__cover'
-    );
-
-  if (cover && group.coverURL) {
-
-    cover.style.backgroundImage =
-      `url("${group.coverURL}")`;
-
-    cover.style.backgroundSize =
-      'cover';
-
-    cover.style.backgroundPosition =
-      'center';
-  }
-
-  const avatar =
-    node.querySelector(
-      '.trending-card__avatar'
-    );
-
-  applyMediaBackground(
-    avatar,
-    group.avatarURL,
-    initialsFrom(group.name)
-  );
-
-  setText(
-    node,
-    '.trending-card__name',
-    group.name || 'Untitled group'
-  );
-
-  setText(
-    node,
-    '.trending-card__member-count',
-    `${formatCount(group.memberCount || 0)} members`
-  );
-
-  return node;
-}
-
-
-// ============================================================
-// GENERIC RAIL CARD
-// ============================================================
-
-function buildRailCard(group) {
-
-  const a =
-    document.createElement('a');
-
-  a.className =
-    'group-rail-card';
-
-  a.href =
-    `group.html?id=${encodeURIComponent(group.id)}`;
-
-  const avatar =
-    document.createElement('div');
-
-  avatar.className =
-    'group-rail-card__avatar';
-
-  applyMediaBackground(
-    avatar,
-    group.avatarURL,
-    initialsFrom(group.name)
-  );
-
-  const content =
-    document.createElement('div');
-
-  content.className =
-    'group-rail-card__content';
-
-  const name =
-    document.createElement('div');
-
-  name.className =
-    'group-rail-card__name';
-
-  name.textContent =
-    group.name || 'Untitled group';
-
-  const meta =
-    document.createElement('div');
-
-  meta.className =
-    'group-rail-card__meta';
-
-  meta.textContent =
-    `${formatCount(group.memberCount || 0)} members`;
-
-  content.appendChild(name);
-  content.appendChild(meta);
-
-  a.appendChild(avatar);
-  a.appendChild(content);
-
-  return a;
-}
-
-
-// ============================================================
-// MAIN GROUP CARD
-// ============================================================
-
-function buildGroupCard(group) {
-
-  if (!groupCardTemplate) {
-    return null;
-  }
-
-  const template =
-    groupCardTemplate
-      .content
-      .firstElementChild;
+      ?.content
+      ?.firstElementChild;
 
   if (!template) return null;
 
@@ -1146,26 +1086,37 @@ function buildGroupCard(group) {
   node.dataset.groupId =
     group.id;
 
+  setText(
+    node,
+    ".trending-card__rank",
+    `#${rank}`
+  );
+
   const cover =
     node.querySelector(
-      '.group-card__cover'
+      ".trending-card__cover"
     );
 
-  if (cover && group.coverURL) {
+  if (cover) {
 
-    cover.style.backgroundImage =
-      `url("${group.coverURL}")`;
+    if (group.coverURL) {
 
-    cover.style.backgroundSize =
-      'cover';
+      cover.style.backgroundImage =
+        `url("${group.coverURL}")`;
 
-    cover.style.backgroundPosition =
-      'center';
+      cover.style.backgroundSize =
+        "cover";
+
+      cover.style.backgroundPosition =
+        "center";
+
+    }
+
   }
 
   const avatar =
     node.querySelector(
-      '.group-card__avatar'
+      ".trending-card__avatar"
     );
 
   applyMediaBackground(
@@ -1176,189 +1127,303 @@ function buildGroupCard(group) {
 
   setText(
     node,
-    '.group-card__name',
-    group.name || 'Untitled group'
+    ".trending-card__name",
+    group.name ||
+      "Untitled group"
   );
+
+  setText(
+    node,
+    ".trending-card__member-count",
+    formatCount(
+      group.memberCount
+    )
+  );
+
+  return node;
+
+}
+
+
+// ============================================================
+// SPECIAL CARD
+// ============================================================
+
+function buildSpecialGroupCard(
+  group,
+  rank
+) {
+
+  const card =
+    buildGroupCard(group);
+
+  if (!card) return null;
+
+  card.dataset.rank =
+    String(rank);
+
+  const rankElement =
+    card.querySelector(
+      ".group-card__rank"
+    );
+
+  if (rankElement) {
+
+    rankElement.textContent =
+      `#${rank}`;
+
+  }
+
+  return card;
+
+}
+
+
+// ============================================================
+// GROUP CARD
+// ============================================================
+
+function buildGroupCard(group) {
+
+  if (!groupCardTemplate) {
+    return null;
+  }
+
+  const template =
+    groupCardTemplate
+      .content
+      ?.firstElementChild;
+
+  if (!template) {
+    return null;
+  }
+
+  const node =
+    template.cloneNode(true);
+
+  node.href =
+    `group.html?id=${encodeURIComponent(group.id)}`;
+
+  node.dataset.groupId =
+    group.id;
+
+
+  // ----------------------------------------------------------
+  // COVER
+  // ----------------------------------------------------------
+
+  const cover =
+    node.querySelector(
+      ".group-card__cover"
+    );
+
+  if (cover && group.coverURL) {
+
+    cover.style.backgroundImage =
+      `url("${group.coverURL}")`;
+
+    cover.style.backgroundSize =
+      "cover";
+
+    cover.style.backgroundPosition =
+      "center";
+
+  }
+
+
+  // ----------------------------------------------------------
+  // AVATAR
+  // ----------------------------------------------------------
+
+  const avatar =
+    node.querySelector(
+      ".group-card__avatar"
+    );
+
+  applyMediaBackground(
+    avatar,
+    group.avatarURL,
+    initialsFrom(group.name)
+  );
+
+
+  // ----------------------------------------------------------
+  // NAME
+  // ----------------------------------------------------------
+
+  setText(
+    node,
+    ".group-card__name",
+    group.name ||
+      "Untitled group"
+  );
+
+
+  // ----------------------------------------------------------
+  // DESCRIPTION
+  // ----------------------------------------------------------
+
+  setText(
+    node,
+    ".group-card__desc",
+    group.description ||
+      ""
+  );
+
+
+  // ----------------------------------------------------------
+  // COUNTS
+  // ----------------------------------------------------------
+
+  setText(
+    node,
+    ".group-card__member-count",
+    formatCount(
+      group.memberCount
+    )
+  );
+
+  setText(
+    node,
+    ".group-card__post-count",
+    formatCount(
+      group.postCount
+    )
+  );
+
+  setText(
+    node,
+    ".group-card__online-count",
+    formatCount(
+      group.onlineCount
+    )
+  );
+
+
+  // ----------------------------------------------------------
+  // PRIVACY
+  // ----------------------------------------------------------
 
   const privacyBadge =
     node.querySelector(
-      '.group-card__privacy-badge'
+      ".group-card__privacy-badge"
     );
 
   if (privacyBadge) {
 
-    if (group.privacy === 'private') {
+    if (
+      group.privacy ===
+      "private"
+    ) {
 
       privacyBadge.className =
-        'badge badge--private group-card__privacy-badge';
+        "badge badge--private group-card__privacy-badge";
 
       privacyBadge.innerHTML =
-        '<i class="fa-solid fa-lock"></i> Private';
+        `
+          <i class="fa-solid fa-lock"></i>
+          Private
+        `;
 
     } else {
 
       privacyBadge.className =
-        'badge badge--public group-card__privacy-badge';
+        "badge badge--public group-card__privacy-badge";
 
       privacyBadge.innerHTML =
-        '<i class="fa-solid fa-globe"></i> Public';
+        `
+          <i class="fa-solid fa-globe"></i>
+          Public
+        `;
+
     }
+
   }
+
+
+  // ----------------------------------------------------------
+  // PREMIUM
+  // ----------------------------------------------------------
 
   const premiumBadge =
     node.querySelector(
-      '.group-card__premium-badge'
+      ".group-card__premium-badge"
     );
 
   if (premiumBadge) {
 
+    const isPremium =
+      group.type ===
+        "premium" ||
+      group.premiumStatus ===
+        "active" ||
+      group.premiumActivation
+        ?.required === true;
+
     premiumBadge.style.display =
-      group.type === 'premium'
-        ? 'inline-flex'
-        : 'none';
+      isPremium
+        ? "inline-flex"
+        : "none";
+
   }
+
+
+  // ----------------------------------------------------------
+  // VERIFIED
+  // ----------------------------------------------------------
 
   const verifiedBadge =
     node.querySelector(
-      '.group-card__verified-badge'
+      ".group-card__verified-badge"
     );
 
   if (verifiedBadge) {
 
     verifiedBadge.style.display =
       group.verified
-        ? 'inline-flex'
-        : 'none';
-  }
+        ? "inline-flex"
+        : "none";
 
-  setText(
-    node,
-    '.group-card__desc',
-    group.description || ''
-  );
-
-  setText(
-    node,
-    '.group-card__member-count',
-    formatCount(group.memberCount || 0)
-  );
-
-  setText(
-    node,
-    '.group-card__post-count',
-    formatCount(group.postCount || 0)
-  );
-
-  setText(
-    node,
-    '.group-card__online-count',
-    formatCount(group.onlineCount || 0)
-  );
-
-
-  // ==========================================================
-  // CREATED / JOINED BADGES
-  // ==========================================================
-
-  const membership =
-    state.membershipMap.get(group.id);
-
-  const createdByMe =
-    isGroupCreatedByUser(
-      group,
-      state.currentUser?.uid
-    );
-
-  const statusBadge =
-    node.querySelector(
-      '.group-card__status'
-    );
-
-  if (statusBadge) {
-
-    if (createdByMe) {
-
-      statusBadge.textContent =
-        'Created by you';
-
-      statusBadge.style.display =
-        'inline-flex';
-
-    } else if (
-      membership?.status === 'active'
-    ) {
-
-      statusBadge.textContent =
-        'Joined';
-
-      statusBadge.style.display =
-        'inline-flex';
-
-    } else if (
-      membership?.status === 'pending'
-    ) {
-
-      statusBadge.textContent =
-        'Requested';
-
-      statusBadge.style.display =
-        'inline-flex';
-
-    } else {
-
-      statusBadge.style.display =
-        'none';
-    }
   }
 
 
-  // ==========================================================
+  // ----------------------------------------------------------
   // JOIN BUTTON
-  // ==========================================================
+  // ----------------------------------------------------------
 
   const joinBtn =
     node.querySelector(
-      '.group-card__join-btn'
+      ".group-card__join-btn"
     );
 
   if (joinBtn) {
 
-    // Creator does not need a Join button.
-    if (createdByMe) {
+    applyJoinButtonState(
+      joinBtn,
+      group
+    );
 
-      joinBtn.textContent =
-        'Your group';
+    joinBtn.addEventListener(
+      "click",
+      event => {
 
-      joinBtn.disabled =
-        true;
+        event.preventDefault();
 
-      joinBtn.className =
-        'btn-join group-card__join-btn is-owner';
+        event.stopPropagation();
 
-    } else {
+        handleJoinClick(
+          group,
+          joinBtn
+        );
 
-      applyJoinButtonState(
-        joinBtn,
-        group.id
-      );
+      }
+    );
 
-      joinBtn.addEventListener(
-        'click',
-        event => {
-
-          event.preventDefault();
-          event.stopPropagation();
-
-          handleJoinClick(
-            group,
-            joinBtn
-          );
-        }
-      );
-    }
   }
 
+
   return node;
+
 }
 
 
@@ -1367,55 +1432,129 @@ function buildGroupCard(group) {
 // ============================================================
 
 function applyJoinButtonState(
-  buttonEl,
-  groupId
+  button,
+  group
 ) {
 
-  if (!buttonEl) return;
+  if (!button) return;
 
   const membership =
-    state.membershipMap.get(groupId);
+    state.membershipMap.get(
+      group.id
+    );
 
-  buttonEl.className =
-    'btn-join group-card__join-btn';
 
-  buttonEl.disabled =
+  button.disabled =
     false;
 
-  if (!membership) {
+  button.className =
+    "btn-join group-card__join-btn";
 
-    buttonEl.textContent =
-      'Join group';
 
-    buttonEl.classList.add(
-      'is-primary'
+  // OWNER
+  if (
+    group.ownerId ===
+    state.currentUser?.uid
+  ) {
+
+    button.textContent =
+      "Manage group";
+
+    button.classList.add(
+      "is-primary"
     );
 
     return;
+
   }
 
+
+  // PENDING
   if (
-    membership.status === 'pending'
+    membership?.status ===
+    "pending"
   ) {
 
-    buttonEl.textContent =
-      'Requested';
+    button.textContent =
+      "Requested";
 
-    buttonEl.classList.add(
-      'is-pending'
+    button.classList.add(
+      "is-pending"
     );
 
-    buttonEl.disabled =
+    button.disabled =
       true;
 
     return;
+
   }
 
-  buttonEl.textContent =
-    '✓ Joined';
 
-  buttonEl.disabled =
-    true;
+  // JOINED
+  if (
+    membership &&
+    membership.status ===
+      "active"
+  ) {
+
+    button.textContent =
+      "✓ Joined";
+
+    button.classList.add(
+      "is-joined"
+    );
+
+    button.disabled =
+      true;
+
+    return;
+
+  }
+
+
+  // INACTIVE PREMIUM GROUP
+  if (
+    group.status ===
+      "pending_payment"
+  ) {
+
+    button.textContent =
+      "Unavailable";
+
+    button.disabled =
+      true;
+
+    return;
+
+  }
+
+
+  // PRIVATE
+  if (
+    group.privacy ===
+    "private"
+  ) {
+
+    button.textContent =
+      "Request to join";
+
+    button.classList.add(
+      "is-primary"
+    );
+
+    return;
+
+  }
+
+
+  // PUBLIC
+  button.textContent =
+    "Join group";
+
+  button.classList.add(
+    "is-primary"
+  );
+
 }
 
 
@@ -1425,52 +1564,99 @@ function applyJoinButtonState(
 
 async function handleJoinClick(
   group,
-  buttonEl
+  button
 ) {
 
+  if (!state.currentUser) {
+    showToast(
+      "Please sign in first.",
+      "error"
+    );
+    return;
+  }
+
+
+  // Owner
+  if (
+    group.ownerId ===
+    state.currentUser.uid
+  ) {
+
+    window.location.href =
+      `group.html?id=${encodeURIComponent(group.id)}`;
+
+    return;
+
+  }
+
+
+  // Already member
   if (
     state.membershipMap.has(
       group.id
     )
   ) {
+
     return;
+
   }
 
-  const originalText =
-    buttonEl.textContent;
 
-  buttonEl.disabled =
+  // Premium inactive
+  if (
+    group.status ===
+    "pending_payment"
+  ) {
+
+    showToast(
+      "This premium group is not active yet.",
+      "info"
+    );
+
+    return;
+
+  }
+
+
+  const originalText =
+    button.textContent;
+
+  button.disabled =
     true;
 
-  buttonEl.textContent =
-    'Joining…';
+  button.textContent =
+    "Joining…";
+
 
   const user =
     state.currentUser;
 
   const isPrivate =
-    group.privacy === 'private';
+    group.privacy ===
+    "private";
 
   const status =
     isPrivate
-      ? 'pending'
-      : 'active';
+      ? "pending"
+      : "active";
+
 
   const memberRef =
     doc(
       db,
-      'groups',
+      "groups",
       group.id,
-      'members',
+      "members",
       user.uid
     );
 
   const groupRef =
     doc(
       db,
-      'groups',
+      "groups",
       group.id
     );
+
 
   try {
 
@@ -1483,104 +1669,163 @@ async function handleJoinClick(
             memberRef
           );
 
-        if (existing.exists()) {
+        if (
+          existing.exists()
+        ) {
           return;
         }
+
 
         transaction.set(
           memberRef,
           {
-            uid: user.uid,
+
+            uid:
+              user.uid,
 
             displayName:
               user.displayName ||
-              'VitalStar Member',
+              "VitalStar Member",
 
             photoURL:
-              user.photoURL || '',
+              user.photoURL ||
+              "",
 
-            role: 'member',
+            role:
+              "member",
 
             status,
 
             category:
-              group.category || '',
+              group.category ||
+              "",
 
             joinedAt:
               serverTimestamp()
+
           }
         );
 
-        if (status === 'active') {
+
+        if (
+          status ===
+          "active"
+        ) {
 
           transaction.update(
             groupRef,
             {
+
               memberCount:
-                increment(1)
+                increment(1),
+
+              updatedAt:
+                serverTimestamp()
+
             }
           );
+
         }
+
       }
     );
+
+
+    // --------------------------------------------------------
+    // UPDATE LOCAL STATE
+    // --------------------------------------------------------
+
+    const membership = {
+
+      groupId:
+        group.id,
+
+      status,
+
+      role:
+        "member",
+
+      category:
+        group.category ||
+        "",
+
+      joinedAt:
+        null
+
+    };
+
 
     state.membershipMap.set(
       group.id,
-      {
-        status,
-        role: 'member',
-        category:
-          group.category || ''
-      }
+      membership
     );
 
-    state.membershipList.unshift({
-      groupId: group.id,
-      status,
-      role: 'member',
-      category:
-        group.category || '',
-      joinedAt: Date.now()
-    });
+
+    state.membershipList.unshift(
+      membership
+    );
+
 
     applyJoinButtonState(
-      buttonEl,
-      group.id
+      button,
+      group
     );
 
-    showToast(
-      isPrivate
-        ? 'Request sent! An admin will review it.'
-        : `You've joined ${group.name}.`,
-      'success'
-    );
 
-    // Refresh recommendations.
-    loadRecommendedRail();
+    if (isPrivate) {
+
+      showToast(
+        "Join request sent successfully.",
+        "success"
+      );
+
+    } else {
+
+      showToast(
+        `You joined ${group.name}.`,
+        "success"
+      );
+
+    }
+
+
+    // Refresh My Groups if currently open
+    if (
+      state.activeTab ===
+      "my-groups"
+    ) {
+
+      await loadGroupsForActiveView(
+        true
+      );
+
+    }
 
   } catch (error) {
 
     logFirestoreError(
-      'Joining group',
+      "Joining group",
       error
     );
 
-    buttonEl.disabled =
+    button.disabled =
       false;
 
-    buttonEl.textContent =
+    button.textContent =
       originalText;
 
     showToast(
-      'Could not join this group. Please try again.',
-      'error'
+      "Could not join this group. Please try again.",
+      "error"
     );
+
   }
+
 }
 
 
 // ============================================================
-// LOAD MAIN GROUP GRID
+// MAIN GROUP LOADER
 // ============================================================
 
 async function loadGroupsForActiveView(
@@ -1594,11 +1839,10 @@ async function loadGroupsForActiveView(
     return;
   }
 
+
   state.isLoading =
     true;
 
-  const requestId =
-    ++state.requestVersion;
 
   if (reset) {
 
@@ -1611,17 +1855,22 @@ async function loadGroupsForActiveView(
     state.myGroupsPageIndex =
       0;
 
-    state.displayedGroupIds.clear();
+    state.renderedGroupIds.clear();
 
-    groupsGrid.innerHTML = '';
+    groupsGrid.innerHTML =
+      "";
+
+    if (groupsEmptyState) {
+
+      groupsEmptyState.style.display =
+        "none";
+
+    }
 
     renderSkeletons(6);
 
-    if (groupsEmptyState) {
-      groupsEmptyState.style.display =
-        'none';
-    }
   }
+
 
   if (loadMoreBtn) {
 
@@ -1629,141 +1878,169 @@ async function loadGroupsForActiveView(
       true;
 
     loadMoreBtn.classList.add(
-      'is-loading'
+      "is-loading"
     );
+
   }
+
 
   try {
 
     let groups = [];
 
-    if (state.searchQuery) {
 
-      groups =
-        await fetchSearchResults(reset);
-
-    } else if (
-      state.activeTab === 'discover'
-    ) {
-
-      groups =
-        await fetchDiscoverGroups(reset);
-
-    } else if (
-      state.activeTab === 'recommended'
-    ) {
-
-      groups =
-        await fetchRecommendedGroups(reset);
-
-    } else if (
-      state.activeTab === 'my-groups'
-    ) {
-
-      groups =
-        await fetchMyGroups(reset);
-    }
-
-
-    // Ignore stale request.
     if (
-      requestId !==
-      state.requestVersion
+      state.searchQuery
     ) {
-      return;
+
+      groups =
+        await fetchSearchResults(
+          reset
+        );
+
+    } else {
+
+      switch (
+        state.activeTab
+      ) {
+
+        case "recommended":
+
+          groups =
+            await fetchRecommendedGroups(
+              reset
+            );
+
+          break;
+
+
+        case "my-groups":
+
+          groups =
+            await fetchMyGroups(
+              reset
+            );
+
+          break;
+
+
+        case "discover":
+
+        default:
+
+          groups =
+            await fetchDiscoverGroups(
+              reset
+            );
+
+          break;
+
+      }
+
     }
+
 
     clearSkeletons();
 
+
     if (reset) {
-      groupsGrid.innerHTML = '';
+
+      groupsGrid.innerHTML =
+        "";
+
+      state.renderedGroupIds.clear();
+
     }
 
 
-    // Remove duplicate cards.
-    const uniqueGroups = [];
+    let added =
+      0;
 
-    for (const group of groups) {
 
-      if (
-        state.displayedGroupIds.has(
+    groups.forEach(
+      group => {
+
+        if (
+          state.renderedGroupIds.has(
+            group.id
+          )
+        ) {
+          return;
+        }
+
+
+        const card =
+          buildGroupCard(
+            group
+          );
+
+        if (!card) return;
+
+
+        state.renderedGroupIds.add(
           group.id
-        )
-      ) {
-        continue;
+        );
+
+        groupsGrid.appendChild(
+          card
+        );
+
+        added++;
+
       }
-
-      state.displayedGroupIds.add(
-        group.id
-      );
-
-      uniqueGroups.push(group);
-    }
+    );
 
 
     if (
-      uniqueGroups.length === 0 &&
-      reset
+      reset &&
+      added === 0
     ) {
 
       if (groupsEmptyMessage) {
 
         groupsEmptyMessage.textContent =
           buildEmptyMessage();
+
       }
 
       if (groupsEmptyState) {
 
         groupsEmptyState.style.display =
-          'flex';
+          "flex";
+
       }
 
-    } else if (groupsEmptyState) {
+    } else if (
+      groupsEmptyState
+    ) {
 
       groupsEmptyState.style.display =
-        'none';
+        "none";
+
     }
-
-
-    uniqueGroups.forEach(group => {
-
-      const card =
-        buildGroupCard(group);
-
-      if (card) {
-        groupsGrid.appendChild(card);
-      }
-    });
 
 
     if (loadMoreBtn) {
 
       loadMoreBtn.style.display =
         state.hasMore
-          ? 'block'
-          : 'none';
+          ? "block"
+          : "none";
 
-      loadMoreBtn.disabled =
-        false;
     }
 
   } catch (error) {
 
     logFirestoreError(
-      `Loading groups — tab=${state.activeTab}, category=${state.activeCategory}, search=${state.searchQuery}`,
+      `Loading groups — ${state.activeTab}`,
       error
     );
 
     clearSkeletons();
 
-    if (reset) {
-
-      groupsGrid.innerHTML = '';
-    }
-
     showToast(
-      'Could not load groups right now.',
-      'error'
+      "Could not load groups right now.",
+      "error"
     );
 
   } finally {
@@ -1773,14 +2050,17 @@ async function loadGroupsForActiveView(
 
     if (loadMoreBtn) {
 
-      loadMoreBtn.classList.remove(
-        'is-loading'
-      );
-
       loadMoreBtn.disabled =
         false;
+
+      loadMoreBtn.classList.remove(
+        "is-loading"
+      );
+
     }
+
   }
+
 }
 
 
@@ -1790,38 +2070,62 @@ async function loadGroupsForActiveView(
 
 function buildEmptyMessage() {
 
-  if (state.searchQuery) {
-
-    return `No groups matched "${state.searchQuery}".`;
-  }
-
   if (
-    state.activeTab === 'my-groups'
+    state.searchQuery
   ) {
 
-    return 'You have not created or joined any groups yet.';
+    return (
+      `No groups matched "${state.searchQuery}".`
+    );
+
   }
 
+
   if (
-    state.activeCategory !== 'all'
+    state.activeTab ===
+    "my-groups"
   ) {
 
-    return `No groups in ${
-      CATEGORY_LABELS[
+    return (
+      "You haven't created or joined any groups yet."
+    );
+
+  }
+
+
+  if (
+    state.activeTab ===
+    "recommended"
+  ) {
+
+    return (
+      "No recommended groups are available right now."
+    );
+
+  }
+
+
+  if (
+    state.activeCategory !==
+    "all"
+  ) {
+
+    return (
+      `No groups found in ${
+        CATEGORY_LABELS[
+          state.activeCategory
+        ] ||
         state.activeCategory
-      ] ||
-      state.activeCategory
-    } yet.`;
+      }.`
+    );
+
   }
 
-  if (
-    state.activeTab === 'recommended'
-  ) {
 
-    return 'No recommended groups available right now.';
-  }
+  return (
+    "No groups available right now."
+  );
 
-  return 'No groups available right now.';
 }
 
 
@@ -1833,34 +2137,41 @@ async function fetchDiscoverGroups(
   reset
 ) {
 
-  const constraints = [
+  const constraints = [];
+
+
+  constraints.push(
     where(
-      'privacy',
-      '==',
-      'public'
+      "status",
+      "==",
+      "active"
     )
-  ];
+  );
+
 
   if (
     state.activeCategory !==
-    'all'
+    "all"
   ) {
 
     constraints.push(
       where(
-        'category',
-        '==',
+        "category",
+        "==",
         state.activeCategory
       )
     );
+
   }
+
 
   constraints.push(
     orderBy(
-      'createdAt',
-      'desc'
+      "createdAt",
+      "desc"
     )
   );
+
 
   if (
     !reset &&
@@ -1872,86 +2183,116 @@ async function fetchDiscoverGroups(
         state.lastVisibleDoc
       )
     );
+
   }
+
 
   constraints.push(
     limit(PAGE_SIZE)
   );
 
+
   const snapshot =
     await getDocs(
       query(
-        collection(db, 'groups'),
+        collection(
+          db,
+          "groups"
+        ),
         ...constraints
       )
     );
 
+
   return consumeSnapshot(
     snapshot
   );
+
 }
 
 
 // ============================================================
 // RECOMMENDED
 // ============================================================
+//
+// Recommended logic:
+//
+// • Uses categories the user already belongs to
+// • If a category is selected, uses that category
+// • Removes groups user already owns/has joined
+// • Falls back to popular public groups
+// ============================================================
 
 async function fetchRecommendedGroups(
   reset
 ) {
 
+  const joinedCategories =
+    [
+      ...new Set(
+        state.membershipList
+          .map(
+            item =>
+              item.category
+          )
+          .filter(Boolean)
+      )
+    ]
+    .slice(0, 10);
+
+
   const constraints = [
+
     where(
-      'privacy',
-      '==',
-      'public'
+      "privacy",
+      "==",
+      "public"
+    ),
+
+    where(
+      "status",
+      "==",
+      "active"
     )
+
   ];
+
 
   if (
     state.activeCategory !==
-    'all'
+    "all"
   ) {
 
     constraints.push(
       where(
-        'category',
-        '==',
+        "category",
+        "==",
         state.activeCategory
       )
     );
 
-  } else {
+  } else if (
+    joinedCategories.length
+  ) {
 
-    const categories =
-      Array.from(
-        new Set(
-          state.membershipList
-            .map(
-              m => m.category
-            )
-            .filter(Boolean)
-        )
-      ).slice(0, 10);
+    constraints.push(
+      where(
+        "category",
+        "in",
+        joinedCategories
+      )
+    );
 
-    if (categories.length) {
-
-      constraints.push(
-        where(
-          'category',
-          'in',
-          categories
-        )
-      );
-    }
   }
+
 
   constraints.push(
     orderBy(
-      'memberCount',
-      'desc'
+      "memberCount",
+      "desc"
     )
   );
+
 
   if (
     !reset &&
@@ -1963,22 +2304,32 @@ async function fetchRecommendedGroups(
         state.lastVisibleDoc
       )
     );
+
   }
+
 
   constraints.push(
     limit(PAGE_SIZE)
   );
 
+
   const snapshot =
     await getDocs(
       query(
-        collection(db, 'groups'),
+        collection(
+          db,
+          "groups"
+        ),
         ...constraints
       )
     );
 
+
   const groups =
-    consumeSnapshot(snapshot);
+    consumeSnapshot(
+      snapshot
+    );
+
 
   return groups.filter(
     group =>
@@ -1986,6 +2337,7 @@ async function fetchRecommendedGroups(
         group.id
       )
   );
+
 }
 
 
@@ -1995,239 +2347,305 @@ async function fetchRecommendedGroups(
 //
 // IMPORTANT:
 //
-// This is the main fix.
+// This does NOT depend only on collectionGroup("members").
 //
-// My Groups now combines:
+// It combines:
 //
-//   1. Groups created by the current user
-//   2. Groups the current user joined
+// A. Groups owned by current user
+// B. Groups joined through members subcollection
 //
-// It also keeps pending requests separate from actual joined groups.
-//
-// The creator's group is shown even if there is no member document.
-// If the creator is also in the members collection, duplicates are
-// removed automatically.
-//
+// This fixes the problem caused by create-group.js storing the
+// owner in the group's `members` MAP.
 // ============================================================
 
-async function fetchMyGroups(reset) {
+async function fetchMyGroups(
+  reset
+) {
 
   if (reset) {
 
+    await rebuildMyGroups();
+
     state.myGroupsPageIndex =
       0;
+
   }
 
 
-  // ----------------------------------------------------------
-  // Get all created groups.
-  // ----------------------------------------------------------
-
-  const created =
-    [...state.createdGroups];
+  let list =
+    [...state.myGroups];
 
 
-  // ----------------------------------------------------------
-  // Get active joined groups.
-  // Pending requests are intentionally excluded from "joined".
-  // ----------------------------------------------------------
+  if (
+    state.activeCategory !==
+    "all"
+  ) {
 
-  const joinedMemberships =
-    state.membershipList.filter(
-      member => {
-
-        if (
-          member.status !==
-          'active'
-        ) {
-          return false;
-        }
-
-        if (
-          state.activeCategory !==
-          'all'
-        ) {
-
-          return (
-            member.category ===
-            state.activeCategory
-          );
-        }
-
-        return true;
-      }
-    );
-
-
-  // ----------------------------------------------------------
-  // Category filter for created groups.
-  // ----------------------------------------------------------
-
-  const filteredCreated =
-    created.filter(group => {
-
-      if (
-        state.activeCategory ===
-        'all'
-      ) {
-        return true;
-      }
-
-      return (
-        group.category ===
-        state.activeCategory
+    list =
+      list.filter(
+        group =>
+          group.category ===
+          state.activeCategory
       );
-    });
 
+  }
 
-  // ----------------------------------------------------------
-  // Build unique ID list.
-  // Created groups are placed first.
-  // ----------------------------------------------------------
-
-  const idMap =
-    new Map();
-
-  filteredCreated.forEach(group => {
-
-    idMap.set(
-      group.id,
-      {
-        id: group.id,
-        source: 'created'
-      }
-    );
-  });
-
-  joinedMemberships.forEach(member => {
-
-    if (!idMap.has(member.groupId)) {
-
-      idMap.set(
-        member.groupId,
-        {
-          id: member.groupId,
-          source: 'joined'
-        }
-      );
-    }
-  });
-
-
-  const allEntries =
-    Array.from(
-      idMap.values()
-    );
-
-
-  // ----------------------------------------------------------
-  // Better pagination.
-  //
-  // We paginate the merged My Groups list instead of separately
-  // paginating created and joined groups.
-  // ----------------------------------------------------------
 
   const start =
     state.myGroupsPageIndex *
     PAGE_SIZE;
 
+  const end =
+    start + PAGE_SIZE;
+
+
   const page =
-    allEntries.slice(
+    list.slice(
       start,
-      start + PAGE_SIZE
+      end
     );
 
-  state.myGroupsPageIndex += 1;
+
+  state.myGroupsPageIndex++;
+
 
   state.hasMore =
-    start + PAGE_SIZE <
-    allEntries.length;
+    end < list.length;
 
 
   if (!page.length) {
 
     return [];
+
+  }
+
+
+  return page;
+
+}
+
+
+// ============================================================
+// REBUILD MY GROUPS
+// ============================================================
+
+async function rebuildMyGroups() {
+
+  const uid =
+    state.currentUser.uid;
+
+  const ids =
+    new Set();
+
+
+  // ----------------------------------------------------------
+  // 1. OWNER GROUPS
+  // ----------------------------------------------------------
+
+  try {
+
+    const ownerQuery =
+      query(
+        collection(
+          db,
+          "groups"
+        ),
+        where(
+          "ownerId",
+          "==",
+          uid
+        ),
+        limit(500)
+      );
+
+    const snapshot =
+      await getDocs(
+        ownerQuery
+      );
+
+    snapshot.forEach(
+      d => ids.add(d.id)
+    );
+
+  } catch (error) {
+
+    logFirestoreError(
+      "Finding owned groups",
+      error
+    );
+
   }
 
 
   // ----------------------------------------------------------
-  // Fetch group documents.
+  // 2. MEMBER SUBCOLLECTION GROUPS
   // ----------------------------------------------------------
 
-  const docs =
+  try {
+
+    const memberQuery =
+      query(
+        collectionGroup(
+          db,
+          "members"
+        ),
+        where(
+          "uid",
+          "==",
+          uid
+        ),
+        limit(500)
+      );
+
+    const snapshot =
+      await getDocs(
+        memberQuery
+      );
+
+    snapshot.forEach(
+      memberDoc => {
+
+        const parent =
+          memberDoc.ref.parent.parent;
+
+        if (parent) {
+          ids.add(parent.id);
+        }
+
+      }
+    );
+
+  } catch (error) {
+
+    logFirestoreError(
+      "Finding joined groups",
+      error
+    );
+
+  }
+
+
+  // ----------------------------------------------------------
+  // 3. GET GROUP DOCUMENTS
+  // ----------------------------------------------------------
+
+  const idArray =
+    [...ids];
+
+
+  const groups = [];
+
+
+  // Firestore getDoc does not require a composite index.
+  const documents =
     await Promise.all(
-      page.map(entry =>
-        getDoc(
-          doc(
-            db,
-            'groups',
-            entry.id
-          )
-        )
+      idArray.map(
+        async groupId => {
+
+          try {
+
+            const snapshot =
+              await getDoc(
+                doc(
+                  db,
+                  "groups",
+                  groupId
+                )
+              );
+
+            if (!snapshot.exists()) {
+              return null;
+            }
+
+            return {
+
+              id:
+                snapshot.id,
+
+              ...snapshot.data()
+
+            };
+
+          } catch (error) {
+
+            console.error(
+              "Could not load group:",
+              groupId,
+              error
+            );
+
+            return null;
+
+          }
+
+        }
       )
     );
 
 
-  const groups =
-    docs
-      .filter(
-        snapshot =>
-          snapshot.exists()
-      )
-      .map(
-        snapshot => ({
-          id: snapshot.id,
-          ...snapshot.data()
-        })
-      );
+  documents.forEach(
+    group => {
+
+      if (!group) return;
+
+      // Don't display inactive groups in My Groups
+      // unless they are owned by the user.
+      if (
+        group.status !==
+          "active" &&
+        group.ownerId !== uid
+      ) {
+        return;
+      }
+
+      groups.push(group);
+
+    }
+  );
 
 
   // ----------------------------------------------------------
-  // Created groups first, then joined groups.
+  // SORT
   // ----------------------------------------------------------
 
   groups.sort(
     (a, b) => {
 
-      const aCreated =
-        isGroupCreatedByUser(
-          a,
-          state.currentUser.uid
-        );
+      const aOwned =
+        a.ownerId === uid;
 
-      const bCreated =
-        isGroupCreatedByUser(
-          b,
-          state.currentUser.uid
-        );
+      const bOwned =
+        b.ownerId === uid;
 
+
+      // Owned groups first
       if (
-        aCreated &&
-        !bCreated
+        aOwned &&
+        !bOwned
       ) {
         return -1;
       }
 
       if (
-        !aCreated &&
-        bCreated
+        !aOwned &&
+        bOwned
       ) {
         return 1;
       }
 
+
       return (
-        getTimestampValue(
-          b.createdAt
-        ) -
-        getTimestampValue(
-          a.createdAt
-        )
+        getCreatedTime(b) -
+        getCreatedTime(a)
       );
+
     }
   );
 
 
-  return groups;
+  state.myGroups =
+    groups;
+
 }
 
 
@@ -2242,38 +2660,46 @@ async function fetchSearchResults(
   const words =
     state.searchQuery
       .toLowerCase()
+      .trim()
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 10);
 
+
   if (!words.length) {
 
-    state.hasMore = false;
+    state.hasMore =
+      false;
 
     return [];
+
   }
 
 
   const constraints = [
+
     where(
-      'searchTokens',
-      'array-contains-any',
+      "searchTokens",
+      "array-contains-any",
       words
     )
+
   ];
+
 
   if (
     state.activeCategory !==
-    'all'
+    "all"
   ) {
 
     constraints.push(
       where(
-        'category',
-        '==',
+        "category",
+        "==",
         state.activeCategory
       )
     );
+
   }
 
 
@@ -2287,6 +2713,7 @@ async function fetchSearchResults(
         state.lastVisibleDoc
       )
     );
+
   }
 
 
@@ -2298,7 +2725,10 @@ async function fetchSearchResults(
   const snapshot =
     await getDocs(
       query(
-        collection(db, 'groups'),
+        collection(
+          db,
+          "groups"
+        ),
         ...constraints
       )
     );
@@ -2310,7 +2740,10 @@ async function fetchSearchResults(
     );
 
 
-  // AND refinement.
+  // ----------------------------------------------------------
+  // AND FILTER
+  // ----------------------------------------------------------
+
   return groups.filter(
     group => {
 
@@ -2321,12 +2754,15 @@ async function fetchSearchResults(
           ? group.searchTokens
           : [];
 
+
       return words.every(
         word =>
           tokens.includes(word)
       );
+
     }
   );
+
 }
 
 
@@ -2341,21 +2777,31 @@ function consumeSnapshot(
   const docs =
     snapshot.docs;
 
+
   if (docs.length) {
 
     state.lastVisibleDoc =
       docs[docs.length - 1];
+
   }
 
+
   state.hasMore =
-    docs.length === PAGE_SIZE;
+    docs.length ===
+    PAGE_SIZE;
+
 
   return docs.map(
     d => ({
-      id: d.id,
+
+      id:
+        d.id,
+
       ...d.data()
+
     })
   );
+
 }
 
 
@@ -2363,7 +2809,9 @@ function consumeSnapshot(
 // SKELETONS
 // ============================================================
 
-function renderSkeletons(count) {
+function renderSkeletons(
+  count
+) {
 
   if (
     !skeletonCardTemplate ||
@@ -2372,12 +2820,14 @@ function renderSkeletons(count) {
     return;
   }
 
+
   const template =
     skeletonCardTemplate
       .content
-      .firstElementChild;
+      ?.firstElementChild;
 
   if (!template) return;
+
 
   for (
     let i = 0;
@@ -2389,10 +2839,14 @@ function renderSkeletons(count) {
       template.cloneNode(true);
 
     node.dataset.skeleton =
-      'true';
+      "true";
 
-    groupsGrid.appendChild(node);
+    groupsGrid.appendChild(
+      node
+    );
+
   }
+
 }
 
 
@@ -2405,137 +2859,152 @@ function clearSkeletons() {
       '[data-skeleton="true"]'
     )
     .forEach(
-      el => el.remove()
+      element =>
+        element.remove()
     );
+
 }
 
 
 // ============================================================
-// TAB SWITCHING
+// TABS
 // ============================================================
 
 if (tabsContainer) {
 
   tabsContainer.addEventListener(
-    'click',
+    "click",
     event => {
 
-      const tabBtn =
+      const tab =
         event.target.closest(
-          '.tab'
+          ".tab"
         );
 
-      if (!tabBtn) return;
+      if (!tab) return;
 
-      const newTab =
-        tabBtn.dataset.tab;
+      const tabName =
+        tab.dataset.tab;
 
-      if (!newTab) return;
+      if (!tabName) return;
 
       if (
-        newTab ===
-        state.activeTab
+        state.activeTab ===
+        tabName
       ) {
         return;
       }
 
+
       tabsContainer
         .querySelectorAll(
-          '.tab'
+          ".tab"
         )
         .forEach(
-          tab =>
-            tab.classList.remove(
-              'is-active'
+          button =>
+            button.classList.remove(
+              "is-active"
             )
         );
 
-      tabBtn.classList.add(
-        'is-active'
+
+      tab.classList.add(
+        "is-active"
       );
 
+
       state.activeTab =
-        newTab;
+        tabName;
 
       state.searchQuery =
-        '';
+        "";
+
+      state.lastVisibleDoc =
+        null;
+
+      state.hasMore =
+        false;
 
       if (searchInput) {
+
         searchInput.value =
-          '';
+          "";
+
       }
 
       if (searchClearBtn) {
 
         searchClearBtn.classList.remove(
-          'is-visible'
+          "is-visible"
         );
+
       }
 
-      state.requestVersion++;
 
       loadGroupsForActiveView(
         true
       );
+
     }
   );
+
 }
 
 
 // ============================================================
-// CATEGORY CHIPS
+// CATEGORY FILTER
 // ============================================================
 
-if (categoryChipsContainer) {
+if (
+  categoryChipsContainer
+) {
 
   categoryChipsContainer.addEventListener(
-    'click',
+    "click",
     event => {
 
       const chip =
         event.target.closest(
-          '.category-chip'
+          ".category-chip"
         );
 
       if (!chip) return;
+
 
       const category =
         chip.dataset.category;
 
       if (!category) return;
 
-      if (
-        category ===
-        state.activeCategory
-      ) {
-        return;
-      }
 
       categoryChipsContainer
         .querySelectorAll(
-          '.category-chip'
+          ".category-chip"
         )
         .forEach(
-          c =>
-            c.classList.remove(
-              'is-active'
+          item =>
+            item.classList.remove(
+              "is-active"
             )
         );
 
+
       chip.classList.add(
-        'is-active'
+        "is-active"
       );
+
 
       state.activeCategory =
         category;
 
-      state.requestVersion++;
 
       loadGroupsForActiveView(
         true
       );
+
     }
   );
+
 }
 
 
@@ -2546,19 +3015,22 @@ if (categoryChipsContainer) {
 if (searchInput) {
 
   searchInput.addEventListener(
-    'input',
+    "input",
     () => {
 
       const value =
         searchInput.value.trim();
 
+
       if (searchClearBtn) {
 
         searchClearBtn.classList.toggle(
-          'is-visible',
+          "is-visible",
           value.length > 0
         );
+
       }
+
 
       clearTimeout(
         state.searchDebounceHandle
@@ -2568,13 +3040,14 @@ if (searchInput) {
       if (!value) {
 
         state.searchQuery =
-          '';
+          "";
 
         if (searchLoading) {
 
           searchLoading.classList.remove(
-            'is-visible'
+            "is-visible"
           );
+
         }
 
         loadGroupsForActiveView(
@@ -2582,14 +3055,16 @@ if (searchInput) {
         );
 
         return;
+
       }
 
 
       if (searchLoading) {
 
         searchLoading.classList.add(
-          'is-visible'
+          "is-visible"
         );
+
       }
 
 
@@ -2603,8 +3078,9 @@ if (searchInput) {
             if (searchLoading) {
 
               searchLoading.classList.remove(
-                'is-visible'
+                "is-visible"
               );
+
             }
 
             loadGroupsForActiveView(
@@ -2614,8 +3090,10 @@ if (searchInput) {
           },
           400
         );
+
     }
   );
+
 }
 
 
@@ -2626,31 +3104,30 @@ if (searchInput) {
 if (searchClearBtn) {
 
   searchClearBtn.addEventListener(
-    'click',
+    "click",
     () => {
 
       if (searchInput) {
 
         searchInput.value =
-          '';
+          "";
+
       }
 
-      searchClearBtn.classList.remove(
-        'is-visible'
-      );
-
       state.searchQuery =
-        '';
+        "";
 
-      clearTimeout(
-        state.searchDebounceHandle
+      searchClearBtn.classList.remove(
+        "is-visible"
       );
 
       loadGroupsForActiveView(
         true
       );
+
     }
   );
+
 }
 
 
@@ -2661,7 +3138,7 @@ if (searchClearBtn) {
 if (loadMoreBtn) {
 
   loadMoreBtn.addEventListener(
-    'click',
+    "click",
     async () => {
 
       if (
@@ -2671,62 +3148,31 @@ if (loadMoreBtn) {
         return;
       }
 
+
       await loadGroupsForActiveView(
         false
       );
+
     }
   );
+
 }
 
 
 // ============================================================
-// OPTIONAL REFRESH
-// ============================================================
-//
-// If groups.html has a button with:
-//
-//   id="refreshGroupsBtn"
-//
-// it can refresh everything without requiring a page reload.
-//
+// INITIAL UI
 // ============================================================
 
-const refreshGroupsBtn =
-  document.getElementById(
-    'refreshGroupsBtn'
-  );
+if (groupsEmptyState) {
 
-if (refreshGroupsBtn) {
+  groupsEmptyState.style.display =
+    "none";
 
-  refreshGroupsBtn.addEventListener(
-    'click',
-    async () => {
+}
 
-      if (state.isLoading) return;
+if (loadMoreBtn) {
 
-      refreshGroupsBtn.disabled =
-        true;
+  loadMoreBtn.style.display =
+    "none";
 
-      try {
-
-        await loadUserMemberships();
-
-        await Promise.all([
-          loadTrending(),
-          loadTopActiveGroups(),
-          loadNewGroups(),
-          loadRecommendedRail()
-        ]);
-
-        await loadGroupsForActiveView(
-          true
-        );
-
-      } finally {
-
-        refreshGroupsBtn.disabled =
-          false;
-      }
-    }
-  );
 }
