@@ -1349,7 +1349,13 @@ function buildTabContext(panelEl) {
     isCurrentUserAdmin,
     canManageGroup,
     isActiveMember,
-    canViewGroup
+    canViewGroup,
+
+    // --------------------------------------------------------
+    // GENERAL NOTIFICATION FUNCTION
+    // --------------------------------------------------------
+
+    sendGroupNotification
 
   };
 
@@ -1615,6 +1621,123 @@ async function handleJoinLeaveClick() {
 
 
 // ============================================================
+// GENERAL GROUP NOTIFICATION
+// ============================================================
+
+async function sendGroupNotification({
+  recipientId,
+  type,
+  text,
+  senderId = null,
+  senderName = 'VitalStar Member',
+  senderPhoto = '',
+  groupId = state.groupId,
+  groupName = state.groupData?.name || 'VitalStar Group',
+  postId = null,
+  chatId = null
+}) {
+
+  if (!recipientId) {
+    return;
+  }
+
+
+  try {
+
+    const notificationData = {
+
+      // Receiver
+      receiverId:
+        recipientId,
+
+      // Compatibility
+      recipientId:
+        recipientId,
+
+
+      // Sender
+      senderId:
+        senderId ||
+        state.currentUser?.uid ||
+        null,
+
+      senderName,
+
+      senderPhoto,
+
+      // Compatibility
+      senderPhotoURL:
+        senderPhoto,
+
+
+      // Notification
+      type,
+
+      text,
+
+      // Compatibility
+      message:
+        text,
+
+
+      // Group
+      groupId,
+
+      groupName,
+
+
+      // Optional destination data
+      ...(postId
+        ? { postId }
+        : {}),
+
+      ...(chatId
+        ? { chatId }
+        : {}),
+
+
+      // Read state
+      read: false,
+
+
+      // Time
+      createdAt:
+        serverTimestamp(),
+
+
+      // Destination
+      url:
+        groupId
+          ? `group.html?id=${encodeURIComponent(
+              groupId
+            )}`
+          : 'notifications.html'
+
+    };
+
+
+    await addDoc(
+      collection(
+        db,
+        'notifications'
+      ),
+      notificationData
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      'General group notification error:',
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
 // GROUP JOIN REQUEST NOTIFICATION
 // ============================================================
 
@@ -1726,10 +1849,6 @@ async function sendJoinRequestNotification() {
     );
 
 
-    // --------------------------------------------------------
-    // NO RECIPIENTS
-    // --------------------------------------------------------
-
     if (!recipients.size) {
       return;
     }
@@ -1740,92 +1859,55 @@ async function sendJoinRequestNotification() {
       'VitalStar Member';
 
 
+    const senderPhoto =
+      user.photoURL ||
+      '';
+
+
     const groupName =
       group.name ||
       'your group';
 
 
     // --------------------------------------------------------
-    // CREATE NOTIFICATIONS
+    // SEND TO GENERAL NOTIFICATION SYSTEM
     // --------------------------------------------------------
 
     await Promise.all(
 
       [...recipients].map(
-        async recipientId => {
+        recipientId =>
 
-          await addDoc(
-            collection(
-              db,
-              'notifications'
-            ),
-            {
+          sendGroupNotification({
 
-              // Receiver
-              recipientId,
+            recipientId,
 
-              // Compatibility with
-              // existing notification systems
-              receiverId:
-                recipientId,
+            type:
+              'group_join_request',
 
+            text:
+              `${senderName} requested to join ${groupName}.`,
 
-              // Sender
-              senderId:
-                user.uid,
+            senderId:
+              user.uid,
 
-              senderName,
+            senderName,
 
-              senderPhotoURL:
-                user.photoURL || '',
+            senderPhoto,
 
+            groupId:
+              state.groupId,
 
-              // Notification type
-              type:
-                'group_join_request',
+            groupName
 
+          })
 
-              // Group
-              groupId:
-                state.groupId,
-
-              groupName,
-
-
-              // Message
-              message:
-                `${senderName} requested to join ${groupName}.`,
-
-
-              // Status
-              read:
-                false,
-
-
-              // Timestamp
-              createdAt:
-                serverTimestamp(),
-
-
-              // Destination
-              url:
-                `group.html?id=${encodeURIComponent(
-                  state.groupId
-                )}`
-
-            }
-          );
-
-        }
       )
 
     );
 
 
   } catch (error) {
-
-    // Notification failure should
-    // never cancel the join request.
 
     console.error(
       'Join request notification error:',
@@ -2002,10 +2084,6 @@ async function joinGroup() {
 
     }
 
-
-    // --------------------------------------------------------
-    // PRIVATE GROUP NOTIFICATION
-    // --------------------------------------------------------
 
     if (
       status === 'pending'
