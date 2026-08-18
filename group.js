@@ -1,11 +1,6 @@
 // ============================================================
 // VITALSTAR — group.js
-// Controller for group.html
-//
-// Compatible with:
-// • group.html
-// • create-group.js
-// • groups/{groupId} Firestore schema
+// Complete controller for group.html
 //
 // Features:
 // • Authentication
@@ -16,14 +11,22 @@
 // • Owner information
 // • Membership status
 // • Join / leave
-// • Private-group pending requests
-// • Premium-group join protection
+// • Cancel pending request
+// • Private-group requests
+// • Approve / reject requests
+// • Join-request notifications
+// • Group notifications
+// • Unread notification state
+// • Exact postId notification handling
 // • Tabs
+// • Posts
 // • Members
 // • Admins / moderators
+// • Group chat launcher
+// • Premium subscription
+// • Settings
 // • Rules
-// • Share
-// • Notifications
+// • Share / invites
 // • Group statistics
 // ============================================================
 
@@ -39,8 +42,10 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  addDoc,
   collection,
   query,
+  where,
   orderBy,
   limit,
   getDocs,
@@ -138,6 +143,8 @@ let activeTab = "posts";
 let loadingGroup = false;
 let membershipBusy = false;
 
+let notificationsCache = [];
+
 
 // ============================================================
 // CATEGORY LABELS
@@ -188,7 +195,11 @@ function toast(message, type = "info") {
     <span></span>
   `;
 
-  el.querySelector("span").textContent = message;
+  const span = el.querySelector("span");
+
+  if (span) {
+    span.textContent = message;
+  }
 
   toastContainer.appendChild(el);
 
@@ -301,7 +312,7 @@ function setNavAvatar(user) {
   if (user.photoURL) {
 
     navUserAvatar.style.backgroundImage =
-      `url("${user.photoURL}")`;
+      `url("${escapeCssUrl(user.photoURL)}")`;
 
     navUserAvatar.style.backgroundSize =
       "cover";
@@ -318,6 +329,17 @@ function setNavAvatar(user) {
     navUserAvatar.innerHTML =
       '<i class="fa-solid fa-user"></i>';
   }
+}
+
+
+// ============================================================
+// SAFE CSS URL
+// ============================================================
+
+function escapeCssUrl(url) {
+
+  return String(url || "")
+    .replace(/"/g, '\\"');
 }
 
 
@@ -361,13 +383,17 @@ async function loadGroup() {
 
     renderRules();
 
-    renderAdmins();
+    await renderAdmins();
 
     await loadPosts();
 
     await loadMembers();
 
+    updateNotificationDot();
+
     showPage();
+
+    handleNotificationNavigation();
 
   } catch (error) {
 
@@ -401,20 +427,17 @@ function renderGroup() {
 
   if (!group) return;
 
-
-  // ----------------------------------------------------------
-  // TITLE
-  // ----------------------------------------------------------
-
   const name =
     group.name ||
     "Untitled Group";
 
-  groupName.textContent =
-    name;
+  if (groupName) {
+    groupName.textContent = name;
+  }
 
-  navGroupTitle.textContent =
-    name;
+  if (navGroupTitle) {
+    navGroupTitle.textContent = name;
+  }
 
   document.title =
     `${name} · VitalStar`;
@@ -424,21 +447,24 @@ function renderGroup() {
   // COVER
   // ----------------------------------------------------------
 
-  if (group.coverURL) {
+  if (groupCover) {
 
-    groupCover.style.backgroundImage =
-      `url("${group.coverURL}")`;
+    if (group.coverURL) {
 
-    groupCover.style.backgroundSize =
-      "cover";
+      groupCover.style.backgroundImage =
+        `url("${escapeCssUrl(group.coverURL)}")`;
 
-    groupCover.style.backgroundPosition =
-      "center";
+      groupCover.style.backgroundSize =
+        "cover";
 
-  } else {
+      groupCover.style.backgroundPosition =
+        "center";
 
-    groupCover.style.backgroundImage =
-      "linear-gradient(135deg,#1b3e8f,#241640)";
+    } else {
+
+      groupCover.style.backgroundImage =
+        "linear-gradient(135deg,#1b3e8f,#241640)";
+    }
   }
 
 
@@ -446,25 +472,28 @@ function renderGroup() {
   // AVATAR
   // ----------------------------------------------------------
 
-  if (group.avatarURL) {
+  if (groupAvatar) {
 
-    groupAvatar.style.backgroundImage =
-      `url("${group.avatarURL}")`;
+    if (group.avatarURL) {
 
-    groupAvatar.style.backgroundSize =
-      "cover";
+      groupAvatar.style.backgroundImage =
+        `url("${escapeCssUrl(group.avatarURL)}")`;
 
-    groupAvatar.style.backgroundPosition =
-      "center";
+      groupAvatar.style.backgroundSize =
+        "cover";
 
-    groupAvatar.innerHTML = "";
+      groupAvatar.style.backgroundPosition =
+        "center";
 
-  } else {
+      groupAvatar.innerHTML = "";
 
-    groupAvatar.style.backgroundImage = "";
+    } else {
 
-    groupAvatar.innerHTML =
-      '<i class="fa-solid fa-users"></i>';
+      groupAvatar.style.backgroundImage = "";
+
+      groupAvatar.innerHTML =
+        '<i class="fa-solid fa-users"></i>';
+    }
   }
 
 
@@ -477,21 +506,24 @@ function renderGroup() {
       ? "private"
       : "public";
 
-  if (privacy === "private") {
+  if (groupPrivacyBadge) {
 
-    groupPrivacyBadge.className =
-      "badge badge--private";
+    if (privacy === "private") {
 
-    groupPrivacyBadge.innerHTML =
-      '<i class="fa-solid fa-lock"></i> Private';
+      groupPrivacyBadge.className =
+        "badge badge--private";
 
-  } else {
+      groupPrivacyBadge.innerHTML =
+        '<i class="fa-solid fa-lock"></i> Private';
 
-    groupPrivacyBadge.className =
-      "badge badge--public";
+    } else {
 
-    groupPrivacyBadge.innerHTML =
-      '<i class="fa-solid fa-globe"></i> Public';
+      groupPrivacyBadge.className =
+        "badge badge--public";
+
+      groupPrivacyBadge.innerHTML =
+        '<i class="fa-solid fa-globe"></i> Public';
+    }
   }
 
 
@@ -499,83 +531,110 @@ function renderGroup() {
   // PREMIUM
   // ----------------------------------------------------------
 
-  const premium =
-    group.type === "premium";
+  if (groupPremiumBadge) {
 
-  groupPremiumBadge.style.display =
-    premium
-      ? "inline-flex"
-      : "none";
+    groupPremiumBadge.style.display =
+      group.type === "premium"
+        ? "inline-flex"
+        : "none";
+  }
 
 
   // ----------------------------------------------------------
   // VERIFIED
   // ----------------------------------------------------------
 
-  groupVerifiedBadge.style.display =
-    group.verified === true
-      ? "inline-flex"
-      : "none";
+  if (groupVerifiedBadge) {
+
+    groupVerifiedBadge.style.display =
+      group.verified === true
+        ? "inline-flex"
+        : "none";
+  }
 
 
   // ----------------------------------------------------------
   // CATEGORY
   // ----------------------------------------------------------
 
-  groupCategoryChip.textContent =
-    categoryLabels[group.category] ||
-    group.category ||
-    "General";
+  if (groupCategoryChip) {
+
+    groupCategoryChip.textContent =
+      categoryLabels[group.category] ||
+      group.category ||
+      "General";
+  }
 
 
   // ----------------------------------------------------------
   // OWNER
   // ----------------------------------------------------------
 
-  groupOwnerText.textContent =
-    `Owned by ${group.ownerName || "VitalStar Member"}`;
+  if (groupOwnerText) {
+
+    groupOwnerText.textContent =
+      `Owned by ${group.ownerName || "VitalStar Member"}`;
+  }
 
 
   // ----------------------------------------------------------
   // DESCRIPTION
   // ----------------------------------------------------------
 
-  groupDescription.textContent =
-    group.description ||
-    "No group description has been added yet.";
+  if (groupDescription) {
+
+    groupDescription.textContent =
+      group.description ||
+      "No group description has been added yet.";
+  }
 
 
   // ----------------------------------------------------------
   // STATS
   // ----------------------------------------------------------
 
-  statMemberCount.textContent =
-    formatNumber(
-      group.memberCount || 0
-    );
+  if (statMemberCount) {
 
-  statPostCount.textContent =
-    formatNumber(
-      group.postCount || 0
-    );
+    statMemberCount.textContent =
+      formatNumber(
+        group.memberCount || 0
+      );
+  }
 
-  statOnlineCount.textContent =
-    formatNumber(
-      group.onlineCount || 0
-    );
+  if (statPostCount) {
 
-  statLevel.textContent =
-    formatNumber(
-      group.level || 1
-    );
+    statPostCount.textContent =
+      formatNumber(
+        group.postCount || 0
+      );
+  }
+
+  if (statOnlineCount) {
+
+    statOnlineCount.textContent =
+      formatNumber(
+        group.onlineCount || 0
+      );
+  }
+
+  if (statLevel) {
+
+    statLevel.textContent =
+      formatNumber(
+        group.level || 1
+      );
+  }
 
 
   // ----------------------------------------------------------
   // CREATED DATE
   // ----------------------------------------------------------
 
-  groupCreatedText.textContent =
-    `Created ${formatDate(group.createdAt)}`;
+  if (groupCreatedText) {
+
+    groupCreatedText.textContent =
+      `Created ${formatDate(group.createdAt)}`;
+  }
 }
 
 
@@ -605,9 +664,13 @@ function formatDate(timestamp) {
   try {
 
     const date =
-      timestamp.toDate
+      timestamp?.toDate
         ? timestamp.toDate()
         : new Date(timestamp);
+
+    if (Number.isNaN(date.getTime())) {
+      return "recently";
+    }
 
     return date.toLocaleDateString(
       undefined,
@@ -654,11 +717,10 @@ async function resolveMembership() {
     return;
   }
 
+
   // ----------------------------------------------------------
-  // Also check a dedicated membership document if one exists.
-// This allows us to extend the system later without changing
-// the group document.
-// ----------------------------------------------------------
+  // SUBCOLLECTION FALLBACK
+  // ----------------------------------------------------------
 
   try {
 
@@ -760,20 +822,26 @@ function renderAccess() {
   // ROLE TAG
   // ----------------------------------------------------------
 
-  if (isMember()) {
+  if (
+    yourRoleTag &&
+    yourRoleText
+  ) {
 
-    yourRoleTag.classList.add(
-      "is-visible"
-    );
+    if (isMember()) {
 
-    yourRoleText.textContent =
-      formatRole(currentRole);
+      yourRoleTag.classList.add(
+        "is-visible"
+      );
 
-  } else {
+      yourRoleText.textContent =
+        formatRole(currentRole);
 
-    yourRoleTag.classList.remove(
-      "is-visible"
-    );
+    } else {
+
+      yourRoleTag.classList.remove(
+        "is-visible"
+      );
+    }
   }
 
 
@@ -783,27 +851,37 @@ function renderAccess() {
 
   if (isOwner()) {
 
-    coverEditBtn.classList.add(
+    coverEditBtn?.classList.add(
       "is-visible"
     );
 
-    inviteBtn.style.display =
-      "flex";
+    if (inviteBtn) {
+      inviteBtn.style.display =
+        "flex";
+    }
 
-    settingsTabBtn.style.display =
-      "flex";
+    if (settingsTabBtn) {
+      settingsTabBtn.style.display =
+        "flex";
+    }
 
   } else {
 
-    coverEditBtn.classList.remove(
+    coverEditBtn?.classList.remove(
       "is-visible"
     );
 
-    inviteBtn.style.display =
-      "none";
+    if (inviteBtn) {
+      inviteBtn.style.display =
+        "none";
+    }
 
-    settingsTabBtn.style.display =
-      "none";
+    if (settingsTabBtn) {
+      settingsTabBtn.style.display =
+        isAdmin()
+          ? "flex"
+          : "none";
+    }
   }
 
 
@@ -811,18 +889,12 @@ function renderAccess() {
   // SUBSCRIPTION TAB
   // ----------------------------------------------------------
 
-  if (
-    group.type === "premium" &&
-    isMember()
-  ) {
+  if (subscriptionTabBtn) {
 
     subscriptionTabBtn.style.display =
-      "flex";
-
-  } else {
-
-    subscriptionTabBtn.style.display =
-      "none";
+      group.type === "premium"
+        ? "flex"
+        : "none";
   }
 
 
@@ -831,25 +903,31 @@ function renderAccess() {
   // ----------------------------------------------------------
 
   if (
-    group.privacy === "private" &&
-    !isMember()
+    lockedNotice &&
+    groupContentGrid
   ) {
 
-    lockedNotice.classList.add(
-      "is-visible"
-    );
+    if (
+      group.privacy === "private" &&
+      !isMember()
+    ) {
 
-    groupContentGrid.style.display =
-      "none";
+      lockedNotice.classList.add(
+        "is-visible"
+      );
 
-  } else {
+      groupContentGrid.style.display =
+        "none";
 
-    lockedNotice.classList.remove(
-      "is-visible"
-    );
+    } else {
 
-    groupContentGrid.style.display =
-      "";
+      lockedNotice.classList.remove(
+        "is-visible"
+      );
+
+      groupContentGrid.style.display =
+        "";
+    }
   }
 
 
@@ -907,7 +985,7 @@ function updateJoinButton() {
   }
 
 
-  // ACTIVE MEMBER
+  // ACTIVE
   if (isMember()) {
 
     joinLeaveBtn.className =
@@ -927,7 +1005,7 @@ function updateJoinButton() {
       "btn-join-leave is-pending";
 
     joinLeaveBtn.innerHTML =
-      '<i class="fa-solid fa-clock"></i> Request pending';
+      '<i class="fa-solid fa-clock"></i> Cancel request';
 
     return;
   }
@@ -943,7 +1021,7 @@ function updateJoinButton() {
 
 
 // ============================================================
-// JOIN / LEAVE
+// JOIN / LEAVE / CANCEL
 // ============================================================
 
 joinLeaveBtn?.addEventListener(
@@ -951,18 +1029,18 @@ joinLeaveBtn?.addEventListener(
   async () => {
 
     if (!currentUser) {
+
       toast(
         "Please sign in first.",
         "error"
       );
+
       return;
     }
 
     if (!currentGroup) return;
 
-    if (isOwner()) {
-      return;
-    }
+    if (isOwner()) return;
 
     if (membershipBusy) return;
 
@@ -970,6 +1048,14 @@ joinLeaveBtn?.addEventListener(
     if (isMember()) {
 
       await leaveGroup();
+
+      return;
+    }
+
+
+    if (isPending()) {
+
+      await cancelJoinRequest();
 
       return;
     }
@@ -1001,21 +1087,7 @@ async function joinGroup() {
       "premium"
     ) {
 
-      toast(
-        "Premium group membership requires the ₦100 join payment.",
-        "info"
-      );
-
-      membershipBusy = false;
-
-      updateJoinButton();
-
-      /*
-       * Payment integration should be connected here.
-       *
-       * We intentionally do not pretend a payment succeeded.
-       * The member is only activated after payment verification.
-       */
+      await startPremiumJoin();
 
       return;
     }
@@ -1030,150 +1102,17 @@ async function joinGroup() {
       "private"
     ) {
 
-      await setDoc(
-        doc(
-          db,
-          "groups",
-          groupId,
-          "members",
-          currentUser.uid
-        ),
-        {
-          userId:
-            currentUser.uid,
-
-          role:
-            "member",
-
-          status:
-            "pending",
-
-          requestedAt:
-            serverTimestamp()
-        },
-        {
-          merge: true
-        }
-      );
-
-      // Keep group document compatible
-      // with the existing members map.
-
-      await updateDoc(
-        doc(
-          db,
-          "groups",
-          groupId
-        ),
-        {
-          [`members.${currentUser.uid}`]: {
-            role: "member",
-            status: "pending",
-            requestedAt:
-              serverTimestamp()
-          },
-
-          updatedAt:
-            serverTimestamp()
-        }
-      );
-
-      currentMembership = {
-        role: "member",
-        status: "pending"
-      };
-
-      currentRole = "member";
-
-      toast(
-        "Your request to join has been sent.",
-        "success"
-      );
-
-      renderAccess();
+      await createJoinRequest();
 
       return;
     }
 
 
     // --------------------------------------------------------
-    // PUBLIC FREE GROUP
+    // PUBLIC FREE
     // --------------------------------------------------------
 
-    const memberData = {
-      role: "member",
-      status: "active",
-      joinedAt:
-        serverTimestamp()
-    };
-
-    await setDoc(
-      doc(
-        db,
-        "groups",
-        groupId,
-        "members",
-        currentUser.uid
-      ),
-      {
-        userId:
-          currentUser.uid,
-        ...memberData
-      },
-      {
-        merge: true
-      }
-    );
-
-
-    await updateDoc(
-      doc(
-        db,
-        "groups",
-        groupId
-      ),
-      {
-        [`members.${currentUser.uid}`]:
-          memberData,
-
-        memberCount:
-          Number(currentGroup.memberCount || 0) + 1,
-
-        followerCount:
-          Number(currentGroup.followerCount || 0) + 1,
-
-        updatedAt:
-          serverTimestamp()
-      }
-    );
-
-
-    currentMembership =
-      memberData;
-
-    currentRole =
-      "member";
-
-    currentGroup.memberCount =
-      Number(
-        currentGroup.memberCount || 0
-      ) + 1;
-
-    currentGroup.followerCount =
-      Number(
-        currentGroup.followerCount || 0
-      ) + 1;
-
-
-    toast(
-      "You joined the group!",
-      "success"
-    );
-
-    renderGroup();
-    renderAccess();
-
-    await loadMembers();
+    await activateMember();
 
   } catch (error) {
 
@@ -1185,6 +1124,266 @@ async function joinGroup() {
     toast(
       error?.message ||
       "Unable to join this group.",
+      "error"
+    );
+
+  } finally {
+
+    membershipBusy = false;
+
+    updateJoinButton();
+  }
+}
+
+
+// ============================================================
+// PRIVATE JOIN REQUEST
+// ============================================================
+
+async function createJoinRequest() {
+
+  const membershipData = {
+    userId:
+      currentUser.uid,
+
+    role:
+      "member",
+
+    status:
+      "pending",
+
+    requestedAt:
+      serverTimestamp()
+  };
+
+
+  await setDoc(
+    doc(
+      db,
+      "groups",
+      groupId,
+      "members",
+      currentUser.uid
+    ),
+    membershipData,
+    {
+      merge: true
+    }
+  );
+
+
+  await updateDoc(
+    doc(
+      db,
+      "groups",
+      groupId
+    ),
+    {
+      [`members.${currentUser.uid}`]: {
+        role: "member",
+        status: "pending",
+        requestedAt:
+          serverTimestamp()
+      },
+
+      updatedAt:
+        serverTimestamp()
+    }
+  );
+
+
+  currentMembership = {
+    role: "member",
+    status: "pending"
+  };
+
+  currentRole = "member";
+
+
+  // Notify owner/admins.
+  await notifyGroupStaffOfJoinRequest();
+
+
+  toast(
+    "Your request to join has been sent.",
+    "success"
+  );
+
+
+  renderAccess();
+}
+
+
+// ============================================================
+// ACTIVATE MEMBER
+// ============================================================
+
+async function activateMember() {
+
+  const memberData = {
+    userId:
+      currentUser.uid,
+
+    role:
+      "member",
+
+    status:
+      "active",
+
+    joinedAt:
+      serverTimestamp()
+  };
+
+
+  await setDoc(
+    doc(
+      db,
+      "groups",
+      groupId,
+      "members",
+      currentUser.uid
+    ),
+    memberData,
+    {
+      merge: true
+    }
+  );
+
+
+  await updateDoc(
+    doc(
+      db,
+      "groups",
+      groupId
+    ),
+    {
+      [`members.${currentUser.uid}`]:
+        memberData,
+
+      memberCount:
+        Number(
+          currentGroup.memberCount || 0
+        ) + 1,
+
+      followerCount:
+        Number(
+          currentGroup.followerCount || 0
+        ) + 1,
+
+      updatedAt:
+        serverTimestamp()
+    }
+  );
+
+
+  currentMembership =
+    memberData;
+
+  currentRole =
+    "member";
+
+
+  currentGroup.memberCount =
+    Number(
+      currentGroup.memberCount || 0
+    ) + 1;
+
+  currentGroup.followerCount =
+    Number(
+      currentGroup.followerCount || 0
+    ) + 1;
+
+
+  await createGroupNotification(
+    currentUser.uid,
+    "joined_group",
+    `${getCurrentUserName()} joined ${currentGroup.name || "the group"}.`
+  );
+
+
+  toast(
+    "You joined the group!",
+    "success"
+  );
+
+
+  renderGroup();
+  renderAccess();
+
+  await loadMembers();
+}
+
+
+// ============================================================
+// CANCEL REQUEST
+// ============================================================
+
+async function cancelJoinRequest() {
+
+  const confirmed =
+    window.confirm(
+      "Cancel your join request?"
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  membershipBusy = true;
+
+  updateJoinButton();
+
+  try {
+
+    await deleteDoc(
+      doc(
+        db,
+        "groups",
+        groupId,
+        "members",
+        currentUser.uid
+      )
+    );
+
+
+    await updateDoc(
+      doc(
+        db,
+        "groups",
+        groupId
+      ),
+      {
+        [`members.${currentUser.uid}`]:
+          null,
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+
+    currentMembership = null;
+    currentRole = null;
+
+
+    toast(
+      "Join request cancelled.",
+      "success"
+    );
+
+
+    renderAccess();
+
+  } catch (error) {
+
+    console.error(
+      "CANCEL REQUEST ERROR:",
+      error
+    );
+
+    toast(
+      error?.message ||
+      "Unable to cancel the request.",
       "error"
     );
 
@@ -1264,6 +1463,7 @@ async function leaveGroup() {
     currentMembership = null;
     currentRole = null;
 
+
     currentGroup.memberCount =
       Math.max(
         0,
@@ -1271,6 +1471,7 @@ async function leaveGroup() {
           currentGroup.memberCount || 0
         ) - 1
       );
+
 
     currentGroup.followerCount =
       Math.max(
@@ -1285,6 +1486,7 @@ async function leaveGroup() {
       "You left the group.",
       "success"
     );
+
 
     renderGroup();
     renderAccess();
@@ -1314,6 +1516,247 @@ async function leaveGroup() {
 
 
 // ============================================================
+// NOTIFICATION HELPER
+// ============================================================
+
+async function createNotification({
+  receiverId,
+  type,
+  message,
+  groupId: notificationGroupId = null,
+  postId = null,
+  senderId = null,
+  read = false
+}) {
+
+  if (!receiverId) return null;
+
+  try {
+
+    const ref =
+      await addDoc(
+        collection(
+          db,
+          "notifications"
+        ),
+        {
+          receiverId,
+
+          userId:
+            receiverId,
+
+          senderId:
+            senderId ||
+            currentUser?.uid ||
+            null,
+
+          type:
+            type || "group",
+
+          message:
+            message || "You have a new notification.",
+
+          groupId:
+            notificationGroupId,
+
+          postId,
+
+          read,
+
+          createdAt:
+            serverTimestamp()
+        }
+      );
+
+    return ref.id;
+
+  } catch (error) {
+
+    console.warn(
+      "CREATE NOTIFICATION ERROR:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+// ============================================================
+// GROUP NOTIFICATION
+// ============================================================
+
+async function createGroupNotification(
+  senderId,
+  type,
+  message,
+  postId = null
+) {
+
+  if (!currentGroup) return;
+
+  const recipients =
+    getActiveMemberIds();
+
+  for (
+    const receiverId of recipients
+  ) {
+
+    if (
+      receiverId === senderId
+    ) {
+      continue;
+    }
+
+    await createNotification({
+      receiverId,
+      senderId,
+      type,
+      message,
+      groupId,
+      postId,
+      read: false
+    });
+  }
+}
+
+
+// ============================================================
+// STAFF NOTIFICATION
+// ============================================================
+
+async function notifyGroupStaffOfJoinRequest() {
+
+  if (!currentGroup) return;
+
+  const staff =
+    getStaffIds();
+
+  const requester =
+    getCurrentUserName();
+
+
+  for (
+    const receiverId of staff
+  ) {
+
+    if (
+      receiverId ===
+      currentUser.uid
+    ) {
+      continue;
+    }
+
+    await createNotification({
+      receiverId,
+
+      senderId:
+        currentUser.uid,
+
+      type:
+        "group_join_request",
+
+      message:
+        `${requester} requested to join ${currentGroup.name || "your group"}.`,
+
+      groupId,
+
+      postId:
+        null,
+
+      read:
+        false
+    });
+  }
+}
+
+
+// ============================================================
+// GET STAFF IDS
+// ============================================================
+
+function getStaffIds() {
+
+  const ids = new Set();
+
+  if (currentGroup?.ownerId) {
+    ids.add(currentGroup.ownerId);
+  }
+
+  const members =
+    currentGroup?.members || {};
+
+  Object.entries(members)
+    .forEach(
+      ([uid, member]) => {
+
+        if (
+          member &&
+          (
+            member.role === "owner" ||
+            member.role === "admin" ||
+            member.role === "moderator"
+          )
+        ) {
+
+          ids.add(uid);
+        }
+      }
+    );
+
+  return [...ids];
+}
+
+
+// ============================================================
+// GET ACTIVE MEMBER IDS
+// ============================================================
+
+function getActiveMemberIds() {
+
+  const ids = new Set();
+
+  const members =
+    currentGroup?.members || {};
+
+  Object.entries(members)
+    .forEach(
+      ([uid, member]) => {
+
+        if (
+          member &&
+          member.status === "active"
+        ) {
+
+          ids.add(uid);
+        }
+      }
+    );
+
+
+  if (currentGroup?.ownerId) {
+    ids.add(currentGroup.ownerId);
+  }
+
+  return [...ids];
+}
+
+
+// ============================================================
+// CURRENT USER NAME
+// ============================================================
+
+function getCurrentUserName() {
+
+  return (
+    currentUser?.displayName ||
+    currentUser?.email?.split("@")[0] ||
+    "VitalStar Member"
+  );
+}
+
+
+// ============================================================
 // RULES
 // ============================================================
 
@@ -1331,18 +1774,23 @@ function renderRules() {
 
   if (!rules.length) {
 
-    rulesEmptyDisplay.style.display =
-      "block";
+    if (rulesEmptyDisplay) {
+      rulesEmptyDisplay.style.display =
+        "block";
+    }
 
     return;
   }
 
-  rulesEmptyDisplay.style.display =
-    "none";
+
+  if (rulesEmptyDisplay) {
+    rulesEmptyDisplay.style.display =
+      "none";
+  }
 
 
   rules.forEach(
-    (rule, index) => {
+    rule => {
 
       const li =
         document.createElement("li");
@@ -1382,7 +1830,6 @@ async function renderAdmins() {
       );
 
 
-  // Owner may not exist in map in older documents
   if (
     currentGroup?.ownerId &&
     !privileged.some(
@@ -1402,19 +1849,23 @@ async function renderAdmins() {
 
   if (!privileged.length) {
 
-    adminsEmptyDisplay.style.display =
-      "block";
+    if (adminsEmptyDisplay) {
+      adminsEmptyDisplay.style.display =
+        "block";
 
-    adminsList.appendChild(
-      adminsEmptyDisplay
-    );
+      adminsList.appendChild(
+        adminsEmptyDisplay
+      );
+    }
 
     return;
   }
 
 
-  adminsEmptyDisplay.style.display =
-    "none";
+  if (adminsEmptyDisplay) {
+    adminsEmptyDisplay.style.display =
+      "none";
+  }
 
 
   for (
@@ -1444,11 +1895,13 @@ async function renderAdmins() {
     info.className =
       "admin-info";
 
+
     const name =
       document.createElement("div");
 
     name.className =
       "admin-name";
+
 
     const role =
       document.createElement("div");
@@ -1462,8 +1915,6 @@ async function renderAdmins() {
       );
 
 
-    // Owner name is available
-    // directly on group document.
     if (
       uid ===
       currentGroup.ownerId
@@ -1473,10 +1924,39 @@ async function renderAdmins() {
         currentGroup.ownerName ||
         "Group Owner";
 
-    } else {
+    } else if (
+      uid ===
+      currentUser?.uid
+    ) {
 
       name.textContent =
+        "You";
+
+    } else {
+
+      const profile =
+        await getUserProfile(uid);
+
+      name.textContent =
+        profile?.fullname ||
+        profile?.fullName ||
+        profile?.displayName ||
+        profile?.username ||
         "VitalStar Member";
+
+      if (profile?.photoURL) {
+
+        avatar.style.backgroundImage =
+          `url("${escapeCssUrl(profile.photoURL)}")`;
+
+        avatar.style.backgroundSize =
+          "cover";
+
+        avatar.style.backgroundPosition =
+          "center";
+
+        avatar.innerHTML = "";
+      }
     }
 
 
@@ -1492,6 +1972,44 @@ async function renderAdmins() {
 
 
 // ============================================================
+// USER PROFILE
+// ============================================================
+
+async function getUserProfile(uid) {
+
+  if (!uid) return null;
+
+  try {
+
+    const snapshot =
+      await getDoc(
+        doc(
+          db,
+          "users",
+          uid
+        )
+      );
+
+    if (
+      snapshot.exists()
+    ) {
+
+      return snapshot.data();
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "USER PROFILE ERROR:",
+      error
+    );
+  }
+
+  return null;
+}
+
+
+// ============================================================
 // POSTS
 // ============================================================
 
@@ -1499,9 +2017,13 @@ async function loadPosts() {
 
   if (!postsTab) return;
 
-  if (!isMember() && currentGroup?.privacy === "private") {
+  if (
+    !isMember() &&
+    currentGroup?.privacy === "private"
+  ) {
     return;
   }
+
 
   postsTab.innerHTML = `
     <div class="tab-panel-placeholder">
@@ -1512,15 +2034,6 @@ async function loadPosts() {
 
 
   try {
-
-    /*
-     * Expected future structure:
-     *
-     * groups/{groupId}/posts/{postId}
-     *
-     * This keeps group posts isolated from
-     * the normal VitalStar feed.
-     */
 
     const postsRef =
       collection(
@@ -1604,6 +2117,9 @@ function createPostCard(
   const card =
     document.createElement("article");
 
+  card.dataset.postId =
+    postId;
+
   card.style.cssText = `
     background:var(--bg-surface);
     border:1px solid var(--border-subtle);
@@ -1615,6 +2131,7 @@ function createPostCard(
 
   const author =
     post.authorName ||
+    post.fullName ||
     "VitalStar Member";
 
   const text =
@@ -1630,28 +2147,34 @@ function createPostCard(
       gap:10px;
       margin-bottom:12px;
     ">
-      <div style="
-        width:38px;
-        height:38px;
-        border-radius:50%;
-        background:linear-gradient(
-          135deg,
-          var(--electric-blue),
-          var(--violet-accent)
-        );
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        flex-shrink:0;
-      ">
+      <div
+        class="group-post-avatar"
+        style="
+          width:38px;
+          height:38px;
+          border-radius:50%;
+          background:linear-gradient(
+            135deg,
+            var(--electric-blue),
+            var(--violet-accent)
+          );
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-shrink:0;
+        "
+      >
         <i class="fa-solid fa-user"></i>
       </div>
 
       <div>
-        <div style="
-          font-size:13.5px;
-          font-weight:600;
-        "></div>
+        <div
+          class="group-post-author"
+          style="
+            font-size:13.5px;
+            font-weight:600;
+          "
+        ></div>
 
         <div style="
           font-size:11px;
@@ -1662,28 +2185,195 @@ function createPostCard(
       </div>
     </div>
 
-    <div style="
-      font-size:14px;
-      line-height:1.6;
-      color:var(--text-secondary);
-      white-space:pre-wrap;
-    "></div>
+    <div
+      class="group-post-text"
+      style="
+        font-size:14px;
+        line-height:1.6;
+        color:var(--text-secondary);
+        white-space:pre-wrap;
+      "
+    ></div>
+
+    <div
+      class="group-post-actions"
+      style="
+        margin-top:14px;
+        display:flex;
+        gap:8px;
+      "
+    >
+      <button
+        type="button"
+        class="group-post-open"
+        data-post-id="${escapeHtml(postId)}"
+        style="
+          border:0;
+          background:transparent;
+          color:var(--electric-blue-bright);
+          cursor:pointer;
+          font-size:12px;
+        "
+      >
+        Open post
+      </button>
+    </div>
   `;
 
 
-  card.querySelector(
-    "div > div > div"
-  ).textContent =
-    author;
+  const authorElement =
+    card.querySelector(
+      ".group-post-author"
+    );
 
-  card.querySelector(
-    "div[style*='white-space']"
-  ).textContent =
-    text ||
-    "This post has no text content.";
+  if (authorElement) {
+    authorElement.textContent =
+      author;
+  }
+
+
+  const textElement =
+    card.querySelector(
+      ".group-post-text"
+    );
+
+  if (textElement) {
+
+    textElement.textContent =
+      text ||
+      "This post has no text content.";
+  }
+
+
+  const openButton =
+    card.querySelector(
+      ".group-post-open"
+    );
+
+  openButton?.addEventListener(
+    "click",
+    () => {
+      openGroupPost(postId);
+    }
+  );
 
 
   return card;
+}
+
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+// ============================================================
+// OPEN GROUP POST
+// ============================================================
+
+function openGroupPost(postId) {
+
+  if (!postId) return;
+
+  const url =
+    new URL(
+      location.href
+    );
+
+  url.searchParams.set(
+    "id",
+    groupId
+  );
+
+  url.searchParams.set(
+    "postId",
+    postId
+  );
+
+  history.replaceState(
+    {},
+    "",
+    url
+  );
+
+
+  const card =
+    postsTab?.querySelector(
+      `[data-post-id="${CSS.escape(postId)}"]`
+    );
+
+
+  if (card) {
+
+    card.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    card.style.outline =
+      "2px solid var(--electric-blue)";
+
+    setTimeout(() => {
+
+      card.style.outline = "";
+
+    }, 2500);
+
+    return;
+  }
+
+
+  toast(
+    "That post is not currently loaded.",
+    "info"
+  );
+}
+
+
+// ============================================================
+// EXACT POST ID FROM URL / NOTIFICATION
+// ============================================================
+
+function handleNotificationNavigation() {
+
+  const params =
+    new URLSearchParams(
+      location.search
+    );
+
+  const postId =
+    params.get("postId");
+
+  const notificationId =
+    params.get("notificationId");
+
+
+  if (postId) {
+
+    setTimeout(() => {
+
+      openGroupPost(postId);
+
+    }, 500);
+  }
+
+
+  if (notificationId) {
+
+    markNotificationRead(
+      notificationId
+    );
+  }
 }
 
 
@@ -1828,7 +2518,7 @@ async function loadMembers() {
           currentGroup.ownerName ||
           "Group Owner";
 
-      } else if (
+    } else if (
         uid ===
         currentUser.uid
       ) {
@@ -1837,10 +2527,32 @@ async function loadMembers() {
           currentUser.displayName ||
           "You";
 
-      } else {
+    } else {
+
+        const profile =
+          await getUserProfile(uid);
 
         name.textContent =
+          profile?.fullname ||
+          profile?.fullName ||
+          profile?.displayName ||
+          profile?.username ||
           "VitalStar Member";
+
+
+        if (profile?.photoURL) {
+
+          avatar.style.backgroundImage =
+            `url("${escapeCssUrl(profile.photoURL)}")`;
+
+          avatar.style.backgroundSize =
+            "cover";
+
+          avatar.style.backgroundPosition =
+            "center";
+
+          avatar.innerHTML = "";
+        }
       }
 
 
@@ -1927,19 +2639,47 @@ function loadChat() {
       </h3>
 
       <p style="
-        margin:0;
+        margin:0 0 16px;
         color:var(--text-muted);
         font-size:13px;
       ">
-        Group chat is ready for the chat system integration.
+        Chat with members of this group.
       </p>
+
+      <button
+        type="button"
+        id="openGroupChatBtn"
+        style="
+          border:0;
+          border-radius:10px;
+          padding:10px 16px;
+          cursor:pointer;
+          background:var(--electric-blue);
+          color:white;
+          font-weight:600;
+        "
+      >
+        Open group chat
+      </button>
     </div>
   `;
+
+
+  $("openGroupChatBtn")?.addEventListener(
+    "click",
+    () => {
+
+      const url =
+        `chat.html?groupId=${encodeURIComponent(groupId)}`;
+
+      location.href = url;
+    }
+  );
 }
 
 
 // ============================================================
-// SUBSCRIPTION
+// PREMIUM SUBSCRIPTION
 // ============================================================
 
 function loadSubscription() {
@@ -1964,6 +2704,7 @@ function loadSubscription() {
 
   const fee =
     currentGroup?.followerFee?.amount ||
+    currentGroup?.joinFee ||
     100;
 
 
@@ -2046,12 +2787,74 @@ function loadSubscription() {
         line-height:1.5;
         margin:16px 0 0;
       ">
-        Premium members are required to complete the
-        membership payment before access is granted.
+        Complete the payment through the configured
+        VitalStar payment flow before membership is activated.
       </p>
+
+      <button
+        type="button"
+        id="premiumJoinBtn"
+        style="
+          margin-top:16px;
+          width:100%;
+          border:0;
+          border-radius:10px;
+          padding:12px;
+          background:var(--electric-blue);
+          color:white;
+          font-weight:600;
+          cursor:pointer;
+        "
+      >
+        Continue to payment
+      </button>
 
     </div>
   `;
+
+
+  $("premiumJoinBtn")?.addEventListener(
+    "click",
+    startPremiumJoin
+  );
+}
+
+
+// ============================================================
+// PREMIUM JOIN HOOK
+// ============================================================
+
+async function startPremiumJoin() {
+
+  if (!currentUser) return;
+
+  const fee =
+    currentGroup?.followerFee?.amount ||
+    currentGroup?.joinFee ||
+    100;
+
+
+  /*
+   * IMPORTANT:
+   *
+   * This function does NOT mark payment as successful.
+   *
+   * Connect your existing Paystack/server-side payment
+   * verification here.
+   *
+   * After verified payment, call:
+   *
+   * await activateMember();
+   *
+   * Never activate membership only because the user clicked
+   * the payment button.
+   */
+
+
+  toast(
+    `Payment flow ready for ₦${formatNumber(fee)}. Connect your verified Paystack callback here.`,
+    "info"
+  );
 }
 
 
@@ -2059,7 +2862,7 @@ function loadSubscription() {
 // SETTINGS
 // ============================================================
 
-function loadSettings() {
+async function loadSettings() {
 
   if (!settingsTab) return;
 
@@ -2078,31 +2881,616 @@ function loadSettings() {
 
 
   settingsTab.innerHTML = `
+    <div
+      id="groupSettingsContainer"
+      style="
+        display:grid;
+        gap:14px;
+      "
+    >
+
+      <div style="
+        background:var(--bg-surface);
+        border:1px solid var(--border-subtle);
+        border-radius:var(--radius-lg);
+        padding:20px;
+      ">
+
+        <h3 style="
+          margin:0 0 6px;
+          font-family:var(--font-display);
+        ">
+          Group management
+        </h3>
+
+        <p style="
+          margin:0;
+          color:var(--text-muted);
+          font-size:13px;
+        ">
+          Manage requests, members and group information.
+        </p>
+
+      </div>
+
+      <div
+        id="groupRequestsAdmin"
+      ></div>
+
+      <div
+        id="groupAdminActions"
+      ></div>
+
+    </div>
+  `;
+
+
+  await renderPendingRequests();
+
+  renderAdminActions();
+}
+
+
+// ============================================================
+// PENDING REQUESTS
+// ============================================================
+
+async function getPendingRequests() {
+
+  const members =
+    currentGroup?.members || {};
+
+  return Object.entries(members)
+    .filter(
+      ([, member]) =>
+        member &&
+        member.status === "pending"
+    );
+}
+
+
+// ============================================================
+// RENDER PENDING REQUESTS
+// ============================================================
+
+async function renderPendingRequests() {
+
+  const container =
+    $("groupRequestsAdmin");
+
+  if (!container) return;
+
+  if (!isAdmin()) return;
+
+
+  const requests =
+    await getPendingRequests();
+
+
+  if (!requests.length) {
+
+    container.innerHTML = `
+      <div style="
+        background:var(--bg-surface);
+        border:1px solid var(--border-subtle);
+        border-radius:var(--radius-lg);
+        padding:20px;
+      ">
+        <strong>No pending requests</strong>
+        <div style="
+          color:var(--text-muted);
+          font-size:12px;
+          margin-top:4px;
+        ">
+          New private-group join requests will appear here.
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML = `
     <div style="
       background:var(--bg-surface);
       border:1px solid var(--border-subtle);
       border-radius:var(--radius-lg);
-      padding:22px;
+      padding:20px;
+    ">
+      <h3 style="
+        margin:0 0 14px;
+        font-family:var(--font-display);
+      ">
+        Join requests
+      </h3>
+
+      <div
+        id="pendingRequestList"
+        style="
+          display:grid;
+          gap:10px;
+        "
+      ></div>
+    </div>
+  `;
+
+
+  const list =
+    $("pendingRequestList");
+
+
+  for (
+    const [uid, request] of requests
+  ) {
+
+    const profile =
+      await getUserProfile(uid);
+
+
+    const name =
+      profile?.fullname ||
+      profile?.fullName ||
+      profile?.displayName ||
+      profile?.username ||
+      "VitalStar Member";
+
+
+    const row =
+      document.createElement("div");
+
+    row.style.cssText = `
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px;
+      border:1px solid var(--border-subtle);
+      border-radius:10px;
+    `;
+
+
+    const info =
+      document.createElement("div");
+
+    info.innerHTML = `
+      <strong>${escapeHtml(name)}</strong>
+      <div style="
+        color:var(--text-muted);
+        font-size:11px;
+        margin-top:3px;
+      ">
+        Requested ${formatDate(request.requestedAt)}
+      </div>
+    `;
+
+
+    const actions =
+      document.createElement("div");
+
+    actions.style.cssText = `
+      display:flex;
+      gap:7px;
+      flex-wrap:wrap;
+    `;
+
+
+    const approve =
+      document.createElement("button");
+
+    approve.type =
+      "button";
+
+    approve.textContent =
+      "Approve";
+
+    approve.style.cssText = `
+      border:0;
+      border-radius:8px;
+      padding:8px 11px;
+      cursor:pointer;
+      background:var(--electric-blue);
+      color:white;
+      font-weight:600;
+    `;
+
+
+    const reject =
+      document.createElement("button");
+
+    reject.type =
+      "button";
+
+    reject.textContent =
+      "Reject";
+
+    reject.style.cssText = `
+      border:1px solid var(--border-subtle);
+      border-radius:8px;
+      padding:8px 11px;
+      cursor:pointer;
+      background:transparent;
+      color:var(--text-primary);
+    `;
+
+
+    approve.addEventListener(
+      "click",
+      async () => {
+
+        await approveJoinRequest(
+          uid
+        );
+      }
+    );
+
+
+    reject.addEventListener(
+      "click",
+      async () => {
+
+        await rejectJoinRequest(
+          uid
+        );
+      }
+    );
+
+
+    actions.appendChild(
+      approve
+    );
+
+    actions.appendChild(
+      reject
+    );
+
+    row.appendChild(info);
+    row.appendChild(actions);
+
+    list.appendChild(row);
+  }
+}
+
+
+// ============================================================
+// APPROVE REQUEST
+// ============================================================
+
+async function approveJoinRequest(
+  uid
+) {
+
+  if (!isAdmin()) return;
+
+  if (!uid) return;
+
+
+  try {
+
+    const memberData = {
+      userId:
+        uid,
+
+      role:
+        "member",
+
+      status:
+        "active",
+
+      joinedAt:
+        serverTimestamp()
+    };
+
+
+    await setDoc(
+      doc(
+        db,
+        "groups",
+        groupId,
+        "members",
+        uid
+      ),
+      memberData,
+      {
+        merge: true
+      }
+    );
+
+
+    await updateDoc(
+      doc(
+        db,
+        "groups",
+        groupId
+      ),
+      {
+        [`members.${uid}`]:
+          memberData,
+
+        memberCount:
+          Number(
+            currentGroup.memberCount || 0
+          ) + 1,
+
+        followerCount:
+          Number(
+            currentGroup.followerCount || 0
+          ) + 1,
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+
+    currentGroup.memberCount =
+      Number(
+        currentGroup.memberCount || 0
+      ) + 1;
+
+
+    currentGroup.followerCount =
+      Number(
+        currentGroup.followerCount || 0
+      ) + 1;
+
+
+    await createNotification({
+      receiverId:
+        uid,
+
+      senderId:
+        currentUser.uid,
+
+      type:
+        "group_join_approved",
+
+      message:
+        `Your request to join ${currentGroup.name || "the group"} was approved.`,
+
+      groupId,
+
+      read:
+        false
+    });
+
+
+    toast(
+      "Join request approved.",
+      "success"
+    );
+
+
+    renderGroup();
+
+    await renderPendingRequests();
+
+  } catch (error) {
+
+    console.error(
+      "APPROVE REQUEST ERROR:",
+      error
+    );
+
+    toast(
+      error?.message ||
+      "Unable to approve request.",
+      "error"
+    );
+  }
+}
+
+
+// ============================================================
+// REJECT REQUEST
+// ============================================================
+
+async function rejectJoinRequest(
+  uid
+) {
+
+  if (!isAdmin()) return;
+
+  if (!uid) return;
+
+
+  try {
+
+    await deleteDoc(
+      doc(
+        db,
+        "groups",
+        groupId,
+        "members",
+        uid
+      )
+    );
+
+
+    await updateDoc(
+      doc(
+        db,
+        "groups",
+        groupId
+      ),
+      {
+        [`members.${uid}`]:
+          null,
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+
+    await createNotification({
+      receiverId:
+        uid,
+
+      senderId:
+        currentUser.uid,
+
+      type:
+        "group_join_rejected",
+
+      message:
+        `Your request to join ${currentGroup.name || "the group"} was not approved.`,
+
+      groupId,
+
+      read:
+        false
+    });
+
+
+    toast(
+      "Join request rejected.",
+      "success"
+    );
+
+
+    await renderPendingRequests();
+
+  } catch (error) {
+
+    console.error(
+      "REJECT REQUEST ERROR:",
+      error
+    );
+
+    toast(
+      error?.message ||
+      "Unable to reject request.",
+      "error"
+    );
+  }
+}
+
+
+// ============================================================
+// ADMIN ACTIONS
+// ============================================================
+
+function renderAdminActions() {
+
+  const container =
+    $("groupAdminActions");
+
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="
+      background:var(--bg-surface);
+      border:1px solid var(--border-subtle);
+      border-radius:var(--radius-lg);
+      padding:20px;
     ">
 
       <h3 style="
-        margin:0 0 8px;
+        margin:0 0 12px;
         font-family:var(--font-display);
       ">
-        Group settings
+        Admin controls
       </h3>
 
-      <p style="
-        margin:0;
-        color:var(--text-muted);
-        font-size:13px;
-        line-height:1.5;
-      ">
-        Group management controls will be added here.
-      </p>
+      <button
+        type="button"
+        id="refreshGroupDataBtn"
+        style="
+          border:1px solid var(--border-subtle);
+          background:transparent;
+          color:var(--text-primary);
+          border-radius:9px;
+          padding:10px 14px;
+          cursor:pointer;
+        "
+      >
+        Refresh group data
+      </button>
 
     </div>
   `;
+
+
+  $("refreshGroupDataBtn")
+    ?.addEventListener(
+      "click",
+      async () => {
+
+        await refreshGroup();
+      }
+    );
+}
+
+
+// ============================================================
+// REFRESH GROUP
+// ============================================================
+
+async function refreshGroup() {
+
+  if (!groupId) return;
+
+  try {
+
+    const snapshot =
+      await getDoc(
+        doc(
+          db,
+          "groups",
+          groupId
+        )
+      );
+
+
+    if (!snapshot.exists()) {
+      showNotFound();
+      return;
+    }
+
+
+    currentGroup = {
+      id:
+        snapshot.id,
+
+      ...snapshot.data()
+    };
+
+
+    await resolveMembership();
+
+    renderGroup();
+
+    renderAccess();
+
+    renderRules();
+
+    await renderAdmins();
+
+    await loadMembers();
+
+    if (activeTab === "settings") {
+      await loadSettings();
+    }
+
+
+    toast(
+      "Group refreshed.",
+      "success"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "REFRESH GROUP ERROR:",
+      error
+    );
+
+    toast(
+      "Unable to refresh group.",
+      "error"
+    );
+  }
 }
 
 
@@ -2187,20 +3575,24 @@ async function activateTab(tab) {
     await loadPosts();
   }
 
+
   if (tab === "members") {
     await loadMembers();
   }
+
 
   if (tab === "chat") {
     loadChat();
   }
 
+
   if (tab === "subscription") {
     loadSubscription();
   }
 
+
   if (tab === "settings") {
-    loadSettings();
+    await loadSettings();
   }
 }
 
@@ -2229,8 +3621,10 @@ shareBtn?.addEventListener(
 
         await navigator.share({
           title,
+
           text:
             `Join ${title} on VitalStar.`,
+
           url
         });
 
@@ -2281,6 +3675,7 @@ inviteBtn?.addEventListener(
     const url =
       `${location.origin}${location.pathname}?id=${encodeURIComponent(groupId)}`;
 
+
     try {
 
       await navigator.clipboard.writeText(
@@ -2316,7 +3711,7 @@ coverEditBtn?.addEventListener(
     }
 
     toast(
-      "Cover editing will be connected to the group editor next.",
+      "Connect this button to your group editor / Cloudinary upload flow.",
       "info"
     );
   }
@@ -2324,7 +3719,7 @@ coverEditBtn?.addEventListener(
 
 
 // ============================================================
-// NOTIFICATIONS
+// NOTIFICATION BELL
 // ============================================================
 
 notificationBellBtn?.addEventListener(
@@ -2333,9 +3728,12 @@ notificationBellBtn?.addEventListener(
 
     event.stopPropagation();
 
+    if (!notificationsPanel) return;
+
     notificationsPanel.classList.toggle(
       "is-visible"
     );
+
 
     if (
       notificationsPanel.classList.contains(
@@ -2349,16 +3747,24 @@ notificationBellBtn?.addEventListener(
 );
 
 
+// ============================================================
+// CLOSE NOTIFICATIONS
+// ============================================================
+
 closeNotificationsBtn?.addEventListener(
   "click",
   () => {
 
-    notificationsPanel.classList.remove(
+    notificationsPanel?.classList.remove(
       "is-visible"
     );
   }
 );
 
+
+// ============================================================
+// CLOSE NOTIFICATIONS OUTSIDE
+// ============================================================
 
 document.addEventListener(
   "click",
@@ -2369,8 +3775,12 @@ document.addEventListener(
       notificationsPanel.classList.contains(
         "is-visible"
       ) &&
-      !notificationsPanel.contains(event.target) &&
-      !notificationBellBtn.contains(event.target)
+      !notificationsPanel.contains(
+        event.target
+      ) &&
+      !notificationBellBtn?.contains(
+        event.target
+      )
     ) {
 
       notificationsPanel.classList.remove(
@@ -2389,39 +3799,82 @@ async function loadNotifications() {
 
   if (!currentUser) return;
 
+  if (!notificationsList) return;
+
+
   notificationsList.innerHTML = `
     <div class="notifications-empty">
       Loading notifications…
     </div>
   `;
 
+
   try {
 
-    const ref =
-      collection(
-        db,
-        "notifications"
+    let snapshot;
+
+
+    // --------------------------------------------------------
+    // Preferred query: receiverId
+    // --------------------------------------------------------
+
+    try {
+
+      const q =
+        query(
+          collection(
+            db,
+            "notifications"
+          ),
+          where(
+            "receiverId",
+            "==",
+            currentUser.uid
+          ),
+          orderBy(
+            "createdAt",
+            "desc"
+          ),
+          limit(50)
+        );
+
+      snapshot =
+        await getDocs(q);
+
+    } catch (queryError) {
+
+      console.warn(
+        "Notification indexed query failed. Using fallback.",
+        queryError
       );
 
-    const q =
-      query(
-        ref,
-        orderBy(
-          "createdAt",
-          "desc"
-        ),
-        limit(20)
-      );
 
-    const snapshot =
-      await getDocs(q);
+      const fallback =
+        query(
+          collection(
+            db,
+            "notifications"
+          ),
+          orderBy(
+            "createdAt",
+            "desc"
+          ),
+          limit(100)
+        );
+
+
+      snapshot =
+        await getDocs(fallback);
+    }
 
 
     const notifications =
       snapshot.docs
         .map(
           item => ({
-            id: item.id,
+            id:
+              item.id,
+
             ...item.data()
           })
         )
@@ -2434,6 +3887,10 @@ async function loadNotifications() {
         );
 
 
+    notificationsCache =
+      notifications;
+
+
     if (!notifications.length) {
 
       notificationsList.innerHTML = `
@@ -2442,9 +3899,7 @@ async function loadNotifications() {
         </div>
       `;
 
-      notifUnreadDot.classList.remove(
-        "is-visible"
-      );
+      updateNotificationDot();
 
       return;
     }
@@ -2457,63 +3912,18 @@ async function loadNotifications() {
       notification => {
 
         const item =
-          document.createElement("div");
-
-        item.className =
-          "notification-item";
-
-
-        const icon =
-          document.createElement("div");
-
-        icon.className =
-          "notification-item__icon";
-
-        icon.innerHTML =
-          '<i class="fa-solid fa-bell"></i>';
-
-
-        const body =
-          document.createElement("div");
-
-
-        const text =
-          document.createElement("div");
-
-        text.className =
-          "notification-item__text";
-
-        text.textContent =
-          notification.message ||
-          "You have a new notification.";
-
-
-        const time =
-          document.createElement("div");
-
-        time.className =
-          "notification-item__time";
-
-        time.textContent =
-          formatDate(
-            notification.createdAt
+          createNotificationElement(
+            notification
           );
 
-
-        body.appendChild(text);
-        body.appendChild(time);
-
-        item.appendChild(icon);
-        item.appendChild(body);
-
-        notificationsList.appendChild(item);
+        notificationsList.appendChild(
+          item
+        );
       }
     );
 
 
-    notifUnreadDot.classList.remove(
-      "is-visible"
-    );
+    updateNotificationDot();
 
   } catch (error) {
 
@@ -2532,6 +3942,337 @@ async function loadNotifications() {
 
 
 // ============================================================
+// NOTIFICATION ELEMENT
+// ============================================================
+
+function createNotificationElement(
+  notification
+) {
+
+  const item =
+    document.createElement("button");
+
+  item.type =
+    "button";
+
+  item.className =
+    "notification-item";
+
+
+  const icon =
+    document.createElement("div");
+
+  icon.className =
+    "notification-item__icon";
+
+  icon.innerHTML =
+    '<i class="fa-solid fa-bell"></i>';
+
+
+  const body =
+    document.createElement("div");
+
+
+  const text =
+    document.createElement("div");
+
+  text.className =
+    "notification-item__text";
+
+  text.textContent =
+    notification.message ||
+    "You have a new notification.";
+
+
+  const time =
+    document.createElement("div");
+
+  time.className =
+    "notification-item__time";
+
+  time.textContent =
+    formatDate(
+      notification.createdAt
+    );
+
+
+  body.appendChild(
+    text
+  );
+
+  body.appendChild(
+    time
+  );
+
+
+  item.appendChild(
+    icon
+  );
+
+  item.appendChild(
+    body
+  );
+
+
+  if (!notification.read) {
+
+    item.classList.add(
+      "is-unread"
+    );
+  }
+
+
+  item.addEventListener(
+    "click",
+    async () => {
+
+      await handleNotificationClick(
+        notification
+      );
+    }
+  );
+
+
+  return item;
+}
+
+
+// ============================================================
+// NOTIFICATION CLICK
+// ============================================================
+
+async function handleNotificationClick(
+  notification
+) {
+
+  if (!notification) return;
+
+
+  await markNotificationRead(
+    notification.id
+  );
+
+
+  // ----------------------------------------------------------
+  // Exact post navigation
+  // ----------------------------------------------------------
+
+  if (
+    notification.postId
+  ) {
+
+    const targetGroupId =
+      notification.groupId ||
+      groupId;
+
+
+    if (
+      targetGroupId ===
+      groupId
+    ) {
+
+      await activateTab(
+        "posts"
+      );
+
+      openGroupPost(
+        notification.postId
+      );
+
+      notificationsPanel?.classList.remove(
+        "is-visible"
+      );
+
+      return;
+    }
+
+
+    const url =
+      `group.html?id=${encodeURIComponent(targetGroupId)}&postId=${encodeURIComponent(notification.postId)}`;
+
+    location.href =
+      url;
+
+    return;
+  }
+
+
+  // ----------------------------------------------------------
+  // Join request notification
+  // ----------------------------------------------------------
+
+  if (
+    notification.type ===
+    "group_join_request"
+  ) {
+
+    if (isAdmin()) {
+
+      notificationsPanel?.classList.remove(
+        "is-visible"
+      );
+
+      await activateTab(
+        "settings"
+      );
+
+      return;
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // Group notification
+  // ----------------------------------------------------------
+
+  if (
+    notification.groupId &&
+    notification.groupId !== groupId
+  ) {
+
+    location.href =
+      `group.html?id=${encodeURIComponent(notification.groupId)}`;
+
+    return;
+  }
+
+
+  notificationsPanel?.classList.remove(
+    "is-visible"
+  );
+}
+
+
+// ============================================================
+// MARK NOTIFICATION READ
+// ============================================================
+
+async function markNotificationRead(
+  notificationId
+) {
+
+  if (!notificationId) return;
+
+  try {
+
+    await updateDoc(
+      doc(
+        db,
+        "notifications",
+        notificationId
+      ),
+      {
+        read:
+          true,
+
+        readAt:
+          serverTimestamp()
+      }
+    );
+
+
+    const cached =
+      notificationsCache.find(
+        item =>
+          item.id ===
+          notificationId
+      );
+
+
+    if (cached) {
+      cached.read = true;
+    }
+
+
+    updateNotificationDot();
+
+  } catch (error) {
+
+    console.warn(
+      "MARK NOTIFICATION READ ERROR:",
+      error
+    );
+  }
+}
+
+
+// ============================================================
+// NOTIFICATION DOT
+// ============================================================
+
+function updateNotificationDot() {
+
+  if (!notifUnreadDot) return;
+
+
+  const unread =
+    notificationsCache.some(
+      notification =>
+        notification.read !== true
+    );
+
+
+  notifUnreadDot.classList.toggle(
+    "is-visible",
+    unread
+  );
+}
+
+
+// ============================================================
+// CHECK NOTIFICATION DOT
+// ============================================================
+
+async function checkNotificationUnread() {
+
+  if (!currentUser) return;
+
+  try {
+
+    const q =
+      query(
+        collection(
+          db,
+          "notifications"
+        ),
+        where(
+          "receiverId",
+          "==",
+          currentUser.uid
+        ),
+        limit(50)
+      );
+
+
+    const snapshot =
+      await getDocs(q);
+
+
+    notificationsCache =
+      snapshot.docs
+        .map(
+          item => ({
+            id:
+              item.id,
+
+            ...item.data()
+          })
+        );
+
+
+    updateNotificationDot();
+
+  } catch (error) {
+
+    console.warn(
+      "CHECK NOTIFICATION ERROR:",
+      error
+    );
+  }
+}
+
+
+// ============================================================
 // INITIAL STATE
 // ============================================================
 
@@ -2540,4 +4281,13 @@ if (tabsNav) {
   activateTab(
     "posts"
   );
+}
+
+
+// ============================================================
+// INITIAL NOTIFICATION CHECK
+// ============================================================
+
+if (currentUser) {
+  checkNotificationUnread();
 }
