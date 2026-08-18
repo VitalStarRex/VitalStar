@@ -1,31 +1,37 @@
 // ============================================================
-// VITALSTAR — group-posts.js
-// Group Posts Controller
-//
+// VITALSTAR — GROUP POSTS
+// ============================================================
 // Features:
-// • Text posts
-// • Image posts
-// • Video posts
-// • Cloudinary uploads
-// • Pagination
-// • Likes / reactions
+//
+// • Create text posts
+// • Upload photos
+// • Upload videos through Cloudinary
+// • Full-name author display
+// • Author profile links
+// • Likes
 // • Like notifications
 // • Comments
+// • Comment notifications
 // • Replies
+// • Reply notifications
 // • Reposts
 // • Shares
 // • Edit posts
 // • Delete posts
-// • Pin / unpin
+// • Pin / unpin posts
 // • Report posts
-// • Member permissions
-// • Author profiles / avatars
+// • Pagination
+// • Comments pagination limit
+// • Profile photo loading
+// • Mobile-friendly video playback
+//
 // ============================================================
 
 import {
   addDoc,
   collection,
   query,
+  where,
   orderBy,
   limit,
   startAfter,
@@ -51,9 +57,10 @@ async function uploadToCloudinary(file) {
     throw new Error("No file selected.");
   }
 
-  const type = file.type.startsWith("video/")
-    ? "video"
-    : "image";
+  const type =
+    file.type.startsWith("video/")
+      ? "video"
+      : "image";
 
   const url =
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`;
@@ -129,20 +136,13 @@ function getPlayableVideoUrl(url) {
     const parsed = new URL(url);
 
     if (
-      parsed.hostname.includes(
-        "res.cloudinary.com"
-      ) &&
-      parsed.pathname.includes(
-        "/video/upload/"
-      )
+      parsed.hostname.includes("res.cloudinary.com") &&
+      parsed.pathname.includes("/video/upload/")
     ) {
-      const marker =
-        "/video/upload/";
+      const marker = "/video/upload/";
 
       const index =
-        parsed.pathname.indexOf(
-          marker
-        );
+        parsed.pathname.indexOf(marker);
 
       if (index !== -1) {
         const before =
@@ -181,14 +181,14 @@ function getPlayableVideoUrl(url) {
 // ============================================================
 
 const POSTS_PAGE_SIZE = 10;
+
 const POSTS_STYLE_ID =
   "vs-group-posts-styles";
 
 let ctx = null;
 let state = null;
 
-const profileCache =
-  new Map();
+const profileCache = new Map();
 
 // ============================================================
 // USER PROFILE
@@ -218,8 +218,7 @@ async function getUserProfile(uid) {
 
     if (!snap.exists()) {
       const fallback = {
-        fullName:
-          "VitalStar User",
+        fullName: "VitalStar User",
         photoURL: ""
       };
 
@@ -231,8 +230,7 @@ async function getUserProfile(uid) {
       return fallback;
     }
 
-    const data =
-      snap.data();
+    const data = snap.data();
 
     const profile = {
       fullName:
@@ -265,15 +263,114 @@ async function getUserProfile(uid) {
     );
 
     return {
-      fullName:
-        "VitalStar User",
+      fullName: "VitalStar User",
       photoURL: ""
     };
   }
 }
 
 // ============================================================
-// HELPERS
+// CURRENT USER FULL NAME
+// ============================================================
+
+async function getCurrentUserFullName() {
+  if (!ctx?.currentUser?.uid) {
+    return "VitalStar User";
+  }
+
+  const profile =
+    await getUserProfile(
+      ctx.currentUser.uid
+    );
+
+  return (
+    profile.fullName ||
+    ctx.currentUser.displayName ||
+    "VitalStar User"
+  );
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+async function sendGroupPostNotification({
+  receiverId,
+  type,
+  postId,
+  commentId = null,
+  message
+}) {
+  if (!receiverId) {
+    return;
+  }
+
+  // Never notify yourself.
+  if (
+    receiverId ===
+    ctx.currentUser.uid
+  ) {
+    return;
+  }
+
+  try {
+    const senderProfile =
+      await getUserProfile(
+        ctx.currentUser.uid
+      );
+
+    const senderName =
+      senderProfile.fullName ||
+      ctx.currentUser.displayName ||
+      "VitalStar User";
+
+    await addDoc(
+      collection(
+        ctx.db,
+        "notifications"
+      ),
+      {
+        receiverId,
+
+        senderId:
+          ctx.currentUser.uid,
+
+        senderName,
+
+        senderPhotoURL:
+          senderProfile.photoURL ||
+          "",
+
+        type,
+
+        message,
+
+        groupId:
+          ctx.groupId,
+
+        postId,
+
+        commentId,
+
+        read: false,
+
+        createdAt:
+          serverTimestamp()
+      }
+    );
+
+  } catch (error) {
+    // Notification failure should never
+    // break the actual action.
+    console.error(
+      "Could not send group post notification:",
+      error
+    );
+  }
+}
+
+// ============================================================
+// INITIALS
 // ============================================================
 
 function getInitials(name) {
@@ -291,11 +388,19 @@ function getInitials(name) {
   );
 }
 
+// ============================================================
+// PROFILE LINK
+// ============================================================
+
 function authorProfileHref(uid) {
   return uid
     ? `profile.html?uid=${encodeURIComponent(uid)}`
     : "#";
 }
+
+// ============================================================
+// AVATAR
+// ============================================================
 
 function setAvatarBackground(
   element,
@@ -310,7 +415,9 @@ function setAvatarBackground(
   element.style.backgroundImage =
     "";
 
-  if (!photoURL) return;
+  if (!photoURL) {
+    return;
+  }
 
   element.style.backgroundImage =
     `url("${photoURL}")`;
@@ -320,18 +427,6 @@ function setAvatarBackground(
 
   element.style.backgroundPosition =
     "center";
-}
-
-function escapeHtml(value) {
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  div.textContent =
-    String(value ?? "");
-
-  return div.innerHTML;
 }
 
 // ============================================================
@@ -880,9 +975,7 @@ export async function init(context) {
   feed.id =
     "postsFeedList";
 
-  ctx.panelEl.appendChild(
-    feed
-  );
+  ctx.panelEl.appendChild(feed);
 
   const more =
     document.createElement(
@@ -904,9 +997,7 @@ export async function init(context) {
   more.onclick =
     () => loadPosts(false);
 
-  ctx.panelEl.appendChild(
-    more
-  );
+  ctx.panelEl.appendChild(more);
 
   await loadPosts(true);
 }
@@ -938,61 +1029,6 @@ function canModeratePosts() {
     role === "admin" ||
     role === "moderator"
   );
-}
-
-// ============================================================
-// NOTIFICATIONS
-// ============================================================
-
-async function sendPostNotification({
-  receiverId,
-  type,
-  postId,
-  message
-}) {
-  if (!receiverId) return;
-
-  if (
-    receiverId ===
-    ctx.currentUser.uid
-  ) {
-    return;
-  }
-
-  try {
-    await addDoc(
-      collection(
-        ctx.db,
-        "notifications"
-      ),
-      {
-        receiverId,
-
-        senderId:
-          ctx.currentUser.uid,
-
-        type,
-
-        groupId:
-          ctx.groupId,
-
-        postId,
-
-        message,
-
-        read: false,
-
-        createdAt:
-          serverTimestamp()
-      }
-    );
-
-  } catch (error) {
-    console.error(
-      "Could not send post notification:",
-      error
-    );
-  }
 }
 
 // ============================================================
@@ -1037,9 +1073,13 @@ function renderComposer() {
       <a
         class="post-author-link composer__avatar"
         id="composerAvatar"
-        href="${authorProfileHref(ctx.currentUser.uid)}"
+        href="${authorProfileHref(
+          ctx.currentUser.uid
+        )}"
       >
-        ${getInitials(ctx.currentUser.displayName)}
+        ${getInitials(
+          ctx.currentUser.displayName
+        )}
       </a>
 
       <textarea
@@ -1148,37 +1188,33 @@ function renderComposer() {
     "#composerImageBtn"
   ).onclick =
     () =>
-      wrap
-        .querySelector(
-          "#composerImageInput"
-        )
-        .click();
+      wrap.querySelector(
+        "#composerImageInput"
+      ).click();
 
   wrap.querySelector(
     "#composerVideoBtn"
   ).onclick =
     () =>
-      wrap
-        .querySelector(
-          "#composerVideoInput"
-        )
-        .click();
+      wrap.querySelector(
+        "#composerVideoInput"
+      ).click();
 
   wrap.querySelector(
     "#composerImageInput"
   ).onchange =
-    e =>
+    event =>
       handleComposerMediaSelect(
-        e,
+        event,
         "image"
       );
 
   wrap.querySelector(
     "#composerVideoInput"
   ).onchange =
-    e =>
+    event =>
       handleComposerMediaSelect(
-        e,
+        event,
         "video"
       );
 
@@ -1186,6 +1222,10 @@ function renderComposer() {
     () =>
       submitPost(wrap);
 }
+
+// ============================================================
+// COMPOSER PROFILE
+// ============================================================
 
 async function loadComposerProfile(
   avatar
@@ -1203,7 +1243,7 @@ async function loadComposerProfile(
 }
 
 // ============================================================
-// MEDIA
+// MEDIA SELECT
 // ============================================================
 
 function handleComposerMediaSelect(
@@ -1294,6 +1334,7 @@ function handleComposerMediaSelect(
     preview.appendChild(
       img
     );
+
   } else {
     const video =
       document.createElement(
@@ -1344,6 +1385,10 @@ function handleComposerMediaSelect(
 
   updatePostButtonState();
 }
+
+// ============================================================
+// CLEAR MEDIA
+// ============================================================
 
 function clearSelectedMedia() {
   state.pendingMediaFile =
@@ -1399,6 +1444,10 @@ function clearSelectedMedia() {
 
   updatePostButtonState();
 }
+
+// ============================================================
+// POST BUTTON
+// ============================================================
 
 function updatePostButtonState() {
   const input =
@@ -1707,6 +1756,7 @@ async function loadPosts(
           </p>
         </div>
       `;
+
     } else {
       snapshot.forEach(
         postDoc => {
@@ -1714,6 +1764,7 @@ async function loadPosts(
             renderPostCard({
               id:
                 postDoc.id,
+
               ...postDoc.data()
             })
           );
@@ -1759,9 +1810,7 @@ async function loadPosts(
 // RENDER POST
 // ============================================================
 
-function renderPostCard(
-  post
-) {
+function renderPostCard(post) {
   const card =
     document.createElement(
       "div"
@@ -1810,7 +1859,9 @@ function renderPostCard(
           class="post-author-link post-card__avatar"
           href="${href}"
         >
-          ${getInitials(post.authorName)}
+          ${getInitials(
+            post.authorName
+          )}
         </a>
 
         <div class="post-card__author-info">
@@ -1936,7 +1987,6 @@ function renderPostCard(
         class="post-action-btn like-btn"
       >
         <i class="fa-regular fa-heart"></i>
-
         <span class="like-count">
           ${ctx.formatCount(
             post.likesCount || 0
@@ -1949,7 +1999,6 @@ function renderPostCard(
         class="post-action-btn comment-toggle-btn"
       >
         <i class="fa-regular fa-comment"></i>
-
         <span class="comment-count">
           ${ctx.formatCount(
             post.commentsCount || 0
@@ -1962,7 +2011,6 @@ function renderPostCard(
         class="post-action-btn repost-btn"
       >
         <i class="fa-solid fa-retweet"></i>
-
         <span class="repost-count">
           ${ctx.formatCount(
             post.repostsCount || 0
@@ -2030,7 +2078,7 @@ function renderPostCard(
 }
 
 // ============================================================
-// AUTHOR
+// REFRESH AUTHOR
 // ============================================================
 
 async function refreshPostAuthor(
@@ -2189,6 +2237,14 @@ function renderPostBody(
         source
       );
 
+      video.onerror =
+        () => {
+          console.error(
+            "Video playback failed:",
+            post.mediaURL
+          );
+        };
+
       media.appendChild(
         video
       );
@@ -2254,7 +2310,7 @@ function renderPostBody(
 }
 
 // ============================================================
-// EVENTS
+// POST EVENTS
 // ============================================================
 
 function bindPostCardEvents(
@@ -2369,6 +2425,10 @@ function bindPostCardEvents(
       );
 }
 
+// ============================================================
+// GLOBAL MENU CLOSE
+// ============================================================
+
 if (
   !window.__vitalstarGroupPostMenuHandler
 ) {
@@ -2400,7 +2460,7 @@ function timeAgo(date) {
     Math.floor(
       (Date.now() -
         date.getTime()) /
-        1000
+      1000
     );
 
   if (seconds < 60) {
@@ -2444,7 +2504,23 @@ function timeAgo(date) {
 }
 
 // ============================================================
-// EDIT
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(value) {
+  const div =
+    document.createElement(
+      "div"
+    );
+
+  div.textContent =
+    String(value ?? "");
+
+  return div.innerHTML;
+}
+
+// ============================================================
+// EDIT POST
 // ============================================================
 
 function startEditPost(
@@ -2550,12 +2626,9 @@ function startEditPost(
   ).onclick =
     async () => {
       const text =
-        wrap
-          .querySelector(
-            "textarea"
-          )
-          .value
-          .trim();
+        wrap.querySelector(
+          "textarea"
+        ).value.trim();
 
       try {
         await updateDoc(
@@ -2608,7 +2681,7 @@ function startEditPost(
 }
 
 // ============================================================
-// DELETE
+// DELETE POST
 // ============================================================
 
 async function deletePost(
@@ -2672,6 +2745,9 @@ async function togglePinPost(
   post
 ) {
   try {
+    const newPinned =
+      !post.isPinned;
+
     await updateDoc(
       doc(
         ctx.db,
@@ -2682,14 +2758,14 @@ async function togglePinPost(
       ),
       {
         isPinned:
-          !post.isPinned
+          newPinned
       }
     );
 
     ctx.showToast(
-      post.isPinned
-        ? "Post unpinned."
-        : "Post pinned to the top.",
+      newPinned
+        ? "Post pinned to the top."
+        : "Post unpinned.",
       "success"
     );
 
@@ -2775,7 +2851,7 @@ async function reportPost(
 }
 
 // ============================================================
-// LIKES
+// LIKE STATE
 // ============================================================
 
 async function refreshLikeButtonState(
@@ -2823,6 +2899,10 @@ async function refreshLikeButtonState(
     );
   }
 }
+
+// ============================================================
+// LIKE / UNLIKE
+// ============================================================
 
 async function toggleLike(
   card,
@@ -2872,9 +2952,7 @@ async function toggleLike(
       ctx.currentUser.uid
     );
 
-  button.disabled =
-    true;
-
+  // Optimistic UI
   button.classList.toggle(
     "is-liked"
   );
@@ -2903,9 +2981,6 @@ async function toggleLike(
 
   try {
     if (liked) {
-      // --------------------------------------------
-      // UNLIKE
-      // --------------------------------------------
 
       await deleteDoc(
         likeRef
@@ -2920,9 +2995,6 @@ async function toggleLike(
       );
 
     } else {
-      // --------------------------------------------
-      // LIKE
-      // --------------------------------------------
 
       await setDoc(
         likeRef,
@@ -2944,10 +3016,13 @@ async function toggleLike(
       );
 
       // --------------------------------------------
-      // SEND NOTIFICATION
+      // LIKE NOTIFICATION
       // --------------------------------------------
 
-      await sendPostNotification({
+      const senderName =
+        await getCurrentUserFullName();
+
+      await sendGroupPostNotification({
         receiverId:
           post.authorId,
 
@@ -2958,7 +3033,7 @@ async function toggleLike(
           post.id,
 
         message:
-          `${ctx.currentUser.displayName || "Someone"} liked your group post.`
+          `${senderName} liked your post.`
       });
     }
 
@@ -2996,15 +3071,11 @@ async function toggleLike(
       "Could not update your like.",
       "error"
     );
-
-  } finally {
-    button.disabled =
-      false;
   }
 }
 
 // ============================================================
-// COMMENTS
+// COMMENTS TOGGLE
 // ============================================================
 
 function toggleComments(
@@ -3043,6 +3114,10 @@ function toggleComments(
   }
 }
 
+// ============================================================
+// LOAD COMMENTS
+// ============================================================
+
 async function loadComments(
   section,
   post
@@ -3069,10 +3144,12 @@ async function loadComments(
             post.id,
             "comments"
           ),
+
           orderBy(
             "createdAt",
             "asc"
           ),
+
           limit(50)
         )
       );
@@ -3080,7 +3157,9 @@ async function loadComments(
     section.innerHTML =
       "";
 
-    if (isActiveMember()) {
+    if (
+      isActiveMember()
+    ) {
       section.appendChild(
         buildCommentComposer(
           post,
@@ -3109,6 +3188,7 @@ async function loadComments(
             {
               id:
                 commentDoc.id,
+
               ...commentDoc.data()
             },
             post
@@ -3200,7 +3280,32 @@ function buildCommentComposer(
             ctx.currentUser.uid
           );
 
+        const senderName =
+          profile.fullName ||
+          "VitalStar User";
+
+        // ====================================================
+        // REPLY
+        // ====================================================
+
         if (parentCommentId) {
+
+          const parentCommentRef =
+            doc(
+              ctx.db,
+              "groups",
+              ctx.groupId,
+              "posts",
+              post.id,
+              "comments",
+              parentCommentId
+            );
+
+          const parentCommentSnap =
+            await getDoc(
+              parentCommentRef
+            );
+
           await addDoc(
             collection(
               ctx.db,
@@ -3217,10 +3322,11 @@ function buildCommentComposer(
                 ctx.currentUser.uid,
 
               authorName:
-                profile.fullName,
+                senderName,
 
               authorPhotoURL:
-                profile.photoURL,
+                profile.photoURL ||
+                "",
 
               text,
 
@@ -3228,6 +3334,38 @@ function buildCommentComposer(
                 serverTimestamp()
             }
           );
+
+          // ------------------------------------------
+          // REPLY NOTIFICATION
+          // ------------------------------------------
+
+          if (
+            parentCommentSnap.exists()
+          ) {
+            const parentComment =
+              parentCommentSnap.data();
+
+            if (
+              parentComment.authorId
+            ) {
+              await sendGroupPostNotification({
+                receiverId:
+                  parentComment.authorId,
+
+                type:
+                  "group_post_reply",
+
+                postId:
+                  post.id,
+
+                commentId:
+                  parentCommentId,
+
+                message:
+                  `${senderName} replied to your comment.`
+              });
+            }
+          }
 
           container.appendChild(
             buildReplyItem({
@@ -3235,41 +3373,51 @@ function buildCommentComposer(
                 ctx.currentUser.uid,
 
               authorName:
-                profile.fullName,
+                senderName,
 
               authorPhotoURL:
-                profile.photoURL,
+                profile.photoURL ||
+                "",
 
               text
             })
           );
 
-        } else {
-          await addDoc(
-            collection(
-              ctx.db,
-              "groups",
-              ctx.groupId,
-              "posts",
-              post.id,
-              "comments"
-            ),
-            {
-              authorId:
-                ctx.currentUser.uid,
+        }
 
-              authorName:
-                profile.fullName,
+        // ====================================================
+        // NORMAL COMMENT
+        // ====================================================
 
-              authorPhotoURL:
-                profile.photoURL,
+        else {
 
-              text,
+          const commentRef =
+            await addDoc(
+              collection(
+                ctx.db,
+                "groups",
+                ctx.groupId,
+                "posts",
+                post.id,
+                "comments"
+              ),
+              {
+                authorId:
+                  ctx.currentUser.uid,
 
-              createdAt:
-                serverTimestamp()
-            }
-          );
+                authorName:
+                  senderName,
+
+                authorPhotoURL:
+                  profile.photoURL ||
+                  "",
+
+                text,
+
+                createdAt:
+                  serverTimestamp()
+              }
+            );
 
           await updateDoc(
             doc(
@@ -3295,13 +3443,39 @@ function buildCommentComposer(
             );
 
           if (card) {
-            card.querySelector(
-              ".comment-count"
-            ).textContent =
-              ctx.formatCount(
-                post.commentsCount
+            const commentCount =
+              card.querySelector(
+                ".comment-count"
               );
+
+            if (commentCount) {
+              commentCount.textContent =
+                ctx.formatCount(
+                  post.commentsCount
+                );
+            }
           }
+
+          // ------------------------------------------
+          // COMMENT NOTIFICATION
+          // ------------------------------------------
+
+          await sendGroupPostNotification({
+            receiverId:
+              post.authorId,
+
+            type:
+              "group_post_comment",
+
+            postId:
+              post.id,
+
+            commentId:
+              commentRef.id,
+
+            message:
+              `${senderName} commented on your post.`
+          });
 
           const list =
             wrap.parentElement?.querySelector(
@@ -3312,14 +3486,18 @@ function buildCommentComposer(
             list.appendChild(
               buildCommentItem(
                 {
+                  id:
+                    commentRef.id,
+
                   authorId:
                     ctx.currentUser.uid,
 
                   authorName:
-                    profile.fullName,
+                    senderName,
 
                   authorPhotoURL:
-                    profile.photoURL,
+                    profile.photoURL ||
+                    "",
 
                   text
                 },
@@ -3334,7 +3512,7 @@ function buildCommentComposer(
 
       } catch (error) {
         console.error(
-          "Error posting comment:",
+          "Error posting comment/reply:",
           error
         );
 
@@ -3507,7 +3685,7 @@ function buildCommentItem(
 }
 
 // ============================================================
-// COMMENT AUTHOR
+// REFRESH COMMENT AUTHOR
 // ============================================================
 
 async function refreshCommentAuthor(
@@ -3563,7 +3741,7 @@ async function refreshCommentAuthor(
 }
 
 // ============================================================
-// REPLIES
+// LOAD REPLIES
 // ============================================================
 
 async function loadReplies(
@@ -3585,10 +3763,12 @@ async function loadReplies(
             commentId,
             "replies"
           ),
+
           orderBy(
             "createdAt",
             "asc"
           ),
+
           limit(30)
         )
       );
@@ -3599,6 +3779,7 @@ async function loadReplies(
           buildReplyItem({
             id:
               replyDoc.id,
+
             ...replyDoc.data()
           })
         );
@@ -3612,6 +3793,10 @@ async function loadReplies(
     );
   }
 }
+
+// ============================================================
+// REPLY ITEM
+// ============================================================
 
 function buildReplyItem(
   reply
@@ -3644,14 +3829,12 @@ function buildReplyItem(
       class="comment-bubble"
       style="flex:1;"
     >
-
       <a
         class="post-author-link comment-author"
         href="${href}"
       ></a>
 
       <div class="comment-text"></div>
-
     </div>
   `;
 
@@ -3895,8 +4078,7 @@ async function sharePost(
 
     } else {
       ctx.showToast(
-        "Share link: " +
-          url,
+        "Share link: " + url,
         "info"
       );
     }
