@@ -1,0 +1,1156 @@
+🌌 VitalStar Terms of Service — Space Edition
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Terms of Service • VitalStar</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    min-height:100vh;
+    overflow-x:hidden;
+
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    color:#f8f7ff;
+
+    background:
+        radial-gradient(circle at 20% 20%, rgba(116,70,255,.22), transparent 28%),
+        radial-gradient(circle at 80% 15%, rgba(0,180,255,.15), transparent 25%),
+        radial-gradient(circle at 50% 80%, rgba(190,40,255,.16), transparent 30%),
+        radial-gradient(circle at 90% 90%, rgba(255,80,180,.10), transparent 25%),
+        #02030b;
+}
+
+
+/* =========================================================
+   SPACE BACKGROUND
+========================================================= */
+
+.space{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    overflow:hidden;
+}
+
+
+/* Small stars */
+
+.space::before{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,.95) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(255,255,255,.65) 1px, transparent 1.5px),
+        radial-gradient(circle, rgba(160,210,255,.8) 1px, transparent 1.5px);
+
+    background-size:
+        90px 90px,
+        150px 150px,
+        210px 210px;
+
+    background-position:
+        10px 20px,
+        60px 90px,
+        120px 30px;
+
+    opacity:.7;
+
+    animation:starMove 20s linear infinite;
+}
+
+
+/* Large glowing stars */
+
+.space::after{
+    content:"✦     ✧       ✦        ✧      ✦
+       ✧          ✦
+  ✦         ✧          ✦
+       ✦          ✧
+  ✧       ✦       ✧";
+
+    position:absolute;
+    inset:0;
+
+    white-space:pre-wrap;
+
+    color:rgba(255,255,255,.7);
+
+    font-size:20px;
+    line-height:100px;
+    letter-spacing:30px;
+
+    opacity:.35;
+
+    animation:twinkle 4s ease-in-out infinite alternate;
+}
+
+
+@keyframes starMove{
+    from{
+        transform:translateY(0);
+    }
+
+    to{
+        transform:translateY(35px);
+    }
+}
+
+
+@keyframes twinkle{
+    from{
+        opacity:.18;
+    }
+
+    to{
+        opacity:.55;
+    }
+}
+
+
+/* =========================================================
+   NEBULA
+========================================================= */
+
+.nebula{
+    position:absolute;
+
+    width:550px;
+    height:550px;
+
+    border-radius:50%;
+
+    filter:blur(80px);
+
+    opacity:.25;
+
+    animation:nebulaFloat 12s ease-in-out infinite;
+}
+
+.nebula.one{
+    top:-220px;
+    left:-180px;
+
+    background:#633cff;
+}
+
+.nebula.two{
+    right:-200px;
+    top:25%;
+
+    background:#008cff;
+
+    animation-delay:3s;
+}
+
+.nebula.three{
+    left:25%;
+    bottom:-300px;
+
+    background:#d72dff;
+
+    animation-delay:6s;
+}
+
+@keyframes nebulaFloat{
+    0%,100%{
+        transform:translate(0,0) scale(1);
+    }
+
+    50%{
+        transform:translate(30px,-25px) scale(1.08);
+    }
+}
+
+
+/* =========================================================
+   FLOWERS
+========================================================= */
+
+.flowers{
+    position:fixed;
+    inset:0;
+
+    z-index:2;
+
+    pointer-events:none;
+}
+
+.flower{
+    position:absolute;
+
+    font-size:clamp(22px,4vw,42px);
+
+    filter:
+        drop-shadow(0 0 7px rgba(255,100,190,.7))
+        drop-shadow(0 0 18px rgba(255,100,190,.25));
+
+    animation:flowerFloat 5s ease-in-out infinite;
+}
+
+@keyframes flowerFloat{
+    0%,100%{
+        transform:translateY(0) rotate(-5deg);
+    }
+
+    50%{
+        transform:translateY(-10px) rotate(5deg);
+    }
+}
+
+
+/* Top */
+
+.flower:nth-child(1){
+    top:10px;
+    left:10px;
+}
+
+.flower:nth-child(2){
+    top:12px;
+    left:75px;
+    animation-delay:1s;
+}
+
+.flower:nth-child(3){
+    top:10px;
+    right:75px;
+    animation-delay:2s;
+}
+
+.flower:nth-child(4){
+    top:10px;
+    right:10px;
+    animation-delay:.5s;
+}
+
+
+/* Left */
+
+.flower:nth-child(5){
+    top:28%;
+    left:8px;
+}
+
+.flower:nth-child(6){
+    top:50%;
+    left:10px;
+    animation-delay:1.5s;
+}
+
+.flower:nth-child(7){
+    top:72%;
+    left:8px;
+    animation-delay:2.5s;
+}
+
+
+/* Right */
+
+.flower:nth-child(8){
+    top:28%;
+    right:8px;
+}
+
+.flower:nth-child(9){
+    top:50%;
+    right:10px;
+    animation-delay:1.5s;
+}
+
+.flower:nth-child(10){
+    top:72%;
+    right:8px;
+    animation-delay:2.5s;
+}
+
+
+/* Bottom */
+
+.flower:nth-child(11){
+    bottom:10px;
+    left:10px;
+}
+
+.flower:nth-child(12){
+    bottom:10px;
+    left:75px;
+    animation-delay:1s;
+}
+
+.flower:nth-child(13){
+    bottom:10px;
+    right:75px;
+    animation-delay:2s;
+}
+
+.flower:nth-child(14){
+    bottom:10px;
+    right:10px;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.wrapper{
+    position:relative;
+    z-index:3;
+
+    width:min(950px, calc(100% - 34px));
+
+    margin:40px auto;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero{
+    text-align:center;
+
+    padding:48px 25px;
+
+    border-radius:32px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.11),
+            rgba(255,255,255,.035)
+        );
+
+    border:1px solid rgba(255,255,255,.15);
+
+    box-shadow:
+        0 0 50px rgba(92,70,255,.13),
+        0 30px 100px rgba(0,0,0,.55),
+        inset 0 1px rgba(255,255,255,.10);
+
+    backdrop-filter:blur(18px);
+}
+
+
+.logo{
+    width:82px;
+    height:82px;
+
+    margin:0 auto 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:27px;
+
+    font-size:42px;
+
+    background:
+        radial-gradient(circle at 35% 30%, #ffffff, transparent 12%),
+        linear-gradient(135deg,#ff55b7,#784cff,#27a9ff);
+
+    box-shadow:
+        0 0 30px rgba(130,80,255,.5),
+        0 0 70px rgba(255,80,190,.18);
+}
+
+
+.hero h1{
+    font-size:clamp(32px,7vw,56px);
+
+    font-weight:850;
+
+    letter-spacing:-1.5px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffffff,
+            #dcbcff,
+            #8edbff,
+            #ffb7df
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+
+    color:transparent;
+}
+
+
+.hero p{
+    margin-top:12px;
+
+    color:#c5c4d7;
+
+    font-size:15px;
+}
+
+
+.updated{
+    display:inline-block;
+
+    margin-top:20px;
+
+    padding:9px 17px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.065);
+
+    border:1px solid rgba(255,255,255,.12);
+
+    color:#ddd8e9;
+
+    font-size:13px;
+}
+
+
+/* =========================================================
+   TERMS
+========================================================= */
+
+.terms{
+    margin-top:25px;
+
+    padding:clamp(25px,5vw,52px);
+
+    border-radius:32px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(10,12,35,.82),
+            rgba(15,9,30,.72)
+        );
+
+    border:1px solid rgba(255,255,255,.11);
+
+    box-shadow:
+        0 30px 100px rgba(0,0,0,.5),
+        0 0 60px rgba(100,70,255,.08);
+
+    backdrop-filter:blur(22px);
+}
+
+
+/* =========================================================
+   NOTICE
+========================================================= */
+
+.notice{
+    padding:21px;
+
+    margin-bottom:10px;
+
+    border-radius:22px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,75,175,.12),
+            rgba(90,70,255,.12)
+        );
+
+    border:1px solid rgba(255,160,220,.15);
+
+    box-shadow:
+        inset 0 1px rgba(255,255,255,.06);
+}
+
+
+.notice strong{
+    color:#ffc5e5;
+
+    font-size:16px;
+}
+
+
+.notice p{
+    margin-top:8px;
+
+    color:#d2cedd;
+
+    line-height:1.75;
+}
+
+
+/* =========================================================
+   SECTIONS
+========================================================= */
+
+.section{
+    padding:27px 0;
+
+    border-bottom:1px solid rgba(255,255,255,.075);
+}
+
+
+.section:last-child{
+    border-bottom:none;
+}
+
+
+.section h2{
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+    margin-bottom:13px;
+
+    color:#f5c8e4;
+
+    font-size:21px;
+}
+
+
+.section h2 span{
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
+    width:34px;
+    height:34px;
+
+    border-radius:11px;
+
+    background:rgba(255,255,255,.055);
+
+    box-shadow:
+        0 0 15px rgba(255,100,190,.12);
+}
+
+
+.section p{
+    color:#cbc7d5;
+
+    font-size:15px;
+
+    line-height:1.85;
+}
+
+
+.section ul{
+    margin-top:13px;
+
+    padding-left:23px;
+}
+
+
+.section li{
+    margin:9px 0;
+
+    color:#cbc7d5;
+
+    line-height:1.7;
+}
+
+
+.section li::marker{
+    color:#ff80c3;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer{
+    text-align:center;
+
+    padding:32px 15px 50px;
+
+    color:#8f8b9d;
+
+    font-size:13px;
+}
+
+
+.footer-stars{
+    margin-bottom:15px;
+
+    color:#d9d4ff;
+
+    letter-spacing:8px;
+
+    text-shadow:
+        0 0 10px #ffffff,
+        0 0 25px #8b72ff;
+}
+
+
+.footer-flowers{
+    font-size:22px;
+
+    letter-spacing:7px;
+
+    margin-bottom:17px;
+}
+
+
+.footer strong{
+    color:#eab6d5;
+
+    font-size:15px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:600px){
+
+    .wrapper{
+        width:calc(100% - 18px);
+
+        margin:18px auto;
+    }
+
+    .hero{
+        padding:34px 18px;
+
+        border-radius:25px;
+    }
+
+    .terms{
+        padding:23px 18px;
+
+        border-radius:25px;
+    }
+
+    .section{
+        padding:23px 0;
+    }
+
+    .section h2{
+        font-size:18px;
+    }
+
+    .section p,
+    .section li{
+        font-size:14px;
+    }
+
+    .flower{
+        font-size:25px;
+    }
+
+    .flower:nth-child(2),
+    .flower:nth-child(3),
+    .flower:nth-child(6),
+    .flower:nth-child(9),
+    .flower:nth-child(12),
+    .flower:nth-child(13){
+        display:none;
+    }
+
+    .nebula{
+        width:350px;
+        height:350px;
+
+        filter:blur(65px);
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+
+<!-- ======================================================
+     SPACE
+====================================================== -->
+
+<div class="space">
+
+    <div class="nebula one"></div>
+    <div class="nebula two"></div>
+    <div class="nebula three"></div>
+
+</div>
+
+
+<!-- ======================================================
+     FLOWERS AROUND EDGES
+====================================================== -->
+
+<div class="flowers" aria-hidden="true">
+
+    <div class="flower">🌸</div>
+    <div class="flower">🌷</div>
+    <div class="flower">🌺</div>
+    <div class="flower">🌹</div>
+
+    <div class="flower">🌼</div>
+    <div class="flower">🌻</div>
+    <div class="flower">🌸</div>
+
+    <div class="flower">🌷</div>
+    <div class="flower">🌺</div>
+    <div class="flower">🌹</div>
+
+    <div class="flower">🌼</div>
+    <div class="flower">🌸</div>
+    <div class="flower">🌷</div>
+    <div class="flower">🌺</div>
+
+</div>
+
+
+<!-- ======================================================
+     MAIN
+====================================================== -->
+
+<main class="wrapper">
+
+
+    <!-- HERO -->
+
+    <header class="hero">
+
+        <div class="logo">
+            🌸
+        </div>
+
+        <h1>
+            Terms of Service
+        </h1>
+
+        <p>
+            Welcome to VitalStar — connect, share, discover and grow.
+        </p>
+
+        <div class="updated">
+            ✦ Effective Date: August 18, 2026
+        </div>
+
+    </header>
+
+
+    <!-- TERMS -->
+
+    <article class="terms">
+
+
+        <div class="notice">
+
+            <strong>
+                🌷 Welcome to VitalStar
+            </strong>
+
+            <p>
+                By creating an account or using VitalStar, you agree
+                to follow these Terms of Service. Please read them
+                carefully before using the platform.
+            </p>
+
+        </div>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌸</span>
+                1. About VitalStar
+            </h2>
+
+            <p>
+                VitalStar is a social and community platform that
+                allows users to create profiles, connect with others,
+                share posts and media, participate in groups,
+                communicate with other users, and access features
+                provided by VitalStar.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌷</span>
+                2. Eligibility
+            </h2>
+
+            <p>
+                You must meet the minimum age required by applicable
+                law to create and use an account on VitalStar.
+                If you are below the required age, you may only use
+                VitalStar where permitted by applicable law and with
+                any required parental or guardian involvement.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌺</span>
+                3. Your Account
+            </h2>
+
+            <p>
+                You are responsible for maintaining the security of
+                your account and the information associated with it.
+            </p>
+
+            <ul>
+                <li>Provide accurate information.</li>
+                <li>Keep your login credentials private.</li>
+                <li>Do not impersonate another person.</li>
+                <li>Do not create accounts for fraudulent purposes.</li>
+                <li>Do not sell or improperly transfer your account.</li>
+                <li>Report suspected account compromise.</li>
+            </ul>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌹</span>
+                4. User Content
+            </h2>
+
+            <p>
+                VitalStar allows users to upload and share content
+                including text, photos, videos, comments, profiles,
+                group posts, messages, and other supported content.
+            </p>
+
+            <p style="margin-top:12px;">
+                You retain ownership of content that you create.
+                By uploading content, you grant VitalStar the
+                permissions reasonably necessary to host, store,
+                display, reproduce and distribute that content as
+                part of operating the platform.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌻</span>
+                5. Prohibited Activities
+            </h2>
+
+            <p>
+                You must not use VitalStar to:
+            </p>
+
+            <ul>
+                <li>Harass, threaten or intimidate others.</li>
+                <li>Impersonate individuals or organizations.</li>
+                <li>Spread malicious software.</li>
+                <li>Attempt unauthorized access to accounts or systems.</li>
+                <li>Commit fraud or scams.</li>
+                <li>Distribute illegal content.</li>
+                <li>Violate another person's privacy.</li>
+                <li>Spam users or manipulate platform features.</li>
+                <li>Circumvent security or access restrictions.</li>
+                <li>Use the platform for unlawful activities.</li>
+            </ul>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌼</span>
+                6. Groups and Communities
+            </h2>
+
+            <p>
+                VitalStar may allow users to create and participate
+                in groups. Group owners and administrators are
+                responsible for managing their communities
+                appropriately.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌸</span>
+                7. Messages and Communication
+            </h2>
+
+            <p>
+                VitalStar may provide private messaging and other
+                communication features. Users must use these
+                features responsibly and must not use them to
+                harass, threaten, scam, exploit or harm others.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌷</span>
+                8. Moderation and Enforcement
+            </h2>
+
+            <p>
+                VitalStar may review reports and take appropriate
+                action against content or accounts that violate
+                these Terms.
+            </p>
+
+            <ul>
+                <li>Content may be removed.</li>
+                <li>Features may be restricted.</li>
+                <li>Accounts may be suspended.</li>
+                <li>Accounts may be permanently terminated.</li>
+                <li>Groups may be removed when necessary.</li>
+            </ul>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌺</span>
+                9. Intellectual Property
+            </h2>
+
+            <p>
+                VitalStar's name, branding, interface, software,
+                graphics, logos and other platform materials may be
+                protected by intellectual-property laws.
+            </p>
+
+            <p style="margin-top:12px;">
+                You may not copy, modify, distribute, reverse engineer
+                or commercially exploit VitalStar's proprietary
+                materials without appropriate permission.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌹</span>
+                10. Third-Party Services
+            </h2>
+
+            <p>
+                VitalStar may integrate with third-party services
+                for authentication, hosting, payments, media
+                storage, analytics, notifications and other
+                functionality.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌻</span>
+                11. Payments and Premium Features
+            </h2>
+
+            <p>
+                VitalStar may offer subscriptions, premium features,
+                digital services or other paid functionality.
+                Prices and applicable conditions will be presented
+                before a purchase is completed.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌼</span>
+                12. Availability
+            </h2>
+
+            <p>
+                We work to keep VitalStar available and functioning
+                properly, but we cannot guarantee that the platform
+                will always be available or error-free.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌸</span>
+                13. Disclaimer
+            </h2>
+
+            <p>
+                VitalStar is provided on an "as available" basis.
+                To the extent permitted by applicable law, we do not
+                guarantee uninterrupted service, permanent
+                availability of features, or the accuracy of
+                user-generated content.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌷</span>
+                14. Limitation of Liability
+            </h2>
+
+            <p>
+                To the maximum extent permitted by applicable law,
+                VitalStar and its operators will not be responsible
+                for indirect, incidental, special or consequential
+                losses arising from use of the platform.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌺</span>
+                15. Account Termination
+            </h2>
+
+            <p>
+                You may stop using VitalStar at any time.
+                VitalStar may suspend or terminate accounts that
+                violate these Terms, applicable law, or rules
+                designed to protect the community.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌹</span>
+                16. Changes to These Terms
+            </h2>
+
+            <p>
+                VitalStar may update these Terms from time to time.
+                When significant changes are made, we may provide
+                appropriate notice through the platform or another
+                reasonable method.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌻</span>
+                17. Privacy
+            </h2>
+
+            <p>
+                Your use of VitalStar is also subject to our Privacy
+                Policy, which explains how information may be
+                collected, used, stored and handled when you use
+                the platform.
+            </p>
+
+        </section>
+
+
+        <section class="section">
+
+            <h2>
+                <span>🌼</span>
+                18. Contact
+            </h2>
+
+            <p>
+                If you have questions about these Terms or VitalStar,
+                please contact the VitalStar team through the official
+                contact method provided within the application or
+                website.
+            </p>
+
+        </section>
+
+
+    </article>
+
+
+    <!-- FOOTER -->
+
+    <footer class="footer">
+
+        <div class="footer-stars">
+            ✦ ✧ ★ ✦ ✧ ★ ✦
+        </div>
+
+        <div class="footer-flowers">
+            🌸 🌷 🌺 🌹 🌻 🌼
+        </div>
+
+        <p>
+            <strong>VitalStar</strong>
+        </p>
+
+        <p style="margin-top:7px;">
+            Connect. Share. Discover. Grow. ✨
+        </p>
+
+        <p style="margin-top:12px;">
+            © 2026 VitalStar. All rights reserved.
+        </p>
+
+    </footer>
+
+
+</main>
+
+</body>
+</html>
