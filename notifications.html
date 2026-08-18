@@ -7,112 +7,426 @@
 
 <style>
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+
+html{
+  scroll-behavior:smooth;
+}
+
 body{
   margin:0;
   font-family:Arial,sans-serif;
   background:
-    radial-gradient(circle at 10% 10%,rgba(123,47,247,.12),transparent 35%),
-    radial-gradient(circle at 90% 30%,rgba(24,119,242,.12),transparent 35%),
+    radial-gradient(circle at 10% 10%,rgba(123,47,247,.14),transparent 35%),
+    radial-gradient(circle at 90% 30%,rgba(24,119,242,.14),transparent 35%),
     #eef2ff;
   color:#172033;
   padding-bottom:90px;
   min-height:100vh;
 }
 
-/* HEADER */
+/* =========================
+   HEADER
+========================= */
+
 header{
-  position:fixed;top:0;left:0;width:100%;height:60px;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:60px;
   background:linear-gradient(135deg,#1877f2,#7b2ff7);
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  font-size:18px;font-weight:700;z-index:1000;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:19px;
+  font-weight:800;
+  z-index:1000;
   box-shadow:0 4px 18px rgba(31,41,55,.22);
   letter-spacing:.3px;
 }
-.back{
-  position:absolute;left:10px;top:50%;transform:translateY(-50%);
-  width:40px;height:40px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;text-decoration:none;font-size:22px;
-  transition:background .2s ease;
-}
-.back:hover{background:rgba(255,255,255,.15)}
 
-/* CONTAINER */
+.back{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  text-decoration:none;
+  font-size:24px;
+  transition:.2s ease;
+}
+
+.back:hover{
+  background:rgba(255,255,255,.16);
+}
+
+.back:active{
+  transform:translateY(-50%) scale(.92);
+}
+
+/* =========================
+   CONTAINER
+========================= */
+
 .container{
   margin-top:60px;
   padding:14px 10px 95px;
   max-width:760px;
   margin-inline:auto;
 }
-#notifications{display:flex;flex-direction:column;gap:12px}
 
-/* LOADING */
+#notifications{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* =========================
+   LOADING
+========================= */
+
 .loading{
   margin:50px auto;
-  padding:22px;
+  padding:24px;
   max-width:420px;
+  width:100%;
   text-align:center;
   color:#687386;
-  background:rgba(255,255,255,.75);
-  border-radius:18px;
-  backdrop-filter:blur(12px);
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(255,255,255,.9);
+  border-radius:20px;
+  backdrop-filter:blur(14px);
+  box-shadow:0 8px 25px rgba(31,41,55,.08);
   font-size:14px;
 }
 
-/* CARDS */
+/* =========================
+   NOTIFICATION CARDS
+========================= */
+
 .notification,
 .notification-card{
-  background:rgba(255,255,255,.92);
+  position:relative;
+  overflow:hidden;
+  background:rgba(255,255,255,.94);
   border-radius:18px;
-  border:1px solid rgba(255,255,255,.9);
+  border:1px solid rgba(255,255,255,.95);
   box-shadow:0 7px 24px rgba(31,41,55,.08);
-  transition:transform .2s ease, box-shadow .2s ease;
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    background .2s ease;
 }
+
 .notification:hover,
 .notification-card:hover{
   transform:translateY(-2px);
-  box-shadow:0 10px 28px rgba(31,41,55,.12);
+  box-shadow:0 10px 28px rgba(31,41,55,.13);
 }
 
-/* BOTTOM NAV */
+/* =========================
+   UNREAD NOTIFICATION
+========================= */
+
+.notification.unread,
+.notification-card.unread{
+  background:linear-gradient(
+    135deg,
+    rgba(255,255,255,.98),
+    rgba(255,245,247,.98)
+  );
+
+  border-color:rgba(255,55,75,.20);
+
+  box-shadow:
+    0 8px 26px rgba(255,55,75,.10),
+    0 3px 10px rgba(31,41,55,.06);
+}
+
+/* Red line on unread cards */
+
+.notification.unread::before,
+.notification-card.unread::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  background:linear-gradient(
+    180deg,
+    #ff1744,
+    #ff4d67
+  );
+}
+
+/* =========================
+   NEW BADGE
+========================= */
+
+.notification-new{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+
+  margin-left:7px;
+  padding:3px 7px;
+
+  color:#fff;
+  background:#e60023;
+
+  border-radius:7px;
+
+  font-size:10px;
+  font-weight:900;
+  line-height:1;
+
+  letter-spacing:.2px;
+
+  box-shadow:
+    0 3px 8px rgba(230,0,35,.28);
+
+  vertical-align:middle;
+
+  animation:newPulse 1.8s ease-in-out infinite;
+}
+
+.notification-new::before{
+  content:"🆕";
+  font-size:10px;
+}
+
+/* If JS directly adds .new-badge */
+
+.new-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  margin-left:7px;
+  padding:3px 7px;
+  background:#e60023;
+  color:#fff;
+  border-radius:7px;
+  font-size:10px;
+  font-weight:900;
+  box-shadow:0 3px 8px rgba(230,0,35,.28);
+}
+
+.new-badge::before{
+  content:"🆕";
+}
+
+/* =========================
+   UNREAD DOT
+========================= */
+
+.unread-dot{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#e60023;
+  box-shadow:0 0 0 4px rgba(230,0,35,.10);
+}
+
+/* =========================
+   READ STATE
+========================= */
+
+.notification.read,
+.notification-card.read{
+  opacity:.88;
+  background:rgba(255,255,255,.88);
+  border-color:rgba(220,225,235,.8);
+}
+
+.notification.read .notification-new,
+.notification-card.read .notification-new,
+.notification.read .new-badge,
+.notification-card.read .new-badge{
+  display:none;
+}
+
+/* =========================
+   BOTTOM NAV
+========================= */
+
 .bottom-nav{
-  position:fixed;bottom:0;left:0;width:100%;height:66px;
-  background:rgba(255,255,255,.92);
-  display:flex;justify-content:space-around;align-items:center;
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:66px;
+
+  background:rgba(255,255,255,.94);
+
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+
   border-top:1px solid rgba(180,190,210,.4);
+
+  box-shadow:
+    0 -5px 22px rgba(31,41,55,.10);
+
   backdrop-filter:blur(18px);
+
+  z-index:1000;
 }
+
 .bottom-nav a{
-  text-decoration:none;color:#596579;
-  display:flex;flex-direction:column;align-items:center;
-  font-size:20px;gap:2px;
-  transition:color .2s ease;
-}
-.bottom-nav a:hover{color:#1877f2}
-.bottom-nav small{font-size:10px}
+  text-decoration:none;
+  color:#596579;
 
-/* CREATE */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  min-width:50px;
+  height:54px;
+
+  font-size:20px;
+  gap:2px;
+
+  border-radius:14px;
+
+  transition:
+    color .2s ease,
+    background .2s ease,
+    transform .2s ease;
+}
+
+.bottom-nav a:hover{
+  color:#1877f2;
+  background:rgba(24,119,242,.08);
+}
+
+.bottom-nav a:active{
+  transform:scale(.92);
+}
+
+.bottom-nav small{
+  font-size:10px;
+  font-weight:600;
+}
+
+/* =========================
+   CREATE BUTTON
+========================= */
+
 .create{
-  width:56px;height:56px;border-radius:50%;
-  background:linear-gradient(135deg,#1877f2,#7b2ff7);
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  margin-top:-26px;font-size:26px;
+  width:56px!important;
+  height:56px!important;
+  min-width:56px!important;
+
+  border-radius:50%!important;
+
+  background:linear-gradient(
+    135deg,
+    #1877f2,
+    #7b2ff7
+  )!important;
+
+  color:#fff!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  margin-top:-26px;
+
+  font-size:26px!important;
+
   border:4px solid #eef2ff;
-  box-shadow:0 6px 18px rgba(0,0,0,.12);
+
+  box-shadow:
+    0 6px 18px rgba(24,119,242,.25),
+    0 4px 12px rgba(123,47,247,.18);
 }
 
-/* MOBILE */
+.create:hover{
+  color:#fff!important;
+  transform:translateY(-2px) scale(1.03)!important;
+}
+
+/* =========================
+   NEW BADGE ANIMATION
+========================= */
+
+@keyframes newPulse{
+  0%,100%{
+    transform:scale(1);
+  }
+
+  50%{
+    transform:scale(1.06);
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
 @media(max-width:480px){
-  header{height:58px;font-size:17px}
-  .container{margin-top:58px}
-  .bottom-nav{height:64px}
+
+  header{
+    height:58px;
+    font-size:17px;
+  }
+
+  .container{
+    margin-top:58px;
+    padding:12px 8px 95px;
+  }
+
+  .bottom-nav{
+    height:64px;
+  }
+
+  .bottom-nav a{
+    min-width:46px;
+    height:52px;
+    font-size:19px;
+  }
+
+  .bottom-nav small{
+    font-size:9px;
+  }
+
+  .create{
+    width:55px!important;
+    height:55px!important;
+    min-width:55px!important;
+    font-size:25px!important;
+  }
 }
 
-/* REDUCED MOTION */
+/* =========================
+   REDUCED MOTION
+========================= */
+
 @media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  *{transition:none!important}
+
+  html{
+    scroll-behavior:auto;
+  }
+
+  *{
+    transition:none!important;
+    animation:none!important;
+  }
 }
 </style>
 </head>
@@ -125,17 +439,41 @@ header{
 </header>
 
 <div class="container">
+
   <div id="notifications">
-    <div class="loading">Loading notifications...</div>
+    <div class="loading">
+      Loading notifications...
+    </div>
   </div>
+
 </div>
 
 <div class="bottom-nav">
-  <a href="home.html">🏠<small>Home</small></a>
-  <a href="users.html">👥<small>Friends</small></a>
-  <a href="create-post.html" class="create">➕</a>
-  <a href="general-room.html">💬<small>Chat</small></a>
-  <a href="profile.html">👤<small>Profile</small></a>
+
+  <a href="home.html">
+    🏠
+    <small>Home</small>
+  </a>
+
+  <a href="users.html">
+    👥
+    <small>Friends</small>
+  </a>
+
+  <a href="create-post.html" class="create">
+    ➕
+  </a>
+
+  <a href="general-room.html">
+    💬
+    <small>Chat</small>
+  </a>
+
+  <a href="profile.html">
+    👤
+    <small>Profile</small>
+  </a>
+
 </div>
 
 <script type="module" src="notifications-page.js"></script>
