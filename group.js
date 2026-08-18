@@ -4,7 +4,7 @@
 // Corrected / hardened version
 // ============================================================
 
-import { auth, db } from '../firebase.js';
+import { auth, db } from './firebase.js';
 
 import {
   onAuthStateChanged
