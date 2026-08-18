@@ -1,2872 +1,218 @@
-// ============================================================
-// VITALSTAR — groups.js
-// Groups Discovery / My Groups / Trending / Recommended
-// ============================================================
-
-import { auth, db } from "./firebase.js";
-
 import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
+  addDoc,
   collection,
-  collectionGroup,
   query,
   where,
   orderBy,
   limit,
   startAfter,
-  getDocs,
-  getDoc,
-  doc,
-  setDoc,
-  updateDoc,
   increment,
-  serverTimestamp
+  serverTimestamp,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ============================================================
-// CONFIG
+// CLOUDINARY
 // ============================================================
 
-const GROUPS_PAGE_SIZE = 12;
-const TOP_ACTIVE_LIMIT = 5;
-const RECOMMENDED_LIMIT = 10;
-const TRENDING_LIMIT = 10;
-const NEW_GROUPS_LIMIT = 10;
+const CLOUDINARY_CLOUD_NAME = "m0scmqqv";
+const CLOUDINARY_UPLOAD_PRESET = "vitalstar_upload";
 
-const GROUPS_STYLE_ID = "vitalstar-groups-styles";
+async function uploadToCloudinary(file) {
+  if (!file) throw new Error("No file selected.");
+
+  const type = file.type.startsWith("video/") ? "video" : "image";
+
+  const url =
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${type}/upload`;
+
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  let response;
+
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      body: form
+    });
+  } catch (error) {
+    console.error("Cloudinary network error:", error);
+    throw new Error(
+      "Cloudinary connection failed. Check your internet connection."
+    );
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(
+      `Cloudinary returned an invalid response (${response.status}).`
+    );
+  }
+
+  if (!response.ok) {
+    console.error("Cloudinary upload failed:", data);
+
+    throw new Error(
+      data?.error?.message ||
+      `Cloudinary upload failed (${response.status}).`
+    );
+  }
+
+  if (!data.secure_url) {
+    throw new Error("Cloudinary did not return a media URL.");
+  }
+
+  return {
+    url: data.secure_url,
+    type
+  };
+}
+
+// Converts Cloudinary videos to MP4 for better mobile compatibility.
+function getPlayableVideoUrl(url) {
+  if (!url) return "";
+
+  try {
+    const parsed = new URL(url);
+
+    if (
+      parsed.hostname.includes("res.cloudinary.com") &&
+      parsed.pathname.includes("/video/upload/")
+    ) {
+      const marker = "/video/upload/";
+      const index = parsed.pathname.indexOf(marker);
+
+      if (index !== -1) {
+        const before =
+          parsed.pathname.slice(0, index + marker.length);
+
+        const after =
+          parsed.pathname.slice(index + marker.length);
+
+        if (!after.startsWith("f_mp4/")) {
+          parsed.pathname = before + "f_mp4/" + after;
+        }
+
+        return parsed.toString();
+      }
+    }
+  } catch (error) {
+    console.warn("Could not transform video URL:", error);
+  }
+
+  return url;
+}
 
 // ============================================================
 // STATE
 // ============================================================
 
-let currentUser = null;
+const POSTS_PAGE_SIZE = 10;
+const POSTS_STYLE_ID = "vs-group-posts-styles";
 
-let state = {
-  allGroups: [],
-  myGroups: [],
-  recommendedGroups: [],
-  trendingGroups: [],
-  topActiveGroups: [],
-  newGroups: [],
+let ctx = null;
+let state = null;
 
-  searchTerm: "",
-  category: "all",
-
-  loading: false,
-
-  cursors: {
-    discover: null,
-    new: null,
-    trending: null,
-    recommended: null
-  },
-
-  hasMore: {
-    discover: true,
-    new: true,
-    trending: true,
-    recommended: true
-  },
-
-  membershipMap: new Map(),
-
-  userProfile: null
-};
-
-// ============================================================
-// DOM
-// ============================================================
-
-let appRoot = null;
-
-// ============================================================
-// INIT
-// ============================================================
-
-function init() {
-  injectStyles();
-
-  onAuthStateChanged(auth, async user => {
-    currentUser = user;
-
-    if (!user) {
-      showLoggedOut();
-      return;
-    }
-
-    await startGroupsPage();
-  });
-}
-
-async function startGroupsPage() {
-  appRoot = findGroupsContainer();
-
-  if (!appRoot) {
-    console.error(
-      "VitalStar Groups: Could not find groups container."
-    );
-
-    return;
-  }
-
-  renderPageShell();
-
-  await loadUserProfile();
-
-  await loadMyGroups();
-
-  await Promise.all([
-    loadTopActiveGroups(),
-    loadNewGroups(true),
-    loadTrendingGroups(true),
-    loadRecommendedGroups(true),
-    loadDiscoverGroups(true)
-  ]);
-}
-
-// ============================================================
-// FIND CONTAINER
-// ============================================================
-
-function findGroupsContainer() {
-  return (
-    document.querySelector("#groupsContainer") ||
-    document.querySelector("#groupsPage") ||
-    document.querySelector("#groupsList") ||
-    document.querySelector(".groups-container") ||
-    document.querySelector("main")
-  );
-}
-
-// ============================================================
-// LOGGED OUT
-// ============================================================
-
-function showLoggedOut() {
-  const root = findGroupsContainer();
-
-  if (!root) return;
-
-  root.innerHTML = `
-    <div class="vs-groups-login-required">
-      <div class="vs-groups-login-icon">
-        <i class="fa-solid fa-users"></i>
-      </div>
-
-      <h2>Join VitalStar Groups</h2>
-
-      <p>
-        Sign in to discover groups, join communities,
-        and connect with other members.
-      </p>
-
-      <a href="login.html" class="vs-primary-btn">
-        Sign In
-      </a>
-    </div>
-  `;
-}
-
-// ============================================================
-// PAGE SHELL
-// ============================================================
-
-function renderPageShell() {
-  appRoot.innerHTML = `
-    <div class="vs-groups-page">
-
-      <!-- HEADER -->
-      <section class="vs-groups-header">
-
-        <div>
-          <div class="vs-eyebrow">
-            <i class="fa-solid fa-users"></i>
-            Communities
-          </div>
-
-          <h1>Groups</h1>
-
-          <p>
-            Discover communities that match your interests.
-          </p>
-        </div>
-
-        <a
-          href="create-group.html"
-          class="vs-create-group-btn"
-        >
-          <i class="fa-solid fa-plus"></i>
-          Create Group
-        </a>
-
-      </section>
-
-      <!-- SEARCH -->
-      <section class="vs-groups-search">
-
-        <div class="vs-search-box">
-          <i class="fa-solid fa-magnifying-glass"></i>
-
-          <input
-            id="groupSearchInput"
-            type="search"
-            placeholder="Search groups..."
-            autocomplete="off"
-          >
-
-          <button
-            id="clearGroupSearch"
-            type="button"
-            style="display:none"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        <div
-          class="vs-category-scroll"
-          id="groupCategories"
-        >
-          <button
-            class="vs-category-btn active"
-            data-category="all"
-          >
-            All
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="technology"
-          >
-            Technology
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="gaming"
-          >
-            Gaming
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="education"
-          >
-            Education
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="music"
-          >
-            Music
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="sports"
-          >
-            Sports
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="business"
-          >
-            Business
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="entertainment"
-          >
-            Entertainment
-          </button>
-
-          <button
-            class="vs-category-btn"
-            data-category="other"
-          >
-            Other
-          </button>
-        </div>
-
-      </section>
-
-      <!-- MY GROUPS -->
-      <section class="vs-group-section">
-
-        <div class="vs-section-header">
-
-          <div>
-            <h2>
-              <i class="fa-solid fa-user-group"></i>
-              My Groups
-            </h2>
-
-            <p>Communities you've joined</p>
-          </div>
-
-          <button
-            class="vs-section-link"
-            id="viewAllMyGroups"
-          >
-            View all
-          </button>
-
-        </div>
-
-        <div
-          id="myGroupsGrid"
-          class="vs-groups-grid"
-        >
-          ${loadingSkeleton(4)}
-        </div>
-
-      </section>
-
-      <!-- TOP ACTIVE -->
-      <section class="vs-group-section">
-
-        <div class="vs-section-header">
-
-          <div>
-            <h2>
-              <i class="fa-solid fa-fire"></i>
-              Top 5 Most Active
-            </h2>
-
-            <p>The busiest communities right now</p>
-          </div>
-
-        </div>
-
-        <div
-          id="topActiveGroups"
-          class="vs-groups-grid vs-top-active-grid"
-        >
-          ${loadingSkeleton(5)}
-        </div>
-
-      </section>
-
-      <!-- TRENDING -->
-      <section class="vs-group-section">
-
-        <div class="vs-section-header">
-
-          <div>
-            <h2>
-              <i class="fa-solid fa-chart-line"></i>
-              Trending
-            </h2>
-
-            <p>Groups getting attention right now</p>
-          </div>
-
-          <button
-            class="vs-section-link"
-            data-section="trending"
-          >
-            More
-          </button>
-
-        </div>
-
-        <div
-          id="trendingGroups"
-          class="vs-groups-grid"
-        >
-          ${loadingSkeleton(4)}
-        </div>
-
-        <button
-          id="loadMoreTrending"
-          class="vs-load-more"
-          style="display:none"
-        >
-          Load more
-        </button>
-
-      </section>
-
-      <!-- NEW -->
-      <section class="vs-group-section">
-
-        <div class="vs-section-header">
-
-          <div>
-            <h2>
-              <i class="fa-solid fa-sparkles"></i>
-              New Groups
-            </h2>
-
-            <p>Fresh communities waiting for members</p>
-          </div>
-
-          <button
-            class="vs-section-link"
-            data-section="new"
-          >
-            More
-          </button>
-
-        </div>
-
-        <div
-          id="newGroups"
-          class="vs-groups-grid"
-        >
-          ${loadingSkeleton(4)}
-        </div>
-
-        <button
-          id="loadMoreNew"
-          class="vs-load-more"
-          style="display:none"
-        >
-          Load more
-        </button>
-
-      </section>
-
-      <!-- RECOMMENDED -->
-      <section class="vs-group-section">
-
-        <div class="vs-section-header">
-
-          <div>
-            <h2>
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              Recommended For You
-            </h2>
-
-            <p>Communities you may enjoy</p>
-          </div>
-
-        </div>
-
-        <div
-          id="recommendedGroups"
-          class="vs-groups-grid"
-        >
-          ${loadingSkeleton(4)}
-        </div>
-
-        <button
-          id="loadMoreRecommended"
-          class="vs-load-more"
-          style="display:none"
-        >
-          Load more
-        </button>
-
-      </section>
-
-      <!-- DISCOVER -->
-      <section class="vs-group-section">
-
-        <div class="vs-section-header">
-
-          <div>
-            <h2>
-              <i class="fa-solid fa-compass"></i>
-              Discover Groups
-            </h2>
-
-            <p>Explore all public communities</p>
-          </div>
-
-        </div>
-
-        <div
-          id="discoverGroups"
-          class="vs-groups-grid"
-        >
-          ${loadingSkeleton(8)}
-        </div>
-
-        <button
-          id="loadMoreDiscover"
-          class="vs-load-more"
-          style="display:none"
-        >
-          Load more
-        </button>
-
-      </section>
-
-      <!-- SEARCH RESULTS -->
-      <section
-        id="groupSearchResultsSection"
-        class="vs-group-section"
-        style="display:none"
-      >
-
-        <div class="vs-section-header">
-          <div>
-            <h2>
-              <i class="fa-solid fa-magnifying-glass"></i>
-              Search Results
-            </h2>
-
-            <p id="searchResultLabel"></p>
-          </div>
-        </div>
-
-        <div
-          id="groupSearchResults"
-          class="vs-groups-grid"
-        ></div>
-
-      </section>
-
-    </div>
-  `;
-
-  bindPageEvents();
-}
-
-// ============================================================
-// PAGE EVENTS
-// ============================================================
-
-function bindPageEvents() {
-  const search =
-    document.querySelector("#groupSearchInput");
-
-  const clear =
-    document.querySelector("#clearGroupSearch");
-
-  if (search) {
-    let timer;
-
-    search.addEventListener("input", () => {
-      clearTimeout(timer);
-
-      state.searchTerm =
-        search.value.trim();
-
-      clear.style.display =
-        state.searchTerm
-          ? "flex"
-          : "none";
-
-      timer = setTimeout(
-        runSearch,
-        350
-      );
-    });
-  }
-
-  if (clear) {
-    clear.onclick = () => {
-      search.value = "";
-      state.searchTerm = "";
-      clear.style.display = "none";
-
-      hideSearchResults();
-
-      document
-        .querySelectorAll(
-          ".vs-category-btn"
-        )
-        .forEach(btn =>
-          btn.classList.remove(
-            "active"
-          )
-        );
-
-      document
-        .querySelector(
-          '.vs-category-btn[data-category="all"]'
-        )
-        ?.classList.add("active");
-    };
-  }
-
-  document
-    .querySelectorAll(
-      ".vs-category-btn"
-    )
-    .forEach(button => {
-      button.addEventListener(
-        "click",
-        () => {
-          document
-            .querySelectorAll(
-              ".vs-category-btn"
-            )
-            .forEach(btn =>
-              btn.classList.remove(
-                "active"
-              )
-            );
-
-          button.classList.add(
-            "active"
-          );
-
-          state.category =
-            button.dataset.category ||
-            "all";
-
-          if (state.searchTerm) {
-            runSearch();
-          } else {
-            loadDiscoverGroups(true);
-          }
-        }
-      );
-    });
-
-  document
-    .querySelector(
-      "#loadMoreDiscover"
-    )
-    ?.addEventListener(
-      "click",
-      () => loadDiscoverGroups(false)
-    );
-
-  document
-    .querySelector(
-      "#loadMoreNew"
-    )
-    ?.addEventListener(
-      "click",
-      () => loadNewGroups(false)
-    );
-
-  document
-    .querySelector(
-      "#loadMoreTrending"
-    )
-    ?.addEventListener(
-      "click",
-      () => loadTrendingGroups(false)
-    );
-
-  document
-    .querySelector(
-      "#loadMoreRecommended"
-    )
-    ?.addEventListener(
-      "click",
-      () => loadRecommendedGroups(false)
-    );
-
-  document
-    .querySelector(
-      "#viewAllMyGroups"
-    )
-    ?.addEventListener(
-      "click",
-      () => {
-        const grid =
-          document.querySelector(
-            "#myGroupsGrid"
-          );
-
-        if (!grid) return;
-
-        grid.classList.toggle(
-          "expanded"
-        );
-
-        document.querySelector(
-          "#viewAllMyGroups"
-        ).textContent =
-          grid.classList.contains(
-            "expanded"
-          )
-            ? "Show less"
-            : "View all";
-      }
-    );
-}
+const profileCache = new Map();
 
 // ============================================================
 // USER PROFILE
 // ============================================================
 
-async function loadUserProfile() {
-  if (!currentUser) return;
-
-  try {
-    const snap =
-      await getDoc(
-        doc(
-          db,
-          "users",
-          currentUser.uid
-        )
-      );
-
-    state.userProfile =
-      snap.exists()
-        ? snap.data()
-        : {};
-
-  } catch (error) {
-    console.error(
-      "Could not load user profile:",
-      error
-    );
-
-    state.userProfile = {};
-  }
-}
-
-// ============================================================
-// MY GROUPS
-// ============================================================
-
-async function loadMyGroups() {
-  const grid =
-    document.querySelector(
-      "#myGroupsGrid"
-    );
-
-  if (!grid || !currentUser)
-    return;
-
-  try {
-    const membershipQuery =
-      query(
-        collectionGroup(
-          db,
-          "members"
-        ),
-        where(
-          "uid",
-          "==",
-          currentUser.uid
-        ),
-        where(
-          "status",
-          "==",
-          "active"
-        ),
-        limit(100)
-      );
-
-    const membershipSnapshot =
-      await getDocs(
-        membershipQuery
-      );
-
-    const groups = [];
-
-    for (
-      const membershipDoc of
-        membershipSnapshot.docs
-    ) {
-      const groupRef =
-        membershipDoc.ref.parent
-          .parent;
-
-      if (!groupRef)
-        continue;
-
-      const groupSnap =
-        await getDoc(
-          groupRef
-        );
-
-      if (!groupSnap.exists())
-        continue;
-
-      const group =
-        normalizeGroup(
-          groupSnap.id,
-          groupSnap.data()
-        );
-
-      state.membershipMap.set(
-        group.id,
-        {
-          status: "active",
-          role:
-            membershipDoc.data()
-              .role || "member"
-        }
-      );
-
-      groups.push(group);
-    }
-
-    groups.sort(
-      (a, b) => {
-        const aTime =
-          getTimestampMillis(
-            a.updatedAt ||
-              a.lastActivityAt
-          );
-
-        const bTime =
-          getTimestampMillis(
-            b.updatedAt ||
-              b.lastActivityAt
-          );
-
-        return bTime - aTime;
-      }
-    );
-
-    state.myGroups =
-      groups;
-
-    renderMyGroups();
-
-  } catch (error) {
-    console.error(
-      "Could not load My Groups:",
-      error
-    );
-
-    grid.innerHTML =
-      emptyState(
-        "fa-users",
-        "Your groups could not be loaded."
-      );
-  }
-}
-
-function renderMyGroups() {
-  const grid =
-    document.querySelector(
-      "#myGroupsGrid"
-    );
-
-  if (!grid) return;
-
-  if (!state.myGroups.length) {
-    grid.innerHTML =
-      emptyState(
-        "fa-user-group",
-        "You haven't joined any groups yet.",
-        "Explore groups below to find a community."
-      );
-
-    return;
+async function getUserProfile(uid) {
+  if (!uid) {
+    return {
+      fullName: "VitalStar User",
+      photoURL: ""
+    };
   }
 
-  const visible =
-    grid.classList.contains(
-      "expanded"
-    )
-      ? state.myGroups
-      : state.myGroups.slice(
-          0,
-          4
-        );
-
-  grid.innerHTML = "";
-
-  visible.forEach(
-    group =>
-      grid.appendChild(
-        createGroupCard(
-          group,
-          {
-            myGroup: true
-          }
-        )
-      )
-  );
-}
-
-// ============================================================
-// TOP 5 ACTIVE
-// ============================================================
-
-async function loadTopActiveGroups() {
-  const container =
-    document.querySelector(
-      "#topActiveGroups"
-    );
-
-  if (!container)
-    return;
-
-  try {
-    let snapshot;
-
-    try {
-      snapshot =
-        await getDocs(
-          query(
-            collection(
-              db,
-              "groups"
-            ),
-            where(
-              "privacy",
-              "==",
-              "public"
-            ),
-            orderBy(
-              "activityScore",
-              "desc"
-            ),
-            limit(
-              TOP_ACTIVE_LIMIT
-            )
-          )
-        );
-    } catch {
-      /*
-       * Fallback for groups that have not yet received
-       * activityScore fields.
-       */
-      snapshot =
-        await getDocs(
-          query(
-            collection(
-              db,
-              "groups"
-            ),
-            where(
-              "privacy",
-              "==",
-              "public"
-            ),
-            orderBy(
-              "updatedAt",
-              "desc"
-            ),
-            limit(
-              TOP_ACTIVE_LIMIT
-            )
-          )
-        );
-    }
-
-    const groups =
-      snapshot.docs.map(
-        d =>
-          normalizeGroup(
-            d.id,
-            d.data()
-          )
-      );
-
-    state.topActiveGroups =
-      groups;
-
-    container.innerHTML = "";
-
-    if (!groups.length) {
-      container.innerHTML =
-        emptyState(
-          "fa-fire",
-          "No active groups yet."
-        );
-
-      return;
-    }
-
-    groups.forEach(
-      (group, index) => {
-        const card =
-          createGroupCard(
-            group,
-            {
-              rank:
-                index + 1,
-              active:
-                true
-            }
-          );
-
-        container.appendChild(
-          card
-        );
-      }
-    );
-
-  } catch (error) {
-    console.error(
-      "Could not load top active groups:",
-      error
-    );
-
-    container.innerHTML =
-      emptyState(
-        "fa-fire",
-        "Unable to load active groups."
-      );
-  }
-}
-
-// ============================================================
-// NEW GROUPS
-// ============================================================
-
-async function loadNewGroups(
-  reset = false
-) {
-  const container =
-    document.querySelector(
-      "#newGroups"
-    );
-
-  if (!container)
-    return;
-
-  if (state.loading)
-    return;
-
-  state.loading = true;
-
-  if (reset) {
-    state.cursors.new =
-      null;
-
-    state.hasMore.new =
-      true;
-
-    container.innerHTML =
-      loadingSkeleton(4);
+  if (profileCache.has(uid)) {
+    return profileCache.get(uid);
   }
 
   try {
-    const constraints = [
-      where(
-        "privacy",
-        "==",
-        "public"
-      ),
-      orderBy(
-        "createdAt",
-        "desc"
-      ),
-      limit(
-        NEW_GROUPS_LIMIT
-      )
-    ];
+    const snap = await getDoc(doc(ctx.db, "users", uid));
 
-    if (
-      !reset &&
-      state.cursors.new
-    ) {
-      constraints.push(
-        startAfter(
-          state.cursors.new
-        )
-      );
+    if (!snap.exists()) {
+      const fallback = {
+        fullName: "VitalStar User",
+        photoURL: ""
+      };
+
+      profileCache.set(uid, fallback);
+      return fallback;
     }
 
-    const snapshot =
-      await getDocs(
-        query(
-          collection(
-            db,
-            "groups"
-          ),
-          ...constraints
-        )
-      );
+    const data = snap.data();
 
-    if (reset)
-      container.innerHTML = "";
+    const profile = {
+      fullName:
+        data.fullName ||
+        data.displayName ||
+        data.name ||
+        "VitalStar User",
 
-    if (
-      snapshot.docs.length
-    ) {
-      state.cursors.new =
-        snapshot.docs[
-          snapshot.docs.length - 1
-        ];
-    }
+      photoURL:
+        data.photoURL ||
+        data.profilePicture ||
+        data.profilePic ||
+        data.profileImage ||
+        data.avatar ||
+        data.image ||
+        ""
+    };
 
-    state.hasMore.new =
-      snapshot.docs.length ===
-      NEW_GROUPS_LIMIT;
+    profileCache.set(uid, profile);
 
-    snapshot.docs.forEach(
-      groupDoc => {
-        const group =
-          normalizeGroup(
-            groupDoc.id,
-            groupDoc.data()
-          );
-
-        container.appendChild(
-          createGroupCard(
-            group
-          )
-        );
-      }
-    );
-
-    if (
-      reset &&
-      snapshot.empty
-    ) {
-      container.innerHTML =
-        emptyState(
-          "fa-sparkles",
-          "No new groups yet."
-        );
-    }
-
-    updateLoadMoreButton(
-      "#loadMoreNew",
-      state.hasMore.new
-    );
-
+    return profile;
   } catch (error) {
-    console.error(
-      "Could not load new groups:",
-      error
-    );
+    console.error("Could not load user profile:", error);
 
-    if (reset) {
-      container.innerHTML =
-        emptyState(
-          "fa-sparkles",
-          "Could not load new groups."
-        );
-    }
-
-  } finally {
-    state.loading = false;
+    return {
+      fullName: "VitalStar User",
+      photoURL: ""
+    };
   }
 }
 
-// ============================================================
-// TRENDING
-// ============================================================
-
-async function loadTrendingGroups(
-  reset = false
-) {
-  const container =
-    document.querySelector(
-      "#trendingGroups"
-    );
-
-  if (!container)
-    return;
-
-  if (state.loading)
-    return;
-
-  state.loading = true;
-
-  if (reset) {
-    state.cursors.trending =
-      null;
-
-    state.hasMore.trending =
-      true;
-
-    container.innerHTML =
-      loadingSkeleton(4);
-  }
-
-  try {
-    const constraints = [
-      where(
-        "privacy",
-        "==",
-        "public"
-      ),
-      orderBy(
-        "activityScore",
-        "desc"
-      ),
-      limit(
-        TRENDING_LIMIT
-      )
-    ];
-
-    if (
-      !reset &&
-      state.cursors.trending
-    ) {
-      constraints.push(
-        startAfter(
-          state.cursors.trending
-        )
-      );
-    }
-
-    let snapshot;
-
-    try {
-      snapshot =
-        await getDocs(
-          query(
-            collection(
-              db,
-              "groups"
-            ),
-            ...constraints
-          )
-        );
-    } catch {
-      snapshot =
-        await getDocs(
-          query(
-            collection(
-              db,
-              "groups"
-            ),
-            where(
-              "privacy",
-              "==",
-              "public"
-            ),
-            orderBy(
-              "updatedAt",
-              "desc"
-            ),
-            limit(
-              TRENDING_LIMIT
-            )
-          )
-        );
-    }
-
-    if (reset)
-      container.innerHTML = "";
-
-    if (
-      snapshot.docs.length
-    ) {
-      state.cursors.trending =
-        snapshot.docs[
-          snapshot.docs.length - 1
-        ];
-    }
-
-    state.hasMore.trending =
-      snapshot.docs.length ===
-      TRENDING_LIMIT;
-
-    snapshot.docs.forEach(
-      groupDoc => {
-        const group =
-          normalizeGroup(
-            groupDoc.id,
-            groupDoc.data()
-          );
-
-        container.appendChild(
-          createGroupCard(
-            group,
-            {
-              trending: true
-            }
-          )
-        );
-      }
-    );
-
-    if (
-      reset &&
-      snapshot.empty
-    ) {
-      container.innerHTML =
-        emptyState(
-          "fa-chart-line",
-          "No trending groups yet."
-        );
-    }
-
-    updateLoadMoreButton(
-      "#loadMoreTrending",
-      state.hasMore.trending
-    );
-
-  } catch (error) {
-    console.error(
-      "Could not load trending groups:",
-      error
-    );
-
-    if (reset) {
-      container.innerHTML =
-        emptyState(
-          "fa-chart-line",
-          "Could not load trending groups."
-        );
-    }
-
-  } finally {
-    state.loading = false;
-  }
-}
-
-// ============================================================
-// RECOMMENDED
-// ============================================================
-
-async function loadRecommendedGroups(
-  reset = false
-) {
-  const container =
-    document.querySelector(
-      "#recommendedGroups"
-    );
-
-  if (!container)
-    return;
-
-  if (state.loading)
-    return;
-
-  state.loading = true;
-
-  if (reset) {
-    state.cursors.recommended =
-      null;
-
-    state.hasMore.recommended =
-      true;
-
-    container.innerHTML =
-      loadingSkeleton(4);
-  }
-
-  try {
-    /*
-     * Recommendation strategy:
-     *
-     * 1. Groups matching categories the user belongs to.
-     * 2. Active groups.
-     * 3. Groups with more members.
-     * 4. Groups the user hasn't joined.
-     */
-
-    const categories =
-      getPreferredCategories();
-
-    let groups = [];
-
-    if (categories.length) {
-      for (
-        const category of categories
-      ) {
-        try {
-          const snapshot =
-            await getDocs(
-              query(
-                collection(
-                  db,
-                  "groups"
-                ),
-                where(
-                  "privacy",
-                  "==",
-                  "public"
-                ),
-                where(
-                  "category",
-                  "==",
-                  category
-                ),
-                orderBy(
-                  "activityScore",
-                  "desc"
-                ),
-                limit(8)
-              )
-            );
-
-          snapshot.docs.forEach(
-            groupDoc => {
-              const group =
-                normalizeGroup(
-                  groupDoc.id,
-                  groupDoc.data()
-                );
-
-              if (
-                !state.membershipMap.has(
-                  group.id
-                )
-              ) {
-                if (
-                  !groups.some(
-                    x =>
-                      x.id ===
-                      group.id
-                  )
-                ) {
-                  groups.push(
-                    group
-                  );
-                }
-              }
-            }
-          );
-        } catch {
-          // Ignore category query failures.
-        }
-      }
-    }
-
-    /*
-     * General fallback recommendations.
-     */
-    if (
-      groups.length <
-      RECOMMENDED_LIMIT
-    ) {
-      try {
-        const snapshot =
-          await getDocs(
-            query(
-              collection(
-                db,
-                "groups"
-              ),
-              where(
-                "privacy",
-                "==",
-                "public"
-              ),
-              orderBy(
-                "memberCount",
-                "desc"
-              ),
-              limit(30)
-            )
-          );
-
-        snapshot.docs.forEach(
-          groupDoc => {
-            const group =
-              normalizeGroup(
-                groupDoc.id,
-                groupDoc.data()
-              );
-
-            if (
-              state.membershipMap.has(
-                group.id
-              )
-            ) {
-              return;
-            }
-
-            if (
-              groups.some(
-                x =>
-                  x.id ===
-                  group.id
-              )
-            ) {
-              return;
-            }
-
-            groups.push(group);
-          }
-        );
-      } catch (error) {
-        console.warn(
-          "Fallback recommendation query failed:",
-          error
-        );
-      }
-    }
-
-    /*
-     * Rank recommendations.
-     */
-    groups.sort(
-      (a, b) =>
-        recommendationScore(b) -
-        recommendationScore(a)
-    );
-
-    const finalGroups =
-      groups.slice(
-        0,
-        RECOMMENDED_LIMIT
-      );
-
-    state.recommendedGroups =
-      finalGroups;
-
-    if (reset)
-      container.innerHTML = "";
-
-    finalGroups.forEach(
-      group => {
-        if (
-          !container.querySelector(
-            `[data-group-id="${group.id}"]`
-          )
-        ) {
-          container.appendChild(
-            createGroupCard(
-              group,
-              {
-                recommended: true
-              }
-            )
-          );
-        }
-      }
-    );
-
-    if (!finalGroups.length) {
-      container.innerHTML =
-        emptyState(
-          "fa-wand-magic-sparkles",
-          "No recommendations yet."
-        );
-    }
-
-    /*
-     * Recommendations are generated from a bounded
-     * candidate set rather than loading the entire
-     * groups collection.
-     */
-    state.hasMore.recommended =
-      false;
-
-    updateLoadMoreButton(
-      "#loadMoreRecommended",
-      false
-    );
-
-  } catch (error) {
-    console.error(
-      "Could not load recommended groups:",
-      error
-    );
-
-    if (reset) {
-      container.innerHTML =
-        emptyState(
-          "fa-wand-magic-sparkles",
-          "Could not load recommendations."
-        );
-    }
-
-  } finally {
-    state.loading = false;
-  }
-}
-
-// ============================================================
-// DISCOVER
-// ============================================================
-
-async function loadDiscoverGroups(
-  reset = false
-) {
-  const container =
-    document.querySelector(
-      "#discoverGroups"
-    );
-
-  if (!container)
-    return;
-
-  if (state.loading)
-    return;
-
-  state.loading = true;
-
-  if (reset) {
-    state.cursors.discover =
-      null;
-
-    state.hasMore.discover =
-      true;
-
-    container.innerHTML =
-      loadingSkeleton(8);
-  }
-
-  try {
-    const constraints = [];
-
-    constraints.push(
-      where(
-        "privacy",
-        "==",
-        "public"
-      )
-    );
-
-    if (
-      state.category &&
-      state.category !== "all"
-    ) {
-      constraints.push(
-        where(
-          "category",
-          "==",
-          state.category
-        )
-      );
-    }
-
-    constraints.push(
-      orderBy(
-        "memberCount",
-        "desc"
-      )
-    );
-
-    constraints.push(
-      limit(
-        GROUPS_PAGE_SIZE
-      )
-    );
-
-    if (
-      !reset &&
-      state.cursors.discover
-    ) {
-      constraints.push(
-        startAfter(
-          state.cursors.discover
-        )
-      );
-    }
-
-    const snapshot =
-      await getDocs(
-        query(
-          collection(
-            db,
-            "groups"
-          ),
-          ...constraints
-        )
-      );
-
-    if (reset)
-      container.innerHTML = "";
-
-    if (
-      snapshot.docs.length
-    ) {
-      state.cursors.discover =
-        snapshot.docs[
-          snapshot.docs.length - 1
-        ];
-    }
-
-    state.hasMore.discover =
-      snapshot.docs.length ===
-      GROUPS_PAGE_SIZE;
-
-    snapshot.docs.forEach(
-      groupDoc => {
-        const group =
-          normalizeGroup(
-            groupDoc.id,
-            groupDoc.data()
-          );
-
-        container.appendChild(
-          createGroupCard(
-            group
-          )
-        );
-      }
-    );
-
-    if (
-      reset &&
-      snapshot.empty
-    ) {
-      container.innerHTML =
-        emptyState(
-          "fa-users",
-          "No public groups found."
-        );
-    }
-
-    updateLoadMoreButton(
-      "#loadMoreDiscover",
-      state.hasMore.discover
-    );
-
-  } catch (error) {
-    console.error(
-      "Could not load discover groups:",
-      error
-    );
-
-    if (reset) {
-      container.innerHTML =
-        emptyState(
-          "fa-users",
-          "Could not load groups."
-        );
-    }
-
-  } finally {
-    state.loading = false;
-  }
-}
-
-// ============================================================
-// SEARCH
-// ============================================================
-
-async function runSearch() {
-  const term =
-    state.searchTerm
-      .toLowerCase()
-      .trim();
-
-  if (!term) {
-    hideSearchResults();
-    return;
-  }
-
-  const section =
-    document.querySelector(
-      "#groupSearchResultsSection"
-    );
-
-  const container =
-    document.querySelector(
-      "#groupSearchResults"
-    );
-
-  const label =
-    document.querySelector(
-      "#searchResultLabel"
-    );
-
-  if (!section || !container)
-    return;
-
-  section.style.display =
-    "block";
-
-  label.textContent =
-    `Results for "${state.searchTerm}"`;
-
-  container.innerHTML =
-    loadingSkeleton(6);
-
-  try {
-    /*
-     * Firestore prefix search using searchTokens.
-     *
-     * Your group documents should contain:
-     *
-     * searchTokens: [
-     *   "gaming",
-     *   "gaming group",
-     *   "football"
-     * ]
-     */
-
-    const snapshot =
-      await getDocs(
-        query(
-          collection(
-            db,
-            "groups"
-          ),
-          where(
-            "privacy",
-            "==",
-            "public"
-          ),
-          where(
-            "searchTokens",
-            "array-contains",
-            term
-          ),
-          limit(30)
-        )
-      );
-
-    let groups =
-      snapshot.docs.map(
-        d =>
-          normalizeGroup(
-            d.id,
-            d.data()
-          )
-      );
-
-    /*
-     * If exact searchTokens didn't find anything,
-     * load a bounded list and perform client filtering.
-     */
-    if (!groups.length) {
-      const fallback =
-        await getDocs(
-          query(
-            collection(
-              db,
-              "groups"
-            ),
-            where(
-              "privacy",
-              "==",
-              "public"
-            ),
-            orderBy(
-              "memberCount",
-              "desc"
-            ),
-            limit(50)
-          )
-        );
-
-      groups =
-        fallback.docs
-          .map(
-            d =>
-              normalizeGroup(
-                d.id,
-                d.data()
-              )
-          )
-          .filter(
-            group =>
-              searchableGroupText(
-                group
-              ).includes(term)
-          );
-    }
-
-    if (
-      state.category !==
-      "all"
-    ) {
-      groups =
-        groups.filter(
-          group =>
-            String(
-              group.category ||
-                ""
-            ).toLowerCase() ===
-            state.category
-        );
-    }
-
-    container.innerHTML = "";
-
-    if (!groups.length) {
-      container.innerHTML =
-        emptyState(
-          "fa-magnifying-glass",
-          "No groups found.",
-          "Try another search term."
-        );
-
-      return;
-    }
-
-    groups.forEach(
-      group =>
-        container.appendChild(
-          createGroupCard(
-            group
-          )
-        )
-    );
-
-  } catch (error) {
-    console.error(
-      "Group search failed:",
-      error
-    );
-
-    container.innerHTML =
-      emptyState(
-        "fa-triangle-exclamation",
-        "Search failed."
-      );
-  }
-}
-
-function hideSearchResults() {
-  const section =
-    document.querySelector(
-      "#groupSearchResultsSection"
-    );
-
-  if (section)
-    section.style.display =
-      "none";
-}
-
-// ============================================================
-// NORMALIZE GROUP
-// ============================================================
-
-function normalizeGroup(
-  id,
-  data
-) {
-  return {
-    id,
-
-    name:
-      data.name ||
-      data.groupName ||
-      "Unnamed Group",
-
-    slug:
-      data.slug ||
-      id,
-
-    description:
-      data.description ||
-      "A VitalStar community.",
-
-    category:
-      String(
-        data.category ||
-          "other"
-      ).toLowerCase(),
-
-    coverURL:
-      data.coverURL ||
-      data.coverUrl ||
-      data.coverImage ||
-      "",
-
-    avatarURL:
-      data.avatarURL ||
-      data.avatarUrl ||
-      data.groupImage ||
-      data.image ||
-      data.photoURL ||
-      "",
-
-    privacy:
-      data.privacy ||
-      data.type ||
-      "public",
-
-    type:
-      data.type ||
-      data.privacy ||
-      "public",
-
-    premium:
-      Boolean(
-        data.premium ||
-        data.isPremium ||
-        data.subscription
-      ),
-
-    verified:
-      Boolean(
-        data.verified
-      ),
-
-    ownerId:
-      data.ownerId ||
-      "",
-
-    ownerName:
-      data.ownerName ||
-      "Group Owner",
-
-    memberCount:
-      Number(
-        data.memberCount ||
-          0
-      ),
-
-    postCount:
-      Number(
-        data.postCount ||
-          0
-      ),
-
-    onlineCount:
-      Number(
-        data.onlineCount ||
-          0
-      ),
-
-    activityScore:
-      Number(
-        data.activityScore ||
-          0
-      ),
-
-    weeklyActivity:
-      Number(
-        data.weeklyActivity ||
-          0
-      ),
-
-    monthlyActivity:
-      Number(
-        data.monthlyActivity ||
-          0
-      ),
-
-    lastActivityAt:
-      data.lastActivityAt ||
-      data.updatedAt ||
-      data.createdAt ||
-      null,
-
-    createdAt:
-      data.createdAt ||
-      null,
-
-    updatedAt:
-      data.updatedAt ||
-      null,
-
-    rules:
-      data.rules ||
-      "",
-
-    subscription:
-      data.subscription ||
-      null
-  };
-}
-
-// ============================================================
-// GROUP CARD
-// ============================================================
-
-function createGroupCard(
-  group,
-  options = {}
-) {
-  const card =
-    document.createElement(
-      "article"
-    );
-
-  card.className =
-    "vs-group-card";
-
-  card.dataset.groupId =
-    group.id;
-
-  const membership =
-    state.membershipMap.get(
-      group.id
-    );
-
-  const isMember =
-    membership?.status ===
-    "active";
-
-  const isPending =
-    membership?.status ===
-    "pending";
-
-  const category =
-    capitalize(
-      group.category
-    );
-
-  const privacyLabel =
-    group.privacy ===
-    "private"
-      ? "Private"
-      : "Public";
-
-  const activity =
-    getActivityLabel(
-      group
-    );
-
-  const avatar =
-    group.avatarURL ||
-    group.coverURL;
-
-  let actionHTML = "";
-
-  if (isMember) {
-    actionHTML = `
-      <a
-        href="group.html?id=${encodeURIComponent(group.id)}"
-        class="vs-group-action joined"
-      >
-        <i class="fa-solid fa-arrow-right"></i>
-        Open
-      </a>
-    `;
-  } else if (isPending) {
-    actionHTML = `
-      <button
-        class="vs-group-action pending"
-        disabled
-      >
-        <i class="fa-solid fa-clock"></i>
-        Pending
-      </button>
-    `;
-  } else {
-    actionHTML = `
-      <button
-        class="vs-group-action join"
-        data-action="join"
-      >
-        <i class="fa-solid fa-user-plus"></i>
-        Join
-      </button>
-    `;
-  }
-
-  const badges = [];
-
-  if (options.rank) {
-    badges.push(`
-      <span class="vs-rank-badge">
-        #${options.rank}
-      </span>
-    `);
-  }
-
-  if (options.trending) {
-    badges.push(`
-      <span class="vs-trending-badge">
-        <i class="fa-solid fa-fire"></i>
-        Trending
-      </span>
-    `);
-  }
-
-  if (group.verified) {
-    badges.push(`
-      <span class="vs-verified-badge">
-        <i class="fa-solid fa-check"></i>
-      </span>
-    `);
-  }
-
-  if (group.premium) {
-    badges.push(`
-      <span class="vs-premium-badge">
-        <i class="fa-solid fa-crown"></i>
-        Premium
-      </span>
-    `);
-  }
-
-  card.innerHTML = `
-    <div
-      class="vs-group-cover"
-      style="${
-        group.coverURL
-          ? `background-image:url("${escapeAttribute(
-              group.coverURL
-            )}")`
-          : ""
-      }"
-    >
-      <div class="vs-group-overlay"></div>
-
-      <div class="vs-card-badges">
-        ${badges.join("")}
-      </div>
-
-      <div
-        class="vs-group-avatar"
-        ${
-          avatar
-            ? `style="background-image:url('${escapeAttribute(
-                avatar
-              )}')"`
-            : ""
-        }
-      >
-        ${
-          !avatar
-            ? escapeHtml(
-                getInitials(
-                  group.name
-                )
-              )
-            : ""
-        }
-      </div>
-    </div>
-
-    <div class="vs-group-card-body">
-
-      <div class="vs-group-title-row">
-
-        <a
-          href="group.html?id=${encodeURIComponent(group.id)}"
-          class="vs-group-name"
-        >
-          ${escapeHtml(
-            group.name
-          )}
-        </a>
-
-        ${
-          group.verified
-            ? `
-              <i
-                class="fa-solid fa-circle-check vs-title-verified"
-                title="Verified group"
-              ></i>
-            `
-            : ""
-        }
-
-      </div>
-
-      <p class="vs-group-description">
-        ${escapeHtml(
-          truncate(
-            group.description,
-            100
-          )
-        )}
-      </p>
-
-      <div class="vs-group-meta">
-
-        <span>
-          <i class="fa-solid fa-users"></i>
-          ${formatNumber(
-            group.memberCount
-          )}
-        </span>
-
-        <span>
-          <i class="fa-solid fa-note-sticky"></i>
-          ${formatNumber(
-            group.postCount
-          )}
-        </span>
-
-        <span>
-          <i class="fa-solid fa-bolt"></i>
-          ${escapeHtml(
-            activity
-          )}
-        </span>
-
-      </div>
-
-      <div class="vs-group-tags">
-
-        <span class="vs-group-tag">
-          ${escapeHtml(
-            category
-          )}
-        </span>
-
-        <span class="vs-group-tag">
-          <i class="fa-solid ${
-            group.privacy ===
-            "private"
-              ? "fa-lock"
-              : "fa-globe"
-          }"></i>
-          ${privacyLabel}
-        </span>
-
-      </div>
-
-      <div class="vs-group-card-footer">
-        ${actionHTML}
-      </div>
-
-    </div>
-  `;
-
-  card
-    .querySelector(
-      '[data-action="join"]'
-    )
-    ?.addEventListener(
-      "click",
-      () =>
-        joinGroup(
-          group,
-          card
-        )
-    );
-
-  return card;
-}
-
-// ============================================================
-// JOIN GROUP
-// ============================================================
-
-async function joinGroup(
-  group,
-  card
-) {
-  if (!currentUser) {
-    window.location.href =
-      "login.html";
-
-    return;
-  }
-
-  const button =
-    card.querySelector(
-      ".vs-group-action"
-    );
-
-  if (button) {
-    button.disabled =
-      true;
-
-    button.innerHTML = `
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      Joining...
-    `;
-  }
-
-  try {
-    const memberRef =
-      doc(
-        db,
-        "groups",
-        group.id,
-        "members",
-        currentUser.uid
-      );
-
-    const existing =
-      await getDoc(
-        memberRef
-      );
-
-    /*
-     * Private groups use pending membership.
-     * Public groups become active immediately.
-     */
-    const status =
-      group.privacy ===
-      "private"
-        ? "pending"
-        : "active";
-
-    const profile =
-      state.userProfile ||
-      {};
-
-    await setDoc(
-      memberRef,
-      {
-        uid:
-          currentUser.uid,
-
-        displayName:
-          profile.fullName ||
-          currentUser.displayName ||
-          "VitalStar User",
-
-        photoURL:
-          profile.photoURL ||
-          "",
-
-        role:
-          existing.exists()
-            ? existing.data()
-                .role ||
-              "member"
-            : "member",
-
-        status,
-
-        category:
-          group.category,
-
-        joinedAt:
-          existing.exists()
-            ? existing.data()
-                .joinedAt ||
-              serverTimestamp()
-            : serverTimestamp(),
-
-        updatedAt:
-          serverTimestamp()
-      },
-      {
-        merge: true
-      }
-    );
-
-    if (
-      status ===
-      "active" &&
-      !existing.exists()
-    ) {
-      await updateDoc(
-        doc(
-          db,
-          "groups",
-          group.id
-        ),
-        {
-          memberCount:
-            increment(1),
-
-          activityScore:
-            increment(1),
-
-          lastActivityAt:
-            serverTimestamp(),
-
-          updatedAt:
-            serverTimestamp()
-        }
-      );
-    }
-
-    state.membershipMap.set(
-      group.id,
-      {
-        status,
-        role: "member"
-      }
-    );
-
-    await loadMyGroups();
-
-    /*
-     * Refresh cards so the Join button
-     * immediately becomes Open/Pending.
-     */
-    refreshGroupCard(
-      group.id
-    );
-
-    if (
-      typeof window.showToast ===
-      "function"
-    ) {
-      window.showToast(
-        status === "active"
-          ? `Joined ${group.name}!`
-          : `Request sent to ${group.name}.`,
-        "success"
-      );
-    }
-
-  } catch (error) {
-    console.error(
-      "Could not join group:",
-      error
-    );
-
-    if (button) {
-      button.disabled =
-        false;
-
-      button.innerHTML = `
-        <i class="fa-solid fa-user-plus"></i>
-        Join
-      `;
-    }
-
-    alert(
-      error.message ||
-      "Could not join this group."
-    );
-  }
-}
-
-// ============================================================
-// REFRESH GROUP CARD
-// ============================================================
-
-function refreshGroupCard(
-  groupId
-) {
-  document
-    .querySelectorAll(
-      `[data-group-id="${groupId}"]`
-    )
-    .forEach(card => {
-      /*
-       * Re-rendering the exact card requires the original
-       * group object. Reloading the section is safer.
-       */
-      card.remove();
-    });
-}
-
-// ============================================================
-// RECOMMENDATION SCORING
-// ============================================================
-
-function getPreferredCategories() {
-  const counts =
-    new Map();
-
-  state.myGroups.forEach(
-    group => {
-      if (!group.category)
-        return;
-
-      counts.set(
-        group.category,
-        (counts.get(
-          group.category
-        ) || 0) + 1
-      );
-    }
-  );
-
-  return Array.from(
-    counts.entries()
-  )
-    .sort(
-      (a, b) =>
-        b[1] - a[1]
-    )
-    .map(
-      x => x[0]
-    )
-    .slice(0, 5);
-}
-
-function recommendationScore(
-  group
-) {
-  const categories =
-    getPreferredCategories();
-
-  let score = 0;
-
-  if (
-    categories.includes(
-      group.category
-    )
-  ) {
-    score += 100;
-  }
-
-  score += Math.min(
-    group.activityScore / 2,
-    50
-  );
-
-  score += Math.min(
-    group.memberCount / 10,
-    30
-  );
-
-  score += Math.min(
-    group.postCount / 5,
-    20
-  );
-
-  if (group.verified)
-    score += 10;
-
-  return score;
-}
-
-// ============================================================
-// ACTIVITY LABEL
-// ============================================================
-
-function getActivityLabel(
-  group
-) {
-  const score =
-    Number(
-      group.activityScore ||
-        0
-    );
-
-  if (score >= 500)
-    return "Very active";
-
-  if (score >= 200)
-    return "Highly active";
-
-  if (score >= 50)
-    return "Active";
-
-  if (
-    group.postCount > 0
-  )
-    return "Growing";
-
-  return "New";
-}
-
-// ============================================================
-// SEARCH TEXT
-// ============================================================
-
-function searchableGroupText(
-  group
-) {
-  return `
-    ${group.name}
-    ${group.description}
-    ${group.category}
-    ${group.ownerName}
-    ${group.slug}
-  `
-    .toLowerCase()
-    .replace(
-      /\s+/g,
-      " "
-    );
-}
-
-// ============================================================
-// LOAD MORE
-// ============================================================
-
-function updateLoadMoreButton(
-  selector,
-  show
-) {
-  const button =
-    document.querySelector(
-      selector
-    );
-
-  if (!button)
-    return;
-
-  button.style.display =
-    show
-      ? "block"
-      : "none";
-}
-
-// ============================================================
-// LOADING SKELETON
-// ============================================================
-
-function loadingSkeleton(
-  count
-) {
-  return Array.from(
-    {
-      length: count
-    }
-  )
-    .map(
-      () => `
-        <div class="vs-group-skeleton">
-
-          <div class="vs-skeleton-cover"></div>
-
-          <div class="vs-skeleton-body">
-
-            <div class="vs-skeleton-line title"></div>
-
-            <div class="vs-skeleton-line"></div>
-
-            <div class="vs-skeleton-line short"></div>
-
-          </div>
-
-        </div>
-      `
-    )
-    .join("");
-}
-
-// ============================================================
-// EMPTY STATE
-// ============================================================
-
-function emptyState(
-  icon,
-  title,
-  description = ""
-) {
-  return `
-    <div class="vs-empty-state">
-
-      <i class="fa-solid ${icon}"></i>
-
-      <strong>
-        ${escapeHtml(title)}
-      </strong>
-
-      ${
-        description
-          ? `
-            <p>
-              ${escapeHtml(
-                description
-              )}
-            </p>
-          `
-          : ""
-      }
-
-    </div>
-  `;
-}
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-function formatNumber(
-  number
-) {
-  const value =
-    Number(number || 0);
-
-  if (value >= 1000000)
-    return (
-      (value / 1000000)
-        .toFixed(
-          value % 1000000
-            ? 1
-            : 0
-        ) +
-      "M"
-    );
-
-  if (value >= 1000)
-    return (
-      (value / 1000)
-        .toFixed(
-          value % 1000
-            ? 1
-            : 0
-        ) +
-      "K"
-    );
-
-  return String(value);
-}
-
-function capitalize(
-  value
-) {
-  if (!value)
-    return "Other";
-
-  return String(value)
-    .charAt(0)
-    .toUpperCase() +
-    String(value)
-      .slice(1);
-}
-
-function truncate(
-  value,
-  max
-) {
-  const text =
-    String(value || "");
-
-  if (
-    text.length <= max
-  ) {
-    return text;
-  }
+function getInitials(name) {
+  if (!name) return "U";
 
   return (
-    text.slice(
-      0,
-      max - 3
-    ) + "..."
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(x => x.charAt(0).toUpperCase())
+      .join("") || "U"
   );
 }
 
-function getInitials(
-  name
-) {
-  return String(
-    name || "Group"
-  )
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map(
-      word =>
-        word
-          .charAt(0)
-          .toUpperCase()
-    )
-    .join("") || "G";
+function authorProfileHref(uid) {
+  return uid
+    ? `profile.html?uid=${encodeURIComponent(uid)}`
+    : "#";
 }
 
-function getTimestampMillis(
-  timestamp
-) {
-  if (!timestamp)
-    return 0;
+function setAvatarBackground(element, photoURL, name) {
+  element.textContent = getInitials(name);
 
-  if (
-    typeof timestamp.toMillis ===
-    "function"
-  ) {
-    return timestamp.toMillis();
-  }
+  if (!photoURL) return;
 
-  if (
-    timestamp instanceof Date
-  ) {
-    return timestamp.getTime();
-  }
-
-  return 0;
-}
-
-function escapeHtml(
-  value
-) {
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  div.textContent =
-    String(
-      value ?? ""
-    );
-
-  return div.innerHTML;
-}
-
-function escapeAttribute(
-  value
-) {
-  return String(
-    value || ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    );
+  element.style.backgroundImage = `url("${photoURL}")`;
+  element.style.backgroundSize = "cover";
+  element.style.backgroundPosition = "center";
 }
 
 // ============================================================
@@ -2874,631 +220,3052 @@ function escapeAttribute(
 // ============================================================
 
 function injectStyles() {
-  if (
-    document.getElementById(
-      GROUPS_STYLE_ID
-    )
-  ) {
-    return;
-  }
+  if (document.getElementById(POSTS_STYLE_ID)) return;
 
-  const style =
-    document.createElement(
-      "style"
-    );
+  const style = document.createElement("style");
 
-  style.id =
-    GROUPS_STYLE_ID;
+  style.id = POSTS_STYLE_ID;
 
   style.textContent = `
-
-    .vs-groups-page {
-      width:100%;
-      max-width:1200px;
-      margin:0 auto;
-      padding:20px;
-      box-sizing:border-box;
-    }
-
-    .vs-groups-header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:20px;
-      margin-bottom:22px;
-    }
-
-    .vs-eyebrow {
-      color:#315fff;
-      font-size:12px;
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.7px;
-      margin-bottom:5px;
-    }
-
-    .vs-groups-header h1 {
-      margin:0;
-      font-size:30px;
-      color:#151822;
-    }
-
-    .vs-groups-header p {
-      margin:6px 0 0;
-      color:#7d8494;
-      font-size:14px;
-    }
-
-    .vs-create-group-btn,
-    .vs-primary-btn {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      text-decoration:none;
-      background:linear-gradient(
-        135deg,
-        #315fff,
-        #7c4dff
-      );
-      color:white;
-      border:0;
-      border-radius:999px;
-      padding:11px 18px;
-      font-weight:700;
-      cursor:pointer;
-    }
-
-    .vs-groups-search {
+    .composer {
+      border-radius:22px;
       background:#fff;
       border:1px solid rgba(0,0,0,.08);
-      border-radius:20px;
-      padding:14px;
-      margin-bottom:30px;
+      padding:16px 18px;
+      margin-bottom:20px;
     }
 
-    .vs-search-box {
-      height:46px;
+    .composer__top {
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .composer__avatar,
+    .post-card__avatar,
+    .comment-avatar {
+      background:linear-gradient(135deg,#315fff,#7c4dff)
+        center/cover;
       display:flex;
       align-items:center;
-      gap:10px;
-      background:#f5f6f8;
-      border-radius:13px;
-      padding:0 14px;
+      justify-content:center;
+      color:#fff;
+      font-weight:700;
+      text-decoration:none;
+      overflow:hidden;
+      flex-shrink:0;
     }
 
-    .vs-search-box i {
-      color:#8a90a0;
+    .composer__avatar {
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      font-size:15px;
     }
 
-    .vs-search-box input {
+    .composer__input {
       flex:1;
-      border:0;
-      outline:0;
-      background:transparent;
+      min-height:42px;
+      max-height:220px;
+      resize:none;
+      background:#f5f6f8;
+      border:1px solid rgba(0,0,0,.1);
+      border-radius:12px;
+      padding:11px 14px;
       color:#1a1d29;
       font-size:14px;
+      outline:none;
     }
 
-    .vs-search-box button {
-      border:0;
-      background:none;
-      color:#8a90a0;
-      cursor:pointer;
-      width:30px;
-      height:30px;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .vs-category-scroll {
-      display:flex;
-      gap:8px;
-      overflow-x:auto;
-      padding-top:12px;
-      scrollbar-width:none;
-    }
-
-    .vs-category-scroll::-webkit-scrollbar {
-      display:none;
-    }
-
-    .vs-category-btn {
-      white-space:nowrap;
-      border:1px solid rgba(0,0,0,.08);
-      background:#fff;
-      color:#6b7280;
-      padding:8px 13px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:600;
-      cursor:pointer;
-    }
-
-    .vs-category-btn.active {
-      background:#315fff;
-      color:#fff;
+    .composer__input:focus {
       border-color:#315fff;
     }
 
-    .vs-group-section {
-      margin-bottom:38px;
+    .composer__input::placeholder {
+      color:#9aa0ac;
     }
 
-    .vs-section-header {
+    .composer__media-preview {
+      margin-top:12px;
+      position:relative;
+      display:none;
+      border-radius:14px;
+      overflow:hidden;
+      background:#000;
+    }
+
+    .composer__media-preview.is-visible {
+      display:block;
+    }
+
+    .composer__media-preview img,
+    .composer__media-preview video {
+      width:100%;
+      max-height:420px;
+      object-fit:contain;
+      display:block;
+      background:#000;
+    }
+
+    .composer__media-remove {
+      position:absolute;
+      top:10px;
+      right:10px;
+      z-index:5;
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      background:rgba(0,0,0,.75);
+      border:0;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+
+    .composer__bottom {
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:15px;
-      margin-bottom:14px;
-    }
-
-    .vs-section-header h2 {
-      margin:0;
-      color:#191c26;
-      font-size:19px;
-    }
-
-    .vs-section-header h2 i {
-      color:#315fff;
-      margin-right:5px;
-    }
-
-    .vs-section-header p {
-      margin:4px 0 0;
-      color:#8a90a0;
-      font-size:12px;
-    }
-
-    .vs-section-link {
-      border:0;
-      background:none;
-      color:#315fff;
-      font-size:12px;
-      font-weight:700;
-      cursor:pointer;
-    }
-
-    .vs-groups-grid {
-      display:grid;
-      grid-template-columns:
-        repeat(
-          4,
-          minmax(0,1fr)
-        );
-      gap:15px;
-    }
-
-    .vs-top-active-grid {
-      grid-template-columns:
-        repeat(
-          5,
-          minmax(0,1fr)
-        );
-    }
-
-    .vs-group-card {
-      min-width:0;
-      background:#fff;
-      border:1px solid rgba(0,0,0,.08);
-      border-radius:19px;
-      overflow:hidden;
-      transition:
-        transform .18s ease,
-        box-shadow .18s ease;
-    }
-
-    .vs-group-card:hover {
-      transform:translateY(-2px);
-      box-shadow:
-        0 10px 28px
-        rgba(0,0,0,.08);
-    }
-
-    .vs-group-cover {
-      height:120px;
-      background:
-        linear-gradient(
-          135deg,
-          #315fff,
-          #7c4dff
-        );
-      background-size:cover;
-      background-position:center;
-      position:relative;
-    }
-
-    .vs-group-overlay {
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(
-          to bottom,
-          rgba(0,0,0,.04),
-          rgba(0,0,0,.25)
-        );
-    }
-
-    .vs-card-badges {
-      position:absolute;
-      top:10px;
-      left:10px;
-      right:10px;
-      display:flex;
-      gap:5px;
-      flex-wrap:wrap;
-      z-index:2;
-    }
-
-    .vs-rank-badge,
-    .vs-trending-badge,
-    .vs-premium-badge {
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      border-radius:999px;
-      padding:4px 7px;
-      font-size:9px;
-      font-weight:800;
-      color:#fff;
-      background:rgba(0,0,0,.55);
-      backdrop-filter:blur(5px);
-    }
-
-    .vs-trending-badge {
-      background:rgba(220,40,70,.85);
-    }
-
-    .vs-premium-badge {
-      background:rgba(212,160,0,.9);
-    }
-
-    .vs-verified-badge {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:22px;
-      height:22px;
-      border-radius:50%;
-      background:#315fff;
-      color:#fff;
-      font-size:10px;
-    }
-
-    .vs-group-avatar {
-      position:absolute;
-      bottom:-24px;
-      left:15px;
-      width:55px;
-      height:55px;
-      border-radius:16px;
-      border:4px solid #fff;
-      background:
-        linear-gradient(
-          135deg,
-          #315fff,
-          #7c4dff
-        );
-      background-size:cover;
-      background-position:center;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#fff;
-      font-size:18px;
-      font-weight:800;
-      z-index:3;
-    }
-
-    .vs-group-card-body {
-      padding:34px 14px 14px;
-    }
-
-    .vs-group-title-row {
-      display:flex;
-      align-items:center;
-      gap:5px;
-    }
-
-    .vs-group-name {
-      color:#191c26;
-      text-decoration:none;
-      font-weight:800;
-      font-size:14px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .vs-title-verified {
-      color:#315fff;
-      font-size:12px;
-    }
-
-    .vs-group-description {
-      margin:7px 0 10px;
-      min-height:34px;
-      color:#7d8494;
-      font-size:11.5px;
-      line-height:1.5;
-    }
-
-    .vs-group-meta {
-      display:flex;
-      flex-wrap:wrap;
-      gap:9px;
-      color:#8a90a0;
-      font-size:10.5px;
-    }
-
-    .vs-group-meta span {
-      display:flex;
-      align-items:center;
-      gap:4px;
-    }
-
-    .vs-group-meta i {
-      color:#315fff;
-    }
-
-    .vs-group-tags {
-      display:flex;
-      gap:5px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-
-    .vs-group-tag {
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      padding:4px 7px;
-      background:#f5f6f8;
-      border-radius:999px;
-      color:#777f8f;
-      font-size:9.5px;
-      font-weight:600;
-    }
-
-    .vs-group-card-footer {
+      gap:10px;
       margin-top:12px;
     }
 
-    .vs-group-action {
-      width:100%;
-      min-height:36px;
-      border-radius:10px;
-      border:0;
+    .composer__tools {
+      display:flex;
+      gap:8px;
+    }
+
+    .composer__tool-btn {
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      background:#f5f6f8;
+      border:1px solid rgba(0,0,0,.1);
+      color:#5a6070;
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:6px;
-      font-size:11px;
+      cursor:pointer;
+    }
+
+    .composer__post-btn {
+      padding:10px 22px;
+      border-radius:999px;
+      border:0;
+      background:linear-gradient(135deg,#315fff,#7c4dff);
+      color:#fff;
       font-weight:700;
       cursor:pointer;
-      text-decoration:none;
-      box-sizing:border-box;
     }
 
-    .vs-group-action.join {
-      background:#315fff;
-      color:#fff;
-    }
-
-    .vs-group-action.joined {
-      background:#f0f3ff;
-      color:#315fff;
-    }
-
-    .vs-group-action.pending {
-      background:#f5f6f8;
-      color:#8a90a0;
+    .composer__post-btn:disabled {
+      opacity:.5;
       cursor:default;
     }
 
-    .vs-load-more {
-      width:100%;
-      margin-top:14px;
-      padding:11px;
-      border-radius:11px;
+    .composer-join-notice {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:14px 16px;
+      border-radius:18px;
+      background:rgba(47,111,255,.07);
+      border:1px solid rgba(47,111,255,.18);
+      color:#4a5568;
+      font-size:13px;
+      margin-bottom:20px;
+    }
+
+    .post-card {
+      border-radius:22px;
+      background:#fff;
       border:1px solid rgba(0,0,0,.08);
-      background:#f5f6f8;
-      color:#315fff;
+      padding:16px 18px;
+      margin-bottom:16px;
+      overflow:hidden;
+    }
+
+    .post-card.is-pinned {
+      border-color:rgba(255,194,75,.55);
+    }
+
+    .post-card__pin-flag {
+      display:none;
+      align-items:center;
+      gap:6px;
+      font-size:11.5px;
+      color:#d69e00;
       font-weight:700;
-      font-size:12px;
-      cursor:pointer;
-    }
-
-    .vs-empty-state {
-      grid-column:1/-1;
-      text-align:center;
-      padding:35px 20px;
-      color:#8a90a0;
-    }
-
-    .vs-empty-state i {
-      display:block;
-      font-size:30px;
-      color:#315fff;
-      opacity:.65;
       margin-bottom:10px;
     }
 
-    .vs-empty-state strong {
-      display:block;
-      color:#5e6575;
-      font-size:13px;
+    .post-card.is-pinned .post-card__pin-flag {
+      display:flex;
     }
 
-    .vs-empty-state p {
-      margin:6px 0 0;
-      font-size:11px;
+    .post-card__head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
     }
 
-    .vs-group-skeleton {
-      border-radius:19px;
+    .post-card__author {
+      display:flex;
+      gap:10px;
+      min-width:0;
+      align-items:center;
+    }
+
+    .post-card__avatar {
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      font-size:15px;
+    }
+
+    .post-card__author-info {
+      min-width:0;
+    }
+
+    .post-card__author-name-row {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .post-card__author-name,
+    .comment-author,
+    .repost-original__author {
+      color:#e2aa00 !important;
+      font-weight:800;
+      text-decoration:none;
+    }
+
+    .post-card__author-name {
+      font-size:14px;
+    }
+
+    .post-card__meta {
+      font-size:11.5px;
+      color:#8a90a0;
+      margin-top:2px;
+    }
+
+    .role-chip {
+      font-size:10px;
+      font-weight:700;
+      padding:3px 8px;
+      border-radius:999px;
+      background:rgba(139,92,255,.12);
+      color:#8b5cff;
+      text-transform:capitalize;
+    }
+
+    .post-card__text {
+      font-size:14px;
+      color:#1a1d29;
+      line-height:1.6;
+      margin:12px 0 0;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .post-card__media {
+      margin-top:12px;
+      border-radius:14px;
       overflow:hidden;
+      background:#000;
+      width:100%;
+    }
+
+    .post-card__media img,
+    .post-card__media video {
+      width:100%;
+      max-height:500px;
+      object-fit:contain;
+      display:block;
+      background:#000;
+    }
+
+    .post-card__menu-wrap {
+      position:relative;
+    }
+
+    .post-card__menu-btn {
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      border:0;
+      background:none;
+      color:#8a90a0;
+      cursor:pointer;
+    }
+
+    .post-card__menu {
+      display:none;
+      position:absolute;
+      top:38px;
+      right:0;
+      z-index:50;
       background:#fff;
-      border:1px solid rgba(0,0,0,.07);
+      border:1px solid rgba(0,0,0,.1);
+      border-radius:14px;
+      box-shadow:0 8px 25px rgba(0,0,0,.15);
+      overflow:hidden;
+      min-width:170px;
     }
 
-    .vs-skeleton-cover {
-      height:120px;
-      background:#eef0f4;
-      animation:
-        vsSkeleton 1.2s
-        infinite alternate;
+    .post-card__menu.is-open {
+      display:block;
     }
 
-    .vs-skeleton-body {
-      padding:30px 14px 15px;
+    .post-card__menu button {
+      display:flex;
+      align-items:center;
+      gap:9px;
+      width:100%;
+      padding:11px 14px;
+      background:none;
+      border:0;
+      color:#4a5568;
+      font-size:13px;
+      text-align:left;
+      cursor:pointer;
     }
 
-    .vs-skeleton-line {
-      height:10px;
-      width:90%;
-      border-radius:5px;
-      background:#eef0f4;
-      margin-bottom:9px;
-      animation:
-        vsSkeleton 1.2s
-        infinite alternate;
+    .post-card__actions {
+      display:flex;
+      gap:6px;
+      margin-top:14px;
+      padding-top:12px;
+      border-top:1px solid rgba(0,0,0,.08);
     }
 
-    .vs-skeleton-line.title {
-      width:60%;
-      height:13px;
-    }
-
-    .vs-skeleton-line.short {
-      width:40%;
-    }
-
-    @keyframes vsSkeleton {
-      from {
-        opacity:.5;
-      }
-
-      to {
-        opacity:1;
-      }
-    }
-
-    .vs-groups-login-required {
-      max-width:500px;
-      margin:70px auto;
-      text-align:center;
-      padding:30px;
-    }
-
-    .vs-groups-login-icon {
-      width:70px;
-      height:70px;
-      margin:0 auto 15px;
-      border-radius:22px;
+    .post-action-btn {
+      flex:1;
       display:flex;
       align-items:center;
       justify-content:center;
-      background:#eef2ff;
+      gap:7px;
+      padding:9px;
+      border-radius:10px;
+      border:0;
+      background:none;
+      color:#6a7080;
+      font-size:12.5px;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .post-action-btn.is-liked {
+      color:#e63946;
+    }
+
+    .comments-section {
+      display:none;
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid rgba(0,0,0,.08);
+    }
+
+    .comments-section.is-open {
+      display:block;
+    }
+
+    .comment-composer,
+    .reply-composer {
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .reply-composer {
+      margin-left:16px;
+      margin-top:8px;
+    }
+
+    .comment-input {
+      flex:1;
+      background:#f5f6f8;
+      border:1px solid rgba(0,0,0,.1);
+      border-radius:999px;
+      padding:9px 15px;
+      color:#1a1d29;
+      font-size:13px;
+      outline:none;
+    }
+
+    .comment-send-btn {
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      border:0;
+      background:#315fff;
+      color:#fff;
+      cursor:pointer;
+      flex-shrink:0;
+    }
+
+    .comment-item {
+      display:flex;
+      gap:9px;
+      margin-bottom:12px;
+    }
+
+    .comment-avatar {
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      font-size:11px;
+    }
+
+    .comment-bubble {
+      background:#f5f6f8;
+      border-radius:14px;
+      padding:8px 12px;
+      flex:1;
+    }
+
+    .comment-author {
+      font-size:12.5px;
+    }
+
+    .comment-text {
+      font-size:13px;
+      color:#4a5568;
+      margin-top:2px;
+      line-height:1.45;
+      word-break:break-word;
+    }
+
+    .comment-footer {
+      margin-top:5px;
+    }
+
+    .comment-reply-btn {
+      font-size:11.5px;
+      color:#8a90a0;
+      background:none;
+      border:0;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .replies-list {
+      margin-top:8px;
+      margin-left:16px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .repost-banner {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:#8a90a0;
+      font-weight:700;
+      margin-bottom:6px;
+    }
+
+    .repost-original {
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#f5f6f8;
+      border:1px solid rgba(0,0,0,.08);
+    }
+
+    .repost-original__author {
+      font-size:12.5px;
+    }
+
+    .repost-original__text {
+      font-size:13px;
+      color:#4a5568;
+      margin-top:2px;
+    }
+
+    .load-more-posts-btn {
+      display:block;
+      width:100%;
+      margin-top:6px;
+      padding:11px;
+      border-radius:12px;
+      background:#f5f6f8;
+      border:1px solid rgba(0,0,0,.1);
+      color:#1a1d29;
+      font-weight:600;
+      font-size:13px;
+      cursor:pointer;
+    }
+
+    .posts-empty {
+      text-align:center;
+      padding:50px 20px;
+      color:#8a90a0;
+    }
+
+    .posts-empty i {
+      font-size:30px;
       color:#315fff;
-      font-size:28px;
+      opacity:.7;
+      margin-bottom:12px;
+      display:block;
     }
-
-    .vs-groups-login-required h2 {
-      margin:0;
-    }
-
-    .vs-groups-login-required p {
-      color:#7d8494;
-      font-size:14px;
-      line-height:1.6;
-      margin:8px 0 20px;
-    }
-
-    @media(max-width:1000px) {
-
-      .vs-groups-grid,
-      .vs-top-active-grid {
-        grid-template-columns:
-          repeat(
-            3,
-            minmax(0,1fr)
-          );
-      }
-
-    }
-
-    @media(max-width:700px) {
-
-      .vs-groups-page {
-        padding:12px;
-      }
-
-      .vs-groups-header {
-        align-items:flex-start;
-        flex-direction:column;
-      }
-
-      .vs-groups-header h1 {
-        font-size:25px;
-      }
-
-      .vs-create-group-btn {
-        width:100%;
-      }
-
-      .vs-groups-grid,
-      .vs-top-active-grid {
-        grid-template-columns:
-          repeat(
-            2,
-            minmax(0,1fr)
-          );
-        gap:10px;
-      }
-
-      .vs-group-cover {
-        height:105px;
-      }
-
-      .vs-group-card-body {
-        padding-left:11px;
-        padding-right:11px;
-      }
-
-    }
-
-    @media(max-width:430px) {
-
-      .vs-groups-grid,
-      .vs-top-active-grid {
-        grid-template-columns:
-          1fr 1fr;
-      }
-
-      .vs-group-description {
-        font-size:10.5px;
-      }
-
-      .vs-group-meta {
-        gap:5px;
-      }
-
-      .vs-group-meta span {
-        font-size:9.5px;
-      }
-
-    }
-
   `;
 
-  document.head.appendChild(
-    style
+  document.head.appendChild(style);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+export async function init(context) {
+  ctx = context;
+
+  injectStyles();
+
+  state = {
+    lastVisibleDoc: null,
+    hasMore: false,
+    isLoadingMore: false,
+    pendingMediaFile: null,
+    pendingMediaType: null,
+    previewObjectURL: null
+  };
+
+  ctx.panelEl.innerHTML = "";
+
+  renderComposer();
+
+  const feed = document.createElement("div");
+  feed.id = "postsFeedList";
+  ctx.panelEl.appendChild(feed);
+
+  const more = document.createElement("button");
+  more.id = "loadMorePostsBtn";
+  more.className = "load-more-posts-btn";
+  more.textContent = "Load more posts";
+  more.style.display = "none";
+
+  more.onclick = () => loadPosts(false);
+
+  ctx.panelEl.appendChild(more);
+
+  await loadPosts(true);
+}
+
+// ============================================================
+// MEMBERSHIP
+// ============================================================
+
+function isActiveMember() {
+  return ctx.membership?.status === "active";
+}
+
+function currentUserRole() {
+  return ctx.membership?.role || null;
+}
+
+function canModeratePosts() {
+  const role = currentUserRole();
+
+  return (
+    role === "owner" ||
+    role === "admin" ||
+    role === "moderator"
   );
 }
 
 // ============================================================
-// START
+// COMPOSER
 // ============================================================
 
-init();
+function renderComposer() {
+  if (!isActiveMember()) {
+    const notice = document.createElement("div");
+
+    notice.className = "composer-join-notice";
+
+    notice.innerHTML = `
+      <i class="fa-solid fa-circle-info"></i>
+      <span>Join this group to post, like, and comment.</span>
+    `;
+
+    ctx.panelEl.appendChild(notice);
+    return;
+  }
+
+  const wrap = document.createElement("div");
+
+  wrap.className = "composer";
+
+  wrap.innerHTML = `
+    <div class="composer__top">
+
+      <a
+        class="post-author-link composer__avatar"
+        id="composerAvatar"
+        href="${authorProfileHref(ctx.currentUser.uid)}"
+      >
+        ${getInitials(ctx.currentUser.displayName)}
+      </a>
+
+      <textarea
+        class="composer__input"
+        id="composerInput"
+        placeholder="Share something with the group..."
+        maxlength="3000"
+        rows="1"
+      ></textarea>
+
+    </div>
+
+    <div
+      class="composer__media-preview"
+      id="composerMediaPreview"
+    ></div>
+
+    <div class="composer__bottom">
+
+      <div class="composer__tools">
+
+        <button
+          type="button"
+          class="composer__tool-btn"
+          id="composerImageBtn"
+          title="Add photo"
+        >
+          <i class="fa-solid fa-image"></i>
+        </button>
+
+        <button
+          type="button"
+          class="composer__tool-btn"
+          id="composerVideoBtn"
+          title="Add video"
+        >
+          <i class="fa-solid fa-video"></i>
+        </button>
+
+        <input
+          type="file"
+          id="composerImageInput"
+          accept="image/*"
+          hidden
+        >
+
+        <input
+          type="file"
+          id="composerVideoInput"
+          accept="video/*"
+          hidden
+        >
+
+      </div>
+
+      <button
+        type="button"
+        class="composer__post-btn"
+        id="composerPostBtn"
+        disabled
+      >
+        Post
+      </button>
+
+    </div>
+  `;
+
+  ctx.panelEl.insertBefore(
+    wrap,
+    ctx.panelEl.firstChild
+  );
+
+  loadComposerProfile(
+    wrap.querySelector("#composerAvatar")
+  );
+
+  const input = wrap.querySelector("#composerInput");
+  const postBtn = wrap.querySelector("#composerPostBtn");
+
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+
+    input.style.height =
+      `${Math.min(input.scrollHeight, 220)}px`;
+
+    updatePostButtonState();
+  });
+
+  wrap.querySelector("#composerImageBtn")
+    .onclick = () =>
+      wrap.querySelector("#composerImageInput").click();
+
+  wrap.querySelector("#composerVideoBtn")
+    .onclick = () =>
+      wrap.querySelector("#composerVideoInput").click();
+
+  wrap.querySelector("#composerImageInput")
+    .onchange = e =>
+      handleComposerMediaSelect(e, "image");
+
+  wrap.querySelector("#composerVideoInput")
+    .onchange = e =>
+      handleComposerMediaSelect(e, "video");
+
+  postBtn.onclick = () =>
+    submitPost(wrap);
+}
+
+async function loadComposerProfile(avatar) {
+  const profile =
+    await getUserProfile(ctx.currentUser.uid);
+
+  setAvatarBackground(
+    avatar,
+    profile.photoURL,
+    profile.fullName
+  );
+}
+
+// ============================================================
+// MEDIA SELECT
+// ============================================================
+
+function handleComposerMediaSelect(event, type) {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  if (
+    type === "image" &&
+    !file.type.startsWith("image/")
+  ) {
+    ctx.showToast(
+      "Please select a valid photo.",
+      "error"
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  if (
+    type === "video" &&
+    !file.type.startsWith("video/")
+  ) {
+    ctx.showToast(
+      "Please select a valid video.",
+      "error"
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  /*
+   * No artificial file-size restriction here.
+   *
+   * Cloudinary will determine the actual maximum
+   * allowed size for your account/upload preset.
+   */
+
+  state.pendingMediaFile = file;
+  state.pendingMediaType = type;
+
+  const preview =
+    document.getElementById(
+      "composerMediaPreview"
+    );
+
+  if (state.previewObjectURL) {
+    URL.revokeObjectURL(
+      state.previewObjectURL
+    );
+  }
+
+  const objectURL =
+    URL.createObjectURL(file);
+
+  state.previewObjectURL = objectURL;
+
+  preview.innerHTML = "";
+
+  if (type === "image") {
+    const img =
+      document.createElement("img");
+
+    img.src = objectURL;
+    img.alt = "Selected photo";
+
+    preview.appendChild(img);
+  } else {
+    const video =
+      document.createElement("video");
+
+    video.src = objectURL;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+
+    preview.appendChild(video);
+  }
+
+  const remove =
+    document.createElement("button");
+
+  remove.type = "button";
+  remove.className =
+    "composer__media-remove";
+
+  remove.innerHTML =
+    '<i class="fa-solid fa-xmark"></i>';
+
+  remove.onclick =
+    clearSelectedMedia;
+
+  preview.appendChild(remove);
+
+  preview.classList.add(
+    "is-visible"
+  );
+
+  updatePostButtonState();
+}
+
+// ============================================================
+// CLEAR MEDIA
+// ============================================================
+
+function clearSelectedMedia() {
+  state.pendingMediaFile = null;
+  state.pendingMediaType = null;
+
+  if (state.previewObjectURL) {
+    URL.revokeObjectURL(
+      state.previewObjectURL
+    );
+
+    state.previewObjectURL = null;
+  }
+
+  const preview =
+    document.getElementById(
+      "composerMediaPreview"
+    );
+
+  if (preview) {
+    preview.innerHTML = "";
+    preview.classList.remove(
+      "is-visible"
+    );
+  }
+
+  const imageInput =
+    document.getElementById(
+      "composerImageInput"
+    );
+
+  const videoInput =
+    document.getElementById(
+      "composerVideoInput"
+    );
+
+  if (imageInput) imageInput.value = "";
+  if (videoInput) videoInput.value = "";
+
+  updatePostButtonState();
+}
+
+// ============================================================
+// POST BUTTON
+// ============================================================
+
+function updatePostButtonState() {
+  const input =
+    document.getElementById(
+      "composerInput"
+    );
+
+  const button =
+    document.getElementById(
+      "composerPostBtn"
+    );
+
+  if (!input || !button) return;
+
+  button.disabled =
+    !input.value.trim() &&
+    !state.pendingMediaFile;
+}
+
+// ============================================================
+// CREATE POST
+// ============================================================
+
+async function submitPost(composerEl) {
+  const input =
+    composerEl.querySelector(
+      "#composerInput"
+    );
+
+  const postBtn =
+    composerEl.querySelector(
+      "#composerPostBtn"
+    );
+
+  const text =
+    input.value.trim();
+
+  if (
+    !text &&
+    !state.pendingMediaFile
+  ) {
+    ctx.showToast(
+      "Write something or choose a photo/video.",
+      "error"
+    );
+
+    return;
+  }
+
+  postBtn.disabled = true;
+  postBtn.textContent = "Posting...";
+
+  try {
+    const profile =
+      await getUserProfile(
+        ctx.currentUser.uid
+      );
+
+    let mediaURL = "";
+    let mediaType = "none";
+
+    if (state.pendingMediaFile) {
+      postBtn.textContent =
+        "Uploading...";
+
+      const result =
+        await uploadToCloudinary(
+          state.pendingMediaFile
+        );
+
+      mediaURL = result.url;
+      mediaType = result.type;
+    }
+
+    await addDoc(
+      collection(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts"
+      ),
+      {
+        authorId:
+          ctx.currentUser.uid,
+
+        authorName:
+          profile.fullName ||
+          "VitalStar User",
+
+        authorPhotoURL:
+          profile.photoURL || "",
+
+        authorRole:
+          currentUserRole() ||
+          "member",
+
+        text,
+
+        mediaURL,
+
+        mediaType,
+
+        isPinned: false,
+        isEdited: false,
+
+        likesCount: 0,
+        commentsCount: 0,
+        sharesCount: 0,
+        repostsCount: 0,
+
+        repostOf: null,
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+    await updateDoc(
+      ctx.groupRef,
+      {
+        postCount:
+          increment(1)
+      }
+    );
+
+    ctx.refreshHeaderStats();
+
+    input.value = "";
+    input.style.height = "auto";
+
+    clearSelectedMedia();
+
+    ctx.showToast(
+      "Post created successfully!",
+      "success"
+    );
+
+    await loadPosts(true);
+
+  } catch (error) {
+    console.error(
+      "Error creating post:",
+      error
+    );
+
+    ctx.showToast(
+      error.message ||
+      "Could not publish your post.",
+      "error"
+    );
+
+  } finally {
+    postBtn.textContent = "Post";
+    updatePostButtonState();
+  }
+}
+
+// ============================================================
+// LOAD POSTS
+// ============================================================
+
+async function loadPosts(reset) {
+  if (state.isLoadingMore) return;
+
+  state.isLoadingMore = true;
+
+  const feed =
+    document.getElementById(
+      "postsFeedList"
+    );
+
+  const more =
+    document.getElementById(
+      "loadMorePostsBtn"
+    );
+
+  if (!feed) {
+    state.isLoadingMore = false;
+    return;
+  }
+
+  if (reset) {
+    state.lastVisibleDoc = null;
+
+    feed.innerHTML = `
+      <div class="tab-panel-placeholder">
+        <span class="spinner-sm"></span>
+        Loading posts...
+      </div>
+    `;
+  }
+
+  try {
+    const constraints = [
+      orderBy("isPinned", "desc"),
+      orderBy("createdAt", "desc"),
+      limit(POSTS_PAGE_SIZE)
+    ];
+
+    if (
+      !reset &&
+      state.lastVisibleDoc
+    ) {
+      constraints.push(
+        startAfter(
+          state.lastVisibleDoc
+        )
+      );
+    }
+
+    const snapshot =
+      await getDocs(
+        query(
+          collection(
+            ctx.db,
+            "groups",
+            ctx.groupId,
+            "posts"
+          ),
+          ...constraints
+        )
+      );
+
+    if (reset) feed.innerHTML = "";
+
+    if (snapshot.docs.length) {
+      state.lastVisibleDoc =
+        snapshot.docs[
+          snapshot.docs.length - 1
+        ];
+    }
+
+    state.hasMore =
+      snapshot.docs.length ===
+      POSTS_PAGE_SIZE;
+
+    if (
+      snapshot.empty &&
+      reset
+    ) {
+      feed.innerHTML = `
+        <div class="posts-empty">
+          <i class="fa-solid fa-note-sticky"></i>
+          <p>No posts yet. Be the first to share something!</p>
+        </div>
+      `;
+    } else {
+      snapshot.forEach(postDoc => {
+        feed.appendChild(
+          renderPostCard({
+            id: postDoc.id,
+            ...postDoc.data()
+          })
+        );
+      });
+    }
+
+    if (more) {
+      more.style.display =
+        state.hasMore
+          ? "block"
+          : "none";
+    }
+
+  } catch (error) {
+    console.error(
+      "Error loading posts:",
+      error
+    );
+
+    if (reset) {
+      feed.innerHTML = `
+        <div class="posts-empty">
+          <p>Could not load posts right now.</p>
+        </div>
+      `;
+    }
+
+    ctx.showToast(
+      "Could not load posts.",
+      "error"
+    );
+
+  } finally {
+    state.isLoadingMore = false;
+  }
+}
+
+// ============================================================
+// RENDER POST
+// ============================================================
+
+function renderPostCard(post) {
+  const card =
+    document.createElement("div");
+
+  card.className =
+    `post-card${post.isPinned ? " is-pinned" : ""}`;
+
+  card.dataset.postId = post.id;
+
+  const isAuthor =
+    post.authorId ===
+    ctx.currentUser.uid;
+
+  const moderator =
+    canModeratePosts();
+
+  const timeLabel =
+    post.createdAt?.toDate
+      ? timeAgo(
+          post.createdAt.toDate()
+        )
+      : "just now";
+
+  const href =
+    authorProfileHref(
+      post.authorId
+    );
+
+  card.innerHTML = `
+    <div class="post-card__pin-flag">
+      <i class="fa-solid fa-thumbtack"></i>
+      Pinned post
+    </div>
+
+    <div class="post-card__head">
+
+      <div class="post-card__author">
+
+        <a
+          class="post-author-link post-card__avatar"
+          href="${href}"
+        >
+          ${getInitials(post.authorName)}
+        </a>
+
+        <div class="post-card__author-info">
+
+          <div class="post-card__author-name-row">
+
+            <a
+              class="post-author-link post-card__author-name"
+              href="${href}"
+            ></a>
+
+            ${
+              post.authorRole &&
+              post.authorRole !== "member"
+                ? `
+                  <span class="role-chip">
+                    ${escapeHtml(post.authorRole)}
+                  </span>
+                `
+                : ""
+            }
+
+          </div>
+
+          <div class="post-card__meta">
+            ${timeLabel}
+            ${post.isEdited ? " · edited" : ""}
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="post-card__menu-wrap">
+
+        <button
+          type="button"
+          class="post-card__menu-btn"
+        >
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+
+        <div class="post-card__menu">
+
+          ${
+            isAuthor
+              ? `
+                <button
+                  type="button"
+                  class="edit-post-btn"
+                >
+                  <i class="fa-solid fa-pen"></i>
+                  Edit
+                </button>
+              `
+              : ""
+          }
+
+          ${
+            isAuthor || moderator
+              ? `
+                <button
+                  type="button"
+                  class="delete-post-btn"
+                >
+                  <i class="fa-solid fa-trash"></i>
+                  Delete
+                </button>
+              `
+              : ""
+          }
+
+          ${
+            moderator
+              ? `
+                <button
+                  type="button"
+                  class="pin-post-btn"
+                >
+                  <i class="fa-solid fa-thumbtack"></i>
+                  ${post.isPinned ? "Unpin" : "Pin"} post
+                </button>
+              `
+              : ""
+          }
+
+          ${
+            !isAuthor
+              ? `
+                <button
+                  type="button"
+                  class="report-post-btn"
+                >
+                  <i class="fa-solid fa-flag"></i>
+                  Report
+                </button>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="post-card__body"></div>
+
+    <div class="post-card__actions">
+
+      <button
+        type="button"
+        class="post-action-btn like-btn"
+      >
+        <i class="fa-regular fa-heart"></i>
+        <span class="like-count">
+          ${ctx.formatCount(post.likesCount || 0)}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="post-action-btn comment-toggle-btn"
+      >
+        <i class="fa-regular fa-comment"></i>
+        <span class="comment-count">
+          ${ctx.formatCount(post.commentsCount || 0)}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="post-action-btn repost-btn"
+      >
+        <i class="fa-solid fa-retweet"></i>
+        <span class="repost-count">
+          ${ctx.formatCount(post.repostsCount || 0)}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="post-action-btn share-btn"
+      >
+        <i class="fa-solid fa-share"></i>
+        Share
+      </button>
+
+    </div>
+
+    <div
+      class="comments-section"
+      data-loaded="false"
+    ></div>
+  `;
+
+  const name =
+    post.authorName ||
+    "VitalStar User";
+
+  const avatar =
+    card.querySelector(
+      ".post-card__avatar"
+    );
+
+  setAvatarBackground(
+    avatar,
+    post.authorPhotoURL,
+    name
+  );
+
+  card.querySelector(
+    ".post-card__author-name"
+  ).textContent = name;
+
+  renderPostBody(card, post);
+
+  bindPostCardEvents(card, post);
+
+  refreshLikeButtonState(
+    card,
+    post.id
+  );
+
+  refreshPostAuthor(
+    card,
+    post
+  );
+
+  return card;
+}
+
+// ============================================================
+// REFRESH AUTHOR
+// ============================================================
+
+async function refreshPostAuthor(
+  card,
+  post
+) {
+  if (!post.authorId) return;
+
+  try {
+    const profile =
+      await getUserProfile(
+        post.authorId
+      );
+
+    const name =
+      profile.fullName ||
+      post.authorName ||
+      "VitalStar User";
+
+    const nameEl =
+      card.querySelector(
+        ".post-card__author-name"
+      );
+
+    const avatar =
+      card.querySelector(
+        ".post-card__avatar"
+      );
+
+    if (nameEl) {
+      nameEl.textContent = name;
+    }
+
+    if (avatar) {
+      setAvatarBackground(
+        avatar,
+        profile.photoURL ||
+          post.authorPhotoURL ||
+          "",
+        name
+      );
+    }
+
+    post.authorName = name;
+
+    post.authorPhotoURL =
+      profile.photoURL ||
+      post.authorPhotoURL ||
+      "";
+
+  } catch (error) {
+    console.error(
+      "Could not refresh author:",
+      error
+    );
+  }
+}
+
+// ============================================================
+// POST BODY
+// ============================================================
+
+function renderPostBody(card, post) {
+  const body =
+    card.querySelector(
+      ".post-card__body"
+    );
+
+  body.innerHTML = "";
+
+  if (post.repostOf) {
+    const banner =
+      document.createElement("div");
+
+    banner.className =
+      "repost-banner";
+
+    banner.innerHTML = `
+      <i class="fa-solid fa-retweet"></i>
+      Reposted
+    `;
+
+    body.appendChild(banner);
+  }
+
+  if (post.text) {
+    const text =
+      document.createElement("p");
+
+    text.className =
+      "post-card__text";
+
+    text.textContent =
+      post.text;
+
+    body.appendChild(text);
+  }
+
+  if (post.mediaURL) {
+    const media =
+      document.createElement("div");
+
+    media.className =
+      "post-card__media";
+
+    if (post.mediaType === "video") {
+      const video =
+        document.createElement("video");
+
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+
+      const source =
+        document.createElement("source");
+
+      source.src =
+        getPlayableVideoUrl(
+          post.mediaURL
+        );
+
+      source.type =
+        "video/mp4";
+
+      video.appendChild(source);
+
+      video.onerror = () => {
+        console.error(
+          "Video playback failed:",
+          post.mediaURL
+        );
+      };
+
+      media.appendChild(video);
+
+    } else {
+      const image =
+        document.createElement("img");
+
+      image.src =
+        post.mediaURL;
+
+      image.alt =
+        "Post image";
+
+      image.loading =
+        "lazy";
+
+      image.decoding =
+        "async";
+
+      media.appendChild(image);
+    }
+
+    body.appendChild(media);
+  }
+
+  if (post.repostOf) {
+    const original =
+      document.createElement("div");
+
+    original.className =
+      "repost-original";
+
+    original.innerHTML = `
+      <div class="repost-original__author"></div>
+      <div class="repost-original__text"></div>
+    `;
+
+    original.querySelector(
+      ".repost-original__author"
+    ).textContent =
+      post.repostOfAuthorName ||
+      "VitalStar User";
+
+    original.querySelector(
+      ".repost-original__text"
+    ).textContent =
+      post.repostOfText || "";
+
+    body.appendChild(original);
+  }
+}
+
+// ============================================================
+// POST EVENTS
+// ============================================================
+
+function bindPostCardEvents(
+  card,
+  post
+) {
+  const menuBtn =
+    card.querySelector(
+      ".post-card__menu-btn"
+    );
+
+  const menu =
+    card.querySelector(
+      ".post-card__menu"
+    );
+
+  menuBtn.onclick = event => {
+    event.stopPropagation();
+
+    document
+      .querySelectorAll(
+        ".post-card__menu.is-open"
+      )
+      .forEach(x => {
+        if (x !== menu) {
+          x.classList.remove(
+            "is-open"
+          );
+        }
+      });
+
+    menu.classList.toggle(
+      "is-open"
+    );
+  };
+
+  card.querySelector(
+    ".edit-post-btn"
+  )?.addEventListener(
+    "click",
+    () => startEditPost(card, post)
+  );
+
+  card.querySelector(
+    ".delete-post-btn"
+  )?.addEventListener(
+    "click",
+    () => deletePost(card, post)
+  );
+
+  card.querySelector(
+    ".pin-post-btn"
+  )?.addEventListener(
+    "click",
+    () => togglePinPost(post)
+  );
+
+  card.querySelector(
+    ".report-post-btn"
+  )?.addEventListener(
+    "click",
+    () => reportPost(post)
+  );
+
+  card.querySelector(
+    ".like-btn"
+  ).onclick =
+    () => toggleLike(card, post);
+
+  card.querySelector(
+    ".comment-toggle-btn"
+  ).onclick =
+    () => toggleComments(card, post);
+
+  card.querySelector(
+    ".repost-btn"
+  ).onclick =
+    () => repostPost(post);
+
+  card.querySelector(
+    ".share-btn"
+  ).onclick =
+    () => sharePost(post);
+}
+
+if (!window.__vitalstarGroupPostMenuHandler) {
+  window.__vitalstarGroupPostMenuHandler = true;
+
+  document.addEventListener(
+    "click",
+    () => {
+      document
+        .querySelectorAll(
+          ".post-card__menu.is-open"
+        )
+        .forEach(menu => {
+          menu.classList.remove(
+            "is-open"
+          );
+        });
+    }
+  );
+}
+
+// ============================================================
+// TIME
+// ============================================================
+
+function timeAgo(date) {
+  const seconds =
+    Math.floor(
+      (Date.now() - date.getTime()) /
+      1000
+    );
+
+  if (seconds < 60)
+    return "just now";
+
+  const minutes =
+    Math.floor(seconds / 60);
+
+  if (minutes < 60)
+    return `${minutes}m ago`;
+
+  const hours =
+    Math.floor(minutes / 60);
+
+  if (hours < 24)
+    return `${hours}h ago`;
+
+  const days =
+    Math.floor(hours / 24);
+
+  if (days < 7)
+    return `${days}d ago`;
+
+  return date.toLocaleDateString(
+    undefined,
+    {
+      month: "short",
+      day: "numeric"
+    }
+  );
+}
+
+function escapeHtml(value) {
+  const div =
+    document.createElement("div");
+
+  div.textContent =
+    String(value ?? "");
+
+  return div.innerHTML;
+}
+
+// ============================================================
+// EDIT POST
+// ============================================================
+
+function startEditPost(
+  card,
+  post
+) {
+  const body =
+    card.querySelector(
+      ".post-card__body"
+    );
+
+  const oldText =
+    post.text || "";
+
+  const wrap =
+    document.createElement("div");
+
+  wrap.innerHTML = `
+    <textarea
+      class="post-card__edit-textarea"
+      style="
+        width:100%;
+        min-height:90px;
+        padding:10px;
+        border-radius:12px;
+        border:1px solid #315fff;
+        resize:vertical;
+      "
+    ></textarea>
+
+    <div
+      style="
+        display:flex;
+        gap:8px;
+        margin-top:8px;
+      "
+    >
+
+      <button
+        type="button"
+        class="save-btn"
+        style="
+          padding:8px 15px;
+          border:0;
+          border-radius:999px;
+          background:#315fff;
+          color:white;
+          font-weight:600;
+        "
+      >
+        Save
+      </button>
+
+      <button
+        type="button"
+        class="cancel-btn"
+        style="
+          padding:8px 15px;
+          border:1px solid #ddd;
+          border-radius:999px;
+          background:#f5f6f8;
+        "
+      >
+        Cancel
+      </button>
+
+    </div>
+  `;
+
+  wrap.querySelector(
+    "textarea"
+  ).value = oldText;
+
+  const textEl =
+    body.querySelector(
+      ".post-card__text"
+    );
+
+  if (textEl) {
+    textEl.replaceWith(wrap);
+  } else {
+    body.prepend(wrap);
+  }
+
+  wrap.querySelector(
+    ".cancel-btn"
+  ).onclick = () =>
+    renderPostBody(
+      card,
+      post
+    );
+
+  wrap.querySelector(
+    ".save-btn"
+  ).onclick = async () => {
+    const text =
+      wrap.querySelector(
+        "textarea"
+      ).value.trim();
+
+    try {
+      await updateDoc(
+        doc(
+          ctx.db,
+          "groups",
+          ctx.groupId,
+          "posts",
+          post.id
+        ),
+        {
+          text,
+          isEdited: true,
+          updatedAt:
+            serverTimestamp()
+        }
+      );
+
+      post.text = text;
+      post.isEdited = true;
+
+      renderPostBody(
+        card,
+        post
+      );
+
+      ctx.showToast(
+        "Post updated.",
+        "success"
+      );
+
+    } catch (error) {
+      console.error(
+        "Error updating post:",
+        error
+      );
+
+      ctx.showToast(
+        "Could not update the post.",
+        "error"
+      );
+    }
+  };
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+
+async function deletePost(
+  card,
+  post
+) {
+  if (
+    !window.confirm(
+      "Delete this post? This cannot be undone."
+    )
+  ) return;
+
+  try {
+    await deleteDoc(
+      doc(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts",
+        post.id
+      )
+    );
+
+    await updateDoc(
+      ctx.groupRef,
+      {
+        postCount:
+          increment(-1)
+      }
+    );
+
+    ctx.refreshHeaderStats();
+
+    card.remove();
+
+    ctx.showToast(
+      "Post deleted.",
+      "info"
+    );
+
+  } catch (error) {
+    console.error(
+      "Error deleting post:",
+      error
+    );
+
+    ctx.showToast(
+      "Could not delete the post.",
+      "error"
+    );
+  }
+}
+
+// ============================================================
+// PIN
+// ============================================================
+
+async function togglePinPost(post) {
+  try {
+    await updateDoc(
+      doc(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts",
+        post.id
+      ),
+      {
+        isPinned:
+          !post.isPinned
+      }
+    );
+
+    ctx.showToast(
+      post.isPinned
+        ? "Post unpinned."
+        : "Post pinned to the top.",
+      "success"
+    );
+
+    await loadPosts(true);
+
+  } catch (error) {
+    console.error(
+      "Error changing pin:",
+      error
+    );
+
+    ctx.showToast(
+      "Could not update the pin status.",
+      "error"
+    );
+  }
+}
+
+// ============================================================
+// REPORT
+// ============================================================
+
+async function reportPost(post) {
+  const reason =
+    window.prompt(
+      "Why are you reporting this post?"
+    );
+
+  if (!reason?.trim()) return;
+
+  try {
+    await addDoc(
+      collection(
+        ctx.db,
+        "reports"
+      ),
+      {
+        type: "post",
+        groupId: ctx.groupId,
+        targetId: post.id,
+        reporterId:
+          ctx.currentUser.uid,
+        reason: reason.trim(),
+        status: "pending",
+        createdAt:
+          serverTimestamp()
+      }
+    );
+
+    ctx.showToast(
+      "Post reported.",
+      "success"
+    );
+
+  } catch (error) {
+    console.error(
+      "Error reporting post:",
+      error
+    );
+
+    ctx.showToast(
+      "Could not submit the report.",
+      "error"
+    );
+  }
+}
+
+// ============================================================
+// LIKES
+// ============================================================
+
+async function refreshLikeButtonState(
+  card,
+  postId
+) {
+  try {
+    const snap =
+      await getDoc(
+        doc(
+          ctx.db,
+          "groups",
+          ctx.groupId,
+          "posts",
+          postId,
+          "likes",
+          ctx.currentUser.uid
+        )
+      );
+
+    const button =
+      card.querySelector(
+        ".like-btn"
+      );
+
+    if (!button) return;
+
+    if (snap.exists()) {
+      button.classList.add(
+        "is-liked"
+      );
+
+      button.querySelector(
+        "i"
+      ).className =
+        "fa-solid fa-heart";
+    }
+
+  } catch (error) {
+    console.error(
+      "Error checking like:",
+      error
+    );
+  }
+}
+
+async function toggleLike(
+  card,
+  post
+) {
+  if (!isActiveMember()) {
+    ctx.showToast(
+      "Join this group to like posts.",
+      "info"
+    );
+
+    return;
+  }
+
+  const button =
+    card.querySelector(
+      ".like-btn"
+    );
+
+  const count =
+    button.querySelector(
+      ".like-count"
+    );
+
+  const liked =
+    button.classList.contains(
+      "is-liked"
+    );
+
+  const postRef =
+    doc(
+      ctx.db,
+      "groups",
+      ctx.groupId,
+      "posts",
+      post.id
+    );
+
+  const likeRef =
+    doc(
+      ctx.db,
+      "groups",
+      ctx.groupId,
+      "posts",
+      post.id,
+      "likes",
+      ctx.currentUser.uid
+    );
+
+  button.classList.toggle(
+    "is-liked"
+  );
+
+  button.querySelector(
+    "i"
+  ).className =
+    liked
+      ? "fa-regular fa-heart"
+      : "fa-solid fa-heart";
+
+  const newCount =
+    Math.max(
+      0,
+      (post.likesCount || 0) +
+        (liked ? -1 : 1)
+    );
+
+  post.likesCount =
+    newCount;
+
+  count.textContent =
+    ctx.formatCount(
+      newCount
+    );
+
+  try {
+    if (liked) {
+      await deleteDoc(
+        likeRef
+      );
+
+      await updateDoc(
+        postRef,
+        {
+          likesCount:
+            increment(-1)
+        }
+      );
+    } else {
+      await setDoc(
+        likeRef,
+        {
+          uid:
+            ctx.currentUser.uid,
+          likedAt:
+            serverTimestamp()
+        }
+      );
+
+      await updateDoc(
+        postRef,
+        {
+          likesCount:
+            increment(1)
+        }
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      "Error toggling like:",
+      error
+    );
+
+    button.classList.toggle(
+      "is-liked"
+    );
+
+    post.likesCount =
+      Math.max(
+        0,
+        (post.likesCount || 0) +
+          (liked ? 1 : -1)
+      );
+
+    count.textContent =
+      ctx.formatCount(
+        post.likesCount
+      );
+
+    ctx.showToast(
+      "Could not update your like.",
+      "error"
+    );
+  }
+}
+
+// ============================================================
+// COMMENTS
+// ============================================================
+
+function toggleComments(
+  card,
+  post
+) {
+  const section =
+    card.querySelector(
+      ".comments-section"
+    );
+
+  if (
+    section.classList.contains(
+      "is-open"
+    )
+  ) {
+    section.classList.remove(
+      "is-open"
+    );
+
+    return;
+  }
+
+  section.classList.add(
+    "is-open"
+  );
+
+  if (
+    section.dataset.loaded ===
+    "false"
+  ) {
+    loadComments(
+      section,
+      post
+    );
+  }
+}
+
+async function loadComments(
+  section,
+  post
+) {
+  section.dataset.loaded =
+    "true";
+
+  section.innerHTML = `
+    <div class="tab-panel-placeholder">
+      <span class="spinner-sm"></span>
+      Loading comments...
+    </div>
+  `;
+
+  try {
+    const snapshot =
+      await getDocs(
+        query(
+          collection(
+            ctx.db,
+            "groups",
+            ctx.groupId,
+            "posts",
+            post.id,
+            "comments"
+          ),
+          orderBy(
+            "createdAt",
+            "asc"
+          ),
+          limit(50)
+        )
+      );
+
+    section.innerHTML = "";
+
+    if (isActiveMember()) {
+      section.appendChild(
+        buildCommentComposer(
+          post,
+          null,
+          section
+        )
+      );
+    }
+
+    const list =
+      document.createElement(
+        "div"
+      );
+
+    list.className =
+      "comments-list";
+
+    section.appendChild(list);
+
+    snapshot.forEach(
+      commentDoc => {
+        list.appendChild(
+          buildCommentItem(
+            {
+              id: commentDoc.id,
+              ...commentDoc.data()
+            },
+            post
+          )
+        );
+      }
+    );
+
+  } catch (error) {
+    console.error(
+      "Error loading comments:",
+      error
+    );
+
+    section.innerHTML = `
+      <div class="posts-empty">
+        <p>Could not load comments.</p>
+      </div>
+    `;
+  }
+}
+
+// ============================================================
+// COMMENT COMPOSER
+// ============================================================
+
+function buildCommentComposer(
+  post,
+  parentCommentId,
+  container
+) {
+  const wrap =
+    document.createElement(
+      "div"
+    );
+
+  wrap.className =
+    parentCommentId
+      ? "reply-composer"
+      : "comment-composer";
+
+  wrap.innerHTML = `
+    <input
+      type="text"
+      class="comment-input"
+      placeholder="${
+        parentCommentId
+          ? "Write a reply..."
+          : "Write a comment..."
+      }"
+      maxlength="1000"
+    >
+
+    <button
+      type="button"
+      class="comment-send-btn"
+    >
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
+  `;
+
+  const input =
+    wrap.querySelector(
+      ".comment-input"
+    );
+
+  const send =
+    wrap.querySelector(
+      ".comment-send-btn"
+    );
+
+  const submit =
+    async () => {
+      const text =
+        input.value.trim();
+
+      if (!text) return;
+
+      send.disabled = true;
+
+      try {
+        const profile =
+          await getUserProfile(
+            ctx.currentUser.uid
+          );
+
+        if (parentCommentId) {
+          await addDoc(
+            collection(
+              ctx.db,
+              "groups",
+              ctx.groupId,
+              "posts",
+              post.id,
+              "comments",
+              parentCommentId,
+              "replies"
+            ),
+            {
+              authorId:
+                ctx.currentUser.uid,
+              authorName:
+                profile.fullName,
+              authorPhotoURL:
+                profile.photoURL,
+              text,
+              createdAt:
+                serverTimestamp()
+            }
+          );
+
+          container.appendChild(
+            buildReplyItem({
+              authorId:
+                ctx.currentUser.uid,
+              authorName:
+                profile.fullName,
+              authorPhotoURL:
+                profile.photoURL,
+              text
+            })
+          );
+
+        } else {
+          await addDoc(
+            collection(
+              ctx.db,
+              "groups",
+              ctx.groupId,
+              "posts",
+              post.id,
+              "comments"
+            ),
+            {
+              authorId:
+                ctx.currentUser.uid,
+              authorName:
+                profile.fullName,
+              authorPhotoURL:
+                profile.photoURL,
+              text,
+              createdAt:
+                serverTimestamp()
+            }
+          );
+
+          await updateDoc(
+            doc(
+              ctx.db,
+              "groups",
+              ctx.groupId,
+              "posts",
+              post.id
+            ),
+            {
+              commentsCount:
+                increment(1)
+            }
+          );
+
+          post.commentsCount =
+            (post.commentsCount || 0) + 1;
+
+          const card =
+            document.querySelector(
+              `.post-card[data-post-id="${post.id}"]`
+            );
+
+          if (card) {
+            card.querySelector(
+              ".comment-count"
+            ).textContent =
+              ctx.formatCount(
+                post.commentsCount
+              );
+          }
+
+          const list =
+            wrap.parentElement?.querySelector(
+              ".comments-list"
+            );
+
+          if (list) {
+            list.appendChild(
+              buildCommentItem(
+                {
+                  authorId:
+                    ctx.currentUser.uid,
+                  authorName:
+                    profile.fullName,
+                  authorPhotoURL:
+                    profile.photoURL,
+                  text
+                },
+                post
+              )
+            );
+          }
+        }
+
+        input.value = "";
+
+      } catch (error) {
+        console.error(
+          "Error posting comment:",
+          error
+        );
+
+        ctx.showToast(
+          "Could not post your comment.",
+          "error"
+        );
+
+      } finally {
+        send.disabled = false;
+      }
+    };
+
+  send.onclick = submit;
+
+  input.onkeydown =
+    event => {
+      if (
+        event.key === "Enter"
+      ) {
+        event.preventDefault();
+        submit();
+      }
+    };
+
+  return wrap;
+}
+
+// ============================================================
+// COMMENT ITEM
+// ============================================================
+
+function buildCommentItem(
+  comment,
+  post
+) {
+  const href =
+    authorProfileHref(
+      comment.authorId
+    );
+
+  const item =
+    document.createElement(
+      "div"
+    );
+
+  item.className =
+    "comment-item";
+
+  item.innerHTML = `
+    <a
+      class="post-author-link comment-avatar"
+      href="${href}"
+    >
+      ${getInitials(comment.authorName)}
+    </a>
+
+    <div style="flex:1;min-width:0;">
+
+      <div class="comment-bubble">
+
+        <a
+          class="post-author-link comment-author"
+          href="${href}"
+        ></a>
+
+        <div class="comment-text"></div>
+
+      </div>
+
+      <div class="comment-footer">
+
+        ${
+          isActiveMember()
+            ? `
+              <button
+                type="button"
+                class="comment-reply-btn"
+              >
+                Reply
+              </button>
+            `
+            : ""
+        }
+
+      </div>
+
+      <div class="replies-list"></div>
+
+    </div>
+  `;
+
+  setAvatarBackground(
+    item.querySelector(
+      ".comment-avatar"
+    ),
+    comment.authorPhotoURL,
+    comment.authorName
+  );
+
+  item.querySelector(
+    ".comment-author"
+  ).textContent =
+    comment.authorName ||
+    "VitalStar User";
+
+  item.querySelector(
+    ".comment-text"
+  ).textContent =
+    comment.text || "";
+
+  const replyBtn =
+    item.querySelector(
+      ".comment-reply-btn"
+    );
+
+  const replies =
+    item.querySelector(
+      ".replies-list"
+    );
+
+  const body =
+    item.querySelector(
+      "div[style]"
+    );
+
+  if (
+    replyBtn &&
+    comment.id
+  ) {
+    replyBtn.onclick =
+      () => {
+        if (
+          item.querySelector(
+            ".reply-composer"
+          )
+        ) return;
+
+        body.appendChild(
+          buildCommentComposer(
+            post,
+            comment.id,
+            replies
+          )
+        );
+
+        loadReplies(
+          comment.id,
+          post,
+          replies
+        );
+      };
+  }
+
+  refreshCommentAuthor(
+    item,
+    comment
+  );
+
+  return item;
+}
+
+// ============================================================
+// REFRESH COMMENT AUTHOR
+// ============================================================
+
+async function refreshCommentAuthor(
+  item,
+  comment
+) {
+  if (!comment.authorId) return;
+
+  try {
+    const profile =
+      await getUserProfile(
+        comment.authorId
+      );
+
+    const name =
+      profile.fullName ||
+      comment.authorName ||
+      "VitalStar User";
+
+    const avatar =
+      item.querySelector(
+        ".comment-avatar"
+      );
+
+    const author =
+      item.querySelector(
+        ".comment-author"
+      );
+
+    if (author) {
+      author.textContent =
+        name;
+    }
+
+    if (avatar) {
+      setAvatarBackground(
+        avatar,
+        profile.photoURL ||
+          comment.authorPhotoURL ||
+          "",
+        name
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      "Could not refresh comment author:",
+      error
+    );
+  }
+}
+
+// ============================================================
+// REPLIES
+// ============================================================
+
+async function loadReplies(
+  commentId,
+  post,
+  repliesList
+) {
+  try {
+    const snapshot =
+      await getDocs(
+        query(
+          collection(
+            ctx.db,
+            "groups",
+            ctx.groupId,
+            "posts",
+            post.id,
+            "comments",
+            commentId,
+            "replies"
+          ),
+          orderBy(
+            "createdAt",
+            "asc"
+          ),
+          limit(30)
+        )
+      );
+
+    snapshot.forEach(
+      replyDoc => {
+        repliesList.appendChild(
+          buildReplyItem({
+            id: replyDoc.id,
+            ...replyDoc.data()
+          })
+        );
+      }
+    );
+
+  } catch (error) {
+    console.error(
+      "Error loading replies:",
+      error
+    );
+  }
+}
+
+function buildReplyItem(reply) {
+  const href =
+    authorProfileHref(
+      reply.authorId
+    );
+
+  const item =
+    document.createElement(
+      "div"
+    );
+
+  item.className =
+    "comment-item";
+
+  item.innerHTML = `
+    <a
+      class="post-author-link comment-avatar"
+      style="width:26px;height:26px;"
+      href="${href}"
+    >
+      ${getInitials(reply.authorName)}
+    </a>
+
+    <div
+      class="comment-bubble"
+      style="flex:1;"
+    >
+      <a
+        class="post-author-link comment-author"
+        href="${href}"
+      ></a>
+
+      <div class="comment-text"></div>
+    </div>
+  `;
+
+  setAvatarBackground(
+    item.querySelector(
+      ".comment-avatar"
+    ),
+    reply.authorPhotoURL,
+    reply.authorName
+  );
+
+  item.querySelector(
+    ".comment-author"
+  ).textContent =
+    reply.authorName ||
+    "VitalStar User";
+
+  item.querySelector(
+    ".comment-text"
+  ).textContent =
+    reply.text || "";
+
+  return item;
+}
+
+// ============================================================
+// REPOST
+// ============================================================
+
+async function repostPost(post) {
+  if (!isActiveMember()) {
+    ctx.showToast(
+      "Join this group to repost.",
+      "info"
+    );
+
+    return;
+  }
+
+  if (post.repostOf) {
+    ctx.showToast(
+      "You can only repost original posts.",
+      "info"
+    );
+
+    return;
+  }
+
+  if (
+    !window.confirm(
+      "Repost this to the group feed?"
+    )
+  ) return;
+
+  try {
+    const profile =
+      await getUserProfile(
+        ctx.currentUser.uid
+      );
+
+    await addDoc(
+      collection(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts"
+      ),
+      {
+        authorId:
+          ctx.currentUser.uid,
+
+        authorName:
+          profile.fullName,
+
+        authorPhotoURL:
+          profile.photoURL,
+
+        authorRole:
+          currentUserRole() ||
+          "member",
+
+        text: "",
+
+        mediaURL:
+          post.mediaURL || "",
+
+        mediaType:
+          post.mediaType || "none",
+
+        isPinned: false,
+        isEdited: false,
+
+        likesCount: 0,
+        commentsCount: 0,
+        sharesCount: 0,
+        repostsCount: 0,
+
+        repostOf: post.id,
+
+        repostOfAuthorName:
+          post.authorName ||
+          "VitalStar User",
+
+        repostOfText:
+          post.text || "",
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+    await updateDoc(
+      doc(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts",
+        post.id
+      ),
+      {
+        repostsCount:
+          increment(1)
+      }
+    );
+
+    await updateDoc(
+      ctx.groupRef,
+      {
+        postCount:
+          increment(1)
+      }
+    );
+
+    ctx.refreshHeaderStats();
+
+    ctx.showToast(
+      "Reposted to the group feed.",
+      "success"
+    );
+
+    await loadPosts(true);
+
+  } catch (error) {
+    console.error(
+      "Error reposting:",
+      error
+    );
+
+    ctx.showToast(
+      "Could not repost.",
+      "error"
+    );
+  }
+}
+
+// ============================================================
+// SHARE
+// ============================================================
+
+async function sharePost(post) {
+  const url =
+    `${window.location.origin}${window.location.pathname}` +
+    `?id=${encodeURIComponent(ctx.groupId)}` +
+    `&post=${encodeURIComponent(post.id)}`;
+
+  try {
+    await updateDoc(
+      doc(
+        ctx.db,
+        "groups",
+        ctx.groupId,
+        "posts",
+        post.id
+      ),
+      {
+        sharesCount:
+          increment(1)
+      }
+    );
+
+    if (navigator.share) {
+      await navigator.share({
+        title:
+          "A post on VitalStar",
+
+        text:
+          post.text
+            ? post.text.slice(0, 100)
+            : "Check out this post on VitalStar.",
+
+        url
+      });
+
+    } else if (
+      navigator.clipboard
+    ) {
+      await navigator.clipboard.writeText(
+        url
+      );
+
+      ctx.showToast(
+        "Link copied to clipboard.",
+        "success"
+      );
+
+    } else {
+      ctx.showToast(
+        "Share link: " + url,
+        "info"
+      );
+    }
+
+  } catch (error) {
+    if (
+      error.name !==
+      "AbortError"
+    ) {
+      console.error(
+        "Error sharing post:",
+        error
+      );
+    }
+  }
+}
