@@ -1,243 +1,551 @@
 // ============================================================
 // VITALSTAR — group.js
-// Complete controller for group.html
-//
-// Features:
-// • Authentication
-// • Group ID detection
-// • Group loading
-// • Cover / avatar
-// • Privacy / premium / verified
-// • Owner information
-// • Membership status
-// • Join / leave
-// • Cancel pending request
-// • Private-group requests
-// • Approve / reject requests
-// • Join-request notifications
-// • Group notifications
-// • Unread notification state
-// • Exact postId notification handling
-// • Tabs
-// • Posts
-// • Members
-// • Admins / moderators
-// • Group chat launcher
-// • Premium subscription
-// • Settings
-// • Rules
-// • Share / invites
-// • Group statistics
+// Main controller for group.html
 // ============================================================
 
-import { auth, db } from "./firebase.js";
+import { auth, db } from '../firebase.js';
 
 import {
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
 import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
   deleteDoc,
+  updateDoc,
   addDoc,
   collection,
   query,
   where,
-  orderBy,
   limit,
   getDocs,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  increment,
+  serverTimestamp,
+  runTransaction
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 
 // ============================================================
-// DOM HELPER
+// TAB MODULES
 // ============================================================
 
-const $ = id => document.getElementById(id);
+const TAB_MODULE_LOADERS = {
+  posts: () => import('./group-posts.js'),
+  members: () => import('./group-members.js'),
+  chat: () => import('./group-chat.js'),
+  subscription: () => import('./group-subscription.js'),
+  settings: () => import('./group-settings.js')
+};
+
+const loadedTabModules = new Set();
+
+let notificationsModuleLoaded = false;
+let headerActionsBound = false;
+let tabsBound = false;
 
 
 // ============================================================
 // DOM
 // ============================================================
 
-const pageLoader = $("pageLoader");
-const notFound = $("groupNotFoundState");
-const pageContent = $("groupPageContent");
+const navUserAvatar =
+  document.getElementById('navUserAvatar');
 
-const groupCover = $("groupCover");
-const coverEditBtn = $("coverEditBtn");
+const navGroupTitle =
+  document.getElementById('navGroupTitle');
 
-const groupAvatar = $("groupAvatar");
-const groupName = $("groupName");
-const navGroupTitle = $("navGroupTitle");
+const pageLoader =
+  document.getElementById('pageLoader');
 
-const groupPrivacyBadge = $("groupPrivacyBadge");
-const groupPremiumBadge = $("groupPremiumBadge");
-const groupVerifiedBadge = $("groupVerifiedBadge");
+const groupNotFoundState =
+  document.getElementById('groupNotFoundState');
 
-const groupCategoryChip = $("groupCategoryChip");
-const groupOwnerText = $("groupOwnerText");
-const groupCreatedText = $("groupCreatedText");
-const groupDescription = $("groupDescription");
+const groupPageContent =
+  document.getElementById('groupPageContent');
 
-const statMemberCount = $("statMemberCount");
-const statPostCount = $("statPostCount");
-const statOnlineCount = $("statOnlineCount");
-const statLevel = $("statLevel");
+const groupCover =
+  document.getElementById('groupCover');
 
-const joinLeaveBtn = $("joinLeaveBtn");
-const shareBtn = $("shareBtn");
-const inviteBtn = $("inviteBtn");
+const coverEditBtn =
+  document.getElementById('coverEditBtn');
 
-const yourRoleTag = $("yourRoleTag");
-const yourRoleText = $("yourRoleText");
+const groupAvatar =
+  document.getElementById('groupAvatar');
 
-const lockedNotice = $("lockedNotice");
-const groupContentGrid = $("groupContentGrid");
+const yourRoleTag =
+  document.getElementById('yourRoleTag');
 
-const tabsNav = $("groupTabsNav");
+const yourRoleText =
+  document.getElementById('yourRoleText');
 
-const postsTab = $("postsTab");
-const membersTab = $("membersTab");
-const chatTab = $("chatTab");
-const subscriptionTab = $("subscriptionTab");
-const settingsTab = $("settingsTab");
+const shareBtn =
+  document.getElementById('shareBtn');
 
-const subscriptionTabBtn = $("subscriptionTabBtn");
-const settingsTabBtn = $("settingsTabBtn");
+const inviteBtn =
+  document.getElementById('inviteBtn');
 
-const rulesListDisplay = $("rulesListDisplay");
-const rulesEmptyDisplay = $("rulesEmptyDisplay");
+const joinLeaveBtn =
+  document.getElementById('joinLeaveBtn');
 
-const adminsList = $("adminsList");
-const adminsEmptyDisplay = $("adminsEmptyDisplay");
+const groupName =
+  document.getElementById('groupName');
 
-const notificationBellBtn = $("notificationBellBtn");
-const notificationsPanel = $("notificationsPanel");
-const closeNotificationsBtn = $("closeNotificationsBtn");
-const notificationsList = $("notificationsList");
-const notifUnreadDot = $("notifUnreadDot");
+const groupPrivacyBadge =
+  document.getElementById('groupPrivacyBadge');
 
-const navUserAvatar = $("navUserAvatar");
+const groupPremiumBadge =
+  document.getElementById('groupPremiumBadge');
 
-const toastContainer = $("toast-container");
+const groupVerifiedBadge =
+  document.getElementById('groupVerifiedBadge');
+
+const groupCategoryChip =
+  document.getElementById('groupCategoryChip');
+
+const groupOwnerText =
+  document.getElementById('groupOwnerText');
+
+const groupCreatedText =
+  document.getElementById('groupCreatedText');
+
+const groupDescription =
+  document.getElementById('groupDescription');
+
+const statMemberCount =
+  document.getElementById('statMemberCount');
+
+const statPostCount =
+  document.getElementById('statPostCount');
+
+const statOnlineCount =
+  document.getElementById('statOnlineCount');
+
+const statLevel =
+  document.getElementById('statLevel');
+
+const lockedNotice =
+  document.getElementById('lockedNotice');
+
+const groupContentGrid =
+  document.getElementById('groupContentGrid');
+
+const groupTabsNav =
+  document.getElementById('groupTabsNav');
+
+const subscriptionTabBtn =
+  document.getElementById('subscriptionTabBtn');
+
+const settingsTabBtn =
+  document.getElementById('settingsTabBtn');
+
+const rulesListDisplay =
+  document.getElementById('rulesListDisplay');
+
+const rulesEmptyDisplay =
+  document.getElementById('rulesEmptyDisplay');
+
+const adminsList =
+  document.getElementById('adminsList');
+
+const adminsEmptyDisplay =
+  document.getElementById('adminsEmptyDisplay');
+
+const notificationBellBtn =
+  document.getElementById('notificationBellBtn');
+
+const notifUnreadDot =
+  document.getElementById('notifUnreadDot');
+
+const notificationsPanel =
+  document.getElementById('notificationsPanel');
+
+const closeNotificationsBtn =
+  document.getElementById('closeNotificationsBtn');
+
+const notificationsList =
+  document.getElementById('notificationsList');
+
+const toastContainer =
+  document.getElementById('toast-container');
 
 
 // ============================================================
-// STATE
+// URL STATE
 // ============================================================
 
-let currentUser = null;
-let currentGroup = null;
-let groupId = null;
+const urlParams =
+  new URLSearchParams(
+    window.location.search
+  );
 
-let currentMembership = null;
-let currentRole = null;
+const requestedPostId =
+  urlParams.get('postId');
 
-let activeTab = "posts";
-
-let loadingGroup = false;
-let membershipBusy = false;
-
-let notificationsCache = [];
+const requestedTab =
+  urlParams.get('tab');
 
 
 // ============================================================
 // CATEGORY LABELS
 // ============================================================
 
-const categoryLabels = {
-  technology: "Technology",
-  gaming: "Gaming",
-  programming: "Programming",
-  music: "Music",
-  "movies-tv": "Movies & TV",
-  anime: "Anime",
-  sports: "Sports",
-  education: "Education",
-  business: "Business",
-  entertainment: "Entertainment",
-  news: "News",
-  science: "Science",
-  fashion: "Fashion",
-  travel: "Travel",
-  politics: "Politics",
-  religion: "Religion",
-  general: "General",
-  other: "Other"
+const CATEGORY_LABELS = {
+  technology: 'Technology',
+  gaming: 'Gaming',
+  programming: 'Programming',
+  music: 'Music',
+  'movies-tv': 'Movies & TV',
+  anime: 'Anime',
+  sports: 'Sports',
+  education: 'Education',
+  business: 'Business',
+  entertainment: 'Entertainment',
+  news: 'News',
+  science: 'Science',
+  fashion: 'Fashion',
+  travel: 'Travel',
+  politics: 'Politics',
+  religion: 'Religion',
+  general: 'General',
+  other: 'Other'
 };
+
+
+// ============================================================
+// STATE
+// ============================================================
+
+const state = {
+
+  currentUser: null,
+
+  groupId:
+    urlParams.get('id'),
+
+  groupData: null,
+
+  membership: null,
+
+  activeTab:
+    requestedTab || (
+      requestedPostId
+        ? 'posts'
+        : 'posts'
+    ),
+
+  postId:
+    requestedPostId || null,
+
+  loading: false
+
+};
+
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function setText(el, value) {
+
+  if (el) {
+    el.textContent =
+      value ?? '';
+  }
+
+}
+
+
+function setDisplay(el, value) {
+
+  if (el) {
+    el.style.display =
+      value;
+  }
+
+}
+
+
+function formatCount(value) {
+
+  const num =
+    Number(value) || 0;
+
+  if (num >= 1000000) {
+
+    return `${(
+      num / 1000000
+    )
+      .toFixed(1)
+      .replace('.0', '')}M`;
+
+  }
+
+  if (num >= 1000) {
+
+    return `${(
+      num / 1000
+    )
+      .toFixed(1)
+      .replace('.0', '')}K`;
+
+  }
+
+  return String(num);
+}
+
+
+function initialsFrom(name) {
+
+  return String(name || '?')
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
+}
+
+
+function applyMediaBackground(
+  el,
+  url,
+  fallbackText = ''
+) {
+
+  if (!el) return;
+
+  if (url) {
+
+    el.style.backgroundImage =
+      `url("${String(url)
+        .replace(/"/g, '\\"')}")`;
+
+    el.style.backgroundSize =
+      'cover';
+
+    el.style.backgroundPosition =
+      'center';
+
+    el.textContent = '';
+
+  } else {
+
+    el.style.backgroundImage =
+      '';
+
+    el.textContent =
+      fallbackText || '';
+
+  }
+
+}
+
+
+function formatDate(timestamp) {
+
+  if (
+    !timestamp ||
+    typeof timestamp.toDate !== 'function'
+  ) {
+    return 'recently';
+  }
+
+  return timestamp
+    .toDate()
+    .toLocaleDateString(
+      undefined,
+      {
+        month: 'short',
+        year: 'numeric'
+      }
+    );
+}
 
 
 // ============================================================
 // TOAST
 // ============================================================
 
-function toast(message, type = "info") {
+function showToast(
+  message,
+  type = 'info'
+) {
 
-  if (!toastContainer) return;
+  if (!toastContainer) {
 
-  const icons = {
-    success: "fa-circle-check",
-    error: "fa-circle-exclamation",
-    info: "fa-circle-info"
-  };
+    console.log(
+      `[${type}] ${message}`
+    );
 
-  const el = document.createElement("div");
-
-  el.className = `toast toast--${type}`;
-
-  el.innerHTML = `
-    <i class="fa-solid ${icons[type] || icons.info}"></i>
-    <span></span>
-  `;
-
-  const span = el.querySelector("span");
-
-  if (span) {
-    span.textContent = message;
+    return;
   }
 
-  toastContainer.appendChild(el);
+  const icons = {
 
-  setTimeout(() => {
+    success:
+      'fa-circle-check',
 
-    el.classList.add("is-leaving");
+    error:
+      'fa-circle-exclamation',
 
-    setTimeout(() => {
-      el.remove();
-    }, 250);
+    info:
+      'fa-circle-info'
 
-  }, 4500);
+  };
+
+
+  const toast =
+    document.createElement('div');
+
+  toast.className =
+    `toast toast--${type}`;
+
+
+  const icon =
+    document.createElement('i');
+
+  icon.className =
+    `fa-solid ${
+      icons[type] ||
+      icons.info
+    }`;
+
+
+  const text =
+    document.createElement('span');
+
+  text.textContent =
+    message;
+
+
+  toast.append(
+    icon,
+    text
+  );
+
+
+  toastContainer.appendChild(
+    toast
+  );
+
+
+  setTimeout(
+    () => {
+
+      toast.classList.add(
+        'is-leaving'
+      );
+
+      setTimeout(
+        () => {
+          toast.remove();
+        },
+        400
+      );
+
+    },
+    3800
+  );
+
 }
 
 
 // ============================================================
-// LOADER
+// OWNER / ADMIN
+// ============================================================
+
+function isCurrentUserOwner() {
+
+  const uid =
+    state.currentUser?.uid;
+
+  if (
+    !uid ||
+    !state.groupData
+  ) {
+    return false;
+  }
+
+  return [
+
+    state.groupData.ownerId,
+    state.groupData.ownerUid,
+    state.groupData.createdBy,
+    state.groupData.creatorId
+
+  ]
+    .filter(Boolean)
+    .includes(uid);
+
+}
+
+
+function isCurrentUserAdmin() {
+
+  return [
+    'admin',
+    'moderator'
+  ].includes(
+    state.membership?.role
+  );
+
+}
+
+
+function canManageGroup() {
+
+  return (
+    isCurrentUserOwner() ||
+    state.membership?.role === 'owner' ||
+    isCurrentUserAdmin()
+  );
+
+}
+
+
+function isActiveMember() {
+
+  return (
+    state.membership?.status ===
+    'active'
+  );
+
+}
+
+
+function canViewGroup() {
+
+  if (!state.groupData) {
+    return false;
+  }
+
+  if (
+    state.groupData.privacy !==
+    'private'
+  ) {
+    return true;
+  }
+
+  return (
+    isActiveMember() ||
+    canManageGroup()
+  );
+
+}
+
+
+// ============================================================
+// LOADING
 // ============================================================
 
 function hideLoader() {
 
-  if (!pageLoader) return;
-
-  pageLoader.classList.add("is-hidden");
-}
-
-
-function showNotFound() {
-
-  hideLoader();
-
-  if (pageContent) {
-    pageContent.classList.remove("is-visible");
+  if (pageLoader) {
+    pageLoader.classList.add(
+      'is-hidden'
+    );
   }
 
-  if (notFound) {
-    notFound.classList.add("is-visible");
-  }
 }
 
 
@@ -245,30 +553,37 @@ function showPage() {
 
   hideLoader();
 
-  if (notFound) {
-    notFound.classList.remove("is-visible");
+  if (groupPageContent) {
+
+    groupPageContent.classList.add(
+      'is-visible'
+    );
+
   }
 
-  if (pageContent) {
-    pageContent.classList.add("is-visible");
-  }
 }
 
 
-// ============================================================
-// GROUP ID
-// ============================================================
+function showNotFound() {
 
-function getGroupId() {
+  hideLoader();
 
-  const params =
-    new URLSearchParams(location.search);
+  if (groupNotFoundState) {
 
-  return (
-    params.get("id") ||
-    params.get("groupId") ||
-    ""
-  ).trim();
+    groupNotFoundState.classList.add(
+      'is-visible'
+    );
+
+  }
+
+  if (groupPageContent) {
+
+    groupPageContent.classList.remove(
+      'is-visible'
+    );
+
+  }
+
 }
 
 
@@ -281,65 +596,38 @@ onAuthStateChanged(
   async user => {
 
     if (!user) {
-      location.href = "login.html";
+
+      window.location.href =
+        'login.html';
+
       return;
     }
 
-    currentUser = user;
+    state.currentUser =
+      user;
 
-    setNavAvatar(user);
-
-    groupId = getGroupId();
-
-    if (!groupId) {
-      showNotFound();
-      return;
-    }
+    applyUserAvatar(user);
 
     await loadGroup();
+
   }
 );
 
 
-// ============================================================
-// NAV AVATAR
-// ============================================================
+function applyUserAvatar(user) {
 
-function setNavAvatar(user) {
-
-  if (!navUserAvatar) return;
-
-  if (user.photoURL) {
-
-    navUserAvatar.style.backgroundImage =
-      `url("${escapeCssUrl(user.photoURL)}")`;
-
-    navUserAvatar.style.backgroundSize =
-      "cover";
-
-    navUserAvatar.style.backgroundPosition =
-      "center";
-
-    navUserAvatar.innerHTML = "";
-
-  } else {
-
-    navUserAvatar.style.backgroundImage = "";
-
-    navUserAvatar.innerHTML =
-      '<i class="fa-solid fa-user"></i>';
+  if (!navUserAvatar) {
+    return;
   }
-}
 
+  applyMediaBackground(
+    navUserAvatar,
+    user.photoURL || '',
+    initialsFrom(
+      user.displayName || 'V'
+    )
+  );
 
-// ============================================================
-// SAFE CSS URL
-// ============================================================
-
-function escapeCssUrl(url) {
-
-  return String(url || "")
-    .replace(/"/g, '\\"');
 }
 
 
@@ -349,169 +637,243 @@ function escapeCssUrl(url) {
 
 async function loadGroup() {
 
-  if (loadingGroup) return;
+  if (state.loading) {
+    return;
+  }
 
-  loadingGroup = true;
-
-  try {
-
-    const ref =
-      doc(
-        db,
-        "groups",
-        groupId
-      );
-
-    const snapshot =
-      await getDoc(ref);
-
-    if (!snapshot.exists()) {
-      showNotFound();
-      return;
-    }
-
-    currentGroup = {
-      id: snapshot.id,
-      ...snapshot.data()
-    };
-
-    renderGroup();
-
-    await resolveMembership();
-
-    renderAccess();
-
-    renderRules();
-
-    await renderAdmins();
-
-    await loadPosts();
-
-    await loadMembers();
-
-    updateNotificationDot();
-
-    showPage();
-
-    handleNotificationNavigation();
-
-  } catch (error) {
+  if (!state.groupId) {
 
     console.error(
-      "GROUP LOAD ERROR:",
-      error
-    );
-
-    toast(
-      "Unable to load this group.",
-      "error"
+      'Missing group ID.'
     );
 
     showNotFound();
 
+    return;
+  }
+
+  state.loading = true;
+
+
+  try {
+
+    const groupRef =
+      doc(
+        db,
+        'groups',
+        state.groupId
+      );
+
+
+    const memberRef =
+      doc(
+        db,
+        'groups',
+        state.groupId,
+        'members',
+        state.currentUser.uid
+      );
+
+
+    const groupSnap =
+      await getDoc(
+        groupRef
+      );
+
+
+    if (!groupSnap.exists()) {
+
+      showNotFound();
+
+      showToast(
+        'This group no longer exists.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    state.groupData = {
+
+      id:
+        groupSnap.id,
+
+      ...groupSnap.data()
+
+    };
+
+
+    try {
+
+      const memberSnap =
+        await getDoc(
+          memberRef
+        );
+
+
+      state.membership =
+        memberSnap.exists()
+          ? {
+
+              uid:
+                state.currentUser.uid,
+
+              ...memberSnap.data()
+
+            }
+          : null;
+
+
+    } catch (error) {
+
+      console.error(
+        'Membership error:',
+        error
+      );
+
+      state.membership =
+        null;
+
+    }
+
+
+    if (
+      isCurrentUserOwner()
+    ) {
+
+      state.membership = {
+
+        ...(state.membership || {}),
+
+        uid:
+          state.currentUser.uid,
+
+        role:
+          'owner',
+
+        status:
+          'active'
+
+      };
+
+    }
+
+
+    renderHeader();
+
+    renderSidebar();
+
+    applyAccessControl();
+
+    setupTabs();
+
+    bindHeaderActions();
+
+
+    renderAdmins()
+      .catch(
+        error => {
+
+          console.error(
+            'Admin rendering error:',
+            error
+          );
+
+        }
+      );
+
+
+    showPage();
+
+
+  } catch (error) {
+
+    console.error(
+      'GROUP LOAD ERROR:',
+      error
+    );
+
+    showNotFound();
+
+    showToast(
+      'Unable to load this group.',
+      'error'
+    );
+
+
   } finally {
 
-    loadingGroup = false;
+    state.loading = false;
+
+    hideLoader();
+
   }
+
 }
 
 
 // ============================================================
-// RENDER GROUP
+// HEADER
 // ============================================================
 
-function renderGroup() {
+function renderHeader() {
 
   const group =
-    currentGroup;
+    state.groupData;
 
-  if (!group) return;
-
-  const name =
-    group.name ||
-    "Untitled Group";
-
-  if (groupName) {
-    groupName.textContent = name;
+  if (!group) {
+    return;
   }
 
-  if (navGroupTitle) {
-    navGroupTitle.textContent = name;
-  }
 
   document.title =
-    `${name} · VitalStar`;
+    `${group.name || 'Group'} · VitalStar`;
 
 
-  // ----------------------------------------------------------
-  // COVER
-  // ----------------------------------------------------------
-
-  if (groupCover) {
-
-    if (group.coverURL) {
-
-      groupCover.style.backgroundImage =
-        `url("${escapeCssUrl(group.coverURL)}")`;
-
-      groupCover.style.backgroundSize =
-        "cover";
-
-      groupCover.style.backgroundPosition =
-        "center";
-
-    } else {
-
-      groupCover.style.backgroundImage =
-        "linear-gradient(135deg,#1b3e8f,#241640)";
-    }
-  }
+  setText(
+    navGroupTitle,
+    group.name ||
+    'VitalStar Group'
+  );
 
 
-  // ----------------------------------------------------------
-  // AVATAR
-  // ----------------------------------------------------------
-
-  if (groupAvatar) {
-
-    if (group.avatarURL) {
-
-      groupAvatar.style.backgroundImage =
-        `url("${escapeCssUrl(group.avatarURL)}")`;
-
-      groupAvatar.style.backgroundSize =
-        "cover";
-
-      groupAvatar.style.backgroundPosition =
-        "center";
-
-      groupAvatar.innerHTML = "";
-
-    } else {
-
-      groupAvatar.style.backgroundImage = "";
-
-      groupAvatar.innerHTML =
-        '<i class="fa-solid fa-users"></i>';
-    }
-  }
+  applyMediaBackground(
+    groupCover,
+    group.coverURL ||
+    group.coverUrl ||
+    '',
+    ''
+  );
 
 
-  // ----------------------------------------------------------
-  // PRIVACY
-  // ----------------------------------------------------------
+  applyMediaBackground(
+    groupAvatar,
+    group.avatarURL ||
+    group.avatarUrl ||
+    '',
+    initialsFrom(
+      group.name
+    )
+  );
 
-  const privacy =
-    group.privacy === "private"
-      ? "private"
-      : "public";
+
+  setText(
+    groupName,
+    group.name ||
+    'VitalStar Group'
+  );
+
 
   if (groupPrivacyBadge) {
 
-    if (privacy === "private") {
+    if (
+      group.privacy ===
+      'private'
+    ) {
 
       groupPrivacyBadge.className =
-        "badge badge--private";
+        'badge badge--private';
 
       groupPrivacyBadge.innerHTML =
         '<i class="fa-solid fa-lock"></i> Private';
@@ -519,798 +881,1971 @@ function renderGroup() {
     } else {
 
       groupPrivacyBadge.className =
-        "badge badge--public";
+        'badge badge--public';
 
       groupPrivacyBadge.innerHTML =
         '<i class="fa-solid fa-globe"></i> Public';
-    }
-  }
 
-
-  // ----------------------------------------------------------
-  // PREMIUM
-  // ----------------------------------------------------------
-
-  if (groupPremiumBadge) {
-
-    groupPremiumBadge.style.display =
-      group.type === "premium"
-        ? "inline-flex"
-        : "none";
-  }
-
-
-  // ----------------------------------------------------------
-  // VERIFIED
-  // ----------------------------------------------------------
-
-  if (groupVerifiedBadge) {
-
-    groupVerifiedBadge.style.display =
-      group.verified === true
-        ? "inline-flex"
-        : "none";
-  }
-
-
-  // ----------------------------------------------------------
-  // CATEGORY
-  // ----------------------------------------------------------
-
-  if (groupCategoryChip) {
-
-    groupCategoryChip.textContent =
-      categoryLabels[group.category] ||
-      group.category ||
-      "General";
-  }
-
-
-  // ----------------------------------------------------------
-  // OWNER
-  // ----------------------------------------------------------
-
-  if (groupOwnerText) {
-
-    groupOwnerText.textContent =
-      `Owned by ${group.ownerName || "VitalStar Member"}`;
-  }
-
-
-  // ----------------------------------------------------------
-  // DESCRIPTION
-  // ----------------------------------------------------------
-
-  if (groupDescription) {
-
-    groupDescription.textContent =
-      group.description ||
-      "No group description has been added yet.";
-  }
-
-
-  // ----------------------------------------------------------
-  // STATS
-  // ----------------------------------------------------------
-
-  if (statMemberCount) {
-
-    statMemberCount.textContent =
-      formatNumber(
-        group.memberCount || 0
-      );
-  }
-
-  if (statPostCount) {
-
-    statPostCount.textContent =
-      formatNumber(
-        group.postCount || 0
-      );
-  }
-
-  if (statOnlineCount) {
-
-    statOnlineCount.textContent =
-      formatNumber(
-        group.onlineCount || 0
-      );
-  }
-
-  if (statLevel) {
-
-    statLevel.textContent =
-      formatNumber(
-        group.level || 1
-      );
-  }
-
-
-  // ----------------------------------------------------------
-  // CREATED DATE
-  // ----------------------------------------------------------
-
-  if (groupCreatedText) {
-
-    groupCreatedText.textContent =
-      `Created ${formatDate(group.createdAt)}`;
-  }
-}
-
-
-// ============================================================
-// NUMBER FORMAT
-// ============================================================
-
-function formatNumber(value) {
-
-  const number =
-    Number(value) || 0;
-
-  return number.toLocaleString();
-}
-
-
-// ============================================================
-// DATE FORMAT
-// ============================================================
-
-function formatDate(timestamp) {
-
-  if (!timestamp) {
-    return "recently";
-  }
-
-  try {
-
-    const date =
-      timestamp?.toDate
-        ? timestamp.toDate()
-        : new Date(timestamp);
-
-    if (Number.isNaN(date.getTime())) {
-      return "recently";
     }
 
-    return date.toLocaleDateString(
-      undefined,
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      }
+  }
+
+
+  setDisplay(
+    groupPremiumBadge,
+    group.type === 'premium'
+      ? 'inline-flex'
+      : 'none'
+  );
+
+
+  setDisplay(
+    groupVerifiedBadge,
+    group.verified === true
+      ? 'inline-flex'
+      : 'none'
+  );
+
+
+  setText(
+    groupCategoryChip,
+    CATEGORY_LABELS[
+      group.category
+    ] ||
+    group.category ||
+    'General'
+  );
+
+
+  const ownerName =
+    group.ownerName ||
+    group.ownerDisplayName ||
+    (
+      isCurrentUserOwner()
+        ? (
+            state.currentUser
+              ?.displayName ||
+            'You'
+          )
+        : 'a member'
     );
 
-  } catch {
 
-    return "recently";
+  setText(
+    groupOwnerText,
+    `Owned by ${ownerName}`
+  );
+
+
+  setText(
+    groupCreatedText,
+    `Created ${formatDate(
+      group.createdAt
+    )}`
+  );
+
+
+  setText(
+    groupDescription,
+    group.description ||
+    ''
+  );
+
+
+  setText(
+    statMemberCount,
+    formatCount(
+      group.memberCount
+    )
+  );
+
+
+  setText(
+    statPostCount,
+    formatCount(
+      group.postCount
+    )
+  );
+
+
+  setText(
+    statOnlineCount,
+    formatCount(
+      group.onlineCount
+    )
+  );
+
+
+  setText(
+    statLevel,
+    group.level ||
+    1
+  );
+
+
+  renderJoinLeaveState();
+
+
+  if (coverEditBtn) {
+
+    coverEditBtn.classList.toggle(
+      'is-visible',
+      canManageGroup()
+    );
+
   }
+
 }
 
 
 // ============================================================
-// MEMBERSHIP
+// JOIN / LEAVE UI
 // ============================================================
 
-async function resolveMembership() {
+function renderJoinLeaveState() {
 
-  currentMembership = null;
-  currentRole = null;
-
-  if (!currentUser || !currentGroup) {
+  if (!joinLeaveBtn) {
     return;
   }
 
-  const members =
-    currentGroup.members || {};
 
-  const member =
-    members[currentUser.uid];
+  if (
+    isCurrentUserOwner() ||
+    state.membership?.role ===
+      'owner'
+  ) {
 
-  if (member) {
+    joinLeaveBtn.style.display =
+      'none';
 
-    currentMembership = member;
+    setDisplay(
+      yourRoleTag,
+      'inline-flex'
+    );
 
-    currentRole =
-      member.role || "member";
+    setText(
+      yourRoleText,
+      'Owner'
+    );
+
+    setDisplay(
+      inviteBtn,
+      'inline-flex'
+    );
 
     return;
   }
 
 
-  // ----------------------------------------------------------
-  // SUBCOLLECTION FALLBACK
-  // ----------------------------------------------------------
-
-  try {
-
-    const memberRef =
-      doc(
-        db,
-        "groups",
-        groupId,
-        "members",
-        currentUser.uid
-      );
-
-    const memberSnapshot =
-      await getDoc(memberRef);
-
-    if (memberSnapshot.exists()) {
-
-      currentMembership =
-        memberSnapshot.data();
-
-      currentRole =
-        currentMembership.role ||
-        "member";
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "Membership subcollection check failed:",
-      error
-    );
-  }
-}
-
-
-// ============================================================
-// ROLE HELPERS
-// ============================================================
-
-function isOwner() {
-
-  return (
-    currentGroup?.ownerId ===
-    currentUser?.uid
-  );
-}
-
-
-function isAdmin() {
-
-  return (
-    isOwner() ||
-    currentRole === "admin"
-  );
-}
-
-
-function isModerator() {
-
-  return (
-    isAdmin() ||
-    currentRole === "moderator"
-  );
-}
-
-
-function isMember() {
-
-  return (
-    currentMembership?.status ===
-      "active" ||
-    isOwner()
-  );
-}
-
-
-function isPending() {
-
-  return (
-    currentMembership?.status ===
-    "pending"
-  );
-}
-
-
-// ============================================================
-// ACCESS / HEADER
-// ============================================================
-
-function renderAccess() {
-
-  const group =
-    currentGroup;
-
-  if (!group) return;
-
-
-  // ----------------------------------------------------------
-  // ROLE TAG
-  // ----------------------------------------------------------
-
   if (
-    yourRoleTag &&
-    yourRoleText
+    state.membership &&
+    state.membership.status ===
+      'active'
   ) {
 
-    if (isMember()) {
-
-      yourRoleTag.classList.add(
-        "is-visible"
-      );
-
-      yourRoleText.textContent =
-        formatRole(currentRole);
-
-    } else {
-
-      yourRoleTag.classList.remove(
-        "is-visible"
-      );
-    }
-  }
-
-
-  // ----------------------------------------------------------
-  // OWNER CONTROLS
-  // ----------------------------------------------------------
-
-  if (isOwner()) {
-
-    coverEditBtn?.classList.add(
-      "is-visible"
-    );
-
-    if (inviteBtn) {
-      inviteBtn.style.display =
-        "flex";
-    }
-
-    if (settingsTabBtn) {
-      settingsTabBtn.style.display =
-        "flex";
-    }
-
-  } else {
-
-    coverEditBtn?.classList.remove(
-      "is-visible"
-    );
-
-    if (inviteBtn) {
-      inviteBtn.style.display =
-        "none";
-    }
-
-    if (settingsTabBtn) {
-      settingsTabBtn.style.display =
-        isAdmin()
-          ? "flex"
-          : "none";
-    }
-  }
-
-
-  // ----------------------------------------------------------
-  // SUBSCRIPTION TAB
-  // ----------------------------------------------------------
-
-  if (subscriptionTabBtn) {
-
-    subscriptionTabBtn.style.display =
-      group.type === "premium"
-        ? "flex"
-        : "none";
-  }
-
-
-  // ----------------------------------------------------------
-  // PRIVATE GROUP
-  // ----------------------------------------------------------
-
-  if (
-    lockedNotice &&
-    groupContentGrid
-  ) {
-
-    if (
-      group.privacy === "private" &&
-      !isMember()
-    ) {
-
-      lockedNotice.classList.add(
-        "is-visible"
-      );
-
-      groupContentGrid.style.display =
-        "none";
-
-    } else {
-
-      lockedNotice.classList.remove(
-        "is-visible"
-      );
-
-      groupContentGrid.style.display =
-        "";
-    }
-  }
-
-
-  // ----------------------------------------------------------
-  // JOIN BUTTON
-  // ----------------------------------------------------------
-
-  updateJoinButton();
-}
-
-
-// ============================================================
-// ROLE LABEL
-// ============================================================
-
-function formatRole(role) {
-
-  const labels = {
-    owner: "Owner",
-    admin: "Admin",
-    moderator: "Moderator",
-    member: "Member"
-  };
-
-  return labels[role] ||
-    "Member";
-}
-
-
-// ============================================================
-// JOIN BUTTON
-// ============================================================
-
-function updateJoinButton() {
-
-  if (!joinLeaveBtn) return;
-
-  joinLeaveBtn.disabled =
-    membershipBusy;
-
-
-  // OWNER
-  if (isOwner()) {
-
-    joinLeaveBtn.className =
-      "btn-join-leave is-member";
-
-    joinLeaveBtn.innerHTML =
-      '<i class="fa-solid fa-shield-halved"></i> Owner';
+    joinLeaveBtn.style.display =
+      'flex';
 
     joinLeaveBtn.disabled =
-      true;
-
-    return;
-  }
-
-
-  // ACTIVE
-  if (isMember()) {
+      false;
 
     joinLeaveBtn.className =
-      "btn-join-leave is-member";
+      'btn-join-leave is-member';
 
     joinLeaveBtn.innerHTML =
       '<i class="fa-solid fa-check"></i> Joined';
 
+
+    setDisplay(
+      yourRoleTag,
+      'inline-flex'
+    );
+
+    setText(
+      yourRoleText,
+      capitalize(
+        state.membership.role ||
+        'member'
+      )
+    );
+
+
+    setDisplay(
+      inviteBtn,
+      'inline-flex'
+    );
+
     return;
   }
 
 
-  // PENDING
-  if (isPending()) {
+  if (
+    state.membership?.status ===
+      'pending'
+  ) {
+
+    joinLeaveBtn.style.display =
+      'flex';
+
+    joinLeaveBtn.disabled =
+      false;
 
     joinLeaveBtn.className =
-      "btn-join-leave is-pending";
+      'btn-join-leave is-pending';
 
     joinLeaveBtn.innerHTML =
-      '<i class="fa-solid fa-clock"></i> Cancel request';
+      '<i class="fa-solid fa-clock"></i> Requested';
+
+
+    setDisplay(
+      yourRoleTag,
+      'none'
+    );
+
+    setDisplay(
+      inviteBtn,
+      'none'
+    );
 
     return;
   }
 
 
-  // JOIN
+  joinLeaveBtn.style.display =
+    'flex';
+
+  joinLeaveBtn.disabled =
+    false;
+
   joinLeaveBtn.className =
-    "btn-join-leave";
+    'btn-join-leave';
 
   joinLeaveBtn.innerHTML =
     '<i class="fa-solid fa-plus"></i> Join group';
+
+
+  setDisplay(
+    yourRoleTag,
+    'none'
+  );
+
+  setDisplay(
+    inviteBtn,
+    'none'
+  );
+
+}
+
+
+function capitalize(value) {
+
+  const text =
+    String(
+      value ||
+      'member'
+    );
+
+  return (
+    text.charAt(0).toUpperCase() +
+    text.slice(1)
+  );
+
 }
 
 
 // ============================================================
-// JOIN / LEAVE / CANCEL
+// SIDEBAR
 // ============================================================
 
-joinLeaveBtn?.addEventListener(
-  "click",
-  async () => {
+function renderSidebar() {
 
-    if (!currentUser) {
+  if (!rulesListDisplay) {
+    return;
+  }
 
-      toast(
-        "Please sign in first.",
-        "error"
+
+  const rules =
+    Array.isArray(
+      state.groupData?.rules
+    )
+      ? state.groupData.rules
+      : [];
+
+
+  rulesListDisplay.innerHTML =
+    '';
+
+
+  if (!rules.length) {
+
+    setDisplay(
+      rulesEmptyDisplay,
+      'block'
+    );
+
+    return;
+  }
+
+
+  setDisplay(
+    rulesEmptyDisplay,
+    'none'
+  );
+
+
+  rules.forEach(
+    rule => {
+
+      const li =
+        document.createElement(
+          'li'
+        );
+
+      li.textContent =
+        String(rule);
+
+      rulesListDisplay
+        .appendChild(li);
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// ADMINS
+// ============================================================
+
+async function renderAdmins() {
+
+  if (!adminsList) {
+    return;
+  }
+
+
+  try {
+
+    const q =
+      query(
+        collection(
+          db,
+          'groups',
+          state.groupId,
+          'members'
+        ),
+
+        where(
+          'role',
+          'in',
+          [
+            'owner',
+            'admin',
+            'moderator'
+          ]
+        ),
+
+        limit(10)
+      );
+
+
+    const snapshot =
+      await getDocs(q);
+
+
+    adminsList
+      .querySelectorAll(
+        '.admin-row'
+      )
+      .forEach(
+        row =>
+          row.remove()
+      );
+
+
+    if (snapshot.empty) {
+
+      setDisplay(
+        adminsEmptyDisplay,
+        'block'
       );
 
       return;
     }
 
-    if (!currentGroup) return;
 
-    if (isOwner()) return;
-
-    if (membershipBusy) return;
-
-
-    if (isMember()) {
-
-      await leaveGroup();
-
-      return;
-    }
+    setDisplay(
+      adminsEmptyDisplay,
+      'none'
+    );
 
 
-    if (isPending()) {
+    const priority = {
 
-      await cancelJoinRequest();
+      owner: 0,
 
-      return;
-    }
+      admin: 1,
 
+      moderator: 2
 
-    await joinGroup();
-  }
-);
+    };
 
 
-// ============================================================
-// JOIN GROUP
-// ============================================================
+    const admins =
+      snapshot.docs
+        .map(
+          item => ({
 
-async function joinGroup() {
+            id:
+              item.id,
 
-  membershipBusy = true;
+            ...item.data()
 
-  updateJoinButton();
-
-  try {
-
-    // --------------------------------------------------------
-    // PREMIUM
-    // --------------------------------------------------------
-
-    if (
-      currentGroup.type ===
-      "premium"
-    ) {
-
-      await startPremiumJoin();
-
-      return;
-    }
+          })
+        )
+        .sort(
+          (a, b) =>
+            (
+              priority[a.role] ??
+              9
+            ) -
+            (
+              priority[b.role] ??
+              9
+            )
+        );
 
 
-    // --------------------------------------------------------
-    // PRIVATE
-    // --------------------------------------------------------
+    admins.forEach(
+      admin => {
 
-    if (
-      currentGroup.privacy ===
-      "private"
-    ) {
+        const row =
+          document.createElement(
+            'div'
+          );
 
-      await createJoinRequest();
-
-      return;
-    }
+        row.className =
+          'admin-row';
 
 
-    // --------------------------------------------------------
-    // PUBLIC FREE
-    // --------------------------------------------------------
+        const avatar =
+          document.createElement(
+            'div'
+          );
 
-    await activateMember();
+        avatar.className =
+          'admin-avatar';
+
+
+        applyMediaBackground(
+          avatar,
+          admin.photoURL ||
+          '',
+          initialsFrom(
+            admin.displayName ||
+            admin.fullName ||
+            'V'
+          )
+        );
+
+
+        const info =
+          document.createElement(
+            'div'
+          );
+
+        info.className =
+          'admin-info';
+
+
+        const name =
+          document.createElement(
+            'div'
+          );
+
+        name.className =
+          'admin-name';
+
+        name.textContent =
+          admin.displayName ||
+          admin.fullName ||
+          'VitalStar Member';
+
+
+        const role =
+          document.createElement(
+            'div'
+          );
+
+        role.className =
+          'admin-role';
+
+        role.textContent =
+          capitalize(
+            admin.role ||
+            'member'
+          );
+
+
+        info.append(
+          name,
+          role
+        );
+
+
+        row.append(
+          avatar,
+          info
+        );
+
+
+        adminsList.appendChild(
+          row
+        );
+
+      }
+    );
+
 
   } catch (error) {
 
     console.error(
-      "JOIN GROUP ERROR:",
+      'Admin loading error:',
       error
     );
 
-    toast(
-      error?.message ||
-      "Unable to join this group.",
-      "error"
+    setDisplay(
+      adminsEmptyDisplay,
+      'block'
     );
+
+  }
+
+}
+
+
+// ============================================================
+// ACCESS CONTROL
+// ============================================================
+
+function applyAccessControl() {
+
+  const canView =
+    canViewGroup();
+
+
+  if (lockedNotice) {
+
+    lockedNotice.classList.toggle(
+      'is-visible',
+      !canView
+    );
+
+  }
+
+
+  if (groupContentGrid) {
+
+    groupContentGrid.style.display =
+      canView
+        ? 'grid'
+        : 'none';
+
+  }
+
+
+  setDisplay(
+    subscriptionTabBtn,
+    state.groupData?.type ===
+      'premium'
+      ? 'flex'
+      : 'none'
+  );
+
+
+  setDisplay(
+    settingsTabBtn,
+    canManageGroup()
+      ? 'flex'
+      : 'none'
+  );
+
+
+  if (canView) {
+
+    activateTab(
+      state.activeTab ||
+      'posts'
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// TABS
+// ============================================================
+
+function setupTabs() {
+
+  if (
+    !groupTabsNav ||
+    tabsBound
+  ) {
+    return;
+  }
+
+
+  tabsBound = true;
+
+
+  groupTabsNav.addEventListener(
+    'click',
+    event => {
+
+      const button =
+        event.target.closest(
+          '.group-tab'
+        );
+
+
+      if (!button) {
+        return;
+      }
+
+
+      const tab =
+        button.dataset.tab;
+
+
+      if (!tab) {
+        return;
+      }
+
+
+      activateTab(tab);
+
+    }
+  );
+
+}
+
+
+function activateTab(tabName) {
+
+  if (!tabName) {
+    return;
+  }
+
+
+  if (
+    !canViewGroup() &&
+    tabName !== 'posts'
+  ) {
+
+    showToast(
+      'Join the group to access this section.',
+      'info'
+    );
+
+    return;
+  }
+
+
+  if (
+    tabName === 'settings' &&
+    !canManageGroup()
+  ) {
+
+    showToast(
+      'You do not have permission to manage this group.',
+      'error'
+    );
+
+    return;
+  }
+
+
+  if (
+    tabName === 'subscription' &&
+    state.groupData?.type !==
+      'premium'
+  ) {
+    return;
+  }
+
+
+  state.activeTab =
+    tabName;
+
+
+  if (groupTabsNav) {
+
+    groupTabsNav
+      .querySelectorAll(
+        '.group-tab'
+      )
+      .forEach(
+        button => {
+
+          button.classList.toggle(
+            'is-active',
+            button.dataset.tab ===
+              tabName
+          );
+
+        }
+      );
+
+  }
+
+
+  document
+    .querySelectorAll(
+      '.tab-panel'
+    )
+    .forEach(
+      panel => {
+
+        panel.classList.toggle(
+          'is-active',
+          panel.dataset.panel ===
+            tabName
+        );
+
+      }
+    );
+
+
+  loadTabModuleIfNeeded(
+    tabName
+  );
+
+}
+
+
+// ============================================================
+// TAB MODULE LOADER
+// ============================================================
+
+async function loadTabModuleIfNeeded(
+  tabName
+) {
+
+  if (
+    loadedTabModules.has(
+      tabName
+    )
+  ) {
+    return;
+  }
+
+
+  const loader =
+    TAB_MODULE_LOADERS[tabName];
+
+
+  if (!loader) {
+    return;
+  }
+
+
+  const panel =
+    document.getElementById(
+      `${tabName}Tab`
+    );
+
+
+  try {
+
+    const module =
+      await loader();
+
+
+    loadedTabModules.add(
+      tabName
+    );
+
+
+    if (
+      module &&
+      typeof module.init ===
+        'function'
+    ) {
+
+      await module.init(
+        buildTabContext(panel)
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      `Failed to load ${tabName}:`,
+      error
+    );
+
+
+    if (!panel) {
+      return;
+    }
+
+
+    panel.innerHTML = `
+      <div class="tab-panel-placeholder">
+
+        <i class="
+          fa-solid
+          fa-circle-exclamation
+        "></i>
+
+        <p>
+          Unable to load this section.
+        </p>
+
+        <button
+          type="button"
+          class="retry-tab-btn"
+        >
+          Try again
+        </button>
+
+      </div>
+    `;
+
+
+    const retry =
+      panel.querySelector(
+        '.retry-tab-btn'
+      );
+
+
+    if (retry) {
+
+      retry.addEventListener(
+        'click',
+        () => {
+
+          loadedTabModules.delete(
+            tabName
+          );
+
+          loadTabModuleIfNeeded(
+            tabName
+          );
+
+        }
+      );
+
+    }
+
+  }
+
+}
+
+
+// ============================================================
+// TAB CONTEXT
+// ============================================================
+
+function buildTabContext(
+  panelEl
+) {
+
+  return {
+
+    db,
+
+    auth,
+
+    groupId:
+      state.groupId,
+
+    groupRef:
+      doc(
+        db,
+        'groups',
+        state.groupId
+      ),
+
+    groupData:
+      state.groupData,
+
+    currentUser:
+      state.currentUser,
+
+    membership:
+      state.membership,
+
+    panelEl,
+
+    // --------------------------------------------------------
+    // IMPORTANT:
+    // Exact group post opened from notification
+    // --------------------------------------------------------
+
+    postId:
+      state.postId,
+
+    requestedPostId:
+      state.postId,
+
+    showToast,
+
+    formatCount,
+
+    initialsFrom,
+
+    applyMediaBackground,
+
+    refreshHeaderStats,
+
+    isCurrentUserOwner,
+
+    isCurrentUserAdmin,
+
+    canManageGroup,
+
+    isActiveMember,
+
+    canViewGroup,
+
+    // --------------------------------------------------------
+    // GROUP NOTIFICATIONS
+    // --------------------------------------------------------
+
+    sendGroupNotification
+
+  };
+
+}
+
+
+// ============================================================
+// REFRESH STATS
+// ============================================================
+
+async function refreshHeaderStats() {
+
+  try {
+
+    const groupRef =
+      doc(
+        db,
+        'groups',
+        state.groupId
+      );
+
+
+    const snap =
+      await getDoc(
+        groupRef
+      );
+
+
+    if (!snap.exists()) {
+      return;
+    }
+
+
+    state.groupData = {
+
+      id:
+        snap.id,
+
+      ...snap.data()
+
+    };
+
+
+    if (
+      isCurrentUserOwner()
+    ) {
+
+      state.membership = {
+
+        ...(state.membership || {}),
+
+        uid:
+          state.currentUser.uid,
+
+        role:
+          'owner',
+
+        status:
+          'active'
+
+      };
+
+    }
+
+
+    setText(
+      statMemberCount,
+      formatCount(
+        state.groupData.memberCount
+      )
+    );
+
+
+    setText(
+      statPostCount,
+      formatCount(
+        state.groupData.postCount
+      )
+    );
+
+
+    setText(
+      statOnlineCount,
+      formatCount(
+        state.groupData.onlineCount
+      )
+    );
+
+
+    setText(
+      statLevel,
+      state.groupData.level ||
+      1
+    );
+
+
+    setDisplay(
+      settingsTabBtn,
+      canManageGroup()
+        ? 'flex'
+        : 'none'
+    );
+
+
+    if (coverEditBtn) {
+
+      coverEditBtn.classList.toggle(
+        'is-visible',
+        canManageGroup()
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Stats refresh error:',
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// HEADER ACTIONS
+// ============================================================
+
+function bindHeaderActions() {
+
+  if (headerActionsBound) {
+    return;
+  }
+
+
+  headerActionsBound = true;
+
+
+  joinLeaveBtn?.addEventListener(
+    'click',
+    handleJoinLeaveClick
+  );
+
+
+  shareBtn?.addEventListener(
+    'click',
+    handleShareClick
+  );
+
+
+  inviteBtn?.addEventListener(
+    'click',
+    handleInviteClick
+  );
+
+
+  coverEditBtn?.addEventListener(
+    'click',
+    () => {
+
+      if (!canManageGroup()) {
+
+        showToast(
+          'You do not have permission to edit this group.',
+          'error'
+        );
+
+        return;
+      }
+
+
+      activateTab(
+        'settings'
+      );
+
+    }
+  );
+
+
+  notificationBellBtn?.addEventListener(
+    'click',
+    toggleNotificationsPanel
+  );
+
+
+  closeNotificationsBtn?.addEventListener(
+    'click',
+    closeNotifications
+  );
+
+
+  document.addEventListener(
+    'click',
+    handleOutsideNotificationClick
+  );
+
+}
+
+
+function closeNotifications() {
+
+  notificationsPanel
+    ?.classList
+    .remove(
+      'is-visible'
+    );
+
+}
+
+
+function handleOutsideNotificationClick(
+  event
+) {
+
+  if (
+    !notificationsPanel ||
+    !notificationBellBtn
+  ) {
+    return;
+  }
+
+
+  if (
+    notificationsPanel.classList
+      .contains('is-visible') &&
+    !notificationsPanel.contains(
+      event.target
+    ) &&
+    !notificationBellBtn.contains(
+      event.target
+    )
+  ) {
+
+    closeNotifications();
+
+  }
+
+}
+
+
+// ============================================================
+// JOIN / LEAVE
+// ============================================================
+
+async function handleJoinLeaveClick() {
+
+  if (
+    isCurrentUserOwner()
+  ) {
+    return;
+  }
+
+
+  const membership =
+    state.membership;
+
+
+  if (!membership) {
+
+    await joinGroup();
+
+    return;
+  }
+
+
+  if (
+    membership.status ===
+      'pending'
+  ) {
+
+    await cancelJoinRequest();
+
+    return;
+  }
+
+
+  if (
+    membership.status ===
+      'active' &&
+    membership.role !==
+      'owner'
+  ) {
+
+    await leaveGroup();
+
+  }
+
+}
+
+
+// ============================================================
+// GET USER PROFILE
+//
+// This prevents "VitalStar User" from being used when
+// Firestore has the real full name/profile photo.
+// ============================================================
+
+async function getUserProfile(
+  uid
+) {
+
+  if (!uid) {
+    return null;
+  }
+
+
+  try {
+
+    const userSnap =
+      await getDoc(
+        doc(
+          db,
+          'users',
+          uid
+        )
+      );
+
+
+    if (
+      userSnap.exists()
+    ) {
+
+      return {
+
+        uid,
+
+        ...userSnap.data()
+
+      };
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      'User profile lookup error:',
+      error
+    );
+
+  }
+
+
+  return null;
+}
+
+
+// ============================================================
+// GENERAL GROUP NOTIFICATION
+// ============================================================
+
+async function sendGroupNotification({
+
+  recipientId,
+
+  type,
+
+  text,
+
+  senderId = null,
+
+  senderName = 'VitalStar Member',
+
+  senderPhoto = '',
+
+  groupId =
+    state.groupId,
+
+  groupName =
+    state.groupData?.name ||
+    'VitalStar Group',
+
+  postId = null,
+
+  chatId = null,
+
+  requesterId = null,
+
+  applicantId = null
+
+}) {
+
+  if (!recipientId) {
+    return;
+  }
+
+
+  try {
+
+    const notificationData = {
+
+      receiverId:
+        recipientId,
+
+      recipientId:
+        recipientId,
+
+
+      senderId:
+        senderId ||
+        state.currentUser?.uid ||
+        null,
+
+
+      senderName:
+        senderName ||
+        'VitalStar Member',
+
+
+      senderPhoto:
+        senderPhoto ||
+        '',
+
+
+      senderPhotoURL:
+        senderPhoto ||
+        '',
+
+
+      type,
+
+      text,
+
+      message:
+        text,
+
+
+      groupId,
+
+      groupName,
+
+
+      read:
+        false,
+
+
+      createdAt:
+        serverTimestamp(),
+
+
+      // ------------------------------------------------------
+      // DEFAULT DESTINATION
+      // ------------------------------------------------------
+
+      url:
+        groupId
+          ? `group.html?id=${
+              encodeURIComponent(
+                groupId
+              )
+            }`
+          : 'notifications.html'
+
+    };
+
+
+    // --------------------------------------------------------
+    // POST
+    // --------------------------------------------------------
+
+    if (postId) {
+
+      notificationData.postId =
+        postId;
+
+
+      if (groupId) {
+
+        notificationData.url =
+          `group.html?id=${
+            encodeURIComponent(
+              groupId
+            )
+          }&tab=posts&postId=${
+            encodeURIComponent(
+              postId
+            )
+          }`;
+
+      }
+
+    }
+
+
+    // --------------------------------------------------------
+    // CHAT
+    // --------------------------------------------------------
+
+    if (chatId) {
+
+      notificationData.chatId =
+        chatId;
+
+    }
+
+
+    // --------------------------------------------------------
+    // JOIN REQUEST
+    // --------------------------------------------------------
+
+    if (
+      requesterId
+    ) {
+
+      notificationData.requesterId =
+        requesterId;
+
+    }
+
+
+    if (
+      applicantId
+    ) {
+
+      notificationData.applicantId =
+        applicantId;
+
+    }
+
+
+    await addDoc(
+      collection(
+        db,
+        'notifications'
+      ),
+      notificationData
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      'General group notification error:',
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// GROUP JOIN REQUEST NOTIFICATION
+// ============================================================
+
+async function sendJoinRequestNotification() {
+
+  const group =
+    state.groupData;
+
+  const user =
+    state.currentUser;
+
+
+  if (
+    !group ||
+    !user
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const recipients =
+      new Set();
+
+
+    // --------------------------------------------------------
+    // OWNER
+    // --------------------------------------------------------
+
+    const ownerId =
+      group.ownerId ||
+      group.ownerUid ||
+      group.createdBy ||
+      group.creatorId;
+
+
+    if (
+      ownerId &&
+      ownerId !== user.uid
+    ) {
+
+      recipients.add(
+        ownerId
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // ADMINS / MODERATORS
+    // --------------------------------------------------------
+
+    const membersRef =
+      collection(
+        db,
+        'groups',
+        state.groupId,
+        'members'
+      );
+
+
+    const adminsQuery =
+      query(
+
+        membersRef,
+
+        where(
+          'role',
+          'in',
+          [
+            'admin',
+            'moderator'
+          ]
+        ),
+
+        where(
+          'status',
+          '==',
+          'active'
+        )
+
+      );
+
+
+    const adminsSnapshot =
+      await getDocs(
+        adminsQuery
+      );
+
+
+    adminsSnapshot.forEach(
+      memberDoc => {
+
+        const member =
+          memberDoc.data();
+
+
+        const uid =
+          member.uid ||
+          memberDoc.id;
+
+
+        if (
+          uid &&
+          uid !== user.uid
+        ) {
+
+          recipients.add(
+            uid
+          );
+
+        }
+
+      }
+    );
+
+
+    if (!recipients.size) {
+      return;
+    }
+
+
+    // --------------------------------------------------------
+    // GET REAL USER PROFILE
+    // --------------------------------------------------------
+
+    const profile =
+      await getUserProfile(
+        user.uid
+      );
+
+
+    const senderName =
+      profile?.fullName ||
+      profile?.displayName ||
+      profile?.name ||
+      user.displayName ||
+      'VitalStar Member';
+
+
+    const senderPhoto =
+      profile?.photoURL ||
+      profile?.photoUrl ||
+      profile?.profilePhoto ||
+      profile?.profilePicture ||
+      user.photoURL ||
+      '';
+
+
+    const groupName =
+      group.name ||
+      'your group';
+
+
+    // --------------------------------------------------------
+    // SEND
+    // --------------------------------------------------------
+
+    await Promise.all(
+
+      [...recipients].map(
+        recipientId =>
+
+          sendGroupNotification({
+
+            recipientId,
+
+            type:
+              'group_join_request',
+
+            text:
+              `${senderName} requested to join ${groupName}.`,
+
+            senderId:
+              user.uid,
+
+            senderName,
+
+            senderPhoto,
+
+            groupId:
+              state.groupId,
+
+            groupName,
+
+            requesterId:
+              user.uid,
+
+            applicantId:
+              user.uid
+
+          })
+
+      )
+
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      'Join request notification error:',
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// JOIN
+// ============================================================
+
+async function joinGroup() {
+
+  if (
+    !joinLeaveBtn ||
+    !state.groupData ||
+    !state.currentUser
+  ) {
+    return;
+  }
+
+
+  joinLeaveBtn.disabled =
+    true;
+
+
+  const group =
+    state.groupData;
+
+  const user =
+    state.currentUser;
+
+
+  const status =
+    group.privacy ===
+      'private'
+      ? 'pending'
+      : 'active';
+
+
+  const memberRef =
+    doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      user.uid
+    );
+
+
+  const groupRef =
+    doc(
+      db,
+      'groups',
+      state.groupId
+    );
+
+
+  try {
+
+    let alreadyExists =
+      false;
+
+
+    await runTransaction(
+      db,
+      async transaction => {
+
+        const memberSnap =
+          await transaction.get(
+            memberRef
+          );
+
+
+        if (
+          memberSnap.exists()
+        ) {
+
+          alreadyExists =
+            true;
+
+          return;
+        }
+
+
+        const profile =
+          await getUserProfile(
+            user.uid
+          );
+
+
+        const fullName =
+          profile?.fullName ||
+          profile?.displayName ||
+          profile?.name ||
+          user.displayName ||
+          'VitalStar Member';
+
+
+        const photoURL =
+          profile?.photoURL ||
+          profile?.photoUrl ||
+          profile?.profilePhoto ||
+          profile?.profilePicture ||
+          user.photoURL ||
+          '';
+
+
+        transaction.set(
+          memberRef,
+          {
+
+            uid:
+              user.uid,
+
+            displayName:
+              fullName,
+
+            fullName:
+              fullName,
+
+            photoURL:
+              photoURL,
+
+            role:
+              'member',
+
+            status,
+
+            category:
+              group.category ||
+              '',
+
+            joinedAt:
+              serverTimestamp()
+
+          }
+        );
+
+
+        if (
+          status ===
+          'active'
+        ) {
+
+          transaction.update(
+            groupRef,
+            {
+
+              memberCount:
+                increment(1)
+
+            }
+          );
+
+        }
+
+      }
+    );
+
+
+    if (
+      alreadyExists
+    ) {
+
+      showToast(
+        'You are already a member of this group.',
+        'info'
+      );
+
+      return;
+    }
+
+
+    const profile =
+      await getUserProfile(
+        user.uid
+      );
+
+
+    const fullName =
+      profile?.fullName ||
+      profile?.displayName ||
+      profile?.name ||
+      user.displayName ||
+      'VitalStar Member';
+
+
+    const photoURL =
+      profile?.photoURL ||
+      profile?.photoUrl ||
+      profile?.profilePhoto ||
+      profile?.profilePicture ||
+      user.photoURL ||
+      '';
+
+
+    state.membership = {
+
+      uid:
+        user.uid,
+
+      displayName:
+        fullName,
+
+      fullName:
+        fullName,
+
+      photoURL:
+        photoURL,
+
+      role:
+        'member',
+
+      status,
+
+      category:
+        group.category ||
+        ''
+
+    };
+
+
+    if (
+      status ===
+      'active'
+    ) {
+
+      state.groupData.memberCount =
+        (
+          Number(
+            state.groupData.memberCount
+          ) || 0
+        ) + 1;
+
+    }
+
+
+    if (
+      status ===
+      'pending'
+    ) {
+
+      await sendJoinRequestNotification();
+
+    }
+
+
+    renderJoinLeaveState();
+
+    applyAccessControl();
+
+    renderHeader();
+
+
+    showToast(
+      status === 'active'
+        ? `You've joined ${group.name}.`
+        : 'Join request sent for approval.',
+      'success'
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      'Join group error:',
+      error
+    );
+
+    showToast(
+      'Could not join this group.',
+      'error'
+    );
+
 
   } finally {
 
-    membershipBusy = false;
+    joinLeaveBtn.disabled =
+      false;
 
-    updateJoinButton();
   }
-}
 
-
-// ============================================================
-// PRIVATE JOIN REQUEST
-// ============================================================
-
-async function createJoinRequest() {
-
-  const membershipData = {
-    userId:
-      currentUser.uid,
-
-    role:
-      "member",
-
-    status:
-      "pending",
-
-    requestedAt:
-      serverTimestamp()
-  };
-
-
-  await setDoc(
-    doc(
-      db,
-      "groups",
-      groupId,
-      "members",
-      currentUser.uid
-    ),
-    membershipData,
-    {
-      merge: true
-    }
-  );
-
-
-  await updateDoc(
-    doc(
-      db,
-      "groups",
-      groupId
-    ),
-    {
-      [`members.${currentUser.uid}`]: {
-        role: "member",
-        status: "pending",
-        requestedAt:
-          serverTimestamp()
-      },
-
-      updatedAt:
-        serverTimestamp()
-    }
-  );
-
-
-  currentMembership = {
-    role: "member",
-    status: "pending"
-  };
-
-  currentRole = "member";
-
-
-  // Notify owner/admins.
-  await notifyGroupStaffOfJoinRequest();
-
-
-  toast(
-    "Your request to join has been sent.",
-    "success"
-  );
-
-
-  renderAccess();
-}
-
-
-// ============================================================
-// ACTIVATE MEMBER
-// ============================================================
-
-async function activateMember() {
-
-  const memberData = {
-    userId:
-      currentUser.uid,
-
-    role:
-      "member",
-
-    status:
-      "active",
-
-    joinedAt:
-      serverTimestamp()
-  };
-
-
-  await setDoc(
-    doc(
-      db,
-      "groups",
-      groupId,
-      "members",
-      currentUser.uid
-    ),
-    memberData,
-    {
-      merge: true
-    }
-  );
-
-
-  await updateDoc(
-    doc(
-      db,
-      "groups",
-      groupId
-    ),
-    {
-      [`members.${currentUser.uid}`]:
-        memberData,
-
-      memberCount:
-        Number(
-          currentGroup.memberCount || 0
-        ) + 1,
-
-      followerCount:
-        Number(
-          currentGroup.followerCount || 0
-        ) + 1,
-
-      updatedAt:
-        serverTimestamp()
-    }
-  );
-
-
-  currentMembership =
-    memberData;
-
-  currentRole =
-    "member";
-
-
-  currentGroup.memberCount =
-    Number(
-      currentGroup.memberCount || 0
-    ) + 1;
-
-  currentGroup.followerCount =
-    Number(
-      currentGroup.followerCount || 0
-    ) + 1;
-
-
-  await createGroupNotification(
-    currentUser.uid,
-    "joined_group",
-    `${getCurrentUserName()} joined ${currentGroup.name || "the group"}.`
-  );
-
-
-  toast(
-    "You joined the group!",
-    "success"
-  );
-
-
-  renderGroup();
-  renderAccess();
-
-  await loadMembers();
 }
 
 
@@ -1320,2280 +2855,265 @@ async function activateMember() {
 
 async function cancelJoinRequest() {
 
-  const confirmed =
-    window.confirm(
-      "Cancel your join request?"
-    );
-
-  if (!confirmed) {
+  if (
+    !window.confirm(
+      'Cancel your request to join this group?'
+    )
+  ) {
     return;
   }
 
-  membershipBusy = true;
 
-  updateJoinButton();
+  if (!joinLeaveBtn) {
+    return;
+  }
+
+
+  joinLeaveBtn.disabled =
+    true;
+
 
   try {
 
     await deleteDoc(
       doc(
         db,
-        "groups",
-        groupId,
-        "members",
-        currentUser.uid
+        'groups',
+        state.groupId,
+        'members',
+        state.currentUser.uid
       )
     );
 
 
-    await updateDoc(
-      doc(
-        db,
-        "groups",
-        groupId
-      ),
-      {
-        [`members.${currentUser.uid}`]:
-          null,
+    state.membership =
+      null;
 
-        updatedAt:
-          serverTimestamp()
-      }
+
+    renderJoinLeaveState();
+
+    applyAccessControl();
+
+
+    showToast(
+      'Join request cancelled.',
+      'info'
     );
 
-
-    currentMembership = null;
-    currentRole = null;
-
-
-    toast(
-      "Join request cancelled.",
-      "success"
-    );
-
-
-    renderAccess();
 
   } catch (error) {
 
     console.error(
-      "CANCEL REQUEST ERROR:",
+      'Cancel request error:',
       error
     );
 
-    toast(
-      error?.message ||
-      "Unable to cancel the request.",
-      "error"
+    showToast(
+      'Could not cancel the request.',
+      'error'
     );
+
 
   } finally {
 
-    membershipBusy = false;
+    joinLeaveBtn.disabled =
+      false;
 
-    updateJoinButton();
   }
+
 }
 
 
 // ============================================================
-// LEAVE GROUP
+// LEAVE
 // ============================================================
 
 async function leaveGroup() {
 
-  const confirmed =
-    window.confirm(
-      "Leave this group?"
-    );
-
-  if (!confirmed) {
+  if (!state.groupData) {
     return;
   }
 
-  membershipBusy = true;
 
-  updateJoinButton();
+  if (
+    !window.confirm(
+      `Leave ${state.groupData.name}?`
+    )
+  ) {
+    return;
+  }
 
-  try {
 
-    await deleteDoc(
-      doc(
-        db,
-        "groups",
-        groupId,
-        "members",
-        currentUser.uid
-      )
+  if (!joinLeaveBtn) {
+    return;
+  }
+
+
+  joinLeaveBtn.disabled =
+    true;
+
+
+  const memberRef =
+    doc(
+      db,
+      'groups',
+      state.groupId,
+      'members',
+      state.currentUser.uid
     );
 
 
-    await updateDoc(
-      doc(
-        db,
-        "groups",
-        groupId
-      ),
-      {
-        [`members.${currentUser.uid}`]:
-          null,
+  const groupRef =
+    doc(
+      db,
+      'groups',
+      state.groupId
+    );
 
-        memberCount:
-          Math.max(
-            0,
-            Number(
-              currentGroup.memberCount || 0
-            ) - 1
-          ),
 
-        followerCount:
-          Math.max(
-            0,
-            Number(
-              currentGroup.followerCount || 0
-            ) - 1
-          ),
+  try {
 
-        updatedAt:
-          serverTimestamp()
+    let removed =
+      false;
+
+    let wasActive =
+      false;
+
+
+    await runTransaction(
+      db,
+      async transaction => {
+
+        const memberSnap =
+          await transaction.get(
+            memberRef
+          );
+
+
+        if (
+          !memberSnap.exists()
+        ) {
+          return;
+        }
+
+
+        const member =
+          memberSnap.data();
+
+
+        if (
+          member.role ===
+            'owner' ||
+          isCurrentUserOwner()
+        ) {
+          return;
+        }
+
+
+        transaction.delete(
+          memberRef
+        );
+
+
+        removed =
+          true;
+
+
+        if (
+          member.status ===
+            'active'
+        ) {
+
+          wasActive =
+            true;
+
+
+          transaction.update(
+            groupRef,
+            {
+
+              memberCount:
+                increment(-1)
+
+            }
+          );
+
+        }
+
       }
     );
 
 
-    currentMembership = null;
-    currentRole = null;
+    if (
+      isCurrentUserOwner()
+    ) {
+      return;
+    }
 
 
-    currentGroup.memberCount =
-      Math.max(
-        0,
-        Number(
-          currentGroup.memberCount || 0
-        ) - 1
-      );
+    if (!removed) {
+
+      state.membership =
+        null;
+
+      renderJoinLeaveState();
+
+      return;
+    }
 
 
-    currentGroup.followerCount =
-      Math.max(
-        0,
-        Number(
-          currentGroup.followerCount || 0
-        ) - 1
-      );
+    state.membership =
+      null;
 
 
-    toast(
-      "You left the group.",
-      "success"
+    if (wasActive) {
+
+      state.groupData.memberCount =
+        Math.max(
+          0,
+          (
+            Number(
+              state.groupData.memberCount
+            ) || 0
+          ) - 1
+        );
+
+    }
+
+
+    renderJoinLeaveState();
+
+    applyAccessControl();
+
+    renderHeader();
+
+
+    showToast(
+      `You left ${state.groupData.name}.`,
+      'info'
     );
 
-
-    renderGroup();
-    renderAccess();
-
-    await loadMembers();
 
   } catch (error) {
 
     console.error(
-      "LEAVE GROUP ERROR:",
+      'Leave group error:',
       error
     );
 
-    toast(
-      error?.message ||
-      "Unable to leave the group.",
-      "error"
+    showToast(
+      'Could not leave the group.',
+      'error'
     );
+
 
   } finally {
 
-    membershipBusy = false;
+    joinLeaveBtn.disabled =
+      false;
 
-    updateJoinButton();
-  }
-}
-
-
-// ============================================================
-// NOTIFICATION HELPER
-// ============================================================
-
-async function createNotification({
-  receiverId,
-  type,
-  message,
-  groupId: notificationGroupId = null,
-  postId = null,
-  senderId = null,
-  read = false
-}) {
-
-  if (!receiverId) return null;
-
-  try {
-
-    const ref =
-      await addDoc(
-        collection(
-          db,
-          "notifications"
-        ),
-        {
-          receiverId,
-
-          userId:
-            receiverId,
-
-          senderId:
-            senderId ||
-            currentUser?.uid ||
-            null,
-
-          type:
-            type || "group",
-
-          message:
-            message || "You have a new notification.",
-
-          groupId:
-            notificationGroupId,
-
-          postId,
-
-          read,
-
-          createdAt:
-            serverTimestamp()
-        }
-      );
-
-    return ref.id;
-
-  } catch (error) {
-
-    console.warn(
-      "CREATE NOTIFICATION ERROR:",
-      error
-    );
-
-    return null;
-  }
-}
-
-
-// ============================================================
-// GROUP NOTIFICATION
-// ============================================================
-
-async function createGroupNotification(
-  senderId,
-  type,
-  message,
-  postId = null
-) {
-
-  if (!currentGroup) return;
-
-  const recipients =
-    getActiveMemberIds();
-
-  for (
-    const receiverId of recipients
-  ) {
-
-    if (
-      receiverId === senderId
-    ) {
-      continue;
-    }
-
-    await createNotification({
-      receiverId,
-      senderId,
-      type,
-      message,
-      groupId,
-      postId,
-      read: false
-    });
-  }
-}
-
-
-// ============================================================
-// STAFF NOTIFICATION
-// ============================================================
-
-async function notifyGroupStaffOfJoinRequest() {
-
-  if (!currentGroup) return;
-
-  const staff =
-    getStaffIds();
-
-  const requester =
-    getCurrentUserName();
-
-
-  for (
-    const receiverId of staff
-  ) {
-
-    if (
-      receiverId ===
-      currentUser.uid
-    ) {
-      continue;
-    }
-
-    await createNotification({
-      receiverId,
-
-      senderId:
-        currentUser.uid,
-
-      type:
-        "group_join_request",
-
-      message:
-        `${requester} requested to join ${currentGroup.name || "your group"}.`,
-
-      groupId,
-
-      postId:
-        null,
-
-      read:
-        false
-    });
-  }
-}
-
-
-// ============================================================
-// GET STAFF IDS
-// ============================================================
-
-function getStaffIds() {
-
-  const ids = new Set();
-
-  if (currentGroup?.ownerId) {
-    ids.add(currentGroup.ownerId);
   }
 
-  const members =
-    currentGroup?.members || {};
-
-  Object.entries(members)
-    .forEach(
-      ([uid, member]) => {
-
-        if (
-          member &&
-          (
-            member.role === "owner" ||
-            member.role === "admin" ||
-            member.role === "moderator"
-          )
-        ) {
-
-          ids.add(uid);
-        }
-      }
-    );
-
-  return [...ids];
-}
-
-
-// ============================================================
-// GET ACTIVE MEMBER IDS
-// ============================================================
-
-function getActiveMemberIds() {
-
-  const ids = new Set();
-
-  const members =
-    currentGroup?.members || {};
-
-  Object.entries(members)
-    .forEach(
-      ([uid, member]) => {
-
-        if (
-          member &&
-          member.status === "active"
-        ) {
-
-          ids.add(uid);
-        }
-      }
-    );
-
-
-  if (currentGroup?.ownerId) {
-    ids.add(currentGroup.ownerId);
-  }
-
-  return [...ids];
-}
-
-
-// ============================================================
-// CURRENT USER NAME
-// ============================================================
-
-function getCurrentUserName() {
-
-  return (
-    currentUser?.displayName ||
-    currentUser?.email?.split("@")[0] ||
-    "VitalStar Member"
-  );
-}
-
-
-// ============================================================
-// RULES
-// ============================================================
-
-function renderRules() {
-
-  if (!rulesListDisplay) return;
-
-  rulesListDisplay.innerHTML = "";
-
-  const rules =
-    Array.isArray(currentGroup?.rules)
-      ? currentGroup.rules
-      : [];
-
-
-  if (!rules.length) {
-
-    if (rulesEmptyDisplay) {
-      rulesEmptyDisplay.style.display =
-        "block";
-    }
-
-    return;
-  }
-
-
-  if (rulesEmptyDisplay) {
-    rulesEmptyDisplay.style.display =
-      "none";
-  }
-
-
-  rules.forEach(
-    rule => {
-
-      const li =
-        document.createElement("li");
-
-      li.textContent =
-        rule;
-
-      rulesListDisplay.appendChild(li);
-    }
-  );
-}
-
-
-// ============================================================
-// ADMINS / MODERATORS
-// ============================================================
-
-async function renderAdmins() {
-
-  if (!adminsList) return;
-
-  adminsList.innerHTML = "";
-
-  const members =
-    currentGroup?.members || {};
-
-  const privileged =
-    Object.entries(members)
-      .filter(
-        ([, member]) =>
-          member &&
-          (
-            member.role === "owner" ||
-            member.role === "admin" ||
-            member.role === "moderator"
-          )
-      );
-
-
-  if (
-    currentGroup?.ownerId &&
-    !privileged.some(
-      ([uid]) =>
-        uid === currentGroup.ownerId
-    )
-  ) {
-
-    privileged.unshift([
-      currentGroup.ownerId,
-      {
-        role: "owner"
-      }
-    ]);
-  }
-
-
-  if (!privileged.length) {
-
-    if (adminsEmptyDisplay) {
-      adminsEmptyDisplay.style.display =
-        "block";
-
-      adminsList.appendChild(
-        adminsEmptyDisplay
-      );
-    }
-
-    return;
-  }
-
-
-  if (adminsEmptyDisplay) {
-    adminsEmptyDisplay.style.display =
-      "none";
-  }
-
-
-  for (
-    const [uid, member] of privileged
-  ) {
-
-    const row =
-      document.createElement("div");
-
-    row.className =
-      "admin-row";
-
-
-    const avatar =
-      document.createElement("div");
-
-    avatar.className =
-      "admin-avatar";
-
-    avatar.innerHTML =
-      '<i class="fa-solid fa-user"></i>';
-
-
-    const info =
-      document.createElement("div");
-
-    info.className =
-      "admin-info";
-
-
-    const name =
-      document.createElement("div");
-
-    name.className =
-      "admin-name";
-
-
-    const role =
-      document.createElement("div");
-
-    role.className =
-      "admin-role";
-
-    role.textContent =
-      formatRole(
-        member.role
-      );
-
-
-    if (
-      uid ===
-      currentGroup.ownerId
-    ) {
-
-      name.textContent =
-        currentGroup.ownerName ||
-        "Group Owner";
-
-    } else if (
-      uid ===
-      currentUser?.uid
-    ) {
-
-      name.textContent =
-        "You";
-
-    } else {
-
-      const profile =
-        await getUserProfile(uid);
-
-      name.textContent =
-        profile?.fullname ||
-        profile?.fullName ||
-        profile?.displayName ||
-        profile?.username ||
-        "VitalStar Member";
-
-      if (profile?.photoURL) {
-
-        avatar.style.backgroundImage =
-          `url("${escapeCssUrl(profile.photoURL)}")`;
-
-        avatar.style.backgroundSize =
-          "cover";
-
-        avatar.style.backgroundPosition =
-          "center";
-
-        avatar.innerHTML = "";
-      }
-    }
-
-
-    info.appendChild(name);
-    info.appendChild(role);
-
-    row.appendChild(avatar);
-    row.appendChild(info);
-
-    adminsList.appendChild(row);
-  }
-}
-
-
-// ============================================================
-// USER PROFILE
-// ============================================================
-
-async function getUserProfile(uid) {
-
-  if (!uid) return null;
-
-  try {
-
-    const snapshot =
-      await getDoc(
-        doc(
-          db,
-          "users",
-          uid
-        )
-      );
-
-    if (
-      snapshot.exists()
-    ) {
-
-      return snapshot.data();
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "USER PROFILE ERROR:",
-      error
-    );
-  }
-
-  return null;
-}
-
-
-// ============================================================
-// POSTS
-// ============================================================
-
-async function loadPosts() {
-
-  if (!postsTab) return;
-
-  if (
-    !isMember() &&
-    currentGroup?.privacy === "private"
-  ) {
-    return;
-  }
-
-
-  postsTab.innerHTML = `
-    <div class="tab-panel-placeholder">
-      <span class="spinner-sm"></span>
-      Loading posts…
-    </div>
-  `;
-
-
-  try {
-
-    const postsRef =
-      collection(
-        db,
-        "groups",
-        groupId,
-        "posts"
-      );
-
-    const postsQuery =
-      query(
-        postsRef,
-        orderBy(
-          "createdAt",
-          "desc"
-        ),
-        limit(20)
-      );
-
-    const snapshot =
-      await getDocs(postsQuery);
-
-
-    if (snapshot.empty) {
-
-      postsTab.innerHTML = `
-        <div class="tab-panel-placeholder">
-          <i class="fa-solid fa-note-sticky"></i>
-          <span>No posts yet. Be the first to post!</span>
-        </div>
-      `;
-
-      return;
-    }
-
-
-    postsTab.innerHTML = "";
-
-    snapshot.forEach(
-      postDoc => {
-
-        const post =
-          postDoc.data();
-
-        const card =
-          createPostCard(
-            postDoc.id,
-            post
-          );
-
-        postsTab.appendChild(card);
-      }
-    );
-
-  } catch (error) {
-
-    console.warn(
-      "GROUP POSTS:",
-      error
-    );
-
-    postsTab.innerHTML = `
-      <div class="tab-panel-placeholder">
-        <i class="fa-solid fa-note-sticky"></i>
-        <span>No group posts available yet.</span>
-      </div>
-    `;
-  }
-}
-
-
-// ============================================================
-// POST CARD
-// ============================================================
-
-function createPostCard(
-  postId,
-  post
-) {
-
-  const card =
-    document.createElement("article");
-
-  card.dataset.postId =
-    postId;
-
-  card.style.cssText = `
-    background:var(--bg-surface);
-    border:1px solid var(--border-subtle);
-    border-radius:var(--radius-lg);
-    padding:18px;
-    margin-bottom:14px;
-  `;
-
-
-  const author =
-    post.authorName ||
-    post.fullName ||
-    "VitalStar Member";
-
-  const text =
-    post.text ||
-    post.content ||
-    "";
-
-
-  card.innerHTML = `
-    <div style="
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-bottom:12px;
-    ">
-      <div
-        class="group-post-avatar"
-        style="
-          width:38px;
-          height:38px;
-          border-radius:50%;
-          background:linear-gradient(
-            135deg,
-            var(--electric-blue),
-            var(--violet-accent)
-          );
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          flex-shrink:0;
-        "
-      >
-        <i class="fa-solid fa-user"></i>
-      </div>
-
-      <div>
-        <div
-          class="group-post-author"
-          style="
-            font-size:13.5px;
-            font-weight:600;
-          "
-        ></div>
-
-        <div style="
-          font-size:11px;
-          color:var(--text-muted);
-        ">
-          ${formatDate(post.createdAt)}
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="group-post-text"
-      style="
-        font-size:14px;
-        line-height:1.6;
-        color:var(--text-secondary);
-        white-space:pre-wrap;
-      "
-    ></div>
-
-    <div
-      class="group-post-actions"
-      style="
-        margin-top:14px;
-        display:flex;
-        gap:8px;
-      "
-    >
-      <button
-        type="button"
-        class="group-post-open"
-        data-post-id="${escapeHtml(postId)}"
-        style="
-          border:0;
-          background:transparent;
-          color:var(--electric-blue-bright);
-          cursor:pointer;
-          font-size:12px;
-        "
-      >
-        Open post
-      </button>
-    </div>
-  `;
-
-
-  const authorElement =
-    card.querySelector(
-      ".group-post-author"
-    );
-
-  if (authorElement) {
-    authorElement.textContent =
-      author;
-  }
-
-
-  const textElement =
-    card.querySelector(
-      ".group-post-text"
-    );
-
-  if (textElement) {
-
-    textElement.textContent =
-      text ||
-      "This post has no text content.";
-  }
-
-
-  const openButton =
-    card.querySelector(
-      ".group-post-open"
-    );
-
-  openButton?.addEventListener(
-    "click",
-    () => {
-      openGroupPost(postId);
-    }
-  );
-
-
-  return card;
-}
-
-
-// ============================================================
-// ESCAPE HTML
-// ============================================================
-
-function escapeHtml(value) {
-
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-
-// ============================================================
-// OPEN GROUP POST
-// ============================================================
-
-function openGroupPost(postId) {
-
-  if (!postId) return;
-
-  const url =
-    new URL(
-      location.href
-    );
-
-  url.searchParams.set(
-    "id",
-    groupId
-  );
-
-  url.searchParams.set(
-    "postId",
-    postId
-  );
-
-  history.replaceState(
-    {},
-    "",
-    url
-  );
-
-
-  const card =
-    postsTab?.querySelector(
-      `[data-post-id="${CSS.escape(postId)}"]`
-    );
-
-
-  if (card) {
-
-    card.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-
-    card.style.outline =
-      "2px solid var(--electric-blue)";
-
-    setTimeout(() => {
-
-      card.style.outline = "";
-
-    }, 2500);
-
-    return;
-  }
-
-
-  toast(
-    "That post is not currently loaded.",
-    "info"
-  );
-}
-
-
-// ============================================================
-// EXACT POST ID FROM URL / NOTIFICATION
-// ============================================================
-
-function handleNotificationNavigation() {
-
-  const params =
-    new URLSearchParams(
-      location.search
-    );
-
-  const postId =
-    params.get("postId");
-
-  const notificationId =
-    params.get("notificationId");
-
-
-  if (postId) {
-
-    setTimeout(() => {
-
-      openGroupPost(postId);
-
-    }, 500);
-  }
-
-
-  if (notificationId) {
-
-    markNotificationRead(
-      notificationId
-    );
-  }
-}
-
-
-// ============================================================
-// MEMBERS
-// ============================================================
-
-async function loadMembers() {
-
-  if (!membersTab) return;
-
-  if (
-    currentGroup?.privacy === "private" &&
-    !isMember()
-  ) {
-    return;
-  }
-
-
-  membersTab.innerHTML = `
-    <div class="tab-panel-placeholder">
-      <span class="spinner-sm"></span>
-      Loading members…
-    </div>
-  `;
-
-
-  try {
-
-    const members =
-      currentGroup?.members || {};
-
-    const entries =
-      Object.entries(members)
-        .filter(
-          ([, member]) =>
-            member &&
-            member.status === "active"
-        );
-
-
-    if (!entries.length) {
-
-      membersTab.innerHTML = `
-        <div class="tab-panel-placeholder">
-          <i class="fa-solid fa-users"></i>
-          <span>No members to display.</span>
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const wrapper =
-      document.createElement("div");
-
-    wrapper.style.cssText = `
-      display:grid;
-      grid-template-columns:
-        repeat(auto-fill,minmax(220px,1fr));
-      gap:12px;
-    `;
-
-
-    for (
-      const [uid, member] of entries
-    ) {
-
-      const card =
-        document.createElement("div");
-
-      card.style.cssText = `
-        display:flex;
-        align-items:center;
-        gap:11px;
-        padding:14px;
-        border-radius:var(--radius-md);
-        background:var(--bg-surface);
-        border:1px solid var(--border-subtle);
-      `;
-
-
-      const avatar =
-        document.createElement("div");
-
-      avatar.style.cssText = `
-        width:42px;
-        height:42px;
-        border-radius:50%;
-        background:linear-gradient(
-          135deg,
-          var(--electric-blue),
-          var(--violet-accent)
-        );
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        flex-shrink:0;
-      `;
-
-      avatar.innerHTML =
-        '<i class="fa-solid fa-user"></i>';
-
-
-      const info =
-        document.createElement("div");
-
-      info.style.minWidth =
-        "0";
-
-
-      const name =
-        document.createElement("div");
-
-      name.style.cssText = `
-        font-size:13px;
-        font-weight:600;
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      `;
-
-
-      const role =
-        document.createElement("div");
-
-      role.style.cssText = `
-        font-size:11px;
-        color:var(--text-muted);
-        text-transform:capitalize;
-        margin-top:2px;
-      `;
-
-
-      if (
-        uid ===
-        currentGroup.ownerId
-      ) {
-
-        name.textContent =
-          currentGroup.ownerName ||
-          "Group Owner";
-
-    } else if (
-        uid ===
-        currentUser.uid
-      ) {
-
-        name.textContent =
-          currentUser.displayName ||
-          "You";
-
-    } else {
-
-        const profile =
-          await getUserProfile(uid);
-
-        name.textContent =
-          profile?.fullname ||
-          profile?.fullName ||
-          profile?.displayName ||
-          profile?.username ||
-          "VitalStar Member";
-
-
-        if (profile?.photoURL) {
-
-          avatar.style.backgroundImage =
-            `url("${escapeCssUrl(profile.photoURL)}")`;
-
-          avatar.style.backgroundSize =
-            "cover";
-
-          avatar.style.backgroundPosition =
-            "center";
-
-          avatar.innerHTML = "";
-        }
-      }
-
-
-      role.textContent =
-        formatRole(
-          member.role
-        );
-
-
-      info.appendChild(name);
-      info.appendChild(role);
-
-      card.appendChild(avatar);
-      card.appendChild(info);
-
-      wrapper.appendChild(card);
-    }
-
-
-    membersTab.innerHTML = "";
-
-    membersTab.appendChild(wrapper);
-
-  } catch (error) {
-
-    console.error(
-      "LOAD MEMBERS ERROR:",
-      error
-    );
-
-    membersTab.innerHTML = `
-      <div class="tab-panel-placeholder">
-        Unable to load members.
-      </div>
-    `;
-  }
-}
-
-
-// ============================================================
-// CHAT
-// ============================================================
-
-function loadChat() {
-
-  if (!chatTab) return;
-
-
-  if (!isMember()) {
-
-    chatTab.innerHTML = `
-      <div class="tab-panel-placeholder">
-        <i class="fa-solid fa-lock"></i>
-        <span>Join the group to access group chat.</span>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  chatTab.innerHTML = `
-    <div style="
-      background:var(--bg-surface);
-      border:1px solid var(--border-subtle);
-      border-radius:var(--radius-lg);
-      padding:24px;
-      text-align:center;
-    ">
-      <i
-        class="fa-solid fa-comments"
-        style="
-          font-size:30px;
-          color:var(--electric-blue-bright);
-          margin-bottom:12px;
-        "
-      ></i>
-
-      <h3 style="
-        margin:0 0 6px;
-        font-family:var(--font-display);
-      ">
-        Group Chat
-      </h3>
-
-      <p style="
-        margin:0 0 16px;
-        color:var(--text-muted);
-        font-size:13px;
-      ">
-        Chat with members of this group.
-      </p>
-
-      <button
-        type="button"
-        id="openGroupChatBtn"
-        style="
-          border:0;
-          border-radius:10px;
-          padding:10px 16px;
-          cursor:pointer;
-          background:var(--electric-blue);
-          color:white;
-          font-weight:600;
-        "
-      >
-        Open group chat
-      </button>
-    </div>
-  `;
-
-
-  $("openGroupChatBtn")?.addEventListener(
-    "click",
-    () => {
-
-      const url =
-        `chat.html?groupId=${encodeURIComponent(groupId)}`;
-
-      location.href = url;
-    }
-  );
-}
-
-
-// ============================================================
-// PREMIUM SUBSCRIPTION
-// ============================================================
-
-function loadSubscription() {
-
-  if (!subscriptionTab) return;
-
-
-  if (
-    currentGroup?.type !==
-    "premium"
-  ) {
-
-    subscriptionTab.innerHTML = `
-      <div class="tab-panel-placeholder">
-        This is a free group.
-      </div>
-    `;
-
-    return;
-  }
-
-
-  const fee =
-    currentGroup?.followerFee?.amount ||
-    currentGroup?.joinFee ||
-    100;
-
-
-  subscriptionTab.innerHTML = `
-    <div style="
-      background:var(--bg-surface);
-      border:1px solid var(--border-subtle);
-      border-radius:var(--radius-lg);
-      padding:22px;
-    ">
-
-      <div style="
-        display:flex;
-        align-items:center;
-        gap:12px;
-        margin-bottom:16px;
-      ">
-
-        <div style="
-          width:44px;
-          height:44px;
-          border-radius:13px;
-          background:rgba(255,194,75,.12);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:var(--gold-accent);
-        ">
-          <i class="fa-solid fa-crown"></i>
-        </div>
-
-        <div>
-          <h3 style="
-            margin:0;
-            font-family:var(--font-display);
-          ">
-            Premium Group
-          </h3>
-
-          <p style="
-            margin:3px 0 0;
-            color:var(--text-muted);
-            font-size:12px;
-          ">
-            Premium membership
-          </p>
-        </div>
-
-      </div>
-
-      <div style="
-        padding:16px;
-        border-radius:var(--radius-md);
-        background:var(--bg-surface-raised);
-        border:1px solid var(--border-subtle);
-      ">
-
-        <div style="
-          color:var(--text-muted);
-          font-size:11px;
-          text-transform:uppercase;
-        ">
-          Membership fee
-        </div>
-
-        <div style="
-          margin-top:4px;
-          font-family:var(--font-mono);
-          font-size:24px;
-          font-weight:600;
-        ">
-          ₦${formatNumber(fee)}
-        </div>
-
-      </div>
-
-      <p style="
-        color:var(--text-secondary);
-        font-size:13px;
-        line-height:1.5;
-        margin:16px 0 0;
-      ">
-        Complete the payment through the configured
-        VitalStar payment flow before membership is activated.
-      </p>
-
-      <button
-        type="button"
-        id="premiumJoinBtn"
-        style="
-          margin-top:16px;
-          width:100%;
-          border:0;
-          border-radius:10px;
-          padding:12px;
-          background:var(--electric-blue);
-          color:white;
-          font-weight:600;
-          cursor:pointer;
-        "
-      >
-        Continue to payment
-      </button>
-
-    </div>
-  `;
-
-
-  $("premiumJoinBtn")?.addEventListener(
-    "click",
-    startPremiumJoin
-  );
-}
-
-
-// ============================================================
-// PREMIUM JOIN HOOK
-// ============================================================
-
-async function startPremiumJoin() {
-
-  if (!currentUser) return;
-
-  const fee =
-    currentGroup?.followerFee?.amount ||
-    currentGroup?.joinFee ||
-    100;
-
-
-  /*
-   * IMPORTANT:
-   *
-   * This function does NOT mark payment as successful.
-   *
-   * Connect your existing Paystack/server-side payment
-   * verification here.
-   *
-   * After verified payment, call:
-   *
-   * await activateMember();
-   *
-   * Never activate membership only because the user clicked
-   * the payment button.
-   */
-
-
-  toast(
-    `Payment flow ready for ₦${formatNumber(fee)}. Connect your verified Paystack callback here.`,
-    "info"
-  );
-}
-
-
-// ============================================================
-// SETTINGS
-// ============================================================
-
-async function loadSettings() {
-
-  if (!settingsTab) return;
-
-
-  if (!isAdmin()) {
-
-    settingsTab.innerHTML = `
-      <div class="tab-panel-placeholder">
-        <i class="fa-solid fa-lock"></i>
-        <span>Only group admins can access settings.</span>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  settingsTab.innerHTML = `
-    <div
-      id="groupSettingsContainer"
-      style="
-        display:grid;
-        gap:14px;
-      "
-    >
-
-      <div style="
-        background:var(--bg-surface);
-        border:1px solid var(--border-subtle);
-        border-radius:var(--radius-lg);
-        padding:20px;
-      ">
-
-        <h3 style="
-          margin:0 0 6px;
-          font-family:var(--font-display);
-        ">
-          Group management
-        </h3>
-
-        <p style="
-          margin:0;
-          color:var(--text-muted);
-          font-size:13px;
-        ">
-          Manage requests, members and group information.
-        </p>
-
-      </div>
-
-      <div
-        id="groupRequestsAdmin"
-      ></div>
-
-      <div
-        id="groupAdminActions"
-      ></div>
-
-    </div>
-  `;
-
-
-  await renderPendingRequests();
-
-  renderAdminActions();
-}
-
-
-// ============================================================
-// PENDING REQUESTS
-// ============================================================
-
-async function getPendingRequests() {
-
-  const members =
-    currentGroup?.members || {};
-
-  return Object.entries(members)
-    .filter(
-      ([, member]) =>
-        member &&
-        member.status === "pending"
-    );
-}
-
-
-// ============================================================
-// RENDER PENDING REQUESTS
-// ============================================================
-
-async function renderPendingRequests() {
-
-  const container =
-    $("groupRequestsAdmin");
-
-  if (!container) return;
-
-  if (!isAdmin()) return;
-
-
-  const requests =
-    await getPendingRequests();
-
-
-  if (!requests.length) {
-
-    container.innerHTML = `
-      <div style="
-        background:var(--bg-surface);
-        border:1px solid var(--border-subtle);
-        border-radius:var(--radius-lg);
-        padding:20px;
-      ">
-        <strong>No pending requests</strong>
-        <div style="
-          color:var(--text-muted);
-          font-size:12px;
-          margin-top:4px;
-        ">
-          New private-group join requests will appear here.
-        </div>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  container.innerHTML = `
-    <div style="
-      background:var(--bg-surface);
-      border:1px solid var(--border-subtle);
-      border-radius:var(--radius-lg);
-      padding:20px;
-    ">
-      <h3 style="
-        margin:0 0 14px;
-        font-family:var(--font-display);
-      ">
-        Join requests
-      </h3>
-
-      <div
-        id="pendingRequestList"
-        style="
-          display:grid;
-          gap:10px;
-        "
-      ></div>
-    </div>
-  `;
-
-
-  const list =
-    $("pendingRequestList");
-
-
-  for (
-    const [uid, request] of requests
-  ) {
-
-    const profile =
-      await getUserProfile(uid);
-
-
-    const name =
-      profile?.fullname ||
-      profile?.fullName ||
-      profile?.displayName ||
-      profile?.username ||
-      "VitalStar Member";
-
-
-    const row =
-      document.createElement("div");
-
-    row.style.cssText = `
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:12px;
-      border:1px solid var(--border-subtle);
-      border-radius:10px;
-    `;
-
-
-    const info =
-      document.createElement("div");
-
-    info.innerHTML = `
-      <strong>${escapeHtml(name)}</strong>
-      <div style="
-        color:var(--text-muted);
-        font-size:11px;
-        margin-top:3px;
-      ">
-        Requested ${formatDate(request.requestedAt)}
-      </div>
-    `;
-
-
-    const actions =
-      document.createElement("div");
-
-    actions.style.cssText = `
-      display:flex;
-      gap:7px;
-      flex-wrap:wrap;
-    `;
-
-
-    const approve =
-      document.createElement("button");
-
-    approve.type =
-      "button";
-
-    approve.textContent =
-      "Approve";
-
-    approve.style.cssText = `
-      border:0;
-      border-radius:8px;
-      padding:8px 11px;
-      cursor:pointer;
-      background:var(--electric-blue);
-      color:white;
-      font-weight:600;
-    `;
-
-
-    const reject =
-      document.createElement("button");
-
-    reject.type =
-      "button";
-
-    reject.textContent =
-      "Reject";
-
-    reject.style.cssText = `
-      border:1px solid var(--border-subtle);
-      border-radius:8px;
-      padding:8px 11px;
-      cursor:pointer;
-      background:transparent;
-      color:var(--text-primary);
-    `;
-
-
-    approve.addEventListener(
-      "click",
-      async () => {
-
-        await approveJoinRequest(
-          uid
-        );
-      }
-    );
-
-
-    reject.addEventListener(
-      "click",
-      async () => {
-
-        await rejectJoinRequest(
-          uid
-        );
-      }
-    );
-
-
-    actions.appendChild(
-      approve
-    );
-
-    actions.appendChild(
-      reject
-    );
-
-    row.appendChild(info);
-    row.appendChild(actions);
-
-    list.appendChild(row);
-  }
-}
-
-
-// ============================================================
-// APPROVE REQUEST
-// ============================================================
-
-async function approveJoinRequest(
-  uid
-) {
-
-  if (!isAdmin()) return;
-
-  if (!uid) return;
-
-
-  try {
-
-    const memberData = {
-      userId:
-        uid,
-
-      role:
-        "member",
-
-      status:
-        "active",
-
-      joinedAt:
-        serverTimestamp()
-    };
-
-
-    await setDoc(
-      doc(
-        db,
-        "groups",
-        groupId,
-        "members",
-        uid
-      ),
-      memberData,
-      {
-        merge: true
-      }
-    );
-
-
-    await updateDoc(
-      doc(
-        db,
-        "groups",
-        groupId
-      ),
-      {
-        [`members.${uid}`]:
-          memberData,
-
-        memberCount:
-          Number(
-            currentGroup.memberCount || 0
-          ) + 1,
-
-        followerCount:
-          Number(
-            currentGroup.followerCount || 0
-          ) + 1,
-
-        updatedAt:
-          serverTimestamp()
-      }
-    );
-
-
-    currentGroup.memberCount =
-      Number(
-        currentGroup.memberCount || 0
-      ) + 1;
-
-
-    currentGroup.followerCount =
-      Number(
-        currentGroup.followerCount || 0
-      ) + 1;
-
-
-    await createNotification({
-      receiverId:
-        uid,
-
-      senderId:
-        currentUser.uid,
-
-      type:
-        "group_join_approved",
-
-      message:
-        `Your request to join ${currentGroup.name || "the group"} was approved.`,
-
-      groupId,
-
-      read:
-        false
-    });
-
-
-    toast(
-      "Join request approved.",
-      "success"
-    );
-
-
-    renderGroup();
-
-    await renderPendingRequests();
-
-  } catch (error) {
-
-    console.error(
-      "APPROVE REQUEST ERROR:",
-      error
-    );
-
-    toast(
-      error?.message ||
-      "Unable to approve request.",
-      "error"
-    );
-  }
-}
-
-
-// ============================================================
-// REJECT REQUEST
-// ============================================================
-
-async function rejectJoinRequest(
-  uid
-) {
-
-  if (!isAdmin()) return;
-
-  if (!uid) return;
-
-
-  try {
-
-    await deleteDoc(
-      doc(
-        db,
-        "groups",
-        groupId,
-        "members",
-        uid
-      )
-    );
-
-
-    await updateDoc(
-      doc(
-        db,
-        "groups",
-        groupId
-      ),
-      {
-        [`members.${uid}`]:
-          null,
-
-        updatedAt:
-          serverTimestamp()
-      }
-    );
-
-
-    await createNotification({
-      receiverId:
-        uid,
-
-      senderId:
-        currentUser.uid,
-
-      type:
-        "group_join_rejected",
-
-      message:
-        `Your request to join ${currentGroup.name || "the group"} was not approved.`,
-
-      groupId,
-
-      read:
-        false
-    });
-
-
-    toast(
-      "Join request rejected.",
-      "success"
-    );
-
-
-    await renderPendingRequests();
-
-  } catch (error) {
-
-    console.error(
-      "REJECT REQUEST ERROR:",
-      error
-    );
-
-    toast(
-      error?.message ||
-      "Unable to reject request.",
-      "error"
-    );
-  }
-}
-
-
-// ============================================================
-// ADMIN ACTIONS
-// ============================================================
-
-function renderAdminActions() {
-
-  const container =
-    $("groupAdminActions");
-
-  if (!container) return;
-
-  container.innerHTML = `
-    <div style="
-      background:var(--bg-surface);
-      border:1px solid var(--border-subtle);
-      border-radius:var(--radius-lg);
-      padding:20px;
-    ">
-
-      <h3 style="
-        margin:0 0 12px;
-        font-family:var(--font-display);
-      ">
-        Admin controls
-      </h3>
-
-      <button
-        type="button"
-        id="refreshGroupDataBtn"
-        style="
-          border:1px solid var(--border-subtle);
-          background:transparent;
-          color:var(--text-primary);
-          border-radius:9px;
-          padding:10px 14px;
-          cursor:pointer;
-        "
-      >
-        Refresh group data
-      </button>
-
-    </div>
-  `;
-
-
-  $("refreshGroupDataBtn")
-    ?.addEventListener(
-      "click",
-      async () => {
-
-        await refreshGroup();
-      }
-    );
-}
-
-
-// ============================================================
-// REFRESH GROUP
-// ============================================================
-
-async function refreshGroup() {
-
-  if (!groupId) return;
-
-  try {
-
-    const snapshot =
-      await getDoc(
-        doc(
-          db,
-          "groups",
-          groupId
-        )
-      );
-
-
-    if (!snapshot.exists()) {
-      showNotFound();
-      return;
-    }
-
-
-    currentGroup = {
-      id:
-        snapshot.id,
-
-      ...snapshot.data()
-    };
-
-
-    await resolveMembership();
-
-    renderGroup();
-
-    renderAccess();
-
-    renderRules();
-
-    await renderAdmins();
-
-    await loadMembers();
-
-    if (activeTab === "settings") {
-      await loadSettings();
-    }
-
-
-    toast(
-      "Group refreshed.",
-      "success"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "REFRESH GROUP ERROR:",
-      error
-    );
-
-    toast(
-      "Unable to refresh group.",
-      "error"
-    );
-  }
-}
-
-
-// ============================================================
-// TABS
-// ============================================================
-
-tabsNav?.addEventListener(
-  "click",
-  event => {
-
-    const button =
-      event.target.closest(
-        ".group-tab"
-      );
-
-    if (!button) return;
-
-    const tab =
-      button.dataset.tab;
-
-    if (!tab) return;
-
-    activateTab(tab);
-  }
-);
-
-
-// ============================================================
-// ACTIVATE TAB
-// ============================================================
-
-async function activateTab(tab) {
-
-  const button =
-    tabsNav?.querySelector(
-      `[data-tab="${tab}"]`
-    );
-
-  if (
-    !button ||
-    button.style.display === "none"
-  ) {
-    return;
-  }
-
-
-  activeTab = tab;
-
-
-  document
-    .querySelectorAll(
-      ".group-tab"
-    )
-    .forEach(
-      item => {
-
-        item.classList.toggle(
-          "is-active",
-          item.dataset.tab === tab
-        );
-      }
-    );
-
-
-  document
-    .querySelectorAll(
-      ".tab-panel"
-    )
-    .forEach(
-      panel => {
-
-        panel.classList.toggle(
-          "is-active",
-          panel.dataset.panel === tab
-        );
-      }
-    );
-
-
-  if (tab === "posts") {
-    await loadPosts();
-  }
-
-
-  if (tab === "members") {
-    await loadMembers();
-  }
-
-
-  if (tab === "chat") {
-    loadChat();
-  }
-
-
-  if (tab === "subscription") {
-    loadSubscription();
-  }
-
-
-  if (tab === "settings") {
-    await loadSettings();
-  }
 }
 
 
@@ -3601,693 +3121,279 @@ async function activateTab(tab) {
 // SHARE
 // ============================================================
 
-shareBtn?.addEventListener(
-  "click",
-  async () => {
+async function handleShareClick() {
 
-    const url =
-      `${location.origin}${location.pathname}?id=${encodeURIComponent(groupId)}`;
+  const url =
+    window.location.href;
 
-    const title =
-      currentGroup?.name ||
-      "VitalStar Group";
 
+  try {
 
     if (
-      navigator.share
+      typeof navigator.share ===
+        'function'
     ) {
 
-      try {
+      await navigator.share({
 
-        await navigator.share({
-          title,
+        title:
+          state.groupData?.name ||
+          'VitalStar Group',
 
-          text:
-            `Join ${title} on VitalStar.`,
+        text:
+          state.groupData?.description ||
+          '',
 
-          url
-        });
-
-        return;
-
-      } catch (error) {
-
-        if (
-          error?.name ===
-          "AbortError"
-        ) {
-          return;
-        }
-      }
-    }
-
-
-    try {
-
-      await navigator.clipboard.writeText(
         url
-      );
 
-      toast(
-        "Group link copied!",
-        "success"
-      );
+      });
 
-    } catch {
-
-      toast(
-        url,
-        "info"
-      );
+      return;
     }
+
+
+    await copyText(url);
+
+
+    showToast(
+      'Group link copied.',
+      'success'
+    );
+
+
+  } catch (error) {
+
+    if (
+      error?.name !==
+      'AbortError'
+    ) {
+
+      console.error(
+        'Share error:',
+        error
+      );
+
+    }
+
   }
-);
+
+}
 
 
 // ============================================================
 // INVITE
 // ============================================================
 
-inviteBtn?.addEventListener(
-  "click",
-  async () => {
+async function handleInviteClick() {
 
-    const url =
-      `${location.origin}${location.pathname}?id=${encodeURIComponent(groupId)}`;
+  try {
 
-
-    try {
-
-      await navigator.clipboard.writeText(
-        url
-      );
-
-      toast(
-        "Invite link copied!",
-        "success"
-      );
-
-    } catch {
-
-      toast(
-        "Unable to copy the invite link.",
-        "error"
-      );
-    }
-  }
-);
-
-
-// ============================================================
-// COVER EDIT
-// ============================================================
-
-coverEditBtn?.addEventListener(
-  "click",
-  () => {
-
-    if (!isOwner()) {
-      return;
-    }
-
-    toast(
-      "Connect this button to your group editor / Cloudinary upload flow.",
-      "info"
+    await copyText(
+      window.location.href
     );
-  }
-);
 
 
-// ============================================================
-// NOTIFICATION BELL
-// ============================================================
-
-notificationBellBtn?.addEventListener(
-  "click",
-  async event => {
-
-    event.stopPropagation();
-
-    if (!notificationsPanel) return;
-
-    notificationsPanel.classList.toggle(
-      "is-visible"
+    showToast(
+      'Invite link copied.',
+      'success'
     );
+
+
+  } catch (error) {
+
+    console.error(
+      'Invite copy error:',
+      error
+    );
+
+
+    showToast(
+      'Could not copy the invite link.',
+      'error'
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// COPY
+// ============================================================
+
+async function copyText(text) {
+
+  if (
+    navigator.clipboard &&
+    window.isSecureContext
+  ) {
+
+    await navigator.clipboard.writeText(
+      text
+    );
+
+    return;
+  }
+
+
+  const textarea =
+    document.createElement(
+      'textarea'
+    );
+
+
+  textarea.value =
+    text;
+
+
+  textarea.style.position =
+    'fixed';
+
+  textarea.style.opacity =
+    '0';
+
+
+  document.body.appendChild(
+    textarea
+  );
+
+
+  textarea.select();
+
+
+  const copied =
+    document.execCommand(
+      'copy'
+    );
+
+
+  textarea.remove();
+
+
+  if (!copied) {
+
+    throw new Error(
+      'Clipboard copy failed'
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+async function toggleNotificationsPanel() {
+
+  if (!notificationsPanel) {
+    return;
+  }
+
+
+  const opening =
+    !notificationsPanel
+      .classList
+      .contains(
+        'is-visible'
+      );
+
+
+  notificationsPanel
+    .classList
+    .toggle(
+      'is-visible',
+      opening
+    );
+
+
+  if (
+    !opening ||
+    notificationsModuleLoaded
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const module =
+      await import(
+        './group-notifications.js'
+      );
+
+
+    notificationsModuleLoaded =
+      true;
 
 
     if (
-      notificationsPanel.classList.contains(
-        "is-visible"
-      )
+      module &&
+      typeof module.init ===
+        'function'
     ) {
 
-      await loadNotifications();
+      await module.init({
+
+        db,
+
+        auth,
+
+        currentUser:
+          state.currentUser,
+
+        groupId:
+          state.groupId,
+
+        listEl:
+          notificationsList,
+
+        unreadDotEl:
+          notifUnreadDot,
+
+        showToast
+
+      });
+
     }
-  }
-);
 
 
-// ============================================================
-// CLOSE NOTIFICATIONS
-// ============================================================
+  } catch (error) {
 
-closeNotificationsBtn?.addEventListener(
-  "click",
-  () => {
-
-    notificationsPanel?.classList.remove(
-      "is-visible"
+    console.error(
+      'Notifications error:',
+      error
     );
+
+
+    showToast(
+      'Notifications could not be loaded.',
+      'error'
+    );
+
   }
-);
+
+}
 
 
 // ============================================================
-// CLOSE NOTIFICATIONS OUTSIDE
+// GLOBAL ERROR PROTECTION
 // ============================================================
 
-document.addEventListener(
-  "click",
+window.addEventListener(
+  'unhandledrejection',
   event => {
 
-    if (
-      notificationsPanel &&
-      notificationsPanel.classList.contains(
-        "is-visible"
-      ) &&
-      !notificationsPanel.contains(
-        event.target
-      ) &&
-      !notificationBellBtn?.contains(
-        event.target
-      )
-    ) {
+    console.error(
+      'Unhandled group promise:',
+      event.reason
+    );
 
-      notificationsPanel.classList.remove(
-        "is-visible"
-      );
-    }
   }
 );
 
 
 // ============================================================
-// LOAD NOTIFICATIONS
+// END OF GROUP.JS
 // ============================================================
-
-async function loadNotifications() {
-
-  if (!currentUser) return;
-
-  if (!notificationsList) return;
-
-
-  notificationsList.innerHTML = `
-    <div class="notifications-empty">
-      Loading notifications…
-    </div>
-  `;
-
-
-  try {
-
-    let snapshot;
-
-
-    // --------------------------------------------------------
-    // Preferred query: receiverId
-    // --------------------------------------------------------
-
-    try {
-
-      const q =
-        query(
-          collection(
-            db,
-            "notifications"
-          ),
-          where(
-            "receiverId",
-            "==",
-            currentUser.uid
-          ),
-          orderBy(
-            "createdAt",
-            "desc"
-          ),
-          limit(50)
-        );
-
-      snapshot =
-        await getDocs(q);
-
-    } catch (queryError) {
-
-      console.warn(
-        "Notification indexed query failed. Using fallback.",
-        queryError
-      );
-
-
-      const fallback =
-        query(
-          collection(
-            db,
-            "notifications"
-          ),
-          orderBy(
-            "createdAt",
-            "desc"
-          ),
-          limit(100)
-        );
-
-
-      snapshot =
-        await getDocs(fallback);
-    }
-
-
-    const notifications =
-      snapshot.docs
-        .map(
-          item => ({
-            id:
-              item.id,
-
-            ...item.data()
-          })
-        )
-        .filter(
-          notification =>
-            notification.receiverId ===
-            currentUser.uid ||
-            notification.userId ===
-            currentUser.uid
-        );
-
-
-    notificationsCache =
-      notifications;
-
-
-    if (!notifications.length) {
-
-      notificationsList.innerHTML = `
-        <div class="notifications-empty">
-          You're all caught up.
-        </div>
-      `;
-
-      updateNotificationDot();
-
-      return;
-    }
-
-
-    notificationsList.innerHTML = "";
-
-
-    notifications.forEach(
-      notification => {
-
-        const item =
-          createNotificationElement(
-            notification
-          );
-
-        notificationsList.appendChild(
-          item
-        );
-      }
-    );
-
-
-    updateNotificationDot();
-
-  } catch (error) {
-
-    console.warn(
-      "NOTIFICATIONS ERROR:",
-      error
-    );
-
-    notificationsList.innerHTML = `
-      <div class="notifications-empty">
-        No notifications available.
-      </div>
-    `;
-  }
-}
-
-
-// ============================================================
-// NOTIFICATION ELEMENT
-// ============================================================
-
-function createNotificationElement(
-  notification
-) {
-
-  const item =
-    document.createElement("button");
-
-  item.type =
-    "button";
-
-  item.className =
-    "notification-item";
-
-
-  const icon =
-    document.createElement("div");
-
-  icon.className =
-    "notification-item__icon";
-
-  icon.innerHTML =
-    '<i class="fa-solid fa-bell"></i>';
-
-
-  const body =
-    document.createElement("div");
-
-
-  const text =
-    document.createElement("div");
-
-  text.className =
-    "notification-item__text";
-
-  text.textContent =
-    notification.message ||
-    "You have a new notification.";
-
-
-  const time =
-    document.createElement("div");
-
-  time.className =
-    "notification-item__time";
-
-  time.textContent =
-    formatDate(
-      notification.createdAt
-    );
-
-
-  body.appendChild(
-    text
-  );
-
-  body.appendChild(
-    time
-  );
-
-
-  item.appendChild(
-    icon
-  );
-
-  item.appendChild(
-    body
-  );
-
-
-  if (!notification.read) {
-
-    item.classList.add(
-      "is-unread"
-    );
-  }
-
-
-  item.addEventListener(
-    "click",
-    async () => {
-
-      await handleNotificationClick(
-        notification
-      );
-    }
-  );
-
-
-  return item;
-}
-
-
-// ============================================================
-// NOTIFICATION CLICK
-// ============================================================
-
-async function handleNotificationClick(
-  notification
-) {
-
-  if (!notification) return;
-
-
-  await markNotificationRead(
-    notification.id
-  );
-
-
-  // ----------------------------------------------------------
-  // Exact post navigation
-  // ----------------------------------------------------------
-
-  if (
-    notification.postId
-  ) {
-
-    const targetGroupId =
-      notification.groupId ||
-      groupId;
-
-
-    if (
-      targetGroupId ===
-      groupId
-    ) {
-
-      await activateTab(
-        "posts"
-      );
-
-      openGroupPost(
-        notification.postId
-      );
-
-      notificationsPanel?.classList.remove(
-        "is-visible"
-      );
-
-      return;
-    }
-
-
-    const url =
-      `group.html?id=${encodeURIComponent(targetGroupId)}&postId=${encodeURIComponent(notification.postId)}`;
-
-    location.href =
-      url;
-
-    return;
-  }
-
-
-  // ----------------------------------------------------------
-  // Join request notification
-  // ----------------------------------------------------------
-
-  if (
-    notification.type ===
-    "group_join_request"
-  ) {
-
-    if (isAdmin()) {
-
-      notificationsPanel?.classList.remove(
-        "is-visible"
-      );
-
-      await activateTab(
-        "settings"
-      );
-
-      return;
-    }
-  }
-
-
-  // ----------------------------------------------------------
-  // Group notification
-  // ----------------------------------------------------------
-
-  if (
-    notification.groupId &&
-    notification.groupId !== groupId
-  ) {
-
-    location.href =
-      `group.html?id=${encodeURIComponent(notification.groupId)}`;
-
-    return;
-  }
-
-
-  notificationsPanel?.classList.remove(
-    "is-visible"
-  );
-}
-
-
-// ============================================================
-// MARK NOTIFICATION READ
-// ============================================================
-
-async function markNotificationRead(
-  notificationId
-) {
-
-  if (!notificationId) return;
-
-  try {
-
-    await updateDoc(
-      doc(
-        db,
-        "notifications",
-        notificationId
-      ),
-      {
-        read:
-          true,
-
-        readAt:
-          serverTimestamp()
-      }
-    );
-
-
-    const cached =
-      notificationsCache.find(
-        item =>
-          item.id ===
-          notificationId
-      );
-
-
-    if (cached) {
-      cached.read = true;
-    }
-
-
-    updateNotificationDot();
-
-  } catch (error) {
-
-    console.warn(
-      "MARK NOTIFICATION READ ERROR:",
-      error
-    );
-  }
-}
-
-
-// ============================================================
-// NOTIFICATION DOT
-// ============================================================
-
-function updateNotificationDot() {
-
-  if (!notifUnreadDot) return;
-
-
-  const unread =
-    notificationsCache.some(
-      notification =>
-        notification.read !== true
-    );
-
-
-  notifUnreadDot.classList.toggle(
-    "is-visible",
-    unread
-  );
-}
-
-
-// ============================================================
-// CHECK NOTIFICATION DOT
-// ============================================================
-
-async function checkNotificationUnread() {
-
-  if (!currentUser) return;
-
-  try {
-
-    const q =
-      query(
-        collection(
-          db,
-          "notifications"
-        ),
-        where(
-          "receiverId",
-          "==",
-          currentUser.uid
-        ),
-        limit(50)
-      );
-
-
-    const snapshot =
-      await getDocs(q);
-
-
-    notificationsCache =
-      snapshot.docs
-        .map(
-          item => ({
-            id:
-              item.id,
-
-            ...item.data()
-          })
-        );
-
-
-    updateNotificationDot();
-
-  } catch (error) {
-
-    console.warn(
-      "CHECK NOTIFICATION ERROR:",
-      error
-    );
-  }
-}
-
-
-// ============================================================
-// INITIAL STATE
-// ============================================================
-
-if (tabsNav) {
-
-  activateTab(
-    "posts"
-  );
-}
-
-
-// ============================================================
-// INITIAL NOTIFICATION CHECK
-// ============================================================
-
-if (currentUser) {
-  checkNotificationUnread();
-}
