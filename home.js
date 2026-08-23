@@ -137,20 +137,30 @@ postFeedStyle.textContent = `
             0 10px 28px rgba(0,0,0,0.18);
     }
 
+
+    /* ========================================================
+       POST ACTION BUTTONS — ALWAYS ONE LINE
+    ======================================================== */
+
     .post-buttons {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px !important;
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
         margin-top: 16px !important;
         padding-top: 14px;
         border-top: 1px solid rgba(255,255,255,0.08);
+        width: 100%;
     }
 
     .post-buttons button {
+        flex: 1;
         min-width: 0;
+        white-space: nowrap;
         border: none;
-        border-radius: 14px;
-        padding: 10px 8px;
+        border-radius: 12px;
+        padding: 10px 4px;
         cursor: pointer;
         font: inherit;
         font-size: 13px;
@@ -171,6 +181,7 @@ postFeedStyle.textContent = `
         transform: scale(0.96);
     }
 
+
     @media (max-width: 450px) {
 
         .post-card {
@@ -179,11 +190,12 @@ postFeedStyle.textContent = `
         }
 
         .post-buttons {
-            grid-template-columns: repeat(2, 1fr);
+            gap: 2px !important;
         }
 
         .post-buttons button {
-            padding: 11px 8px;
+            font-size: 12px;
+            padding: 10px 2px;
         }
 
     }
@@ -385,6 +397,7 @@ onSnapshot(postsQuery, async (snapshot) => {
 
             <div class="post-card">
 
+
                 <!-- USER INFORMATION -->
 
                 <div class="user-info">
@@ -527,6 +540,7 @@ onSnapshot(postsQuery, async (snapshot) => {
 
                 </div>
 
+
             </div>
 
         `;
@@ -599,7 +613,9 @@ window.likePost = async function(postId) {
 
 
     const likeSnap =
-        await getDoc(likeRef);
+        await getDoc(
+            likeRef
+        );
 
 
     const postRef =
@@ -1005,7 +1021,7 @@ async (user) => {
 
 
 // ============================================================
-// UNREAD NOTIFICATION / MESSAGE BADGE
+// UNREAD NOTIFICATION BADGE
 // ============================================================
 
 const notificationBadge =
@@ -1014,7 +1030,7 @@ const notificationBadge =
     );
 
 
-// Always show zero before Firebase finishes loading
+// Always show 0 before Firebase finishes loading
 
 if (notificationBadge) {
 
@@ -1034,6 +1050,7 @@ if (notificationBadge) {
 onAuthStateChanged(
     auth,
     (user) => {
+
 
         // Keep badge visible with 0
 
