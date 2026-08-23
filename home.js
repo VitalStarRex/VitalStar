@@ -389,7 +389,7 @@ onSnapshot(postsQuery, async (snapshot) => {
         <!-- SHARE -->
 
         <button
-            onclick="openComments('${postId}')"
+            onclick="sharePost('${postId}')"
         >
 
             🔗 ${post.shares || 0}
