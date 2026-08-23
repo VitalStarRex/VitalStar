@@ -1,3 +1,8 @@
+// ============================================================
+// VITALSTAR — HOME FEED
+// Beautiful Posts • Likes • Comments • Shares • Notifications
+// ============================================================
+
 import { auth, db, rtdb } from "./firebase.js";
 
 import {
@@ -27,7 +32,165 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 
+// ============================================================
+// PAGE ELEMENTS
+// ============================================================
+
 const feed = document.getElementById("feed");
+
+
+// ============================================================
+// POST FEED STYLES
+// ============================================================
+
+const postFeedStyle = document.createElement("style");
+
+postFeedStyle.textContent = `
+
+    .post-card {
+        position: relative;
+        width: min(100%, 680px);
+        margin: 0 auto 18px;
+        padding: 18px;
+        text-align: center;
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,0.08),
+                rgba(255,255,255,0.025)
+            );
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 22px;
+        box-shadow:
+            0 12px 35px rgba(0,0,0,0.14),
+            inset 0 1px 0 rgba(255,255,255,0.08);
+        overflow: hidden;
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease,
+            border-color 0.25s ease;
+    }
+
+    .post-card:hover {
+        transform: translateY(-3px);
+        box-shadow:
+            0 18px 45px rgba(0,0,0,0.20),
+            inset 0 1px 0 rgba(255,255,255,0.10);
+        border-color: rgba(255,213,79,0.35);
+    }
+
+    .user-info {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+        margin-bottom: 8px;
+    }
+
+    .avatar {
+        flex-shrink: 0;
+    }
+
+    .user-info h3 {
+        margin: 0 0 3px;
+        font-size: 17px;
+        line-height: 1.2;
+    }
+
+    .user-info h3 a {
+        text-decoration: none;
+        color: inherit;
+        transition: opacity 0.2s ease;
+    }
+
+    .user-info h3 a:hover {
+        opacity: 0.75;
+    }
+
+    .user-info small {
+        opacity: 0.7;
+        font-size: 12px;
+    }
+
+    .post-text {
+        max-width: 580px;
+        margin: 16px auto;
+        line-height: 1.65;
+        font-size: 15px;
+        word-break: break-word;
+        white-space: pre-wrap;
+    }
+
+    .post-photo,
+    .post-video {
+        width: min(100%, 420px) !important;
+        max-height: 500px;
+        height: auto !important;
+        aspect-ratio: auto;
+        object-fit: cover;
+        border-radius: 18px !important;
+        display: block;
+        margin: 14px auto !important;
+        background: rgba(0,0,0,0.15);
+        box-shadow:
+            0 10px 28px rgba(0,0,0,0.18);
+    }
+
+    .post-buttons {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px !important;
+        margin-top: 16px !important;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .post-buttons button {
+        min-width: 0;
+        border: none;
+        border-radius: 14px;
+        padding: 10px 8px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        background: rgba(255,255,255,0.08);
+        color: inherit;
+        transition:
+            transform 0.2s ease,
+            background 0.2s ease;
+    }
+
+    .post-buttons button:hover {
+        transform: translateY(-2px);
+        background: rgba(255,213,79,0.16);
+    }
+
+    .post-buttons button:active {
+        transform: scale(0.96);
+    }
+
+    @media (max-width: 450px) {
+
+        .post-card {
+            padding: 14px;
+            border-radius: 18px;
+        }
+
+        .post-buttons {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .post-buttons button {
+            padding: 11px 8px;
+        }
+
+    }
+
+`;
+
+document.head.appendChild(postFeedStyle);
 
 
 // ============================================================
@@ -43,18 +206,24 @@ const postsQuery = query(
 
 onSnapshot(postsQuery, async (snapshot) => {
 
+    if (!feed) {
+        return;
+    }
+
+
     feed.innerHTML = "";
 
 
     if (snapshot.empty) {
 
         feed.innerHTML = `
-        <p style="
-            text-align:center;
-            padding:20px;
-        ">
-            No posts yet. Be the first to post ⭐
-        </p>
+            <p style="
+                text-align:center;
+                padding:25px;
+                opacity:0.8;
+            ">
+                No posts yet. Be the first to post ⭐
+            </p>
         `;
 
         return;
@@ -83,7 +252,14 @@ onSnapshot(postsQuery, async (snapshot) => {
                     .toDate()
                     .toLocaleString();
 
-            } catch (e) {}
+            } catch (e) {
+
+                console.log(
+                    "Could not format post date:",
+                    e
+                );
+
+            }
 
         }
 
@@ -102,7 +278,11 @@ onSnapshot(postsQuery, async (snapshot) => {
         try {
 
             const userSnap = await getDoc(
-                doc(db, "users", post.uid)
+                doc(
+                    db,
+                    "users",
+                    post.uid
+                )
             );
 
 
@@ -152,6 +332,7 @@ onSnapshot(postsQuery, async (snapshot) => {
                         border-radius:50%;
                         object-fit:cover;
                         display:block;
+                        box-shadow:0 4px 15px rgba(0,0,0,0.15);
                     "
                     onerror="
                         this.style.display='none';
@@ -202,207 +383,153 @@ onSnapshot(postsQuery, async (snapshot) => {
 
         feed.innerHTML += `
 
-<div
-    class="post-card"
-    style="
-        text-align:center;
-    "
->
+            <div class="post-card">
 
+                <!-- USER INFORMATION -->
 
-    <!-- USER INFORMATION -->
+                <div class="user-info">
 
-    <div
-        class="user-info"
-        style="
-            justify-content:center;
-            align-items:center;
-            text-align:center;
-        "
-    >
+                    <div class="avatar">
 
-        <div
-            class="avatar"
-            style="
-                display:flex;
-                align-items:center;
-                justify-content:center;
-            "
-        >
+                        ${avatarHTML}
 
-            ${avatarHTML}
+                    </div>
 
-        </div>
 
+                    <div>
 
-        <div>
+                        <h3>
 
-            <h3>
+                            <a
+                                href="profile.html?uid=${post.uid}"
+                            >
+                                ${fullName}
+                            </a>
 
-                <a
-                    href="profile.html?uid=${post.uid}"
-                >
+                        </h3>
 
-                    ${fullName}
 
-                </a>
+                        <small>
+                            ${date}
+                        </small>
 
-            </h3>
+                    </div>
 
+                </div>
 
-            <small>
-                ${date}
-            </small>
 
-        </div>
+                <!-- POST TEXT -->
 
-    </div>
+                ${
+                    post.text
+                        ? `
 
+                            <p class="post-text">
 
-    <!-- POST TEXT -->
+                                ${post.text}
 
-    ${
-        post.text
-            ? `
+                            </p>
 
-            <p
-                style="
-                    text-align:center;
-                    margin:15px auto;
-                "
-            >
+                        `
+                        : ""
+                }
 
-                ${post.text}
 
-            </p>
+                <!-- POST IMAGE -->
 
-            `
-            : ""
-    }
+                ${
+                    post.image
+                        ? `
 
+                            <img
+                                class="post-photo"
+                                src="${post.image}"
+                                alt="Post Image"
+                            >
 
-    <!-- POST IMAGE -->
+                        `
+                        : ""
+                }
 
-    ${
-        post.image
-            ? `
 
-            <img
-                class="post-photo"
-                src="${post.image}"
-                alt="Post Image"
-                style="
-                    width:180px;
-                    height:220px;
-                    object-fit:cover;
-                    border-radius:10px;
-                    display:block;
-                    margin:10px auto;
-                "
-            >
+                <!-- POST VIDEO -->
 
-            `
-            : ""
-    }
+                ${
+                    post.video
+                        ? `
 
+                            <video
+                                class="post-video"
+                                controls
+                                preload="metadata"
+                            >
 
-    <!-- POST VIDEO -->
+                                <source
+                                    src="${post.video}"
+                                    type="video/mp4"
+                                >
 
-    ${
-        post.video
-            ? `
+                                Your browser does not support video.
 
-            <video
-                class="post-video"
-                controls
-                preload="metadata"
-                style="
-                    width:180px;
-                    height:220px;
-                    object-fit:cover;
-                    border-radius:10px;
-                    display:block;
-                    margin:10px auto;
-                "
-            >
+                            </video>
 
-                <source
-                    src="${post.video}"
-                    type="video/mp4"
-                >
+                        `
+                        : ""
+                }
 
-                Your browser does not support video.
 
-            </video>
+                <!-- ACTION BUTTONS -->
 
-            `
-            : ""
-    }
+                <div class="post-buttons">
 
 
-    <!-- ACTION BUTTONS -->
+                    <!-- LIKE -->
 
-    <div
-        class="post-buttons"
-        style="
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            gap:15px;
-            flex-wrap:wrap;
-            margin-top:15px;
-        "
-    >
+                    <button
+                        onclick="likePost('${postId}')"
+                    >
 
+                        ❤️ ${post.likes || 0}
 
-        <!-- LIKE -->
+                    </button>
 
-        <button
-            onclick="likePost('${postId}')"
-        >
 
-            ❤️ ${post.likes || 0}
+                    <!-- COMMENTS -->
 
-        </button>
+                    <button
+                        onclick="openComments('${postId}')"
+                    >
 
+                        💬 ${post.comments || 0}
 
-        <!-- COMMENTS -->
+                    </button>
 
-        <button
-            onclick="openComments('${postId}')"
-        >
 
-            💬 ${post.comments || 0}
+                    <!-- REPOST -->
 
-        </button>
+                    <button>
 
+                        🔁 ${post.reposts || 0}
 
-        <!-- REPOST -->
+                    </button>
 
-        <button>
 
-            🔁 ${post.reposts || 0}
+                    <!-- SHARE -->
 
-        </button>
+                    <button
+                        onclick="sharePost('${postId}')"
+                    >
 
+                        🔗 ${post.shares || 0}
 
-        <!-- SHARE -->
+                    </button>
 
-        <button
-            onclick="sharePost('${postId}')"
-        >
 
-            🔗 ${post.shares || 0}
+                </div>
 
-        </button>
+            </div>
 
-
-    </div>
-
-
-</div>
-
-`;
+        `;
 
     }
 
@@ -415,20 +542,25 @@ onSnapshot(postsQuery, async (snapshot) => {
     );
 
 
-    feed.innerHTML = `
+    if (feed) {
 
-        <p
-            style="
-                color:red;
-                text-align:center;
-            "
-        >
+        feed.innerHTML = `
 
-            Unable to load posts
+            <p
+                style="
+                    color:red;
+                    text-align:center;
+                    padding:20px;
+                "
+            >
 
-        </p>
+                Unable to load posts
 
-    `;
+            </p>
+
+        `;
+
+    }
 
 });
 
@@ -651,7 +783,7 @@ async function(postId) {
     const postRef =
         doc(
             db,
-            "comments",
+            "posts",
             postId
         );
 
@@ -677,8 +809,12 @@ async function(postId) {
         postSnap.data();
 
 
+    // ========================================================
+    // SHARE URL — COMMENTS PAGE
+    // ========================================================
+
     const shareUrl =
-        `${window.location.origin}/post.html?id=${postId}`;
+        `${window.location.origin}/comments.html?postId=${postId}`;
 
 
     try {
@@ -860,7 +996,7 @@ async (user) => {
 
         welcome.innerHTML =
             `${greeting}, <span style="color:#FFD54F">
-            ${fullName}
+                ${fullName}
             </span> 👋`;
 
     }
@@ -869,7 +1005,7 @@ async (user) => {
 
 
 // ============================================================
-// UNREAD NOTIFICATION BADGE
+// UNREAD NOTIFICATION / MESSAGE BADGE
 // ============================================================
 
 const notificationBadge =
@@ -878,12 +1014,43 @@ const notificationBadge =
     );
 
 
+// Always show zero before Firebase finishes loading
+
+if (notificationBadge) {
+
+    notificationBadge.textContent =
+        "0";
+
+    notificationBadge.style.display =
+        "inline-flex";
+
+}
+
+
+// ============================================================
+// LOAD UNREAD NOTIFICATIONS
+// ============================================================
+
 onAuthStateChanged(
     auth,
     (user) => {
 
+        // Keep badge visible with 0
+
         if (!user) {
+
+            if (notificationBadge) {
+
+                notificationBadge.textContent =
+                    "0";
+
+                notificationBadge.style.display =
+                    "inline-flex";
+
+            }
+
             return;
+
         }
 
 
@@ -928,12 +1095,41 @@ onAuthStateChanged(
                 );
 
 
+                // ====================================================
+                // ALWAYS SHOW NUMBER — INCLUDING ZERO
+                // ====================================================
+
                 if (notificationBadge) {
 
                     notificationBadge.textContent =
                         unreadNotifications > 0
                             ? unreadNotifications
                             : "0";
+
+
+                    notificationBadge.style.display =
+                        "inline-flex";
+
+                }
+
+            },
+            (error) => {
+
+                console.error(
+                    "Notification badge error:",
+                    error
+                );
+
+
+                // Keep the badge visible even if loading fails
+
+                if (notificationBadge) {
+
+                    notificationBadge.textContent =
+                        "0";
+
+                    notificationBadge.style.display =
+                        "inline-flex";
 
                 }
 
