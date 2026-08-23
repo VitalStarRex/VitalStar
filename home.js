@@ -651,7 +651,7 @@ async function(postId) {
     const postRef =
         doc(
             db,
-            "posts",
+            "comments",
             postId
         );
 
