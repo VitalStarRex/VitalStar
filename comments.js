@@ -1,5 +1,5 @@
 // ============================================================
-// VITALSTAR — COMMENTS PAGE
+// VITALSTAR — COMMENTS.JS
 // Comments / Likes / Replies / Sharing / Notifications
 // ============================================================
 
@@ -27,29 +27,29 @@ import {
 
 
 // ============================================================
-// AUTHENTICATION
+// ELEMENTS
 // ============================================================
 
-onAuthStateChanged(auth, (user) => {
+const commentList =
+    document.getElementById("commentList");
 
-    if (!user) {
-        window.location.href = "login.html";
-    }
-
-});
+const postContainer =
+    document.getElementById("postContainer");
 
 
 // ============================================================
-// GET POST ID
+// POST ID
 // ============================================================
 
-const params = new URLSearchParams(window.location.search);
+const params =
+    new URLSearchParams(window.location.search);
 
-const postId = params.get("postId");
+const postId =
+    params.get("postId");
 
 if (!postId) {
 
-    console.error("Post ID not found.");
+    console.error("Missing postId");
 
     throw new Error("Missing postId");
 
@@ -57,40 +57,74 @@ if (!postId) {
 
 
 // ============================================================
-// ELEMENTS
+// AUTH
 // ============================================================
 
-const commentList = document.getElementById("commentList");
+onAuthStateChanged(auth, (user) => {
 
-const postContainer = document.getElementById("postContainer");
+    if (!user) {
+
+        window.location.href = "login.html";
+
+    }
+
+});
 
 
 // ============================================================
-// LOAD USER INFORMATION
+// ESCAPE HTML
+// ============================================================
+
+function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// ============================================================
+// GET CURRENT USER DATA
 // ============================================================
 
 async function getCurrentUserData() {
 
-    const user = auth.currentUser;
+    const user =
+        auth.currentUser;
 
     if (!user) return null;
 
-    const userSnap = await getDoc(
-        doc(db, "users", user.uid)
-    );
+    const userSnap =
+        await getDoc(
+            doc(db, "users", user.uid)
+        );
 
     if (!userSnap.exists()) {
 
         return {
+
             uid: user.uid,
+
             username: "username",
+
             fullName: "VitalStar User",
+
             profilePicture: ""
+
         };
 
     }
 
-    const data = userSnap.data();
+    const data =
+        userSnap.data();
 
     return {
 
@@ -114,6 +148,73 @@ async function getCurrentUserData() {
 
 
 // ============================================================
+// CREATE NOTIFICATION
+// ============================================================
+
+async function createNotification({
+
+    receiverId,
+
+    type,
+
+    postId,
+
+    commentId = null,
+
+    text,
+
+    sender
+
+}) {
+
+    if (!receiverId) return;
+
+    if (!sender) return;
+
+    // Never notify yourself
+    if (receiverId === sender.uid) return;
+
+    const notification = {
+
+        receiverId: receiverId,
+
+        senderId: sender.uid,
+
+        senderName: sender.fullName,
+
+        senderPhoto: sender.profilePicture,
+
+        type: type,
+
+        postId: postId,
+
+        text: text,
+
+        read: false,
+
+        createdAt: serverTimestamp()
+
+    };
+
+    if (commentId) {
+
+        notification.commentId =
+            commentId;
+
+    }
+
+    await addDoc(
+        collection(
+            db,
+            "notifications"
+        ),
+        notification
+    );
+
+}
+
+
+// ============================================================
 // LOAD POST
 // ============================================================
 
@@ -121,9 +222,14 @@ async function loadPost() {
 
     try {
 
-        const postSnap = await getDoc(
-            doc(db, "posts", postId)
-        );
+        const postSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "posts",
+                    postId
+                )
+            );
 
         if (!postSnap.exists()) {
 
@@ -145,9 +251,11 @@ async function loadPost() {
 
         }
 
-        const post = postSnap.data();
+        const post =
+            postSnap.data();
 
-        let date = "Just now";
+        let date =
+            "Just now";
 
         if (post.createdAt) {
 
@@ -158,50 +266,61 @@ async function loadPost() {
                         .toDate()
                         .toLocaleString();
 
-            } catch (e) {}
+            } catch (error) {}
 
         }
-
 
         if (!postContainer) return;
 
 
         postContainer.innerHTML = `
 
-            <div class="comment">
+            <div class="comment post-preview">
 
                 <div class="comment-header">
 
                     <div class="comment-avatar">
+
                         ${
                             post.profilePicture
-                                ? `
-                                <img
-                                    src="${post.profilePicture}"
-                                    style="
-                                        width:100%;
-                                        height:100%;
-                                        border-radius:50%;
-                                        object-fit:cover;
-                                    "
-                                >
-                                `
-                                : "👤"
+                            ?
+                            `
+                            <img
+                                src="${escapeHTML(
+                                    post.profilePicture
+                                )}"
+                                style="
+                                    width:100%;
+                                    height:100%;
+                                    border-radius:50%;
+                                    object-fit:cover;
+                                "
+                            >
+                            `
+                            :
+                            `👤`
                         }
+
                     </div>
+
 
                     <div>
 
                         <b>
 
                             <a
-                                href="profile.html?uid=${post.uid}"
+                                href="profile.html?uid=${encodeURIComponent(
+                                    post.uid || ""
+                                )}"
                                 style="
                                     text-decoration:none;
                                     color:black;
                                 "
                             >
-                                ${post.fullName || "VitalStar User"}
+                                ${escapeHTML(
+                                    post.fullName ||
+                                    "VitalStar User"
+                                )}
                             </a>
 
                         </b>
@@ -209,7 +328,7 @@ async function loadPost() {
                         <br>
 
                         <small>
-                            ${date}
+                            ${escapeHTML(date)}
                         </small>
 
                     </div>
@@ -217,64 +336,99 @@ async function loadPost() {
                 </div>
 
 
-                <p class="comment-text">
-                    ${post.text || ""}
-                </p>
+                ${
+                    post.text
+                    ?
+                    `
+                    <p class="comment-text">
+                        ${escapeHTML(post.text)}
+                    </p>
+                    `
+                    :
+                    ""
+                }
 
 
                 ${
                     post.image
-                        ? `
-                            <img
-                                class="comment-photo"
-                                src="${post.image}"
-                            >
-                          `
-                        : ""
+                    ?
+                    `
+                    <img
+                        class="comment-photo"
+                        src="${escapeHTML(post.image)}"
+                    >
+                    `
+                    :
+                    ""
                 }
 
 
                 ${
                     post.video
-                        ? `
-                            <video
-                                class="comment-photo"
-                                controls
-                            >
-                                <source
-                                    src="${post.video}"
-                                    type="video/mp4"
-                                >
-                            </video>
-                          `
-                        : ""
+                    ?
+                    `
+                    <video
+                        class="comment-photo"
+                        controls
+                    >
+                        <source
+                            src="${escapeHTML(post.video)}"
+                            type="video/mp4"
+                        >
+                    </video>
+                    `
+                    :
+                    ""
                 }
 
 
-                <div class="comment-actions">
+                <div
+                    class="comment-actions post-actions"
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:12px;
+                    "
+                >
 
                     <span>
-                        ❤️ ${post.likes || 0}
+                        ❤️
+                        ${post.likes || 0}
                     </span>
 
+
                     <span>
-                        💬 ${post.comments || 0}
+                        💬
+                        ${post.comments || 0}
                     </span>
+
+
+                    <!-- ICON ONLY SHARE BUTTON -->
 
                     <button
                         type="button"
-                        onclick="sharePost()"
+                        class="post-share-btn"
+                        data-post-share="true"
+                        aria-label="Share post"
+                        title="Share post"
                         style="
                             border:none;
-                            background:none;
+                            background:transparent;
                             cursor:pointer;
-                            font-size:15px;
+                            padding:6px;
+                            font-size:16px;
+                            position:relative;
+                            z-index:20;
+                            pointer-events:auto;
                         "
                     >
-                        🔗 Share
+
+                        🔗
+
                         <span id="shareCount">
                             ${post.shares || 0}
                         </span>
+
                     </button>
 
                 </div>
@@ -283,10 +437,34 @@ async function loadPost() {
 
         `;
 
+
+        // Attach share event directly
+        const shareButton =
+            postContainer.querySelector(
+                "[data-post-share='true']"
+            );
+
+        if (shareButton) {
+
+            shareButton.addEventListener(
+                "click",
+                function(event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    window.sharePost();
+
+                }
+            );
+
+        }
+
     } catch (error) {
 
         console.error(
-            "Failed to load post:",
+            "Load post error:",
             error
         );
 
@@ -302,22 +480,26 @@ loadPost();
 // LOAD COMMENTS
 // ============================================================
 
-const commentsQuery = query(
+const commentsQuery =
+    query(
 
-    collection(db, "comments"),
+        collection(
+            db,
+            "comments"
+        ),
 
-    where(
-        "postId",
-        "==",
-        postId
-    ),
+        where(
+            "postId",
+            "==",
+            postId
+        ),
 
-    orderBy(
-        "createdAt",
-        "desc"
-    )
+        orderBy(
+            "createdAt",
+            "desc"
+        )
 
-);
+    );
 
 
 onSnapshot(
@@ -326,14 +508,7 @@ onSnapshot(
 
     (snapshot) => {
 
-        console.log(
-            "Comments:",
-            snapshot.size
-        );
-
-
         if (!commentList) return;
-
 
         commentList.innerHTML = "";
 
@@ -341,6 +516,7 @@ onSnapshot(
         if (snapshot.empty) {
 
             commentList.innerHTML = `
+
                 <p
                     style="
                         text-align:center;
@@ -350,6 +526,7 @@ onSnapshot(
                 >
                     No comments yet.
                 </p>
+
             `;
 
             return;
@@ -357,144 +534,16 @@ onSnapshot(
         }
 
 
-        snapshot.forEach((docSnap) => {
+        snapshot.forEach(
+            (commentSnap) => {
 
-            const comment =
-                docSnap.data();
-
-            let date = "Just now";
-
-
-            if (comment.createdAt) {
-
-                try {
-
-                    date =
-                        comment.createdAt
-                            .toDate()
-                            .toLocaleString();
-
-                } catch (e) {}
+                renderComment(
+                    commentSnap.id,
+                    commentSnap.data()
+                );
 
             }
-
-
-            commentList.innerHTML += `
-
-                <div class="comment">
-
-                    <div class="comment-header">
-
-                        <div class="comment-avatar">
-
-                            <img
-                                src="${
-                                    comment.profilePicture ||
-                                    "https://via.placeholder.com/45"
-                                }"
-                                style="
-                                    width:100%;
-                                    height:100%;
-                                    border-radius:50%;
-                                    object-fit:cover;
-                                "
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <b>
-
-                                <a
-                                    href="profile.html?uid=${comment.uid}"
-                                    style="
-                                        text-decoration:none;
-                                        color:black;
-                                    "
-                                >
-                                    ${
-                                        comment.fullName ||
-                                        "VitalStar User"
-                                    }
-                                </a>
-
-                            </b>
-
-                            <br>
-
-                            <span
-                                style="
-                                    color:#1877f2;
-                                    font-size:13px;
-                                "
-                            >
-                                @${comment.username || "username"}
-                            </span>
-
-                            <br>
-
-                            <small
-                                style="color:gray;"
-                            >
-                                ${date}
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <p class="comment-text">
-                        ${comment.text || ""}
-                    </p>
-
-
-                    ${
-                        comment.image
-                            ? `
-                                <img
-                                    class="comment-photo"
-                                    src="${comment.image}"
-                                >
-                              `
-                            : ""
-                    }
-
-
-                    <div class="comment-actions">
-
-                        <button
-                            type="button"
-                            onclick="likeComment('${docSnap.id}')"
-                        >
-                            ❤️
-                            <span>
-                                ${comment.likes || 0}
-                            </span>
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onclick="showReplyBox('${docSnap.id}')"
-                        >
-                            💬 Reply
-                        </button>
-
-                    </div>
-
-
-                    <div
-                        id="replyBox-${docSnap.id}"
-                    ></div>
-
-                </div>
-
-            `;
-
-        });
+        );
 
     },
 
@@ -511,10 +560,296 @@ onSnapshot(
 
 
 // ============================================================
+// RENDER COMMENT
+// ============================================================
+
+function renderComment(
+    commentId,
+    comment
+) {
+
+    if (!commentList) return;
+
+
+    let date =
+        "Just now";
+
+    if (comment.createdAt) {
+
+        try {
+
+            date =
+                comment.createdAt
+                    .toDate()
+                    .toLocaleString();
+
+        } catch (error) {}
+
+    }
+
+
+    const commentElement =
+        document.createElement("div");
+
+    commentElement.className =
+        "comment";
+
+
+    commentElement.innerHTML = `
+
+        <div class="comment-header">
+
+            <div class="comment-avatar">
+
+                ${
+                    comment.profilePicture
+                    ?
+                    `
+                    <img
+                        src="${escapeHTML(
+                            comment.profilePicture
+                        )}"
+                        style="
+                            width:100%;
+                            height:100%;
+                            border-radius:50%;
+                            object-fit:cover;
+                        "
+                    >
+                    `
+                    :
+                    `👤`
+                }
+
+            </div>
+
+
+            <div>
+
+                <b>
+
+                    <a
+                        href="profile.html?uid=${encodeURIComponent(
+                            comment.uid || ""
+                        )}"
+                        style="
+                            text-decoration:none;
+                            color:black;
+                        "
+                    >
+                        ${escapeHTML(
+                            comment.fullName ||
+                            "VitalStar User"
+                        )}
+                    </a>
+
+                </b>
+
+                <br>
+
+                <span
+                    style="
+                        color:#1877f2;
+                        font-size:13px;
+                    "
+                >
+                    @${escapeHTML(
+                        comment.username ||
+                        "username"
+                    )}
+                </span>
+
+                <br>
+
+                <small style="color:gray;">
+                    ${escapeHTML(date)}
+                </small>
+
+            </div>
+
+        </div>
+
+
+        ${
+            comment.text
+            ?
+            `
+            <p class="comment-text">
+                ${escapeHTML(comment.text)}
+            </p>
+            `
+            :
+            ""
+        }
+
+
+        ${
+            comment.image
+            ?
+            `
+            <img
+                class="comment-photo"
+                src="${escapeHTML(comment.image)}"
+            >
+            `
+            :
+            ""
+        }
+
+
+        <div
+            class="comment-actions"
+            style="
+                display:flex;
+                align-items:center;
+                gap:8px;
+            "
+        >
+
+            <!-- CLICKABLE LIKE -->
+
+            <button
+                type="button"
+                class="comment-like-btn"
+                data-comment-like="${commentId}"
+                aria-label="Like comment"
+                title="Like comment"
+                style="
+                    border:none;
+                    background:transparent;
+                    cursor:pointer;
+                    padding:7px 10px;
+                    font-size:15px;
+                    position:relative;
+                    z-index:20;
+                    pointer-events:auto;
+                "
+            >
+
+                ❤️
+
+                <span class="comment-like-count">
+                    ${comment.likes || 0}
+                </span>
+
+            </button>
+
+
+            <!-- CLICKABLE REPLY -->
+
+            <button
+                type="button"
+                class="comment-reply-btn"
+                data-comment-reply="${commentId}"
+                style="
+                    border:none;
+                    background:transparent;
+                    cursor:pointer;
+                    padding:7px 10px;
+                    font-size:15px;
+                    position:relative;
+                    z-index:20;
+                    pointer-events:auto;
+                "
+            >
+
+                💬 Reply
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="replyBox-${commentId}"
+            class="reply-box"
+        ></div>
+
+        <div
+            id="replies-${commentId}"
+            class="replies-container"
+        ></div>
+
+    `;
+
+
+    commentList.appendChild(
+        commentElement
+    );
+
+
+    // ========================================================
+    // LIKE BUTTON
+    // ========================================================
+
+    const likeButton =
+        commentElement.querySelector(
+            "[data-comment-like]"
+        );
+
+
+    if (likeButton) {
+
+        likeButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                window.likeComment(
+                    commentId
+                );
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // REPLY BUTTON
+    // ========================================================
+
+    const replyButton =
+        commentElement.querySelector(
+            "[data-comment-reply]"
+        );
+
+
+    if (replyButton) {
+
+        replyButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                window.showReplyBox(
+                    commentId
+                );
+
+            }
+        );
+
+    }
+
+
+    // Load replies
+    loadReplies(commentId);
+
+}
+
+
+// ============================================================
 // SEND COMMENT
 // ============================================================
 
-window.sendComment = async function () {
+window.sendComment =
+async function() {
 
     try {
 
@@ -531,15 +866,20 @@ window.sendComment = async function () {
 
         const text =
             textElement
-                ? textElement.value.trim()
-                : "";
+            ?
+            textElement.value.trim()
+            :
+            "";
 
 
         const imageFile =
             imageElement &&
-            imageElement.files
-                ? imageElement.files[0]
-                : null;
+            imageElement.files &&
+            imageElement.files[0]
+            ?
+            imageElement.files[0]
+            :
+            null;
 
 
         if (!text && !imageFile) {
@@ -574,12 +914,13 @@ window.sendComment = async function () {
         if (!userData) return;
 
 
-        // ====================================================
-        // IMAGE UPLOAD
-        // ====================================================
+        let imageUrl =
+            "";
 
-        let imageUrl = "";
 
+        // ====================================================
+        // UPLOAD IMAGE
+        // ====================================================
 
         if (imageFile) {
 
@@ -631,7 +972,7 @@ window.sendComment = async function () {
 
 
         // ====================================================
-        // CREATE COMMENT
+        // ADD COMMENT
         // ====================================================
 
         await addDoc(
@@ -641,9 +982,10 @@ window.sendComment = async function () {
             ),
             {
 
-                postId: postId,
+                postId,
 
-                uid: user.uid,
+                uid:
+                    user.uid,
 
                 username:
                     userData.username,
@@ -654,9 +996,10 @@ window.sendComment = async function () {
                 profilePicture:
                     userData.profilePicture,
 
-                text: text,
+                text,
 
-                image: imageUrl,
+                image:
+                    imageUrl,
 
                 likes: 0,
 
@@ -689,7 +1032,7 @@ window.sendComment = async function () {
 
 
         // ====================================================
-        // GET POST OWNER
+        // COMMENT NOTIFICATION
         // ====================================================
 
         const postSnap =
@@ -702,73 +1045,41 @@ window.sendComment = async function () {
             );
 
 
-        // ====================================================
-        // COMMENT NOTIFICATION
-        // ====================================================
-
         if (postSnap.exists()) {
 
             const post =
                 postSnap.data();
 
 
-            // Don't notify yourself
-            if (
-                post.uid !==
-                user.uid
-            ) {
+            await createNotification({
 
-                await addDoc(
-                    collection(
-                        db,
-                        "notifications"
-                    ),
-                    {
+                receiverId:
+                    post.uid,
 
-                        receiverId:
-                            post.uid,
+                sender:
+                    userData,
 
-                        senderId:
-                            user.uid,
+                type:
+                    "comment",
 
-                        senderName:
-                            userData.fullName,
+                postId:
+                    postId,
 
-                        senderPhoto:
-                            userData.profilePicture,
+                text:
+                    "commented on your post."
 
-                        type:
-                            "comment",
-
-                        postId:
-                            postId,
-
-                        text:
-                            "commented on your post.",
-
-                        read: false,
-
-                        createdAt:
-                            serverTimestamp()
-
-                    }
-                );
-
-            }
+            });
 
         }
 
 
-        // ====================================================
-        // CLEAR FORM
-        // ====================================================
+        // Clear form
 
         if (textElement) {
 
             textElement.value = "";
 
         }
-
 
         if (imageElement) {
 
@@ -778,13 +1089,13 @@ window.sendComment = async function () {
 
 
         console.log(
-            "Comment posted successfully."
+            "Comment posted."
         );
 
     } catch (error) {
 
         console.error(
-            "Comment error:",
+            "Send comment error:",
             error
         );
 
@@ -802,9 +1113,8 @@ window.sendComment = async function () {
 // LIKE COMMENT
 // ============================================================
 
-window.likeComment = async function (
-    commentId
-) {
+window.likeComment =
+async function(commentId) {
 
     try {
 
@@ -834,12 +1144,6 @@ window.likeComment = async function (
             );
 
 
-        const likeSnap =
-            await getDoc(
-                likeRef
-            );
-
-
         const commentRef =
             doc(
                 db,
@@ -848,17 +1152,19 @@ window.likeComment = async function (
             );
 
 
-        const commentSnap =
-            await getDoc(
-                commentRef
-            );
+        const [
+            likeSnap,
+            commentSnap
+        ] = await Promise.all([
+
+            getDoc(likeRef),
+
+            getDoc(commentRef)
+
+        ]);
 
 
         if (!commentSnap.exists()) {
-
-            console.error(
-                "Comment not found."
-            );
 
             return;
 
@@ -895,10 +1201,6 @@ window.likeComment = async function (
             );
 
 
-            console.log(
-                "Comment unliked."
-            );
-
             return;
 
         }
@@ -912,8 +1214,7 @@ window.likeComment = async function (
             likeRef,
             {
 
-                commentId:
-                    commentId,
+                commentId,
 
                 uid:
                     user.uid,
@@ -937,61 +1238,31 @@ window.likeComment = async function (
 
 
         // ====================================================
-        // LIKE NOTIFICATION
+        // NOTIFY COMMENT OWNER
         // ====================================================
 
-        // Don't notify yourself
-        if (
-            comment.uid &&
-            comment.uid !==
-            user.uid
-        ) {
+        await createNotification({
 
-            await addDoc(
-                collection(
-                    db,
-                    "notifications"
-                ),
-                {
+            receiverId:
+                comment.uid,
 
-                    receiverId:
-                        comment.uid,
+            sender:
+                userData,
 
-                    senderId:
-                        user.uid,
+            type:
+                "comment_like",
 
-                    senderName:
-                        userData.fullName,
+            postId:
+                postId,
 
-                    senderPhoto:
-                        userData.profilePicture,
+            commentId:
+                commentId,
 
-                    type:
-                        "comment_like",
+            text:
+                "liked your comment."
 
-                    postId:
-                        postId,
+        });
 
-                    commentId:
-                        commentId,
-
-                    text:
-                        "liked your comment.",
-
-                    read: false,
-
-                    createdAt:
-                        serverTimestamp()
-
-                }
-            );
-
-        }
-
-
-        console.log(
-            "Comment liked."
-        );
 
     } catch (error) {
 
@@ -1006,10 +1277,455 @@ window.likeComment = async function (
 
 
 // ============================================================
+// SHOW REPLY BOX
+// ============================================================
+
+window.showReplyBox =
+function(commentId) {
+
+    const box =
+        document.getElementById(
+            `replyBox-${commentId}`
+        );
+
+
+    if (!box) return;
+
+
+    // Close if already open
+
+    if (
+        box.innerHTML.trim() !== ""
+    ) {
+
+        box.innerHTML = "";
+
+        return;
+
+    }
+
+
+    box.innerHTML = `
+
+        <div
+            style="
+                display:flex;
+                gap:8px;
+                margin-top:8px;
+                margin-bottom:8px;
+            "
+        >
+
+            <input
+                id="replyInput-${commentId}"
+                type="text"
+                placeholder="Write a reply..."
+                style="
+                    flex:1;
+                    padding:10px;
+                    border:1px solid #ddd;
+                    border-radius:20px;
+                    outline:none;
+                "
+            >
+
+
+            <button
+                type="button"
+                id="replySend-${commentId}"
+                style="
+                    border:none;
+                    border-radius:20px;
+                    padding:8px 14px;
+                    background:#1877f2;
+                    color:white;
+                    cursor:pointer;
+                "
+            >
+                Send
+            </button>
+
+        </div>
+
+    `;
+
+
+    const input =
+        document.getElementById(
+            `replyInput-${commentId}`
+        );
+
+
+    const send =
+        document.getElementById(
+            `replySend-${commentId}`
+        );
+
+
+    if (input) {
+
+        input.focus();
+
+    }
+
+
+    if (send) {
+
+        send.addEventListener(
+            "click",
+            function() {
+
+                sendReply(
+                    commentId
+                );
+
+            }
+        );
+
+    }
+
+};
+
+
+// ============================================================
+// SEND REPLY
+// ============================================================
+
+async function sendReply(
+    commentId
+) {
+
+    try {
+
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        const input =
+            document.getElementById(
+                `replyInput-${commentId}`
+            );
+
+
+        if (!input) return;
+
+
+        const text =
+            input.value.trim();
+
+
+        if (!text) return;
+
+
+        const userData =
+            await getCurrentUserData();
+
+
+        const commentSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "comments",
+                    commentId
+                )
+            );
+
+
+        if (!commentSnap.exists()) {
+
+            return;
+
+        }
+
+
+        const comment =
+            commentSnap.data();
+
+
+        // ====================================================
+        // ADD REPLY
+        // ====================================================
+
+        await addDoc(
+            collection(
+                db,
+                "comments",
+                commentId,
+                "replies"
+            ),
+            {
+
+                uid:
+                    user.uid,
+
+                username:
+                    userData.username,
+
+                fullName:
+                    userData.fullName,
+
+                profilePicture:
+                    userData.profilePicture,
+
+                text,
+
+                createdAt:
+                    serverTimestamp()
+
+            }
+        );
+
+
+        // ====================================================
+        // UPDATE REPLY COUNT
+        // ====================================================
+
+        await updateDoc(
+            doc(
+                db,
+                "comments",
+                commentId
+            ),
+            {
+
+                replies:
+                    increment(1)
+
+            }
+        );
+
+
+        // ====================================================
+        // REPLY NOTIFICATION
+        // ====================================================
+
+        await createNotification({
+
+            receiverId:
+                comment.uid,
+
+            sender:
+                userData,
+
+            type:
+                "comment_reply",
+
+            postId:
+                postId,
+
+            commentId:
+                commentId,
+
+            text:
+                "replied to your comment."
+
+        });
+
+
+        input.value = "";
+
+
+        const box =
+            document.getElementById(
+                `replyBox-${commentId}`
+            );
+
+
+        if (box) {
+
+            box.innerHTML = "";
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Reply error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD REPLIES
+// ============================================================
+
+function loadReplies(
+    commentId
+) {
+
+    const repliesContainer =
+        document.getElementById(
+            `replies-${commentId}`
+        );
+
+
+    if (!repliesContainer) return;
+
+
+    const repliesQuery =
+        query(
+
+            collection(
+                db,
+                "comments",
+                commentId,
+                "replies"
+            ),
+
+            orderBy(
+                "createdAt",
+                "asc"
+            )
+
+        );
+
+
+    onSnapshot(
+        repliesQuery,
+
+        (snapshot) => {
+
+            repliesContainer.innerHTML = "";
+
+
+            snapshot.forEach(
+                (replySnap) => {
+
+                    const reply =
+                        replySnap.data();
+
+
+                    let date =
+                        "Just now";
+
+
+                    if (
+                        reply.createdAt
+                    ) {
+
+                        try {
+
+                            date =
+                                reply.createdAt
+                                    .toDate()
+                                    .toLocaleString();
+
+                        } catch (error) {}
+
+                    }
+
+
+                    repliesContainer.innerHTML += `
+
+                        <div
+                            class="reply"
+                            style="
+                                margin-left:35px;
+                                margin-top:8px;
+                                padding:10px;
+                                border-left:3px solid #1877f2;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    display:flex;
+                                    gap:8px;
+                                    align-items:center;
+                                "
+                            >
+
+                                <img
+                                    src="${
+                                        escapeHTML(
+                                            reply.profilePicture ||
+                                            "https://via.placeholder.com/35"
+                                        )
+                                    }"
+                                    style="
+                                        width:35px;
+                                        height:35px;
+                                        border-radius:50%;
+                                        object-fit:cover;
+                                    "
+                                >
+
+                                <div>
+
+                                    <b>
+                                        ${escapeHTML(
+                                            reply.fullName ||
+                                            "VitalStar User"
+                                        )}
+                                    </b>
+
+                                    <br>
+
+                                    <small
+                                        style="color:gray;"
+                                    >
+                                        ${escapeHTML(date)}
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+
+                            <p
+                                style="
+                                    margin:7px 0 0 43px;
+                                "
+                            >
+                                ${escapeHTML(
+                                    reply.text || ""
+                                )}
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+        },
+
+        (error) => {
+
+            console.error(
+                "Replies listener error:",
+                error
+            );
+
+        }
+
+    );
+
+}
+
+
+// ============================================================
 // SHARE POST
 // ============================================================
 
-window.sharePost = async function () {
+window.sharePost =
+async function() {
 
     try {
 
@@ -1043,10 +1759,6 @@ window.sharePost = async function () {
 
         if (!postSnap.exists()) {
 
-            console.error(
-                "Post not found."
-            );
-
             return;
 
         }
@@ -1060,12 +1772,10 @@ window.sharePost = async function () {
             await getCurrentUserData();
 
 
-        // ====================================================
-        // SHARE URL
-        // ====================================================
-
         const shareUrl =
-            `${window.location.origin}${window.location.pathname}?postId=${postId}`;
+            `${window.location.origin}${window.location.pathname}?postId=${encodeURIComponent(
+                postId
+            )}`;
 
 
         const shareData = {
@@ -1075,13 +1785,22 @@ window.sharePost = async function () {
 
             text:
                 post.text
-                    ? post.text.substring(0, 120)
-                    : "Check out this post on VitalStar.",
+                ?
+                post.text.substring(
+                    0,
+                    120
+                )
+                :
+                "Check out this post on VitalStar.",
 
             url:
                 shareUrl
 
         };
+
+
+        let shared =
+            false;
 
 
         // ====================================================
@@ -1098,11 +1817,12 @@ window.sharePost = async function () {
                     shareData
                 );
 
-            } catch (shareError) {
+                shared = true;
 
-                // User cancelled the share dialog.
+            } catch (error) {
+
                 if (
-                    shareError.name ===
+                    error.name ===
                     "AbortError"
                 ) {
 
@@ -1111,33 +1831,43 @@ window.sharePost = async function () {
                 }
 
                 console.error(
-                    "Native share failed:",
-                    shareError
+                    "Share dialog error:",
+                    error
                 );
+
+                return;
 
             }
 
         } else {
 
             // ==================================================
-            // FALLBACK — COPY LINK
+            // COPY LINK FALLBACK
             // ==================================================
 
-            if (
-                navigator.clipboard
-            ) {
+            try {
 
                 await navigator.clipboard.writeText(
                     shareUrl
                 );
 
-                console.log(
-                    "Post link copied."
+                shared = true;
+
+            } catch (error) {
+
+                console.error(
+                    "Copy link error:",
+                    error
                 );
+
+                return;
 
             }
 
         }
+
+
+        if (!shared) return;
 
 
         // ====================================================
@@ -1156,7 +1886,7 @@ window.sharePost = async function () {
 
 
         // ====================================================
-        // UPDATE DISPLAYED SHARE COUNT
+        // UPDATE UI
         // ====================================================
 
         const shareCount =
@@ -1167,14 +1897,10 @@ window.sharePost = async function () {
 
         if (shareCount) {
 
-            const currentCount =
+            shareCount.textContent =
                 Number(
                     shareCount.textContent
-                ) || 0;
-
-
-            shareCount.textContent =
-                currentCount + 1;
+                ) + 1;
 
         }
 
@@ -1183,60 +1909,30 @@ window.sharePost = async function () {
         // SHARE NOTIFICATION
         // ====================================================
 
-        // Don't notify yourself
-        if (
-            post.uid &&
-            post.uid !==
-            user.uid
-        ) {
+        await createNotification({
 
-            await addDoc(
-                collection(
-                    db,
-                    "notifications"
-                ),
-                {
+            receiverId:
+                post.uid,
 
-                    receiverId:
-                        post.uid,
+            sender:
+                userData,
 
-                    senderId:
-                        user.uid,
+            type:
+                "share",
 
-                    senderName:
-                        userData.fullName,
+            postId:
+                postId,
 
-                    senderPhoto:
-                        userData.profilePicture,
+            text:
+                "shared your post."
 
-                    type:
-                        "share",
+        });
 
-                    postId:
-                        postId,
-
-                    text:
-                        "shared your post.",
-
-                    read: false,
-
-                    createdAt:
-                        serverTimestamp()
-
-                }
-            );
-
-        }
-
-
-        console.log(
-            "Post shared."
-        );
 
     } catch (error) {
 
         console.error(
-            "Share post error:",
+            "Share error:",
             error
         );
 
