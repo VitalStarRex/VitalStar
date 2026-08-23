@@ -1,6 +1,6 @@
 // ============================================================
-// VITALSTAR — COMMENTS.JS
-// Comments / Likes / Replies / Sharing / Notifications
+// VITALSTAR — comments.js
+// Post / Comments / Likes / Replies / Shares / Notifications
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -49,7 +49,7 @@ const postId =
 
 if (!postId) {
 
-    console.error("Missing postId");
+    console.error("Post ID not found.");
 
     throw new Error("Missing postId");
 
@@ -77,8 +77,13 @@ onAuthStateChanged(auth, (user) => {
 
 function escapeHTML(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
         return "";
+
     }
 
     return String(value)
@@ -102,33 +107,46 @@ async function getCurrentUserData() {
 
     if (!user) return null;
 
+
     const userSnap =
         await getDoc(
-            doc(db, "users", user.uid)
+            doc(
+                db,
+                "users",
+                user.uid
+            )
         );
+
 
     if (!userSnap.exists()) {
 
         return {
 
-            uid: user.uid,
+            uid:
+                user.uid,
 
-            username: "username",
+            username:
+                "username",
 
-            fullName: "VitalStar User",
+            fullName:
+                "VitalStar User",
 
-            profilePicture: ""
+            profilePicture:
+                ""
 
         };
 
     }
 
+
     const data =
         userSnap.data();
 
+
     return {
 
-        uid: user.uid,
+        uid:
+            user.uid,
 
         username:
             data.username ||
@@ -155,15 +173,15 @@ async function createNotification({
 
     receiverId,
 
+    sender,
+
     type,
 
     postId,
 
     commentId = null,
 
-    text,
-
-    sender
+    text
 
 }) {
 
@@ -172,29 +190,47 @@ async function createNotification({
     if (!sender) return;
 
     // Never notify yourself
-    if (receiverId === sender.uid) return;
+    if (
+        receiverId ===
+        sender.uid
+    ) {
+
+        return;
+
+    }
+
 
     const notification = {
 
-        receiverId: receiverId,
+        receiverId:
+            receiverId,
 
-        senderId: sender.uid,
+        senderId:
+            sender.uid,
 
-        senderName: sender.fullName,
+        senderName:
+            sender.fullName,
 
-        senderPhoto: sender.profilePicture,
+        senderPhoto:
+            sender.profilePicture,
 
-        type: type,
+        type:
+            type,
 
-        postId: postId,
+        postId:
+            postId,
 
-        text: text,
+        text:
+            text,
 
-        read: false,
+        read:
+            false,
 
-        createdAt: serverTimestamp()
+        createdAt:
+            serverTimestamp()
 
     };
+
 
     if (commentId) {
 
@@ -202,6 +238,7 @@ async function createNotification({
             commentId;
 
     }
+
 
     await addDoc(
         collection(
@@ -231,11 +268,13 @@ async function loadPost() {
                 )
             );
 
+
         if (!postSnap.exists()) {
 
             if (postContainer) {
 
                 postContainer.innerHTML = `
+
                     <p style="
                         text-align:center;
                         padding:30px;
@@ -243,6 +282,7 @@ async function loadPost() {
                     ">
                         Post not found.
                     </p>
+
                 `;
 
             }
@@ -251,11 +291,14 @@ async function loadPost() {
 
         }
 
+
         const post =
             postSnap.data();
 
+
         let date =
             "Just now";
+
 
         if (post.createdAt) {
 
@@ -269,6 +312,7 @@ async function loadPost() {
             } catch (error) {}
 
         }
+
 
         if (!postContainer) return;
 
@@ -298,7 +342,7 @@ async function loadPost() {
                             >
                             `
                             :
-                            `👤`
+                            "👤"
                         }
 
                     </div>
@@ -341,7 +385,9 @@ async function loadPost() {
                     ?
                     `
                     <p class="comment-text">
-                        ${escapeHTML(post.text)}
+                        ${escapeHTML(
+                            post.text
+                        )}
                     </p>
                     `
                     :
@@ -355,7 +401,9 @@ async function loadPost() {
                     `
                     <img
                         class="comment-photo"
-                        src="${escapeHTML(post.image)}"
+                        src="${escapeHTML(
+                            post.image
+                        )}"
                     >
                     `
                     :
@@ -371,10 +419,14 @@ async function loadPost() {
                         class="comment-photo"
                         controls
                     >
+
                         <source
-                            src="${escapeHTML(post.video)}"
+                            src="${escapeHTML(
+                                post.video
+                            )}"
                             type="video/mp4"
                         >
+
                     </video>
                     `
                     :
@@ -387,36 +439,64 @@ async function loadPost() {
                     style="
                         display:flex;
                         align-items:center;
-                        gap:12px;
+                        gap:8px;
                     "
                 >
 
-                    <span>
-                        ❤️
-                        ${post.likes || 0}
-                    </span>
-
-
-                    <span>
-                        💬
-                        ${post.comments || 0}
-                    </span>
-
-
-                    <!-- ICON ONLY SHARE BUTTON -->
+                    <!-- POST LIKE -->
 
                     <button
                         type="button"
+                        id="postLikeBtn"
+                        class="post-like-btn"
+                        aria-label="Like post"
+                        title="Like post"
+                        style="
+                            border:none;
+                            background:transparent;
+                            cursor:pointer;
+                            padding:7px 10px;
+                            font-size:15px;
+                            position:relative;
+                            z-index:20;
+                            pointer-events:auto;
+                        "
+                    >
+
+                        ❤️
+
+                        <span id="postLikeCount">
+                            ${post.likes || 0}
+                        </span>
+
+                    </button>
+
+
+                    <!-- COMMENT COUNT -->
+
+                    <span>
+
+                        💬
+
+                        ${post.comments || 0}
+
+                    </span>
+
+
+                    <!-- ICON ONLY SHARE -->
+
+                    <button
+                        type="button"
+                        id="postShareBtn"
                         class="post-share-btn"
-                        data-post-share="true"
                         aria-label="Share post"
                         title="Share post"
                         style="
                             border:none;
                             background:transparent;
                             cursor:pointer;
-                            padding:6px;
-                            font-size:16px;
+                            padding:7px 10px;
+                            font-size:15px;
                             position:relative;
                             z-index:20;
                             pointer-events:auto;
@@ -438,11 +518,43 @@ async function loadPost() {
         `;
 
 
-        // Attach share event directly
-        const shareButton =
-            postContainer.querySelector(
-                "[data-post-share='true']"
+        // ====================================================
+        // POST LIKE BUTTON
+        // ====================================================
+
+        const likeButton =
+            document.getElementById(
+                "postLikeBtn"
             );
+
+
+        if (likeButton) {
+
+            likeButton.addEventListener(
+                "click",
+                function(event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    window.likePost();
+
+                }
+            );
+
+        }
+
+
+        // ====================================================
+        // SHARE BUTTON
+        // ====================================================
+
+        const shareButton =
+            document.getElementById(
+                "postShareBtn"
+            );
+
 
         if (shareButton) {
 
@@ -461,6 +573,10 @@ async function loadPost() {
 
         }
 
+
+        // Update post like button state
+        await updatePostLikeState();
+
     } catch (error) {
 
         console.error(
@@ -474,6 +590,298 @@ async function loadPost() {
 
 
 loadPost();
+
+
+// ============================================================
+// UPDATE POST LIKE STATE
+// ============================================================
+
+async function updatePostLikeState() {
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) return;
+
+
+    const likeId =
+        `${postId}_${user.uid}`;
+
+
+    const likeSnap =
+        await getDoc(
+            doc(
+                db,
+                "postLikes",
+                likeId
+            )
+        );
+
+
+    const button =
+        document.getElementById(
+            "postLikeBtn"
+        );
+
+
+    if (!button) return;
+
+
+    if (likeSnap.exists()) {
+
+        button.style.opacity =
+            "1";
+
+        button.setAttribute(
+            "aria-pressed",
+            "true"
+        );
+
+    } else {
+
+        button.setAttribute(
+            "aria-pressed",
+            "false"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// POST LIKE
+// ============================================================
+
+window.likePost =
+async function() {
+
+    try {
+
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            window.location.href =
+                "login.html";
+
+            return;
+
+        }
+
+
+        const postRef =
+            doc(
+                db,
+                "posts",
+                postId
+            );
+
+
+        const likeId =
+            `${postId}_${user.uid}`;
+
+
+        const likeRef =
+            doc(
+                db,
+                "postLikes",
+                likeId
+            );
+
+
+        const [
+            likeSnap,
+            postSnap
+        ] = await Promise.all([
+
+            getDoc(likeRef),
+
+            getDoc(postRef)
+
+        ]);
+
+
+        if (!postSnap.exists()) {
+
+            return;
+
+        }
+
+
+        const post =
+            postSnap.data();
+
+
+        const userData =
+            await getCurrentUserData();
+
+
+        const count =
+            document.getElementById(
+                "postLikeCount"
+            );
+
+
+        // ====================================================
+        // UNLIKE
+        // ====================================================
+
+        if (likeSnap.exists()) {
+
+            await deleteDoc(
+                likeRef
+            );
+
+
+            await updateDoc(
+                postRef,
+                {
+
+                    likes:
+                        increment(-1)
+
+                }
+            );
+
+
+            if (count) {
+
+                const current =
+                    Number(
+                        count.textContent
+                    ) || 0;
+
+
+                count.textContent =
+                    Math.max(
+                        0,
+                        current - 1
+                    );
+
+            }
+
+
+            const button =
+                document.getElementById(
+                    "postLikeBtn"
+                );
+
+
+            if (button) {
+
+                button.setAttribute(
+                    "aria-pressed",
+                    "false"
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // LIKE
+        // ====================================================
+
+        await setDoc(
+            likeRef,
+            {
+
+                postId:
+                    postId,
+
+                uid:
+                    user.uid,
+
+                createdAt:
+                    serverTimestamp()
+
+            }
+        );
+
+
+        await updateDoc(
+            postRef,
+            {
+
+                likes:
+                    increment(1)
+
+            }
+        );
+
+
+        if (count) {
+
+            const current =
+                Number(
+                    count.textContent
+                ) || 0;
+
+
+            count.textContent =
+                current + 1;
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "postLikeBtn"
+            );
+
+
+        if (button) {
+
+            button.setAttribute(
+                "aria-pressed",
+                "true"
+            );
+
+        }
+
+
+        // ====================================================
+        // NOTIFICATION
+        // ====================================================
+
+        await createNotification({
+
+            receiverId:
+                post.uid,
+
+            sender:
+                userData,
+
+            type:
+                "post_like",
+
+            postId:
+                postId,
+
+            text:
+                "liked your post."
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Post like error:",
+            error
+        );
+
+    }
+
+};
 
 
 // ============================================================
@@ -510,6 +918,7 @@ onSnapshot(
 
         if (!commentList) return;
 
+
         commentList.innerHTML = "";
 
 
@@ -517,13 +926,11 @@ onSnapshot(
 
             commentList.innerHTML = `
 
-                <p
-                    style="
-                        text-align:center;
-                        padding:20px;
-                        color:gray;
-                    "
-                >
+                <p style="
+                    text-align:center;
+                    padding:20px;
+                    color:gray;
+                ">
                     No comments yet.
                 </p>
 
@@ -574,6 +981,7 @@ function renderComment(
     let date =
         "Just now";
 
+
     if (comment.createdAt) {
 
         try {
@@ -588,14 +996,17 @@ function renderComment(
     }
 
 
-    const commentElement =
-        document.createElement("div");
+    const element =
+        document.createElement(
+            "div"
+        );
 
-    commentElement.className =
+
+    element.className =
         "comment";
 
 
-    commentElement.innerHTML = `
+    element.innerHTML = `
 
         <div class="comment-header">
 
@@ -618,7 +1029,7 @@ function renderComment(
                     >
                     `
                     :
-                    `👤`
+                    "👤"
                 }
 
             </div>
@@ -675,7 +1086,9 @@ function renderComment(
             ?
             `
             <p class="comment-text">
-                ${escapeHTML(comment.text)}
+                ${escapeHTML(
+                    comment.text
+                )}
             </p>
             `
             :
@@ -689,7 +1102,9 @@ function renderComment(
             `
             <img
                 class="comment-photo"
-                src="${escapeHTML(comment.image)}"
+                src="${escapeHTML(
+                    comment.image
+                )}"
             >
             `
             :
@@ -706,7 +1121,7 @@ function renderComment(
             "
         >
 
-            <!-- CLICKABLE LIKE -->
+            <!-- COMMENT LIKE -->
 
             <button
                 type="button"
@@ -728,14 +1143,14 @@ function renderComment(
 
                 ❤️
 
-                <span class="comment-like-count">
+                <span>
                     ${comment.likes || 0}
                 </span>
 
             </button>
 
 
-            <!-- CLICKABLE REPLY -->
+            <!-- REPLY -->
 
             <button
                 type="button"
@@ -762,28 +1177,27 @@ function renderComment(
 
         <div
             id="replyBox-${commentId}"
-            class="reply-box"
         ></div>
+
 
         <div
             id="replies-${commentId}"
-            class="replies-container"
         ></div>
 
     `;
 
 
     commentList.appendChild(
-        commentElement
+        element
     );
 
 
     // ========================================================
-    // LIKE BUTTON
+    // COMMENT LIKE
     // ========================================================
 
     const likeButton =
-        commentElement.querySelector(
+        element.querySelector(
             "[data-comment-like]"
         );
 
@@ -809,11 +1223,11 @@ function renderComment(
 
 
     // ========================================================
-    // REPLY BUTTON
+    // REPLY
     // ========================================================
 
     const replyButton =
-        commentElement.querySelector(
+        element.querySelector(
             "[data-comment-reply]"
         );
 
@@ -838,8 +1252,53 @@ function renderComment(
     }
 
 
-    // Load replies
-    loadReplies(commentId);
+    loadReplies(
+        commentId
+    );
+
+}
+
+
+// ============================================================
+// COMMENTING INDICATOR
+// ============================================================
+
+function showCommentingIndicator(
+    text
+) {
+
+    const indicator =
+        document.getElementById(
+            "commentingIndicator"
+        );
+
+
+    if (!indicator) return;
+
+
+    indicator.textContent =
+        text;
+
+
+    indicator.style.display =
+        "block";
+
+}
+
+
+function hideCommentingIndicator() {
+
+    const indicator =
+        document.getElementById(
+            "commentingIndicator"
+        );
+
+
+    if (!indicator) return;
+
+
+    indicator.style.display =
+        "none";
 
 }
 
@@ -851,12 +1310,25 @@ function renderComment(
 window.sendComment =
 async function() {
 
+    const indicator =
+        document.getElementById(
+            "commentingIndicator"
+        );
+
+
+    const sendButton =
+        document.getElementById(
+            "sendCommentBtn"
+        );
+
+
     try {
 
         const textElement =
             document.getElementById(
                 "commentText"
             );
+
 
         const imageElement =
             document.getElementById(
@@ -884,10 +1356,6 @@ async function() {
 
         if (!text && !imageFile) {
 
-            alert(
-                "Write a comment or choose an image."
-            );
-
             return;
 
         }
@@ -907,22 +1375,36 @@ async function() {
         }
 
 
+        showCommentingIndicator(
+            "💬 Posting comment..."
+        );
+
+
+        if (sendButton) {
+
+            sendButton.disabled =
+                true;
+
+            sendButton.style.opacity =
+                "0.6";
+
+        }
+
+
         const userData =
             await getCurrentUserData();
-
-
-        if (!userData) return;
 
 
         let imageUrl =
             "";
 
 
-        // ====================================================
-        // UPLOAD IMAGE
-        // ====================================================
-
         if (imageFile) {
+
+            showCommentingIndicator(
+                "📤 Uploading image..."
+            );
+
 
             const formData =
                 new FormData();
@@ -956,11 +1438,9 @@ async function() {
 
             if (!data.secure_url) {
 
-                alert(
+                throw new Error(
                     "Image upload failed."
                 );
-
-                return;
 
             }
 
@@ -971,9 +1451,10 @@ async function() {
         }
 
 
-        // ====================================================
-        // ADD COMMENT
-        // ====================================================
+        showCommentingIndicator(
+            "💬 Posting comment..."
+        );
+
 
         await addDoc(
             collection(
@@ -982,7 +1463,8 @@ async function() {
             ),
             {
 
-                postId,
+                postId:
+                    postId,
 
                 uid:
                     user.uid,
@@ -996,14 +1478,17 @@ async function() {
                 profilePicture:
                     userData.profilePicture,
 
-                text,
+                text:
+                    text,
 
                 image:
                     imageUrl,
 
-                likes: 0,
+                likes:
+                    0,
 
-                replies: 0,
+                replies:
+                    0,
 
                 createdAt:
                     serverTimestamp()
@@ -1011,10 +1496,6 @@ async function() {
             }
         );
 
-
-        // ====================================================
-        // UPDATE POST COMMENT COUNT
-        // ====================================================
 
         await updateDoc(
             doc(
@@ -1030,10 +1511,6 @@ async function() {
             }
         );
 
-
-        // ====================================================
-        // COMMENT NOTIFICATION
-        // ====================================================
 
         const postSnap =
             await getDoc(
@@ -1073,36 +1550,63 @@ async function() {
         }
 
 
-        // Clear form
-
         if (textElement) {
 
-            textElement.value = "";
+            textElement.value =
+                "";
 
         }
+
 
         if (imageElement) {
 
-            imageElement.value = "";
+            imageElement.value =
+                "";
 
         }
 
 
-        console.log(
-            "Comment posted."
+        showCommentingIndicator(
+            "✓ Comment posted"
         );
+
+
+        setTimeout(
+            hideCommentingIndicator,
+            1200
+        );
+
 
     } catch (error) {
 
         console.error(
-            "Send comment error:",
+            "Comment error:",
             error
         );
 
-        alert(
-            error.message ||
-            "Failed to post comment."
+
+        showCommentingIndicator(
+            "⚠️ Failed to post comment"
         );
+
+
+        setTimeout(
+            hideCommentingIndicator,
+            2000
+        );
+
+
+    } finally {
+
+        if (sendButton) {
+
+            sendButton.disabled =
+                false;
+
+            sendButton.style.opacity =
+                "1";
+
+        }
 
     }
 
@@ -1179,10 +1683,6 @@ async function(commentId) {
             await getCurrentUserData();
 
 
-        // ====================================================
-        // UNLIKE
-        // ====================================================
-
         if (likeSnap.exists()) {
 
             await deleteDoc(
@@ -1206,15 +1706,12 @@ async function(commentId) {
         }
 
 
-        // ====================================================
-        // LIKE
-        // ====================================================
-
         await setDoc(
             likeRef,
             {
 
-                commentId,
+                commentId:
+                    commentId,
 
                 uid:
                     user.uid,
@@ -1236,10 +1733,6 @@ async function(commentId) {
             }
         );
 
-
-        // ====================================================
-        // NOTIFY COMMENT OWNER
-        // ====================================================
 
         await createNotification({
 
@@ -1267,7 +1760,7 @@ async function(commentId) {
     } catch (error) {
 
         console.error(
-            "Like comment error:",
+            "Comment like error:",
             error
         );
 
@@ -1292,13 +1785,12 @@ function(commentId) {
     if (!box) return;
 
 
-    // Close if already open
-
     if (
-        box.innerHTML.trim() !== ""
+        box.innerHTML.trim()
     ) {
 
-        box.innerHTML = "";
+        box.innerHTML =
+            "";
 
         return;
 
@@ -1311,8 +1803,7 @@ function(commentId) {
             style="
                 display:flex;
                 gap:8px;
-                margin-top:8px;
-                margin-bottom:8px;
+                margin:8px 0;
             "
         >
 
@@ -1373,7 +1864,9 @@ function(commentId) {
 
         send.addEventListener(
             "click",
-            function() {
+            function(event) {
+
+                event.preventDefault();
 
                 sendReply(
                     commentId
@@ -1452,10 +1945,6 @@ async function sendReply(
             commentSnap.data();
 
 
-        // ====================================================
-        // ADD REPLY
-        // ====================================================
-
         await addDoc(
             collection(
                 db,
@@ -1477,7 +1966,8 @@ async function sendReply(
                 profilePicture:
                     userData.profilePicture,
 
-                text,
+                text:
+                    text,
 
                 createdAt:
                     serverTimestamp()
@@ -1485,10 +1975,6 @@ async function sendReply(
             }
         );
 
-
-        // ====================================================
-        // UPDATE REPLY COUNT
-        // ====================================================
 
         await updateDoc(
             doc(
@@ -1504,10 +1990,6 @@ async function sendReply(
             }
         );
 
-
-        // ====================================================
-        // REPLY NOTIFICATION
-        // ====================================================
 
         await createNotification({
 
@@ -1532,7 +2014,8 @@ async function sendReply(
         });
 
 
-        input.value = "";
+        input.value =
+            "";
 
 
         const box =
@@ -1543,10 +2026,10 @@ async function sendReply(
 
         if (box) {
 
-            box.innerHTML = "";
+            box.innerHTML =
+                "";
 
         }
-
 
     } catch (error) {
 
@@ -1568,13 +2051,13 @@ function loadReplies(
     commentId
 ) {
 
-    const repliesContainer =
+    const container =
         document.getElementById(
             `replies-${commentId}`
         );
 
 
-    if (!repliesContainer) return;
+    if (!container) return;
 
 
     const repliesQuery =
@@ -1600,7 +2083,8 @@ function loadReplies(
 
         (snapshot) => {
 
-            repliesContainer.innerHTML = "";
+            container.innerHTML =
+                "";
 
 
             snapshot.forEach(
@@ -1630,7 +2114,7 @@ function loadReplies(
                     }
 
 
-                    repliesContainer.innerHTML += `
+                    container.innerHTML += `
 
                         <div
                             class="reply"
@@ -1651,12 +2135,10 @@ function loadReplies(
                             >
 
                                 <img
-                                    src="${
-                                        escapeHTML(
-                                            reply.profilePicture ||
-                                            "https://via.placeholder.com/35"
-                                        )
-                                    }"
+                                    src="${escapeHTML(
+                                        reply.profilePicture ||
+                                        "https://via.placeholder.com/35"
+                                    )}"
                                     style="
                                         width:35px;
                                         height:35px;
@@ -1679,7 +2161,9 @@ function loadReplies(
                                     <small
                                         style="color:gray;"
                                     >
-                                        ${escapeHTML(date)}
+                                        ${escapeHTML(
+                                            date
+                                        )}
                                     </small>
 
                                 </div>
@@ -1693,7 +2177,8 @@ function loadReplies(
                                 "
                             >
                                 ${escapeHTML(
-                                    reply.text || ""
+                                    reply.text ||
+                                    ""
                                 )}
                             </p>
 
@@ -1709,7 +2194,7 @@ function loadReplies(
         (error) => {
 
             console.error(
-                "Replies listener error:",
+                "Replies error:",
                 error
             );
 
@@ -1803,10 +2288,6 @@ async function() {
             false;
 
 
-        // ====================================================
-        // NATIVE SHARE
-        // ====================================================
-
         if (
             navigator.share
         ) {
@@ -1817,7 +2298,8 @@ async function() {
                     shareData
                 );
 
-                shared = true;
+                shared =
+                    true;
 
             } catch (error) {
 
@@ -1831,7 +2313,7 @@ async function() {
                 }
 
                 console.error(
-                    "Share dialog error:",
+                    "Share cancelled/error:",
                     error
                 );
 
@@ -1841,17 +2323,14 @@ async function() {
 
         } else {
 
-            // ==================================================
-            // COPY LINK FALLBACK
-            // ==================================================
-
             try {
 
                 await navigator.clipboard.writeText(
                     shareUrl
                 );
 
-                shared = true;
+                shared =
+                    true;
 
             } catch (error) {
 
@@ -1870,10 +2349,6 @@ async function() {
         if (!shared) return;
 
 
-        // ====================================================
-        // UPDATE SHARE COUNT
-        // ====================================================
-
         await updateDoc(
             postRef,
             {
@@ -1884,10 +2359,6 @@ async function() {
             }
         );
 
-
-        // ====================================================
-        // UPDATE UI
-        // ====================================================
 
         const shareCount =
             document.getElementById(
@@ -1904,10 +2375,6 @@ async function() {
 
         }
 
-
-        // ====================================================
-        // SHARE NOTIFICATION
-        // ====================================================
 
         await createNotification({
 
