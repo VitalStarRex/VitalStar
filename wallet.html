@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>VitalStar Wallet</title>
+
+<style>
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:#eef2ff;
+    color:#222;
+    padding-bottom:40px;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+header{
+    position:sticky;
+    top:0;
+    width:100%;
+    height:65px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 18px;
+    color:white;
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7
+        );
+    box-shadow:
+        0 3px 15px rgba(0,0,0,.2);
+    z-index:100;
+}
+
+.back-btn{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:50%;
+    background:rgba(255,255,255,.18);
+    color:white;
+    font-size:26px;
+    cursor:pointer;
+}
+
+.wallet-title{
+    font-size:21px;
+    font-weight:900;
+}
+
+.header-space{
+    width:42px;
+}
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.container{
+    width:min(100%,650px);
+    margin:auto;
+    padding:20px 15px;
+}
+
+/* =========================================================
+   WALLET BALANCE CARD
+   ========================================================= */
+
+.wallet-card{
+    position:relative;
+    overflow:hidden;
+    padding:28px 24px;
+    border-radius:28px;
+    color:white;
+    background:
+        linear-gradient(
+            135deg,
+            #7b2ff7,
+            #1877f2,
+            #00c6ff
+        );
+    box-shadow:
+        0 15px 35px rgba(70,80,200,.35);
+}
+
+.wallet-card::before{
+    content:"";
+    position:absolute;
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    background:rgba(255,255,255,.12);
+    top:-80px;
+    right:-50px;
+}
+
+.wallet-card::after{
+    content:"";
+    position:absolute;
+    width:130px;
+    height:130px;
+    border-radius:50%;
+    border:25px solid rgba(255,255,255,.08);
+    bottom:-75px;
+    left:-35px;
+}
+
+.wallet-content{
+    position:relative;
+    z-index:1;
+}
+
+.wallet-label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:15px;
+    font-weight:bold;
+    opacity:.9;
+}
+
+.wallet-amount{
+    margin-top:12px;
+    font-size:38px;
+    font-weight:900;
+    word-break:break-word;
+}
+
+.wallet-currency{
+    margin-top:8px;
+    font-size:13px;
+    opacity:.85;
+}
+
+.wallet-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:28px;
+}
+
+.wallet-owner{
+    font-size:14px;
+    font-weight:bold;
+    max-width:70%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.wallet-logo{
+    font-size:20px;
+    font-weight:900;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+    margin:22px 0;
+}
+
+.action-btn{
+    border:none;
+    padding:18px 12px;
+    border-radius:20px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-size:15px;
+    font-weight:900;
+    transition:.2s ease;
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.08);
+}
+
+.action-btn:hover{
+    transform:translateY(-3px);
+}
+
+.action-btn:active{
+    transform:scale(.97);
+}
+
+.deposit-btn{
+    background:#fff;
+    color:#1877f2;
+}
+
+.withdraw-btn{
+    background:#fff;
+    color:#7b2ff7;
+}
+
+.action-icon{
+    width:50px;
+    height:50px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:25px;
+}
+
+.deposit-btn .action-icon{
+    background:#eaf3ff;
+}
+
+.withdraw-btn .action-icon{
+    background:#f2ebff;
+}
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:25px;
+}
+
+.stat-card{
+    background:white;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.07);
+}
+
+.stat-label{
+    color:#777;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.stat-value{
+    margin-top:8px;
+    font-size:18px;
+    font-weight:900;
+}
+
+/* =========================================================
+   TRANSACTION HISTORY
+   ========================================================= */
+
+.section-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+}
+
+.section-title{
+    font-size:20px;
+    font-weight:900;
+}
+
+.transaction-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.transaction-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:15px;
+    background:white;
+    border-radius:18px;
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.06);
+}
+
+.transaction-icon{
+    width:46px;
+    height:46px;
+    min-width:46px;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:21px;
+    background:#eef2ff;
+}
+
+.transaction-info{
+    flex:1;
+    min-width:0;
+}
+
+.transaction-title{
+    font-size:15px;
+    font-weight:900;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.transaction-date{
+    margin-top:4px;
+    color:#888;
+    font-size:12px;
+}
+
+.transaction-amount{
+    font-size:15px;
+    font-weight:900;
+    white-space:nowrap;
+}
+
+.transaction-amount.credit{
+    color:#16a34a;
+}
+
+.transaction-amount.debit{
+    color:#e11d48;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state{
+    text-align:center;
+    padding:35px 20px;
+    border-radius:22px;
+    background:white;
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.06);
+}
+
+.empty-icon{
+    font-size:42px;
+}
+
+.empty-title{
+    margin-top:10px;
+    font-size:18px;
+    font-weight:900;
+}
+
+.empty-text{
+    margin-top:7px;
+    color:#777;
+    font-size:14px;
+    line-height:1.5;
+}
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading{
+    text-align:center;
+    padding:25px;
+    color:#777;
+    font-weight:bold;
+}
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+.modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    padding:15px;
+    background:rgba(0,0,0,.55);
+    z-index:1000;
+}
+
+.modal.show{
+    display:flex;
+}
+
+.modal-box{
+    width:min(100%,600px);
+    max-height:90vh;
+    overflow-y:auto;
+    padding:24px;
+    border-radius:28px 28px 20px 20px;
+    background:white;
+    box-shadow:
+        0 -10px 40px rgba(0,0,0,.2);
+}
+
+.modal-handle{
+    width:45px;
+    height:5px;
+    margin:0 auto 18px;
+    border-radius:20px;
+    background:#ddd;
+}
+
+.modal-title{
+    font-size:23px;
+    font-weight:900;
+}
+
+.modal-text{
+    margin:8px 0 20px;
+    color:#666;
+    line-height:1.5;
+}
+
+.form-group{
+    margin-top:15px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:8px;
+    font-size:14px;
+    font-weight:bold;
+}
+
+.form-group input,
+.form-group select{
+    width:100%;
+    padding:15px;
+    border:2px solid #e5e7eb;
+    border-radius:15px;
+    outline:none;
+    font-size:16px;
+    background:white;
+}
+
+.form-group input:focus,
+.form-group select:focus{
+    border-color:#1877f2;
+}
+
+.modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+}
+
+.modal-actions button{
+    flex:1;
+    border:none;
+    padding:15px;
+    border-radius:15px;
+    font-size:15px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.cancel-btn{
+    background:#eee;
+    color:#333;
+}
+
+.continue-btn{
+    color:white;
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7
+        );
+}
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+body.dark-mode{
+    background:#121212;
+    color:#eee;
+}
+
+body.dark-mode .deposit-btn,
+body.dark-mode .withdraw-btn,
+body.dark-mode .stat-card,
+body.dark-mode .transaction-item,
+body.dark-mode .empty-state,
+body.dark-mode .modal-box{
+    background:#1e1e1e;
+    color:#eee;
+}
+
+body.dark-mode .stat-label,
+body.dark-mode .transaction-date,
+body.dark-mode .empty-text,
+body.dark-mode .modal-text{
+    color:#aaa;
+}
+
+body.dark-mode .deposit-btn .action-icon{
+    background:#17345a;
+}
+
+body.dark-mode .withdraw-btn .action-icon{
+    background:#321f54;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select{
+    background:#282828;
+    color:white;
+    border-color:#444;
+}
+
+body.dark-mode .cancel-btn{
+    background:#333;
+    color:white;
+}
+
+@media(max-width:380px){
+
+    .wallet-amount{
+        font-size:31px;
+    }
+
+    .wallet-card{
+        padding:24px 18px;
+    }
+
+    .actions{
+        gap:10px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+
+<header>
+
+<button
+    class="back-btn"
+    type="button"
+    onclick="history.back()"
+>
+    ←
+</button>
+
+<div class="wallet-title">
+    💰 VitalStar Wallet
+</div>
+
+<div class="header-space"></div>
+
+</header>
+
+
+<!-- =========================================================
+     MAIN CONTENT
+     ========================================================= -->
+
+<main class="container">
+
+
+<!-- WALLET CARD -->
+
+<section class="wallet-card">
+
+<div class="wallet-content">
+
+    <div class="wallet-label">
+        💰 Available Balance
+    </div>
+
+    <div
+        class="wallet-amount"
+        id="walletPageBalance"
+    >
+        ₦0.00
+    </div>
+
+    <div class="wallet-currency">
+        Nigerian Naira • NGN
+    </div>
+
+    <div class="wallet-footer">
+
+        <div
+            class="wallet-owner"
+            id="walletOwner"
+        >
+            VitalStar Member
+        </div>
+
+        <div class="wallet-logo">
+            ⭐
+        </div>
+
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- ACTIONS -->
+
+<section class="actions">
+
+<button
+    class="action-btn deposit-btn"
+    id="depositButton"
+    type="button"
+>
+
+    <span class="action-icon">
+        ➕
+    </span>
+
+    Deposit
+
+</button>
+
+
+<button
+    class="action-btn withdraw-btn"
+    id="withdrawButton"
+    type="button"
+>
+
+    <span class="action-icon">
+        💸
+    </span>
+
+    Withdraw
+
+</button>
+
+</section>
+
+
+<!-- WALLET STATS -->
+
+<section class="stats">
+
+<div class="stat-card">
+
+    <div class="stat-label">
+        Deposited
+    </div>
+
+    <div
+        class="stat-value"
+        id="totalDeposited"
+    >
+        ₦0.00
+    </div>
+
+</div>
+
+
+<div class="stat-card">
+
+    <div class="stat-label">
+        Spent
+    </div>
+
+    <div
+        class="stat-value"
+        id="totalSpent"
+    >
+        ₦0.00
+    </div>
+
+</div>
+
+</section>
+
+
+<!-- TRANSACTION HISTORY -->
+
+<section>
+
+<div class="section-header">
+
+    <h2 class="section-title">
+        Transaction History
+    </h2>
+
+</div>
+
+
+<div
+    class="transaction-list"
+    id="transactionList"
+>
+
+    <div class="loading">
+        Loading transactions...
+    </div>
+
+</div>
+
+</section>
+
+
+</main>
+
+
+<!-- =========================================================
+     DEPOSIT MODAL
+     ========================================================= -->
+
+<div
+    class="modal"
+    id="depositModal"
+>
+
+<div class="modal-box">
+
+<div class="modal-handle"></div>
+
+<h2 class="modal-title">
+    💰 Deposit Money
+</h2>
+
+<p class="modal-text">
+    Enter the amount you want to add to your VitalStar Wallet.
+</p>
+
+<div class="form-group">
+
+<label for="depositAmount">
+    Amount
+</label>
+
+<input
+    id="depositAmount"
+    type="number"
+    min="100"
+    step="1"
+    placeholder="Enter amount in Naira"
+/>
+
+</div>
+
+<div class="modal-actions">
+
+<button
+    class="cancel-btn"
+    type="button"
+    data-close="depositModal"
+>
+    Cancel
+</button>
+
+<button
+    class="continue-btn"
+    id="continueDeposit"
+    type="button"
+>
+    Continue
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     WITHDRAW MODAL
+     ========================================================= -->
+
+<div
+    class="modal"
+    id="withdrawModal"
+>
+
+<div class="modal-box">
+
+<div class="modal-handle"></div>
+
+<h2 class="modal-title">
+    💸 Withdraw Money
+</h2>
+
+<p class="modal-text">
+    Enter the amount you want to withdraw from your VitalStar Wallet.
+</p>
+
+<div class="form-group">
+
+<label for="withdrawAmount">
+    Amount
+</label>
+
+<input
+    id="withdrawAmount"
+    type="number"
+    min="100"
+    step="1"
+    placeholder="Enter amount in Naira"
+/>
+
+</div>
+
+
+<div class="form-group">
+
+<label for="bankName">
+    Bank Name
+</label>
+
+<input
+    id="bankName"
+    type="text"
+    placeholder="Enter your bank name"
+/>
+
+</div>
+
+
+<div class="form-group">
+
+<label for="accountNumber">
+    Account Number
+</label>
+
+<input
+    id="accountNumber"
+    type="text"
+    inputmode="numeric"
+    maxlength="10"
+    placeholder="10-digit account number"
+/>
+
+</div>
+
+
+<div class="form-group">
+
+<label for="accountName">
+    Account Name
+</label>
+
+<input
+    id="accountName"
+    type="text"
+    placeholder="Account holder name"
+/>
+
+</div>
+
+
+<div class="modal-actions">
+
+<button
+    class="cancel-btn"
+    type="button"
+    data-close="withdrawModal"
+>
+    Cancel
+</button>
+
+<button
+    class="continue-btn"
+    id="continueWithdraw"
+    type="button"
+>
+    Withdraw
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+     WALLET SCRIPT
+     ========================================================= -->
+
+<script
+    type="module"
+    src="wallet.js"
+></script>
+
+
+<!-- =========================================================
+     DARK MODE
+     ========================================================= -->
+
+<script>
+
+if(
+    localStorage.getItem("darkMode") === "enabled"
+){
+    document.body.classList.add(
+        "dark-mode"
+    );
+}
+
+</script>
+
+
+</body>
+
+</html>
