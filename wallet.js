@@ -1,8 +1,3 @@
-// ============================================================
-// VITALSTAR WALLET
-// Works on home.html and wallet.html
-// ============================================================
-
 import { auth, db } from "./firebase.js";
 
 import {
@@ -24,20 +19,13 @@ import {
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
-// ============================================================
 // ELEMENTS
-// ============================================================
-
-// HOME PAGE
 
 const walletBalance =
     document.getElementById("walletBalance");
 
 const walletButton =
     document.getElementById("walletButton");
-
-
-// WALLET PAGE
 
 const walletPageBalance =
     document.getElementById("walletPageBalance");
@@ -73,23 +61,16 @@ const continueWithdraw =
     document.getElementById("continueWithdraw");
 
 
-// ============================================================
 // GLOBAL STATE
-// ============================================================
 
 let currentUser = null;
 
 let currentBalance = 0;
 
 
-// ============================================================
 // FORMAT MONEY
-// ============================================================
 
 function formatMoney(amount){
-
-    const number =
-        Number(amount) || 0;
 
     return new Intl.NumberFormat(
         "en-NG",
@@ -98,14 +79,14 @@ function formatMoney(amount){
             currency:"NGN",
             maximumFractionDigits:2
         }
-    ).format(number);
+    ).format(
+        Number(amount) || 0
+    );
 
 }
 
 
-// ============================================================
-// UPDATE ALL BALANCE DISPLAYS
-// ============================================================
+// UPDATE BALANCE
 
 function updateBalanceDisplays(balance){
 
@@ -129,9 +110,7 @@ function updateBalanceDisplays(balance){
 }
 
 
-// ============================================================
 // OPEN WALLET
-// ============================================================
 
 walletButton?.addEventListener(
     "click",
@@ -144,71 +123,38 @@ walletButton?.addEventListener(
 );
 
 
-// ============================================================
-// MODAL FUNCTIONS
-// ============================================================
+// MODALS
 
 function openModal(modal){
 
-    if(modal){
-
-        modal.classList.add(
-            "show"
-        );
-
-    }
+    modal?.classList.add("show");
 
 }
-
 
 function closeModal(modal){
 
-    if(modal){
-
-        modal.classList.remove(
-            "show"
-        );
-
-    }
+    modal?.classList.remove("show");
 
 }
 
 
-// ============================================================
 // DEPOSIT MODAL
-// ============================================================
 
 depositButton?.addEventListener(
     "click",
-    () => {
-
-        openModal(
-            depositModal
-        );
-
-    }
+    () => openModal(depositModal)
 );
 
 
-// ============================================================
 // WITHDRAW MODAL
-// ============================================================
 
 withdrawButton?.addEventListener(
     "click",
-    () => {
-
-        openModal(
-            withdrawModal
-        );
-
-    }
+    () => openModal(withdrawModal)
 );
 
 
-// ============================================================
 // CLOSE MODALS
-// ============================================================
 
 document.querySelectorAll(
     "[data-close]"
@@ -219,12 +165,9 @@ document.querySelectorAll(
             "click",
             () => {
 
-                const modalId =
-                    button.dataset.close;
-
                 closeModal(
                     document.getElementById(
-                        modalId
+                        button.dataset.close
                     )
                 );
 
@@ -235,9 +178,7 @@ document.querySelectorAll(
 );
 
 
-// ============================================================
-// CLOSE MODAL WHEN BACKGROUND IS CLICKED
-// ============================================================
+// CLOSE BACKGROUND
 
 [depositModal, withdrawModal].forEach(
     (modal) => {
@@ -246,9 +187,7 @@ document.querySelectorAll(
             "click",
             (event) => {
 
-                if(
-                    event.target === modal
-                ){
+                if(event.target === modal){
 
                     closeModal(modal);
 
@@ -263,49 +202,112 @@ document.querySelectorAll(
 
 // ============================================================
 // CONTINUE DEPOSIT
+// CONNECTED TO PAYSTACK
 // ============================================================
 
 continueDeposit?.addEventListener(
     "click",
-    () => {
+    async () => {
 
-        const depositAmount =
+        const amount =
             Number(
                 document.getElementById(
                     "depositAmount"
                 )?.value
             );
 
-        if(
-            !depositAmount ||
-            depositAmount <= 0
-        ){
+        if(!amount || amount < 100){
 
             alert(
-                "Please enter a valid deposit amount."
+                "Minimum deposit is ₦100"
             );
 
             return;
 
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * DO NOT add the money directly
-         * to Firestore here.
-         *
-         * The next step will send the user
-         * to a secure payment system.
-         */
+        if(!currentUser){
 
-        alert(
-            "Payment setup is the next step. "
-            +
-            "Amount selected: "
-            +
-            formatMoney(depositAmount)
-        );
+            alert(
+                "Please log in first"
+            );
+
+            return;
+
+        }
+
+        continueDeposit.disabled = true;
+
+        continueDeposit.textContent =
+            "Loading...";
+
+        try{
+
+            const response =
+                await fetch(
+                    "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/wallet-deposit",
+                    {
+                        method:"POST",
+
+                        headers:{
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:JSON.stringify({
+                            amount,
+                            email:
+                                currentUser.email,
+                            userId:
+                                currentUser.uid
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if(!data.success){
+
+                throw new Error(
+                    data.message ||
+                    "Payment failed"
+                );
+
+            }
+
+            if(!data.authorizationUrl){
+
+                throw new Error(
+                    "Payment link not received"
+                );
+
+            }
+
+            window.location.href =
+                data.authorizationUrl;
+
+        }
+
+        catch(error){
+
+            console.error(
+                "Deposit error:",
+                error
+            );
+
+            alert(
+                error.message ||
+                "Unable to start payment"
+            );
+
+            continueDeposit.disabled =
+                false;
+
+            continueDeposit.textContent =
+                "Continue";
+
+        }
 
     }
 );
@@ -393,31 +395,15 @@ continueWithdraw?.addEventListener(
 
         }
 
-        /*
-         * IMPORTANT:
-         *
-         * Do not deduct the money here.
-         *
-         * The secure backend must process
-         * the withdrawal and then update
-         * the wallet.
-         */
-
         alert(
-            "Withdrawal processing will be "
-            +
-            "connected to the secure payment "
-            +
-            "system next."
+            "Withdrawal processing will be connected next."
         );
 
     }
 );
 
 
-// ============================================================
 // CREATE WALLET
-// ============================================================
 
 async function createWallet(user){
 
@@ -445,9 +431,7 @@ async function createWallet(user){
 }
 
 
-// ============================================================
 // LOAD WALLET
-// ============================================================
 
 async function loadWallet(user){
 
@@ -459,47 +443,30 @@ async function loadWallet(user){
         );
 
     const walletSnap =
-        await getDoc(
-            walletRef
-        );
+        await getDoc(walletRef);
 
-    // Create wallet automatically
-
-    if(
-        !walletSnap.exists()
-    ){
+    if(!walletSnap.exists()){
 
         const balance =
-            await createWallet(
-                user
-            );
+            await createWallet(user);
 
-        updateBalanceDisplays(
-            balance
-        );
+        updateBalanceDisplays(balance);
 
         return;
 
     }
 
-    const walletData =
-        walletSnap.data();
-
     const balance =
         Number(
-            walletData.balance
+            walletSnap.data().balance
         ) || 0;
 
-    updateBalanceDisplays(
-        balance
-    );
+    updateBalanceDisplays(balance);
 
 }
 
 
-// ============================================================
 // LOAD WALLET OWNER
-// ============================================================
 
 async function loadWalletOwner(user){
 
@@ -511,28 +478,23 @@ async function loadWalletOwner(user){
 
     try{
 
-        const userRef =
-            doc(
-                db,
-                "users",
-                user.uid
-            );
-
         const userSnap =
             await getDoc(
-                userRef
+                doc(
+                    db,
+                    "users",
+                    user.uid
+                )
             );
 
-        if(
-            userSnap.exists()
-        ){
+        if(userSnap.exists()){
 
-            const userData =
+            const data =
                 userSnap.data();
 
             walletOwner.textContent =
-                userData.fullname ||
-                userData.username ||
+                data.fullname ||
+                data.username ||
                 "VitalStar Member";
 
         }
@@ -559,9 +521,7 @@ async function loadWalletOwner(user){
 }
 
 
-// ============================================================
 // LOAD TRANSACTIONS
-// ============================================================
 
 async function loadTransactions(user){
 
@@ -572,11 +532,7 @@ async function loadTransactions(user){
     }
 
     transactionList.innerHTML =
-        `
-        <div class="loading">
-            Loading transactions...
-        </div>
-        `;
+        "Loading transactions...";
 
     try{
 
@@ -588,42 +544,24 @@ async function loadTransactions(user){
                 "transactions"
             );
 
-        const transactionsQuery =
-            query(
-                transactionsRef,
-                orderBy(
-                    "createdAt",
-                    "desc"
-                ),
-                limit(50)
-            );
-
         const snapshot =
             await getDocs(
-                transactionsQuery
+                query(
+                    transactionsRef,
+                    orderBy(
+                        "createdAt",
+                        "desc"
+                    ),
+                    limit(50)
+                )
             );
 
-        if(
-            snapshot.empty
-        ){
+        if(snapshot.empty){
 
             transactionList.innerHTML =
                 `
                 <div class="empty-state">
-
-                    <div class="empty-icon">
-                        📭
-                    </div>
-
-                    <div class="empty-title">
-                        No transactions yet
-                    </div>
-
-                    <div class="empty-text">
-                        Your wallet transactions
-                        will appear here.
-                    </div>
-
+                    📭 No transactions yet
                 </div>
                 `;
 
@@ -645,14 +583,10 @@ async function loadTransactions(user){
 
         }
 
-
         let deposited = 0;
-
         let spent = 0;
 
-        transactionList.innerHTML =
-            "";
-
+        transactionList.innerHTML = "";
 
         snapshot.forEach(
             (transactionDoc) => {
@@ -700,10 +634,7 @@ async function loadTransactions(user){
 
                 let icon = "💳";
 
-                if(
-                    type === "deposit" ||
-                    type === "credit"
-                ){
+                if(isCredit){
 
                     icon = "➕";
 
@@ -726,20 +657,10 @@ async function loadTransactions(user){
 
                 }
 
-                const transactionTitle =
+                const title =
                     data.description ||
                     type ||
                     "Wallet Transaction";
-
-                const sign =
-                    isCredit
-                        ? "+"
-                        : "-";
-
-                const amountClass =
-                    isCredit
-                        ? "credit"
-                        : "debit";
 
                 const item =
                     document.createElement(
@@ -758,53 +679,43 @@ async function loadTransactions(user){
                     <div class="transaction-info">
 
                         <div class="transaction-title">
-                            ${escapeHTML(
-                                transactionTitle
-                            )}
+                            ${escapeHTML(title)}
                         </div>
 
                         <div class="transaction-date">
-                            ${escapeHTML(
-                                dateText
-                            )}
+                            ${escapeHTML(dateText)}
                         </div>
 
                     </div>
 
-                    <div
-                        class="
-                            transaction-amount
-                            ${amountClass}
-                        "
-                    >
-                        ${sign}
+                    <div class="transaction-amount ${
+                        isCredit
+                            ? "credit"
+                            : "debit"
+                    }">
+
+                        ${isCredit ? "+" : "-"}
                         ${formatMoney(amount)}
+
                     </div>
                     `;
 
-                transactionList.appendChild(
-                    item
-                );
+                transactionList.appendChild(item);
 
             }
         );
 
-
         if(totalDeposited){
 
             totalDeposited.textContent =
-                formatMoney(
-                    deposited
-                );
+                formatMoney(deposited);
 
         }
 
         if(totalSpent){
 
             totalSpent.textContent =
-                formatMoney(
-                    spent
-                );
+                formatMoney(spent);
 
         }
 
@@ -813,44 +724,24 @@ async function loadTransactions(user){
     catch(error){
 
         console.error(
-            "Transaction loading error:",
+            "Transaction error:",
             error
         );
 
         transactionList.innerHTML =
-            `
-            <div class="empty-state">
-
-                <div class="empty-icon">
-                    ⚠️
-                </div>
-
-                <div class="empty-title">
-                    Unable to load transactions
-                </div>
-
-                <div class="empty-text">
-                    Please try again later.
-                </div>
-
-            </div>
-            `;
+            "⚠️ Unable to load transactions";
 
     }
 
 }
 
 
-// ============================================================
 // ESCAPE HTML
-// ============================================================
 
 function escapeHTML(value){
 
     const element =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     element.textContent =
         String(value || "");
@@ -860,9 +751,7 @@ function escapeHTML(value){
 }
 
 
-// ============================================================
-// AUTH STATE
-// ============================================================
+// AUTH
 
 onAuthStateChanged(
     auth,
@@ -878,30 +767,22 @@ onAuthStateChanged(
 
         try{
 
-            await loadWallet(
-                user
-            );
+            await loadWallet(user);
 
-            await loadWalletOwner(
-                user
-            );
+            await loadWalletOwner(user);
 
-            await loadTransactions(
-                user
-            );
+            await loadTransactions(user);
 
         }
 
         catch(error){
 
             console.error(
-                "Wallet loading error:",
+                "Wallet error:",
                 error
             );
 
-            updateBalanceDisplays(
-                0
-            );
+            updateBalanceDisplays(0);
 
         }
 
