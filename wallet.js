@@ -19,7 +19,9 @@ import {
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
+// ============================================================
 // ELEMENTS
+// ============================================================
 
 const walletBalance =
     document.getElementById("walletBalance");
@@ -61,14 +63,17 @@ const continueWithdraw =
     document.getElementById("continueWithdraw");
 
 
-// GLOBAL STATE
+// ============================================================
+// STATE
+// ============================================================
 
 let currentUser = null;
-
 let currentBalance = 0;
 
 
+// ============================================================
 // FORMAT MONEY
+// ============================================================
 
 function formatMoney(amount){
 
@@ -86,31 +91,33 @@ function formatMoney(amount){
 }
 
 
+// ============================================================
 // UPDATE BALANCE
+// ============================================================
 
 function updateBalanceDisplays(balance){
 
     currentBalance =
         Number(balance) || 0;
 
-    if(walletBalance){
+    walletBalance &&
+        (
+            walletBalance.textContent =
+                formatMoney(currentBalance)
+        );
 
-        walletBalance.textContent =
-            formatMoney(currentBalance);
-
-    }
-
-    if(walletPageBalance){
-
-        walletPageBalance.textContent =
-            formatMoney(currentBalance);
-
-    }
+    walletPageBalance &&
+        (
+            walletPageBalance.textContent =
+                formatMoney(currentBalance)
+        );
 
 }
 
 
+// ============================================================
 // OPEN WALLET
+// ============================================================
 
 walletButton?.addEventListener(
     "click",
@@ -123,13 +130,16 @@ walletButton?.addEventListener(
 );
 
 
+// ============================================================
 // MODALS
+// ============================================================
 
 function openModal(modal){
 
     modal?.classList.add("show");
 
 }
+
 
 function closeModal(modal){
 
@@ -138,15 +148,11 @@ function closeModal(modal){
 }
 
 
-// DEPOSIT MODAL
-
 depositButton?.addEventListener(
     "click",
     () => openModal(depositModal)
 );
 
-
-// WITHDRAW MODAL
 
 withdrawButton?.addEventListener(
     "click",
@@ -154,12 +160,10 @@ withdrawButton?.addEventListener(
 );
 
 
-// CLOSE MODALS
-
 document.querySelectorAll(
     "[data-close]"
 ).forEach(
-    (button) => {
+    button => {
 
         button.addEventListener(
             "click",
@@ -178,14 +182,12 @@ document.querySelectorAll(
 );
 
 
-// CLOSE BACKGROUND
-
 [depositModal, withdrawModal].forEach(
-    (modal) => {
+    modal => {
 
         modal?.addEventListener(
             "click",
-            (event) => {
+            event => {
 
                 if(event.target === modal){
 
@@ -201,8 +203,7 @@ document.querySelectorAll(
 
 
 // ============================================================
-// CONTINUE DEPOSIT
-// CONNECTED TO PAYSTACK
+// START DEPOSIT
 // ============================================================
 
 continueDeposit?.addEventListener(
@@ -256,8 +257,10 @@ continueDeposit?.addEventListener(
 
                         body:JSON.stringify({
                             amount,
+
                             email:
                                 currentUser.email,
+
                             userId:
                                 currentUser.uid
                         })
@@ -267,23 +270,25 @@ continueDeposit?.addEventListener(
             const data =
                 await response.json();
 
-            if(!data.success){
+            if(
+                !data.success ||
+                !data.authorizationUrl
+            ){
 
                 throw new Error(
                     data.message ||
-                    "Payment failed"
+                    "Unable to start payment"
                 );
 
             }
 
-            if(!data.authorizationUrl){
+            // SAVE REFERENCE
+            localStorage.setItem(
+                "walletPaymentReference",
+                data.reference
+            );
 
-                throw new Error(
-                    "Payment link not received"
-                );
-
-            }
-
+            // OPEN PAYSTACK
             window.location.href =
                 data.authorizationUrl;
 
@@ -292,7 +297,6 @@ continueDeposit?.addEventListener(
         catch(error){
 
             console.error(
-                "Deposit error:",
                 error
             );
 
@@ -314,81 +318,105 @@ continueDeposit?.addEventListener(
 
 
 // ============================================================
-// CONTINUE WITHDRAW
+// VERIFY PAYMENT
+// ============================================================
+
+async function verifyPayment(user){
+
+    const reference =
+        localStorage.getItem(
+            "walletPaymentReference"
+        );
+
+    if(!reference){
+
+        return;
+
+    }
+
+    try{
+
+        const response =
+            await fetch(
+                "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/wallet-verify",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:JSON.stringify({
+                        reference
+                    })
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if(!data.success){
+
+            return;
+
+        }
+
+        // IMPORTANT:
+        // Credit will be added by the backend
+        // in the next step.
+
+        localStorage.removeItem(
+            "walletPaymentReference"
+        );
+
+        alert(
+            "Payment verified successfully."
+        );
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Verification error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// WITHDRAW
 // ============================================================
 
 continueWithdraw?.addEventListener(
     "click",
     () => {
 
-        const withdrawAmount =
+        const amount =
             Number(
                 document.getElementById(
                     "withdrawAmount"
                 )?.value
             );
 
-        if(
-            !withdrawAmount ||
-            withdrawAmount <= 0
-        ){
+        if(!amount || amount <= 0){
 
             alert(
-                "Please enter a valid withdrawal amount."
+                "Enter a valid amount"
             );
 
             return;
 
         }
 
-        if(
-            withdrawAmount >
-            currentBalance
-        ){
+        if(amount > currentBalance){
 
             alert(
-                "Insufficient wallet balance."
-            );
-
-            return;
-
-        }
-
-        const bankName =
-            document.getElementById(
-                "bankName"
-            )?.value.trim();
-
-        const accountNumber =
-            document.getElementById(
-                "accountNumber"
-            )?.value.trim();
-
-        const accountName =
-            document.getElementById(
-                "accountName"
-            )?.value.trim();
-
-        if(
-            !bankName ||
-            !accountNumber ||
-            !accountName
-        ){
-
-            alert(
-                "Please complete your withdrawal details."
-            );
-
-            return;
-
-        }
-
-        if(
-            accountNumber.length !== 10
-        ){
-
-            alert(
-                "Please enter a valid 10-digit account number."
+                "Insufficient wallet balance"
             );
 
             return;
@@ -396,31 +424,33 @@ continueWithdraw?.addEventListener(
         }
 
         alert(
-            "Withdrawal processing will be connected next."
+            "Withdrawal will be connected next."
         );
 
     }
 );
 
 
+// ============================================================
 // CREATE WALLET
+// ============================================================
 
 async function createWallet(user){
 
-    const walletRef =
+    await setDoc(
         doc(
             db,
             "wallets",
             user.uid
-        );
-
-    await setDoc(
-        walletRef,
+        ),
         {
             balance:0,
+
             currency:"NGN",
+
             createdAt:
                 serverTimestamp(),
+
             updatedAt:
                 serverTimestamp()
         }
@@ -431,7 +461,9 @@ async function createWallet(user){
 }
 
 
+// ============================================================
 // LOAD WALLET
+// ============================================================
 
 async function loadWallet(user){
 
@@ -442,31 +474,29 @@ async function loadWallet(user){
             user.uid
         );
 
-    const walletSnap =
+    const snapshot =
         await getDoc(walletRef);
 
-    if(!walletSnap.exists()){
+    if(!snapshot.exists()){
 
-        const balance =
-            await createWallet(user);
-
-        updateBalanceDisplays(balance);
+        updateBalanceDisplays(
+            await createWallet(user)
+        );
 
         return;
 
     }
 
-    const balance =
-        Number(
-            walletSnap.data().balance
-        ) || 0;
-
-    updateBalanceDisplays(balance);
+    updateBalanceDisplays(
+        snapshot.data().balance
+    );
 
 }
 
 
-// LOAD WALLET OWNER
+// ============================================================
+// LOAD OWNER
+// ============================================================
 
 async function loadWalletOwner(user){
 
@@ -476,52 +506,32 @@ async function loadWalletOwner(user){
 
     }
 
-    try{
-
-        const userSnap =
-            await getDoc(
-                doc(
-                    db,
-                    "users",
-                    user.uid
-                )
-            );
-
-        if(userSnap.exists()){
-
-            const data =
-                userSnap.data();
-
-            walletOwner.textContent =
-                data.fullname ||
-                data.username ||
-                "VitalStar Member";
-
-        }
-
-        else{
-
-            walletOwner.textContent =
-                user.email ||
-                "VitalStar Member";
-
-        }
-
-    }
-
-    catch(error){
-
-        console.error(
-            "Wallet owner error:",
-            error
+    const snapshot =
+        await getDoc(
+            doc(
+                db,
+                "users",
+                user.uid
+            )
         );
 
-    }
+    const data =
+        snapshot.exists()
+            ? snapshot.data()
+            : {};
+
+    walletOwner.textContent =
+        data.fullname ||
+        data.username ||
+        user.email ||
+        "VitalStar Member";
 
 }
 
 
+// ============================================================
 // LOAD TRANSACTIONS
+// ============================================================
 
 async function loadTransactions(user){
 
@@ -531,27 +541,23 @@ async function loadTransactions(user){
 
     }
 
-    transactionList.innerHTML =
-        "Loading transactions...";
-
     try{
-
-        const transactionsRef =
-            collection(
-                db,
-                "wallets",
-                user.uid,
-                "transactions"
-            );
 
         const snapshot =
             await getDocs(
                 query(
-                    transactionsRef,
+                    collection(
+                        db,
+                        "wallets",
+                        user.uid,
+                        "transactions"
+                    ),
+
                     orderBy(
                         "createdAt",
                         "desc"
                     ),
+
                     limit(50)
                 )
             );
@@ -559,25 +565,19 @@ async function loadTransactions(user){
         if(snapshot.empty){
 
             transactionList.innerHTML =
-                `
-                <div class="empty-state">
-                    📭 No transactions yet
-                </div>
-                `;
+                "📭 No transactions yet";
 
-            if(totalDeposited){
+            totalDeposited &&
+                (
+                    totalDeposited.textContent =
+                        formatMoney(0)
+                );
 
-                totalDeposited.textContent =
-                    formatMoney(0);
-
-            }
-
-            if(totalSpent){
-
-                totalSpent.textContent =
-                    formatMoney(0);
-
-            }
+            totalSpent &&
+                (
+                    totalSpent.textContent =
+                        formatMoney(0)
+                );
 
             return;
 
@@ -589,7 +589,7 @@ async function loadTransactions(user){
         transactionList.innerHTML = "";
 
         snapshot.forEach(
-            (transactionDoc) => {
+            transactionDoc => {
 
                 const data =
                     transactionDoc.data();
@@ -604,13 +604,13 @@ async function loadTransactions(user){
                         data.type || ""
                     ).toLowerCase();
 
-                const isCredit =
+                const credit =
                     [
                         "deposit",
                         "credit"
                     ].includes(type);
 
-                if(isCredit){
+                if(credit){
 
                     deposited += amount;
 
@@ -622,50 +622,8 @@ async function loadTransactions(user){
 
                 }
 
-                const date =
-                    data.createdAt?.toDate
-                        ? data.createdAt.toDate()
-                        : null;
-
-                const dateText =
-                    date
-                        ? date.toLocaleString()
-                        : "Processing...";
-
-                let icon = "💳";
-
-                if(isCredit){
-
-                    icon = "➕";
-
-                }
-
-                else if(
-                    type === "withdraw" ||
-                    type === "withdrawal"
-                ){
-
-                    icon = "💸";
-
-                }
-
-                else if(
-                    type === "subscription"
-                ){
-
-                    icon = "⭐";
-
-                }
-
-                const title =
-                    data.description ||
-                    type ||
-                    "Wallet Transaction";
-
                 const item =
-                    document.createElement(
-                        "div"
-                    );
+                    document.createElement("div");
 
                 item.className =
                     "transaction-item";
@@ -673,60 +631,57 @@ async function loadTransactions(user){
                 item.innerHTML =
                     `
                     <div class="transaction-icon">
-                        ${icon}
+                        ${credit ? "➕" : "💸"}
                     </div>
 
                     <div class="transaction-info">
 
                         <div class="transaction-title">
-                            ${escapeHTML(title)}
-                        </div>
-
-                        <div class="transaction-date">
-                            ${escapeHTML(dateText)}
+                            ${escapeHTML(
+                                data.description ||
+                                type ||
+                                "Wallet Transaction"
+                            )}
                         </div>
 
                     </div>
 
                     <div class="transaction-amount ${
-                        isCredit
+                        credit
                             ? "credit"
                             : "debit"
                     }">
 
-                        ${isCredit ? "+" : "-"}
+                        ${credit ? "+" : "-"}
                         ${formatMoney(amount)}
 
                     </div>
                     `;
 
-                transactionList.appendChild(item);
+                transactionList.appendChild(
+                    item
+                );
 
             }
         );
 
-        if(totalDeposited){
+        totalDeposited &&
+            (
+                totalDeposited.textContent =
+                    formatMoney(deposited)
+            );
 
-            totalDeposited.textContent =
-                formatMoney(deposited);
-
-        }
-
-        if(totalSpent){
-
-            totalSpent.textContent =
-                formatMoney(spent);
-
-        }
+        totalSpent &&
+            (
+                totalSpent.textContent =
+                    formatMoney(spent)
+            );
 
     }
 
     catch(error){
 
-        console.error(
-            "Transaction error:",
-            error
-        );
+        console.error(error);
 
         transactionList.innerHTML =
             "⚠️ Unable to load transactions";
@@ -736,7 +691,9 @@ async function loadTransactions(user){
 }
 
 
+// ============================================================
 // ESCAPE HTML
+// ============================================================
 
 function escapeHTML(value){
 
@@ -751,11 +708,13 @@ function escapeHTML(value){
 }
 
 
+// ============================================================
 // AUTH
+// ============================================================
 
 onAuthStateChanged(
     auth,
-    async (user) => {
+    async user => {
 
         if(!user){
 
@@ -767,6 +726,10 @@ onAuthStateChanged(
 
         try{
 
+            // VERIFY FIRST
+            await verifyPayment(user);
+
+            // THEN LOAD UPDATED DATA
             await loadWallet(user);
 
             await loadWalletOwner(user);
@@ -781,8 +744,6 @@ onAuthStateChanged(
                 "Wallet error:",
                 error
             );
-
-            updateBalanceDisplays(0);
 
         }
 
