@@ -1,13 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>VitalStar - Connect & Shine</title>
 
-<meta name="google-site-verification" content="1fCHKHoTwEN8FWE3BFeqAuc4ztlqPX65MpS4GzRWc7o" />
+<meta charset="UTF-8">
 
-<meta name="description" content="VitalStar is a social media platform where you can connect with friends, share photos, videos, chat, and build your community.">
+<title>VitalStar - Connect, Share & Shine</title>
 
-<meta name="keywords" content="VitalStar, social media, chat, friends, posts, photos, videos, community">
+<meta name="google-site-verification" content="1fCHKHoTwEN8FWE3BFeqAuc4ztlqPX65MpS4GzRWc7o">
+
+<meta name="description" content="VitalStar is a social media platform where you can connect with friends, share photos, videos, chat and build your community.">
+
+<meta name="keywords" content="VitalStar, social media, friends, chat, photos, videos, community">
 
 <meta name="author" content="VitalStar">
 
@@ -16,131 +19,392 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:Arial, sans-serif;
+}
+
+html{
+    scroll-behavior:smooth;
 }
 
 body{
-    height:100vh;
-    background:linear-gradient(135deg,#000000,#1877f2,#8a2be2);
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    background:#020018;
+    overflow-x:hidden;
 }
 
-.container{
-    width:90%;
-    max-width:450px;
-    background:white;
-    padding:40px 30px;
-    border-radius:25px;
-    text-align:center;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+/* MAIN PAGE */
+
+.page{
+    position:relative;
+    width:100%;
+    max-width:1024px;
+    margin:auto;
 }
 
-.logo{
-    font-size:45px;
-    font-weight:bold;
-    color:#1877f2;
-    margin-bottom:10px;
-}
+/* THE EXACT VITALSTAR PICTURE */
 
-.logo span{
-    color:#ffd700;
-}
-
-h2{
-    font-size:28px;
-    margin-bottom:15px;
-    color:#111;
-}
-
-p{
-    color:#555;
-    font-size:16px;
-    margin-bottom:30px;
-    line-height:1.5;
-}
-
-.btn{
+.main-image{
     display:block;
-    text-decoration:none;
-    padding:15px;
-    margin:15px 0;
-    border-radius:30px;
-    font-size:18px;
-    font-weight:bold;
-    transition:0.3s;
+    width:100%;
+    height:auto;
 }
 
-.register{
-    background:#1877f2;
-    color:white;
+/* ANIMATION LAYER */
+
+.effects{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
 }
 
-.login{
-    background:black;
-    color:#ffd700;
-    border:2px solid #ffd700;
+/* SHOOTING STARS */
+
+.star{
+    position:absolute;
+    width:130px;
+    height:3px;
+    background:linear-gradient(
+        90deg,
+        transparent,
+        white,
+        #00d9ff
+    );
+    box-shadow:
+        0 0 8px white,
+        0 0 18px #00d9ff;
+    transform:rotate(-30deg);
+    animation:shoot 5s linear infinite;
 }
 
-.btn:hover{
-    transform:scale(1.05);
+.star1{
+    top:3%;
+    left:-160px;
 }
 
-.features{
-    margin-top:25px;
-    color:#333;
-    font-size:14px;
+.star2{
+    top:9%;
+    left:-200px;
+    animation-delay:2s;
 }
+
+.star3{
+    top:16%;
+    left:-250px;
+    animation-delay:4s;
+}
+
+@keyframes shoot{
+
+    0%{
+        transform:translate(-100px,-50px) rotate(-30deg);
+        opacity:0;
+    }
+
+    10%{
+        opacity:1;
+    }
+
+    100%{
+        transform:translate(1300px,500px) rotate(-30deg);
+        opacity:0;
+    }
+
+}
+
+/* FLOATING LIGHTS */
+
+.light{
+    position:absolute;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:white;
+    box-shadow:0 0 15px white;
+    animation:twinkle 2s infinite alternate;
+}
+
+.l1{
+    top:7%;
+    left:45%;
+}
+
+.l2{
+    top:13%;
+    left:68%;
+    animation-delay:.5s;
+}
+
+.l3{
+    top:21%;
+    left:52%;
+    animation-delay:1s;
+}
+
+.l4{
+    top:31%;
+    left:82%;
+    animation-delay:1.5s;
+}
+
+.l5{
+    top:48%;
+    left:15%;
+    animation-delay:2s;
+}
+
+.l6{
+    top:61%;
+    left:74%;
+    animation-delay:.7s;
+}
+
+.l7{
+    top:76%;
+    left:25%;
+    animation-delay:1.3s;
+}
+
+.l8{
+    top:87%;
+    left:82%;
+    animation-delay:1.8s;
+}
+
+@keyframes twinkle{
+
+    from{
+        opacity:.2;
+        transform:scale(.5);
+    }
+
+    to{
+        opacity:1;
+        transform:scale(2);
+    }
+
+}
+
+/* BUTTERFLY GLOW EFFECTS */
+
+.butterfly{
+    position:absolute;
+    font-size:25px;
+    filter:drop-shadow(0 0 8px #ff44d9);
+    animation:fly 8s ease-in-out infinite;
+}
+
+.b1{
+    top:12%;
+    left:4%;
+}
+
+.b2{
+    top:32%;
+    right:3%;
+    animation-delay:2s;
+}
+
+.b3{
+    top:62%;
+    left:4%;
+    animation-delay:4s;
+}
+
+.b4{
+    top:79%;
+    right:5%;
+    animation-delay:6s;
+}
+
+@keyframes fly{
+
+    0%,100%{
+        transform:translate(0,0) rotate(-8deg);
+    }
+
+    25%{
+        transform:translate(40px,-50px) rotate(10deg);
+    }
+
+    50%{
+        transform:translate(90px,10px) rotate(-10deg);
+    }
+
+    75%{
+        transform:translate(30px,50px) rotate(8deg);
+    }
+
+}
+
+/* CLICKABLE BUTTON AREAS */
+
+/*
+The buttons are already inside the picture.
+These invisible links simply make them clickable.
+*/
+
+.create-top{
+    position:absolute;
+    left:10%;
+    top:27.7%;
+    width:25%;
+    height:4%;
+    z-index:20;
+}
+
+.login-top{
+    position:absolute;
+    left:35%;
+    top:27.7%;
+    width:15%;
+    height:4%;
+    z-index:20;
+}
+
+.create-bottom{
+    position:absolute;
+    left:25%;
+    top:93%;
+    width:26%;
+    height:4%;
+    z-index:20;
+}
+
+.login-bottom{
+    position:absolute;
+    left:52%;
+    top:93%;
+    width:18%;
+    height:4%;
+    z-index:20;
+}
+
+/* BUTTON HOVER GLOW */
+
+.create-top:hover,
+.create-bottom:hover{
+    filter:drop-shadow(0 0 15px #ff20d0);
+}
+
+.login-top:hover,
+.login-bottom:hover{
+    filter:drop-shadow(0 0 15px #ffd700);
+}
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+    .star{
+        width:90px;
+    }
+
+    .butterfly{
+        font-size:18px;
+    }
+
+}
+
 </style>
 
 </head>
 
 <body>
 
-<div class="container">
+<div class="page">
 
-<div class="logo">
-Vital<span>Star</span>
+    <!-- EXACT VITALSTAR IMAGE -->
+
+    <img
+        src="vitalstar.png"
+        class="main-image"
+        alt="VitalStar Connect Share Shine"
+    >
+
+
+    <!-- ANIMATIONS -->
+
+    <div class="effects">
+
+        <div class="star star1"></div>
+        <div class="star star2"></div>
+        <div class="star star3"></div>
+
+        <div class="light l1"></div>
+        <div class="light l2"></div>
+        <div class="light l3"></div>
+        <div class="light l4"></div>
+        <div class="light l5"></div>
+        <div class="light l6"></div>
+        <div class="light l7"></div>
+        <div class="light l8"></div>
+
+        <div class="butterfly b1">🦋</div>
+        <div class="butterfly b2">🦋</div>
+        <div class="butterfly b3">🦋</div>
+        <div class="butterfly b4">🦋</div>
+
+    </div>
+
+
+    <!-- TOP BUTTONS -->
+
+    <a
+        href="register.html"
+        class="create-top"
+        aria-label="Create Account"
+    ></a>
+
+    <a
+        href="login.html"
+        class="login-top"
+        aria-label="Login"
+    ></a>
+
+
+    <!-- BOTTOM BUTTONS -->
+
+    <a
+        href="register.html"
+        class="create-bottom"
+        aria-label="Create Account"
+    ></a>
+
+    <a
+        href="login.html"
+        class="login-bottom"
+        aria-label="Login"
+    ></a>
+
 </div>
 
-<h2>Welcome to VitalStar</h2>
 
-<p>
-Connect with people, share your moments,
-and discover a new way to build your social world.
-Join VitalStar today and become part of the future.
-</p>
-
-<a href="register.html" class="btn register">
-Create Account
-</a>
-
-<a href="login.html" class="btn login">
-Login
-</a>
-
-<div class="features">
-⭐ Share your stories<br>
-⭐ Connect with friends<br>
-⭐ Build your community
-</div>
-
-</div>
+<!-- FIREBASE LOGIN CHECK -->
 
 <script type="module">
+
 import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    window.location.href = "home.html";
-  }
+
+    if(user){
+
+        window.location.href = "home.html";
+
+    }
+
 });
+
 </script>
 
 </body>
