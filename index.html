@@ -10,23 +10,16 @@
 content="1fCHKHoTwEN8FWE3BFeqAuc4ztlqPX65MpS4GzRWc7o">
 
 <meta name="description"
-content="VitalStar is a social platform where you can connect, share moments, chat, discover communities and shine together.">
-
-<meta name="keywords"
-content="VitalStar, social media, friends, chat, photos, videos, community">
-
-<meta name="author" content="VitalStar">
-
-<meta name="robots" content="index, follow">
+content="VitalStar is more than social media. Connect, share your moments, chat with friends, discover communities and shine together.">
 
 <meta name="viewport"
-content="width=device-width,initial-scale=1.0">
+content="width=device-width,initial-scale=1">
 
 <style>
 
-/* ==============================
-   RESET
-============================== */
+/* =========================
+RESET
+========================= */
 
 *{
     margin:0;
@@ -34,15 +27,17 @@ content="width=device-width,initial-scale=1.0">
     box-sizing:border-box;
 }
 
-html{
-    scroll-behavior:smooth;
+html,
+body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
 }
 
 body{
     font-family:Arial,sans-serif;
-    background:#020018;
+    background:#030019;
     color:white;
-    overflow-x:hidden;
 }
 
 a{
@@ -50,32 +45,35 @@ a{
 }
 
 
-/* ==============================
-   HERO
-============================== */
+/* =========================
+HERO
+========================= */
 
 .hero{
 
     position:relative;
 
-    min-height:720px;
+    width:100%;
+    max-width:100%;
+
+    min-height:680px;
 
     overflow:hidden;
 
     background:
     radial-gradient(
-        circle at 75% 35%,
-        #8b2699 0%,
-        #35115c 30%,
-        #10043d 60%,
-        #020018 100%
+        circle at 80% 35%,
+        #8d269f,
+        #32105d 40%,
+        #08002d 75%,
+        #020018
     );
 }
 
 
-/* ==============================
-   STARS
-============================== */
+/* =========================
+STARS
+========================= */
 
 .stars{
 
@@ -83,17 +81,18 @@ a{
 
     inset:0;
 
-    background-image:
+    width:100%;
+    height:100%;
 
+    background-image:
     radial-gradient(
         circle,
         white 1px,
         transparent 2px
     ),
-
     radial-gradient(
         circle,
-        #5eeaff 1px,
+        #55ddff 1px,
         transparent 2px
     );
 
@@ -104,34 +103,32 @@ a{
     animation:
     starsMove 18s linear infinite;
 
-    opacity:.8;
+    opacity:.75;
 }
 
 @keyframes starsMove{
 
     from{
-        background-position:
-        0 0,
-        0 0;
+        background-position:0 0,0 0;
     }
 
     to{
-        background-position:
-        150px 300px,
-        -200px 250px;
+        background-position:150px 300px,-150px 250px;
     }
 }
 
 
-/* ==============================
-   SHOOTING STARS
-============================== */
+/* =========================
+SHOOTING STARS
+========================= */
 
 .shooting{
 
     position:absolute;
 
-    width:190px;
+    width:180px;
+    max-width:45vw;
+
     height:3px;
 
     background:
@@ -149,33 +146,33 @@ a{
     transform:rotate(-30deg);
 
     animation:
-    shooting 5s linear infinite;
+    shoot 5s linear infinite;
 
-    z-index:3;
+    z-index:2;
 }
 
-.shooting.one{
-    top:80px;
-    left:-250px;
+.s1{
+    top:90px;
+    left:-220px;
 }
 
-.shooting.two{
-    top:170px;
-    left:-350px;
+.s2{
+    top:180px;
+    left:-300px;
     animation-delay:2s;
 }
 
-.shooting.three{
-    top:260px;
-    left:-280px;
+.s3{
+    top:270px;
+    left:-250px;
     animation-delay:3.5s;
 }
 
-@keyframes shooting{
+@keyframes shoot{
 
     0%{
         transform:
-        translate(-100px,-50px)
+        translate(-50px,-50px)
         rotate(-30deg);
 
         opacity:0;
@@ -187,7 +184,7 @@ a{
 
     100%{
         transform:
-        translate(1400px,600px)
+        translate(1200px,500px)
         rotate(-30deg);
 
         opacity:0;
@@ -195,9 +192,9 @@ a{
 }
 
 
-/* ==============================
-   HERO CONTENT
-============================== */
+/* =========================
+HERO CONTENT
+========================= */
 
 .hero-content{
 
@@ -206,8 +203,7 @@ a{
     z-index:20;
 
     width:92%;
-
-    max-width:1150px;
+    max-width:1100px;
 
     margin:auto;
 
@@ -216,7 +212,7 @@ a{
 
 .logo{
 
-    font-size:65px;
+    font-size:64px;
 
     font-weight:900;
 
@@ -224,24 +220,24 @@ a{
 
     text-shadow:
     0 0 15px #00d9ff,
-    0 0 35px #8e27ff;
+    0 0 30px #8e27ff;
 }
 
 .logo span{
-    color:#ffc800;
+    color:#ffc900;
 }
 
 .tagline{
 
-    max-width:650px;
+    width:55%;
 
-    font-size:43px;
+    font-size:42px;
 
-    line-height:1.1;
+    line-height:1.08;
 
     font-weight:900;
 
-    margin-top:10px;
+    margin-top:8px;
 }
 
 .tagline span{
@@ -249,56 +245,63 @@ a{
     background:
     linear-gradient(
         90deg,
-        #ff45c9,
+        #ff42ca,
         #00dfff,
         #ffd000
     );
 
     -webkit-background-clip:text;
 
+    background-clip:text;
+
     color:transparent;
 }
 
 .description{
 
+    width:45%;
     max-width:500px;
 
-    margin-top:20px;
+    margin-top:18px;
+
+    font-size:16px;
+
+    line-height:1.5;
 
     color:#eee;
-
-    font-size:17px;
-
-    line-height:1.6;
 }
 
 
-/* ==============================
-   BUTTONS
-============================== */
+/* =========================
+BUTTONS
+========================= */
 
 .buttons{
 
     display:flex;
 
-    gap:15px;
-
-    margin-top:28px;
+    gap:14px;
 
     flex-wrap:wrap;
+
+    margin-top:25px;
 }
 
 .btn{
 
-    display:inline-block;
+    display:inline-flex;
 
-    padding:15px 27px;
+    align-items:center;
+
+    justify-content:center;
+
+    padding:14px 25px;
 
     border-radius:40px;
 
-    font-size:17px;
-
     font-weight:bold;
+
+    font-size:16px;
 
     transition:.3s;
 }
@@ -310,131 +313,128 @@ a{
     background:
     linear-gradient(
         90deg,
-        #ff4d88,
-        #a92cff
+        #ff4e91,
+        #a82cff
     );
 
     box-shadow:
-    0 0 20px #ff22c8;
+    0 0 20px #ff28c8;
 }
 
 .login{
 
     color:white;
 
-    background:#05021e;
+    background:#070321;
 
-    border:
-    2px solid #ffd000;
+    border:2px solid #ffd000;
 
     box-shadow:
     0 0 15px #ffd000;
 }
 
 .btn:hover{
-
-    transform:
-    translateY(-5px)
-    scale(1.04);
+    transform:translateY(-4px) scale(1.03);
 }
 
 
-/* ==============================
-   POOL
-============================== */
+/* =========================
+POOL
+========================= */
 
 .pool{
 
     position:absolute;
 
-    right:-4%;
+    right:-3%;
 
     bottom:0;
 
-    width:58%;
+    width:56%;
+    max-width:700px;
 
-    height:390px;
-
-    overflow:hidden;
+    height:330px;
 
     border-radius:
     50% 50% 0 0;
 
+    overflow:hidden;
+
     background:
     radial-gradient(
-        ellipse at center,
-        #67f5ff,
-        #087ed9 45%,
-        #021765 90%
+        ellipse at 50% 20%,
+        #70ffff,
+        #0794e0 45%,
+        #031b69
     );
 
     box-shadow:
-    inset 0 15px 35px rgba(255,255,255,.35),
-    0 -10px 50px #007dff;
+    inset 0 15px 35px
+    rgba(255,255,255,.35),
+
+    0 -10px 50px
+    #008cff;
 
     z-index:5;
 }
 
 
-/* WATER */
+/* WATER WAVES */
 
 .wave{
 
     position:absolute;
 
-    width:130%;
+    left:-10%;
 
-    height:45px;
+    width:120%;
 
-    left:-15%;
+    height:35px;
+
+    border-top:
+    3px solid
+    rgba(255,255,255,.35);
 
     border-radius:50%;
 
-    border-top:
-    4px solid
-    rgba(255,255,255,.35);
-
     animation:
-    wave 4s ease-in-out infinite;
+    waveMove 4s ease-in-out infinite;
 }
 
-.wave.one{
-    top:70px;
+.w1{
+    top:65px;
 }
 
-.wave.two{
-    top:180px;
+.w2{
+    top:150px;
     animation-delay:1s;
 }
 
-.wave.three{
-    top:290px;
+.w3{
+    top:245px;
     animation-delay:2s;
 }
 
-@keyframes wave{
+@keyframes waveMove{
 
     50%{
-        transform:
-        translateX(30px);
+        transform:translateX(25px);
     }
 }
 
 
-/* ==============================
-   FISH
-============================== */
+/* =========================
+FISH
+========================= */
 
 .fish{
 
     position:absolute;
 
-    width:65px;
+    width:58px;
+    height:30px;
 
-    height:35px;
-
-    border-radius:
-    55% 45% 50% 50%;
+    border-radius:55% 45% 50% 50%;
 
     animation:
     swim 9s linear infinite;
@@ -446,17 +446,15 @@ a{
 
     position:absolute;
 
-    width:8px;
+    right:10px;
+    top:8px;
 
-    height:8px;
+    width:7px;
+    height:7px;
 
     border-radius:50%;
 
     background:#111;
-
-    right:12px;
-
-    top:10px;
 }
 
 .fish:after{
@@ -465,60 +463,53 @@ a{
 
     position:absolute;
 
-    right:-22px;
-
-    top:4px;
+    right:-20px;
+    top:2px;
 
     border-style:solid;
 
     border-width:
-    14px 25px 14px 0;
+    13px 22px 13px 0;
 
     border-color:
-    transparent
-    currentColor
-    transparent
-    transparent;
+    transparent currentColor
+    transparent transparent;
 }
 
-.fish.red{
+.red{
 
-    background:#ff5533;
+    top:100px;
 
-    color:#ff5533;
-
-    top:130px;
+    background:#ff4b38;
+    color:#ff4b38;
 }
 
-.fish.yellow{
+.yellow{
+
+    top:190px;
 
     background:#ffd000;
-
     color:#ffd000;
-
-    top:220px;
 
     animation-delay:2s;
 }
 
-.fish.blue{
+.blue{
 
-    background:#00dcff;
+    top:70px;
 
-    color:#00dcff;
-
-    top:90px;
+    background:#00dfff;
+    color:#00dfff;
 
     animation-delay:4s;
 }
 
-.fish.pink{
+.pink{
 
-    background:#ff45c8;
+    top:260px;
 
-    color:#ff45c8;
-
-    top:290px;
+    background:#ff43c8;
+    color:#ff43c8;
 
     animation-delay:6s;
 }
@@ -526,40 +517,37 @@ a{
 @keyframes swim{
 
     0%{
-        left:-100px;
+        left:-80px;
     }
 
     50%{
-        left:65%;
-
-        transform:
-        translateY(-25px);
+        left:60%;
+        transform:translateY(-20px);
     }
 
     100%{
-        left:110%;
-
-        transform:
-        translateY(20px);
+        left:105%;
+        transform:translateY(15px);
     }
 }
 
 
-/* ==============================
-   PARTY
-============================== */
+/* =========================
+PARTY
+========================= */
 
 .party{
 
     position:absolute;
 
-    right:0;
+    right:1%;
 
-    top:90px;
+    top:75px;
 
-    width:47%;
+    width:45%;
+    max-width:550px;
 
-    height:280px;
+    height:240px;
 
     z-index:7;
 }
@@ -568,23 +556,22 @@ a{
 
     position:absolute;
 
-    right:5%;
-
+    right:0;
     bottom:0;
 
     width:90%;
 
-    height:165px;
+    height:135px;
 
     border-radius:
-    18px 18px 0 0;
+    20px 20px 0 0;
 
     background:
     linear-gradient(
         90deg,
-        #41094b,
-        #a7277e,
-        #43084d
+        #43084c,
+        #a92880,
+        #43084c
     );
 
     box-shadow:
@@ -595,50 +582,46 @@ a{
 
     position:absolute;
 
-    top:18px;
-
+    top:15px;
     left:5%;
 
     width:90%;
-
-    height:12px;
+    height:10px;
 
     background:
     repeating-linear-gradient(
         90deg,
-        #ffd000 0 12px,
-        #ff35c8 12px 24px,
-        #00eaff 24px 36px
+        #ffd000 0 14px,
+        #ff35c8 14px 28px,
+        #00eaff 28px 42px
     );
 
     animation:
-    lights 1s infinite alternate;
+    lightMove 1s infinite alternate;
 }
 
-@keyframes lights{
+@keyframes lightMove{
 
     to{
-        filter:
-        brightness(2.3);
+        filter:brightness(2);
     }
 }
 
 
-/* DANCERS */
+/* PEOPLE */
 
 .person{
 
     position:absolute;
 
-    bottom:10px;
+    bottom:8px;
 
-    width:18px;
+    width:17px;
+    height:62px;
 
-    height:70px;
+    background:#10091e;
 
     border-radius:10px;
-
-    background:#100c20;
 
     animation:
     dance .7s infinite alternate;
@@ -650,17 +633,15 @@ a{
 
     position:absolute;
 
-    top:-28px;
-
+    top:-24px;
     left:-4px;
 
-    width:26px;
-
-    height:26px;
+    width:25px;
+    height:25px;
 
     border-radius:50%;
 
-    background:#b87554;
+    background:#bd7959;
 }
 
 .person:after{
@@ -669,40 +650,35 @@ a{
 
     position:absolute;
 
-    top:18px;
+    top:15px;
+    left:-17px;
 
-    left:-20px;
+    width:52px;
+    height:7px;
 
-    width:58px;
-
-    height:8px;
+    background:#10091e;
 
     border-radius:10px;
-
-    background:#100c20;
 
     transform:rotate(-20deg);
 }
 
-.person.p1{
+.p1{
     left:15%;
 }
 
-.person.p2{
+.p2{
     left:35%;
-
     animation-delay:.2s;
 }
 
-.person.p3{
+.p3{
     left:55%;
-
     animation-delay:.4s;
 }
 
-.person.p4{
+.p4{
     left:75%;
-
     animation-delay:.6s;
 }
 
@@ -710,68 +686,65 @@ a{
 
     to{
         transform:
-        translateY(-14px)
-        rotate(8deg);
+        translateY(-12px)
+        rotate(7deg);
     }
 }
 
 
-/* ==============================
-   PALM
-============================== */
+/* =========================
+PALM
+========================= */
 
 .palm{
 
     position:absolute;
 
-    right:43%;
+    right:42%;
 
-    bottom:280px;
+    bottom:230px;
 
-    z-index:9;
+    z-index:10;
 }
 
 .trunk{
 
-    width:17px;
+    width:15px;
 
-    height:150px;
+    height:130px;
 
     background:
     linear-gradient(
         90deg,
-        #4d240e,
-        #b66b2c,
-        #54280f
+        #51260e,
+        #b86d2e,
+        #51260e
     );
 
-    transform:rotate(7deg);
+    transform:rotate(8deg);
 }
 
 .leaves{
 
     position:absolute;
 
-    top:-60px;
+    top:-45px;
+    left:-65px;
 
-    left:-75px;
-
-    width:170px;
-
-    height:100px;
+    width:150px;
+    height:80px;
 }
 
 .leaves i{
 
     position:absolute;
 
-    width:105px;
-
-    height:20px;
+    width:95px;
+    height:17px;
 
     border-radius:100%;
 
-    background:#168d4c;
+    background:#17964d;
 
     transform-origin:right center;
 }
@@ -793,22 +766,21 @@ a{
 }
 
 
-/* ==============================
-   BUTTERFLIES
-============================== */
+/* =========================
+BUTTERFLIES
+========================= */
 
 .butterfly{
 
     position:absolute;
 
-    width:30px;
-
+    width:28px;
     height:25px;
 
     z-index:30;
 
     animation:
-    butterfly 8s ease-in-out infinite;
+    fly 8s ease-in-out infinite;
 }
 
 .butterfly:before,
@@ -818,19 +790,17 @@ a{
 
     position:absolute;
 
-    width:18px;
+    width:17px;
+    height:22px;
 
-    height:23px;
-
-    border-radius:
-    80% 20% 80% 20%;
+    border-radius:80% 20% 80% 20%;
 }
 
 .butterfly:before{
 
     left:0;
 
-    background:#ff45c8;
+    background:#ff43c8;
 
     transform:rotate(25deg);
 }
@@ -848,11 +818,10 @@ a{
 
     position:absolute;
 
-    left:13px;
+    left:12px;
 
     width:5px;
-
-    height:27px;
+    height:25px;
 
     background:#111;
 
@@ -860,80 +829,72 @@ a{
 }
 
 .b1{
-    top:25%;
+    top:20%;
     left:4%;
 }
 
 .b2{
-    top:55%;
-    right:4%;
+    top:50%;
+    right:3%;
     animation-delay:2s;
 }
 
 .b3{
-    top:75%;
-    left:8%;
+    top:72%;
+    left:7%;
     animation-delay:4s;
 }
 
-@keyframes butterfly{
+@keyframes fly{
 
     0%,100%{
-        transform:
-        translate(0,0)
-        rotate(-5deg);
+        transform:translate(0,0);
     }
 
     25%{
-        transform:
-        translate(70px,-60px)
-        rotate(12deg);
+        transform:translate(45px,-45px);
     }
 
     50%{
-        transform:
-        translate(130px,10px)
-        rotate(-10deg);
+        transform:translate(80px,10px);
     }
 
     75%{
-        transform:
-        translate(60px,70px)
-        rotate(8deg);
+        transform:translate(35px,50px);
     }
 }
 
 
-/* ==============================
-   FLOWERS
-============================== */
+/* =========================
+FLOWERS
+========================= */
 
 .flower{
 
     position:absolute;
 
-    z-index:25;
+    z-index:30;
 
-    font-size:38px;
+    font-size:35px;
 
     animation:
     flowerMove 3s ease-in-out infinite;
 }
 
-.flower.one{
-    left:2%;
-    bottom:20px;
+.flower1{
+    bottom:10px;
+    left:3%;
 }
 
-.flower.two{
+.flower2{
+    bottom:15px;
     right:3%;
-    bottom:25px;
     animation-delay:1s;
 }
 
-.flower.three{
-    left:22%;
-    bottom:10px;
+.flower3{
+    bottom:5px;
+    left:25%;
     animation-delay:2s;
 }
 
@@ -941,25 +902,26 @@ a{
 
     50%{
         transform:
-        rotate(12deg)
-        translateY(-8px);
+        translateY(-8px)
+        rotate(10deg);
     }
 }
 
 
-/* ==============================
-   FEATURES
-============================== */
+/* =========================
+FEATURES
+========================= */
 
 .features{
 
-    padding:
-    65px 4%;
+    width:100%;
+
+    padding:60px 4%;
 
     background:
     linear-gradient(
         180deg,
-        #06104a,
+        #07124d,
         #090025
     );
 }
@@ -970,72 +932,67 @@ a{
 
     font-size:38px;
 
-    margin-bottom:12px;
+    margin-bottom:10px;
 }
 
 .title span{
-    color:#ff45cb;
+    color:#ff43ca;
 }
 
 .subtitle{
-
-    max-width:720px;
-
-    margin:auto;
 
     text-align:center;
 
     color:#ccc;
 
-    line-height:1.5;
+    max-width:700px;
+
+    margin:auto;
 
     font-size:15px;
+
+    line-height:1.5;
 }
 
 
-/* EQUAL GRID */
+/* 3 × 2 */
 
 .cards{
 
     width:100%;
+    max-width:1100px;
 
-    max-width:1150px;
-
-    margin:40px auto 0;
+    margin:35px auto 0;
 
     display:grid;
 
     grid-template-columns:
-    repeat(3,1fr);
+    repeat(3,minmax(0,1fr));
 
     grid-template-rows:
-    repeat(2,210px);
+    repeat(2,190px);
 
-    gap:15px;
+    gap:14px;
 }
-
-
-/* EQUAL CARDS */
 
 .card{
 
     width:100%;
+    height:190px;
 
-    height:210px;
+    padding:20px;
 
     display:flex;
 
     flex-direction:column;
 
-    justify-content:center;
-
     align-items:center;
+
+    justify-content:center;
 
     text-align:center;
 
-    padding:20px;
-
-    border-radius:20px;
+    border-radius:18px;
 
     border:
     1px solid
@@ -1044,71 +1001,64 @@ a{
     background:
     linear-gradient(
         145deg,
-        rgba(60,20,120,.9),
-        rgba(5,10,50,.9)
+        #3a1670,
+        #080b35
     );
 
     transition:.3s;
 }
 
 .card:hover{
-
-    transform:
-    translateY(-8px);
-
-    box-shadow:
-    0 15px 35px #000;
+    transform:translateY(-6px);
 }
 
 .icon{
 
-    width:55px;
-
-    height:55px;
+    width:50px;
+    height:50px;
 
     display:flex;
 
     align-items:center;
-
     justify-content:center;
 
     border-radius:50%;
 
-    background:#24105c;
+    background:#24105d;
 
-    border:
-    1px solid #a82dff;
+    border:1px solid #ad2cff;
 
-    font-size:25px;
+    font-size:24px;
 
-    margin-bottom:12px;
+    margin-bottom:10px;
 }
 
 .card h3{
 
-    font-size:18px;
+    font-size:17px;
 
-    margin-bottom:8px;
+    margin-bottom:7px;
 }
 
 .card p{
 
     color:#ccc;
 
-    font-size:13px;
+    font-size:12px;
 
     line-height:1.4;
 }
 
 
-/* ==============================
-   SCENES
-============================== */
+/* =========================
+SCENES
+========================= */
 
 .scenes{
 
-    padding:
-    65px 4%;
+    width:100%;
+
+    padding:60px 4%;
 
     background:#030019;
 }
@@ -1116,33 +1066,30 @@ a{
 .scene-grid{
 
     width:100%;
+    max-width:1100px;
 
-    max-width:1150px;
-
-    margin:40px auto 0;
+    margin:35px auto 0;
 
     display:grid;
 
     grid-template-columns:
-    repeat(3,1fr);
+    repeat(3,minmax(0,1fr));
 
-    grid-template-rows:
-    300px;
+    grid-template-rows:280px;
 
-    gap:15px;
+    gap:14px;
 }
 
 .scene{
 
     width:100%;
-
-    height:300px;
+    height:280px;
 
     position:relative;
 
     overflow:hidden;
 
-    border-radius:20px;
+    border-radius:18px;
 
     border:
     1px solid
@@ -1150,16 +1097,16 @@ a{
 }
 
 
-/* UNDERWATER */
+/* WATER SCENE */
 
 .underwater{
 
     background:
     radial-gradient(
         circle at 30% 30%,
-        #67ffff,
-        #0073bd 45%,
-        #001c61
+        #69ffff,
+        #087bc4 45%,
+        #001858
     );
 }
 
@@ -1175,19 +1122,18 @@ a{
     repeating-radial-gradient(
         ellipse,
         transparent 0 25px,
-        rgba(255,255,255,.15)
+        rgba(255,255,255,.13)
         27px 30px
     );
 
     animation:
-    water 5s linear infinite;
+    waterMove 5s linear infinite;
 }
 
-@keyframes water{
+@keyframes waterMove{
 
     to{
-        transform:
-        translateY(50px);
+        transform:translateY(40px);
     }
 }
 
@@ -1198,13 +1144,14 @@ a{
 
     position:absolute;
 
-    width:48px;
+    left:-60px;
 
-    height:25px;
+    width:45px;
+    height:23px;
 
     border-radius:50%;
 
-    background:#ffc400;
+    background:#ffd000;
 
     animation:
     miniSwim 5s linear infinite;
@@ -1216,53 +1163,50 @@ a{
 
     position:absolute;
 
-    right:-18px;
-
+    right:-17px;
     top:2px;
 
     border-style:solid;
 
     border-width:
-    10px 20px 10px 0;
+    10px 19px 10px 0;
 
     border-color:
-    transparent #ffc400
+    transparent #ffd000
     transparent transparent;
 }
 
-.mini-fish.f2{
+.mf2{
 
     top:55%;
 
-    background:#ff477e;
+    background:#ff43c8;
 
-    animation-delay:1s;
+    animation-delay:1.5s;
 }
 
-.mini-fish.f2:after{
-
+.mf2:after{
     border-color:
-    transparent #ff477e
+    transparent #ff43c8
     transparent transparent;
 }
 
-.mini-fish.f3{
+.mf3{
 
-    top:70%;
+    top:72%;
 
-    background:#00e0ff;
+    background:#00eaff;
 
-    animation-delay:2s;
+    animation-delay:3s;
 }
 
-.mini-fish.f3:after{
-
+.mf3:after{
     border-color:
-    transparent #00e0ff
+    transparent #00eaff
     transparent transparent;
 }
 
-.mini-fish.f1{
+.mf1{
     top:30%;
 }
 
@@ -1285,14 +1229,14 @@ a{
     background:
     radial-gradient(
         circle at center,
-        #ff2bbf,
-        #4a096d 45%,
-        #09001e
+        #ff2bc0,
+        #570b73 45%,
+        #08001e
     );
 }
 
 
-/* NIGHT */
+/* NIGHT SCENE */
 
 .night{
 
@@ -1300,9 +1244,38 @@ a{
     linear-gradient(
         180deg,
         #020028,
-        #182b72,
-        #ff6b83
+        #1a2d78,
+        #ff7188
     );
+}
+
+.night:before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+    radial-gradient(
+        circle,
+        white 1px,
+        transparent 2px
+    );
+
+    background-size:45px 45px;
+
+    animation:
+    nightMove 8s linear infinite;
+}
+
+@keyframes nightMove{
+
+    to{
+        background-position:
+        80px 120px;
+    }
 }
 
 .mountain{
@@ -1312,25 +1285,20 @@ a{
     bottom:0;
 
     width:0;
-
     height:0;
 
-    border-left:
-    180px solid transparent;
+    border-left:170px solid transparent;
 
-    border-right:
-    180px solid transparent;
+    border-right:170px solid transparent;
 
-    border-bottom:
-    230px solid #090a34;
+    border-bottom:210px solid #080a31;
 }
 
-.mountain.one{
+.mountain1{
     left:-70px;
 }
 
-.mountain.two{
-
+.mountain2{
     right:-80px;
 
     border-bottom-color:#121642;
@@ -1343,73 +1311,71 @@ a{
 
     position:absolute;
 
-    left:18px;
-
-    right:18px;
-
-    bottom:18px;
-
     z-index:10;
+
+    left:15px;
+    right:15px;
+    bottom:15px;
 }
 
 .scene-text h3{
 
-    font-size:21px;
+    font-size:19px;
 
-    margin-bottom:7px;
+    margin-bottom:5px;
 }
 
 .scene-text p{
 
-    color:#ddd;
-
-    font-size:13px;
+    font-size:12px;
 
     line-height:1.4;
+
+    color:#ddd;
 }
 
 
-/* ==============================
-   CTA
-============================== */
+/* =========================
+CTA
+========================= */
 
 .cta{
 
     position:relative;
 
-    overflow:hidden;
+    width:100%;
 
-    padding:
-    90px 20px;
+    padding:80px 20px;
 
     text-align:center;
 
+    overflow:hidden;
+
     background:
     radial-gradient(
-        circle at center,
-        #35006c,
-        #080022 65%
+        circle,
+        #3b0570,
+        #080021 70%
     );
 }
 
 .cta h2{
-    font-size:40px;
+    font-size:38px;
 }
 
 .cta h2 span{
-    color:#ffc800;
+    color:#ffd000;
 }
 
 .cta p{
 
     max-width:650px;
 
-    margin:
-    18px auto 0;
+    margin:15px auto;
 
     color:#ccc;
 
-    line-height:1.6;
+    line-height:1.5;
 }
 
 .cta .buttons{
@@ -1417,79 +1383,87 @@ a{
 }
 
 
-/* ==============================
-   FOOTER
-============================== */
+/* =========================
+FOOTER
+========================= */
 
 footer{
+
+    width:100%;
 
     padding:25px;
 
     text-align:center;
 
-    background:#01000b;
+    background:#01000a;
 
     color:#888;
 }
 
 footer strong{
-    color:#ffc800;
+    color:#ffd000;
 }
 
 
-/* ==============================
-   TABLET
-============================== */
+/* =====================================================
+TABLET
+===================================================== */
 
-@media(max-width:850px){
+@media(max-width:800px){
 
     .hero{
-        min-height:650px;
+        min-height:600px;
+    }
+
+    .hero-content{
+        padding-top:35px;
     }
 
     .logo{
-        font-size:52px;
+        font-size:50px;
     }
 
     .tagline{
-        font-size:34px;
-        max-width:55%;
+        font-size:31px;
     }
 
     .description{
-        max-width:50%;
-        font-size:14px;
+        font-size:13px;
     }
 
     .party{
-        width:48%;
+        width:47%;
+        top:90px;
     }
 
     .pool{
-        width:57%;
+        width:58%;
+        height:290px;
+    }
+
+    .palm{
+        transform:scale(.75);
+        transform-origin:bottom center;
     }
 
     .cards{
 
         grid-template-columns:
-        repeat(3,1fr);
+        repeat(3,minmax(0,1fr));
 
         grid-template-rows:
-        repeat(2,170px);
-
-        gap:8px;
+        repeat(2,150px);
     }
 
     .card{
-        height:170px;
+        height:150px;
         padding:10px;
     }
 
     .icon{
-        width:40px;
-        height:40px;
+        width:38px;
+        height:38px;
         font-size:18px;
-        margin-bottom:7px;
     }
 
     .card h3{
@@ -1501,146 +1475,188 @@ footer strong{
     }
 
     .scene-grid{
-        grid-template-rows:240px;
+        grid-template-rows:220px;
     }
 
     .scene{
-        height:240px;
-    }
-
-    .scene-text{
-        left:10px;
-        right:10px;
-        bottom:10px;
-    }
-
-    .scene-text h3{
-        font-size:14px;
-    }
-
-    .scene-text p{
-        font-size:9px;
+        height:220px;
     }
 }
 
 
-/* ==============================
-   PHONE
-============================== */
+/* =====================================================
+PHONE
+===================================================== */
 
 @media(max-width:600px){
 
+    html,
     body{
-        min-width:360px;
+        width:100vw;
+        max-width:100vw;
+        overflow-x:hidden;
     }
 
     .hero{
 
-        min-height:600px;
+        width:100vw;
+        max-width:100vw;
 
-        aspect-ratio:
-        1.15 / 1;
+        min-height:520px;
+
+        height:145vw;
+
+        max-height:620px;
     }
+
+
+    /* CONTENT */
 
     .hero-content{
 
         width:94%;
 
-        padding-top:28px;
+        padding-top:25px;
     }
 
     .logo{
-        font-size:38px;
+
+        font-size:
+        clamp(30px,10vw,40px);
+
         letter-spacing:-2px;
     }
 
     .tagline{
 
-        font-size:23px;
+        width:58%;
 
-        max-width:58%;
+        font-size:
+        clamp(18px,6vw,25px);
     }
 
     .description{
 
-        max-width:53%;
+        width:53%;
 
-        font-size:11px;
+        font-size:10px;
 
-        line-height:1.4;
+        line-height:1.35;
+
+        margin-top:10px;
     }
 
     .buttons{
 
-        margin-top:15px;
+        gap:6px;
 
-        gap:7px;
+        margin-top:12px;
     }
 
     .btn{
 
         padding:
-        9px 13px;
+        8px 12px;
 
-        font-size:11px;
+        font-size:10px;
     }
 
 
-    /* KEEP ALL HERO ELEMENTS */
+    /* PARTY */
 
     .party{
 
-        display:block;
+        width:45%;
 
-        width:46%;
+        max-width:none;
 
-        height:170px;
+        height:140px;
 
-        top:80px;
+        top:70px;
+
+        right:-1%;
     }
 
     .building{
-        height:105px;
+
+        width:95%;
+
+        height:90px;
+    }
+
+    .lights{
+
+        top:10px;
+
+        height:7px;
     }
 
     .person{
-        transform:scale(.65);
-
-        transform-origin:
-        bottom center;
-    }
-
-    .pool{
-
-        display:block;
-
-        width:58%;
-
-        height:240px;
-
-        right:-4%;
-    }
-
-    .palm{
-
-        display:block;
 
         transform:scale(.55);
 
         transform-origin:
         bottom center;
+    }
 
-        bottom:190px;
 
-        right:42%;
+    /* POOL */
+
+    .pool{
+
+        width:58%;
+
+        max-width:none;
+
+        height:205px;
+
+        right:-3%;
+    }
+
+    .wave{
+        height:25px;
+    }
+
+    .fish{
+
+        width:40px;
+
+        height:21px;
+    }
+
+    .fish:after{
+
+        right:-14px;
+
+        border-width:
+        9px 16px 9px 0;
+    }
+
+
+    /* PALM */
+
+    .palm{
+
+        right:41%;
+
+        bottom:170px;
+
+        transform:scale(.55);
+
+        transform-origin:
+        bottom center;
+    }
+
+
+    /* DECORATION */
+
+    .butterfly{
+
+        transform:scale(.6);
     }
 
     .flower{
-        font-size:25px;
-    }
-
-    .butterfly{
-        transform:scale(.65);
+        font-size:22px;
     }
 
 
@@ -1649,62 +1665,67 @@ footer strong{
     .features{
 
         padding:
-        45px 3%;
+        40px 3%;
     }
 
     .title{
-        font-size:24px;
+
+        font-size:
+        clamp(21px,7vw,27px);
     }
 
     .subtitle{
-        font-size:11px;
+        font-size:10px;
     }
 
     .cards{
 
+        width:100%;
+
         grid-template-columns:
-        repeat(3,1fr);
+        repeat(3,minmax(0,1fr));
 
         grid-template-rows:
-        repeat(2,125px);
+        repeat(2,105px);
 
-        gap:6px;
+        gap:5px;
 
-        margin-top:25px;
+        margin-top:22px;
     }
 
     .card{
 
-        height:125px;
+        width:100%;
 
-        padding:7px;
+        height:105px;
 
-        border-radius:12px;
+        padding:5px;
+
+        border-radius:10px;
     }
 
     .icon{
 
-        width:32px;
+        width:28px;
+        height:28px;
 
-        height:32px;
-
-        font-size:15px;
-
-        margin-bottom:5px;
-    }
-
-    .card h3{
-
-        font-size:10px;
+        font-size:13px;
 
         margin-bottom:4px;
     }
 
+    .card h3{
+
+        font-size:9px;
+
+        margin-bottom:3px;
+    }
+
     .card p{
 
-        font-size:7px;
+        font-size:6.5px;
 
-        line-height:1.25;
+        line-height:1.2;
     }
 
 
@@ -1713,104 +1734,126 @@ footer strong{
     .scenes{
 
         padding:
-        45px 3%;
+        40px 3%;
     }
 
     .scene-grid{
 
+        width:100%;
+
         grid-template-columns:
-        repeat(3,1fr);
+        repeat(3,minmax(0,1fr));
 
         grid-template-rows:
-        190px;
+        160px;
 
-        gap:6px;
+        gap:5px;
 
-        margin-top:25px;
+        margin-top:22px;
     }
 
     .scene{
 
-        height:190px;
+        width:100%;
 
-        border-radius:12px;
+        height:160px;
+
+        border-radius:10px;
     }
 
     .scene-text{
 
-        left:7px;
+        left:6px;
 
-        right:7px;
+        right:6px;
 
-        bottom:7px;
+        bottom:6px;
     }
 
     .scene-text h3{
-        font-size:11px;
+        font-size:10px;
     }
 
     .scene-text p{
-        font-size:7px;
+        font-size:6px;
+    }
+
+    .mountain{
+
+        border-left-width:90px;
+
+        border-right-width:90px;
+
+        border-bottom-width:120px;
     }
 
 
     /* CTA */
 
     .cta{
-        padding:60px 15px;
+
+        padding:
+        55px 12px;
     }
 
     .cta h2{
-        font-size:27px;
+        font-size:25px;
     }
 
     .cta p{
-        font-size:11px;
+        font-size:10px;
+    }
+
+    footer{
+        font-size:10px;
     }
 
 }
 
 
-/* ==============================
-   VERY SMALL PHONE
-============================== */
+/* =====================================================
+VERY SMALL PHONES
+===================================================== */
 
-@media(max-width:390px){
+@media(max-width:380px){
 
     .hero{
-        min-height:570px;
+        min-height:500px;
     }
 
     .logo{
-        font-size:34px;
+        font-size:29px;
     }
 
     .tagline{
-        font-size:21px;
+        font-size:17px;
     }
 
     .description{
-        font-size:10px;
+        font-size:8px;
+    }
+
+    .btn{
+        font-size:8px;
+        padding:7px 10px;
     }
 
     .cards{
-
         grid-template-rows:
-        repeat(2,115px);
+        repeat(2,95px);
     }
 
     .card{
-        height:115px;
+        height:95px;
     }
 
     .scene-grid{
-        grid-template-rows:175px;
+        grid-template-rows:145px;
     }
 
     .scene{
-        height:175px;
+        height:145px;
     }
-
 }
 
 </style>
@@ -1821,21 +1864,17 @@ footer strong{
 <body>
 
 
-<!-- =====================================
-     HERO
-===================================== -->
+<!-- =========================
+HERO
+========================= -->
 
 <section class="hero">
 
-
 <div class="stars"></div>
 
-
-<div class="shooting one"></div>
-
-<div class="shooting two"></div>
-
-<div class="shooting three"></div>
+<div class="shooting s1"></div>
+<div class="shooting s2"></div>
+<div class="shooting s3"></div>
 
 
 <!-- PARTY -->
@@ -1847,11 +1886,8 @@ footer strong{
         <div class="lights"></div>
 
         <div class="person p1"></div>
-
         <div class="person p2"></div>
-
         <div class="person p3"></div>
-
         <div class="person p4"></div>
 
     </div>
@@ -1881,19 +1917,13 @@ footer strong{
 
 <div class="pool">
 
-    <div class="wave one"></div>
-
-    <div class="wave two"></div>
-
-    <div class="wave three"></div>
-
+    <div class="wave w1"></div>
+    <div class="wave w2"></div>
+    <div class="wave w3"></div>
 
     <div class="fish red"></div>
-
     <div class="fish yellow"></div>
-
     <div class="fish blue"></div>
-
     <div class="fish pink"></div>
 
 </div>
@@ -1916,73 +1946,59 @@ footer strong{
 
 <!-- FLOWERS -->
 
-<div class="flower one">🌸</div>
-
-<div class="flower two">🌺</div>
-
-<div class="flower three">🌷</div>
+<div class="flower flower1">🌸</div>
+<div class="flower flower2">🌺</div>
+<div class="flower flower3">🌷</div>
 
 
-<!-- HERO CONTENT -->
+<!-- CONTENT -->
 
 <div class="hero-content">
 
+    <div class="logo">
+        Vital<span>Star</span>
+    </div>
 
-<div class="logo">
+    <div class="tagline">
 
-Vital<span>Star</span>
+        Connect. Share.
 
-</div>
+        <span>
+            Shine Together.
+        </span>
 
+    </div>
 
-<div class="tagline">
+    <p class="description">
 
-Connect. Share.
+        VitalStar is more than social media.
 
-<span>
-Shine Together.
-</span>
+        Connect with people, share your
+        moments, chat with friends,
+        discover communities and
+        let your personality shine.
 
-</div>
+    </p>
 
+    <div class="buttons">
 
-<p class="description">
+        <a
+        href="register.html"
+        class="btn register">
 
-VitalStar is more than social media.
+            ✨ Create Account
 
-Connect with people,
-share your moments,
-discover communities,
-chat with friends,
-have fun and let your
-personality shine.
+        </a>
 
-</p>
+        <a
+        href="login.html"
+        class="btn login">
 
+            🔐 Login
 
-<div class="buttons">
+        </a>
 
-
-<a
-href="register.html"
-class="btn register">
-
-✨ Create Account
-
-</a>
-
-
-<a
-href="login.html"
-class="btn login">
-
-🔐 Login
-
-</a>
-
-
-</div>
-
+    </div>
 
 </div>
 
@@ -1990,30 +2006,26 @@ class="btn login">
 
 
 
-<!-- =====================================
-     FEATURES
-===================================== -->
+<!-- =========================
+FEATURES
+========================= -->
 
 <section class="features">
-
 
 <h2 class="title">
 
 Everything
 
-<span>
-You Love
-</span>
+<span>You Love</span>
 
 In One Place
 
 </h2>
 
-
 <p class="subtitle">
 
-Everything you need to connect,
-share, communicate and have fun.
+Connect, share, communicate,
+discover and have fun.
 
 </p>
 
@@ -2023,13 +2035,9 @@ share, communicate and have fun.
 
 <div class="card">
 
-<div class="icon">
-👥
-</div>
+<div class="icon">👥</div>
 
-<h3>
-Connect
-</h3>
+<h3>Connect</h3>
 
 <p>
 Find friends and grow
@@ -2041,13 +2049,9 @@ your social network.
 
 <div class="card">
 
-<div class="icon">
-📸
-</div>
+<div class="icon">📸</div>
 
-<h3>
-Share Moments
-</h3>
+<h3>Share Moments</h3>
 
 <p>
 Share photos, videos
@@ -2059,13 +2063,9 @@ and updates.
 
 <div class="card">
 
-<div class="icon">
-💬
-</div>
+<div class="icon">💬</div>
 
-<h3>
-Chat
-</h3>
+<h3>Chat</h3>
 
 <p>
 Talk with friends
@@ -2077,13 +2077,9 @@ anytime.
 
 <div class="card">
 
-<div class="icon">
-🌎
-</div>
+<div class="icon">🌎</div>
 
-<h3>
-Communities
-</h3>
+<h3>Communities</h3>
 
 <p>
 Join groups and
@@ -2095,17 +2091,13 @@ meet people.
 
 <div class="card">
 
-<div class="icon">
-🎮
-</div>
+<div class="icon">🎮</div>
 
-<h3>
-Games
-</h3>
+<h3>Games</h3>
 
 <p>
-Enjoy exciting games
-and activities.
+Enjoy exciting
+games and activities.
 </p>
 
 </div>
@@ -2113,13 +2105,9 @@ and activities.
 
 <div class="card">
 
-<div class="icon">
-⭐
-</div>
+<div class="icon">⭐</div>
 
-<h3>
-Shine
-</h3>
+<h3>Shine</h3>
 
 <p>
 Express yourself
@@ -2135,23 +2123,19 @@ and stand out.
 
 
 
-<!-- =====================================
-     VISUAL SCENES
-===================================== -->
+<!-- =========================
+SCENES
+========================= -->
 
 <section class="scenes">
-
 
 <h2 class="title">
 
 A World Full Of
 
-<span>
-Possibilities
-</span>
+<span>Possibilities</span>
 
 </h2>
-
 
 <p class="subtitle">
 
@@ -2165,144 +2149,69 @@ new adventures.
 <div class="scene-grid">
 
 
-<!-- WATER -->
+<!-- FISH -->
 
 <div class="scene underwater">
 
+    <div class="mini-fish mf1"></div>
+    <div class="mini-fish mf2"></div>
+    <div class="mini-fish mf3"></div>
 
-<div class="mini-fish f1"></div>
+    <div class="scene-text">
 
-<div class="mini-fish f2"></div>
+        <h3>🐠 Discover</h3>
 
-<div class="mini-fish f3"></div>
+        <p>
+        Explore beautiful moments
+        and discover something new.
+        </p>
 
-
-<div class="scene-text">
-
-<h3>
-🐠 Discover
-</h3>
-
-<p>
-Explore beautiful moments
-and discover something new.
-</p>
+    </div>
 
 </div>
-
-</div>
-
 
 
 <!-- PARTY -->
 
 <div class="scene party-scene">
 
+    <div class="person p1"></div>
+    <div class="person p2"></div>
+    <div class="person p3"></div>
+    <div class="person p4"></div>
 
-<div class="person p1"></div>
+    <div class="scene-text">
 
-<div class="person p2"></div>
+        <h3>🎉 Celebrate</h3>
 
-<div class="person p3"></div>
+        <p>
+        Share happiness and enjoy
+        great moments together.
+        </p>
 
-<div class="person p4"></div>
-
-
-<div class="scene-text">
-
-<h3>
-🎉 Celebrate
-</h3>
-
-<p>
-Share happiness and enjoy
-great moments together.
-</p>
-
-</div>
+    </div>
 
 </div>
 
 
-
-<!-- NIGHT -->
+<!-- STARS -->
 
 <div class="scene night">
 
+    <div class="mountain mountain1"></div>
 
-<div class="night-star"
-style="
-position:absolute;
-top:20%;
-left:20%;
-width:4px;
-height:4px;
-background:white;
-border-radius:50%;
-box-shadow:0 0 10px white;
-">
-</div>
+    <div class="mountain mountain2"></div>
 
+    <div class="scene-text">
 
-<div class="night-star"
-style="
-position:absolute;
-top:15%;
-left:55%;
-width:4px;
-height:4px;
-background:white;
-border-radius:50%;
-box-shadow:0 0 10px white;
-">
-</div>
+        <h3>🌠 Shine</h3>
 
+        <p>
+        Let your brightest
+        moments shine.
+        </p>
 
-<div class="night-star"
-style="
-position:absolute;
-top:30%;
-left:80%;
-width:4px;
-height:4px;
-background:white;
-border-radius:50%;
-box-shadow:0 0 10px white;
-">
-</div>
-
-
-<div class="night-star"
-style="
-position:absolute;
-top:10%;
-left:35%;
-width:4px;
-height:4px;
-background:white;
-border-radius:50%;
-box-shadow:0 0 10px white;
-">
-</div>
-
-
-<div class="mountain one"></div>
-
-<div class="mountain two"></div>
-
-
-<div class="scene-text">
-
-<h3>
-🌠 Shine
-</h3>
-
-<p>
-Let your brightest
-moments shine.
-</p>
-
-</div>
+    </div>
 
 </div>
 
@@ -2313,34 +2222,21 @@ moments shine.
 
 
 
-<!-- =====================================
-     CTA
-===================================== -->
+<!-- =========================
+CTA
+========================= -->
 
 <section class="cta">
-
-
-<div class="flower one">
-🌸
-</div>
-
-<div class="flower two">
-🌺
-</div>
-
 
 <h2>
 
 Start Your
 
-<span>
-Journey
-</span>
+<span>Journey</span>
 
 Today
 
 </h2>
-
 
 <p>
 
@@ -2353,7 +2249,6 @@ social community.
 
 <div class="buttons">
 
-
 <a
 href="register.html"
 class="btn register">
@@ -2362,7 +2257,6 @@ class="btn register">
 
 </a>
 
-
 <a
 href="login.html"
 class="btn login">
@@ -2370,7 +2264,6 @@ class="btn login">
 🔐 Login
 
 </a>
-
 
 </div>
 
@@ -2382,9 +2275,7 @@ class="btn login">
 
 © 2026
 
-<strong>
-VitalStar
-</strong>
+<strong>VitalStar</strong>
 
 <br>
 
@@ -2393,10 +2284,9 @@ Connect • Share • Shine
 </footer>
 
 
-
-<!-- =====================================
-     FIREBASE
-===================================== -->
+<!-- =========================
+AUTH REDIRECT
+========================= -->
 
 <script type="module">
 
@@ -2424,7 +2314,6 @@ onAuthStateChanged(
 );
 
 </script>
-
 
 </body>
 </html>
