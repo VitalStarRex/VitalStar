@@ -17,10 +17,6 @@ content="width=device-width,initial-scale=1">
 
 <style>
 
-/* =========================
-RESET
-========================= */
-
 *{
     margin:0;
     padding:0;
@@ -50,14 +46,10 @@ HERO
 ========================= */
 
 .hero{
-
     position:relative;
-
     width:100%;
     max-width:100%;
-
     min-height:680px;
-
     overflow:hidden;
 
     background:
@@ -76,11 +68,8 @@ STARS
 ========================= */
 
 .stars{
-
     position:absolute;
-
     inset:0;
-
     width:100%;
     height:100%;
 
@@ -100,9 +89,7 @@ STARS
     70px 70px,
     120px 120px;
 
-    animation:
-    starsMove 18s linear infinite;
-
+    animation:starsMove 18s linear infinite;
     opacity:.75;
 }
 
@@ -123,12 +110,9 @@ SHOOTING STARS
 ========================= */
 
 .shooting{
-
     position:absolute;
-
     width:180px;
     max-width:45vw;
-
     height:3px;
 
     background:
@@ -144,10 +128,7 @@ SHOOTING STARS
     0 0 25px #00cfff;
 
     transform:rotate(-30deg);
-
-    animation:
-    shoot 5s linear infinite;
-
+    animation:shoot 5s linear infinite;
     z-index:2;
 }
 
@@ -174,7 +155,6 @@ SHOOTING STARS
         transform:
         translate(-50px,-50px)
         rotate(-30deg);
-
         opacity:0;
     }
 
@@ -186,7 +166,6 @@ SHOOTING STARS
         transform:
         translate(1200px,500px)
         rotate(-30deg);
-
         opacity:0;
     }
 }
@@ -197,25 +176,17 @@ HERO CONTENT
 ========================= */
 
 .hero-content{
-
     position:relative;
-
     z-index:20;
-
     width:92%;
     max-width:1100px;
-
     margin:auto;
-
     padding-top:55px;
 }
 
 .logo{
-
     font-size:64px;
-
     font-weight:900;
-
     letter-spacing:-4px;
 
     text-shadow:
@@ -228,20 +199,14 @@ HERO CONTENT
 }
 
 .tagline{
-
     width:55%;
-
     font-size:42px;
-
     line-height:1.08;
-
     font-weight:900;
-
     margin-top:8px;
 }
 
 .tagline span{
-
     background:
     linear-gradient(
         90deg,
@@ -251,23 +216,16 @@ HERO CONTENT
     );
 
     -webkit-background-clip:text;
-
     background-clip:text;
-
     color:transparent;
 }
 
 .description{
-
     width:45%;
     max-width:500px;
-
     margin-top:18px;
-
     font-size:16px;
-
     line-height:1.5;
-
     color:#eee;
 }
 
@@ -277,37 +235,24 @@ BUTTONS
 ========================= */
 
 .buttons{
-
     display:flex;
-
     gap:14px;
-
     flex-wrap:wrap;
-
     margin-top:25px;
 }
 
 .btn{
-
     display:inline-flex;
-
     align-items:center;
-
     justify-content:center;
-
     padding:14px 25px;
-
     border-radius:40px;
-
     font-weight:bold;
-
     font-size:16px;
-
     transition:.3s;
 }
 
 .register{
-
     color:white;
 
     background:
@@ -322,15 +267,10 @@ BUTTONS
 }
 
 .login{
-
     color:white;
-
     background:#070321;
-
     border:2px solid #ffd000;
-
-    box-shadow:
-    0 0 15px #ffd000;
+    box-shadow:0 0 15px #ffd000;
 }
 
 .btn:hover{
@@ -339,20 +279,52 @@ BUTTONS
 
 
 /* =========================
+RAINBOW
+========================= */
+
+.rainbow{
+    position:absolute;
+    right:5%;
+    top:25px;
+
+    width:210px;
+    height:110px;
+
+    border-radius:210px 210px 0 0;
+
+    background:
+    radial-gradient(
+        ellipse at center bottom,
+        transparent 0 43%,
+        #ff3030 44% 49%,
+        #ff8a00 50% 55%,
+        #ffe600 56% 61%,
+        #39e75f 62% 67%,
+        #20c9ff 68% 73%,
+        #635bff 74% 79%,
+        #b53cff 80% 85%,
+        transparent 86%
+    );
+
+    filter:
+    drop-shadow(0 0 10px #ff43ca)
+    drop-shadow(0 0 20px #00eaff);
+
+    z-index:6;
+}
+
+
+/* =========================
 POOL
 ========================= */
 
 .pool{
-
     position:absolute;
-
     right:-3%;
-
     bottom:0;
 
     width:56%;
     max-width:700px;
-
     height:330px;
 
     border-radius:
@@ -379,16 +351,14 @@ POOL
 }
 
 
-/* WATER WAVES */
+/* =========================
+WATER WAVES
+========================= */
 
 .wave{
-
     position:absolute;
-
     left:-10%;
-
     width:120%;
-
     height:35px;
 
     border-top:
@@ -424,29 +394,33 @@ POOL
 
 
 /* =========================
-FISH
+COLORFUL FISH
 ========================= */
 
 .fish{
-
     position:absolute;
 
     width:58px;
-    height:30px;
+    height:32px;
 
-    border-radius:55% 45% 50% 50%;
+    border-radius:
+    55% 45% 50% 50%;
 
     animation:
     swim 9s linear infinite;
+
+    z-index:12;
 }
 
-.fish:before{
 
+/* EYE */
+
+.fish:before{
     content:"";
 
     position:absolute;
 
-    right:10px;
+    right:8px;
     top:8px;
 
     width:7px;
@@ -455,79 +429,190 @@ FISH
     border-radius:50%;
 
     background:#111;
+
+    box-shadow:
+    0 0 0 2px white;
 }
 
-.fish:after{
 
+/* TAIL */
+
+.fish:after{
     content:"";
 
     position:absolute;
 
-    right:-20px;
-    top:2px;
+    right:-22px;
+    top:1px;
 
-    border-style:solid;
+    width:0;
+    height:0;
 
-    border-width:
-    13px 22px 13px 0;
+    border-top:
+    15px solid transparent;
 
-    border-color:
-    transparent currentColor
-    transparent transparent;
+    border-bottom:
+    15px solid transparent;
+
+    border-right:
+    23px solid currentColor;
 }
 
-.red{
 
-    top:100px;
+/* BODY STRIPES */
 
-    background:#ff4b38;
-    color:#ff4b38;
+.fish i{
+    position:absolute;
+
+    left:13px;
+    top:0;
+
+    width:6px;
+    height:32px;
+
+    background:
+    rgba(255,255,255,.35);
+
+    border-radius:50%;
 }
 
-.yellow{
+.fish b{
+    position:absolute;
 
-    top:190px;
+    left:24px;
+    top:0;
 
+    width:6px;
+    height:32px;
+
+    background:
+    rgba(255,255,255,.25);
+
+    border-radius:50%;
+}
+
+
+/* COLORS */
+
+.fish-red{
+    background:#ff3838;
+    color:#ff3838;
+}
+
+.fish-yellow{
     background:#ffd000;
     color:#ffd000;
+}
 
+.fish-blue{
+    background:#00dfff;
+    color:#00dfff;
+}
+
+.fish-pink{
+    background:#ff43c8;
+    color:#ff43c8;
+}
+
+.fish-green{
+    background:#32e875;
+    color:#32e875;
+}
+
+.fish-purple{
+    background:#a855ff;
+    color:#a855ff;
+}
+
+.fish-orange{
+    background:#ff7b18;
+    color:#ff7b18;
+}
+
+.fish-white{
+    background:#fff;
+    color:#fff;
+}
+
+
+/* FISH POSITIONS */
+
+.f1{
+    top:35px;
+    animation-delay:0s;
+}
+
+.f2{
+    top:70px;
+    animation-delay:1s;
+}
+
+.f3{
+    top:105px;
     animation-delay:2s;
 }
 
-.blue{
+.f4{
+    top:140px;
+    animation-delay:3s;
+}
 
-    top:70px;
-
-    background:#00dfff;
-    color:#00dfff;
-
+.f5{
+    top:175px;
     animation-delay:4s;
 }
 
-.pink{
+.f6{
+    top:210px;
+    animation-delay:5s;
+}
 
-    top:260px;
-
-    background:#ff43c8;
-    color:#ff43c8;
-
+.f7{
+    top:245px;
     animation-delay:6s;
 }
+
+.f8{
+    top:115px;
+    animation-delay:7s;
+}
+
+
+/* SWIMMING */
 
 @keyframes swim{
 
     0%{
-        left:-80px;
+        left:-90px;
+        transform:
+        translateY(0)
+        scale(.8);
+    }
+
+    25%{
+        transform:
+        translateY(-18px)
+        scale(1);
     }
 
     50%{
-        left:60%;
-        transform:translateY(-20px);
+        transform:
+        translateY(12px)
+        scale(1);
+    }
+
+    75%{
+        transform:
+        translateY(-10px)
+        scale(1);
     }
 
     100%{
-        left:105%;
-        transform:translateY(15px);
+        left:110%;
+
+        transform:
+        translateY(10px)
+        scale(.8);
     }
 }
 
@@ -537,11 +622,9 @@ PARTY
 ========================= */
 
 .party{
-
     position:absolute;
 
     right:1%;
-
     top:75px;
 
     width:45%;
@@ -553,14 +636,12 @@ PARTY
 }
 
 .building{
-
     position:absolute;
 
     right:0;
     bottom:0;
 
     width:90%;
-
     height:135px;
 
     border-radius:
@@ -579,7 +660,6 @@ PARTY
 }
 
 .lights{
-
     position:absolute;
 
     top:15px;
@@ -611,7 +691,6 @@ PARTY
 /* PEOPLE */
 
 .person{
-
     position:absolute;
 
     bottom:8px;
@@ -628,7 +707,6 @@ PARTY
 }
 
 .person:before{
-
     content:"";
 
     position:absolute;
@@ -645,7 +723,6 @@ PARTY
 }
 
 .person:after{
-
     content:"";
 
     position:absolute;
@@ -697,20 +774,16 @@ PALM
 ========================= */
 
 .palm{
-
     position:absolute;
 
     right:42%;
-
     bottom:230px;
 
     z-index:10;
 }
 
 .trunk{
-
     width:15px;
-
     height:130px;
 
     background:
@@ -725,7 +798,6 @@ PALM
 }
 
 .leaves{
-
     position:absolute;
 
     top:-45px;
@@ -736,7 +808,6 @@ PALM
 }
 
 .leaves i{
-
     position:absolute;
 
     width:95px;
@@ -771,7 +842,6 @@ BUTTERFLIES
 ========================= */
 
 .butterfly{
-
     position:absolute;
 
     width:28px;
@@ -785,7 +855,6 @@ BUTTERFLIES
 
 .butterfly:before,
 .butterfly:after{
-
     content:"";
 
     position:absolute;
@@ -793,11 +862,11 @@ BUTTERFLIES
     width:17px;
     height:22px;
 
-    border-radius:80% 20% 80% 20%;
+    border-radius:
+    80% 20% 80% 20%;
 }
 
 .butterfly:before{
-
     left:0;
 
     background:#ff43c8;
@@ -806,7 +875,6 @@ BUTTERFLIES
 }
 
 .butterfly:after{
-
     right:0;
 
     background:#ffd000;
@@ -815,7 +883,6 @@ BUTTERFLIES
 }
 
 .butterfly b{
-
     position:absolute;
 
     left:12px;
@@ -870,7 +937,6 @@ FLOWERS
 ========================= */
 
 .flower{
-
     position:absolute;
 
     z-index:30;
@@ -913,7 +979,6 @@ FEATURES
 ========================= */
 
 .features{
-
     width:100%;
 
     padding:60px 4%;
@@ -927,11 +992,8 @@ FEATURES
 }
 
 .title{
-
     text-align:center;
-
     font-size:38px;
-
     margin-bottom:10px;
 }
 
@@ -940,7 +1002,6 @@ FEATURES
 }
 
 .subtitle{
-
     text-align:center;
 
     color:#ccc;
@@ -954,11 +1015,7 @@ FEATURES
     line-height:1.5;
 }
 
-
-/* 3 × 2 */
-
 .cards{
-
     width:100%;
     max-width:1100px;
 
@@ -976,7 +1033,6 @@ FEATURES
 }
 
 .card{
-
     width:100%;
     height:190px;
 
@@ -987,7 +1043,6 @@ FEATURES
     flex-direction:column;
 
     align-items:center;
-
     justify-content:center;
 
     text-align:center;
@@ -1013,7 +1068,6 @@ FEATURES
 }
 
 .icon{
-
     width:50px;
     height:50px;
 
@@ -1034,14 +1088,11 @@ FEATURES
 }
 
 .card h3{
-
     font-size:17px;
-
     margin-bottom:7px;
 }
 
 .card p{
-
     color:#ccc;
 
     font-size:12px;
@@ -1055,7 +1106,6 @@ SCENES
 ========================= */
 
 .scenes{
-
     width:100%;
 
     padding:60px 4%;
@@ -1064,7 +1114,6 @@ SCENES
 }
 
 .scene-grid{
-
     width:100%;
     max-width:1100px;
 
@@ -1081,7 +1130,6 @@ SCENES
 }
 
 .scene{
-
     width:100%;
     height:280px;
 
@@ -1100,7 +1148,6 @@ SCENES
 /* WATER SCENE */
 
 .underwater{
-
     background:
     radial-gradient(
         circle at 30% 30%,
@@ -1111,7 +1158,6 @@ SCENES
 }
 
 .underwater:before{
-
     content:"";
 
     position:absolute;
@@ -1141,7 +1187,6 @@ SCENES
 /* MINI FISH */
 
 .mini-fish{
-
     position:absolute;
 
     left:-60px;
@@ -1158,7 +1203,6 @@ SCENES
 }
 
 .mini-fish:after{
-
     content:"";
 
     position:absolute;
@@ -1177,7 +1221,6 @@ SCENES
 }
 
 .mf2{
-
     top:55%;
 
     background:#ff43c8;
@@ -1192,7 +1235,6 @@ SCENES
 }
 
 .mf3{
-
     top:72%;
 
     background:#00eaff;
@@ -1225,7 +1267,6 @@ SCENES
 /* PARTY SCENE */
 
 .party-scene{
-
     background:
     radial-gradient(
         circle at center,
@@ -1239,7 +1280,6 @@ SCENES
 /* NIGHT SCENE */
 
 .night{
-
     background:
     linear-gradient(
         180deg,
@@ -1250,7 +1290,6 @@ SCENES
 }
 
 .night:before{
-
     content:"";
 
     position:absolute;
@@ -1279,7 +1318,6 @@ SCENES
 }
 
 .mountain{
-
     position:absolute;
 
     bottom:0;
@@ -1288,7 +1326,6 @@ SCENES
     height:0;
 
     border-left:170px solid transparent;
-
     border-right:170px solid transparent;
 
     border-bottom:210px solid #080a31;
@@ -1308,7 +1345,6 @@ SCENES
 /* SCENE TEXT */
 
 .scene-text{
-
     position:absolute;
 
     z-index:10;
@@ -1319,18 +1355,13 @@ SCENES
 }
 
 .scene-text h3{
-
     font-size:19px;
-
     margin-bottom:5px;
 }
 
 .scene-text p{
-
     font-size:12px;
-
     line-height:1.4;
-
     color:#ddd;
 }
 
@@ -1340,7 +1371,6 @@ CTA
 ========================= */
 
 .cta{
-
     position:relative;
 
     width:100%;
@@ -1368,7 +1398,6 @@ CTA
 }
 
 .cta p{
-
     max-width:650px;
 
     margin:15px auto;
@@ -1388,7 +1417,6 @@ FOOTER
 ========================= */
 
 footer{
-
     width:100%;
 
     padding:25px;
@@ -1405,9 +1433,9 @@ footer strong{
 }
 
 
-/* =====================================================
+/* =========================
 TABLET
-===================================================== */
+========================= */
 
 @media(max-width:800px){
 
@@ -1446,8 +1474,12 @@ TABLET
         transform-origin:bottom center;
     }
 
-    .cards{
+    .rainbow{
+        width:150px;
+        height:80px;
+    }
 
+    .cards{
         grid-template-columns:
         repeat(3,minmax(0,1fr));
 
@@ -1484,9 +1516,9 @@ TABLET
 }
 
 
-/* =====================================================
+/* =========================
 PHONE
-===================================================== */
+========================= */
 
 @media(max-width:600px){
 
@@ -1498,7 +1530,6 @@ PHONE
     }
 
     .hero{
-
         width:100vw;
         max-width:100vw;
 
@@ -1509,18 +1540,12 @@ PHONE
         max-height:620px;
     }
 
-
-    /* CONTENT */
-
     .hero-content{
-
         width:94%;
-
         padding-top:25px;
     }
 
     .logo{
-
         font-size:
         clamp(30px,10vw,40px);
 
@@ -1528,7 +1553,6 @@ PHONE
     }
 
     .tagline{
-
         width:58%;
 
         font-size:
@@ -1536,7 +1560,6 @@ PHONE
     }
 
     .description{
-
         width:53%;
 
         font-size:10px;
@@ -1547,14 +1570,11 @@ PHONE
     }
 
     .buttons{
-
         gap:6px;
-
         margin-top:12px;
     }
 
     .btn{
-
         padding:
         8px 12px;
 
@@ -1562,10 +1582,20 @@ PHONE
     }
 
 
+    /* RAINBOW */
+
+    .rainbow{
+        width:105px;
+        height:58px;
+
+        right:4%;
+        top:25px;
+    }
+
+
     /* PARTY */
 
     .party{
-
         width:45%;
 
         max-width:none;
@@ -1578,32 +1608,24 @@ PHONE
     }
 
     .building{
-
         width:95%;
-
         height:90px;
     }
 
     .lights{
-
         top:10px;
-
         height:7px;
     }
 
     .person{
-
         transform:scale(.55);
-
-        transform-origin:
-        bottom center;
+        transform-origin:bottom center;
     }
 
 
     /* POOL */
 
     .pool{
-
         width:58%;
 
         max-width:none;
@@ -1617,26 +1639,44 @@ PHONE
         height:25px;
     }
 
+
+    /* FISH */
+
     .fish{
+        width:38px;
+        height:22px;
+    }
 
-        width:40px;
+    .fish:before{
+        width:5px;
+        height:5px;
 
-        height:21px;
+        right:6px;
+        top:6px;
     }
 
     .fish:after{
+        right:-15px;
 
-        right:-14px;
+        border-top:
+        11px solid transparent;
 
-        border-width:
-        9px 16px 9px 0;
+        border-bottom:
+        11px solid transparent;
+
+        border-right:
+        16px solid currentColor;
+    }
+
+    .fish i,
+    .fish b{
+        height:22px;
     }
 
 
     /* PALM */
 
     .palm{
-
         right:41%;
 
         bottom:170px;
@@ -1651,7 +1691,6 @@ PHONE
     /* DECORATION */
 
     .butterfly{
-
         transform:scale(.6);
     }
 
@@ -1663,13 +1702,11 @@ PHONE
     /* FEATURES */
 
     .features{
-
         padding:
         40px 3%;
     }
 
     .title{
-
         font-size:
         clamp(21px,7vw,27px);
     }
@@ -1679,7 +1716,6 @@ PHONE
     }
 
     .cards{
-
         width:100%;
 
         grid-template-columns:
@@ -1694,9 +1730,7 @@ PHONE
     }
 
     .card{
-
         width:100%;
-
         height:105px;
 
         padding:5px;
@@ -1705,7 +1739,6 @@ PHONE
     }
 
     .icon{
-
         width:28px;
         height:28px;
 
@@ -1715,16 +1748,12 @@ PHONE
     }
 
     .card h3{
-
         font-size:9px;
-
         margin-bottom:3px;
     }
 
     .card p{
-
         font-size:6.5px;
-
         line-height:1.2;
     }
 
@@ -1732,13 +1761,11 @@ PHONE
     /* SCENES */
 
     .scenes{
-
         padding:
         40px 3%;
     }
 
     .scene-grid{
-
         width:100%;
 
         grid-template-columns:
@@ -1753,20 +1780,15 @@ PHONE
     }
 
     .scene{
-
         width:100%;
-
         height:160px;
 
         border-radius:10px;
     }
 
     .scene-text{
-
         left:6px;
-
         right:6px;
-
         bottom:6px;
     }
 
@@ -1779,11 +1801,8 @@ PHONE
     }
 
     .mountain{
-
         border-left-width:90px;
-
         border-right-width:90px;
-
         border-bottom-width:120px;
     }
 
@@ -1791,9 +1810,7 @@ PHONE
     /* CTA */
 
     .cta{
-
-        padding:
-        55px 12px;
+        padding:55px 15px;
     }
 
     .cta h2{
@@ -1804,206 +1821,174 @@ PHONE
         font-size:10px;
     }
 
+
+    /* FOOTER */
+
     footer{
+        padding:18px 10px;
         font-size:10px;
-    }
-
-}
-
-
-/* =====================================================
-VERY SMALL PHONES
-===================================================== */
-
-@media(max-width:380px){
-
-    .hero{
-        min-height:500px;
-    }
-
-    .logo{
-        font-size:29px;
-    }
-
-    .tagline{
-        font-size:17px;
-    }
-
-    .description{
-        font-size:8px;
-    }
-
-    .btn{
-        font-size:8px;
-        padding:7px 10px;
-    }
-
-    .cards{
-        grid-template-rows:
-        repeat(2,95px);
-    }
-
-    .card{
-        height:95px;
-    }
-
-    .scene-grid{
-        grid-template-rows:145px;
-    }
-
-    .scene{
-        height:145px;
     }
 }
 
 </style>
-
 </head>
-
 
 <body>
 
 
-<!-- =========================
-HERO
-========================= -->
-
 <section class="hero">
 
-<div class="stars"></div>
+    <div class="stars"></div>
 
-<div class="shooting s1"></div>
-<div class="shooting s2"></div>
-<div class="shooting s3"></div>
-
-
-<!-- PARTY -->
-
-<div class="party">
-
-    <div class="building">
-
-        <div class="lights"></div>
-
-        <div class="person p1"></div>
-        <div class="person p2"></div>
-        <div class="person p3"></div>
-        <div class="person p4"></div>
-
-    </div>
-
-</div>
+    <div class="shooting s1"></div>
+    <div class="shooting s2"></div>
+    <div class="shooting s3"></div>
 
 
-<!-- PALM -->
+    <!-- RAINBOW -->
 
-<div class="palm">
-
-    <div class="leaves">
-
-        <i></i>
-        <i></i>
-        <i></i>
-        <i></i>
-
-    </div>
-
-    <div class="trunk"></div>
-
-</div>
+    <div class="rainbow"></div>
 
 
-<!-- POOL -->
+    <!-- HERO CONTENT -->
 
-<div class="pool">
+    <div class="hero-content">
 
-    <div class="wave w1"></div>
-    <div class="wave w2"></div>
-    <div class="wave w3"></div>
+        <div class="logo">
+            Vital<span>Star</span>
+        </div>
 
-    <div class="fish red"></div>
-    <div class="fish yellow"></div>
-    <div class="fish blue"></div>
-    <div class="fish pink"></div>
+        <div class="tagline">
+            Connect, <span>Share & Shine</span>
+        </div>
 
-</div>
+        <div class="description">
+            VitalStar is more than social media.
+            Connect with friends, share your moments,
+            discover communities and shine together.
+        </div>
 
+        <div class="buttons">
 
-<!-- BUTTERFLIES -->
+            <a href="register.html"
+               class="btn register">
+                Join VitalStar
+            </a>
 
-<div class="butterfly b1">
-    <b></b>
-</div>
+            <a href="login.html"
+               class="btn login">
+                Login
+            </a>
 
-<div class="butterfly b2">
-    <b></b>
-</div>
-
-<div class="butterfly b3">
-    <b></b>
-</div>
-
-
-<!-- FLOWERS -->
-
-<div class="flower flower1">🌸</div>
-<div class="flower flower2">🌺</div>
-<div class="flower flower3">🌷</div>
-
-
-<!-- CONTENT -->
-
-<div class="hero-content">
-
-    <div class="logo">
-        Vital<span>Star</span>
-    </div>
-
-    <div class="tagline">
-
-        Connect. Share.
-
-        <span>
-            Shine Together.
-        </span>
+        </div>
 
     </div>
 
-    <p class="description">
 
-        VitalStar is more than social media.
+    <!-- PARTY -->
 
-        Connect with people, share your
-        moments, chat with friends,
-        discover communities and
-        let your personality shine.
+    <div class="party">
 
-    </p>
+        <div class="building">
 
-    <div class="buttons">
+            <div class="lights"></div>
 
-        <a
-        href="register.html"
-        class="btn register">
+            <div class="person p1"></div>
+            <div class="person p2"></div>
+            <div class="person p3"></div>
+            <div class="person p4"></div>
 
-            ✨ Create Account
-
-        </a>
-
-        <a
-        href="login.html"
-        class="btn login">
-
-            🔐 Login
-
-        </a>
+        </div>
 
     </div>
 
-</div>
+
+    <!-- PALM -->
+
+    <div class="palm">
+
+        <div class="leaves">
+
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+
+        </div>
+
+        <div class="trunk"></div>
+
+    </div>
+
+
+    <!-- POOL -->
+
+    <div class="pool">
+
+        <div class="wave w1"></div>
+        <div class="wave w2"></div>
+        <div class="wave w3"></div>
+
+
+        <!-- MANY COLORFUL FISH -->
+
+        <div class="fish fish-red f1">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-yellow f2">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-blue f3">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-pink f4">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-green f5">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-purple f6">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-orange f7">
+            <i></i><b></b>
+        </div>
+
+        <div class="fish fish-white f8">
+            <i></i><b></b>
+        </div>
+
+    </div>
+
+
+    <!-- BUTTERFLIES -->
+
+    <div class="butterfly b1">
+        <b></b>
+    </div>
+
+    <div class="butterfly b2">
+        <b></b>
+    </div>
+
+    <div class="butterfly b3">
+        <b></b>
+    </div>
+
+
+    <!-- FLOWERS -->
+
+    <div class="flower flower1">🌸</div>
+    <div class="flower flower2">🌺</div>
+    <div class="flower flower3">🌼</div>
 
 </section>
-
 
 
 <!-- =========================
@@ -2012,115 +1997,106 @@ FEATURES
 
 <section class="features">
 
-<h2 class="title">
+    <h2 class="title">
+        Everything You Need to
+        <span>Shine</span>
+    </h2>
 
-Everything
-
-<span>You Love</span>
-
-In One Place
-
-</h2>
-
-<p class="subtitle">
-
-Connect, share, communicate,
-discover and have fun.
-
-</p>
+    <p class="subtitle">
+        Connect with people, share your world,
+        discover communities and enjoy everything
+        VitalStar has to offer.
+    </p>
 
 
-<div class="cards">
+    <div class="cards">
+
+        <div class="card">
+
+            <div class="icon">💬</div>
+
+            <h3>Chat</h3>
+
+            <p>
+                Talk with friends and
+                stay connected.
+            </p>
+
+        </div>
 
 
-<div class="card">
+        <div class="card">
 
-<div class="icon">👥</div>
+            <div class="icon">📸</div>
 
-<h3>Connect</h3>
+            <h3>Share</h3>
 
-<p>
-Find friends and grow
-your social network.
-</p>
+            <p>
+                Share photos,
+                videos and moments.
+            </p>
 
-</div>
-
-
-<div class="card">
-
-<div class="icon">📸</div>
-
-<h3>Share Moments</h3>
-
-<p>
-Share photos, videos
-and updates.
-</p>
-
-</div>
+        </div>
 
 
-<div class="card">
+        <div class="card">
 
-<div class="icon">💬</div>
+            <div class="icon">👥</div>
 
-<h3>Chat</h3>
+            <h3>Communities</h3>
 
-<p>
-Talk with friends
-anytime.
-</p>
+            <p>
+                Discover and join
+                communities you love.
+            </p>
 
-</div>
-
-
-<div class="card">
-
-<div class="icon">🌎</div>
-
-<h3>Communities</h3>
-
-<p>
-Join groups and
-meet people.
-</p>
-
-</div>
+        </div>
 
 
-<div class="card">
+        <div class="card">
 
-<div class="icon">🎮</div>
+            <div class="icon">🔔</div>
 
-<h3>Games</h3>
+            <h3>Notifications</h3>
 
-<p>
-Enjoy exciting
-games and activities.
-</p>
+            <p>
+                Never miss important
+                updates from friends.
+            </p>
 
-</div>
-
-
-<div class="card">
-
-<div class="icon">⭐</div>
-
-<h3>Shine</h3>
-
-<p>
-Express yourself
-and stand out.
-</p>
-
-</div>
+        </div>
 
 
-</div>
+        <div class="card">
+
+            <div class="icon">🎮</div>
+
+            <h3>Games</h3>
+
+            <p>
+                Have fun and enjoy
+                exciting games.
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">✨</div>
+
+            <h3>Shine</h3>
+
+            <p>
+                Express yourself and
+                be part of VitalStar.
+            </p>
+
+        </div>
+
+    </div>
 
 </section>
-
 
 
 <!-- =========================
@@ -2129,97 +2105,83 @@ SCENES
 
 <section class="scenes">
 
-<h2 class="title">
+    <h2 class="title">
+        Explore the
+        <span>World</span>
+    </h2>
 
-A World Full Of
-
-<span>Possibilities</span>
-
-</h2>
-
-<p class="subtitle">
-
-Discover beautiful moments,
-exciting experiences and
-new adventures.
-
-</p>
+    <p class="subtitle">
+        A colorful place where everyone
+        can connect and shine.
+    </p>
 
 
-<div class="scene-grid">
+    <div class="scene-grid">
 
 
-<!-- FISH -->
+        <!-- WATER -->
 
-<div class="scene underwater">
+        <div class="scene underwater">
 
-    <div class="mini-fish mf1"></div>
-    <div class="mini-fish mf2"></div>
-    <div class="mini-fish mf3"></div>
+            <div class="mini-fish mf1"></div>
+            <div class="mini-fish mf2"></div>
+            <div class="mini-fish mf3"></div>
 
-    <div class="scene-text">
+            <div class="scene-text">
 
-        <h3>🐠 Discover</h3>
+                <h3>Underwater</h3>
 
-        <p>
-        Explore beautiful moments
-        and discover something new.
-        </p>
+                <p>
+                    Dive into a colorful world
+                    of friends and discovery.
+                </p>
 
-    </div>
+            </div>
 
-</div>
-
-
-<!-- PARTY -->
-
-<div class="scene party-scene">
-
-    <div class="person p1"></div>
-    <div class="person p2"></div>
-    <div class="person p3"></div>
-    <div class="person p4"></div>
-
-    <div class="scene-text">
-
-        <h3>🎉 Celebrate</h3>
-
-        <p>
-        Share happiness and enjoy
-        great moments together.
-        </p>
-
-    </div>
-
-</div>
+        </div>
 
 
-<!-- STARS -->
+        <!-- PARTY -->
 
-<div class="scene night">
+        <div class="scene party-scene">
 
-    <div class="mountain mountain1"></div>
+            <div class="scene-text">
 
-    <div class="mountain mountain2"></div>
+                <h3>Party</h3>
 
-    <div class="scene-text">
+                <p>
+                    Share moments and
+                    celebrate together.
+                </p>
 
-        <h3>🌠 Shine</h3>
+            </div>
 
-        <p>
-        Let your brightest
-        moments shine.
-        </p>
+        </div>
+
+
+        <!-- NIGHT -->
+
+        <div class="scene night">
+
+            <div class="mountain mountain1"></div>
+            <div class="mountain mountain2"></div>
+
+            <div class="scene-text">
+
+                <h3>Night Sky</h3>
+
+                <p>
+                    Dream big and let
+                    your star shine.
+                </p>
+
+            </div>
+
+        </div>
 
     </div>
-
-</div>
-
-
-</div>
 
 </section>
-
 
 
 <!-- =========================
@@ -2228,92 +2190,52 @@ CTA
 
 <section class="cta">
 
-<h2>
+    <h2>
+        Ready to
+        <span>Shine?</span>
+    </h2>
 
-Start Your
+    <p>
+        Join VitalStar and connect with
+        people, share your moments and
+        discover a colorful social world.
+    </p>
 
-<span>Journey</span>
+    <div class="buttons">
 
-Today
+        <a href="register.html"
+           class="btn register">
+            Create Account
+        </a>
 
-</h2>
+        <a href="login.html"
+           class="btn login">
+            Login
+        </a>
 
-<p>
-
-Create your VitalStar account
-and become part of an exciting
-social community.
-
-</p>
-
-
-<div class="buttons">
-
-<a
-href="register.html"
-class="btn register">
-
-🚀 Create Account
-
-</a>
-
-<a
-href="login.html"
-class="btn login">
-
-🔐 Login
-
-</a>
-
-</div>
+    </div>
 
 </section>
 
 
+<!-- =========================
+FOOTER
+========================= -->
 
 <footer>
 
-© 2026
+    <strong>VitalStar</strong>
 
-<strong>VitalStar</strong>
+    <br><br>
 
-<br>
+    Connect • Share • Shine
 
-Connect • Share • Shine
+    <br><br>
+
+    © 2026 VitalStar. All rights reserved.
 
 </footer>
 
-
-<!-- =========================
-AUTH REDIRECT
-========================= -->
-
-<script type="module">
-
-import { auth } from "./firebase.js";
-
-import {
-    onAuthStateChanged
-}
-from
-"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-
-onAuthStateChanged(
-    auth,
-    (user)=>{
-
-        if(user){
-
-            window.location.href =
-            "home.html";
-
-        }
-
-    }
-);
-
-</script>
 
 </body>
 </html>
