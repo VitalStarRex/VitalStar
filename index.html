@@ -6,19 +6,27 @@
 
 <title>VitalStar - Connect, Share & Shine</title>
 
-<meta name="google-site-verification" content="1fCHKHoTwEN8FWE3BFeqAuc4ztlqPX65MpS4GzRWc7o">
+<meta name="google-site-verification"
+content="1fCHKHoTwEN8FWE3BFeqAuc4ztlqPX65MpS4GzRWc7o">
 
-<meta name="description" content="VitalStar is a social media platform where you can connect with friends, share photos, videos, chat and build your community.">
+<meta name="description"
+content="VitalStar is a social platform where you can connect, share moments, chat, discover communities and shine together.">
 
-<meta name="keywords" content="VitalStar, social media, friends, chat, photos, videos, community">
+<meta name="keywords"
+content="VitalStar, social media, friends, chat, photos, videos, community">
 
 <meta name="author" content="VitalStar">
 
 <meta name="robots" content="index, follow">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
 
 <style>
+
+/* ==============================
+   RESET
+============================== */
 
 *{
     margin:0;
@@ -31,76 +39,145 @@ html{
 }
 
 body{
+    font-family:Arial,sans-serif;
     background:#020018;
+    color:white;
     overflow-x:hidden;
 }
 
-/* MAIN PAGE */
+a{
+    text-decoration:none;
+}
 
-.page{
+
+/* ==============================
+   HERO
+============================== */
+
+.hero{
+
     position:relative;
-    width:100%;
-    max-width:1024px;
-    margin:auto;
-}
 
-/* THE EXACT VITALSTAR PICTURE */
+    min-height:720px;
 
-.main-image{
-    display:block;
-    width:100%;
-    height:auto;
-}
-
-/* ANIMATION LAYER */
-
-.effects{
-    position:absolute;
-    inset:0;
     overflow:hidden;
-    pointer-events:none;
+
+    background:
+    radial-gradient(
+        circle at 75% 35%,
+        #8b2699 0%,
+        #35115c 30%,
+        #10043d 60%,
+        #020018 100%
+    );
 }
 
-/* SHOOTING STARS */
 
-.star{
+/* ==============================
+   STARS
+============================== */
+
+.stars{
+
     position:absolute;
-    width:130px;
+
+    inset:0;
+
+    background-image:
+
+    radial-gradient(
+        circle,
+        white 1px,
+        transparent 2px
+    ),
+
+    radial-gradient(
+        circle,
+        #5eeaff 1px,
+        transparent 2px
+    );
+
+    background-size:
+    70px 70px,
+    120px 120px;
+
+    animation:
+    starsMove 18s linear infinite;
+
+    opacity:.8;
+}
+
+@keyframes starsMove{
+
+    from{
+        background-position:
+        0 0,
+        0 0;
+    }
+
+    to{
+        background-position:
+        150px 300px,
+        -200px 250px;
+    }
+}
+
+
+/* ==============================
+   SHOOTING STARS
+============================== */
+
+.shooting{
+
+    position:absolute;
+
+    width:190px;
     height:3px;
-    background:linear-gradient(
+
+    background:
+    linear-gradient(
         90deg,
         transparent,
         white,
-        #00d9ff
+        #00eaff
     );
+
     box-shadow:
-        0 0 8px white,
-        0 0 18px #00d9ff;
+    0 0 10px white,
+    0 0 25px #00cfff;
+
     transform:rotate(-30deg);
-    animation:shoot 5s linear infinite;
+
+    animation:
+    shooting 5s linear infinite;
+
+    z-index:3;
 }
 
-.star1{
-    top:3%;
-    left:-160px;
+.shooting.one{
+    top:80px;
+    left:-250px;
 }
 
-.star2{
-    top:9%;
-    left:-200px;
+.shooting.two{
+    top:170px;
+    left:-350px;
     animation-delay:2s;
 }
 
-.star3{
-    top:16%;
-    left:-250px;
-    animation-delay:4s;
+.shooting.three{
+    top:260px;
+    left:-280px;
+    animation-delay:3.5s;
 }
 
-@keyframes shoot{
+@keyframes shooting{
 
     0%{
-        transform:translate(-100px,-50px) rotate(-30deg);
+        transform:
+        translate(-100px,-50px)
+        rotate(-30deg);
+
         opacity:0;
     }
 
@@ -109,202 +186,1629 @@ body{
     }
 
     100%{
-        transform:translate(1300px,500px) rotate(-30deg);
+        transform:
+        translate(1400px,600px)
+        rotate(-30deg);
+
         opacity:0;
     }
-
 }
 
-/* FLOATING LIGHTS */
 
-.light{
+/* ==============================
+   HERO CONTENT
+============================== */
+
+.hero-content{
+
+    position:relative;
+
+    z-index:20;
+
+    width:92%;
+
+    max-width:1150px;
+
+    margin:auto;
+
+    padding-top:55px;
+}
+
+.logo{
+
+    font-size:65px;
+
+    font-weight:900;
+
+    letter-spacing:-4px;
+
+    text-shadow:
+    0 0 15px #00d9ff,
+    0 0 35px #8e27ff;
+}
+
+.logo span{
+    color:#ffc800;
+}
+
+.tagline{
+
+    max-width:650px;
+
+    font-size:43px;
+
+    line-height:1.1;
+
+    font-weight:900;
+
+    margin-top:10px;
+}
+
+.tagline span{
+
+    background:
+    linear-gradient(
+        90deg,
+        #ff45c9,
+        #00dfff,
+        #ffd000
+    );
+
+    -webkit-background-clip:text;
+
+    color:transparent;
+}
+
+.description{
+
+    max-width:500px;
+
+    margin-top:20px;
+
+    color:#eee;
+
+    font-size:17px;
+
+    line-height:1.6;
+}
+
+
+/* ==============================
+   BUTTONS
+============================== */
+
+.buttons{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-top:28px;
+
+    flex-wrap:wrap;
+}
+
+.btn{
+
+    display:inline-block;
+
+    padding:15px 27px;
+
+    border-radius:40px;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+    transition:.3s;
+}
+
+.register{
+
+    color:white;
+
+    background:
+    linear-gradient(
+        90deg,
+        #ff4d88,
+        #a92cff
+    );
+
+    box-shadow:
+    0 0 20px #ff22c8;
+}
+
+.login{
+
+    color:white;
+
+    background:#05021e;
+
+    border:
+    2px solid #ffd000;
+
+    box-shadow:
+    0 0 15px #ffd000;
+}
+
+.btn:hover{
+
+    transform:
+    translateY(-5px)
+    scale(1.04);
+}
+
+
+/* ==============================
+   POOL
+============================== */
+
+.pool{
+
     position:absolute;
-    width:5px;
-    height:5px;
+
+    right:-4%;
+
+    bottom:0;
+
+    width:58%;
+
+    height:390px;
+
+    overflow:hidden;
+
+    border-radius:
+    50% 50% 0 0;
+
+    background:
+    radial-gradient(
+        ellipse at center,
+        #67f5ff,
+        #087ed9 45%,
+        #021765 90%
+    );
+
+    box-shadow:
+    inset 0 15px 35px rgba(255,255,255,.35),
+    0 -10px 50px #007dff;
+
+    z-index:5;
+}
+
+
+/* WATER */
+
+.wave{
+
+    position:absolute;
+
+    width:130%;
+
+    height:45px;
+
+    left:-15%;
+
     border-radius:50%;
-    background:white;
-    box-shadow:0 0 15px white;
-    animation:twinkle 2s infinite alternate;
+
+    border-top:
+    4px solid
+    rgba(255,255,255,.35);
+
+    animation:
+    wave 4s ease-in-out infinite;
 }
 
-.l1{
-    top:7%;
-    left:45%;
+.wave.one{
+    top:70px;
 }
 
-.l2{
-    top:13%;
-    left:68%;
-    animation-delay:.5s;
-}
-
-.l3{
-    top:21%;
-    left:52%;
+.wave.two{
+    top:180px;
     animation-delay:1s;
 }
 
-.l4{
-    top:31%;
-    left:82%;
-    animation-delay:1.5s;
-}
-
-.l5{
-    top:48%;
-    left:15%;
+.wave.three{
+    top:290px;
     animation-delay:2s;
 }
 
-.l6{
-    top:61%;
-    left:74%;
-    animation-delay:.7s;
-}
+@keyframes wave{
 
-.l7{
-    top:76%;
-    left:25%;
-    animation-delay:1.3s;
-}
-
-.l8{
-    top:87%;
-    left:82%;
-    animation-delay:1.8s;
-}
-
-@keyframes twinkle{
-
-    from{
-        opacity:.2;
-        transform:scale(.5);
+    50%{
+        transform:
+        translateX(30px);
     }
+}
+
+
+/* ==============================
+   FISH
+============================== */
+
+.fish{
+
+    position:absolute;
+
+    width:65px;
+
+    height:35px;
+
+    border-radius:
+    55% 45% 50% 50%;
+
+    animation:
+    swim 9s linear infinite;
+}
+
+.fish:before{
+
+    content:"";
+
+    position:absolute;
+
+    width:8px;
+
+    height:8px;
+
+    border-radius:50%;
+
+    background:#111;
+
+    right:12px;
+
+    top:10px;
+}
+
+.fish:after{
+
+    content:"";
+
+    position:absolute;
+
+    right:-22px;
+
+    top:4px;
+
+    border-style:solid;
+
+    border-width:
+    14px 25px 14px 0;
+
+    border-color:
+    transparent
+    currentColor
+    transparent
+    transparent;
+}
+
+.fish.red{
+
+    background:#ff5533;
+
+    color:#ff5533;
+
+    top:130px;
+}
+
+.fish.yellow{
+
+    background:#ffd000;
+
+    color:#ffd000;
+
+    top:220px;
+
+    animation-delay:2s;
+}
+
+.fish.blue{
+
+    background:#00dcff;
+
+    color:#00dcff;
+
+    top:90px;
+
+    animation-delay:4s;
+}
+
+.fish.pink{
+
+    background:#ff45c8;
+
+    color:#ff45c8;
+
+    top:290px;
+
+    animation-delay:6s;
+}
+
+@keyframes swim{
+
+    0%{
+        left:-100px;
+    }
+
+    50%{
+        left:65%;
+
+        transform:
+        translateY(-25px);
+    }
+
+    100%{
+        left:110%;
+
+        transform:
+        translateY(20px);
+    }
+}
+
+
+/* ==============================
+   PARTY
+============================== */
+
+.party{
+
+    position:absolute;
+
+    right:0;
+
+    top:90px;
+
+    width:47%;
+
+    height:280px;
+
+    z-index:7;
+}
+
+.building{
+
+    position:absolute;
+
+    right:5%;
+
+    bottom:0;
+
+    width:90%;
+
+    height:165px;
+
+    border-radius:
+    18px 18px 0 0;
+
+    background:
+    linear-gradient(
+        90deg,
+        #41094b,
+        #a7277e,
+        #43084d
+    );
+
+    box-shadow:
+    0 0 35px #ff28c8;
+}
+
+.lights{
+
+    position:absolute;
+
+    top:18px;
+
+    left:5%;
+
+    width:90%;
+
+    height:12px;
+
+    background:
+    repeating-linear-gradient(
+        90deg,
+        #ffd000 0 12px,
+        #ff35c8 12px 24px,
+        #00eaff 24px 36px
+    );
+
+    animation:
+    lights 1s infinite alternate;
+}
+
+@keyframes lights{
 
     to{
-        opacity:1;
-        transform:scale(2);
+        filter:
+        brightness(2.3);
     }
-
 }
 
-/* BUTTERFLY GLOW EFFECTS */
+
+/* DANCERS */
+
+.person{
+
+    position:absolute;
+
+    bottom:10px;
+
+    width:18px;
+
+    height:70px;
+
+    border-radius:10px;
+
+    background:#100c20;
+
+    animation:
+    dance .7s infinite alternate;
+}
+
+.person:before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-28px;
+
+    left:-4px;
+
+    width:26px;
+
+    height:26px;
+
+    border-radius:50%;
+
+    background:#b87554;
+}
+
+.person:after{
+
+    content:"";
+
+    position:absolute;
+
+    top:18px;
+
+    left:-20px;
+
+    width:58px;
+
+    height:8px;
+
+    border-radius:10px;
+
+    background:#100c20;
+
+    transform:rotate(-20deg);
+}
+
+.person.p1{
+    left:15%;
+}
+
+.person.p2{
+    left:35%;
+
+    animation-delay:.2s;
+}
+
+.person.p3{
+    left:55%;
+
+    animation-delay:.4s;
+}
+
+.person.p4{
+    left:75%;
+
+    animation-delay:.6s;
+}
+
+@keyframes dance{
+
+    to{
+        transform:
+        translateY(-14px)
+        rotate(8deg);
+    }
+}
+
+
+/* ==============================
+   PALM
+============================== */
+
+.palm{
+
+    position:absolute;
+
+    right:43%;
+
+    bottom:280px;
+
+    z-index:9;
+}
+
+.trunk{
+
+    width:17px;
+
+    height:150px;
+
+    background:
+    linear-gradient(
+        90deg,
+        #4d240e,
+        #b66b2c,
+        #54280f
+    );
+
+    transform:rotate(7deg);
+}
+
+.leaves{
+
+    position:absolute;
+
+    top:-60px;
+
+    left:-75px;
+
+    width:170px;
+
+    height:100px;
+}
+
+.leaves i{
+
+    position:absolute;
+
+    width:105px;
+
+    height:20px;
+
+    border-radius:100%;
+
+    background:#168d4c;
+
+    transform-origin:right center;
+}
+
+.leaves i:nth-child(1){
+    transform:rotate(-40deg);
+}
+
+.leaves i:nth-child(2){
+    transform:rotate(-15deg);
+}
+
+.leaves i:nth-child(3){
+    transform:rotate(15deg);
+}
+
+.leaves i:nth-child(4){
+    transform:rotate(40deg);
+}
+
+
+/* ==============================
+   BUTTERFLIES
+============================== */
 
 .butterfly{
+
     position:absolute;
-    font-size:25px;
-    filter:drop-shadow(0 0 8px #ff44d9);
-    animation:fly 8s ease-in-out infinite;
+
+    width:30px;
+
+    height:25px;
+
+    z-index:30;
+
+    animation:
+    butterfly 8s ease-in-out infinite;
+}
+
+.butterfly:before,
+.butterfly:after{
+
+    content:"";
+
+    position:absolute;
+
+    width:18px;
+
+    height:23px;
+
+    border-radius:
+    80% 20% 80% 20%;
+}
+
+.butterfly:before{
+
+    left:0;
+
+    background:#ff45c8;
+
+    transform:rotate(25deg);
+}
+
+.butterfly:after{
+
+    right:0;
+
+    background:#ffd000;
+
+    transform:rotate(-25deg);
+}
+
+.butterfly b{
+
+    position:absolute;
+
+    left:13px;
+
+    width:5px;
+
+    height:27px;
+
+    background:#111;
+
+    z-index:3;
 }
 
 .b1{
-    top:12%;
+    top:25%;
     left:4%;
 }
 
 .b2{
-    top:32%;
-    right:3%;
+    top:55%;
+    right:4%;
     animation-delay:2s;
 }
 
 .b3{
-    top:62%;
-    left:4%;
+    top:75%;
+    left:8%;
     animation-delay:4s;
 }
 
-.b4{
-    top:79%;
-    right:5%;
-    animation-delay:6s;
-}
-
-@keyframes fly{
+@keyframes butterfly{
 
     0%,100%{
-        transform:translate(0,0) rotate(-8deg);
+        transform:
+        translate(0,0)
+        rotate(-5deg);
     }
 
     25%{
-        transform:translate(40px,-50px) rotate(10deg);
+        transform:
+        translate(70px,-60px)
+        rotate(12deg);
     }
 
     50%{
-        transform:translate(90px,10px) rotate(-10deg);
+        transform:
+        translate(130px,10px)
+        rotate(-10deg);
     }
 
     75%{
-        transform:translate(30px,50px) rotate(8deg);
+        transform:
+        translate(60px,70px)
+        rotate(8deg);
+    }
+}
+
+
+/* ==============================
+   FLOWERS
+============================== */
+
+.flower{
+
+    position:absolute;
+
+    z-index:25;
+
+    font-size:38px;
+
+    animation:
+    flowerMove 3s ease-in-out infinite;
+}
+
+.flower.one{
+    left:2%;
+    bottom:20px;
+}
+
+.flower.two{
+    right:3%;
+    bottom:25px;
+    animation-delay:1s;
+}
+
+.flower.three{
+    left:22%;
+    bottom:10px;
+    animation-delay:2s;
+}
+
+@keyframes flowerMove{
+
+    50%{
+        transform:
+        rotate(12deg)
+        translateY(-8px);
+    }
+}
+
+
+/* ==============================
+   FEATURES
+============================== */
+
+.features{
+
+    padding:
+    65px 4%;
+
+    background:
+    linear-gradient(
+        180deg,
+        #06104a,
+        #090025
+    );
+}
+
+.title{
+
+    text-align:center;
+
+    font-size:38px;
+
+    margin-bottom:12px;
+}
+
+.title span{
+    color:#ff45cb;
+}
+
+.subtitle{
+
+    max-width:720px;
+
+    margin:auto;
+
+    text-align:center;
+
+    color:#ccc;
+
+    line-height:1.5;
+
+    font-size:15px;
+}
+
+
+/* EQUAL GRID */
+
+.cards{
+
+    width:100%;
+
+    max-width:1150px;
+
+    margin:40px auto 0;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,1fr);
+
+    grid-template-rows:
+    repeat(2,210px);
+
+    gap:15px;
+}
+
+
+/* EQUAL CARDS */
+
+.card{
+
+    width:100%;
+
+    height:210px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+
+    padding:20px;
+
+    border-radius:20px;
+
+    border:
+    1px solid
+    rgba(255,255,255,.2);
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(60,20,120,.9),
+        rgba(5,10,50,.9)
+    );
+
+    transition:.3s;
+}
+
+.card:hover{
+
+    transform:
+    translateY(-8px);
+
+    box-shadow:
+    0 15px 35px #000;
+}
+
+.icon{
+
+    width:55px;
+
+    height:55px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:#24105c;
+
+    border:
+    1px solid #a82dff;
+
+    font-size:25px;
+
+    margin-bottom:12px;
+}
+
+.card h3{
+
+    font-size:18px;
+
+    margin-bottom:8px;
+}
+
+.card p{
+
+    color:#ccc;
+
+    font-size:13px;
+
+    line-height:1.4;
+}
+
+
+/* ==============================
+   SCENES
+============================== */
+
+.scenes{
+
+    padding:
+    65px 4%;
+
+    background:#030019;
+}
+
+.scene-grid{
+
+    width:100%;
+
+    max-width:1150px;
+
+    margin:40px auto 0;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,1fr);
+
+    grid-template-rows:
+    300px;
+
+    gap:15px;
+}
+
+.scene{
+
+    width:100%;
+
+    height:300px;
+
+    position:relative;
+
+    overflow:hidden;
+
+    border-radius:20px;
+
+    border:
+    1px solid
+    rgba(255,255,255,.2);
+}
+
+
+/* UNDERWATER */
+
+.underwater{
+
+    background:
+    radial-gradient(
+        circle at 30% 30%,
+        #67ffff,
+        #0073bd 45%,
+        #001c61
+    );
+}
+
+.underwater:before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+    repeating-radial-gradient(
+        ellipse,
+        transparent 0 25px,
+        rgba(255,255,255,.15)
+        27px 30px
+    );
+
+    animation:
+    water 5s linear infinite;
+}
+
+@keyframes water{
+
+    to{
+        transform:
+        translateY(50px);
+    }
+}
+
+
+/* MINI FISH */
+
+.mini-fish{
+
+    position:absolute;
+
+    width:48px;
+
+    height:25px;
+
+    border-radius:50%;
+
+    background:#ffc400;
+
+    animation:
+    miniSwim 5s linear infinite;
+}
+
+.mini-fish:after{
+
+    content:"";
+
+    position:absolute;
+
+    right:-18px;
+
+    top:2px;
+
+    border-style:solid;
+
+    border-width:
+    10px 20px 10px 0;
+
+    border-color:
+    transparent #ffc400
+    transparent transparent;
+}
+
+.mini-fish.f2{
+
+    top:55%;
+
+    background:#ff477e;
+
+    animation-delay:1s;
+}
+
+.mini-fish.f2:after{
+
+    border-color:
+    transparent #ff477e
+    transparent transparent;
+}
+
+.mini-fish.f3{
+
+    top:70%;
+
+    background:#00e0ff;
+
+    animation-delay:2s;
+}
+
+.mini-fish.f3:after{
+
+    border-color:
+    transparent #00e0ff
+    transparent transparent;
+}
+
+.mini-fish.f1{
+    top:30%;
+}
+
+@keyframes miniSwim{
+
+    from{
+        left:-60px;
     }
 
+    to{
+        left:110%;
+    }
 }
 
-/* CLICKABLE BUTTON AREAS */
 
-/*
-The buttons are already inside the picture.
-These invisible links simply make them clickable.
-*/
+/* PARTY SCENE */
 
-.create-top{
+.party-scene{
+
+    background:
+    radial-gradient(
+        circle at center,
+        #ff2bbf,
+        #4a096d 45%,
+        #09001e
+    );
+}
+
+
+/* NIGHT */
+
+.night{
+
+    background:
+    linear-gradient(
+        180deg,
+        #020028,
+        #182b72,
+        #ff6b83
+    );
+}
+
+.mountain{
+
     position:absolute;
-    left:10%;
-    top:27.7%;
-    width:25%;
-    height:4%;
-    z-index:20;
+
+    bottom:0;
+
+    width:0;
+
+    height:0;
+
+    border-left:
+    180px solid transparent;
+
+    border-right:
+    180px solid transparent;
+
+    border-bottom:
+    230px solid #090a34;
 }
 
-.login-top{
+.mountain.one{
+    left:-70px;
+}
+
+.mountain.two{
+
+    right:-80px;
+
+    border-bottom-color:#121642;
+}
+
+
+/* SCENE TEXT */
+
+.scene-text{
+
     position:absolute;
-    left:35%;
-    top:27.7%;
-    width:15%;
-    height:4%;
-    z-index:20;
+
+    left:18px;
+
+    right:18px;
+
+    bottom:18px;
+
+    z-index:10;
 }
 
-.create-bottom{
-    position:absolute;
-    left:25%;
-    top:93%;
-    width:26%;
-    height:4%;
-    z-index:20;
+.scene-text h3{
+
+    font-size:21px;
+
+    margin-bottom:7px;
 }
 
-.login-bottom{
-    position:absolute;
-    left:52%;
-    top:93%;
-    width:18%;
-    height:4%;
-    z-index:20;
+.scene-text p{
+
+    color:#ddd;
+
+    font-size:13px;
+
+    line-height:1.4;
 }
 
-/* BUTTON HOVER GLOW */
 
-.create-top:hover,
-.create-bottom:hover{
-    filter:drop-shadow(0 0 15px #ff20d0);
+/* ==============================
+   CTA
+============================== */
+
+.cta{
+
+    position:relative;
+
+    overflow:hidden;
+
+    padding:
+    90px 20px;
+
+    text-align:center;
+
+    background:
+    radial-gradient(
+        circle at center,
+        #35006c,
+        #080022 65%
+    );
 }
 
-.login-top:hover,
-.login-bottom:hover{
-    filter:drop-shadow(0 0 15px #ffd700);
+.cta h2{
+    font-size:40px;
 }
 
-/* MOBILE */
+.cta h2 span{
+    color:#ffc800;
+}
+
+.cta p{
+
+    max-width:650px;
+
+    margin:
+    18px auto 0;
+
+    color:#ccc;
+
+    line-height:1.6;
+}
+
+.cta .buttons{
+    justify-content:center;
+}
+
+
+/* ==============================
+   FOOTER
+============================== */
+
+footer{
+
+    padding:25px;
+
+    text-align:center;
+
+    background:#01000b;
+
+    color:#888;
+}
+
+footer strong{
+    color:#ffc800;
+}
+
+
+/* ==============================
+   TABLET
+============================== */
+
+@media(max-width:850px){
+
+    .hero{
+        min-height:650px;
+    }
+
+    .logo{
+        font-size:52px;
+    }
+
+    .tagline{
+        font-size:34px;
+        max-width:55%;
+    }
+
+    .description{
+        max-width:50%;
+        font-size:14px;
+    }
+
+    .party{
+        width:48%;
+    }
+
+    .pool{
+        width:57%;
+    }
+
+    .cards{
+
+        grid-template-columns:
+        repeat(3,1fr);
+
+        grid-template-rows:
+        repeat(2,170px);
+
+        gap:8px;
+    }
+
+    .card{
+        height:170px;
+        padding:10px;
+    }
+
+    .icon{
+        width:40px;
+        height:40px;
+        font-size:18px;
+        margin-bottom:7px;
+    }
+
+    .card h3{
+        font-size:13px;
+    }
+
+    .card p{
+        font-size:9px;
+    }
+
+    .scene-grid{
+        grid-template-rows:240px;
+    }
+
+    .scene{
+        height:240px;
+    }
+
+    .scene-text{
+        left:10px;
+        right:10px;
+        bottom:10px;
+    }
+
+    .scene-text h3{
+        font-size:14px;
+    }
+
+    .scene-text p{
+        font-size:9px;
+    }
+}
+
+
+/* ==============================
+   PHONE
+============================== */
 
 @media(max-width:600px){
 
-    .star{
-        width:90px;
+    body{
+        min-width:360px;
+    }
+
+    .hero{
+
+        min-height:600px;
+
+        aspect-ratio:
+        1.15 / 1;
+    }
+
+    .hero-content{
+
+        width:94%;
+
+        padding-top:28px;
+    }
+
+    .logo{
+        font-size:38px;
+        letter-spacing:-2px;
+    }
+
+    .tagline{
+
+        font-size:23px;
+
+        max-width:58%;
+    }
+
+    .description{
+
+        max-width:53%;
+
+        font-size:11px;
+
+        line-height:1.4;
+    }
+
+    .buttons{
+
+        margin-top:15px;
+
+        gap:7px;
+    }
+
+    .btn{
+
+        padding:
+        9px 13px;
+
+        font-size:11px;
+    }
+
+
+    /* KEEP ALL HERO ELEMENTS */
+
+    .party{
+
+        display:block;
+
+        width:46%;
+
+        height:170px;
+
+        top:80px;
+    }
+
+    .building{
+        height:105px;
+    }
+
+    .person{
+        transform:scale(.65);
+
+        transform-origin:
+        bottom center;
+    }
+
+    .pool{
+
+        display:block;
+
+        width:58%;
+
+        height:240px;
+
+        right:-4%;
+    }
+
+    .palm{
+
+        display:block;
+
+        transform:scale(.55);
+
+        transform-origin:
+        bottom center;
+
+        bottom:190px;
+
+        right:42%;
+    }
+
+    .flower{
+        font-size:25px;
     }
 
     .butterfly{
-        font-size:18px;
+        transform:scale(.65);
+    }
+
+
+    /* FEATURES */
+
+    .features{
+
+        padding:
+        45px 3%;
+    }
+
+    .title{
+        font-size:24px;
+    }
+
+    .subtitle{
+        font-size:11px;
+    }
+
+    .cards{
+
+        grid-template-columns:
+        repeat(3,1fr);
+
+        grid-template-rows:
+        repeat(2,125px);
+
+        gap:6px;
+
+        margin-top:25px;
+    }
+
+    .card{
+
+        height:125px;
+
+        padding:7px;
+
+        border-radius:12px;
+    }
+
+    .icon{
+
+        width:32px;
+
+        height:32px;
+
+        font-size:15px;
+
+        margin-bottom:5px;
+    }
+
+    .card h3{
+
+        font-size:10px;
+
+        margin-bottom:4px;
+    }
+
+    .card p{
+
+        font-size:7px;
+
+        line-height:1.25;
+    }
+
+
+    /* SCENES */
+
+    .scenes{
+
+        padding:
+        45px 3%;
+    }
+
+    .scene-grid{
+
+        grid-template-columns:
+        repeat(3,1fr);
+
+        grid-template-rows:
+        190px;
+
+        gap:6px;
+
+        margin-top:25px;
+    }
+
+    .scene{
+
+        height:190px;
+
+        border-radius:12px;
+    }
+
+    .scene-text{
+
+        left:7px;
+
+        right:7px;
+
+        bottom:7px;
+    }
+
+    .scene-text h3{
+        font-size:11px;
+    }
+
+    .scene-text p{
+        font-size:7px;
+    }
+
+
+    /* CTA */
+
+    .cta{
+        padding:60px 15px;
+    }
+
+    .cta h2{
+        font-size:27px;
+    }
+
+    .cta p{
+        font-size:11px;
+    }
+
+}
+
+
+/* ==============================
+   VERY SMALL PHONE
+============================== */
+
+@media(max-width:390px){
+
+    .hero{
+        min-height:570px;
+    }
+
+    .logo{
+        font-size:34px;
+    }
+
+    .tagline{
+        font-size:21px;
+    }
+
+    .description{
+        font-size:10px;
+    }
+
+    .cards{
+
+        grid-template-rows:
+        repeat(2,115px);
+    }
+
+    .card{
+        height:115px;
+    }
+
+    .scene-grid{
+        grid-template-rows:175px;
+    }
+
+    .scene{
+        height:175px;
     }
 
 }
@@ -313,77 +1817,586 @@ These invisible links simply make them clickable.
 
 </head>
 
+
 <body>
 
-<div class="page">
 
-    <!-- EXACT VITALSTAR IMAGE -->
+<!-- =====================================
+     HERO
+===================================== -->
 
-    <img
-        src="vitalstar.png"
-        class="main-image"
-        alt="VitalStar Connect Share Shine"
-    >
+<section class="hero">
 
 
-    <!-- ANIMATIONS -->
+<div class="stars"></div>
 
-    <div class="effects">
 
-        <div class="star star1"></div>
-        <div class="star star2"></div>
-        <div class="star star3"></div>
+<div class="shooting one"></div>
 
-        <div class="light l1"></div>
-        <div class="light l2"></div>
-        <div class="light l3"></div>
-        <div class="light l4"></div>
-        <div class="light l5"></div>
-        <div class="light l6"></div>
-        <div class="light l7"></div>
-        <div class="light l8"></div>
+<div class="shooting two"></div>
 
-        <div class="butterfly b1">🦋</div>
-        <div class="butterfly b2">🦋</div>
-        <div class="butterfly b3">🦋</div>
-        <div class="butterfly b4">🦋</div>
+<div class="shooting three"></div>
+
+
+<!-- PARTY -->
+
+<div class="party">
+
+    <div class="building">
+
+        <div class="lights"></div>
+
+        <div class="person p1"></div>
+
+        <div class="person p2"></div>
+
+        <div class="person p3"></div>
+
+        <div class="person p4"></div>
 
     </div>
-
-
-    <!-- TOP BUTTONS -->
-
-    <a
-        href="register.html"
-        class="create-top"
-        aria-label="Create Account"
-    ></a>
-
-    <a
-        href="login.html"
-        class="login-top"
-        aria-label="Login"
-    ></a>
-
-
-    <!-- BOTTOM BUTTONS -->
-
-    <a
-        href="register.html"
-        class="create-bottom"
-        aria-label="Create Account"
-    ></a>
-
-    <a
-        href="login.html"
-        class="login-bottom"
-        aria-label="Login"
-    ></a>
 
 </div>
 
 
-<!-- FIREBASE LOGIN CHECK -->
+<!-- PALM -->
+
+<div class="palm">
+
+    <div class="leaves">
+
+        <i></i>
+        <i></i>
+        <i></i>
+        <i></i>
+
+    </div>
+
+    <div class="trunk"></div>
+
+</div>
+
+
+<!-- POOL -->
+
+<div class="pool">
+
+    <div class="wave one"></div>
+
+    <div class="wave two"></div>
+
+    <div class="wave three"></div>
+
+
+    <div class="fish red"></div>
+
+    <div class="fish yellow"></div>
+
+    <div class="fish blue"></div>
+
+    <div class="fish pink"></div>
+
+</div>
+
+
+<!-- BUTTERFLIES -->
+
+<div class="butterfly b1">
+    <b></b>
+</div>
+
+<div class="butterfly b2">
+    <b></b>
+</div>
+
+<div class="butterfly b3">
+    <b></b>
+</div>
+
+
+<!-- FLOWERS -->
+
+<div class="flower one">🌸</div>
+
+<div class="flower two">🌺</div>
+
+<div class="flower three">🌷</div>
+
+
+<!-- HERO CONTENT -->
+
+<div class="hero-content">
+
+
+<div class="logo">
+
+Vital<span>Star</span>
+
+</div>
+
+
+<div class="tagline">
+
+Connect. Share.
+
+<span>
+Shine Together.
+</span>
+
+</div>
+
+
+<p class="description">
+
+VitalStar is more than social media.
+
+Connect with people,
+share your moments,
+discover communities,
+chat with friends,
+have fun and let your
+personality shine.
+
+</p>
+
+
+<div class="buttons">
+
+
+<a
+href="register.html"
+class="btn register">
+
+✨ Create Account
+
+</a>
+
+
+<a
+href="login.html"
+class="btn login">
+
+🔐 Login
+
+</a>
+
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================
+     FEATURES
+===================================== -->
+
+<section class="features">
+
+
+<h2 class="title">
+
+Everything
+
+<span>
+You Love
+</span>
+
+In One Place
+
+</h2>
+
+
+<p class="subtitle">
+
+Everything you need to connect,
+share, communicate and have fun.
+
+</p>
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<div class="icon">
+👥
+</div>
+
+<h3>
+Connect
+</h3>
+
+<p>
+Find friends and grow
+your social network.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="icon">
+📸
+</div>
+
+<h3>
+Share Moments
+</h3>
+
+<p>
+Share photos, videos
+and updates.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="icon">
+💬
+</div>
+
+<h3>
+Chat
+</h3>
+
+<p>
+Talk with friends
+anytime.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="icon">
+🌎
+</div>
+
+<h3>
+Communities
+</h3>
+
+<p>
+Join groups and
+meet people.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="icon">
+🎮
+</div>
+
+<h3>
+Games
+</h3>
+
+<p>
+Enjoy exciting games
+and activities.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<div class="icon">
+⭐
+</div>
+
+<h3>
+Shine
+</h3>
+
+<p>
+Express yourself
+and stand out.
+</p>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================
+     VISUAL SCENES
+===================================== -->
+
+<section class="scenes">
+
+
+<h2 class="title">
+
+A World Full Of
+
+<span>
+Possibilities
+</span>
+
+</h2>
+
+
+<p class="subtitle">
+
+Discover beautiful moments,
+exciting experiences and
+new adventures.
+
+</p>
+
+
+<div class="scene-grid">
+
+
+<!-- WATER -->
+
+<div class="scene underwater">
+
+
+<div class="mini-fish f1"></div>
+
+<div class="mini-fish f2"></div>
+
+<div class="mini-fish f3"></div>
+
+
+<div class="scene-text">
+
+<h3>
+🐠 Discover
+</h3>
+
+<p>
+Explore beautiful moments
+and discover something new.
+</p>
+
+</div>
+
+</div>
+
+
+
+<!-- PARTY -->
+
+<div class="scene party-scene">
+
+
+<div class="person p1"></div>
+
+<div class="person p2"></div>
+
+<div class="person p3"></div>
+
+<div class="person p4"></div>
+
+
+<div class="scene-text">
+
+<h3>
+🎉 Celebrate
+</h3>
+
+<p>
+Share happiness and enjoy
+great moments together.
+</p>
+
+</div>
+
+</div>
+
+
+
+<!-- NIGHT -->
+
+<div class="scene night">
+
+
+<div class="night-star"
+style="
+position:absolute;
+top:20%;
+left:20%;
+width:4px;
+height:4px;
+background:white;
+border-radius:50%;
+box-shadow:0 0 10px white;
+">
+</div>
+
+
+<div class="night-star"
+style="
+position:absolute;
+top:15%;
+left:55%;
+width:4px;
+height:4px;
+background:white;
+border-radius:50%;
+box-shadow:0 0 10px white;
+">
+</div>
+
+
+<div class="night-star"
+style="
+position:absolute;
+top:30%;
+left:80%;
+width:4px;
+height:4px;
+background:white;
+border-radius:50%;
+box-shadow:0 0 10px white;
+">
+</div>
+
+
+<div class="night-star"
+style="
+position:absolute;
+top:10%;
+left:35%;
+width:4px;
+height:4px;
+background:white;
+border-radius:50%;
+box-shadow:0 0 10px white;
+">
+</div>
+
+
+<div class="mountain one"></div>
+
+<div class="mountain two"></div>
+
+
+<div class="scene-text">
+
+<h3>
+🌠 Shine
+</h3>
+
+<p>
+Let your brightest
+moments shine.
+</p>
+
+</div>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================
+     CTA
+===================================== -->
+
+<section class="cta">
+
+
+<div class="flower one">
+🌸
+</div>
+
+<div class="flower two">
+🌺
+</div>
+
+
+<h2>
+
+Start Your
+
+<span>
+Journey
+</span>
+
+Today
+
+</h2>
+
+
+<p>
+
+Create your VitalStar account
+and become part of an exciting
+social community.
+
+</p>
+
+
+<div class="buttons">
+
+
+<a
+href="register.html"
+class="btn register">
+
+🚀 Create Account
+
+</a>
+
+
+<a
+href="login.html"
+class="btn login">
+
+🔐 Login
+
+</a>
+
+
+</div>
+
+</section>
+
+
+
+<footer>
+
+© 2026
+
+<strong>
+VitalStar
+</strong>
+
+<br>
+
+Connect • Share • Shine
+
+</footer>
+
+
+
+<!-- =====================================
+     FIREBASE
+===================================== -->
 
 <script type="module">
 
@@ -392,20 +2405,26 @@ import { auth } from "./firebase.js";
 import {
     onAuthStateChanged
 }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(
+    auth,
+    (user)=>{
 
-    if(user){
+        if(user){
 
-        window.location.href = "home.html";
+            window.location.href =
+            "home.html";
+
+        }
 
     }
-
-});
+);
 
 </script>
+
 
 </body>
 </html>
