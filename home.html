@@ -4,7 +4,11 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>VitalStar</title>
 
@@ -121,9 +125,7 @@ header{
 
 .icon-link{
     color:white;
-
     text-decoration:none;
-
     font-size:23px;
 }
 
@@ -457,402 +459,12 @@ header{
 
 
 /* =========================================================
-   FLOATING STARS
-   ========================================================= */
-
-.decoration{
-    position:fixed;
-
-    pointer-events:none;
-
-    z-index:2;
-
-    user-select:none;
-
-    will-change:transform;
-}
-
-.flower1{
-    top:80px;
-    left:5px;
-
-    font-size:58px;
-
-    color:#fff;
-
-    text-shadow:
-        0 0 8px #fff,
-        0 0 18px #7b2ff7,
-        0 0 30px #1877f2;
-
-    animation:
-        starFloat1 7s ease-in-out infinite;
-}
-
-.flower2{
-    top:300px;
-    right:5px;
-
-    font-size:52px;
-
-    color:#fff;
-
-    text-shadow:
-        0 0 8px #fff,
-        0 0 18px #ff1493,
-        0 0 30px #7b2ff7;
-
-    animation:
-        starFloat2 9s ease-in-out infinite;
-}
-
-.flower3{
-    bottom:120px;
-    left:5px;
-
-    font-size:50px;
-
-    color:#fff;
-
-    text-shadow:
-        0 0 8px #fff,
-        0 0 18px #1877f2,
-        0 0 30px #7b2ff7;
-
-    animation:
-        starFloat3 8s ease-in-out infinite;
-}
-
-.flower4{
-    bottom:230px;
-    right:5px;
-
-    font-size:58px;
-
-    color:#fff;
-
-    text-shadow:
-        0 0 8px #fff,
-        0 0 18px #ff1493,
-        0 0 30px #ff9500;
-
-    animation:
-        starFloat4 10s ease-in-out infinite;
-}
-
-
-/* =========================================================
-   BUTTERFLIES
-   ========================================================= */
-
-.butterfly1{
-    top:130px;
-    left:25%;
-
-    font-size:30px;
-
-    filter:
-        drop-shadow(
-            0 3px 7px
-            rgba(123,47,247,.5)
-        );
-
-    animation:
-        butterflyFly1 8s ease-in-out infinite;
-}
-
-.butterfly2{
-    top:430px;
-    left:8%;
-
-    font-size:27px;
-
-    filter:
-        drop-shadow(
-            0 3px 7px
-            rgba(255,20,147,.5)
-        );
-
-    animation:
-        butterflyFly2 10s ease-in-out infinite;
-}
-
-.butterfly3{
-    bottom:190px;
-    right:8%;
-
-    font-size:32px;
-
-    filter:
-        drop-shadow(
-            0 3px 7px
-            rgba(24,119,242,.5)
-        );
-
-    animation:
-        butterflyFly3 9s ease-in-out infinite;
-}
-
-
-/* =========================================================
-   STAR ANIMATIONS
-   ========================================================= */
-
-@keyframes starFloat1{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-
-    25%{
-        transform:
-            translate(14px,-18px)
-            rotate(12deg)
-            scale(1.08);
-    }
-
-    50%{
-        transform:
-            translate(5px,8px)
-            rotate(-8deg)
-            scale(.95);
-    }
-
-    75%{
-        transform:
-            translate(20px,-10px)
-            rotate(15deg)
-            scale(1.1);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-}
-
-@keyframes starFloat2{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-
-    30%{
-        transform:
-            translate(-15px,12px)
-            rotate(-12deg)
-            scale(1.08);
-    }
-
-    60%{
-        transform:
-            translate(-5px,-15px)
-            rotate(10deg)
-            scale(.95);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-}
-
-@keyframes starFloat3{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(0deg);
-    }
-
-    40%{
-        transform:
-            translate(17px,-15px)
-            rotate(12deg);
-    }
-
-    70%{
-        transform:
-            translate(5px,10px)
-            rotate(-8deg);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(0deg);
-    }
-}
-
-@keyframes starFloat4{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-
-    35%{
-        transform:
-            translate(-15px,-20px)
-            rotate(12deg)
-            scale(1.1);
-    }
-
-    70%{
-        transform:
-            translate(-22px,5px)
-            rotate(-10deg)
-            scale(.96);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-}
-
-
-/* =========================================================
-   BUTTERFLY FLIGHT
-   ========================================================= */
-
-@keyframes butterflyFly1{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-
-    20%{
-        transform:
-            translate(45px,-25px)
-            rotate(12deg)
-            scale(1.05);
-    }
-
-    40%{
-        transform:
-            translate(80px,20px)
-            rotate(-8deg)
-            scale(.95);
-    }
-
-    60%{
-        transform:
-            translate(45px,55px)
-            rotate(10deg)
-            scale(1.1);
-    }
-
-    80%{
-        transform:
-            translate(-10px,25px)
-            rotate(-12deg)
-            scale(.97);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(0deg)
-            scale(1);
-    }
-}
-
-@keyframes butterflyFly2{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(-5deg);
-    }
-
-    25%{
-        transform:
-            translate(35px,-30px)
-            rotate(15deg);
-    }
-
-    50%{
-        transform:
-            translate(75px,-5px)
-            rotate(-10deg);
-    }
-
-    75%{
-        transform:
-            translate(45px,35px)
-            rotate(12deg);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(-5deg);
-    }
-}
-
-@keyframes butterflyFly3{
-
-    0%{
-        transform:
-            translate(0,0)
-            rotate(5deg)
-            scale(1);
-    }
-
-    20%{
-        transform:
-            translate(-35px,-25px)
-            rotate(-12deg)
-            scale(1.08);
-    }
-
-    45%{
-        transform:
-            translate(-70px,5px)
-            rotate(10deg)
-            scale(.95);
-    }
-
-    70%{
-        transform:
-            translate(-40px,45px)
-            rotate(-8deg)
-            scale(1.1);
-    }
-
-    100%{
-        transform:
-            translate(0,0)
-            rotate(5deg)
-            scale(1);
-    }
-}
-
-
-/* =========================================================
    MAIN CONTENT
    ========================================================= */
 
 .container{
     width:100%;
+
     max-width:900px;
 
     margin:auto;
@@ -890,6 +502,7 @@ header{
     display:flex;
 
     justify-content:space-between;
+
     align-items:center;
 
     box-shadow:
@@ -898,16 +511,20 @@ header{
 }
 
 .hero-card:after{
-    content:"☆";
+    content:"";
 
     position:absolute;
 
-    right:20px;
-    bottom:-25px;
+    right:-20px;
+    bottom:-30px;
 
-    font-size:110px;
+    width:130px;
+    height:130px;
 
-    opacity:.12;
+    border-radius:50%;
+
+    background:
+        rgba(255,255,255,.08);
 }
 
 .hero-left{
@@ -964,7 +581,7 @@ header{
 
 
 /* =========================================================
-   STORIES
+   STORIES / FLOWERS
    ========================================================= */
 
 .stories{
@@ -996,6 +613,7 @@ header{
     display:flex;
 
     align-items:flex-end;
+
     justify-content:center;
 
     padding-bottom:13px;
@@ -1018,25 +636,21 @@ header{
 }
 
 .story:before{
-    content:"☆";
+    content:"🌸";
 
     position:absolute;
 
-    top:12px;
-
+    top:20px;
     left:50%;
 
     transform:
         translateX(-50%);
 
-    font-size:46px;
-
-    text-shadow:
-        0 0 12px white;
+    font-size:48px;
 }
 
 .story:after{
-    content:"🦋";
+    content:"🌺";
 
     position:absolute;
 
@@ -1240,7 +854,7 @@ header{
 
 
 /* =========================================================
-   BOTTOM NAV
+   BOTTOM NAVIGATION
    ========================================================= */
 
 .bottom-nav{
@@ -1250,6 +864,7 @@ header{
     left:0;
 
     width:100%;
+
     height:67px;
 
     background:
@@ -1260,6 +875,7 @@ header{
     display:flex;
 
     justify-content:space-around;
+
     align-items:center;
 
     box-shadow:
@@ -1310,6 +926,7 @@ header{
     display:flex;
 
     align-items:center;
+
     justify-content:center;
 
     font-size:30px !important;
@@ -1352,6 +969,7 @@ body.dark-mode #logoutBtn{
 
 body.dark-mode .post-card{
     background:#1d1d1d;
+
     color:#eee;
 }
 
@@ -1447,25 +1065,6 @@ body.dark-mode .create-btn{
         font-size:26px;
     }
 
-    .flower1,
-    .flower2,
-    .flower3,
-    .flower4{
-        font-size:40px;
-    }
-
-    .butterfly1{
-        font-size:24px;
-    }
-
-    .butterfly2{
-        font-size:22px;
-    }
-
-    .butterfly3{
-        font-size:25px;
-    }
-
 }
 
 </style>
@@ -1474,25 +1073,6 @@ body.dark-mode .create-btn{
 
 
 <body>
-
-
-<!-- =========================================================
-     FLOATING STARS
-     ========================================================= -->
-
-<div class="decoration flower1">☆</div>
-<div class="decoration flower2">☆</div>
-<div class="decoration flower3">☆</div>
-<div class="decoration flower4">☆</div>
-
-
-<!-- =========================================================
-     FLYING BUTTERFLIES
-     ========================================================= -->
-
-<div class="decoration butterfly1">🦋</div>
-<div class="decoration butterfly2">🦋</div>
-<div class="decoration butterfly3">🦋</div>
 
 
 <!-- =========================================================
@@ -1741,7 +1321,9 @@ function openMenu(){
 </section>
 
 
-<!-- STORIES -->
+<!-- =========================================================
+     FLOWER STORIES
+     ========================================================= -->
 
 <div class="stories">
 
@@ -1768,7 +1350,9 @@ function openMenu(){
 </div>
 
 
-<!-- LATEST -->
+<!-- =========================================================
+     LATEST
+     ========================================================= -->
 
 <div class="latest-wrap">
 
@@ -1808,7 +1392,6 @@ function openMenu(){
     Connect, share, and shine together.
 </p>
 
-
 <div class="footer-links">
 
 <a
@@ -1835,7 +1418,6 @@ function openMenu(){
 </a>
 
 </div>
-
 
 <p class="copyright">
     © 2026 VitalStar. All rights reserved.
@@ -1876,9 +1458,7 @@ function openMenu(){
     href="create-post.html"
     class="create-btn"
 >
-
     ➕
-
 </a>
 
 
