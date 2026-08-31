@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
 <title>VitalStar</title>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -18,61 +22,96 @@ body{
     overflow-x:hidden;
 }
 
-/* FLOATING STARS */
-.star{
+/* =====================================================
+   LARGE BACKGROUND STARS
+   ===================================================== */
+
+.background-stars{
     position:fixed;
-    z-index:0;
-    color:#ffd700;
-    font-weight:bold;
+    inset:0;
+    overflow:hidden;
     pointer-events:none;
-    animation:floatStar linear infinite;
+    z-index:0;
+}
+
+.bg-star{
+    position:absolute;
+    color:#ffd700;
+    opacity:.28;
     text-shadow:
-        0 0 5px #ffd700,
-        0 0 10px rgba(255,215,0,.5);
+        0 0 12px #ffd700,
+        0 0 25px #fff;
+    animation:starFloat 8s ease-in-out infinite;
 }
 
-.star:nth-child(1){font-size:10px;left:8%;top:20%;animation-duration:7s;}
-.star:nth-child(2){font-size:7px;left:18%;top:65%;animation-duration:9s;}
-.star:nth-child(3){font-size:12px;left:30%;top:35%;animation-duration:8s;}
-.star:nth-child(4){font-size:8px;left:45%;top:75%;animation-duration:10s;}
-.star:nth-child(5){font-size:11px;left:60%;top:25%;animation-duration:7s;}
-.star:nth-child(6){font-size:7px;left:72%;top:60%;animation-duration:9s;}
-.star:nth-child(7){font-size:10px;left:84%;top:30%;animation-duration:8s;}
-.star:nth-child(8){font-size:8px;left:93%;top:75%;animation-duration:11s;}
-.star:nth-child(9){font-size:6px;left:38%;top:15%;animation-duration:9s;}
-.star:nth-child(10){font-size:9px;left:78%;top:85%;animation-duration:8s;}
+.bg-star:nth-child(1){
+    font-size:100px;
+    left:2%;
+    top:12%;
+}
 
-@keyframes floatStar{
-    0%{
+.bg-star:nth-child(2){
+    font-size:70px;
+    left:82%;
+    top:18%;
+    animation-delay:2s;
+}
+
+.bg-star:nth-child(3){
+    font-size:120px;
+    left:72%;
+    top:55%;
+    animation-delay:4s;
+}
+
+.bg-star:nth-child(4){
+    font-size:80px;
+    left:8%;
+    top:70%;
+    animation-delay:1s;
+}
+
+.bg-star:nth-child(5){
+    font-size:55px;
+    left:45%;
+    top:35%;
+    animation-delay:3s;
+}
+
+.bg-star:nth-child(6){
+    font-size:90px;
+    left:35%;
+    top:80%;
+    animation-delay:5s;
+}
+
+@keyframes starFloat{
+
+    0%,100%{
         transform:translate(0,0) rotate(0deg);
-        opacity:.25;
     }
-    25%{
-        transform:translate(12px,-18px) rotate(45deg);
-        opacity:.8;
-    }
+
     50%{
-        transform:translate(-10px,-30px) rotate(90deg);
-        opacity:1;
+        transform:translate(20px,-25px) rotate(15deg);
     }
-    75%{
-        transform:translate(15px,-15px) rotate(135deg);
-        opacity:.7;
-    }
-    100%{
-        transform:translate(0,0) rotate(180deg);
-        opacity:.25;
-    }
+
 }
 
-/* HEADER */
+/* =====================================================
+   HEADER
+   ===================================================== */
+
 header{
     position:fixed;
     top:0;
     left:0;
     width:100%;
     height:60px;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    background:linear-gradient(
+        135deg,
+        #1877f2,
+        #7b2ff7
+    );
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -129,10 +168,17 @@ header{
     border:2px solid white;
 }
 
-/* WALLET */
+/* =====================================================
+   WALLET
+   ===================================================== */
+
 .wallet-trigger{
     border:none;
-    background:linear-gradient(135deg,#ffd700,#ff9500);
+    background:linear-gradient(
+        135deg,
+        #ffd700,
+        #ff9500
+    );
     color:#111;
     min-width:72px;
     height:38px;
@@ -146,7 +192,10 @@ header{
     font-weight:900;
 }
 
-/* SIDEBAR */
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+
 .sidebar{
     position:fixed;
     top:0;
@@ -183,7 +232,10 @@ header{
     color:white;
 }
 
-/* AI MENUS */
+/* =====================================================
+   AI MENUS
+   ===================================================== */
+
 .orion-menu,
 .pinky-menu,
 .games-menu{
@@ -196,15 +248,27 @@ header{
 }
 
 .orion-menu{
-    background:linear-gradient(135deg,rgba(123,47,247,.12),rgba(24,119,242,.12));
+    background:linear-gradient(
+        135deg,
+        rgba(123,47,247,.12),
+        rgba(24,119,242,.12)
+    );
 }
 
 .pinky-menu{
-    background:linear-gradient(135deg,rgba(255,105,180,.14),rgba(255,182,193,.18));
+    background:linear-gradient(
+        135deg,
+        rgba(255,105,180,.14),
+        rgba(255,182,193,.18)
+    );
 }
 
 .games-menu{
-    background:linear-gradient(135deg,rgba(24,119,242,.12),rgba(52,199,89,.12));
+    background:linear-gradient(
+        135deg,
+        rgba(24,119,242,.12),
+        rgba(52,199,89,.12)
+    );
 }
 
 .orion-icon,
@@ -221,15 +285,27 @@ header{
 }
 
 .orion-icon{
-    background:linear-gradient(135deg,#7b2ff7,#1877f2);
+    background:linear-gradient(
+        135deg,
+        #7b2ff7,
+        #1877f2
+    );
 }
 
 .pinky-icon{
-    background:linear-gradient(135deg,#ff69b4,#ff1493);
+    background:linear-gradient(
+        135deg,
+        #ff69b4,
+        #ff1493
+    );
 }
 
 .games-icon{
-    background:linear-gradient(135deg,#1877f2,#34c759);
+    background:linear-gradient(
+        135deg,
+        #1877f2,
+        #34c759
+    );
 }
 
 .orion-name,
@@ -250,22 +326,37 @@ header{
 }
 
 .ai-badge{
-    background:linear-gradient(135deg,#7b2ff7,#1877f2);
+    background:linear-gradient(
+        135deg,
+        #7b2ff7,
+        #1877f2
+    );
 }
 
 .games-badge{
-    background:linear-gradient(135deg,#1877f2,#34c759);
+    background:linear-gradient(
+        135deg,
+        #1877f2,
+        #34c759
+    );
 }
 
-/* CONTENT */
+/* =====================================================
+   MAIN
+   ===================================================== */
+
 .container{
     position:relative;
     z-index:2;
     padding:80px 15px 100px;
 }
 
+/* =====================================================
+   HERO
+   ===================================================== */
+
 .hero-card{
-    background:white;
+    background:rgba(255,255,255,.94);
     border-radius:20px;
     padding:20px;
     display:flex;
@@ -281,7 +372,7 @@ header{
 }
 
 .hero-icon{
-    font-size:35px;
+    font-size:40px;
 }
 
 .hero-badge{
@@ -289,27 +380,117 @@ header{
     font-weight:bold;
 }
 
-/* STORIES */
-.stories{
+/* =====================================================
+   FLOWER SECTION
+   ===================================================== */
+
+.flowers{
     display:flex;
-    gap:10px;
+    gap:14px;
     overflow-x:auto;
-    margin:20px 0;
+    padding:10px 3px 15px;
+    margin:15px 0 20px;
 }
 
-.story{
-    min-width:90px;
-    height:150px;
-    border-radius:15px;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
-    color:white;
+.flower-card{
+    position:relative;
+    min-width:105px;
+    height:145px;
+    border-radius:22px;
+    overflow:hidden;
     display:flex;
-    justify-content:center;
     align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    color:white;
     font-weight:bold;
+    box-shadow:0 7px 18px rgba(0,0,0,.18);
+    flex-shrink:0;
 }
 
-/* LATEST */
+.flower-card:nth-child(1){
+    background:linear-gradient(
+        160deg,
+        #ff69b4,
+        #ff1493
+    );
+}
+
+.flower-card:nth-child(2){
+    background:linear-gradient(
+        160deg,
+        #7b2ff7,
+        #1877f2
+    );
+}
+
+.flower-card:nth-child(3){
+    background:linear-gradient(
+        160deg,
+        #ff9500,
+        #ff3b30
+    );
+}
+
+.flower-card:nth-child(4){
+    background:linear-gradient(
+        160deg,
+        #34c759,
+        #00a86b
+    );
+}
+
+.flower-card:nth-child(5){
+    background:linear-gradient(
+        160deg,
+        #00bfff,
+        #4169e1
+    );
+}
+
+.flower{
+    font-size:55px;
+    line-height:1;
+    animation:flowerFloat 3s ease-in-out infinite;
+}
+
+.flower-card:nth-child(2) .flower{
+    animation-delay:.5s;
+}
+
+.flower-card:nth-child(3) .flower{
+    animation-delay:1s;
+}
+
+.flower-card:nth-child(4) .flower{
+    animation-delay:1.5s;
+}
+
+.flower-card:nth-child(5) .flower{
+    animation-delay:2s;
+}
+
+@keyframes flowerFloat{
+
+    0%,100%{
+        transform:translateY(0) rotate(-3deg);
+    }
+
+    50%{
+        transform:translateY(-8px) rotate(3deg);
+    }
+
+}
+
+.flower-name{
+    margin-top:8px;
+    font-size:14px;
+}
+
+/* =====================================================
+   LATEST
+   ===================================================== */
+
 .latest-title{
     background:#000;
     padding:10px 20px;
@@ -325,9 +506,12 @@ header{
 .blue{color:#007aff}
 .purple{color:#af52de}
 
-/* POSTS */
+/* =====================================================
+   POSTS
+   ===================================================== */
+
 .post-card{
-    background:white;
+    background:rgba(255,255,255,.95);
     border-radius:20px;
     overflow:hidden;
     margin-top:20px;
@@ -368,7 +552,10 @@ header{
     font-weight:bold;
 }
 
-/* FOOTER */
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
 .vital-footer{
     position:relative;
     z-index:2;
@@ -381,6 +568,10 @@ header{
 .vital-footer h2{
     color:#ddd;
     font-size:28px;
+}
+
+.vital-footer p{
+    margin-top:8px;
 }
 
 .footer-links{
@@ -401,7 +592,10 @@ header{
     padding-top:15px;
 }
 
-/* BOTTOM NAV */
+/* =====================================================
+   BOTTOM NAV
+   ===================================================== */
+
 .bottom-nav{
     position:fixed;
     bottom:0;
@@ -432,7 +626,11 @@ header{
     width:55px;
     height:55px;
     border-radius:50%;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    background:linear-gradient(
+        135deg,
+        #1877f2,
+        #7b2ff7
+    );
     color:white !important;
     display:flex !important;
     justify-content:center;
@@ -441,7 +639,10 @@ header{
     margin-top:-25px;
 }
 
-/* DARK MODE */
+/* =====================================================
+   DARK MODE
+   ===================================================== */
+
 body.dark-mode{
     background:#121212;
     color:#eee;
@@ -467,6 +668,11 @@ body.dark-mode .post-card{
 }
 
 @media(max-width:500px){
+
+    header{
+        padding:0 10px;
+    }
+
     .logo{
         font-size:19px;
     }
@@ -477,6 +683,7 @@ body.dark-mode .post-card{
 
     .wallet-trigger{
         min-width:auto;
+        height:36px;
         font-size:12px;
         padding:0 8px;
     }
@@ -484,84 +691,220 @@ body.dark-mode .post-card{
     .icon-link{
         font-size:21px;
     }
+
+    .bg-star:nth-child(1){
+        font-size:75px;
+    }
+
+    .bg-star:nth-child(2){
+        font-size:55px;
+    }
+
+    .bg-star:nth-child(3){
+        font-size:85px;
+    }
+
+    .bg-star:nth-child(4){
+        font-size:60px;
+    }
+
+    .bg-star:nth-child(5){
+        font-size:45px;
+    }
+
+    .bg-star:nth-child(6){
+        font-size:65px;
+    }
+
 }
+
 </style>
+
 </head>
 
 <body>
 
-<!-- SMALL FLOATING STARS -->
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
-<div class="star">☆</div>
+<!-- =====================================================
+     BACKGROUND STARS
+     ===================================================== -->
+
+<div class="background-stars">
+
+    <span class="bg-star">☆</span>
+    <span class="bg-star">☆</span>
+    <span class="bg-star">☆</span>
+    <span class="bg-star">☆</span>
+    <span class="bg-star">☆</span>
+    <span class="bg-star">☆</span>
+
+</div>
+
+<!-- =====================================================
+     HEADER
+     ===================================================== -->
 
 <header>
 
-<button class="menu" onclick="openMenu()">☰</button>
+<button
+    class="menu"
+    onclick="openMenu()"
+>
+    ☰
+</button>
 
-<div class="logo">⭐ VitalStar</div>
+<div class="logo">
+    ⭐ VitalStar
+</div>
 
 <div class="icons">
 
-<button class="wallet-trigger" id="walletButton">
-💰 <span id="walletBalance">₦0</span>
+<button
+    class="wallet-trigger"
+    id="walletButton"
+    type="button"
+>
+    💰
+    <span id="walletBalance">₦0</span>
 </button>
 
 <div class="icon">
-<a href="notifications.html" class="icon-link">🔔</a>
-<span id="notificationBadge" class="badge">0</span>
+
+<a
+    href="notifications.html"
+    class="icon-link"
+>
+    🔔
+</a>
+
+<span
+    id="notificationBadge"
+    class="badge"
+>
+    0
+</span>
+
 </div>
 
 <div class="icon">
-<a href="message.html" class="icon-link">💬</a>
-<span id="messageBadge" class="badge">0</span>
+
+<a
+    href="message.html"
+    class="icon-link"
+>
+    💬
+</a>
+
+<span
+    id="messageBadge"
+    class="badge"
+>
+    0
+</span>
+
 </div>
 
 </div>
+
 </header>
 
-<div class="sidebar" id="sidebar">
+<!-- =====================================================
+     SIDEBAR
+     ===================================================== -->
 
-<a href="profile.html">👤 Profile</a>
-<a href="users.html">👥 Friends</a>
-<a href="messages.html">💬 Messages</a>
+<div
+    class="sidebar"
+    id="sidebar"
+>
 
-<a href="orion.html" class="orion-menu">
-<span class="orion-icon">✦</span>
-<span class="orion-name">Orion Pax</span>
-<span class="ai-badge">AI</span>
+<a href="profile.html">
+    👤 Profile
 </a>
 
-<a href="pinky-spark.html" class="pinky-menu">
-<span class="pinky-icon">✨</span>
-<span class="pinky-name">Pinky Spark</span>
-<span class="ai-badge">AI</span>
+<a href="users.html">
+    👥 Friends
 </a>
 
-<a href="games/games.html" class="games-menu">
-<span class="games-icon">🎮</span>
-<span class="games-name">Games</span>
-<span class="games-badge">PLAY</span>
+<a href="messages.html">
+    💬 Messages
 </a>
 
-<a href="edit-profile.html">⚙️ Settings</a>
+<a
+    href="orion.html"
+    class="orion-menu"
+>
 
-<button id="darkModeToggle" class="darkModeBtn">
-🌙 Dark Mode
+<span class="orion-icon">
+    ✦
+</span>
+
+<span class="orion-name">
+    Orion Pax
+</span>
+
+<span class="ai-badge">
+    AI
+</span>
+
+</a>
+
+<a
+    href="pinky-spark.html"
+    class="pinky-menu"
+>
+
+<span class="pinky-icon">
+    ✨
+</span>
+
+<span class="pinky-name">
+    Pinky Spark
+</span>
+
+<span class="ai-badge">
+    AI
+</span>
+
+</a>
+
+<a
+    href="games/games.html"
+    class="games-menu"
+>
+
+<span class="games-icon">
+    🎮
+</span>
+
+<span class="games-name">
+    Games
+</span>
+
+<span class="games-badge">
+    PLAY
+</span>
+
+</a>
+
+<a href="edit-profile.html">
+    ⚙️ Settings
+</a>
+
+<button
+    id="darkModeToggle"
+    class="darkModeBtn"
+>
+    🌙 Dark Mode
 </button>
 
 <button id="logoutBtn">
-🚪 Logout
+    🚪 Logout
 </button>
 
 </div>
+
+<!-- =====================================================
+     MAIN CONTENT
+     ===================================================== -->
 
 <div class="container">
 
@@ -569,40 +912,113 @@ body.dark-mode .post-card{
 
 <div class="hero-left">
 
-<div class="hero-icon">✨</div>
+<div class="hero-icon">
+    ✨
+</div>
 
 <div>
-<h2 id="welcomeText">Good Day...</h2>
-<p id="welcomeSub">Welcome back to VitalStar</p>
+
+<h2 id="welcomeText">
+    Good Day...
+</h2>
+
+<p id="welcomeSub">
+    Welcome back to VitalStar
+</p>
+
 </div>
 
 </div>
 
 <div class="hero-badge">
-● Online
+    ● Online
 </div>
 
 </div>
 
-<div class="stories">
+<!-- =====================================================
+     FLOWERS
+     ===================================================== -->
 
-<div class="story">Story</div>
-<div class="story">Story</div>
-<div class="story">Story</div>
-<div class="story">Story</div>
-<div class="story">Story</div>
+<div class="flowers">
+
+<div class="flower-card">
+
+<div class="flower">
+    🌸
+</div>
+
+<div class="flower-name">
+    Flower
+</div>
 
 </div>
+
+<div class="flower-card">
+
+<div class="flower">
+    🌺
+</div>
+
+<div class="flower-name">
+    Flower
+</div>
+
+</div>
+
+<div class="flower-card">
+
+<div class="flower">
+    🌼
+</div>
+
+<div class="flower-name">
+    Flower
+</div>
+
+</div>
+
+<div class="flower-card">
+
+<div class="flower">
+    🌷
+</div>
+
+<div class="flower-name">
+    Flower
+</div>
+
+</div>
+
+<div class="flower-card">
+
+<div class="flower">
+    🌻
+</div>
+
+<div class="flower-name">
+    Flower
+</div>
+
+</div>
+
+</div>
+
+<!-- =====================================================
+     LATEST
+     ===================================================== -->
 
 <center>
 
 <h2 class="latest-title">
+
 <span class="red">L</span>
 <span class="orange">a</span>
 <span class="yellow">t</span>
 <span class="green">e</span>
 <span class="blue">s</span>
 <span class="purple">t</span>
+
 </h2>
 
 </center>
@@ -611,83 +1027,172 @@ body.dark-mode .post-card{
 
 </div>
 
+<!-- =====================================================
+     FOOTER
+     ===================================================== -->
+
 <footer class="vital-footer">
 
-<h2>⭐ VitalStar</h2>
+<h2>
+    ⭐ VitalStar
+</h2>
 
-<p>Connect, share, and shine together.</p>
+<p>
+    Connect, share, and shine together.
+</p>
 
 <div class="footer-links">
 
-<a href="online-users.html" id="onlineUsersCount">
-🟢 Online: 0
+<a
+    href="online-users.html"
+    id="onlineUsersCount"
+>
+    🟢 Online: 0
 </a>
 
-<a href="policy.html">📜 Privacy & Policy</a>
+<a href="policy.html">
+    📜 Privacy & Policy
+</a>
 
-<a href="report.html">🚨 Report</a>
+<a href="report.html">
+    🚨 Report
+</a>
 
-<a href="terms.html">⚖️ Terms</a>
+<a href="terms.html">
+    ⚖️ Terms
+</a>
 
 </div>
 
 <p class="copyright">
-© 2026 VitalStar. All rights reserved.
+    © 2026 VitalStar. All rights reserved.
 </p>
 
 </footer>
 
+<!-- =====================================================
+     BOTTOM NAVIGATION
+     ===================================================== -->
+
 <div class="bottom-nav">
 
 <a href="home.html">
-🏠
-<small>Home</small>
+
+    🏠
+
+    <small>
+        Home
+    </small>
+
 </a>
 
 <a href="users.html">
-👥
-<small>Friends</small>
+
+    👥
+
+    <small>
+        Friends
+    </small>
+
 </a>
 
-<a href="create-post.html" class="create-btn">
-➕
+<a
+    href="create-post.html"
+    class="create-btn"
+>
+    ➕
 </a>
 
 <a href="groups.html">
-🌐
-<small>Groups</small>
+
+    🌐
+
+    <small>
+        Groups
+    </small>
+
 </a>
 
 <a href="profile.html">
-👤
-<small>Profile</small>
+
+    👤
+
+    <small>
+        Profile
+    </small>
+
 </a>
 
 </div>
 
+<!-- =====================================================
+     MENU
+     ===================================================== -->
+
 <script>
+
 function openMenu(){
 
-    const sidebar=document.getElementById("sidebar");
+    const sidebar =
+        document.getElementById("sidebar");
 
     sidebar.style.left =
-        sidebar.style.left==="0px"
+        sidebar.style.left === "0px"
         ? "-260px"
         : "0px";
+
 }
+
 </script>
 
-<script type="module" src="auth-guard.js"></script>
-<script type="module" src="presence.js"></script>
-<script type="module" src="message-badge.js"></script>
-<script type="module" src="wallet.js"></script>
-<script type="module" src="home.js"></script>
-<script type="module" src="online-count.js"></script>
-<script type="module" src="notifications.js"></script>
-<script type="module" src="logout.js"></script>
+<!-- =====================================================
+     VITALSTAR SCRIPTS
+     ===================================================== -->
+
+<script
+    type="module"
+    src="auth-guard.js"
+></script>
+
+<script
+    type="module"
+    src="presence.js"
+></script>
+
+<script
+    type="module"
+    src="message-badge.js"
+></script>
+
+<script
+    type="module"
+    src="wallet.js"
+></script>
+
+<script
+    type="module"
+    src="home.js"
+></script>
+
+<script
+    type="module"
+    src="online-count.js"
+></script>
+
+<script
+    type="module"
+    src="notifications.js"
+></script>
+
+<script
+    type="module"
+    src="logout.js"
+></script>
+
 <script src="dark-mode.js"></script>
 
 <script>
+
 if("serviceWorker" in navigator){
 
     navigator.serviceWorker.register(
@@ -695,6 +1200,7 @@ if("serviceWorker" in navigator){
     );
 
 }
+
 </script>
 
 </body>
