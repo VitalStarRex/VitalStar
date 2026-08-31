@@ -7,6 +7,9 @@
 
 <title>VitalStar - Connect, Share & Shine</title>
 
+<meta name="description"
+content="VitalStar is more than social media. Connect, share your moments, chat with friends, discover communities and shine together.">
+
 <style>
 
 /* =========================
@@ -22,6 +25,7 @@ RESET
 html,
 body{
     width:100%;
+    max-width:100%;
     overflow-x:hidden;
 }
 
@@ -31,22 +35,29 @@ body{
     color:white;
 }
 
+a{
+    text-decoration:none;
+}
+
 
 /* =========================
 HERO
 ========================= */
 
 .hero{
+
     position:relative;
+
     width:100%;
     min-height:680px;
+
     overflow:hidden;
 
     background:
     radial-gradient(
-        circle at 80% 30%,
-        #9b299f,
-        #351060 40%,
+        circle at 80% 35%,
+        #8d269f,
+        #32105d 40%,
         #08002d 75%,
         #020018
     );
@@ -58,15 +69,19 @@ STARS
 ========================= */
 
 .stars{
+
     position:absolute;
+
     inset:0;
 
     background-image:
+
     radial-gradient(
         circle,
         white 1px,
         transparent 2px
     ),
+
     radial-gradient(
         circle,
         #55ddff 1px,
@@ -86,7 +101,9 @@ STARS
 @keyframes starsMove{
 
     from{
-        background-position:0 0,0 0;
+        background-position:
+        0 0,
+        0 0;
     }
 
     to{
@@ -102,6 +119,7 @@ SHOOTING STARS
 ========================= */
 
 .shooting{
+
     position:absolute;
 
     width:180px;
@@ -124,7 +142,7 @@ SHOOTING STARS
     animation:
     shoot 5s linear infinite;
 
-    z-index:2;
+    z-index:3;
 }
 
 .s1{
@@ -169,13 +187,14 @@ SHOOTING STARS
 
 
 /* =========================
-CONTENT
+HERO CONTENT
 ========================= */
 
 .hero-content{
+
     position:relative;
 
-    z-index:50;
+    z-index:100;
 
     width:92%;
     max-width:1100px;
@@ -186,6 +205,7 @@ CONTENT
 }
 
 .logo{
+
     font-size:64px;
 
     font-weight:900;
@@ -202,6 +222,7 @@ CONTENT
 }
 
 .tagline{
+
     width:55%;
 
     font-size:42px;
@@ -224,12 +245,14 @@ CONTENT
     );
 
     -webkit-background-clip:text;
+
     background-clip:text;
 
     color:transparent;
 }
 
 .description{
+
     width:45%;
     max-width:500px;
 
@@ -248,6 +271,7 @@ BUTTONS
 ========================= */
 
 .buttons{
+
     display:flex;
 
     gap:14px;
@@ -258,6 +282,7 @@ BUTTONS
 }
 
 .btn{
+
     display:inline-flex;
 
     align-items:center;
@@ -270,8 +295,6 @@ BUTTONS
     font-weight:bold;
 
     font-size:16px;
-
-    text-decoration:none;
 
     transition:.3s;
 }
@@ -302,11 +325,11 @@ BUTTONS
     #ffd000;
 
     box-shadow:
-    0 0 15px
-    #ffd000;
+    0 0 15px #ffd000;
 }
 
 .btn:hover{
+
     transform:
     translateY(-4px)
     scale(1.03);
@@ -321,16 +344,18 @@ RAINBOW
 
     position:absolute;
 
-    right:4%;
+    right:3%;
+
     top:25px;
 
-    width:240px;
-    height:125px;
+    width:260px;
+    height:140px;
 
     border-radius:
-    240px 240px 0 0;
+    260px 260px 0 0;
 
     background:
+
     radial-gradient(
         ellipse at center bottom,
 
@@ -348,10 +373,10 @@ RAINBOW
     );
 
     filter:
-    drop-shadow(0 0 12px #ff43ca)
-    drop-shadow(0 0 22px #00eaff);
+    drop-shadow(0 0 10px #ff43ca)
+    drop-shadow(0 0 20px #00eaff);
 
-    z-index:7;
+    z-index:8;
 }
 
 
@@ -364,6 +389,7 @@ POOL
     position:absolute;
 
     right:-3%;
+
     bottom:0;
 
     width:58%;
@@ -377,6 +403,7 @@ POOL
     overflow:hidden;
 
     background:
+
     radial-gradient(
         ellipse at 50% 15%,
         #70ffff,
@@ -397,7 +424,7 @@ POOL
 
 
 /* =========================
-WATER WAVES
+WAVES
 ========================= */
 
 .wave{
@@ -419,22 +446,20 @@ WATER WAVES
     animation:
     waveMove 4s ease-in-out infinite;
 
-    z-index:3;
+    z-index:4;
 }
 
 .w1{
-    top:55px;
+    top:50px;
 }
 
 .w2{
-    top:150px;
-
+    top:145px;
     animation-delay:1s;
 }
 
 .w3{
-    top:250px;
-
+    top:245px;
     animation-delay:2s;
 }
 
@@ -448,22 +473,14 @@ WATER WAVES
 
 
 /* =========================
-MANY EMOJI FISH
+FISH
 ========================= */
 
 .sea-fish{
 
     position:absolute;
 
-    left:-100px;
-
-    font-family:
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Noto Color Emoji",
-    sans-serif;
-
-    font-size:43px;
+    left:-120px;
 
     line-height:1;
 
@@ -476,20 +493,43 @@ MANY EMOJI FISH
 }
 
 
+/*
+IMPORTANT:
+The emoji itself is flipped horizontally.
+This makes the head face RIGHT →
+while the whole fish moves RIGHT →
+*/
+
+.sea-fish span{
+
+    display:inline-block;
+
+    transform:
+    scaleX(-1);
+
+    filter:
+    drop-shadow(0 0 4px rgba(255,255,255,.45));
+}
+
+
 /* =========================
 FISH SIZES
 ========================= */
 
-.big{
-    font-size:65px;
+.sea-fish{
+    font-size:42px;
 }
 
-.medium{
-    font-size:48px;
+.sea-fish.small{
+    font-size:28px;
 }
 
-.small{
-    font-size:30px;
+.sea-fish.medium{
+    font-size:50px;
+}
+
+.sea-fish.big{
+    font-size:68px;
 }
 
 
@@ -498,66 +538,66 @@ FISH POSITIONS
 ========================= */
 
 .f01{
-    top:20px;
+    top:15px;
     animation-duration:7s;
 }
 
 .f02{
-    top:55px;
+    top:45px;
     animation-duration:9s;
     animation-delay:1s;
 }
 
 .f03{
-    top:90px;
+    top:80px;
     animation-duration:12s;
     animation-delay:2s;
 }
 
 .f04{
-    top:125px;
+    top:115px;
     animation-duration:8s;
     animation-delay:3s;
 }
 
 .f05{
-    top:160px;
+    top:150px;
     animation-duration:10s;
     animation-delay:4s;
 }
 
 .f06{
-    top:195px;
+    top:185px;
     animation-duration:13s;
     animation-delay:5s;
 }
 
 .f07{
-    top:230px;
+    top:220px;
     animation-duration:7s;
     animation-delay:6s;
 }
 
 .f08{
-    top:270px;
+    top:260px;
     animation-duration:11s;
     animation-delay:2s;
 }
 
 .f09{
-    top:35px;
+    top:30px;
     animation-duration:6s;
     animation-delay:4s;
 }
 
 .f10{
-    top:115px;
+    top:105px;
     animation-duration:14s;
     animation-delay:7s;
 }
 
 .f11{
-    top:180px;
+    top:175px;
     animation-duration:8s;
     animation-delay:1s;
 }
@@ -569,7 +609,7 @@ FISH POSITIONS
 }
 
 .f13{
-    top:75px;
+    top:65px;
     animation-duration:7s;
     animation-delay:5s;
 }
@@ -581,67 +621,67 @@ FISH POSITIONS
 }
 
 .f15{
-    top:145px;
+    top:140px;
     animation-duration:6s;
     animation-delay:2s;
 }
 
 .f16{
-    top:100px;
+    top:95px;
     animation-duration:9s;
     animation-delay:6s;
 }
 
 .f17{
-    top:250px;
+    top:245px;
     animation-duration:8s;
     animation-delay:7s;
 }
 
 .f18{
-    top:15px;
+    top:10px;
     animation-duration:13s;
     animation-delay:9s;
 }
 
 .f19{
-    top:135px;
+    top:125px;
     animation-duration:7s;
     animation-delay:8s;
 }
 
 .f20{
-    top:205px;
+    top:200px;
     animation-duration:10s;
     animation-delay:10s;
 }
 
 .f21{
-    top:305px;
+    top:300px;
     animation-duration:8s;
     animation-delay:4s;
 }
 
 .f22{
-    top:80px;
+    top:75px;
     animation-duration:14s;
     animation-delay:11s;
 }
 
 .f23{
-    top:170px;
+    top:165px;
     animation-duration:7s;
     animation-delay:9s;
 }
 
 .f24{
-    top:245px;
+    top:235px;
     animation-duration:9s;
     animation-delay:12s;
 }
 
 .f25{
-    top:45px;
+    top:40px;
     animation-duration:6s;
     animation-delay:10s;
 }
@@ -653,19 +693,19 @@ FISH POSITIONS
 }
 
 .f27{
-    top:275px;
+    top:270px;
     animation-duration:8s;
     animation-delay:14s;
 }
 
 .f28{
-    top:190px;
+    top:185px;
     animation-duration:7s;
     animation-delay:15s;
 }
 
 .f29{
-    top:60px;
+    top:55px;
     animation-duration:10s;
     animation-delay:16s;
 }
@@ -678,55 +718,55 @@ FISH POSITIONS
 
 
 /* =========================
-DIFFERENT COLOUR EFFECTS
+DIFFERENT COLORS
 ========================= */
 
-.c1{
+.c1 span{
     filter:hue-rotate(0deg);
 }
 
-.c2{
-    filter:hue-rotate(45deg);
+.c2 span{
+    filter:hue-rotate(40deg);
 }
 
-.c3{
-    filter:hue-rotate(90deg);
+.c3 span{
+    filter:hue-rotate(80deg);
 }
 
-.c4{
-    filter:hue-rotate(135deg);
+.c4 span{
+    filter:hue-rotate(120deg);
 }
 
-.c5{
-    filter:hue-rotate(180deg);
+.c5 span{
+    filter:hue-rotate(160deg);
 }
 
-.c6{
-    filter:hue-rotate(225deg);
+.c6 span{
+    filter:hue-rotate(200deg);
 }
 
-.c7{
-    filter:hue-rotate(270deg);
+.c7 span{
+    filter:hue-rotate(240deg);
 }
 
-.c8{
-    filter:hue-rotate(315deg);
+.c8 span{
+    filter:hue-rotate(300deg);
 }
 
 
 /* =========================
-FORWARD MOVEMENT
+SWIM LEFT → RIGHT
 ========================= */
 
 @keyframes swimForward{
 
     0%{
 
-        left:-120px;
+        left:-130px;
 
         transform:
         translateY(0)
-        scale(.75);
+        scale(.72);
 
         opacity:0;
     }
@@ -738,7 +778,7 @@ FORWARD MOVEMENT
     25%{
 
         transform:
-        translateY(-18px)
+        translateY(-15px)
         scale(1);
     }
 
@@ -746,13 +786,13 @@ FORWARD MOVEMENT
 
         transform:
         translateY(15px)
-        scale(1.05);
+        scale(1.04);
     }
 
     75%{
 
         transform:
-        translateY(-12px)
+        translateY(-10px)
         scale(1);
     }
 
@@ -788,7 +828,7 @@ BUBBLES
 
     border:
     2px solid
-    rgba(255,255,255,.6);
+    rgba(255,255,255,.65);
 
     border-radius:50%;
 
@@ -799,32 +839,38 @@ BUBBLES
 }
 
 .b01{
-    left:15%;
+    left:10%;
 }
 
 .b02{
-    left:35%;
+    left:25%;
     animation-delay:1s;
 }
 
 .b03{
-    left:55%;
+    left:42%;
     animation-delay:2s;
 }
 
 .b04{
-    left:75%;
+    left:60%;
     animation-delay:3s;
 }
 
 .b05{
-    left:90%;
+    left:78%;
     animation-delay:4s;
+}
+
+.b06{
+    left:90%;
+    animation-delay:2.5s;
 }
 
 @keyframes bubbleUp{
 
     0%{
+
         transform:
         translateY(0)
         scale(.5);
@@ -839,7 +885,7 @@ BUBBLES
     100%{
 
         transform:
-        translateY(-370px)
+        translateY(-380px)
         scale(1.5);
 
         opacity:0;
@@ -857,7 +903,7 @@ BUTTERFLIES
 
     font-size:32px;
 
-    z-index:60;
+    z-index:70;
 
     animation:
     fly 8s ease-in-out infinite;
@@ -883,24 +929,28 @@ BUTTERFLIES
 @keyframes fly{
 
     0%,100%{
+
         transform:
         translate(0,0)
         rotate(0);
     }
 
     25%{
+
         transform:
         translate(45px,-45px)
         rotate(10deg);
     }
 
     50%{
+
         transform:
         translate(80px,10px)
         rotate(-8deg);
     }
 
     75%{
+
         transform:
         translate(35px,50px)
         rotate(8deg);
@@ -916,7 +966,7 @@ FLOWERS
 
     position:absolute;
 
-    z-index:60;
+    z-index:70;
 
     font-size:38px;
 
@@ -925,12 +975,12 @@ FLOWERS
 }
 
 .flower1{
-    bottom:10px;
+    bottom:8px;
     left:3%;
 }
 
 .flower2{
-    bottom:15px;
+    bottom:12px;
     left:25%;
     animation-delay:1s;
 }
@@ -944,6 +994,7 @@ FLOWERS
 @keyframes flowerMove{
 
     50%{
+
         transform:
         translateY(-8px)
         rotate(10deg);
@@ -952,50 +1003,550 @@ FLOWERS
 
 
 /* =========================
-PREVIEW BADGE
+FEATURES
 ========================= */
 
-.badge{
+.features{
 
-    position:absolute;
+    width:100%;
 
-    left:35px;
-    bottom:25px;
+    padding:60px 4%;
 
-    z-index:70;
+    background:
+    linear-gradient(
+        180deg,
+        #07124d,
+        #090025
+    );
+}
 
-    padding:
-    12px 18px;
+.title{
+
+    text-align:center;
+
+    font-size:38px;
+
+    margin-bottom:10px;
+}
+
+.title span{
+    color:#ff43ca;
+}
+
+.subtitle{
+
+    text-align:center;
+
+    color:#ccc;
+
+    max-width:700px;
+
+    margin:auto;
+
+    font-size:15px;
+
+    line-height:1.5;
+}
+
+.cards{
+
+    width:100%;
+    max-width:1100px;
+
+    margin:35px auto 0;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+    grid-template-rows:
+    repeat(2,190px);
+
+    gap:14px;
+}
+
+.card{
+
+    width:100%;
+    height:190px;
+
+    padding:20px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+    justify-content:center;
+
+    text-align:center;
 
     border-radius:18px;
 
-    background:
-    rgba(0,0,0,.4);
+    border:
+    1px solid
+    rgba(255,255,255,.2);
 
-    backdrop-filter:
-    blur(8px);
+    background:
+    linear-gradient(
+        145deg,
+        #3a1670,
+        #080b35
+    );
+
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+}
+
+.icon{
+
+    width:50px;
+    height:50px;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:#24105d;
 
     border:
     1px solid
-    rgba(255,255,255,.25);
+    #ad2cff;
 
-    box-shadow:
-    0 0 20px
-    rgba(255,43,192,.35);
+    font-size:24px;
 
-    font-size:13px;
+    margin-bottom:10px;
+}
+
+.card h3{
+
+    font-size:17px;
+
+    margin-bottom:7px;
+}
+
+.card p{
+
+    color:#ccc;
+
+    font-size:12px;
 
     line-height:1.4;
 }
 
 
 /* =========================
-MOBILE
+SCENES
+========================= */
+
+.scenes{
+
+    width:100%;
+
+    padding:60px 4%;
+
+    background:#030019;
+}
+
+.scene-grid{
+
+    width:100%;
+    max-width:1100px;
+
+    margin:35px auto 0;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+    grid-template-rows:280px;
+
+    gap:14px;
+}
+
+.scene{
+
+    width:100%;
+    height:280px;
+
+    position:relative;
+
+    overflow:hidden;
+
+    border-radius:18px;
+
+    border:
+    1px solid
+    rgba(255,255,255,.2);
+}
+
+
+/* WATER SCENE */
+
+.underwater{
+
+    background:
+    radial-gradient(
+        circle at 30% 30%,
+        #69ffff,
+        #087bc4 45%,
+        #001858
+    );
+}
+
+.underwater:before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+    repeating-radial-gradient(
+        ellipse,
+        transparent 0 25px,
+        rgba(255,255,255,.13)
+        27px 30px
+    );
+
+    animation:
+    waterMove 5s linear infinite;
+}
+
+@keyframes waterMove{
+
+    to{
+        transform:
+        translateY(40px);
+    }
+}
+
+
+/* MINI FISH */
+
+.mini-fish{
+
+    position:absolute;
+
+    left:-60px;
+
+    font-size:35px;
+
+    animation:
+    miniSwim 5s linear infinite;
+}
+
+.mf1{
+    top:30%;
+}
+
+.mf2{
+    top:55%;
+    animation-delay:1.5s;
+}
+
+.mf3{
+    top:72%;
+    animation-delay:3s;
+}
+
+@keyframes miniSwim{
+
+    from{
+        left:-70px;
+    }
+
+    to{
+        left:110%;
+    }
+}
+
+
+/* PARTY SCENE */
+
+.party-scene{
+
+    background:
+    radial-gradient(
+        circle at center,
+        #ff2bc0,
+        #570b73 45%,
+        #08001e
+    );
+}
+
+
+/* NIGHT SCENE */
+
+.night{
+
+    background:
+    linear-gradient(
+        180deg,
+        #020028,
+        #1a2d78,
+        #ff7188
+    );
+}
+
+.night:before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+    radial-gradient(
+        circle,
+        white 1px,
+        transparent 2px
+    );
+
+    background-size:45px 45px;
+
+    animation:
+    nightMove 8s linear infinite;
+}
+
+@keyframes nightMove{
+
+    to{
+        background-position:
+        80px 120px;
+    }
+}
+
+.mountain{
+
+    position:absolute;
+
+    bottom:0;
+
+    width:0;
+    height:0;
+
+    border-left:
+    170px solid transparent;
+
+    border-right:
+    170px solid transparent;
+
+    border-bottom:
+    210px solid #080a31;
+}
+
+.mountain1{
+    left:-70px;
+}
+
+.mountain2{
+
+    right:-80px;
+
+    border-bottom-color:#121642;
+}
+
+
+/* SCENE TEXT */
+
+.scene-text{
+
+    position:absolute;
+
+    z-index:10;
+
+    left:15px;
+    right:15px;
+    bottom:15px;
+}
+
+.scene-text h3{
+
+    font-size:19px;
+
+    margin-bottom:5px;
+}
+
+.scene-text p{
+
+    font-size:12px;
+
+    line-height:1.4;
+
+    color:#ddd;
+}
+
+
+/* =========================
+CTA
+========================= */
+
+.cta{
+
+    position:relative;
+
+    width:100%;
+
+    padding:80px 20px;
+
+    text-align:center;
+
+    overflow:hidden;
+
+    background:
+    radial-gradient(
+        circle,
+        #3b0570,
+        #080021 70%
+    );
+}
+
+.cta h2{
+    font-size:38px;
+}
+
+.cta h2 span{
+    color:#ffd000;
+}
+
+.cta p{
+
+    max-width:650px;
+
+    margin:15px auto;
+
+    color:#ccc;
+
+    line-height:1.5;
+}
+
+.cta .buttons{
+    justify-content:center;
+}
+
+
+/* =========================
+FOOTER
+========================= */
+
+footer{
+
+    width:100%;
+
+    padding:25px;
+
+    text-align:center;
+
+    background:#01000a;
+
+    color:#888;
+}
+
+footer strong{
+    color:#ffd000;
+}
+
+
+/* =========================
+TABLET
+========================= */
+
+@media(max-width:800px){
+
+    .hero{
+        min-height:600px;
+    }
+
+    .logo{
+        font-size:50px;
+    }
+
+    .tagline{
+        font-size:31px;
+    }
+
+    .description{
+        font-size:13px;
+    }
+
+    .pool{
+
+        width:58%;
+        height:290px;
+    }
+
+    .rainbow{
+
+        width:180px;
+        height:100px;
+    }
+
+    .cards{
+
+        grid-template-rows:
+        repeat(2,150px);
+    }
+
+    .card{
+        height:150px;
+        padding:10px;
+    }
+
+    .icon{
+
+        width:38px;
+        height:38px;
+
+        font-size:18px;
+    }
+
+    .card h3{
+        font-size:13px;
+    }
+
+    .card p{
+        font-size:9px;
+    }
+
+    .scene-grid{
+        grid-template-rows:220px;
+    }
+
+    .scene{
+        height:220px;
+    }
+}
+
+
+/* =========================
+PHONE
 ========================= */
 
 @media(max-width:600px){
 
+    html,
+    body{
+
+        width:100vw;
+        max-width:100vw;
+
+        overflow-x:hidden;
+    }
+
     .hero{
+
+        width:100vw;
 
         min-height:520px;
 
@@ -1005,13 +1556,14 @@ MOBILE
     }
 
 
+    /* CONTENT */
+
     .hero-content{
 
         width:94%;
 
         padding-top:25px;
     }
-
 
     .logo{
 
@@ -1021,7 +1573,6 @@ MOBILE
         letter-spacing:-2px;
     }
 
-
     .tagline{
 
         width:58%;
@@ -1029,7 +1580,6 @@ MOBILE
         font-size:
         clamp(18px,6vw,25px);
     }
-
 
     .description{
 
@@ -1042,14 +1592,12 @@ MOBILE
         margin-top:10px;
     }
 
-
     .buttons{
 
         gap:6px;
 
         margin-top:12px;
     }
-
 
     .btn{
 
@@ -1064,11 +1612,12 @@ MOBILE
 
     .rainbow{
 
-        width:110px;
-        height:60px;
+        width:115px;
+        height:62px;
 
         right:3%;
-        top:20px;
+
+        top:18px;
     }
 
 
@@ -1076,7 +1625,7 @@ MOBILE
 
     .pool{
 
-        width:60%;
+        width:62%;
 
         height:210px;
 
@@ -1091,9 +1640,9 @@ MOBILE
         font-size:27px;
     }
 
-    .sea-fish.big{
+    .sea-fish.small{
 
-        font-size:39px;
+        font-size:20px;
     }
 
     .sea-fish.medium{
@@ -1101,42 +1650,53 @@ MOBILE
         font-size:32px;
     }
 
-    .sea-fish.small{
+    .sea-fish.big{
 
-        font-size:21px;
+        font-size:40px;
     }
 
 
-    .f01{top:10px;}
-    .f02{top:32px;}
-    .f03{top:54px;}
-    .f04{top:76px;}
-    .f05{top:98px;}
-    .f06{top:120px;}
-    .f07{top:142px;}
-    .f08{top:164px;}
-    .f09{top:28px;}
-    .f10{top:90px;}
-    .f11{top:130px;}
-    .f12{top:175px;}
-    .f13{top:48px;}
-    .f14{top:145px;}
-    .f15{top:105px;}
-    .f16{top:65px;}
+    .f01{top:8px;}
+    .f02{top:28px;}
+    .f03{top:50px;}
+    .f04{top:72px;}
+    .f05{top:94px;}
+    .f06{top:116px;}
+    .f07{top:138px;}
+    .f08{top:160px;}
+    .f09{top:25px;}
+    .f10{top:88px;}
+    .f11{top:128px;}
+    .f12{top:178px;}
+    .f13{top:45px;}
+    .f14{top:142px;}
+    .f15{top:102px;}
+    .f16{top:64px;}
     .f17{top:155px;}
-    .f18{top:18px;}
-    .f19{top:115px;}
-    .f20{top:135px;}
-    .f21{top:180px;}
-    .f22{top:75px;}
-    .f23{top:100px;}
-    .f24{top:150px;}
-    .f25{top:40px;}
-    .f26{top:125px;}
-    .f27{top:170px;}
-    .f28{top:85px;}
-    .f29{top:58px;}
-    .f30{top:145px;}
+    .f18{top:15px;}
+    .f19{top:112px;}
+    .f20{top:132px;}
+    .f21{top:182px;}
+    .f22{top:72px;}
+    .f23{top:98px;}
+    .f24{top:148px;}
+    .f25{top:38px;}
+    .f26{top:122px;}
+    .f27{top:172px;}
+    .f28{top:82px;}
+    .f29{top:55px;}
+    .f30{top:142px;}
+
+
+    /* BUBBLES */
+
+    .bubble{
+
+        width:5px;
+        height:5px;
+
+        border-width:1px;
+    }
 
 
     /* BUTTERFLIES */
@@ -1155,20 +1715,152 @@ MOBILE
     }
 
 
-    /* BADGE */
+    /* FEATURES */
 
-    .badge{
-
-        left:8px;
-        bottom:8px;
+    .features{
 
         padding:
-        7px 10px;
-
-        font-size:8px;
-
-        max-width:170px;
+        40px 3%;
     }
+
+    .title{
+
+        font-size:
+        clamp(21px,7vw,27px);
+    }
+
+    .subtitle{
+        font-size:10px;
+    }
+
+    .cards{
+
+        width:100%;
+
+        grid-template-columns:
+        repeat(3,minmax(0,1fr));
+
+        grid-template-rows:
+        repeat(2,105px);
+
+        gap:5px;
+
+        margin-top:22px;
+    }
+
+    .card{
+
+        width:100%;
+
+        height:105px;
+
+        padding:5px;
+
+        border-radius:10px;
+    }
+
+    .icon{
+
+        width:28px;
+        height:28px;
+
+        font-size:13px;
+
+        margin-bottom:4px;
+    }
+
+    .card h3{
+
+        font-size:9px;
+
+        margin-bottom:3px;
+    }
+
+    .card p{
+
+        font-size:6.5px;
+
+        line-height:1.2;
+    }
+
+
+    /* SCENES */
+
+    .scenes{
+
+        padding:
+        40px 3%;
+    }
+
+    .scene-grid{
+
+        width:100%;
+
+        grid-template-columns:
+        repeat(3,minmax(0,1fr));
+
+        grid-template-rows:
+        160px;
+
+        gap:5px;
+
+        margin-top:22px;
+    }
+
+    .scene{
+
+        width:100%;
+
+        height:160px;
+
+        border-radius:10px;
+    }
+
+    .scene-text{
+
+        left:6px;
+        right:6px;
+        bottom:6px;
+    }
+
+    .scene-text h3{
+        font-size:10px;
+    }
+
+    .scene-text p{
+        font-size:6px;
+    }
+
+    .mountain{
+
+        border-left-width:90px;
+
+        border-right-width:90px;
+
+        border-bottom-width:120px;
+    }
+
+
+    /* CTA */
+
+    .cta{
+
+        padding:
+        55px 15px;
+    }
+
+    .cta h2{
+        font-size:25px;
+    }
+
+    .cta p{
+        font-size:10px;
+    }
+
+    footer{
+        font-size:9px;
+    }
+
 }
 
 </style>
@@ -1178,15 +1870,15 @@ MOBILE
 <body>
 
 
+<!-- =========================
+HERO
+========================= -->
+
 <section class="hero">
 
 
-    <!-- STARS -->
-
     <div class="stars"></div>
 
-
-    <!-- SHOOTING STARS -->
 
     <div class="shooting s1"></div>
     <div class="shooting s2"></div>
@@ -1198,9 +1890,7 @@ MOBILE
     <div class="rainbow"></div>
 
 
-    <!-- =========================
-    HERO CONTENT
-    ========================= -->
+    <!-- CONTENT -->
 
     <div class="hero-content">
 
@@ -1208,14 +1898,10 @@ MOBILE
             Vital<span>Star</span>
         </div>
 
-
         <div class="tagline">
-
             Connect,
             <span>Share & Shine</span>
-
         </div>
-
 
         <div class="description">
 
@@ -1226,7 +1912,6 @@ MOBILE
 
         </div>
 
-
         <div class="buttons">
 
             <a
@@ -1236,7 +1921,6 @@ MOBILE
                 Join VitalStar
 
             </a>
-
 
             <a
                 href="login.html"
@@ -1270,131 +1954,162 @@ MOBILE
         <div class="bubble b03"></div>
         <div class="bubble b04"></div>
         <div class="bubble b05"></div>
+        <div class="bubble b06"></div>
 
 
         <!-- =====================
-        30 FISH
+        FISH 01
         ====================== -->
 
         <div class="sea-fish f01 c1 medium">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f02 c2">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f03 c3 big">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f04 c4">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f05 c5 medium">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f06 c6 big">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f07 c7">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f08 c8 small">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f09 c3 small">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f10 c5 big">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f11 c7 small">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f12 c1">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f13 c4 small">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f14 c2 big">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f15 c6 small">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f16 c8">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f17 c3 medium">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f18 c5 medium">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f19 c7 small">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f20 c2">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f21 c4 small">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f22 c6 big">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f23 c8">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f24 c1 small">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f25 c3 medium">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f26 c5">
-            🐟
+            <span>🐟</span>
         </div>
+
 
         <div class="sea-fish f27 c7 big">
-            🐳
+            <span>🐳</span>
         </div>
+
 
         <div class="sea-fish f28 c2 medium">
-            🐠
+            <span>🐠</span>
         </div>
+
 
         <div class="sea-fish f29 c6 small">
-            🐟
+            <span>🐟</span>
         </div>
 
+
         <div class="sea-fish f30 c4 medium">
-            🐠
+            <span>🐠</span>
         </div>
+
 
     </div>
 
@@ -1433,21 +2148,339 @@ MOBILE
     </div>
 
 
-    <!-- =========================
-    BADGE
-    ========================= -->
+</section>
 
-    <div class="badge">
 
-        🐠 🐟 🐳
+<!-- =========================
+FEATURES
+========================= -->
 
-        Dive into a world full of
-        color, friends & possibilities ✨
+<section class="features">
+
+    <h2 class="title">
+        Everything You Need
+        <span>in One Place</span>
+    </h2>
+
+    <p class="subtitle">
+
+        Connect with people, share your
+        moments, discover communities and
+        enjoy everything VitalStar has to offer.
+
+    </p>
+
+
+    <div class="cards">
+
+
+        <div class="card">
+
+            <div class="icon">
+                👥
+            </div>
+
+            <h3>
+                Connect
+            </h3>
+
+            <p>
+                Find friends and build meaningful
+                connections.
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                💬
+            </div>
+
+            <h3>
+                Chat
+            </h3>
+
+            <p>
+                Talk with friends and stay connected.
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                📸
+            </div>
+
+            <h3>
+                Share
+            </h3>
+
+            <p>
+                Share photos, videos and moments.
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                🌎
+            </div>
+
+            <h3>
+                Communities
+            </h3>
+
+            <p>
+                Discover groups and communities.
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                🔔
+            </div>
+
+            <h3>
+                Notifications
+            </h3>
+
+            <p>
+                Never miss important updates.
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                ⭐
+            </div>
+
+            <h3>
+                Shine
+            </h3>
+
+            <p>
+                Express yourself and shine together.
+            </p>
+
+        </div>
+
 
     </div>
 
+</section>
+
+
+<!-- =========================
+SCENES
+========================= -->
+
+<section class="scenes">
+
+
+    <h2 class="title">
+        Explore <span>VitalStar</span>
+    </h2>
+
+
+    <p class="subtitle">
+
+        A colorful world where everyone
+        can connect, share and shine.
+
+    </p>
+
+
+    <div class="scene-grid">
+
+
+        <!-- WATER -->
+
+        <div class="scene underwater">
+
+            <div class="mini-fish mf1">
+                🐠
+            </div>
+
+            <div class="mini-fish mf2">
+                🐟
+            </div>
+
+            <div class="mini-fish mf3">
+                🐳
+            </div>
+
+            <div class="scene-text">
+
+                <h3>
+                    Dive Into Fun
+                </h3>
+
+                <p>
+                    Discover a colorful world
+                    of new possibilities.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- PARTY -->
+
+        <div class="scene party-scene">
+
+            <div
+                style="
+                position:absolute;
+                top:25%;
+                left:20%;
+                font-size:55px;
+                ">
+                🎉
+            </div>
+
+            <div
+                style="
+                position:absolute;
+                top:20%;
+                right:20%;
+                font-size:50px;
+                ">
+                🕺
+            </div>
+
+            <div
+                style="
+                position:absolute;
+                bottom:35%;
+                left:40%;
+                font-size:45px;
+                ">
+                💃
+            </div>
+
+            <div class="scene-text">
+
+                <h3>
+                    Celebrate Together
+                </h3>
+
+                <p>
+                    Share happiness and
+                    unforgettable moments.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- NIGHT -->
+
+        <div class="scene night">
+
+            <div class="mountain mountain1"></div>
+
+            <div class="mountain mountain2"></div>
+
+            <div
+                style="
+                position:absolute;
+                top:20px;
+                right:25px;
+                font-size:40px;
+                ">
+                🌙
+            </div>
+
+            <div class="scene-text">
+
+                <h3>
+                    Shine At Night
+                </h3>
+
+                <p>
+                    Your world stays bright
+                    wherever you go.
+                </p>
+
+            </div>
+
+        </div>
+
+
+    </div>
 
 </section>
+
+
+<!-- =========================
+CTA
+========================= -->
+
+<section class="cta">
+
+    <h2>
+        Ready to
+        <span>Shine?</span>
+    </h2>
+
+    <p>
+
+        Join VitalStar and become part
+        of a colorful community where
+        people connect, share and shine.
+
+    </p>
+
+
+    <div class="buttons">
+
+        <a
+            href="register.html"
+            class="btn register">
+
+            Join VitalStar
+
+        </a>
+
+        <a
+            href="login.html"
+            class="btn login">
+
+            Login
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =========================
+FOOTER
+========================= -->
+
+<footer>
+
+    © 2026
+    <strong>VitalStar</strong>
+
+    — Connect, Share & Shine ✨
+
+</footer>
 
 
 </body>
