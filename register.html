@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VitalStar Register</title>
-
-<style>
+<title>VitalStar Register</title><style>
 body{
     margin:0;
     font-family:Arial,sans-serif;
@@ -43,6 +40,33 @@ input{
     font-size:15px;
 }
 
+.terms{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin:5px 0 18px;
+    font-size:13px;
+    line-height:1.5;
+    color:#444;
+}
+
+.terms input{
+    width:17px;
+    height:17px;
+    margin:2px 0 0;
+    flex-shrink:0;
+}
+
+.terms a{
+    color:#1877f2;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+.terms a:hover{
+    text-decoration:underline;
+}
+
 button{
     width:100%;
     padding:12px;
@@ -63,34 +87,17 @@ button:disabled{
     background:#9db8e8;
     cursor:not-allowed;
 }
-</style>
-</head>
+</style></head><body><div class="container"><h1>VitalStar Register</h1><form id="registerForm"><input type="text" id="fullName" placeholder="Nick Name" required><input type="text" id="username" placeholder="Username" required><input type="email" id="email" placeholder="Email" required><input type="password" id="password" placeholder="Password" required><input type="password" id="confirmPassword" placeholder="Confirm Password" required><div class="terms">
+    <input type="checkbox" id="agreeTerms">
+    <label for="agreeTerms">
+        I agree to the
+        <a href="terms.html" target="_blank">Terms of Service</a>
+        and
+        <a href="privacy.html" target="_blank">Privacy Policy</a>.
+    </label>
+</div><button type="submit" id="registerBtn">Register</button>
 
-<body>
-
-<div class="container">
-
-<h1>VitalStar Register</h1>
-
-<form id="registerForm">
-
-<input type="text" id="fullName" placeholder="Nick Name" required>
-
-<input type="text" id="username" placeholder="Username" required>
-
-<input type="email" id="email" placeholder="Email" required>
-
-<input type="password" id="password" placeholder="Password" required>
-
-<input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-
-<button type="submit" id="registerBtn">Register</button>
-
-</form>
-
-</div>
-
-<script type="module">
+</form></div><script type="module">
 
 import { auth, db } from "./firebase.js";
 
@@ -110,10 +117,16 @@ serverTimestamp
 
 const form = document.getElementById("registerForm");
 const registerBtn = document.getElementById("registerBtn");
+const agreeTerms = document.getElementById("agreeTerms");
 
 form.addEventListener("submit", async (e)=>{
 
 e.preventDefault();
+
+if(!agreeTerms.checked){
+    alert("Please agree to the Terms of Service and Privacy Policy.");
+    return;
+}
 
 // Prevent double taps from triggering multiple signups
 registerBtn.disabled = true;
@@ -176,7 +189,11 @@ await setDoc(doc(db,"users",cred.user.uid),{
 
     lastSeen: serverTimestamp(),
 
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+
+    agreedToTerms: true,
+
+    termsAgreedAt: serverTimestamp()
 
 });
 
@@ -194,7 +211,5 @@ registerBtn.textContent = "Register";
 
 });
 
-</script>
-
-</body>
+</script></body>
 </html>
