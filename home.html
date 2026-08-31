@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>VitalStar</title>
 
 <style>
+
+/* =========================================================
+   RESET
+   ========================================================= */
 
 *{
     margin:0;
@@ -17,113 +21,61 @@
     font-family:Arial,sans-serif;
 }
 
+html{
+    scroll-behavior:smooth;
+}
+
 body{
-    background:#eef2ff;
+    background:
+        radial-gradient(circle at 10% 20%,rgba(255,105,180,.15),transparent 25%),
+        radial-gradient(circle at 90% 30%,rgba(123,47,247,.15),transparent 25%),
+        radial-gradient(circle at 50% 90%,rgba(24,119,242,.12),transparent 30%),
+        #eef2ff;
+    color:#222;
+    min-height:100vh;
     overflow-x:hidden;
 }
 
-/* =====================================================
-   LARGE BACKGROUND STARS
-   ===================================================== */
 
-.background-stars{
-    position:fixed;
-    inset:0;
-    overflow:hidden;
-    pointer-events:none;
-    z-index:0;
-}
-
-.bg-star{
-    position:absolute;
-    color:#ffd700;
-    opacity:.28;
-    text-shadow:
-        0 0 12px #ffd700,
-        0 0 25px #fff;
-    animation:starFloat 8s ease-in-out infinite;
-}
-
-.bg-star:nth-child(1){
-    font-size:100px;
-    left:2%;
-    top:12%;
-}
-
-.bg-star:nth-child(2){
-    font-size:70px;
-    left:82%;
-    top:18%;
-    animation-delay:2s;
-}
-
-.bg-star:nth-child(3){
-    font-size:120px;
-    left:72%;
-    top:55%;
-    animation-delay:4s;
-}
-
-.bg-star:nth-child(4){
-    font-size:80px;
-    left:8%;
-    top:70%;
-    animation-delay:1s;
-}
-
-.bg-star:nth-child(5){
-    font-size:55px;
-    left:45%;
-    top:35%;
-    animation-delay:3s;
-}
-
-.bg-star:nth-child(6){
-    font-size:90px;
-    left:35%;
-    top:80%;
-    animation-delay:5s;
-}
-
-@keyframes starFloat{
-
-    0%,100%{
-        transform:translate(0,0) rotate(0deg);
-    }
-
-    50%{
-        transform:translate(20px,-25px) rotate(15deg);
-    }
-
-}
-
-/* =====================================================
+/* =========================================================
    HEADER
-   ===================================================== */
+   ========================================================= */
 
 header{
     position:fixed;
     top:0;
     left:0;
     width:100%;
-    height:60px;
-    background:linear-gradient(
-        135deg,
-        #1877f2,
-        #7b2ff7
-    );
+    height:62px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7,
+            #ff1493
+        );
+
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:0 15px;
+
+    padding:0 14px;
+
     color:white;
+
     z-index:1000;
-    box-shadow:0 3px 10px rgba(0,0,0,.2);
+
+    box-shadow:
+        0 4px 20px rgba(0,0,0,.25);
 }
 
 .logo{
-    font-size:24px;
-    font-weight:bold;
+    font-size:23px;
+    font-weight:900;
+    letter-spacing:.3px;
+    text-shadow:
+        0 2px 8px rgba(0,0,0,.3);
 }
 
 .menu{
@@ -132,6 +84,8 @@ header{
     color:white;
     font-size:28px;
     cursor:pointer;
+    width:40px;
+    height:40px;
 }
 
 .icons{
@@ -142,606 +96,968 @@ header{
 
 .icon{
     position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
 .icon-link{
+    color:white;
     text-decoration:none;
-    font-size:24px;
-    color:white;
+    font-size:23px;
 }
 
-.badge{
-    position:absolute;
-    top:-6px;
-    right:-8px;
-    min-width:18px;
-    height:18px;
-    padding:0 5px;
-    background:red;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:11px;
-    font-weight:bold;
-    border:2px solid white;
-}
 
-/* =====================================================
+/* =========================================================
    WALLET
-   ===================================================== */
+   ========================================================= */
 
 .wallet-trigger{
     border:none;
-    background:linear-gradient(
-        135deg,
-        #ffd700,
-        #ff9500
-    );
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe600,
+            #ff9500
+        );
+
     color:#111;
-    min-width:72px;
+
+    min-width:76px;
     height:38px;
-    padding:0 10px;
-    border-radius:12px;
+
+    padding:0 9px;
+
+    border-radius:13px;
+
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:5px;
-    font-size:14px;
+
+    gap:4px;
+
+    font-size:13px;
     font-weight:900;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 4px 14px rgba(255,149,0,.4);
+
+    transition:.2s;
 }
 
-/* =====================================================
+.wallet-trigger:hover{
+    transform:translateY(-2px);
+}
+
+.wallet-trigger:active{
+    transform:scale(.95);
+}
+
+#walletBalance{
+    white-space:nowrap;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge{
+    position:absolute;
+
+    top:-7px;
+    right:-8px;
+
+    min-width:18px;
+    height:18px;
+
+    padding:0 5px;
+
+    background:#ff1744;
+    color:white;
+
+    border-radius:20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:10px;
+    font-weight:900;
+
+    border:2px solid white;
+}
+
+
+/* =========================================================
    SIDEBAR
-   ===================================================== */
+   ========================================================= */
 
 .sidebar{
     position:fixed;
+
     top:0;
-    left:-260px;
-    width:250px;
+    left:-270px;
+
+    width:260px;
     height:100%;
+
     background:white;
-    padding-top:70px;
+
+    padding-top:75px;
+
+    box-shadow:
+        4px 0 20px rgba(0,0,0,.2);
+
     transition:.3s;
-    box-shadow:2px 0 10px rgba(0,0,0,.2);
+
     z-index:999;
+
     overflow-y:auto;
 }
 
-.sidebar a,
-.darkModeBtn,
-#logoutBtn{
+.sidebar a{
     display:block;
-    width:100%;
-    padding:15px 20px;
-    text-decoration:none;
+
+    margin:3px 10px;
+
+    padding:14px 15px;
+
     color:#333;
-    font-weight:bold;
-    border:none;
-    background:none;
-    text-align:left;
-    font-size:16px;
+
+    text-decoration:none;
+
+    font-weight:800;
+
+    border-radius:12px;
+
+    transition:.2s;
 }
 
-.sidebar a:hover,
-.darkModeBtn:hover,
-#logoutBtn:hover{
+.sidebar a:hover{
     background:#1877f2;
     color:white;
+    transform:translateX(3px);
 }
 
-/* =====================================================
+
+/* =========================================================
    AI MENUS
-   ===================================================== */
+   ========================================================= */
 
 .orion-menu,
 .pinky-menu,
 .games-menu{
     display:flex !important;
     align-items:center;
+
     gap:10px;
-    margin:4px 10px;
-    padding:12px 10px !important;
-    border-radius:12px;
+
+    margin:5px 10px;
+
+    padding:11px 10px !important;
+
+    border-radius:14px;
+
+    transition:.25s;
 }
 
 .orion-menu{
-    background:linear-gradient(
-        135deg,
-        rgba(123,47,247,.12),
-        rgba(24,119,242,.12)
-    );
+    background:
+        linear-gradient(
+            135deg,
+            rgba(123,47,247,.12),
+            rgba(24,119,242,.12)
+        );
 }
 
 .pinky-menu{
-    background:linear-gradient(
-        135deg,
-        rgba(255,105,180,.14),
-        rgba(255,182,193,.18)
-    );
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,105,180,.15),
+            rgba(255,20,147,.1)
+        );
 }
 
 .games-menu{
-    background:linear-gradient(
-        135deg,
-        rgba(24,119,242,.12),
-        rgba(52,199,89,.12)
-    );
+    background:
+        linear-gradient(
+            135deg,
+            rgba(24,119,242,.12),
+            rgba(52,199,89,.12)
+        );
 }
 
 .orion-icon,
 .pinky-icon,
 .games-icon{
-    width:32px;
-    height:32px;
-    min-width:32px;
+    width:34px;
+    height:34px;
+
+    min-width:34px;
+
     border-radius:50%;
+
     display:flex;
     align-items:center;
     justify-content:center;
+
     color:white;
+
+    font-weight:900;
+
+    transition:.25s;
 }
 
 .orion-icon{
-    background:linear-gradient(
-        135deg,
-        #7b2ff7,
-        #1877f2
-    );
+    background:
+        linear-gradient(135deg,#7b2ff7,#1877f2);
+
+    box-shadow:
+        0 0 12px rgba(123,47,247,.5);
 }
 
 .pinky-icon{
-    background:linear-gradient(
-        135deg,
-        #ff69b4,
-        #ff1493
-    );
+    background:
+        linear-gradient(135deg,#ff69b4,#ff1493);
+
+    box-shadow:
+        0 0 12px rgba(255,20,147,.5);
 }
 
 .games-icon{
-    background:linear-gradient(
-        135deg,
-        #1877f2,
-        #34c759
-    );
+    background:
+        linear-gradient(135deg,#1877f2,#34c759);
+
+    box-shadow:
+        0 0 12px rgba(24,119,242,.5);
 }
 
 .orion-name,
 .pinky-name,
 .games-name{
     font-size:15px;
-    font-weight:800;
+    font-weight:900;
 }
 
 .ai-badge,
 .games-badge{
     margin-left:auto;
+
     padding:4px 8px;
+
     border-radius:8px;
+
     color:white;
-    font-size:10px;
+
+    font-size:9px;
     font-weight:900;
 }
 
 .ai-badge{
-    background:linear-gradient(
-        135deg,
-        #7b2ff7,
-        #1877f2
-    );
+    background:
+        linear-gradient(135deg,#7b2ff7,#1877f2);
+}
+
+.pinky-badge{
+    background:
+        linear-gradient(135deg,#ff69b4,#ff1493);
 }
 
 .games-badge{
-    background:linear-gradient(
-        135deg,
-        #1877f2,
-        #34c759
-    );
+    background:
+        linear-gradient(135deg,#1877f2,#34c759);
 }
 
-/* =====================================================
+
+/* =========================================================
+   DARK MODE BUTTON
+   ========================================================= */
+
+.darkModeBtn,
+#logoutBtn{
+    width:calc(100% - 20px);
+
+    margin:3px 10px;
+
+    text-align:left;
+
+    padding:14px 15px;
+
+    border:none;
+
+    background:none;
+
+    color:#333;
+
+    font-size:15px;
+
+    font-weight:800;
+
+    border-radius:12px;
+
+    cursor:pointer;
+}
+
+.darkModeBtn:hover,
+#logoutBtn:hover{
+    background:#1877f2;
+    color:white;
+}
+
+
+/* =========================================================
+   DECORATIONS
+   ========================================================= */
+
+.decoration{
+    position:fixed;
+    pointer-events:none;
+    z-index:-1;
+    user-select:none;
+}
+
+.flower1{
+    top:80px;
+    left:-10px;
+    font-size:55px;
+}
+
+.flower2{
+    top:300px;
+    right:-10px;
+    font-size:50px;
+}
+
+.flower3{
+    bottom:100px;
+    left:-8px;
+    font-size:48px;
+}
+
+.flower4{
+    bottom:220px;
+    right:-8px;
+    font-size:55px;
+}
+
+.butterfly1{
+    top:130px;
+    right:8%;
+    font-size:30px;
+}
+
+.butterfly2{
+    top:450px;
+    left:5%;
+    font-size:27px;
+}
+
+.butterfly3{
+    bottom:180px;
+    right:5%;
+    font-size:32px;
+}
+
+
+/* =========================================================
    MAIN
-   ===================================================== */
+   ========================================================= */
 
 .container{
-    position:relative;
-    z-index:2;
-    padding:80px 15px 100px;
+    width:100%;
+    max-width:900px;
+
+    margin:auto;
+
+    padding:
+        82px
+        14px
+        100px;
 }
 
-/* =====================================================
+
+/* =========================================================
    HERO
-   ===================================================== */
+   ========================================================= */
 
 .hero-card{
-    background:rgba(255,255,255,.94);
-    border-radius:20px;
-    padding:20px;
+    position:relative;
+
+    overflow:hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7,
+            #ff1493
+        );
+
+    color:white;
+
+    border-radius:24px;
+
+    padding:23px;
+
     display:flex;
     justify-content:space-between;
     align-items:center;
-    box-shadow:0 5px 15px rgba(0,0,0,.1);
+
+    box-shadow:
+        0 10px 30px rgba(80,50,200,.3);
+}
+
+.hero-card:after{
+    content:"✦";
+
+    position:absolute;
+
+    right:20px;
+    bottom:-20px;
+
+    font-size:100px;
+
+    opacity:.12;
 }
 
 .hero-left{
     display:flex;
     align-items:center;
-    gap:15px;
+    gap:14px;
 }
 
 .hero-icon{
-    font-size:40px;
-}
+    width:55px;
+    height:55px;
 
-.hero-badge{
-    color:green;
-    font-weight:bold;
-}
+    border-radius:18px;
 
-/* =====================================================
-   FLOWER SECTION
-   ===================================================== */
+    background:rgba(255,255,255,.2);
 
-.flowers{
-    display:flex;
-    gap:14px;
-    overflow-x:auto;
-    padding:10px 3px 15px;
-    margin:15px 0 20px;
-}
-
-.flower-card{
-    position:relative;
-    min-width:105px;
-    height:145px;
-    border-radius:22px;
-    overflow:hidden;
     display:flex;
     align-items:center;
     justify-content:center;
-    flex-direction:column;
+
+    font-size:32px;
+
+    backdrop-filter:blur(5px);
+}
+
+.hero-card h2{
+    font-size:21px;
+    margin-bottom:5px;
+}
+
+.hero-card p{
+    font-size:13px;
+    opacity:.9;
+}
+
+.hero-badge{
+    background:rgba(255,255,255,.18);
+
+    padding:8px 11px;
+
+    border-radius:20px;
+
+    font-size:12px;
+    font-weight:900;
+}
+
+
+/* =========================================================
+   STORIES
+   ========================================================= */
+
+.stories{
+    display:flex;
+
+    gap:12px;
+
+    overflow-x:auto;
+
+    padding:18px 2px;
+
+    scrollbar-width:none;
+}
+
+.stories::-webkit-scrollbar{
+    display:none;
+}
+
+.story{
+    position:relative;
+
+    min-width:105px;
+    height:150px;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+
+    padding-bottom:13px;
+
     color:white;
-    font-weight:bold;
-    box-shadow:0 7px 18px rgba(0,0,0,.18);
-    flex-shrink:0;
+
+    font-weight:900;
+
+    background:
+        linear-gradient(
+            160deg,
+            #1877f2,
+            #7b2ff7,
+            #ff1493
+        );
+
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.18);
 }
 
-.flower-card:nth-child(1){
-    background:linear-gradient(
-        160deg,
-        #ff69b4,
-        #ff1493
-    );
+.story:before{
+    content:"🌸";
+
+    position:absolute;
+
+    top:15px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    font-size:40px;
 }
 
-.flower-card:nth-child(2){
-    background:linear-gradient(
-        160deg,
-        #7b2ff7,
-        #1877f2
-    );
+.story:after{
+    content:"🦋";
+
+    position:absolute;
+
+    right:8px;
+    top:8px;
+
+    font-size:22px;
 }
 
-.flower-card:nth-child(3){
-    background:linear-gradient(
-        160deg,
-        #ff9500,
-        #ff3b30
-    );
-}
 
-.flower-card:nth-child(4){
-    background:linear-gradient(
-        160deg,
-        #34c759,
-        #00a86b
-    );
-}
-
-.flower-card:nth-child(5){
-    background:linear-gradient(
-        160deg,
-        #00bfff,
-        #4169e1
-    );
-}
-
-.flower{
-    font-size:55px;
-    line-height:1;
-    animation:flowerFloat 3s ease-in-out infinite;
-}
-
-.flower-card:nth-child(2) .flower{
-    animation-delay:.5s;
-}
-
-.flower-card:nth-child(3) .flower{
-    animation-delay:1s;
-}
-
-.flower-card:nth-child(4) .flower{
-    animation-delay:1.5s;
-}
-
-.flower-card:nth-child(5) .flower{
-    animation-delay:2s;
-}
-
-@keyframes flowerFloat{
-
-    0%,100%{
-        transform:translateY(0) rotate(-3deg);
-    }
-
-    50%{
-        transform:translateY(-8px) rotate(3deg);
-    }
-
-}
-
-.flower-name{
-    margin-top:8px;
-    font-size:14px;
-}
-
-/* =====================================================
+/* =========================================================
    LATEST
-   ===================================================== */
+   ========================================================= */
+
+.latest-wrap{
+    text-align:center;
+
+    margin:10px 0 18px;
+}
 
 .latest-title{
-    background:#000;
-    padding:10px 20px;
-    border-radius:12px;
-    font-size:30px;
     display:inline-block;
+
+    padding:10px 24px;
+
+    border-radius:16px;
+
+    background:#111;
+
+    font-size:30px;
+
+    font-weight:900;
+
+    box-shadow:
+        0 7px 20px rgba(0,0,0,.2);
 }
 
-.red{color:#ff3b30}
-.orange{color:#ff9500}
-.yellow{color:#ffcc00}
-.green{color:#34c759}
-.blue{color:#007aff}
-.purple{color:#af52de}
+.red{color:#ff3b30;}
+.orange{color:#ff9500;}
+.yellow{color:#ffcc00;}
+.green{color:#34c759;}
+.blue{color:#007aff;}
+.purple{color:#af52de;}
 
-/* =====================================================
+
+/* =========================================================
    POSTS
-   ===================================================== */
+   ========================================================= */
 
 .post-card{
-    background:rgba(255,255,255,.95);
-    border-radius:20px;
+    background:white;
+
+    border-radius:22px;
+
     overflow:hidden;
-    margin-top:20px;
-    box-shadow:0 5px 15px rgba(0,0,0,.15);
+
+    margin-top:18px;
+
+    box-shadow:
+        0 7px 22px rgba(0,0,0,.12);
 }
 
 .user-info{
     display:flex;
+
     align-items:center;
+
     padding:15px;
 }
 
 .avatar{
-    width:50px;
-    height:50px;
+    width:48px;
+    height:48px;
+
     border-radius:50%;
+
     margin-right:10px;
+
+    object-fit:cover;
+
+    background:#ddd;
 }
 
 .post-card p{
     padding:15px;
+
+    font-size:16px;
+
+    line-height:1.5;
 }
 
 .post-photo{
     width:100%;
+
+    max-height:600px;
+
+    object-fit:cover;
 }
 
 .post-buttons{
     display:flex;
+
     justify-content:space-around;
-    padding:15px;
-    border-top:1px solid #ddd;
+
+    padding:13px;
+
+    border-top:1px solid #eee;
 }
 
 .post-buttons button{
-    background:none;
     border:none;
-    font-weight:bold;
+
+    background:none;
+
+    font-size:15px;
+
+    font-weight:800;
+
+    cursor:pointer;
 }
 
-/* =====================================================
+
+/* =========================================================
    FOOTER
-   ===================================================== */
+   ========================================================= */
 
 .vital-footer{
-    position:relative;
-    z-index:2;
-    background:#000;
+    background:#050505;
+
     color:#888;
+
     text-align:center;
-    padding:35px 15px;
+
+    padding:38px 15px 90px;
+
+    box-shadow:
+        0 -5px 25px rgba(0,0,0,.7);
 }
 
 .vital-footer h2{
-    color:#ddd;
+    color:white;
+
     font-size:28px;
+
+    font-weight:900;
+
+    margin-bottom:8px;
+
+    text-shadow:
+        0 0 12px #777;
 }
 
 .vital-footer p{
-    margin-top:8px;
+    font-weight:bold;
 }
 
 .footer-links{
-    margin:20px 0;
+    margin:22px 0;
 }
 
 .footer-links a{
     display:inline-block;
-    margin:8px;
-    color:#999;
-    font-weight:bold;
+
+    margin:7px;
+
+    color:#aaa;
+
     text-decoration:none;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+    transition:.2s;
+}
+
+.footer-links a:hover{
+    color:white;
+
+    transform:translateY(-2px);
 }
 
 .copyright{
-    font-size:13px;
     border-top:1px solid #333;
+
     padding-top:15px;
+
+    font-size:12px;
+
+    color:#777;
 }
 
-/* =====================================================
-   BOTTOM NAV
-   ===================================================== */
+
+/* =========================================================
+   BOTTOM NAVIGATION
+   ========================================================= */
 
 .bottom-nav{
     position:fixed;
+
     bottom:0;
     left:0;
+
     width:100%;
-    height:65px;
-    background:white;
+    height:67px;
+
+    background:rgba(255,255,255,.96);
+
+    backdrop-filter:blur(12px);
+
     display:flex;
+
     justify-content:space-around;
     align-items:center;
-    box-shadow:0 -3px 10px rgba(0,0,0,.15);
+
+    box-shadow:
+        0 -4px 20px rgba(0,0,0,.15);
+
     z-index:1000;
 }
 
 .bottom-nav a{
-    text-decoration:none;
     color:#555;
+
+    text-decoration:none;
+
     text-align:center;
-    font-size:22px;
+
+    font-size:21px;
+
+    min-width:55px;
 }
 
 .bottom-nav small{
     display:block;
-    font-size:11px;
+
+    font-size:10px;
+
+    font-weight:bold;
+
+    margin-top:2px;
 }
 
 .create-btn{
-    width:55px;
-    height:55px;
+    width:56px;
+    height:56px;
+
     border-radius:50%;
-    background:linear-gradient(
-        135deg,
-        #1877f2,
-        #7b2ff7
-    );
+
+    background:
+        linear-gradient(
+            135deg,
+            #1877f2,
+            #7b2ff7,
+            #ff1493
+        );
+
     color:white !important;
-    display:flex !important;
-    justify-content:center;
+
+    display:flex;
+
     align-items:center;
+    justify-content:center;
+
     font-size:30px !important;
-    margin-top:-25px;
+
+    margin-top:-27px;
+
+    border:4px solid white;
+
+    box-shadow:
+        0 5px 20px rgba(123,47,247,.4);
 }
 
-/* =====================================================
+
+/* =========================================================
    DARK MODE
-   ===================================================== */
+   ========================================================= */
 
 body.dark-mode{
-    background:#121212;
+    background:
+        radial-gradient(circle at 10% 20%,rgba(123,47,247,.12),transparent 25%),
+        #111;
+
     color:#eee;
 }
 
-body.dark-mode .sidebar,
-body.dark-mode .hero-card,
-body.dark-mode .post-card,
-body.dark-mode .bottom-nav{
-    background:#1e1e1e;
+body.dark-mode .sidebar{
+    background:#1d1d1d;
 }
 
 body.dark-mode .sidebar a,
 body.dark-mode .darkModeBtn,
-body.dark-mode #logoutBtn,
-body.dark-mode .bottom-nav a{
+body.dark-mode #logoutBtn{
     color:#eee;
 }
 
-body.dark-mode .hero-card,
+body.dark-mode .hero-card{
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+}
+
 body.dark-mode .post-card{
+    background:#1d1d1d;
     color:#eee;
 }
+
+body.dark-mode .post-buttons{
+    border-top-color:#333;
+}
+
+body.dark-mode .bottom-nav{
+    background:rgba(29,29,29,.96);
+}
+
+body.dark-mode .bottom-nav a{
+    color:#ccc;
+}
+
+body.dark-mode .create-btn{
+    border-color:#1d1d1d;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media(max-width:500px){
 
     header{
-        padding:0 10px;
+        padding:0 9px;
     }
 
     .logo{
-        font-size:19px;
+        font-size:18px;
     }
 
     .icons{
-        gap:8px;
+        gap:7px;
     }
 
     .wallet-trigger{
         min-width:auto;
         height:36px;
-        font-size:12px;
-        padding:0 8px;
+        padding:0 7px;
+        font-size:11px;
     }
 
     .icon-link{
-        font-size:21px;
+        font-size:20px;
     }
 
-    .bg-star:nth-child(1){
-        font-size:75px;
+    .container{
+        padding-left:10px;
+        padding-right:10px;
     }
 
-    .bg-star:nth-child(2){
-        font-size:55px;
+    .hero-card{
+        padding:18px;
+        border-radius:20px;
     }
 
-    .bg-star:nth-child(3){
-        font-size:85px;
+    .hero-icon{
+        width:48px;
+        height:48px;
+        font-size:27px;
     }
 
-    .bg-star:nth-child(4){
-        font-size:60px;
+    .hero-card h2{
+        font-size:18px;
     }
 
-    .bg-star:nth-child(5){
-        font-size:45px;
+    .hero-card p{
+        font-size:11px;
     }
 
-    .bg-star:nth-child(6){
-        font-size:65px;
+    .hero-badge{
+        font-size:10px;
+        padding:6px 8px;
     }
 
+    .story{
+        min-width:92px;
+        height:135px;
+    }
+
+    .latest-title{
+        font-size:26px;
+    }
+
+    .decoration{
+        opacity:.7;
+    }
 }
 
 </style>
 
 </head>
 
+
 <body>
 
-<!-- =====================================================
-     BACKGROUND STARS
-     ===================================================== -->
 
-<div class="background-stars">
+<!-- =========================================================
+     DECORATIONS
+     ========================================================= -->
 
-    <span class="bg-star">☆</span>
-    <span class="bg-star">☆</span>
-    <span class="bg-star">☆</span>
-    <span class="bg-star">☆</span>
-    <span class="bg-star">☆</span>
-    <span class="bg-star">☆</span>
+<div class="decoration flower1">🌸</div>
+<div class="decoration flower2">🌺</div>
+<div class="decoration flower3">🌷</div>
+<div class="decoration flower4">🌼</div>
 
-</div>
+<div class="decoration butterfly1">🦋</div>
+<div class="decoration butterfly2">🦋</div>
+<div class="decoration butterfly3">🦋</div>
 
-<!-- =====================================================
+
+<!-- =========================================================
      HEADER
-     ===================================================== -->
+     ========================================================= -->
 
 <header>
 
@@ -807,9 +1123,10 @@ body.dark-mode .post-card{
 
 </header>
 
-<!-- =====================================================
+
+<!-- =========================================================
      SIDEBAR
-     ===================================================== -->
+     ========================================================= -->
 
 <div
     class="sidebar"
@@ -828,14 +1145,13 @@ body.dark-mode .post-card{
     💬 Messages
 </a>
 
+
 <a
     href="orion.html"
     class="orion-menu"
 >
 
-<span class="orion-icon">
-    ✦
-</span>
+<span class="orion-icon">✦</span>
 
 <span class="orion-name">
     Orion Pax
@@ -846,6 +1162,7 @@ body.dark-mode .post-card{
 </span>
 
 </a>
+
 
 <a
     href="pinky-spark.html"
@@ -860,11 +1177,12 @@ body.dark-mode .post-card{
     Pinky Spark
 </span>
 
-<span class="ai-badge">
+<span class="ai-badge pinky-badge">
     AI
 </span>
 
 </a>
+
 
 <a
     href="games/games.html"
@@ -885,6 +1203,7 @@ body.dark-mode .post-card{
 
 </a>
 
+
 <a href="edit-profile.html">
     ⚙️ Settings
 </a>
@@ -896,19 +1215,51 @@ body.dark-mode .post-card{
     🌙 Dark Mode
 </button>
 
-<button id="logoutBtn">
+<button
+    id="logoutBtn"
+>
     🚪 Logout
 </button>
 
 </div>
 
-<!-- =====================================================
+
+<!-- =========================================================
+     MENU SCRIPT
+     ========================================================= -->
+
+<script>
+
+function openMenu(){
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    if(
+        sidebar.style.left === "0px"
+    ){
+
+        sidebar.style.left = "-270px";
+
+    }else{
+
+        sidebar.style.left = "0px";
+
+    }
+
+}
+
+</script>
+
+
+<!-- =========================================================
      MAIN CONTENT
-     ===================================================== -->
+     ========================================================= -->
 
-<div class="container">
+<main class="container">
 
-<div class="hero-card">
+
+<section class="hero-card">
 
 <div class="hero-left">
 
@@ -934,81 +1285,39 @@ body.dark-mode .post-card{
     ● Online
 </div>
 
+</section>
+
+
+<!-- STORIES -->
+
+<div class="stories">
+
+<div class="story">
+    Story
 </div>
 
-<!-- =====================================================
-     FLOWERS
-     ===================================================== -->
-
-<div class="flowers">
-
-<div class="flower-card">
-
-<div class="flower">
-    🌸
+<div class="story">
+    Story
 </div>
 
-<div class="flower-name">
-    Flower
+<div class="story">
+    Story
 </div>
 
+<div class="story">
+    Story
 </div>
 
-<div class="flower-card">
-
-<div class="flower">
-    🌺
-</div>
-
-<div class="flower-name">
-    Flower
+<div class="story">
+    Story
 </div>
 
 </div>
 
-<div class="flower-card">
 
-<div class="flower">
-    🌼
-</div>
+<!-- LATEST -->
 
-<div class="flower-name">
-    Flower
-</div>
-
-</div>
-
-<div class="flower-card">
-
-<div class="flower">
-    🌷
-</div>
-
-<div class="flower-name">
-    Flower
-</div>
-
-</div>
-
-<div class="flower-card">
-
-<div class="flower">
-    🌻
-</div>
-
-<div class="flower-name">
-    Flower
-</div>
-
-</div>
-
-</div>
-
-<!-- =====================================================
-     LATEST
-     ===================================================== -->
-
-<center>
+<div class="latest-wrap">
 
 <h2 class="latest-title">
 
@@ -1021,15 +1330,20 @@ body.dark-mode .post-card{
 
 </h2>
 
-</center>
+</div>
+
+
+<!-- FIREBASE POSTS -->
 
 <div id="feed"></div>
 
-</div>
 
-<!-- =====================================================
+</main>
+
+
+<!-- =========================================================
      FOOTER
-     ===================================================== -->
+     ========================================================= -->
 
 <footer class="vital-footer">
 
@@ -1062,6 +1376,10 @@ body.dark-mode .post-card{
     ⚖️ Terms
 </a>
 
+<a href="javascript:void(0)">
+    🚫 Do Not Copy Us
+</a>
+
 </div>
 
 <p class="copyright">
@@ -1070,11 +1388,12 @@ body.dark-mode .post-card{
 
 </footer>
 
-<!-- =====================================================
-     BOTTOM NAVIGATION
-     ===================================================== -->
 
-<div class="bottom-nav">
+<!-- =========================================================
+     BOTTOM NAVIGATION
+     ========================================================= -->
+
+<nav class="bottom-nav">
 
 <a href="home.html">
 
@@ -1123,31 +1442,12 @@ body.dark-mode .post-card{
 
 </a>
 
-</div>
+</nav>
 
-<!-- =====================================================
-     MENU
-     ===================================================== -->
 
-<script>
-
-function openMenu(){
-
-    const sidebar =
-        document.getElementById("sidebar");
-
-    sidebar.style.left =
-        sidebar.style.left === "0px"
-        ? "-260px"
-        : "0px";
-
-}
-
-</script>
-
-<!-- =====================================================
-     VITALSTAR SCRIPTS
-     ===================================================== -->
+<!-- =========================================================
+     FIREBASE / VITALSTAR SCRIPTS
+     ========================================================= -->
 
 <script
     type="module"
@@ -1191,17 +1491,42 @@ function openMenu(){
 
 <script src="dark-mode.js"></script>
 
+
+<!-- =========================================================
+     SERVICE WORKER
+     ========================================================= -->
+
 <script>
 
 if("serviceWorker" in navigator){
 
     navigator.serviceWorker.register(
         "./firebase-messaging-sw.js"
-    );
+    )
+
+    .then(function(registration){
+
+        console.log(
+            "Service Worker registered:",
+            registration
+        );
+
+    })
+
+    .catch(function(error){
+
+        console.error(
+            "Service Worker Error:",
+            error
+        );
+
+    });
 
 }
 
 </script>
 
+
 </body>
+
 </html>
