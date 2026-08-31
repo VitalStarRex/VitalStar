@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VitalStar Preview</title>
+
+<title>VitalStar - Connect, Share & Shine</title>
 
 <style>
+
+/* =========================
+RESET
+========================= */
 
 *{
     margin:0;
@@ -13,11 +19,16 @@
     box-sizing:border-box;
 }
 
+html,
+body{
+    width:100%;
+    overflow-x:hidden;
+}
+
 body{
     font-family:Arial,sans-serif;
     background:#030019;
     color:white;
-    overflow-x:hidden;
 }
 
 
@@ -42,7 +53,9 @@ HERO
 }
 
 
-/* STARS */
+/* =========================
+STARS
+========================= */
 
 .stars{
     position:absolute;
@@ -64,11 +77,17 @@ HERO
     70px 70px,
     120px 120px;
 
-    animation:stars 18s linear infinite;
-    opacity:.7;
+    animation:
+    starsMove 18s linear infinite;
+
+    opacity:.75;
 }
 
-@keyframes stars{
+@keyframes starsMove{
+
+    from{
+        background-position:0 0,0 0;
+    }
 
     to{
         background-position:
@@ -79,23 +98,98 @@ HERO
 
 
 /* =========================
+SHOOTING STARS
+========================= */
+
+.shooting{
+    position:absolute;
+
+    width:180px;
+    height:3px;
+
+    background:
+    linear-gradient(
+        90deg,
+        transparent,
+        white,
+        #00eaff
+    );
+
+    box-shadow:
+    0 0 10px white,
+    0 0 25px #00cfff;
+
+    transform:rotate(-30deg);
+
+    animation:
+    shoot 5s linear infinite;
+
+    z-index:2;
+}
+
+.s1{
+    top:90px;
+    left:-220px;
+}
+
+.s2{
+    top:180px;
+    left:-300px;
+    animation-delay:2s;
+}
+
+.s3{
+    top:270px;
+    left:-250px;
+    animation-delay:3.5s;
+}
+
+@keyframes shoot{
+
+    0%{
+        transform:
+        translate(-50px,-50px)
+        rotate(-30deg);
+
+        opacity:0;
+    }
+
+    10%{
+        opacity:1;
+    }
+
+    100%{
+        transform:
+        translate(1200px,500px)
+        rotate(-30deg);
+
+        opacity:0;
+    }
+}
+
+
+/* =========================
 CONTENT
 ========================= */
 
-.content{
+.hero-content{
     position:relative;
-    z-index:20;
+
+    z-index:50;
 
     width:92%;
     max-width:1100px;
 
     margin:auto;
+
     padding-top:55px;
 }
 
 .logo{
     font-size:64px;
+
     font-weight:900;
+
     letter-spacing:-4px;
 
     text-shadow:
@@ -104,20 +198,23 @@ CONTENT
 }
 
 .logo span{
-    color:#ffd000;
+    color:#ffc900;
 }
 
 .tagline{
     width:55%;
 
-    margin-top:10px;
-
     font-size:42px;
-    line-height:1.05;
+
+    line-height:1.08;
+
     font-weight:900;
+
+    margin-top:8px;
 }
 
 .tagline span{
+
     background:
     linear-gradient(
         90deg,
@@ -128,6 +225,7 @@ CONTENT
 
     -webkit-background-clip:text;
     background-clip:text;
+
     color:transparent;
 }
 
@@ -137,10 +235,11 @@ CONTENT
 
     margin-top:18px;
 
-    color:#eee;
-
     font-size:16px;
+
     line-height:1.5;
+
+    color:#eee;
 }
 
 
@@ -150,23 +249,37 @@ BUTTONS
 
 .buttons{
     display:flex;
+
     gap:14px;
+
+    flex-wrap:wrap;
 
     margin-top:25px;
 }
 
 .btn{
+    display:inline-flex;
+
+    align-items:center;
+    justify-content:center;
+
     padding:14px 25px;
 
     border-radius:40px;
 
     font-weight:bold;
-    color:white;
 
-    display:inline-block;
+    font-size:16px;
+
+    text-decoration:none;
+
+    transition:.3s;
 }
 
 .register{
+
+    color:white;
+
     background:
     linear-gradient(
         90deg,
@@ -179,12 +292,24 @@ BUTTONS
 }
 
 .login{
+
+    color:white;
+
     background:#070321;
 
-    border:2px solid #ffd000;
+    border:
+    2px solid
+    #ffd000;
 
     box-shadow:
-    0 0 15px #ffd000;
+    0 0 15px
+    #ffd000;
+}
+
+.btn:hover{
+    transform:
+    translateY(-4px)
+    scale(1.03);
 }
 
 
@@ -193,16 +318,17 @@ RAINBOW
 ========================= */
 
 .rainbow{
+
     position:absolute;
 
-    right:5%;
+    right:4%;
     top:25px;
 
-    width:230px;
-    height:120px;
+    width:240px;
+    height:125px;
 
     border-radius:
-    230px 230px 0 0;
+    240px 240px 0 0;
 
     background:
     radial-gradient(
@@ -223,9 +349,9 @@ RAINBOW
 
     filter:
     drop-shadow(0 0 12px #ff43ca)
-    drop-shadow(0 0 20px #00eaff);
+    drop-shadow(0 0 22px #00eaff);
 
-    z-index:6;
+    z-index:7;
 }
 
 
@@ -234,14 +360,16 @@ POOL
 ========================= */
 
 .pool{
+
     position:absolute;
 
     right:-3%;
     bottom:0;
 
-    width:56%;
-    max-width:700px;
-    height:330px;
+    width:58%;
+    max-width:720px;
+
+    height:350px;
 
     border-radius:
     50% 50% 0 0;
@@ -250,31 +378,36 @@ POOL
 
     background:
     radial-gradient(
-        ellipse at 50% 20%,
+        ellipse at 50% 15%,
         #70ffff,
-        #0794e0 45%,
-        #031b69
+        #0794e0 42%,
+        #031b69 80%
     );
 
     box-shadow:
+
     inset 0 15px 35px
     rgba(255,255,255,.35),
 
     0 -10px 50px
     #008cff;
 
-    z-index:5;
+    z-index:10;
 }
 
 
-/* WATER WAVES */
+/* =========================
+WATER WAVES
+========================= */
 
 .wave{
+
     position:absolute;
 
     left:-10%;
 
     width:120%;
+
     height:35px;
 
     border-top:
@@ -284,37 +417,42 @@ POOL
     border-radius:50%;
 
     animation:
-    wave 4s ease-in-out infinite;
+    waveMove 4s ease-in-out infinite;
+
+    z-index:3;
 }
 
 .w1{
-    top:60px;
+    top:55px;
 }
 
 .w2{
     top:150px;
+
     animation-delay:1s;
 }
 
 .w3{
-    top:245px;
+    top:250px;
+
     animation-delay:2s;
 }
 
-@keyframes wave{
+@keyframes waveMove{
 
     50%{
-        transform:translateX(25px);
+        transform:
+        translateX(25px);
     }
 }
 
 
 /* =========================
-EMOJI FISH
-🐠 🐳 🐟
+MANY EMOJI FISH
 ========================= */
 
-.emoji-fish{
+.sea-fish{
+
     position:absolute;
 
     left:-100px;
@@ -325,98 +463,386 @@ EMOJI FISH
     "Noto Color Emoji",
     sans-serif;
 
-    font-size:45px;
+    font-size:43px;
+
+    line-height:1;
 
     white-space:nowrap;
 
+    z-index:20;
+
     animation:
-    fishSwim 8s linear infinite;
-
-    z-index:15;
+    swimForward linear infinite;
 }
 
 
-/* MANY FISH */
+/* =========================
+FISH SIZES
+========================= */
 
-.fish1{
-    top:25px;
-    animation-duration:8s;
+.big{
+    font-size:65px;
 }
 
-.fish2{
-    top:65px;
-    animation-duration:10s;
+.medium{
+    font-size:48px;
+}
+
+.small{
+    font-size:30px;
+}
+
+
+/* =========================
+FISH POSITIONS
+========================= */
+
+.f01{
+    top:20px;
+    animation-duration:7s;
+}
+
+.f02{
+    top:55px;
+    animation-duration:9s;
     animation-delay:1s;
 }
 
-.fish3{
-    top:105px;
-    animation-duration:7s;
+.f03{
+    top:90px;
+    animation-duration:12s;
     animation-delay:2s;
 }
 
-.fish4{
-    top:145px;
-    animation-duration:11s;
+.f04{
+    top:125px;
+    animation-duration:8s;
     animation-delay:3s;
 }
 
-.fish5{
-    top:185px;
+.f05{
+    top:160px;
+    animation-duration:10s;
+    animation-delay:4s;
+}
+
+.f06{
+    top:195px;
+    animation-duration:13s;
+    animation-delay:5s;
+}
+
+.f07{
+    top:230px;
+    animation-duration:7s;
+    animation-delay:6s;
+}
+
+.f08{
+    top:270px;
+    animation-duration:11s;
+    animation-delay:2s;
+}
+
+.f09{
+    top:35px;
+    animation-duration:6s;
+    animation-delay:4s;
+}
+
+.f10{
+    top:115px;
+    animation-duration:14s;
+    animation-delay:7s;
+}
+
+.f11{
+    top:180px;
+    animation-duration:8s;
+    animation-delay:1s;
+}
+
+.f12{
+    top:285px;
+    animation-duration:9s;
+    animation-delay:3s;
+}
+
+.f13{
+    top:75px;
+    animation-duration:7s;
+    animation-delay:5s;
+}
+
+.f14{
+    top:215px;
+    animation-duration:12s;
+    animation-delay:8s;
+}
+
+.f15{
+    top:145px;
+    animation-duration:6s;
+    animation-delay:2s;
+}
+
+.f16{
+    top:100px;
+    animation-duration:9s;
+    animation-delay:6s;
+}
+
+.f17{
+    top:250px;
+    animation-duration:8s;
+    animation-delay:7s;
+}
+
+.f18{
+    top:15px;
+    animation-duration:13s;
+    animation-delay:9s;
+}
+
+.f19{
+    top:135px;
+    animation-duration:7s;
+    animation-delay:8s;
+}
+
+.f20{
+    top:205px;
+    animation-duration:10s;
+    animation-delay:10s;
+}
+
+.f21{
+    top:305px;
     animation-duration:8s;
     animation-delay:4s;
 }
 
-.fish6{
-    top:225px;
-    animation-duration:9s;
-    animation-delay:5s;
+.f22{
+    top:80px;
+    animation-duration:14s;
+    animation-delay:11s;
 }
 
-.fish7{
-    top:75px;
+.f23{
+    top:170px;
+    animation-duration:7s;
+    animation-delay:9s;
+}
+
+.f24{
+    top:245px;
+    animation-duration:9s;
+    animation-delay:12s;
+}
+
+.f25{
+    top:45px;
+    animation-duration:6s;
+    animation-delay:10s;
+}
+
+.f26{
+    top:110px;
+    animation-duration:11s;
+    animation-delay:13s;
+}
+
+.f27{
+    top:275px;
+    animation-duration:8s;
+    animation-delay:14s;
+}
+
+.f28{
+    top:190px;
+    animation-duration:7s;
+    animation-delay:15s;
+}
+
+.f29{
+    top:60px;
+    animation-duration:10s;
+    animation-delay:16s;
+}
+
+.f30{
+    top:155px;
     animation-duration:12s;
-    animation-delay:6s;
+    animation-delay:17s;
 }
 
-.fish8{
-    top:160px;
-    animation-duration:9s;
-    animation-delay:7s;
+
+/* =========================
+DIFFERENT COLOUR EFFECTS
+========================= */
+
+.c1{
+    filter:hue-rotate(0deg);
 }
 
-@keyframes fishSwim{
+.c2{
+    filter:hue-rotate(45deg);
+}
+
+.c3{
+    filter:hue-rotate(90deg);
+}
+
+.c4{
+    filter:hue-rotate(135deg);
+}
+
+.c5{
+    filter:hue-rotate(180deg);
+}
+
+.c6{
+    filter:hue-rotate(225deg);
+}
+
+.c7{
+    filter:hue-rotate(270deg);
+}
+
+.c8{
+    filter:hue-rotate(315deg);
+}
+
+
+/* =========================
+FORWARD MOVEMENT
+========================= */
+
+@keyframes swimForward{
 
     0%{
-        left:-110px;
+
+        left:-120px;
+
         transform:
         translateY(0)
-        scale(.8);
+        scale(.75);
+
+        opacity:0;
+    }
+
+    8%{
+        opacity:1;
     }
 
     25%{
+
         transform:
-        translateY(-15px)
+        translateY(-18px)
         scale(1);
     }
 
     50%{
+
         transform:
-        translateY(12px)
-        scale(1);
+        translateY(15px)
+        scale(1.05);
     }
 
     75%{
+
         transform:
-        translateY(-10px)
+        translateY(-12px)
         scale(1);
     }
 
+    92%{
+        opacity:1;
+    }
+
     100%{
-        left:110%;
+
+        left:115%;
+
         transform:
         translateY(10px)
-        scale(.8);
+        scale(.75);
+
+        opacity:0;
+    }
+}
+
+
+/* =========================
+BUBBLES
+========================= */
+
+.bubble{
+
+    position:absolute;
+
+    bottom:-20px;
+
+    width:8px;
+    height:8px;
+
+    border:
+    2px solid
+    rgba(255,255,255,.6);
+
+    border-radius:50%;
+
+    animation:
+    bubbleUp 5s linear infinite;
+
+    z-index:8;
+}
+
+.b01{
+    left:15%;
+}
+
+.b02{
+    left:35%;
+    animation-delay:1s;
+}
+
+.b03{
+    left:55%;
+    animation-delay:2s;
+}
+
+.b04{
+    left:75%;
+    animation-delay:3s;
+}
+
+.b05{
+    left:90%;
+    animation-delay:4s;
+}
+
+@keyframes bubbleUp{
+
+    0%{
+        transform:
+        translateY(0)
+        scale(.5);
+
+        opacity:0;
+    }
+
+    20%{
+        opacity:1;
+    }
+
+    100%{
+
+        transform:
+        translateY(-370px)
+        scale(1.5);
+
+        opacity:0;
     }
 }
 
@@ -426,49 +852,58 @@ BUTTERFLIES
 ========================= */
 
 .butterfly{
+
     position:absolute;
 
     font-size:32px;
 
-    z-index:30;
+    z-index:60;
 
     animation:
-    fly 7s ease-in-out infinite;
+    fly 8s ease-in-out infinite;
 }
 
 .b1{
-    left:5%;
-    top:30%;
+    top:20%;
+    left:4%;
 }
 
 .b2{
-    right:4%;
-    top:55%;
+    top:50%;
+    right:3%;
     animation-delay:2s;
 }
 
 .b3{
-    left:8%;
-    top:70%;
+    top:72%;
+    left:7%;
     animation-delay:4s;
 }
 
 @keyframes fly{
 
     0%,100%{
-        transform:translate(0,0);
+        transform:
+        translate(0,0)
+        rotate(0);
     }
 
     25%{
-        transform:translate(40px,-40px);
+        transform:
+        translate(45px,-45px)
+        rotate(10deg);
     }
 
     50%{
-        transform:translate(80px,10px);
+        transform:
+        translate(80px,10px)
+        rotate(-8deg);
     }
 
     75%{
-        transform:translate(30px,45px);
+        transform:
+        translate(35px,50px)
+        rotate(8deg);
     }
 }
 
@@ -478,33 +913,35 @@ FLOWERS
 ========================= */
 
 .flower{
+
     position:absolute;
 
-    bottom:10px;
+    z-index:60;
 
-    font-size:35px;
-
-    z-index:30;
+    font-size:38px;
 
     animation:
-    flower 3s ease-in-out infinite;
+    flowerMove 3s ease-in-out infinite;
 }
 
 .flower1{
+    bottom:10px;
     left:3%;
 }
 
 .flower2{
+    bottom:15px;
     left:25%;
     animation-delay:1s;
 }
 
 .flower3{
+    bottom:8px;
     right:3%;
     animation-delay:2s;
 }
 
-@keyframes flower{
+@keyframes flowerMove{
 
     50%{
         transform:
@@ -515,31 +952,40 @@ FLOWERS
 
 
 /* =========================
-PREVIEW INFO
+PREVIEW BADGE
 ========================= */
 
-.preview{
+.badge{
+
     position:absolute;
 
-    left:30px;
+    left:35px;
     bottom:25px;
 
-    z-index:25;
+    z-index:70;
 
-    padding:12px 18px;
+    padding:
+    12px 18px;
 
-    border-radius:20px;
+    border-radius:18px;
 
     background:
-    rgba(0,0,0,.35);
+    rgba(0,0,0,.4);
 
-    backdrop-filter:blur(8px);
-
-    font-size:13px;
+    backdrop-filter:
+    blur(8px);
 
     border:
     1px solid
-    rgba(255,255,255,.2);
+    rgba(255,255,255,.25);
+
+    box-shadow:
+    0 0 20px
+    rgba(255,43,192,.35);
+
+    font-size:13px;
+
+    line-height:1.4;
 }
 
 
@@ -550,81 +996,178 @@ MOBILE
 @media(max-width:600px){
 
     .hero{
+
         min-height:520px;
+
         height:145vw;
+
         max-height:620px;
     }
 
-    .content{
+
+    .hero-content{
+
         width:94%;
+
         padding-top:25px;
     }
 
+
     .logo{
-        font-size:38px;
+
+        font-size:
+        clamp(30px,10vw,40px);
+
         letter-spacing:-2px;
     }
 
+
     .tagline{
+
         width:58%;
-        font-size:23px;
+
+        font-size:
+        clamp(18px,6vw,25px);
     }
+
 
     .description{
+
         width:53%;
+
         font-size:10px;
+
         line-height:1.35;
+
+        margin-top:10px;
     }
 
+
     .buttons{
+
         gap:6px;
+
         margin-top:12px;
     }
 
+
     .btn{
-        padding:8px 12px;
+
+        padding:
+        8px 12px;
+
         font-size:10px;
     }
 
+
+    /* RAINBOW */
+
     .rainbow{
-        width:105px;
-        height:58px;
-        right:4%;
-        top:25px;
+
+        width:110px;
+        height:60px;
+
+        right:3%;
+        top:20px;
     }
 
+
+    /* POOL */
+
     .pool{
-        width:58%;
-        height:205px;
+
+        width:60%;
+
+        height:210px;
+
         right:-3%;
     }
 
-    .emoji-fish{
-        font-size:29px;
+
+    /* FISH */
+
+    .sea-fish{
+
+        font-size:27px;
     }
 
-    .fish1{top:20px;}
-    .fish2{top:45px;}
-    .fish3{top:70px;}
-    .fish4{top:95px;}
-    .fish5{top:120px;}
-    .fish6{top:145px;}
-    .fish7{top:65px;}
-    .fish8{top:170px;}
+    .sea-fish.big{
+
+        font-size:39px;
+    }
+
+    .sea-fish.medium{
+
+        font-size:32px;
+    }
+
+    .sea-fish.small{
+
+        font-size:21px;
+    }
+
+
+    .f01{top:10px;}
+    .f02{top:32px;}
+    .f03{top:54px;}
+    .f04{top:76px;}
+    .f05{top:98px;}
+    .f06{top:120px;}
+    .f07{top:142px;}
+    .f08{top:164px;}
+    .f09{top:28px;}
+    .f10{top:90px;}
+    .f11{top:130px;}
+    .f12{top:175px;}
+    .f13{top:48px;}
+    .f14{top:145px;}
+    .f15{top:105px;}
+    .f16{top:65px;}
+    .f17{top:155px;}
+    .f18{top:18px;}
+    .f19{top:115px;}
+    .f20{top:135px;}
+    .f21{top:180px;}
+    .f22{top:75px;}
+    .f23{top:100px;}
+    .f24{top:150px;}
+    .f25{top:40px;}
+    .f26{top:125px;}
+    .f27{top:170px;}
+    .f28{top:85px;}
+    .f29{top:58px;}
+    .f30{top:145px;}
+
+
+    /* BUTTERFLIES */
 
     .butterfly{
+
         font-size:20px;
     }
 
+
+    /* FLOWERS */
+
     .flower{
+
         font-size:22px;
     }
 
-    .preview{
-        left:10px;
-        bottom:10px;
-        font-size:9px;
-        padding:7px 10px;
+
+    /* BADGE */
+
+    .badge{
+
+        left:8px;
+        bottom:8px;
+
+        padding:
+        7px 10px;
+
+        font-size:8px;
+
+        max-width:170px;
     }
 }
 
@@ -637,7 +1180,17 @@ MOBILE
 
 <section class="hero">
 
+
+    <!-- STARS -->
+
     <div class="stars"></div>
+
+
+    <!-- SHOOTING STARS -->
+
+    <div class="shooting s1"></div>
+    <div class="shooting s2"></div>
+    <div class="shooting s3"></div>
 
 
     <!-- RAINBOW -->
@@ -645,36 +1198,52 @@ MOBILE
     <div class="rainbow"></div>
 
 
-    <!-- CONTENT -->
+    <!-- =========================
+    HERO CONTENT
+    ========================= -->
 
-    <div class="content">
+    <div class="hero-content">
 
         <div class="logo">
             Vital<span>Star</span>
         </div>
 
+
         <div class="tagline">
+
             Connect,
             <span>Share & Shine</span>
+
         </div>
 
+
         <div class="description">
+
             VitalStar is more than social media.
             Connect with friends, share your
             moments, discover communities and
             shine together.
+
         </div>
+
 
         <div class="buttons">
 
-            <a href="register.html"
-               class="btn register">
+            <a
+                href="register.html"
+                class="btn register">
+
                 Join VitalStar
+
             </a>
 
-            <a href="login.html"
-               class="btn login">
+
+            <a
+                href="login.html"
+                class="btn login">
+
                 Login
+
             </a>
 
         </div>
@@ -682,53 +1251,157 @@ MOBILE
     </div>
 
 
-    <!-- POOL -->
+    <!-- =========================
+    WATER
+    ========================= -->
 
     <div class="pool">
+
 
         <div class="wave w1"></div>
         <div class="wave w2"></div>
         <div class="wave w3"></div>
 
 
-        <!-- MANY EMOJI FISH -->
+        <!-- BUBBLES -->
 
-        <div class="emoji-fish fish1">
+        <div class="bubble b01"></div>
+        <div class="bubble b02"></div>
+        <div class="bubble b03"></div>
+        <div class="bubble b04"></div>
+        <div class="bubble b05"></div>
+
+
+        <!-- =====================
+        30 FISH
+        ====================== -->
+
+        <div class="sea-fish f01 c1 medium">
             🐠
         </div>
 
-        <div class="emoji-fish fish2">
+        <div class="sea-fish f02 c2">
             🐟
         </div>
 
-        <div class="emoji-fish fish3">
+        <div class="sea-fish f03 c3 big">
             🐳
         </div>
 
-        <div class="emoji-fish fish4">
+        <div class="sea-fish f04 c4">
             🐠
         </div>
 
-        <div class="emoji-fish fish5">
+        <div class="sea-fish f05 c5 medium">
             🐟
         </div>
 
-        <div class="emoji-fish fish6">
+        <div class="sea-fish f06 c6 big">
             🐳
         </div>
 
-        <div class="emoji-fish fish7">
+        <div class="sea-fish f07 c7">
             🐠
         </div>
 
-        <div class="emoji-fish fish8">
+        <div class="sea-fish f08 c8 small">
             🐟
+        </div>
+
+        <div class="sea-fish f09 c3 small">
+            🐠
+        </div>
+
+        <div class="sea-fish f10 c5 big">
+            🐳
+        </div>
+
+        <div class="sea-fish f11 c7 small">
+            🐟
+        </div>
+
+        <div class="sea-fish f12 c1">
+            🐠
+        </div>
+
+        <div class="sea-fish f13 c4 small">
+            🐟
+        </div>
+
+        <div class="sea-fish f14 c2 big">
+            🐳
+        </div>
+
+        <div class="sea-fish f15 c6 small">
+            🐠
+        </div>
+
+        <div class="sea-fish f16 c8">
+            🐟
+        </div>
+
+        <div class="sea-fish f17 c3 medium">
+            🐠
+        </div>
+
+        <div class="sea-fish f18 c5 medium">
+            🐳
+        </div>
+
+        <div class="sea-fish f19 c7 small">
+            🐟
+        </div>
+
+        <div class="sea-fish f20 c2">
+            🐠
+        </div>
+
+        <div class="sea-fish f21 c4 small">
+            🐟
+        </div>
+
+        <div class="sea-fish f22 c6 big">
+            🐳
+        </div>
+
+        <div class="sea-fish f23 c8">
+            🐠
+        </div>
+
+        <div class="sea-fish f24 c1 small">
+            🐟
+        </div>
+
+        <div class="sea-fish f25 c3 medium">
+            🐠
+        </div>
+
+        <div class="sea-fish f26 c5">
+            🐟
+        </div>
+
+        <div class="sea-fish f27 c7 big">
+            🐳
+        </div>
+
+        <div class="sea-fish f28 c2 medium">
+            🐠
+        </div>
+
+        <div class="sea-fish f29 c6 small">
+            🐟
+        </div>
+
+        <div class="sea-fish f30 c4 medium">
+            🐠
         </div>
 
     </div>
 
 
-    <!-- BUTTERFLIES -->
+    <!-- =========================
+    BUTTERFLIES
+    ========================= -->
 
     <div class="butterfly b1">
         🦋
@@ -743,7 +1416,9 @@ MOBILE
     </div>
 
 
-    <!-- FLOWERS -->
+    <!-- =========================
+    FLOWERS
+    ========================= -->
 
     <div class="flower flower1">
         🌸
@@ -758,9 +1433,19 @@ MOBILE
     </div>
 
 
-    <div class="preview">
-        🐠 🐳 🐟 Colorful underwater world 🌈
+    <!-- =========================
+    BADGE
+    ========================= -->
+
+    <div class="badge">
+
+        🐠 🐟 🐳
+
+        Dive into a world full of
+        color, friends & possibilities ✨
+
     </div>
+
 
 </section>
 
