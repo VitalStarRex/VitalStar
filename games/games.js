@@ -16,28 +16,120 @@ orderBy,limit,getDocs,where,serverTimestamp,increment
 
 const games=[
 
-{id:"hoop-master",name:"Hoop Master",icon:"🏀",description:"Compete for the highest score.",category:"sports",multiplayer:true,premium:false,url:"./hoop-master.html"},
+// ================= FREE GAMES =================
 
-{id:"quick-tap",name:"Quick Tap",icon:"⚡",description:"Challenge another player in a tapping battle.",category:"arcade",multiplayer:true,premium:false,url:"./quick-tap.html"},
+{
+    id:"hoop-master",
+    name:"Hoop Master",
+    icon:"🏀",
+    description:"Compete for the highest score.",
+    category:"sports",
+    multiplayer:true,
+    premium:false,
+    url:"./hoop-master.html"
+},
 
-{id:"word-sprint",name:"Word Sprint",icon:"🔤",description:"Find words faster than your opponent.",category:"puzzle",multiplayer:true,premium:false,url:"./word-sprint.html"},
+{
+    id:"quick-tap",
+    name:"Quick Tap",
+    icon:"⚡",
+    description:"Challenge another player in a tapping battle.",
+    category:"arcade",
+    multiplayer:true,
+    premium:false,
+    url:"./quick-tap.html"
+},
 
-{id:"memory-master",name:"Memory Master",icon:"🧠",description:"Remember the cards and beat your opponent.",category:"puzzle",multiplayer:true,premium:false,url:"./memory-master.html"},
+{
+    id:"word-sprint",
+    name:"Word Sprint",
+    icon:"🔤",
+    description:"Find words faster than your opponent.",
+    category:"puzzle",
+    multiplayer:true,
+    premium:false,
+    url:"./word-sprint.html"
+},
 
-{id:"brain-rush",name:"Brain Rush",icon:"🧩",description:"Solve quick puzzles before time runs out.",category:"puzzle",multiplayer:false,premium:false,url:"./brain-rush.html"},
+{
+    id:"memory-master",
+    name:"Memory Master",
+    icon:"🧠",
+    description:"Remember the cards and beat your opponent.",
+    category:"puzzle",
+    multiplayer:true,
+    premium:false,
+    url:"./memory-master.html"
+},
+
+{
+    id:"star-runner",
+    name:"Star Runner Race",
+    icon:"🚀",
+    description:"Race other players through the stars.",
+    category:"arcade",
+    multiplayer:true,
+    premium:false,
+    url:"./star-runner.html"
+},
 
 
-// PREMIUM GAMES
+// ================= PREMIUM GAMES =================
 
-{id:"star-runner",name:"Star Runner Race",icon:"🚀",description:"Race other players through the stars.",category:"arcade",multiplayer:true,premium:true,url:"./star-runner.html"},
+{
+    id:"airstrike",
+    name:"Airstrike",
+    icon:"✈️",
+    description:"Battle other players in an intense air battle.",
+    category:"arcade",
+    multiplayer:true,
+    premium:true,
+    url:"./airstrike.html"
+},
 
-{id:"paddle-smash",name:"Paddle Smash",icon:"🏓",description:"A fast two-player paddle battle.",category:"sports",multiplayer:true,premium:true,url:"./paddle-smash.html"},
+{
+    id:"nitro-race",
+    name:"Nitro Race",
+    icon:"🏎️",
+    description:"Race against other players at maximum speed.",
+    category:"racing",
+    multiplayer:true,
+    premium:true,
+    url:"./nitro-race.html"
+},
 
-{id:"target-master",name:"Target Master",icon:"🎯",description:"Hit targets and beat your opponent.",category:"arcade",multiplayer:true,premium:true,url:"./target-master.html"},
+{
+    id:"goal-scorer",
+    name:"Goal Scorer",
+    icon:"⚽",
+    description:"Score more goals than your opponent.",
+    category:"sports",
+    multiplayer:true,
+    premium:true,
+    url:"./goal-scorer.html"
+},
 
-{id:"gravity-flip",name:"Gravity Flip",icon:"🌀",description:"Master gravity and survive obstacles.",category:"arcade",multiplayer:false,premium:true,url:"./gravity-flip.html"},
+{
+    id:"incredible-spin",
+    name:"Incredible Spin",
+    icon:"🌀",
+    description:"Spin, compete and beat other players.",
+    category:"arcade",
+    multiplayer:true,
+    premium:true,
+    url:"./incredible-spin.html"
+},
 
-{id:"color-rush",name:"Color Rush",icon:"🟣",description:"React quickly and match colors.",category:"arcade",multiplayer:false,premium:true,url:"./color-rush.html"}
+{
+    id:"gravity-flip",
+    name:"Gravity Flip",
+    icon:"🌌",
+    description:"Flip gravity and compete through challenging obstacles.",
+    category:"arcade",
+    multiplayer:true,
+    premium:true,
+    url:"./gravity-flip.html"
+}
 
 ];
 
@@ -79,38 +171,85 @@ function escapeHTML(value){
 // ================= COINS =================
 
 function loadLocalCoins(){
-    const saved=Number(localStorage.getItem("vitalstarCoins"));
 
-    if(Number.isFinite(saved)&&saved>=0){
+    const saved=
+        Number(
+            localStorage.getItem(
+                "vitalstarCoins"
+            )
+        );
+
+    if(
+        Number.isFinite(saved)&&
+        saved>=0
+    ){
+
         coins=saved;
+
     }else{
+
         coins=1000;
-        localStorage.setItem("vitalstarCoins","1000");
+
+        localStorage.setItem(
+            "vitalstarCoins",
+            "1000"
+        );
+
     }
 
     updateCoinUI();
+
 }
+
 
 function updateCoinUI(){
-    setText("coinBalance",formatNumber(coins));
-    setText("myCoins",formatNumber(coins));
+
+    setText(
+        "coinBalance",
+        formatNumber(coins)
+    );
+
+    setText(
+        "myCoins",
+        formatNumber(coins)
+    );
+
 }
 
+
 function saveLocalCoins(){
-    localStorage.setItem("vitalstarCoins",String(coins));
+
+    localStorage.setItem(
+        "vitalstarCoins",
+        String(coins)
+    );
+
     updateCoinUI();
+
 }
 
 
 // ================= PROFILE =================
 
 function createDefaultProfile(user){
+
     return{
+
         uid:user.uid,
-        displayName:user.displayName||"VitalStar Player",
+
+        displayName:
+            user.displayName||
+            "VitalStar Player",
+
         username:user.email?
-        user.email.split("@")[0].toLowerCase():"player",
-        photoURL:user.photoURL||"",
+            user.email
+            .split("@")[0]
+            .toLowerCase():
+            "player",
+
+        photoURL:
+            user.photoURL||"",
+
         isPremium:false,
 
         gamesPlayed:0,
@@ -124,14 +263,20 @@ function createDefaultProfile(user){
 
         currentStreak:0,
         bestStreak:0,
+
         achievements:[],
 
         favoriteGame:"",
         lastPlayedGame:"",
 
-        createdAt:serverTimestamp(),
-        updatedAt:serverTimestamp()
+        createdAt:
+            serverTimestamp(),
+
+        updatedAt:
+            serverTimestamp()
+
     };
+
 }
 
 
@@ -141,17 +286,23 @@ async function loadMyProfile(){
 
     try{
 
-        const ref=doc(
-            db,
-            "gameProfiles",
-            currentUser.uid
-        );
+        const ref=
+            doc(
+                db,
+                "gameProfiles",
+                currentUser.uid
+            );
 
-        const snap=await getDoc(ref);
+        const snap=
+            await getDoc(ref);
+
 
         if(!snap.exists()){
 
-            myProfile=createDefaultProfile(currentUser);
+            myProfile=
+                createDefaultProfile(
+                    currentUser
+                );
 
             await setDoc(
                 ref,
@@ -160,7 +311,8 @@ async function loadMyProfile(){
 
         }else{
 
-            myProfile=snap.data();
+            myProfile=
+                snap.data();
 
         }
 
@@ -170,27 +322,41 @@ async function loadMyProfile(){
         let token;
 
         try{
-            token=await currentUser.getIdTokenResult(true);
+
+            token=
+                await currentUser
+                .getIdTokenResult(true);
+
         }catch(e){
-            token={claims:{}};
+
+            token={
+                claims:{}
+            };
+
         }
 
-        isPremium=Boolean(
-            myProfile.isPremium||
-            myProfile.premium||
-            token.claims?.premium
-        );
+
+        isPremium=
+            Boolean(
+                myProfile.isPremium||
+                myProfile.premium||
+                token.claims?.premium
+            );
 
 
         // COINS
 
-        coins=Number(myProfile.totalCoins);
+        coins=
+            Number(
+                myProfile.totalCoins
+            );
 
         if(!Number.isFinite(coins))
             coins=1000;
 
 
         saveLocalCoins();
+
 
         renderMyProfile();
 
@@ -211,12 +377,14 @@ async function loadMyProfile(){
         renderGames();
 
     }
+
 }
 
 
 function renderMyProfile(){
 
     if(!myProfile)return;
+
 
     const name=
         myProfile.displayName||
@@ -232,66 +400,92 @@ function renderMyProfile(){
     setText(
         "myGameUsername",
         myProfile.username?
-        "@"+myProfile.username:""
+        "@"+myProfile.username:
+        ""
     );
+
 
     setText(
         "myGamesPlayed",
-        formatNumber(myProfile.gamesPlayed)
+        formatNumber(
+            myProfile.gamesPlayed
+        )
     );
 
     setText(
         "myWins",
-        formatNumber(myProfile.wins)
+        formatNumber(
+            myProfile.wins
+        )
     );
 
     setText(
         "myLosses",
-        formatNumber(myProfile.losses)
+        formatNumber(
+            myProfile.losses
+        )
     );
 
     setText(
         "myRating",
-        formatNumber(myProfile.rating||1000)
+        formatNumber(
+            myProfile.rating||1000
+        )
     );
 
     setText(
         "myBestScore",
-        formatNumber(myProfile.bestScore)
+        formatNumber(
+            myProfile.bestScore
+        )
     );
 
     setText(
         "myStreak",
-        formatNumber(myProfile.currentStreak)
+        formatNumber(
+            myProfile.currentStreak
+        )
     );
 
     setText(
         "myBestStreak",
-        formatNumber(myProfile.bestStreak)
+        formatNumber(
+            myProfile.bestStreak
+        )
     );
 
     setText(
         "myCoins",
-        formatNumber(myProfile.totalCoins)
+        formatNumber(
+            myProfile.totalCoins
+        )
     );
 
 
     const played=
-        Number(myProfile.gamesPlayed||0);
+        Number(
+            myProfile.gamesPlayed||0
+        );
 
     const wins=
-        Number(myProfile.wins||0);
+        Number(
+            myProfile.wins||0
+        );
 
 
     setText(
         "myWinRate",
-        (played?
-        wins/played*100:0)
-        .toFixed(1)+"%"
+        (
+            played?
+            wins/played*100:
+            0
+        ).toFixed(1)+"%"
     );
 
 
-    const avatar=$("myGameAvatar");
+    const avatar=
+        $("myGameAvatar");
+
 
     if(avatar){
 
@@ -309,45 +503,54 @@ function renderMyProfile(){
 
 function renderGames(){
 
-    const grid=$("gamesGrid");
+    const grid=
+        $("gamesGrid");
 
     if(!grid)return;
+
 
     grid.innerHTML="";
 
 
     const text=
-        searchText.trim().toLowerCase();
+        searchText
+        .trim()
+        .toLowerCase();
 
 
-    const filtered=games.filter(game=>{
+    const filtered=
+        games.filter(game=>{
 
-        let categoryOK=true;
-
-
-        if(currentCategory==="free")
-            categoryOK=!game.premium;
+            let categoryOK=true;
 
 
-        if(currentCategory==="premium")
-            categoryOK=game.premium;
+            if(currentCategory==="free")
+                categoryOK=
+                    !game.premium;
 
 
-        if(currentCategory==="multiplayer")
-            categoryOK=game.multiplayer;
+            if(currentCategory==="premium")
+                categoryOK=
+                    game.premium;
 
 
-        return categoryOK&&(
-            !text||
-            game.name
-            .toLowerCase()
-            .includes(text)
-        );
-
-    });
+            if(currentCategory==="multiplayer")
+                categoryOK=
+                    game.multiplayer;
 
 
-    const empty=$("emptyMessage");
+            return categoryOK&&(
+                !text||
+                game.name
+                .toLowerCase()
+                .includes(text)
+            );
+
+        });
+
+
+    const empty=
+        $("emptyMessage");
 
 
     if(!filtered.length){
@@ -367,13 +570,18 @@ function renderGames(){
     filtered.forEach(game=>{
 
         const card=
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         card.className=
             "game"+
-            (game.premium&&!isPremium?
-            " locked":"");
+            (
+                game.premium&&!isPremium
+                ?" locked":
+                ""
+            );
 
 
         card.innerHTML=`
@@ -384,24 +592,25 @@ function renderGames(){
                 `<div class="lock">
                     🔒 PREMIUM
                 </div>`
-                :""
+                :
+                ""
             }
 
             <div class="game-icon">
                 ${game.icon}
             </div>
 
-
             <div class="badges">
 
                 <span class="badge">
+
                     ${
                         game.premium
                         ?"👑 PREMIUM"
                         :"🆓 FREE"
                     }
-                </span>
 
+                </span>
 
                 ${
                     game.multiplayer
@@ -409,21 +618,21 @@ function renderGames(){
                     `<span class="badge">
                         👥 MULTIPLAYER
                     </span>`
-                    :""
+                    :
+                    ""
                 }
 
             </div>
-
 
             <h3>
                 ${escapeHTML(game.name)}
             </h3>
 
-
             <p>
-                ${escapeHTML(game.description)}
+                ${escapeHTML(
+                    game.description
+                )}
             </p>
-
 
             <button class="play">
 
@@ -465,7 +674,9 @@ function launchGame(game){
     }
 
 
-    if(game.premium&&!isPremium){
+    if(
+        game.premium&&!isPremium
+    ){
 
         openPremium();
 
@@ -487,7 +698,8 @@ function launchGame(game){
 
     if(game.url){
 
-        location.href=game.url;
+        location.href=
+            game.url;
 
     }else{
 
@@ -503,11 +715,16 @@ function launchGame(game){
 
 // ================= SEARCH / TABS =================
 
-$("gameSearch")?.addEventListener(
+$("gameSearch")
+?.addEventListener(
     "input",
     e=>{
-        searchText=e.target.value;
+
+        searchText=
+            e.target.value;
+
         renderGames();
+
     }
 );
 
@@ -523,15 +740,20 @@ document
             document
             .querySelectorAll(".tab")
             .forEach(x=>
-                x.classList.remove("active")
+                x.classList.remove(
+                    "active"
+                )
             );
 
 
-            tab.classList.add("active");
+            tab.classList.add(
+                "active"
+            );
 
 
             currentCategory=
-                tab.dataset.category||"all";
+                tab.dataset.category||
+                "all";
 
 
             renderGames();
@@ -551,7 +773,8 @@ const premiumModal=
 function openPremium(){
 
     if(premiumModal)
-        premiumModal.style.display="flex";
+        premiumModal.style.display=
+            "flex";
 
 }
 
@@ -559,7 +782,8 @@ function openPremium(){
 function closePremium(){
 
     if(premiumModal)
-        premiumModal.style.display="none";
+        premiumModal.style.display=
+            "none";
 
 }
 
@@ -585,7 +809,8 @@ $("closePremium")
 );
 
 
-premiumModal?.addEventListener(
+premiumModal
+?.addEventListener(
     "click",
     e=>{
 
@@ -613,9 +838,11 @@ $("subscribeButton")
 
 async function loadTopWinners(){
 
-    const box=$("topWinners");
+    const box=
+        $("topWinners");
 
     if(!box)return;
+
 
     box.innerHTML=
         `<div class="loading">
@@ -625,14 +852,23 @@ async function loadTopWinners(){
 
     try{
 
-        const q=query(
-            collection(db,"gameProfiles"),
-            orderBy("wins","desc"),
-            limit(10)
-        );
+        const q=
+            query(
+                collection(
+                    db,
+                    "gameProfiles"
+                ),
+                orderBy(
+                    "wins",
+                    "desc"
+                ),
+                limit(10)
+            );
 
 
-        const snap=await getDocs(q);
+        const snap=
+            await getDocs(q);
+
 
         box.innerHTML="";
 
@@ -650,13 +886,14 @@ async function loadTopWinners(){
         }
 
 
-        snap.docs.forEach((x,i)=>
-            box.appendChild(
-                createLeaderboardPlayer(
-                    x.data(),
-                    i+1
+        snap.docs.forEach(
+            (x,i)=>
+                box.appendChild(
+                    createLeaderboardPlayer(
+                        x.data(),
+                        i+1
+                    )
                 )
-            )
         );
 
 
@@ -666,6 +903,7 @@ async function loadTopWinners(){
             "Top winners error:",
             error
         );
+
 
         box.innerHTML=
             `<div class="empty"
@@ -680,9 +918,11 @@ async function loadTopWinners(){
 
 async function loadLeaderboard(){
 
-    const box=$("leaderboard");
+    const box=
+        $("leaderboard");
 
     if(!box)return;
+
 
     box.innerHTML=
         `<div class="loading">
@@ -692,14 +932,23 @@ async function loadLeaderboard(){
 
     try{
 
-        const q=query(
-            collection(db,"gameProfiles"),
-            orderBy("rating","desc"),
-            limit(100)
-        );
+        const q=
+            query(
+                collection(
+                    db,
+                    "gameProfiles"
+                ),
+                orderBy(
+                    "rating",
+                    "desc"
+                ),
+                limit(100)
+            );
 
 
-        const snap=await getDocs(q);
+        const snap=
+            await getDocs(q);
+
 
         box.innerHTML="";
 
@@ -717,13 +966,14 @@ async function loadLeaderboard(){
         }
 
 
-        snap.docs.forEach((x,i)=>
-            box.appendChild(
-                createLeaderboardPlayer(
-                    x.data(),
-                    i+1
+        snap.docs.forEach(
+            (x,i)=>
+                box.appendChild(
+                    createLeaderboardPlayer(
+                        x.data(),
+                        i+1
+                    )
                 )
-            )
         );
 
 
@@ -733,6 +983,7 @@ async function loadLeaderboard(){
             "Leaderboard error:",
             error
         );
+
 
         box.innerHTML=
             `<div class="empty"
@@ -751,7 +1002,10 @@ function createLeaderboardPlayer(
 ){
 
     const el=
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     el.className=
         "leaderboard-player";
@@ -767,7 +1021,8 @@ function createLeaderboardPlayer(
         rank===1?"🥇":
         rank===2?"🥈":
         rank===3?"🥉":
-        rank?"#"+rank:"👤";
+        rank?"#"+rank:
+        "👤";
 
 
     el.innerHTML=`
@@ -776,7 +1031,6 @@ function createLeaderboardPlayer(
             ${medal}
         </div>
 
-
         <img
         class="leader-avatar"
         src="${
@@ -784,7 +1038,6 @@ function createLeaderboardPlayer(
             "https://ui-avatars.com/api/?name="+
             encodeURIComponent(name)
         }">
-
 
         <div class="leader-info">
 
@@ -800,16 +1053,18 @@ function createLeaderboardPlayer(
                         player.username
                     )}
                 </small>`
-                :""
+                :
+                ""
             }
 
         </div>
 
-
         <div class="leader-stats">
 
             <strong>
-                ${formatNumber(player.wins)}
+                ${formatNumber(
+                    player.wins
+                )}
             </strong>
 
             <small>
@@ -818,11 +1073,12 @@ function createLeaderboardPlayer(
 
         </div>
 
-
         <div class="leader-rating">
-            ⭐ ${formatNumber(
-                player.rating||1000
-            )}
+            ⭐ ${
+                formatNumber(
+                    player.rating||1000
+                )
+            }
         </div>
 
     `;
@@ -856,7 +1112,11 @@ async function openPlayerProfile(uid){
 
         const snap=
             await getDoc(
-                doc(db,"gameProfiles",uid)
+                doc(
+                    db,
+                    "gameProfiles",
+                    uid
+                )
             );
 
 
@@ -871,7 +1131,8 @@ async function openPlayerProfile(uid){
         }
 
 
-        const p=snap.data();
+        const p=
+            snap.data();
 
 
         const name=
@@ -881,16 +1142,24 @@ async function openPlayerProfile(uid){
 
 
         const played=
-            Number(p.gamesPlayed||0);
+            Number(
+                p.gamesPlayed||0
+            );
 
 
         const wins=
-            Number(p.wins||0);
+            Number(
+                p.wins||0
+            );
 
 
         const rate=
             played?
-            (wins/played*100).toFixed(1):
+            (
+                wins/
+                played*
+                100
+            ).toFixed(1):
             "0.0";
 
 
@@ -902,12 +1171,17 @@ async function openPlayerProfile(uid){
 
             alert(
                 name+
-                "\n\n🏆 Wins: "+wins+
-                "\n🎮 Games: "+played+
+                "\n\n🏆 Wins: "+
+                wins+
+                "\n🎮 Games: "+
+                played+
                 "\n❌ Losses: "+
-                Number(p.losses||0)+
+                Number(
+                    p.losses||0
+                )+
                 "\n📊 Win Rate: "+
-                rate+"%"+
+                rate+
+                "%"+
                 "\n⭐ Rating: "+
                 (p.rating||1000)
             );
@@ -917,7 +1191,8 @@ async function openPlayerProfile(uid){
         }
 
 
-        modal.style.display="flex";
+        modal.style.display=
+            "flex";
 
 
         setText(
@@ -928,22 +1203,29 @@ async function openPlayerProfile(uid){
         setText(
             "profilePlayerUsername",
             p.username?
-            "@"+p.username:""
+            "@"+p.username:
+            ""
         );
 
         setText(
             "profileGamesPlayed",
-            formatNumber(played)
+            formatNumber(
+                played
+            )
         );
 
         setText(
             "profileWins",
-            formatNumber(p.wins)
+            formatNumber(
+                p.wins
+            )
         );
 
         setText(
             "profileLosses",
-            formatNumber(p.losses)
+            formatNumber(
+                p.losses
+            )
         );
 
         setText(
@@ -960,12 +1242,16 @@ async function openPlayerProfile(uid){
 
         setText(
             "profileBestScore",
-            formatNumber(p.bestScore)
+            formatNumber(
+                p.bestScore
+            )
         );
 
         setText(
             "profileStreak",
-            formatNumber(p.bestStreak)
+            formatNumber(
+                p.bestStreak
+            )
         );
 
 
@@ -990,6 +1276,7 @@ async function openPlayerProfile(uid){
             error
         );
 
+
         alert(
             "Unable to open player profile."
         );
@@ -1008,7 +1295,8 @@ $("closePlayerProfile")
             $("playerProfileModal");
 
         if(modal)
-            modal.style.display="none";
+            modal.style.display=
+                "none";
 
     }
 );
@@ -1019,9 +1307,16 @@ $("playerProfileModal")
     "click",
     e=>{
 
-        if(e.target===$("playerProfileModal"))
+        if(
+            e.target===
             $("playerProfileModal")
-            .style.display="none";
+        ){
+
+            $("playerProfileModal")
+            .style.display=
+                "none";
+
+        }
 
     }
 );
@@ -1064,23 +1359,24 @@ $("playerSearch")
 
         try{
 
-            const q=query(
-                collection(
-                    db,
-                    "gameProfiles"
-                ),
-                where(
-                    "username",
-                    ">=",
-                    text
-                ),
-                where(
-                    "username",
-                    "<=",
-                    text+"\uf8ff"
-                ),
-                limit(10)
-            );
+            const q=
+                query(
+                    collection(
+                        db,
+                        "gameProfiles"
+                    ),
+                    where(
+                        "username",
+                        ">=",
+                        text
+                    ),
+                    where(
+                        "username",
+                        "<=",
+                        text+"\uf8ff"
+                    ),
+                    limit(10)
+                );
 
 
             const snap=
@@ -1103,13 +1399,14 @@ $("playerSearch")
             }
 
 
-            snap.docs.forEach(x=>
-                box.appendChild(
-                    createLeaderboardPlayer(
-                        x.data(),
-                        ""
+            snap.docs.forEach(
+                x=>
+                    box.appendChild(
+                        createLeaderboardPlayer(
+                            x.data(),
+                            ""
+                        )
                     )
-                )
             );
 
 
@@ -1119,6 +1416,7 @@ $("playerSearch")
                 "Player search error:",
                 error
             );
+
 
             box.innerHTML=
                 `<div class="empty"
@@ -1144,7 +1442,13 @@ export async function recordGameResult(
     if(!currentUser)return false;
 
 
-    if(!["win","loss","draw"].includes(result)){
+    if(
+        ![
+            "win",
+            "loss",
+            "draw"
+        ].includes(result)
+    ){
 
         console.error(
             "Invalid result:",
@@ -1187,25 +1491,45 @@ export async function recordGameResult(
 
 
         let gamesPlayed=
-            Number(p.gamesPlayed||0)+1;
+            Number(
+                p.gamesPlayed||0
+            )+1;
+
 
         let wins=
-            Number(p.wins||0);
+            Number(
+                p.wins||0
+            );
+
 
         let losses=
-            Number(p.losses||0);
+            Number(
+                p.losses||0
+            );
+
 
         let draws=
-            Number(p.draws||0);
+            Number(
+                p.draws||0
+            );
+
 
         let rating=
-            Number(p.rating||1000);
+            Number(
+                p.rating||1000
+            );
+
 
         let streak=
-            Number(p.currentStreak||0);
+            Number(
+                p.currentStreak||0
+            );
+
 
         let bestStreak=
-            Number(p.bestStreak||0);
+            Number(
+                p.bestStreak||0
+            );
 
 
         const numericScore=
@@ -1215,6 +1539,7 @@ export async function recordGameResult(
         if(result==="win"){
 
             wins++;
+
             streak++;
 
             bestStreak=
@@ -1228,6 +1553,7 @@ export async function recordGameResult(
         }else if(result==="loss"){
 
             losses++;
+
             streak=0;
 
             rating=
@@ -1239,6 +1565,7 @@ export async function recordGameResult(
         }else{
 
             draws++;
+
             rating+=5;
 
         }
@@ -1247,20 +1574,26 @@ export async function recordGameResult(
         const reward=
             Math.max(
                 0,
-                Number(coinReward)||0
+                Number(
+                    coinReward
+                )||0
             );
 
 
         const newCoins=
             Math.max(
                 0,
-                Number(p.totalCoins)||0
+                Number(
+                    p.totalCoins
+                )||0
             )+reward;
 
 
         const bestScore=
             Math.max(
-                Number(p.bestScore||0),
+                Number(
+                    p.bestScore||0
+                ),
                 numericScore
             );
 
@@ -1268,17 +1601,30 @@ export async function recordGameResult(
         await updateDoc(
             ref,
             {
+
                 gamesPlayed,
                 wins,
                 losses,
                 draws,
+
                 rating,
-                currentStreak:streak,
+
+                currentStreak:
+                    streak,
+
                 bestStreak,
+
                 bestScore,
-                totalCoins:newCoins,
-                lastPlayedGame:gameId,
-                updatedAt:serverTimestamp()
+
+                totalCoins:
+                    newCoins,
+
+                lastPlayedGame:
+                    gameId,
+
+                updatedAt:
+                    serverTimestamp()
+
             }
         );
 
@@ -1294,11 +1640,20 @@ export async function recordGameResult(
 
 
         const stats={
+
             gameId,
-            gamesPlayed:increment(1),
+
+            gamesPlayed:
+                increment(1),
+
             bestScore,
-            lastResult:result,
-            updatedAt:serverTimestamp()
+
+            lastResult:
+                result,
+
+            updatedAt:
+                serverTimestamp()
+
         };
 
 
@@ -1314,7 +1669,9 @@ export async function recordGameResult(
         await setDoc(
             statRef,
             stats,
-            {merge:true}
+            {
+                merge:true
+            }
         );
 
 
@@ -1327,16 +1684,26 @@ export async function recordGameResult(
                 String(Date.now())
             ),
             {
+
                 gameId,
+
                 result,
-                score:numericScore,
-                coins:reward,
-                createdAt:serverTimestamp()
+
+                score:
+                    numericScore,
+
+                coins:
+                    reward,
+
+                createdAt:
+                    serverTimestamp()
+
             }
         );
 
 
-        coins=newCoins;
+        coins=
+            newCoins;
 
         saveLocalCoins();
 
@@ -1387,19 +1754,20 @@ async function loadGameHistory(){
 
     try{
 
-        const q=query(
-            collection(
-                db,
-                "gameProfiles",
-                currentUser.uid,
-                "history"
-            ),
-            orderBy(
-                "createdAt",
-                "desc"
-            ),
-            limit(20)
-        );
+        const q=
+            query(
+                collection(
+                    db,
+                    "gameProfiles",
+                    currentUser.uid,
+                    "history"
+                ),
+                orderBy(
+                    "createdAt",
+                    "desc"
+                ),
+                limit(20)
+            );
 
 
         const snap=
@@ -1422,81 +1790,92 @@ async function loadGameHistory(){
         }
 
 
-        snap.docs.forEach(x=>{
+        snap.docs.forEach(
+            x=>{
 
-            const m=x.data();
+                const m=
+                    x.data();
 
 
-            const game=
-                games.find(
-                    g=>g.id===m.gameId
+                const game=
+                    games.find(
+                        g=>
+                            g.id===
+                            m.gameId
+                    );
+
+
+                const row=
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className=
+                    "game-history-item";
+
+
+                const resultClass=
+                    m.result==="win"
+                    ?"win":
+                    m.result==="loss"
+                    ?"loss":
+                    "draw";
+
+
+                const resultText=
+                    m.result==="win"
+                    ?"🏆 WIN":
+                    m.result==="loss"
+                    ?"❌ LOSS":
+                    "🤝 DRAW";
+
+
+                row.innerHTML=`
+
+                    <div class="history-icon">
+                        ${game?game.icon:"🎮"}
+                    </div>
+
+                    <div class="history-info">
+
+                        <strong>
+                            ${
+                                game
+                                ?
+                                escapeHTML(
+                                    game.name
+                                )
+                                :
+                                escapeHTML(
+                                    m.gameId||
+                                    "Game"
+                                )
+                            }
+                        </strong>
+
+                        <small>
+                            Score:
+                            ${formatNumber(
+                                m.score
+                            )}
+                        </small>
+
+                    </div>
+
+                    <div class="history-result ${resultClass}">
+                        ${resultText}
+                    </div>
+
+                `;
+
+
+                box.appendChild(
+                    row
                 );
 
-
-            const row=
-                document.createElement("div");
-
-
-            row.className=
-                "game-history-item";
-
-
-            const resultClass=
-                m.result==="win"
-                ?"win":
-                m.result==="loss"
-                ?"loss":
-                "draw";
-
-
-            const resultText=
-                m.result==="win"
-                ?"🏆 WIN":
-                m.result==="loss"
-                ?"❌ LOSS":
-                "🤝 DRAW";
-
-
-            row.innerHTML=`
-
-                <div class="history-icon">
-                    ${game?game.icon:"🎮"}
-                </div>
-
-
-                <div class="history-info">
-
-                    <strong>
-                        ${
-                            game
-                            ?
-                            escapeHTML(game.name)
-                            :
-                            escapeHTML(
-                                m.gameId||"Game"
-                            )
-                        }
-                    </strong>
-
-
-                    <small>
-                        Score:
-                        ${formatNumber(m.score)}
-                    </small>
-
-                </div>
-
-
-                <div class="history-result ${resultClass}">
-                    ${resultText}
-                </div>
-
-            `;
-
-
-            box.appendChild(row);
-
-        });
+            }
+        );
 
 
     }catch(error){
@@ -1522,34 +1901,97 @@ async function loadGameHistory(){
 
 const ACHIEVEMENTS=[
 
-{id:"first-win",icon:"🏆",name:"First Victory",description:"Win your first game.",condition:p=>Number(p.wins||0)>=1},
+{
+    id:"first-win",
+    icon:"🏆",
+    name:"First Victory",
+    description:"Win your first game.",
+    condition:p=>
+        Number(p.wins||0)>=1
+},
 
-{id:"five-wins",icon:"🔥",name:"Hot Streak",description:"Win 5 games.",condition:p=>Number(p.wins||0)>=5},
+{
+    id:"five-wins",
+    icon:"🔥",
+    name:"Hot Streak",
+    description:"Win 5 games.",
+    condition:p=>
+        Number(p.wins||0)>=5
+},
 
-{id:"ten-wins",icon:"⚡",name:"Winning Machine",description:"Win 10 games.",condition:p=>Number(p.wins||0)>=10},
+{
+    id:"ten-wins",
+    icon:"⚡",
+    name:"Winning Machine",
+    description:"Win 10 games.",
+    condition:p=>
+        Number(p.wins||0)>=10
+},
 
-{id:"fifty-wins",icon:"👑",name:"Champion",description:"Win 50 games.",condition:p=>Number(p.wins||0)>=50},
+{
+    id:"fifty-wins",
+    icon:"👑",
+    name:"Champion",
+    description:"Win 50 games.",
+    condition:p=>
+        Number(p.wins||0)>=50
+},
 
-{id:"hundred-wins",icon:"💎",name:"Legend",description:"Win 100 games.",condition:p=>Number(p.wins||0)>=100},
+{
+    id:"hundred-wins",
+    icon:"💎",
+    name:"Legend",
+    description:"Win 100 games.",
+    condition:p=>
+        Number(p.wins||0)>=100
+},
 
-{id:"ten-games",icon:"🎮",name:"Gamer",description:"Play 10 games.",condition:p=>Number(p.gamesPlayed||0)>=10},
+{
+    id:"ten-games",
+    icon:"🎮",
+    name:"Gamer",
+    description:"Play 10 games.",
+    condition:p=>
+        Number(p.gamesPlayed||0)>=10
+},
 
-{id:"hundred-games",icon:"🌟",name:"Veteran",description:"Play 100 games.",condition:p=>Number(p.gamesPlayed||0)>=100},
+{
+    id:"hundred-games",
+    icon:"🌟",
+    name:"Veteran",
+    description:"Play 100 games.",
+    condition:p=>
+        Number(p.gamesPlayed||0)>=100
+},
 
-{id:"five-streak",icon:"🔥",name:"Unstoppable",description:"Reach a 5-game winning streak.",condition:p=>Number(p.bestStreak||0)>=5}
+{
+    id:"five-streak",
+    icon:"🔥",
+    name:"Unstoppable",
+    description:"Reach a 5-game winning streak.",
+    condition:p=>
+        Number(p.bestStreak||0)>=5
+}
 
 ];
 
 
 async function checkAchievements(){
 
-    if(!currentUser||!myProfile)return;
+    if(
+        !currentUser||
+        !myProfile
+    )return;
 
 
     const earned=
-        Array.isArray(myProfile.achievements)
+        Array.isArray(
+            myProfile.achievements
+        )
         ?
-        [...myProfile.achievements]
+        [
+            ...myProfile.achievements
+        ]
         :
         [];
 
@@ -1557,25 +1999,35 @@ async function checkAchievements(){
     const newOnes=[];
 
 
-    ACHIEVEMENTS.forEach(a=>{
+    ACHIEVEMENTS.forEach(
+        a=>{
 
-        if(
-            a.condition(myProfile)&&
-            !earned.includes(a.id)
-        ){
+            if(
+                a.condition(myProfile)&&
+                !earned.includes(a.id)
+            ){
 
-            earned.push(a.id);
-            newOnes.push(a);
+                earned.push(
+                    a.id
+                );
+
+                newOnes.push(
+                    a
+                );
+
+            }
 
         }
-
-    });
-
-
-    renderAchievements(earned);
+    );
 
 
-    if(!newOnes.length)return;
+    renderAchievements(
+        earned
+    );
+
+
+    if(!newOnes.length)
+        return;
 
 
     try{
@@ -1587,8 +2039,11 @@ async function checkAchievements(){
                 currentUser.uid
             ),
             {
-                achievements:earned,
-                updatedAt:serverTimestamp()
+                achievements:
+                    earned,
+
+                updatedAt:
+                    serverTimestamp()
             }
         );
 
@@ -1614,7 +2069,9 @@ async function checkAchievements(){
 }
 
 
-function renderAchievements(earned=[]){
+function renderAchievements(
+    earned=[]
+){
 
     const box=
         $("achievements");
@@ -1626,48 +2083,65 @@ function renderAchievements(earned=[]){
     box.innerHTML="";
 
 
-    ACHIEVEMENTS.forEach(a=>{
+    ACHIEVEMENTS.forEach(
+        a=>{
 
-        const unlocked=
-            earned.includes(a.id);
-
-
-        const item=
-            document.createElement("div");
-
-
-        item.className=
-            "achievement "+
-            (unlocked?
-            "unlocked":
-            "locked");
+            const unlocked=
+                earned.includes(
+                    a.id
+                );
 
 
-        item.innerHTML=`
-
-            <div class="achievement-icon">
-                ${unlocked?a.icon:"🔒"}
-            </div>
-
-
-            <div>
-
-                <strong>
-                    ${escapeHTML(a.name)}
-                </strong>
-
-                <small>
-                    ${escapeHTML(a.description)}
-                </small>
-
-            </div>
-
-        `;
+            const item=
+                document.createElement(
+                    "div"
+                );
 
 
-        box.appendChild(item);
+            item.className=
+                "achievement "+
+                (
+                    unlocked
+                    ?"unlocked"
+                    :"locked"
+                );
 
-    });
+
+            item.innerHTML=`
+
+                <div class="achievement-icon">
+                    ${
+                        unlocked
+                        ?a.icon
+                        :"🔒"
+                    }
+                </div>
+
+                <div>
+
+                    <strong>
+                        ${escapeHTML(
+                            a.name
+                        )}
+                    </strong>
+
+                    <small>
+                        ${escapeHTML(
+                            a.description
+                        )}
+                    </small>
+
+                </div>
+
+            `;
+
+
+            box.appendChild(
+                item
+            );
+
+        }
+    );
 
 }
 
@@ -1675,7 +2149,9 @@ function renderAchievements(earned=[]){
 function showAchievementNotification(a){
 
     const n=
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     n.className=
@@ -1695,7 +2171,9 @@ function showAchievementNotification(a){
             </strong>
 
             <span>
-                ${escapeHTML(a.name)}
+                ${escapeHTML(
+                    a.name
+                )}
             </span>
 
         </div>
@@ -1703,7 +2181,9 @@ function showAchievementNotification(a){
     `;
 
 
-    document.body.appendChild(n);
+    document.body.appendChild(
+        n
+    );
 
 
     setTimeout(
@@ -1724,7 +2204,9 @@ async function loadGamesHub(){
     await Promise.allSettled([
 
         loadTopWinners(),
+
         loadLeaderboard(),
+
         loadGameHistory()
 
     ]);
@@ -1755,12 +2237,16 @@ onAuthStateChanged(
         if(!user){
 
             currentUser=null;
+
             myProfile=null;
+
             isPremium=false;
+
 
             console.log(
                 "Games Hub: not logged in"
             );
+
 
             renderGames();
 
@@ -1769,7 +2255,8 @@ onAuthStateChanged(
         }
 
 
-        currentUser=user;
+        currentUser=
+            user;
 
 
         console.log(
