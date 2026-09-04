@@ -4,29 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>VitalStar - Connect, Share & Shine</title>
-<meta name="description" content="VitalStar is more than social media. Connect, share your moments, chat with friends, discover communities and shine together.">
+<meta name="description" content="VitalStar is more than social media. Connect, share, chat, discover communities and shine together.">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;overflow-x:hidden}
 body{font-family:Arial,sans-serif;background:#030019;color:#fff}
-
-/* GLOWING TEXT */
-body,.title,.subtitle,.card h3,.card p,.scene-text,.cta h2,.cta p,footer{
- text-shadow:0 0 5px #fff,0 0 10px #00eaff,0 0 18px #ff2bc0
-}
-.logo,.tagline span,.title span,.cta h2 span{
- background:linear-gradient(90deg,#ff3cae,#00eaff,#ffe000,#7cff5b,#a85cff,#ff3cae);
- background-size:300% auto;
- -webkit-background-clip:text;background-clip:text;color:transparent;
- animation:colors 5s linear infinite;
- text-shadow:none
-}
-@keyframes colors{to{background-position:300% center}}
+a{text-decoration:none;color:inherit}
 
 /* HERO */
 .hero{
- position:relative;width:100%;min-height:680px;overflow:hidden;
+ position:relative;min-height:680px;overflow:hidden;
  background:radial-gradient(circle at 80% 35%,#8d269f,#32105d 40%,#08002d 75%,#020018)
 }
 .stars{
@@ -35,19 +23,15 @@ body,.title,.subtitle,.card h3,.card p,.scene-text,.cta h2,.cta p,footer{
  background-size:70px 70px,120px 120px;
  animation:stars 18s linear infinite;opacity:.75
 }
-@keyframes stars{
- to{background-position:150px 300px,-150px 250px}
-}
+@keyframes stars{to{background-position:150px 300px,-150px 250px}}
 
-/* SHOOTING STARS */
 .shooting{
  position:absolute;width:180px;height:3px;
  background:linear-gradient(90deg,transparent,#fff,#00eaff);
  box-shadow:0 0 10px #fff,0 0 25px #00cfff;
  transform:rotate(-30deg);animation:shoot 5s linear infinite;z-index:3
 }
-.s1{top:90px;left:-220px}
-.s2{top:180px;left:-300px;animation-delay:2s}
+.s1{top:90px;left:-220px}.s2{top:180px;left:-300px;animation-delay:2s}
 .s3{top:270px;left:-250px;animation-delay:3.5s}
 @keyframes shoot{
  0%{transform:translate(-50px,-50px) rotate(-30deg);opacity:0}
@@ -55,40 +39,50 @@ body,.title,.subtitle,.card h3,.card p,.scene-text,.cta h2,.cta p,footer{
  100%{transform:translate(1200px,500px) rotate(-30deg);opacity:0}
 }
 
-/* CONTENT */
 .hero-content{
  position:relative;z-index:100;width:92%;max-width:1100px;margin:auto;padding-top:55px
 }
 .logo{font-size:64px;font-weight:900;letter-spacing:-4px}
 .logo span{color:#ffc900}
 .tagline{width:55%;font-size:42px;line-height:1.08;font-weight:900;margin-top:8px}
+.tagline span{
+ background:linear-gradient(90deg,#ff42ca,#00dfff,#ffd000);
+ -webkit-background-clip:text;background-clip:text;color:transparent
+}
 .description{width:45%;max-width:500px;margin-top:18px;font-size:16px;line-height:1.5;color:#eee}
 
-/* BUTTONS */
 .buttons{display:flex;gap:14px;flex-wrap:wrap;margin-top:25px}
 .btn{
  display:inline-flex;align-items:center;justify-content:center;
  padding:14px 25px;border-radius:40px;font-weight:bold;font-size:16px;
- transition:.3s;text-shadow:0 0 8px #fff
+ transition:.3s;position:relative
 }
-.register{color:#fff;background:linear-gradient(90deg,#ff4e91,#a82cff);box-shadow:0 0 20px #ff28c8}
-.login{color:#fff;background:#070321;border:2px solid #ffd000;box-shadow:0 0 15px #ffd000}
+.register{
+ background:linear-gradient(90deg,#ff4e91,#a82cff);
+ box-shadow:0 0 12px #ff28c8,0 0 30px #a82cff
+}
+.login{
+ background:#070321;border:2px solid #ffd000;
+ box-shadow:0 0 10px #ffd000,0 0 25px #ffd000
+}
 .btn:hover{transform:translateY(-4px) scale(1.03)}
 
-/* LOGIN SPINNER */
-.login-spinner{
- width:14px;height:14px;border:2px solid rgba(255,255,255,.3);
- border-top-color:#ffd000;border-radius:50%;display:inline-block;
- margin-right:7px;animation:spin .7s linear infinite
+/* LOGIN CHECK INDICATOR */
+.login-check{display:inline-flex;align-items:center;gap:7px}
+.login-indicator{
+ width:13px;height:13px;border:2px solid rgba(255,255,255,.35);
+ border-top-color:#ffd000;border-radius:50%;
+ animation:spin .7s linear infinite;display:inline-block
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-.login.ready .login-spinner{display:none}
+.login.logged-in .login-indicator{display:none}
 
 /* RAINBOW */
 .rainbow{
  position:absolute;right:3%;top:25px;width:260px;height:140px;border-radius:260px 260px 0 0;
- background:radial-gradient(ellipse at center bottom,transparent 0 42%,#f33 43% 48%,#ff8a00 49% 54%,#ffe600 55% 60%,#39e75f 61% 66%,#20c9ff 67% 72%,#635bff 73% 78%,#b53cff 79% 84%,transparent 85%);
- filter:drop-shadow(0 0 10px #ff43ca) drop-shadow(0 0 20px #00eaff);z-index:8
+ background:radial-gradient(ellipse at center bottom,transparent 0 42%,#ff3030 43% 48%,#ff8a00 49% 54%,#ffe600 55% 60%,#39e75f 61% 66%,#20c9ff 67% 72%,#635bff 73% 78%,#b53cff 79% 84%,transparent 85%);
+ filter:drop-shadow(0 0 10px #ff43ca) drop-shadow(0 0 20px #00eaff);
+ z-index:8
 }
 
 /* WATER */
@@ -96,7 +90,8 @@ body,.title,.subtitle,.card h3,.card p,.scene-text,.cta h2,.cta p,footer{
  position:absolute;right:-3%;bottom:0;width:58%;max-width:720px;height:350px;
  border-radius:50% 50% 0 0;overflow:hidden;
  background:radial-gradient(ellipse at 50% 15%,#70ffff,#0794e0 42%,#031b69 80%);
- box-shadow:inset 0 15px 35px rgba(255,255,255,.35),0 -10px 50px #008cff;z-index:10
+ box-shadow:inset 0 15px 35px rgba(255,255,255,.35),0 -10px 50px #008cff;
+ z-index:10
 }
 .wave{
  position:absolute;left:-10%;width:120%;height:35px;
@@ -108,26 +103,13 @@ body,.title,.subtitle,.card h3,.card p,.scene-text,.cta h2,.cta p,footer{
 
 /* FISH */
 .sea-fish{
- position:absolute;left:-120px;line-height:1;white-space:nowrap;
- z-index:20;font-size:42px;animation:swim linear infinite
+ position:absolute;left:-130px;line-height:1;white-space:nowrap;
+ z-index:20;font-size:42px;animation:swim linear infinite;
+ filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px #00eaff)
 }
-.sea-fish span{display:inline-block;transform:scaleX(-1);filter:drop-shadow(0 0 4px rgba(255,255,255,.45))}
+.sea-fish span{display:inline-block;transform:scaleX(-1)}
 .small{font-size:28px}.medium{font-size:50px}.big{font-size:68px}
-.c2 span{filter:hue-rotate(40deg)}.c3 span{filter:hue-rotate(80deg)}
-.c4 span{filter:hue-rotate(120deg)}.c5 span{filter:hue-rotate(160deg)}
-.c6 span{filter:hue-rotate(200deg)}.c7 span{filter:hue-rotate(240deg)}
-.c8 span{filter:hue-rotate(300deg)}
-@keyframes swim{
- 0%{left:-130px;transform:translateY(0) scale(.72);opacity:0}
- 8%{opacity:1}
- 25%{transform:translateY(-15px) scale(1)}
- 50%{transform:translateY(15px) scale(1.04)}
- 75%{transform:translateY(-10px) scale(1)}
- 92%{opacity:1}
- 100%{left:115%;transform:translateY(10px) scale(.75);opacity:0}
-}
 
-/* FISH POSITIONS */
 .f01{top:15px;animation-duration:7s}.f02{top:45px;animation-duration:9s;animation-delay:1s}
 .f03{top:80px;animation-duration:12s;animation-delay:2s}.f04{top:115px;animation-duration:8s;animation-delay:3s}
 .f05{top:150px;animation-duration:10s;animation-delay:4s}.f06{top:185px;animation-duration:13s;animation-delay:5s}
@@ -144,106 +126,136 @@ body,.title,.subtitle,.card h3,.card p,.scene-text,.cta h2,.cta p,footer{
 .f27{top:270px;animation-duration:8s;animation-delay:14s}.f28{top:185px;animation-duration:7s;animation-delay:15s}
 .f29{top:55px;animation-duration:10s;animation-delay:16s}.f30{top:155px;animation-duration:12s;animation-delay:17s}
 
+.c2{filter:hue-rotate(40deg) drop-shadow(0 0 6px #fff)}
+.c3{filter:hue-rotate(80deg) drop-shadow(0 0 6px #fff)}
+.c4{filter:hue-rotate(120deg) drop-shadow(0 0 6px #fff)}
+.c5{filter:hue-rotate(160deg) drop-shadow(0 0 6px #fff)}
+.c6{filter:hue-rotate(200deg) drop-shadow(0 0 6px #fff)}
+.c7{filter:hue-rotate(240deg) drop-shadow(0 0 6px #fff)}
+.c8{filter:hue-rotate(300deg) drop-shadow(0 0 6px #fff)}
+
+@keyframes swim{
+ 0%{left:-130px;transform:translateY(0) scale(.72);opacity:0}
+ 8%{opacity:1}25%{transform:translateY(-15px) scale(1)}
+ 50%{transform:translateY(15px) scale(1.04)}
+ 75%{transform:translateY(-10px) scale(1)}
+ 92%{opacity:1}100%{left:115%;transform:translateY(10px) scale(.75);opacity:0}
+}
+
 /* BUBBLES */
 .bubble{
- position:absolute;bottom:-20px;width:8px;height:8px;border:2px solid rgba(255,255,255,.65);
- border-radius:50%;animation:bubble 5s linear infinite;z-index:8
+ position:absolute;bottom:-20px;width:8px;height:8px;
+ border:2px solid rgba(255,255,255,.65);border-radius:50%;
+ box-shadow:0 0 8px #fff,0 0 15px #00eaff;
+ animation:bubble 5s linear infinite;z-index:8
 }
 .b01{left:10%}.b02{left:25%;animation-delay:1s}.b03{left:42%;animation-delay:2s}
 .b04{left:60%;animation-delay:3s}.b05{left:78%;animation-delay:4s}.b06{left:90%;animation-delay:2.5s}
 @keyframes bubble{
  0%{transform:translateY(0) scale(.5);opacity:0}
- 20%{opacity:1}
- 100%{transform:translateY(-380px) scale(1.5);opacity:0}
+ 20%{opacity:1}100%{transform:translateY(-380px) scale(1.5);opacity:0}
 }
 
-/* BUTTERFLIES & FLOWERS */
-.butterfly,.flower{position:absolute;z-index:70;animation:float 8s ease-in-out infinite}
-.butterfly{font-size:32px}.flower{font-size:38px}
+/* DECORATIONS */
+.butterfly,.flower{
+ position:absolute;z-index:70;
+ filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 15px #ff3bd4)
+}
+.butterfly{font-size:32px;animation:fly 8s ease-in-out infinite}
 .b1{top:20%;left:4%}.b2{top:50%;right:3%;animation-delay:2s}.b3{top:72%;left:7%;animation-delay:4s}
-.flower1{bottom:8px;left:3%}.flower2{bottom:12px;left:25%;animation-delay:1s}.flower3{bottom:8px;right:3%;animation-delay:2s}
-@keyframes float{
+@keyframes fly{
  0%,100%{transform:translate(0) rotate(0)}
  25%{transform:translate(45px,-45px) rotate(10deg)}
  50%{transform:translate(80px,10px) rotate(-8deg)}
  75%{transform:translate(35px,50px) rotate(8deg)}
 }
+.flower{font-size:38px;animation:flower 3s ease-in-out infinite}
+.flower1{bottom:8px;left:3%}.flower2{bottom:12px;left:25%;animation-delay:1s}.flower3{bottom:8px;right:3%;animation-delay:2s}
+@keyframes flower{50%{transform:translateY(-8px) rotate(10deg)}}
 
 /* SECTIONS */
-.features,.scenes{width:100%;padding:60px 4%}
-.features{background:linear-gradient(180deg,#07124d,#090025)}
+.features,.scenes{width:100%;padding:60px 4%;background:linear-gradient(180deg,#07124d,#090025)}
 .scenes{background:#030019}
 .title{text-align:center;font-size:38px;margin-bottom:10px}
+.title span{color:#ff43ca}
 .subtitle{text-align:center;color:#ccc;max-width:700px;margin:auto;font-size:15px;line-height:1.5}
 
-/* CARDS */
 .cards,.scene-grid{
- width:100%;max-width:1100px;margin:35px auto 0;display:grid;
- grid-template-columns:repeat(3,minmax(0,1fr));gap:14px
+ width:100%;max-width:1100px;margin:35px auto 0;
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px
 }
-.cards{grid-template-rows:repeat(2,190px)}
+.cards{grid-template-rows:190px 190px}
+.card,.scene{
+ width:100%;border-radius:18px;
+ border:1px solid rgba(255,255,255,.25);
+ box-shadow:0 0 8px rgba(255,215,0,.7),0 0 20px rgba(255,215,0,.3)
+}
 .card{
- height:190px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;
- text-align:center;border-radius:18px;border:1px solid rgba(255,255,255,.2);
+ height:190px;padding:20px;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;text-align:center;
  background:linear-gradient(145deg,#3a1670,#080b35);transition:.3s
 }
-.card:hover{transform:translateY(-6px)}
+.card:hover{transform:translateY(-6px);box-shadow:0 0 15px #ffd000,0 0 30px #ffd000}
 .icon{
  width:50px;height:50px;display:flex;align-items:center;justify-content:center;
- border-radius:50%;background:#24105d;border:1px solid #ad2cff;font-size:24px;margin-bottom:10px
+ border-radius:50%;background:#24105d;border:1px solid #ffd000;
+ box-shadow:0 0 10px #ffd000,0 0 20px #ffd000;font-size:24px;margin-bottom:10px
 }
-.card h3{font-size:17px;margin-bottom:7px}.card p{color:#ccc;font-size:12px;line-height:1.4}
+.card h3{font-size:17px;margin-bottom:7px}
+.card p{color:#ccc;font-size:12px;line-height:1.4}
 
 /* SCENES */
 .scene-grid{grid-template-rows:280px}
-.scene{position:relative;height:280px;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.2)}
+.scene{height:280px;position:relative;overflow:hidden}
 .underwater{background:radial-gradient(circle at 30% 30%,#69ffff,#087bc4 45%,#001858)}
-.underwater:before{
- content:"";position:absolute;inset:0;
- background:repeating-radial-gradient(ellipse,transparent 0 25px,rgba(255,255,255,.13) 27px 30px);
- animation:water 5s linear infinite
-}
-@keyframes water{to{transform:translateY(40px)}}
-.mini-fish{position:absolute;left:-60px;font-size:35px;animation:mini 5s linear infinite}
-.mf1{top:30%}.mf2{top:55%;animation-delay:1.5s}.mf3{top:72%;animation-delay:3s}
-@keyframes mini{to{left:110%}}
 .party-scene{background:radial-gradient(circle,#ff2bc0,#570b73 45%,#08001e)}
 .night{background:linear-gradient(180deg,#020028,#1a2d78,#ff7188)}
-.night:before{
- content:"";position:absolute;inset:0;background:radial-gradient(circle,#fff 1px,transparent 2px);
- background-size:45px 45px;animation:night 8s linear infinite
+.underwater,.party-scene,.night{
+ box-shadow:0 0 12px #ffd000,0 0 25px rgba(255,208,0,.5)
 }
-@keyframes night{to{background-position:80px 120px}}
+.mini-fish{
+ position:absolute;left:-60px;font-size:35px;
+ filter:drop-shadow(0 0 7px #00ffff);animation:mini 5s linear infinite
+}
+.mf1{top:30%}.mf2{top:55%;animation-delay:1.5s}.mf3{top:72%;animation-delay:3s}
+@keyframes mini{from{left:-70px}to{left:110%}}
 .mountain{
  position:absolute;bottom:0;width:0;height:0;
- border-left:170px solid transparent;border-right:170px solid transparent;border-bottom:210px solid #080a31
+ border-left:170px solid transparent;border-right:170px solid transparent;
+ border-bottom:210px solid #080a31
 }
 .mountain1{left:-70px}.mountain2{right:-80px;border-bottom-color:#121642}
 .scene-text{position:absolute;z-index:10;left:15px;right:15px;bottom:15px}
-.scene-text h3{font-size:19px;margin-bottom:5px}.scene-text p{font-size:12px;line-height:1.4;color:#ddd}
+.scene-text h3{font-size:19px;margin-bottom:5px}
+.scene-text p{font-size:12px;line-height:1.4;color:#ddd}
 
 /* CTA */
 .cta{
  position:relative;width:100%;padding:80px 20px;text-align:center;overflow:hidden;
- background:radial-gradient(circle,#3b0570,#080021 70%)
+ background:radial-gradient(circle,#3b0570,#080021 70%);
+ box-shadow:inset 0 0 40px #ffd000
 }
-.cta h2{font-size:38px}.cta p{max-width:650px;margin:15px auto;color:#ccc;line-height:1.5}
+.cta h2{font-size:38px}.cta h2 span{color:#ffd000}
+.cta p{max-width:650px;margin:15px auto;color:#ccc;line-height:1.5}
 .cta .buttons{justify-content:center}
 
 /* FOOTER */
-footer{width:100%;padding:25px;text-align:center;background:#01000a;color:#888}
+footer{
+ width:100%;padding:25px;text-align:center;background:#01000a;color:#888;
+ border-top:1px solid #ffd000;box-shadow:0 0 15px #ffd000
+}
 footer strong{color:#ffd000}
 
-/* TABLET */
+/* PHONE */
 @media(max-width:800px){
- .hero{min-height:600px}.logo{font-size:50px}.tagline{font-size:31px}.description{font-size:13px}
- .pool{width:58%;height:290px}.rainbow{width:180px;height:100px}
- .cards{grid-template-rows:repeat(2,150px)}.card{height:150px;padding:10px}
- .icon{width:38px;height:38px;font-size:18px}.card h3{font-size:13px}.card p{font-size:9px}
+ .hero{min-height:600px}.logo{font-size:50px}.tagline{font-size:31px}
+ .description{font-size:13px}.pool{height:290px}
+ .rainbow{width:180px;height:100px}
+ .cards{grid-template-rows:150px 150px}.card{height:150px;padding:10px}
+ .icon{width:38px;height:38px;font-size:18px}
+ .card h3{font-size:13px}.card p{font-size:9px}
  .scene-grid{grid-template-rows:220px}.scene{height:220px}
 }
-
-/* PHONE */
 @media(max-width:600px){
  .hero{width:100vw;min-height:520px;height:145vw;max-height:620px}
  .hero-content{width:94%;padding-top:25px}
@@ -252,7 +264,7 @@ footer strong{color:#ffd000}
  .description{width:53%;font-size:10px;line-height:1.35;margin-top:10px}
  .buttons{gap:6px;margin-top:12px}.btn{padding:8px 12px;font-size:10px}
  .rainbow{width:115px;height:62px;right:3%;top:18px}
- .pool{width:62%;height:210px;right:-3%}
+ .pool{width:62%;height:210px}
  .sea-fish{font-size:27px}.small{font-size:20px}.medium{font-size:32px}.big{font-size:40px}
  .f01{top:8px}.f02{top:28px}.f03{top:50px}.f04{top:72px}.f05{top:94px}.f06{top:116px}
  .f07{top:138px}.f08{top:160px}.f09{top:25px}.f10{top:88px}.f11{top:128px}.f12{top:178px}
@@ -261,14 +273,16 @@ footer strong{color:#ffd000}
  .f25{top:38px}.f26{top:122px}.f27{top:172px}.f28{top:82px}.f29{top:55px}.f30{top:142px}
  .bubble{width:5px;height:5px;border-width:1px}
  .butterfly{font-size:20px}.flower{font-size:22px}
- .features,.scenes{padding:40px 3%}
- .title{font-size:clamp(21px,7vw,27px)}.subtitle{font-size:10px}
- .cards{grid-template-rows:repeat(2,105px);gap:5px;margin-top:22px}
+ .features,.scenes{padding:40px 3%}.title{font-size:clamp(21px,7vw,27px)}
+ .subtitle{font-size:10px}
+ .cards{grid-template-rows:105px 105px;gap:5px;margin-top:22px}
  .card{height:105px;padding:5px;border-radius:10px}
  .icon{width:28px;height:28px;font-size:13px;margin-bottom:4px}
  .card h3{font-size:9px;margin-bottom:3px}.card p{font-size:6.5px;line-height:1.2}
- .scene-grid{grid-template-rows:160px;gap:5px;margin-top:22px}.scene{height:160px;border-radius:10px}
- .scene-text{left:6px;right:6px;bottom:6px}.scene-text h3{font-size:10px}.scene-text p{font-size:6px}
+ .scene-grid{grid-template-rows:160px;gap:5px;margin-top:22px}
+ .scene{height:160px;border-radius:10px}
+ .scene-text{left:6px;right:6px;bottom:6px}
+ .scene-text h3{font-size:10px}.scene-text p{font-size:6px}
  .mountain{border-left-width:90px;border-right-width:90px;border-bottom-width:120px}
  .cta{padding:55px 15px}.cta h2{font-size:25px}.cta p{font-size:10px}
  footer{font-size:9px}
@@ -287,9 +301,12 @@ footer strong{color:#ffd000}
 <div class="logo">Vital<span>Star</span></div>
 <div class="tagline">Connect, <span>Share & Shine</span></div>
 <div class="description">VitalStar is more than social media. Connect with friends, share your moments, discover communities and shine together.</div>
+
 <div class="buttons">
 <a href="register.html" class="btn register">Join VitalStar</a>
-<a href="login.html" class="btn login" id="loginBtn"><span class="login-spinner"></span><span id="loginText">Logging In...</span></a>
+<a href="login.html" class="btn login" id="loginBtn">
+<span class="login-check"><i class="login-indicator"></i><span id="loginText">Logging In...</span></span>
+</a>
 </div>
 </div>
 
@@ -330,8 +347,12 @@ footer strong{color:#ffd000}
 <div class="sea-fish f30 c4 medium"><span>🐠</span></div>
 </div>
 
-<div class="butterfly b1">🦋</div><div class="butterfly b2">🦋</div><div class="butterfly b3">🦋</div>
-<div class="flower flower1">🌸</div><div class="flower flower2">🌺</div><div class="flower flower3">🌼</div>
+<div class="butterfly b1">🦋</div>
+<div class="butterfly b2">🦋</div>
+<div class="butterfly b3">🦋</div>
+<div class="flower flower1">🌸</div>
+<div class="flower flower2">🌺</div>
+<div class="flower flower3">🌼</div>
 </section>
 
 <section class="features">
@@ -355,7 +376,9 @@ footer strong{color:#ffd000}
 <div class="scene-grid">
 
 <div class="scene underwater">
-<div class="mini-fish mf1">🐠</div><div class="mini-fish mf2">🐟</div><div class="mini-fish mf3">🐳</div>
+<div class="mini-fish mf1">🐠</div>
+<div class="mini-fish mf2">🐟</div>
+<div class="mini-fish mf3">🐳</div>
 <div class="scene-text"><h3>Dive Into Fun</h3><p>Discover a colorful world of new possibilities.</p></div>
 </div>
 
@@ -367,7 +390,8 @@ footer strong{color:#ffd000}
 </div>
 
 <div class="scene night">
-<div class="mountain mountain1"></div><div class="mountain mountain2"></div>
+<div class="mountain mountain1"></div>
+<div class="mountain mountain2"></div>
 <div style="position:absolute;top:20px;right:25px;font-size:40px">🌙</div>
 <div class="scene-text"><h3>Shine At Night</h3><p>Your world stays bright wherever you go.</p></div>
 </div>
@@ -390,15 +414,17 @@ footer strong{color:#ffd000}
 import{onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import{auth}from"./firebase.js";
 
-const btn=document.getElementById("loginBtn"),text=document.getElementById("loginText");
+const btn=document.getElementById("loginBtn");
+const text=document.getElementById("loginText");
 
 onAuthStateChanged(auth,user=>{
  if(user){
-  text.textContent="Logging In...";
-  location.replace("home.html");
+   btn.classList.add("logged-in");
+   text.textContent="Logging In...";
+   setTimeout(()=>location.replace("home.html"),800);
  }else{
-  text.textContent="Login";
-  btn.classList.add("ready");
+   btn.classList.remove("logged-in");
+   text.textContent="Login";
  }
 });
 </script>
