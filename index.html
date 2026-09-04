@@ -2,1429 +2,1056 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VitalStar - Connect, Share & Shine</title>
-<meta name="description" content="VitalStar is more than social media. Connect, share, chat, discover communities and shine together.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>VitalStar — Connect, Share & Shine</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;overflow-x:hidden}
-body{font-family:Arial,sans-serif;background:#030019;color:#fff}
-a{text-decoration:none;color:inherit}
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    color:#fff;
+    background:
+        radial-gradient(circle at 15% 10%,rgba(100,0,255,.18),transparent 28%),
+        radial-gradient(circle at 85% 35%,rgba(0,140,255,.10),transparent 30%),
+        radial-gradient(circle at 50% 75%,rgba(255,0,190,.08),transparent 30%),
+        #030313;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* STARS */
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+
+    background-image:
+        radial-gradient(circle,#fff 1px,transparent 1.5px),
+        radial-gradient(circle,#00eaff 1px,transparent 1.5px),
+        radial-gradient(circle,#ff35d5 1px,transparent 1.5px);
+
+    background-size:
+        190px 190px,
+        260px 260px,
+        330px 330px;
+
+    background-position:
+        20px 30px,
+        80px 100px,
+        150px 40px;
+
+    opacity:.3;
+    z-index:0;
+}
+
+/* MAIN */
+
+.container{
+    width:88%;
+    max-width:900px;
+    margin:auto;
+    position:relative;
+    z-index:2;
+}
 
 /* HERO */
+
 .hero{
- position:relative;min-height:680px;overflow:hidden;
- background:radial-gradient(circle at 80% 35%,#8d269f,#32105d 40%,#08002d 75%,#020018)
+    text-align:center;
+    padding:45px 10px 30px;
 }
 
-.stars{
- position:absolute;inset:0;
- background-image:radial-gradient(circle,#fff 1px,transparent 2px),
- radial-gradient(circle,#55ddff 1px,transparent 2px);
- background-size:70px 70px,120px 120px;
- animation:stars 18s linear infinite;
- opacity:.75
+.hero p{
+    font-size:20px;
+    line-height:1.55;
+    font-weight:500;
 }
 
-@keyframes stars{
- to{background-position:150px 300px,-150px 250px}
+.pink{
+    color:#ff38d5;
+    text-shadow:0 0 12px rgba(255,56,213,.6);
 }
 
-.shooting{
- position:absolute;width:180px;height:3px;
- background:linear-gradient(90deg,transparent,#fff,#00eaff);
- box-shadow:0 0 10px #fff,0 0 25px #00cfff;
- transform:rotate(-30deg);
- animation:shoot 5s linear infinite;
- z-index:3
+.blue{
+    color:#00ddff;
+    text-shadow:0 0 12px rgba(0,221,255,.6);
 }
 
-.s1{top:90px;left:-220px}
-.s2{top:180px;left:-300px;animation-delay:2s}
-.s3{top:270px;left:-250px;animation-delay:3.5s}
-
-@keyframes shoot{
- 0%{
-   transform:translate(-50px,-50px) rotate(-30deg);
-   opacity:0
- }
- 10%{opacity:1}
- 100%{
-   transform:translate(1200px,500px) rotate(-30deg);
-   opacity:0
- }
-}
-
-/* CONTENT */
-.hero-content{
- position:relative;
- z-index:100;
- width:92%;
- max-width:1100px;
- margin:auto;
- padding-top:55px
-}
-
-.logo{
- font-size:64px;
- font-weight:900;
- letter-spacing:-4px
-}
-
-.logo span{color:#ffc900}
-
-.tagline{
- width:55%;
- font-size:42px;
- line-height:1.08;
- font-weight:900;
- margin-top:8px
-}
-
-.tagline span{
- background:linear-gradient(90deg,#ff42ca,#00dfff,#ffd000);
- -webkit-background-clip:text;
- background-clip:text;
- color:transparent
-}
-
-.description{
- width:45%;
- max-width:500px;
- margin-top:18px;
- font-size:16px;
- line-height:1.5;
- color:#eee
-}
-
-/* BUTTONS */
-.buttons{
- display:flex;
- gap:14px;
- flex-wrap:wrap;
- margin-top:25px
-}
-
-.btn{
- display:inline-flex;
- align-items:center;
- justify-content:center;
- padding:14px 25px;
- border-radius:40px;
- font-weight:bold;
- font-size:16px;
- transition:.3s;
- position:relative
-}
-
-.register{
- background:linear-gradient(90deg,#ff4e91,#a82cff);
- box-shadow:0 0 12px #ff28c8,0 0 30px #a82cff
-}
-
-.login{
- background:#070321;
- border:2px solid #ffd000;
- box-shadow:0 0 10px #ffd000,0 0 25px #ffd000
-}
-
-.btn:hover{
- transform:translateY(-4px) scale(1.03)
-}
-
-.login-check{
- display:inline-flex;
- align-items:center;
- gap:7px
-}
-
-.login-indicator{
- width:13px;
- height:13px;
- border:2px solid rgba(255,255,255,.35);
- border-top-color:#ffd000;
- border-radius:50%;
- animation:spin .7s linear infinite;
- display:inline-block
-}
-
-@keyframes spin{
- to{transform:rotate(360deg)}
-}
-
-.login.logged-in .login-indicator{
- display:none
-}
-
-/* RAINBOW */
-.rainbow{
- position:absolute;
- right:3%;
- top:25px;
- width:260px;
- height:140px;
- border-radius:260px 260px 0 0;
- background:radial-gradient(
-   ellipse at center bottom,
-   transparent 0 42%,
-   #ff3030 43% 48%,
-   #ff8a00 49% 54%,
-   #ffe600 55% 60%,
-   #39e75f 61% 66%,
-   #20c9ff 67% 72%,
-   #635bff 73% 78%,
-   #b53cff 79% 84%,
-   transparent 85%
- );
- filter:drop-shadow(0 0 10px #ff43ca)
-        drop-shadow(0 0 20px #00eaff);
- z-index:8
-}
-
-/* POOL */
-.pool{
- position:absolute;
- right:-3%;
- bottom:0;
- width:58%;
- max-width:720px;
- height:350px;
- border-radius:50% 50% 0 0;
- overflow:hidden;
- background:radial-gradient(
-   ellipse at 50% 15%,
-   #70ffff,
-   #0794e0 42%,
-   #031b69 80%
- );
- box-shadow:
-   inset 0 15px 35px rgba(255,255,255,.35),
-   0 -10px 50px #008cff;
- z-index:10
-}
-
-/* SKY / BIRD ZONE */
-.bird-zone{
- position:absolute;
- top:0;
- left:0;
- width:100%;
- height:43%;
- overflow:hidden;
- border-bottom:2px solid rgba(255,255,255,.25);
- background:linear-gradient(
-   180deg,
-   rgba(100,220,255,.35),
-   rgba(40,140,220,.12)
- );
- z-index:5
-}
-
-/* =========================================
-   FLYING BIRDS
-========================================= */
-
-.bird{
- position:absolute;
- left:-100px;
- font-size:34px;
- line-height:1;
- white-space:nowrap;
- animation:birdFly linear infinite;
- z-index:8;
-}
-
-.bird span{
- display:inline-block;
- transform-origin:center;
- animation:wingStretch .65s ease-in-out infinite alternate;
-}
-
-/* WINGS STRETCH OPEN */
-@keyframes wingStretch{
-
- 0%{
-   transform:
-     translateY(3px)
-     rotate(-7deg)
-     scaleX(1);
- }
-
- 50%{
-   transform:
-     translateY(-7px)
-     rotate(3deg)
-     scaleX(1.18);
- }
-
- 100%{
-   transform:
-     translateY(-12px)
-     rotate(7deg)
-     scaleX(1.3);
- }
-}
-
-/* FLYING PATH */
-@keyframes birdFly{
-
- 0%{
-   left:-120px;
-   transform:
-     translateY(15px)
-     rotate(-5deg)
-     scale(.65);
-   opacity:0;
- }
-
- 7%{
-   opacity:1;
- }
-
- 20%{
-   transform:
-     translateY(-17px)
-     rotate(4deg)
-     scale(.8);
- }
-
- 40%{
-   transform:
-     translateY(10px)
-     rotate(-3deg)
-     scale(.95);
- }
-
- 60%{
-   transform:
-     translateY(-20px)
-     rotate(5deg)
-     scale(1);
- }
-
- 80%{
-   transform:
-     translateY(7px)
-     rotate(-3deg)
-     scale(.9);
- }
-
- 92%{
-   opacity:1;
- }
-
- 100%{
-   left:115%;
-   transform:
-     translateY(-8px)
-     rotate(5deg)
-     scale(.7);
-   opacity:0;
- }
-}
-
-/* DIFFERENT BIRD TYPES */
-.bird.dove{font-size:34px}
-.bird.eagle{font-size:42px}
-.bird.parrot{font-size:36px}
-.bird.swan{font-size:39px}
-.bird.blackbird{font-size:32px}
-.bird.smallbird{font-size:27px}
-
-/* DIFFERENT COLOURS */
-.bird.yellow{
- color:#ffe600;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #ffe600)
-}
-
-.bird.pink{
- color:#ff42d0;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #ff42d0)
-}
-
-.bird.blue{
- color:#00eaff;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #00eaff)
-}
-
-.bird.green{
- color:#48ff72;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #48ff72)
-}
-
-.bird.orange{
- color:#ff8b00;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #ff8b00)
-}
-
-.bird.purple{
- color:#b84cff;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #b84cff)
-}
-
-.bird.red{
- color:#ff3d5a;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #ff3d5a)
-}
-
-/* BIRD POSITIONS */
-.bird1{top:15%;animation-duration:8s}
-.bird2{top:45%;animation-duration:11s;animation-delay:1s}
-.bird3{top:27%;animation-duration:7s;animation-delay:2s}
-.bird4{top:63%;animation-duration:10s;animation-delay:3s}
-.bird5{top:10%;animation-duration:12s;animation-delay:4s}
-.bird6{top:55%;animation-duration:9s;animation-delay:5s}
-.bird7{top:34%;animation-duration:13s;animation-delay:6s}
-.bird8{top:70%;animation-duration:8s;animation-delay:7s}
-.bird9{top:20%;animation-duration:10s;animation-delay:8s}
-.bird10{top:58%;animation-duration:12s;animation-delay:9s}
-.bird11{top:38%;animation-duration:9s;animation-delay:2s}
-.bird12{top:68%;animation-duration:14s;animation-delay:4s}
-
-/* WATER ZONE */
-.water-zone{
- position:absolute;
- left:0;
- bottom:0;
- width:100%;
- height:59%;
- overflow:hidden;
- z-index:6
-}
-
-/* WAVES */
-.wave{
- position:absolute;
- left:-10%;
- width:120%;
- height:35px;
- border-top:3px solid rgba(255,255,255,.35);
- border-radius:50%;
- animation:wave 4s ease-in-out infinite;
- z-index:4
-}
-
-.w1{top:25px}
-.w2{top:105px;animation-delay:1s}
-.w3{top:190px;animation-delay:2s}
-
-@keyframes wave{
- 50%{transform:translateX(25px)}
-}
-
-/* FISH */
-.sea-fish{
- position:absolute;
- left:-130px;
- line-height:1;
- white-space:nowrap;
- z-index:20;
- font-size:42px;
- animation:swim linear infinite
-}
-
-.sea-fish span{
- display:inline-block;
- transform:scaleX(-1);
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 12px #00eaff)
-}
-
-.small{font-size:28px}
-.medium{font-size:50px}
-.big{font-size:68px}
-
-/* FISH MOVEMENT */
-@keyframes swim{
-
- 0%{
-   left:-130px;
-   transform:translate3d(0,0,0) scale(.72);
-   opacity:0
- }
-
- 8%{opacity:1}
-
- 25%{
-   transform:translate3d(0,-13px,0) scale(.9)
- }
-
- 50%{
-   transform:translate3d(0,10px,0) scale(1)
- }
-
- 75%{
-   transform:translate3d(0,-8px,0) scale(.96)
- }
-
- 92%{opacity:1}
-
- 100%{
-   left:115%;
-   transform:translate3d(0,7px,0) scale(.75);
-   opacity:0
- }
-}
-
-.f01{top:8px;animation-duration:8s}
-.f02{top:30px;animation-duration:10s;animation-delay:1s}
-.f03{top:55px;animation-duration:13s;animation-delay:2s}
-.f04{top:80px;animation-duration:9s;animation-delay:3s}
-.f05{top:105px;animation-duration:11s;animation-delay:4s}
-.f06{top:130px;animation-duration:14s;animation-delay:5s}
-.f07{top:155px;animation-duration:8s;animation-delay:6s}
-.f08{top:180px;animation-duration:12s;animation-delay:2s}
-.f09{top:20px;animation-duration:7s;animation-delay:4s}
-.f10{top:75px;animation-duration:15s;animation-delay:7s}
-.f11{top:125px;animation-duration:9s;animation-delay:1s}
-.f12{top:190px;animation-duration:10s;animation-delay:3s}
-.f13{top:45px;animation-duration:8s;animation-delay:5s}
-.f14{top:145px;animation-duration:13s;animation-delay:8s}
-.f15{top:95px;animation-duration:7s;animation-delay:2s}
-.f16{top:65px;animation-duration:10s;animation-delay:6s}
-.f17{top:160px;animation-duration:9s;animation-delay:7s}
-.f18{top:15px;animation-duration:14s;animation-delay:9s}
-.f19{top:115px;animation-duration:8s;animation-delay:8s}
-.f20{top:140px;animation-duration:11s;animation-delay:10s}
-
-/* BUBBLES */
-.bubble{
- position:absolute;
- bottom:-20px;
- width:8px;
- height:8px;
- border:2px solid rgba(255,255,255,.65);
- border-radius:50%;
- box-shadow:0 0 8px #fff,0 0 15px #00eaff;
- animation:bubble 5s linear infinite;
- z-index:8
-}
-
-.b01{left:10%}
-.b02{left:25%;animation-delay:1s}
-.b03{left:42%;animation-delay:2s}
-.b04{left:60%;animation-delay:3s}
-.b05{left:78%;animation-delay:4s}
-.b06{left:90%;animation-delay:2.5s}
-
-@keyframes bubble{
-
- 0%{
-   transform:translateY(0) scale(.5);
-   opacity:0
- }
-
- 20%{opacity:1}
-
- 100%{
-   transform:translateY(-250px) scale(1.5);
-   opacity:0
- }
-}
-
-/* DECORATIONS */
-.butterfly,.flower{
- position:absolute;
- z-index:70;
- filter:
-   drop-shadow(0 0 5px #fff)
-   drop-shadow(0 0 15px #ff3bd4)
-}
-
-.butterfly{
- font-size:32px;
- animation:fly 8s ease-in-out infinite
-}
-
-.b1{top:20%;left:4%}
-.b2{top:50%;right:3%}
-.b3{top:72%;left:7%;animation-delay:4s}
-
-@keyframes fly{
-
- 0%,100%{
-   transform:translate(0) rotate(0)
- }
-
- 25%{
-   transform:translate(45px,-45px) rotate(10deg)
- }
-
- 50%{
-   transform:translate(80px,10px) rotate(-8deg)
- }
-
- 75%{
-   transform:translate(35px,50px) rotate(8deg)
- }
-}
-
-.flower{
- font-size:38px;
- animation:flower 3s ease-in-out infinite
-}
-
-.flower1{bottom:8px;left:3%}
-.flower2{bottom:12px;left:25%;animation-delay:1s}
-.flower3{bottom:8px;right:3%;animation-delay:2s}
-
-@keyframes flower{
- 50%{
-   transform:translateY(-8px) rotate(10deg)
- }
-}
-
-/* SECTIONS */
-.features,.scenes{
- width:100%;
- padding:60px 4%;
- background:linear-gradient(180deg,#07124d,#090025)
-}
-
-.scenes{background:#030019}
-
-.title{
- text-align:center;
- font-size:38px;
- margin-bottom:10px
-}
-
-.title span{color:#ff43ca}
-
-.subtitle{
- text-align:center;
- color:#ccc;
- max-width:700px;
- margin:auto;
- font-size:15px;
- line-height:1.5
-}
-
-.cards,.scene-grid{
- width:100%;
- max-width:1100px;
- margin:35px auto 0;
- display:grid;
- grid-template-columns:repeat(3,minmax(0,1fr));
- gap:14px
-}
-
-.cards{
- grid-template-rows:190px 190px
-}
-
-.card,.scene{
- width:100%;
- border-radius:18px;
- border:1px solid rgba(255,255,255,.25);
- box-shadow:
-   0 0 8px rgba(255,215,0,.7),
-   0 0 20px rgba(255,215,0,.3)
-}
-
-.card{
- height:190px;
- padding:20px;
- display:flex;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- text-align:center;
- background:linear-gradient(145deg,#3a1670,#080b35);
- transition:.3s
-}
-
-.card:hover{
- transform:translateY(-6px);
- box-shadow:0 0 15px #ffd000,0 0 30px #ffd000
-}
-
-.icon{
- width:50px;
- height:50px;
- display:flex;
- align-items:center;
- justify-content:center;
- border-radius:50%;
- background:#24105d;
- border:1px solid #ffd000;
- box-shadow:0 0 10px #ffd000,0 0 20px #ffd000;
- font-size:24px;
- margin-bottom:10px
-}
-
-.card h3{
- font-size:17px;
- margin-bottom:7px
-}
-
-.card p{
- color:#ccc;
- font-size:12px;
- line-height:1.4
-}
-
-/* SCENES */
-.scene-grid{
- grid-template-rows:280px
-}
-
-.scene{
- height:280px;
- position:relative;
- overflow:hidden
-}
-
-.underwater{
- background:radial-gradient(circle at 30% 30%,#69ffff,#087bc4 45%,#001858)
-}
-
-.party-scene{
- background:radial-gradient(circle,#ff2bc0,#570b73 45%,#08001e)
-}
-
-.night{
- background:linear-gradient(180deg,#020028,#1a2d78,#ff7188)
-}
-
-.underwater,.party-scene,.night{
- box-shadow:
-   0 0 12px #ffd000,
-   0 0 25px rgba(255,208,0,.5)
-}
-
-.mini-fish{
- position:absolute;
- left:-60px;
- font-size:35px;
- filter:drop-shadow(0 0 7px #00ffff);
- animation:mini 5s linear infinite
-}
-
-.mf1{top:30%}
-.mf2{top:55%;animation-delay:1.5s}
-.mf3{top:72%;animation-delay:3s}
-
-@keyframes mini{
- from{left:-70px}
- to{left:110%}
-}
-
-.mountain{
- position:absolute;
- bottom:0;
- width:0;
- height:0;
- border-left:170px solid transparent;
- border-right:170px solid transparent;
- border-bottom:210px solid #080a31
-}
-
-.mountain1{left:-70px}
-.mountain2{
- right:-80px;
- border-bottom-color:#121642
-}
-
-.scene-text{
- position:absolute;
- z-index:10;
- left:15px;
- right:15px;
- bottom:15px
-}
-
-.scene-text h3{
- font-size:19px;
- margin-bottom:5px
-}
-
-.scene-text p{
- font-size:12px;
- line-height:1.4;
- color:#ddd
+.yellow{
+    color:#ffd000;
+    text-shadow:0 0 12px rgba(255,208,0,.6);
 }
 
 /* CTA */
+
 .cta{
- position:relative;
- width:100%;
- padding:80px 20px;
- text-align:center;
- overflow:hidden;
- background:radial-gradient(circle,#3b0570,#080021 70%);
- box-shadow:inset 0 0 40px #ffd000
+    width:100%;
+    min-height:285px;
+
+    margin:20px 0 45px;
+    padding:32px 25px;
+
+    border-radius:25px;
+    text-align:center;
+
+    position:relative;
+    overflow:hidden;
+
+    border:2px solid transparent;
+
+    background:
+        linear-gradient(#08051e,#08051e) padding-box,
+        linear-gradient(
+            100deg,
+            #ff27c7,
+            #ff32e0,
+            #ffd000
+        ) border-box;
+
+    box-shadow:
+        0 0 25px rgba(255,30,210,.25),
+        0 0 45px rgba(255,180,0,.08),
+        inset 0 0 45px rgba(150,0,255,.09);
 }
 
-.cta h2{font-size:38px}
-.cta h2 span{color:#ffd000}
+.cta::before{
+    content:"✦";
+
+    position:absolute;
+    left:65px;
+    top:65px;
+
+    font-size:48px;
+    color:#ffd000;
+
+    text-shadow:0 0 18px #ffbb00;
+}
+
+.cta::after{
+    content:"✦";
+
+    position:absolute;
+    right:65px;
+    top:70px;
+
+    font-size:45px;
+    color:#ffd000;
+
+    text-shadow:0 0 18px #ffbb00;
+}
+
+.cta h1{
+    font-size:47px;
+    line-height:1.2;
+    margin-bottom:12px;
+}
 
 .cta p{
- max-width:650px;
- margin:15px auto;
- color:#ccc;
- line-height:1.5
+    max-width:650px;
+    margin:auto;
+
+    font-size:17px;
+    line-height:1.6;
+    color:#f4f4f7;
 }
 
-.cta .buttons{
- justify-content:center
+/* LOGIN STATUS */
+
+.auth-status{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    gap:8px;
+
+    margin-top:18px;
+    padding:8px 16px;
+
+    border-radius:20px;
+
+    font-size:14px;
+    font-weight:bold;
+
+    background:rgba(0,255,120,.08);
+    border:1px solid rgba(0,255,120,.45);
+
+    color:#45ff83;
+
+    box-shadow:0 0 15px rgba(0,255,120,.15);
+
+    transition:.3s ease;
+}
+
+.auth-status.hidden{
+    display:none;
+}
+
+.auth-dot{
+    width:9px;
+    height:9px;
+
+    border-radius:50%;
+
+    background:#35ff72;
+
+    box-shadow:0 0 10px #35ff72;
+}
+
+/* BUTTONS */
+
+.buttons{
+    margin-top:23px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    gap:22px;
+}
+
+.btn{
+    display:inline-block;
+
+    padding:13px 35px;
+
+    border-radius:30px;
+
+    text-decoration:none;
+
+    font-size:18px;
+    font-weight:bold;
+
+    transition:.25s ease;
+
+    cursor:pointer;
+}
+
+.btn:hover{
+    transform:translateY(-3px);
+}
+
+.join{
+    color:#fff;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ff416c,
+            #ff21b8,
+            #773cff
+        );
+
+    box-shadow:
+        0 0 22px rgba(255,30,190,.45);
+}
+
+.login{
+    color:#fff;
+
+    border:2px solid #ffd000;
+
+    box-shadow:
+        0 0 15px rgba(255,208,0,.3);
+}
+
+/* LOGOUT */
+
+.logout{
+    color:#fff;
+
+    border:2px solid #ff4d6d;
+
+    background:rgba(255,40,80,.08);
+
+    box-shadow:
+        0 0 15px rgba(255,40,80,.25);
+}
+
+/* FEATURES */
+
+.features-heading{
+    text-align:center;
+    margin:0 0 27px;
+}
+
+.features-heading h2{
+    font-size:35px;
+    line-height:1.3;
+    margin-bottom:10px;
+}
+
+.features-heading p{
+    max-width:700px;
+    margin:auto;
+
+    font-size:17px;
+    line-height:1.6;
+
+    color:#eeeef5;
+}
+
+/* FEATURE GRID */
+
+.features{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+
+    gap:18px;
+    padding-bottom:35px;
+}
+
+/* FEATURE CARD */
+
+.feature{
+    height:205px;
+
+    padding:20px 13px;
+
+    text-align:center;
+
+    border-radius:18px;
+
+    background:rgba(8,7,32,.88);
+
+    border:1px solid rgba(255,255,255,.2);
+
+    box-shadow:
+        inset 0 0 35px rgba(90,0,255,.08);
+
+    transition:
+        transform .3s ease,
+        box-shadow .3s ease;
+}
+
+.feature:hover{
+    transform:translateY(-5px);
+
+    box-shadow:
+        0 0 22px rgba(255,255,255,.13),
+        inset 0 0 35px rgba(90,0,255,.12);
+}
+
+/* COLORED BORDERS */
+
+.feature:nth-child(1){
+    border-color:#ffd000;
+}
+
+.feature:nth-child(2){
+    border-color:#ff38d5;
+}
+
+.feature:nth-child(3){
+    border-color:#00d9ff;
+}
+
+.feature:nth-child(4){
+    border-color:#40ff68;
+}
+
+.feature:nth-child(5){
+    border-color:#ffbb00;
+}
+
+.feature:nth-child(6){
+    border-color:#e63cff;
+}
+
+/* ICON */
+
+.icon{
+    width:61px;
+    height:61px;
+
+    margin:0 auto 12px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:29px;
+
+    border:1.5px solid currentColor;
+
+    box-shadow:
+        0 0 16px currentColor;
+}
+
+.feature:nth-child(1) .icon{
+    color:#ffd000;
+}
+
+.feature:nth-child(2) .icon{
+    color:#ff38d5;
+}
+
+.feature:nth-child(3) .icon{
+    color:#00d9ff;
+}
+
+.feature:nth-child(4) .icon{
+    color:#40ff68;
+}
+
+.feature:nth-child(5) .icon{
+    color:#ffbb00;
+}
+
+.feature:nth-child(6) .icon{
+    color:#d738ff;
+}
+
+/* FEATURE TEXT */
+
+.feature h3{
+    font-size:19px;
+    margin-bottom:8px;
+}
+
+.feature p{
+    font-size:14px;
+    line-height:1.5;
+    color:#eeeef5;
 }
 
 /* FOOTER */
+
 footer{
- width:100%;
- padding:25px;
- text-align:center;
- background:#01000a;
- color:#888;
- border-top:1px solid #ffd000;
- box-shadow:0 0 15px #ffd000
+    border-top:1px solid rgba(255,205,0,.75);
+    padding:25px 0;
 }
 
-footer strong{color:#ffd000}
+.footer-inner{
+    width:88%;
+    max-width:900px;
 
-/* PHONE */
+    margin:auto;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:20px;
+}
+
+/* LOGO */
+
+.logo{
+    font-size:36px;
+
+    font-weight:800;
+
+    letter-spacing:-1.5px;
+
+    text-shadow:
+        0 0 15px rgba(255,255,255,.18);
+}
+
+.logo span{
+    color:#ffd000;
+
+    text-shadow:
+        0 0 14px rgba(255,208,0,.5);
+}
+
+.logo-star{
+    color:#ffd000 !important;
+    margin-left:7px;
+}
+
+/* COPYRIGHT */
+
+.copyright{
+    font-size:15px;
+    color:#eeeef5;
+}
+
+.copyright strong{
+    color:#ffd000;
+}
+
+/* TABLET */
+
 @media(max-width:800px){
 
- .hero{min-height:600px}
+    .container{
+        width:90%;
+    }
 
- .logo{font-size:50px}
+    .features{
+        grid-template-columns:repeat(2,1fr);
+    }
 
- .tagline{font-size:31px}
-
- .description{font-size:13px}
-
- .pool{height:290px}
-
- .rainbow{
-   width:180px;
-   height:100px
- }
-
- .cards{
-   grid-template-rows:150px 150px
- }
-
- .card{
-   height:150px;
-   padding:10px
- }
-
- .icon{
-   width:38px;
-   height:38px;
-   font-size:18px
- }
-
- .card h3{font-size:13px}
- .card p{font-size:9px}
-
- .scene-grid{
-   grid-template-rows:220px
- }
-
- .scene{height:220px}
-
- .bird{font-size:25px}
-
- .bird.eagle{font-size:31px}
- .bird.parrot{font-size:28px}
- .bird.swan{font-size:29px}
+    .footer-inner{
+        width:90%;
+    }
 }
 
-/* SMALL PHONE */
+/* MOBILE */
+
 @media(max-width:600px){
 
- .hero{
-   width:100vw;
-   min-height:520px;
-   height:145vw;
-   max-height:620px
- }
+    .container{
+        width:91%;
+        max-width:390px;
+    }
 
- .hero-content{
-   width:94%;
-   padding-top:25px
- }
+    .hero{
+        padding:28px 5px 25px;
+    }
 
- .logo{
-   font-size:clamp(30px,10vw,40px);
-   letter-spacing:-2px
- }
+    .hero p{
+        font-size:17px;
+        line-height:1.5;
+    }
 
- .tagline{
-   width:58%;
-   font-size:clamp(18px,6vw,25px)
- }
+    .cta{
+        min-height:230px;
 
- .description{
-   width:53%;
-   font-size:10px;
-   line-height:1.35;
-   margin-top:10px
- }
+        margin:8px 0 30px;
 
- .buttons{
-   gap:6px;
-   margin-top:12px
- }
+        padding:24px 14px;
 
- .btn{
-   padding:8px 12px;
-   font-size:10px
- }
+        border-radius:20px;
+    }
 
- .rainbow{
-   width:115px;
-   height:62px;
-   right:3%;
-   top:18px
- }
+    .cta h1{
+        font-size:31px;
+        margin-bottom:8px;
+    }
 
- .pool{
-   width:62%;
-   height:210px
- }
+    .cta p{
+        max-width:310px;
 
- .bird-zone{height:43%}
- .water-zone{height:59%}
+        font-size:14px;
+        line-height:1.5;
+    }
 
- .bird{
-   font-size:18px
- }
+    .cta::before{
+        left:17px;
+        top:52px;
+        font-size:32px;
+    }
 
- .bird.eagle{font-size:24px}
- .bird.parrot{font-size:20px}
- .bird.swan{font-size:21px}
- .bird.blackbird{font-size:18px}
- .bird.smallbird{font-size:16px}
+    .cta::after{
+        right:17px;
+        top:57px;
+        font-size:30px;
+    }
 
- .sea-fish{font-size:23px}
+    .buttons{
+        margin-top:17px;
+        gap:10px;
+        flex-wrap:wrap;
+    }
 
- .small{font-size:17px}
- .medium{font-size:27px}
- .big{font-size:34px}
+    .btn{
+        padding:10px 21px;
+        font-size:14px;
+    }
 
- .bubble{
-   width:5px;
-   height:5px;
-   border-width:1px
- }
+    .auth-status{
+        font-size:12px;
+        padding:7px 13px;
+    }
 
- .butterfly{font-size:20px}
- .flower{font-size:22px}
+    .features-heading{
+        margin:0 0 19px;
+    }
 
- .features,.scenes{
-   padding:40px 3%
- }
+    .features-heading h2{
+        font-size:25px;
+        line-height:1.3;
+    }
 
- .title{
-   font-size:clamp(21px,7vw,27px)
- }
+    .features-heading p{
+        font-size:14px;
+        line-height:1.5;
+    }
 
- .subtitle{font-size:10px}
+    .features{
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
+        padding-bottom:25px;
+    }
 
- .cards{
-   grid-template-rows:105px 105px;
-   gap:5px;
-   margin-top:22px
- }
+    .feature{
+        height:155px;
+        min-height:155px;
 
- .card{
-   height:105px;
-   padding:5px;
-   border-radius:10px
- }
+        padding:13px 7px;
 
- .icon{
-   width:28px;
-   height:28px;
-   font-size:13px;
-   margin-bottom:4px
- }
+        border-radius:14px;
+    }
 
- .card h3{
-   font-size:9px;
-   margin-bottom:3px
- }
+    .icon{
+        width:45px;
+        height:45px;
 
- .card p{
-   font-size:6.5px;
-   line-height:1.2
- }
+        font-size:21px;
 
- .scene-grid{
-   grid-template-rows:160px;
-   gap:5px;
-   margin-top:22px
- }
+        margin-bottom:7px;
+    }
 
- .scene{
-   height:160px;
-   border-radius:10px
- }
+    .feature h3{
+        font-size:15px;
+        margin-bottom:5px;
+    }
 
- .scene-text{
-   left:6px;
-   right:6px;
-   bottom:6px
- }
+    .feature p{
+        font-size:11px;
+        line-height:1.35;
+    }
 
- .scene-text h3{font-size:10px}
+    footer{
+        padding:20px 0;
+    }
 
- .scene-text p{font-size:6px}
+    .footer-inner{
+        width:91%;
 
- .mountain{
-   border-left-width:90px;
-   border-right-width:90px;
-   border-bottom-width:120px
- }
+        flex-direction:column;
 
- .cta{padding:55px 15px}
+        text-align:center;
 
- .cta h2{font-size:25px}
+        gap:9px;
+    }
 
- .cta p{font-size:10px}
+    .logo{
+        font-size:29px;
+    }
 
- footer{font-size:9px}
+    .copyright{
+        font-size:12px;
+        line-height:1.4;
+    }
+}
+
+/* VERY SMALL PHONES */
+
+@media(max-width:380px){
+
+    .container{
+        width:90%;
+    }
+
+    .hero p{
+        font-size:16px;
+    }
+
+    .cta{
+        min-height:220px;
+    }
+
+    .cta h1{
+        font-size:29px;
+    }
+
+    .features{
+        gap:10px;
+    }
+
+    .feature{
+        height:150px;
+        min-height:150px;
+    }
+
+    .feature p{
+        font-size:10.5px;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<section class="hero">
+<main class="container">
 
-<div class="stars"></div>
+    <!-- HERO -->
 
-<div class="shooting s1"></div>
-<div class="shooting s2"></div>
-<div class="shooting s3"></div>
+    <section class="hero">
 
-<div class="rainbow"></div>
+        <p>
+            A colorful world where everyone can
+            <span class="pink">connect</span>,
+            <span class="blue">share</span> and
+            <span class="yellow">shine.</span>
+        </p>
 
-<div class="hero-content">
+    </section>
 
-<div class="logo">Vital<span>Star</span></div>
 
-<div class="tagline">
-Connect, <span>Share & Shine</span>
-</div>
+    <!-- CTA -->
 
-<div class="description">
-VitalStar is more than social media.
-Connect with friends, share your moments,
-discover communities and shine together.
-</div>
+    <section class="cta">
 
-<div class="buttons">
+        <h1>
+            Ready to
+            <span class="yellow">Shine?</span>
+        </h1>
 
-<a href="register.html" class="btn register">
-Join VitalStar
-</a>
+        <p id="welcomeText">
+            Join VitalStar and become part
+            of a colorful community where
+            people connect, share and shine.
+        </p>
 
-<a href="login.html" class="btn login" id="loginBtn">
 
-<span class="login-check">
+        <!-- LOGIN STATUS -->
 
-<i class="login-indicator"></i>
+        <div id="authStatus" class="auth-status hidden">
 
-<span id="loginText">
-Logging In...
-</span>
+            <span class="auth-dot"></span>
 
-</span>
+            <span id="authStatusText">
+                Logged in
+            </span>
 
-</a>
+        </div>
 
-</div>
-</div>
 
+        <!-- BUTTONS -->
 
-<!-- =========================================
-     POOL
-========================================= -->
+        <div class="buttons">
 
-<div class="pool">
+            <a
+                href="register.html"
+                class="btn join"
+                id="joinBtn"
+            >
+                Join VitalStar
+            </a>
 
-<!-- SKY / FLYING BIRDS -->
 
-<div class="bird-zone">
+            <a
+                href="login.html"
+                class="btn login"
+                id="loginBtn"
+            >
+                Login
+            </a>
 
-<div class="bird dove yellow bird1">
-<span>🕊️</span>
-</div>
+        </div>
 
-<div class="bird eagle blue bird2">
-<span>🦅</span>
-</div>
+    </section>
 
-<div class="bird parrot green bird3">
-<span>🦜</span>
-</div>
 
-<div class="bird swan pink bird4">
-<span>🦢</span>
-</div>
+    <!-- FEATURES -->
 
-<div class="bird blackbird purple bird5">
-<span>🐦‍⬛</span>
-</div>
+    <section class="features-heading">
 
-<div class="bird smallbird orange bird6">
-<span>🐦</span>
-</div>
+        <h2>
+            Everything You Need
+            <span class="pink">in One Place</span>
+        </h2>
 
-<div class="bird eagle red bird7">
-<span>🦅</span>
-</div>
+        <p>
+            Connect with people, share your moments,
+            discover communities and enjoy everything
+            VitalStar has to offer.
+        </p>
 
-<div class="bird dove blue bird8">
-<span>🕊️</span>
-</div>
+    </section>
 
-<div class="bird parrot yellow bird9">
-<span>🦜</span>
-</div>
 
-<div class="bird swan green bird10">
-<span>🦢</span>
-</div>
+    <!-- SIX FEATURES -->
 
-<div class="bird eagle purple bird11">
-<span>🦅</span>
-</div>
+    <section class="features">
 
-<div class="bird dove pink bird12">
-<span>🕊️</span>
-</div>
+        <div class="feature">
 
-</div>
+            <div class="icon">
+                👥
+            </div>
 
+            <h3>
+                Connect
+            </h3>
 
-<!-- WATER / FISH -->
+            <p>
+                Find friends and build
+                meaningful connections.
+            </p>
 
-<div class="water-zone">
+        </div>
 
-<div class="wave w1"></div>
-<div class="wave w2"></div>
-<div class="wave w3"></div>
 
-<div class="bubble b01"></div>
-<div class="bubble b02"></div>
-<div class="bubble b03"></div>
-<div class="bubble b04"></div>
-<div class="bubble b05"></div>
-<div class="bubble b06"></div>
+        <div class="feature">
 
-<div class="sea-fish f01 medium">
-<span>🐠</span>
-</div>
+            <div class="icon">
+                💬
+            </div>
 
-<div class="sea-fish f02">
-<span>🐟</span>
-</div>
+            <h3>
+                Chat
+            </h3>
 
-<div class="sea-fish f03 big">
-<span>🐳</span>
-</div>
+            <p>
+                Talk with friends and
+                stay connected.
+            </p>
 
-<div class="sea-fish f04">
-<span>🐠</span>
-</div>
+        </div>
 
-<div class="sea-fish f05 medium">
-<span>🐟</span>
-</div>
 
-<div class="sea-fish f06 big">
-<span>🐳</span>
-</div>
+        <div class="feature">
 
-<div class="sea-fish f07">
-<span>🐠</span>
-</div>
+            <div class="icon">
+                📷
+            </div>
 
-<div class="sea-fish f08 small">
-<span>🐟</span>
-</div>
+            <h3>
+                Share
+            </h3>
 
-<div class="sea-fish f09 small">
-<span>🐠</span>
-</div>
+            <p>
+                Share photos, videos
+                and moments.
+            </p>
 
-<div class="sea-fish f10 big">
-<span>🐳</span>
-</div>
+        </div>
 
-<div class="sea-fish f11 small">
-<span>🐟</span>
-</div>
 
-<div class="sea-fish f12">
-<span>🐠</span>
-</div>
+        <div class="feature">
 
-<div class="sea-fish f13 small">
-<span>🐟</span>
-</div>
+            <div class="icon">
+                🌐
+            </div>
 
-<div class="sea-fish f14 big">
-<span>🐳</span>
-</div>
+            <h3>
+                Communities
+            </h3>
 
-<div class="sea-fish f15 small">
-<span>🐠</span>
-</div>
+            <p>
+                Discover groups and
+                communities.
+            </p>
 
-<div class="sea-fish f16">
-<span>🐟</span>
-</div>
+        </div>
 
-<div class="sea-fish f17 medium">
-<span>🐠</span>
-</div>
 
-<div class="sea-fish f18 medium">
-<span>🐳</span>
-</div>
+        <div class="feature">
 
-<div class="sea-fish f19 small">
-<span>🐟</span>
-</div>
+            <div class="icon">
+                🔔
+            </div>
 
-<div class="sea-fish f20">
-<span>🐠</span>
-</div>
+            <h3>
+                Notifications
+            </h3>
 
-</div>
+            <p>
+                Never miss important
+                updates.
+            </p>
 
-</div>
+        </div>
 
 
-<!-- DECORATIONS -->
+        <div class="feature">
 
-<div class="butterfly b1">🦋</div>
-<div class="butterfly b2">🦋</div>
-<div class="butterfly b3">🦋</div>
+            <div class="icon">
+                ★
+            </div>
 
-<div class="flower flower1">🌸</div>
-<div class="flower flower2">🌺</div>
-<div class="flower flower3">🌼</div>
+            <h3>
+                Shine
+            </h3>
 
-</section>
+            <p>
+                Express yourself and
+                shine together.
+            </p>
 
+        </div>
 
-<!-- FEATURES -->
+    </section>
 
-<section class="features">
-
-<h2 class="title">
-Everything You Need <span>in One Place</span>
-</h2>
-
-<p class="subtitle">
-Connect with people, share your moments,
-discover communities and enjoy everything
-VitalStar has to offer.
-</p>
-
-<div class="cards">
-
-<div class="card">
-<div class="icon">👥</div>
-<h3>Connect</h3>
-<p>Find friends and build meaningful connections.</p>
-</div>
-
-<div class="card">
-<div class="icon">💬</div>
-<h3>Chat</h3>
-<p>Talk with friends and stay connected.</p>
-</div>
-
-<div class="card">
-<div class="icon">📸</div>
-<h3>Share</h3>
-<p>Share photos, videos and moments.</p>
-</div>
-
-<div class="card">
-<div class="icon">🌎</div>
-<h3>Communities</h3>
-<p>Discover groups and communities.</p>
-</div>
-
-<div class="card">
-<div class="icon">🔔</div>
-<h3>Notifications</h3>
-<p>Never miss important updates.</p>
-</div>
-
-<div class="card">
-<div class="icon">⭐</div>
-<h3>Shine</h3>
-<p>Express yourself and shine together.</p>
-</div>
-
-</div>
-</section>
-
-
-<!-- SCENES -->
-
-<section class="scenes">
-
-<h2 class="title">
-Explore <span>VitalStar</span>
-</h2>
-
-<p class="subtitle">
-A colorful world where everyone can connect,
-share and shine.
-</p>
-
-<div class="scene-grid">
-
-<div class="scene underwater">
-
-<div class="mini-fish mf1">🐠</div>
-<div class="mini-fish mf2">🐟</div>
-<div class="mini-fish mf3">🐳</div>
-
-<div class="scene-text">
-<h3>Dive Into Fun</h3>
-<p>Discover a colorful world of new possibilities.</p>
-</div>
-
-</div>
-
-
-<div class="scene party-scene">
-
-<div style="position:absolute;top:25%;left:20%;font-size:55px">
-🎉
-</div>
-
-<div style="position:absolute;top:20%;right:20%;font-size:50px">
-🕺
-</div>
-
-<div style="position:absolute;bottom:35%;left:40%;font-size:45px">
-💃
-</div>
-
-<div class="scene-text">
-<h3>Celebrate Together</h3>
-<p>Share happiness and unforgettable moments.</p>
-</div>
-
-</div>
-
-
-<div class="scene night">
-
-<div class="mountain mountain1"></div>
-<div class="mountain mountain2"></div>
-
-<div style="position:absolute;top:20px;right:25px;font-size:40px">
-🌙
-</div>
-
-<div class="scene-text">
-<h3>Shine At Night</h3>
-<p>Your world stays bright wherever you go.</p>
-</div>
-
-</div>
-
-</div>
-</section>
-
-
-<!-- CTA -->
-
-<section class="cta">
-
-<h2>
-Ready to <span>Shine?</span>
-</h2>
-
-<p>
-Join VitalStar and become part of a colorful
-community where people connect, share and shine.
-</p>
-
-<div class="buttons">
-
-<a href="register.html" class="btn register">
-Join VitalStar
-</a>
-
-<a href="login.html" class="btn login">
-Login
-</a>
-
-</div>
-
-</section>
+</main>
 
 
 <!-- FOOTER -->
 
 <footer>
-© 2026 <strong>VitalStar</strong>
-— Connect, Share & Shine ✨
+
+    <div class="footer-inner">
+
+        <div class="logo">
+
+            Vital<span>Star</span>
+
+            <span class="logo-star">
+                ✦
+            </span>
+
+        </div>
+
+
+        <div class="copyright">
+
+            © 2026
+            <strong>VitalStar</strong>
+            — Connect, Share & Shine ✦
+
+        </div>
+
+    </div>
+
 </footer>
 
 
-<!-- FIREBASE LOGIN STATUS -->
+<!-- =====================================================
+     FIREBASE AUTH DETECTION
+===================================================== -->
 
 <script type="module">
 
-import{onAuthStateChanged}
-from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { auth } from "./firebase.js";
 
-import{auth}from"./firebase.js";
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const btn=document.getElementById("loginBtn");
-const text=document.getElementById("loginText");
 
-onAuthStateChanged(auth,user=>{
+const authStatus =
+    document.getElementById("authStatus");
 
- if(user){
+const authStatusText =
+    document.getElementById("authStatusText");
 
-   btn.classList.add("logged-in");
+const welcomeText =
+    document.getElementById("welcomeText");
 
-   text.textContent="Logging In...";
+const joinBtn =
+    document.getElementById("joinBtn");
 
-   setTimeout(()=>{
-     location.replace("home.html");
-   },800);
+const loginBtn =
+    document.getElementById("loginBtn");
 
- }else{
 
-   btn.classList.remove("logged-in");
+onAuthStateChanged(auth, (user) => {
 
-   text.textContent="Login";
+    if(user){
 
- }
+        /*
+         * USER IS LOGGED IN
+         */
+
+        authStatus.classList.remove("hidden");
+
+        authStatusText.textContent =
+            "✓ You are logged in";
+
+
+        welcomeText.textContent =
+            "Welcome back to VitalStar! You are already part of our colorful community.";
+
+
+        /*
+         * Change Join button
+         */
+
+        joinBtn.textContent =
+            "Go to VitalStar";
+
+        joinBtn.href =
+            "home.html";
+
+
+        /*
+         * Change Login button to Logout
+         */
+
+        loginBtn.textContent =
+            "Logout";
+
+        loginBtn.href =
+            "#";
+
+        loginBtn.classList.remove("login");
+
+        loginBtn.classList.add("logout");
+
+
+        loginBtn.onclick = async (event) => {
+
+            event.preventDefault();
+
+            try{
+
+                await signOut(auth);
+
+                /*
+                 * Refresh the page so the
+                 * buttons return to normal.
+                 */
+
+                location.reload();
+
+            }catch(error){
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+                alert(
+                    "Unable to log out. Please try again."
+                );
+
+            }
+
+        };
+
+    }else{
+
+        /*
+         * USER IS NOT LOGGED IN
+         */
+
+        authStatus.classList.add("hidden");
+
+        welcomeText.textContent =
+            "Join VitalStar and become part of a colorful community where people connect, share and shine.";
+
+
+        joinBtn.textContent =
+            "Join VitalStar";
+
+        joinBtn.href =
+            "register.html";
+
+
+        loginBtn.textContent =
+            "Login";
+
+        loginBtn.href =
+            "login.html";
+
+        loginBtn.classList.remove("logout");
+
+        loginBtn.classList.add("login");
+
+        loginBtn.onclick = null;
+
+    }
 
 });
 
