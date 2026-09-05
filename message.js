@@ -1,3 +1,6 @@
+// VITALSTAR MESSAGES
+// message.js
+
 import { auth, db } from "./firebase.js";
 
 import {
@@ -16,259 +19,164 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+const messageList = document.getElementById("messageList");
+const searchInput = document.getElementById("searchInput");
 
-const messageList =
-    document.getElementById("messageList");
-
-const searchInput =
-    document.getElementById("searchInput");
-
+const DEFAULT_PROFILE_PIC = "default.png";
 
 let currentUser = null;
 let allChats = [];
+
 let rendering = false;
 let renderAgain = false;
 
+// Keep message listeners so we don't create duplicates
+const messageListeners = new Map();
 
-/* ============================================================
-   ESCAPE HTML
-============================================================ */
+
+// ===============================
+// ESCAPE HTML
+// ===============================
 
 function escapeHtml(text) {
+    if (text === null || text === undefined) return "";
 
-    return String(text ?? "")
+    return String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+        .replace(/'/g, "&#039;");
 }
 
 
-/* ============================================================
-   TIMESTAMP VALUE
-============================================================ */
+// ===============================
+// TIMESTAMP
+// ===============================
 
 function getTimestampValue(timestamp) {
+    if (!timestamp) return 0;
 
-    if (!timestamp) {
-        return 0;
-    }
-
-    if (
-        typeof timestamp.toDate === "function"
-    ) {
-        return timestamp.toDate().getTime();
+    if (typeof timestamp.toMillis === "function") {
+        return timestamp.toMillis();
     }
 
     if (timestamp.seconds) {
         return timestamp.seconds * 1000;
     }
 
-    const date =
-        new Date(timestamp);
+    if (timestamp instanceof Date) {
+        return timestamp.getTime();
+    }
 
-    return isNaN(date.getTime())
-        ? 0
-        : date.getTime();
+    if (typeof timestamp === "number") {
+        return timestamp;
+    }
+
+    return 0;
 }
 
 
-/* ============================================================
-   FORMAT TIME
-============================================================ */
+// ===============================
+// FORMAT TIME
+// ===============================
 
 function formatTime(timestamp) {
+    const time = getTimestampValue(timestamp);
 
-    if (!timestamp) {
-        return "";
+    if (!time) return "";
+
+    const date = new Date(time);
+    const now = new Date();
+
+    const sameDay =
+        date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+    if (sameDay) {
+        return date.toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit"
+        });
     }
 
-    let date;
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
 
-    if (
-        typeof timestamp.toDate === "function"
-    ) {
-        date = timestamp.toDate();
+    const isYesterday =
+        date.getDate() === yesterday.getDate() &&
+        date.getMonth() === yesterday.getMonth() &&
+        date.getFullYear() === yesterday.getFullYear();
 
-    } else if (timestamp.seconds) {
-        date =
-            new Date(
-                timestamp.seconds * 1000
-            );
-
-    } else {
-        date =
-            new Date(timestamp);
+    if (isYesterday) {
+        return "Yesterday";
     }
 
-
-    if (isNaN(date.getTime())) {
-        return "";
-    }
-
-
-    const now =
-        new Date();
-
-    const seconds =
-        Math.floor(
-            (now - date) / 1000
-        );
-
-
-    if (seconds < 60) {
-        return "Just now";
-    }
-
-
-    if (seconds < 3600) {
-
-        return (
-            Math.floor(seconds / 60) +
-            " min"
-        );
-    }
-
-
-    if (seconds < 86400) {
-
-        return date.toLocaleTimeString(
-            [],
-            {
-                hour: "numeric",
-                minute: "2-digit"
-            }
-        );
-    }
-
-
-    if (seconds < 604800) {
-
-        return date.toLocaleDateString(
-            [],
-            {
-                weekday: "short"
-            }
-        );
-    }
-
-
-    return date.toLocaleDateString(
-        [],
-        {
-            day: "numeric",
-            month: "short"
-        }
-    );
+    return date.toLocaleDateString([], {
+        day: "numeric",
+        month: "short"
+    });
 }
 
 
-/* ============================================================
-   LAST MESSAGE
-============================================================ */
+// ===============================
+// LAST MESSAGE
+// ===============================
 
 function getLastMessageHtml(chat) {
 
-    if (chat.lastImage) {
-
-        return `
-            <div class="last-message-text">
-                🖼️ Photo
-            </div>
-        `;
+    if (chat.lastMessage) {
+        return escapeHtml(chat.lastMessage);
     }
 
+    if (chat.lastImage) {
+        return "🖼️ Photo";
+    }
 
     if (chat.lastVideo) {
-
-        return `
-            <div class="last-message-text">
-                🎥 Video
-            </div>
-        `;
+        return "🎥 Video";
     }
-
 
     if (chat.lastAudio) {
-
-        return `
-            <div class="last-message-text">
-                🎤 Voice message
-            </div>
-        `;
+        return "🎤 Voice message";
     }
 
-
-    if (chat.lastDocument) {
-
-        return `
-            <div class="last-message-text">
-                📄 Document
-            </div>
-        `;
-    }
-
-
-    return `
-        <div class="last-message-text">
-            ${escapeHtml(
-                chat.lastMessage ||
-                "No messages yet"
-            )}
-        </div>
-    `;
+    return "Start a conversation";
 }
 
 
-/* ============================================================
-   GET UNREAD COUNT
-============================================================ */
+// ===============================
+// GET UNREAD COUNT
+// ===============================
 
-async function getUnreadCount(
-    chatId,
-    userId
-) {
+async function getUnreadCount(chatId, userId) {
 
     try {
 
-        const messagesRef =
-            collection(
-                db,
-                "chats",
-                chatId,
-                "messages"
-            );
+        const messagesRef = collection(
+            db,
+            "chats",
+            chatId,
+            "messages"
+        );
 
-
-        const snapshot =
-            await getDocs(
-                messagesRef
-            );
-
+        const snapshot = await getDocs(messagesRef);
 
         let count = 0;
 
+        snapshot.forEach(messageDoc => {
 
-        snapshot.forEach(
-            messageDoc => {
+            const message = messageDoc.data();
 
-                const message =
-                    messageDoc.data();
-
-
-                if (
-                    message.receiverId ===
-                    userId &&
-                    message.read === false
-                ) {
-
-                    count++;
-                }
-
+            if (
+                message.receiverId === userId &&
+                message.read === false
+            ) {
+                count++;
             }
-        );
 
+        });
 
         return count;
 
@@ -284,133 +192,72 @@ async function getUnreadCount(
 }
 
 
-/* ============================================================
-   EMPTY STATE
-============================================================ */
+// ===============================
+// DELETE CHAT
+// ===============================
 
-function showEmptyState(
-    icon,
-    title,
-    text
-) {
+async function deleteChat(chatId, card) {
 
-    messageList.innerHTML = `
+    const confirmed = confirm(
+        "Delete this conversation?\n\nAll messages in this chat will be deleted."
+    );
 
-        <div class="empty-state">
-
-            <div class="empty-icon">
-                ${icon}
-            </div>
-
-            <div class="empty-title">
-                ${escapeHtml(title)}
-            </div>
-
-            <div class="empty-text">
-                ${escapeHtml(text)}
-            </div>
-
-        </div>
-
-    `;
-}
-
-
-/* ============================================================
-   DELETE CHAT
-============================================================ */
-
-async function deleteChat(
-    chatId,
-    card
-) {
-
-    const confirmed =
-        confirm(
-            "Delete this conversation?\n\n" +
-            "All messages in this chat will be deleted."
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
+    if (!confirmed) return;
 
     try {
 
         card.style.opacity = "0.45";
         card.style.pointerEvents = "none";
 
+        const messagesRef = collection(
+            db,
+            "chats",
+            chatId,
+            "messages"
+        );
 
-        const messagesRef =
-            collection(
-                db,
-                "chats",
-                chatId,
-                "messages"
-            );
+        const snapshot = await getDocs(messagesRef);
 
-
-        const snapshot =
-            await getDocs(
-                messagesRef
-            );
-
-
-        let batch =
-            writeBatch(db);
-
+        let batch = writeBatch(db);
         let count = 0;
 
+        for (const messageDoc of snapshot.docs) {
 
-        for (
-            const messageDoc
-            of snapshot.docs
-        ) {
-
-            batch.delete(
-                messageDoc.ref
-            );
+            batch.delete(messageDoc.ref);
 
             count++;
-
 
             if (count === 500) {
 
                 await batch.commit();
 
-                batch =
-                    writeBatch(db);
+                batch = writeBatch(db);
 
                 count = 0;
             }
         }
 
-
         if (count > 0) {
             await batch.commit();
         }
 
-
         await deleteDoc(
-            doc(
-                db,
-                "chats",
-                chatId
-            )
+            doc(db, "chats", chatId)
         );
 
+        // Remove listener
+        if (messageListeners.has(chatId)) {
+
+            messageListeners.get(chatId)();
+
+            messageListeners.delete(chatId);
+        }
 
         card.remove();
 
-
-        allChats =
-            allChats.filter(
-                chat =>
-                    chat.id !== chatId
-            );
-
+        allChats = allChats.filter(
+            chat => chat.id !== chatId
+        );
 
         if (
             !messageList.querySelector(
@@ -421,7 +268,7 @@ async function deleteChat(
             showEmptyState(
                 "💬",
                 "No conversations",
-                "Start a conversation on VitalStar."
+                "Start chatting with your friends."
             );
         }
 
@@ -432,51 +279,100 @@ async function deleteChat(
             error
         );
 
-
         card.style.opacity = "1";
         card.style.pointerEvents = "auto";
 
-
         alert(
-            "Failed to delete chat. Please try again."
+            "Unable to delete this conversation."
         );
     }
 }
 
 
-/* ============================================================
-   CREATE CHAT CARD
-============================================================ */
+// ===============================
+// EMPTY STATE
+// ===============================
+
+function showEmptyState(
+    icon,
+    title,
+    text
+) {
+
+    messageList.innerHTML = `
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                ${icon}
+            </div>
+
+            <h2>
+                ${escapeHtml(title)}
+            </h2>
+
+            <p>
+                ${escapeHtml(text)}
+            </p>
+
+        </div>
+    `;
+}
+
+
+// ===============================
+// PROFILE IMAGE
+// ===============================
+
+function getProfilePicture(userData) {
+
+    if (!userData) {
+        return DEFAULT_PROFILE_PIC;
+    }
+
+    const possiblePictures = [
+        userData.profilePic,
+        userData.profilePicture,
+        userData.photoURL,
+        userData.photoUrl,
+        userData.profileImage,
+        userData.imageUrl
+    ];
+
+    for (const picture of possiblePictures) {
+
+        if (
+            typeof picture === "string" &&
+            picture.trim() !== ""
+        ) {
+            return picture.trim();
+        }
+    }
+
+    return DEFAULT_PROFILE_PIC;
+}
+
+
+// ===============================
+// CREATE CHAT CARD
+// ===============================
 
 async function createChatCard(chat) {
 
-    const unreadCount =
-        await getUnreadCount(
-            chat.id,
-            currentUser.uid
-        );
+    const unreadCount = await getUnreadCount(
+        chat.id,
+        currentUser.uid
+    );
 
+    const card = document.createElement("div");
 
-    const card =
-        document.createElement("div");
-
-
-    card.className =
-        "message-card";
-
+    card.className = "message-card";
 
     if (unreadCount > 0) {
-
-        card.classList.add(
-            "unread-card"
-        );
+        card.classList.add("unread-card");
     }
 
-
     const profilePic =
-        chat.profilePic ||
-        "default.png";
-
+        chat.profilePic || DEFAULT_PROFILE_PIC;
 
     card.innerHTML = `
 
@@ -486,7 +382,7 @@ async function createChatCard(chat) {
                 src="${escapeHtml(profilePic)}"
                 class="profile-picture"
                 alt="${escapeHtml(chat.fullName)}"
-                onerror="this.src='default.png'">
+            >
 
             <span class="online-dot"></span>
 
@@ -502,9 +398,7 @@ async function createChatCard(chat) {
                 </div>
 
                 <div class="time-text">
-                    ${formatTime(
-                        chat.lastTimestamp
-                    )}
+                    ${formatTime(chat.lastTimestamp)}
                 </div>
 
             </div>
@@ -513,11 +407,8 @@ async function createChatCard(chat) {
             <div class="bottom-row">
 
                 <div class="last-message">
-
                     ${getLastMessageHtml(chat)}
-
                 </div>
-
 
                 ${
                     unreadCount > 0
@@ -529,7 +420,7 @@ async function createChatCard(chat) {
                                         : unreadCount
                                 }
                             </span>
-                          `
+                        `
                         : ""
                 }
 
@@ -542,82 +433,109 @@ async function createChatCard(chat) {
             class="delete-chat-btn"
             type="button"
             title="Delete chat"
-            aria-label="Delete chat">
-
+            aria-label="Delete chat"
+        >
             🗑️
-
         </button>
 
     `;
 
 
-    /* OPEN CHAT */
+    // ===============================
+    // PROFILE IMAGE FALLBACK
+    // ===============================
+
+    const image =
+        card.querySelector(".profile-picture");
+
+    if (image) {
+
+        image.addEventListener(
+            "error",
+            () => {
+
+                // Prevent infinite loop
+                if (
+                    image.src.endsWith(
+                        DEFAULT_PROFILE_PIC
+                    )
+                ) {
+                    return;
+                }
+
+                image.src = DEFAULT_PROFILE_PIC;
+            }
+        );
+
+    }
+
+
+    // ===============================
+    // OPEN CHAT
+    // ===============================
 
     card.addEventListener(
         "click",
         () => {
 
             window.location.href =
-                `chat.html?uid=${chat.otherUserId}`;
+                `chat.html?uid=${encodeURIComponent(
+                    chat.otherUserId
+                )}`;
 
         }
     );
 
 
-    /* DELETE CHAT */
+    // ===============================
+    // DELETE BUTTON
+    // ===============================
 
     const deleteButton =
         card.querySelector(
             ".delete-chat-btn"
         );
 
+    if (deleteButton) {
 
-    deleteButton.addEventListener(
-        "click",
-        event => {
+        deleteButton.addEventListener(
+            "click",
+            event => {
 
-            event.preventDefault();
-            event.stopPropagation();
+                event.preventDefault();
+                event.stopPropagation();
 
+                deleteChat(
+                    chat.id,
+                    card
+                );
 
-            deleteChat(
-                chat.id,
-                card
-            );
+            }
+        );
 
-        }
-    );
+    }
 
 
     return card;
 }
 
 
-/* ============================================================
-   RENDER CHAT LIST
-============================================================ */
+// ===============================
+// RENDER CHATS
+// ===============================
 
 async function renderChats() {
 
-    if (!currentUser) {
-        return;
-    }
-
-
-    /*
-     * Prevent multiple renders from
-     * fighting with each other.
-     */
+    if (!currentUser) return;
 
     if (rendering) {
 
         renderAgain = true;
+
         return;
     }
 
-
     rendering = true;
-
 
     try {
 
@@ -626,71 +544,62 @@ async function renderChats() {
                 ?.trim()
                 .toLowerCase() || "";
 
-
-        let chats =
-            [...allChats];
+        let chats = [...allChats];
 
 
-        /* SEARCH */
+        // ===============================
+        // SEARCH
+        // ===============================
 
         if (search) {
 
-            chats =
-                chats.filter(
-                    chat => {
+            chats = chats.filter(chat => {
 
-                        const name =
-                            (
-                                chat.fullName ||
-                                ""
-                            ).toLowerCase();
+                const name =
+                    (chat.fullName || "")
+                        .toLowerCase();
 
+                const lastMessage =
+                    (chat.lastMessage || "")
+                        .toLowerCase();
 
-                        const lastMessage =
-                            (
-                                chat.lastMessage ||
-                                ""
-                            ).toLowerCase();
-
-
-                        return (
-                            name.includes(search) ||
-                            lastMessage.includes(search)
-                        );
-
-                    }
+                return (
+                    name.includes(search) ||
+                    lastMessage.includes(search)
                 );
+
+            });
+
         }
 
 
-        /* SORT */
+        // ===============================
+        // NEWEST FIRST
+        // ===============================
 
         chats.sort(
-            (a, b) => {
-
-                return (
-                    getTimestampValue(
-                        b.lastTimestamp
-                    ) -
-                    getTimestampValue(
-                        a.lastTimestamp
-                    )
-                );
-
-            }
+            (a, b) =>
+                getTimestampValue(
+                    b.lastTimestamp
+                ) -
+                getTimestampValue(
+                    a.lastTimestamp
+                )
         );
 
 
-        /* EMPTY */
+        // ===============================
+        // EMPTY
+        // ===============================
 
         if (!chats.length) {
 
             if (search) {
 
                 showEmptyState(
-                    "🔍",
+                    "🔎",
                     "No results",
-                    "No conversation matches your search."
+                    "No conversations match your search."
                 );
 
             } else {
@@ -698,48 +607,33 @@ async function renderChats() {
                 showEmptyState(
                     "💬",
                     "No conversations",
-                    "Start chatting with your friends on VitalStar."
+                    "Start chatting with your friends."
                 );
+
             }
 
             return;
         }
 
 
-        /*
-         * Build everything in a temporary
-         * container first.
-         *
-         * This prevents the page from
-         * becoming blank during rendering.
-         */
+        // ===============================
+        // BUILD LIST
+        // ===============================
 
         const fragment =
             document.createDocumentFragment();
 
-
-        for (
-            const chat
-            of chats
-        ) {
+        for (const chat of chats) {
 
             const card =
-                await createChatCard(
-                    chat
-                );
+                await createChatCard(chat);
 
+            fragment.appendChild(card);
 
-            fragment.appendChild(
-                card
-            );
         }
 
 
-        /*
-         * Replace the list only after
-         * everything is ready.
-         */
-
+        // Replace everything at once
         messageList.innerHTML = "";
 
         messageList.appendChild(
@@ -750,21 +644,19 @@ async function renderChats() {
     } catch (error) {
 
         console.error(
-            "Render error:",
+            "Render chats error:",
             error
         );
 
-
         showEmptyState(
             "⚠️",
-            "Something went wrong",
-            "Unable to display your conversations."
+            "Unable to load messages",
+            "Please refresh the page and try again."
         );
 
     } finally {
 
         rendering = false;
-
 
         if (renderAgain) {
 
@@ -774,14 +666,16 @@ async function renderChats() {
                 renderChats,
                 50
             );
+
         }
+
     }
 }
 
 
-/* ============================================================
-   AUTHENTICATION
-============================================================ */
+// ===============================
+// AUTHENTICATION
+// ===============================
 
 onAuthStateChanged(
     auth,
@@ -795,41 +689,36 @@ onAuthStateChanged(
             return;
         }
 
-
-        currentUser =
-            user;
+        currentUser = user;
 
 
-        /*
-         * Get all chats belonging
-         * to the current user.
-         */
+        // ===============================
+        // CHATS QUERY
+        // ===============================
 
-        const chatsQuery =
-            query(
-                collection(
-                    db,
-                    "chats"
-                ),
-                where(
-                    "participants",
-                    "array-contains",
-                    user.uid
-                )
-            );
+        const chatsQuery = query(
+            collection(db, "chats"),
+            where(
+                "participants",
+                "array-contains",
+                user.uid
+            )
+        );
 
 
         onSnapshot(
             chatsQuery,
-
             async snapshot => {
 
                 const chats = [];
 
+                const activeChatIds =
+                    new Set();
 
-                /*
-                 * Read each conversation.
-                 */
+
+                // ===============================
+                // LOAD CHAT USERS
+                // ===============================
 
                 for (
                     const chatDoc
@@ -839,13 +728,11 @@ onAuthStateChanged(
                     const data =
                         chatDoc.data();
 
-
                     if (
                         !Array.isArray(
                             data.participants
                         )
                     ) {
-
                         continue;
                     }
 
@@ -862,12 +749,16 @@ onAuthStateChanged(
                     }
 
 
+                    activeChatIds.add(
+                        chatDoc.id
+                    );
+
+
                     let fullName =
                         "Unknown User";
 
-
                     let profilePic =
-                        "default.png";
+                        DEFAULT_PROFILE_PIC;
 
 
                     try {
@@ -897,71 +788,105 @@ onAuthStateChanged(
 
 
                             profilePic =
-                                userData.profilePic ||
-                                userData.profilePicture ||
-                                userData.photoURL ||
-                                userData.photoUrl ||
-                                userData.profileImage ||
-                                userData.imageUrl ||
-                                "default.png";
+                                getProfilePicture(
+                                    userData
+                                );
+
                         }
 
                     } catch (error) {
 
                         console.error(
-                            "Profile loading error:",
+                            "User profile error:",
                             error
                         );
+
                     }
 
 
                     chats.push({
 
-                        id:
-                            chatDoc.id,
+                        id: chatDoc.id,
 
                         ...data,
 
-                        otherUserId:
-                            otherUserId,
+                        otherUserId,
 
-                        fullName:
-                            fullName,
+                        fullName,
 
-                        profilePic:
-                            profilePic
+                        profilePic
 
                     });
+
                 }
 
 
-                allChats =
-                    chats;
+                // ===============================
+                // REMOVE OLD LISTENERS
+                // ===============================
 
+                for (
+                    const [
+                        chatId,
+                        unsubscribe
+                    ]
+                    of messageListeners
+                ) {
+
+                    if (
+                        !activeChatIds.has(
+                            chatId
+                        )
+                    ) {
+
+                        unsubscribe();
+
+                        messageListeners.delete(
+                            chatId
+                        );
+
+                    }
+
+                }
+
+
+                allChats = chats;
+
+
+                // ===============================
+                // RENDER
+                // ===============================
 
                 await renderChats();
 
 
-                /*
-                 * Listen for new/read messages.
-                 *
-                 * This updates unread numbers
-                 * without clearing the list
-                 * unnecessarily.
-                 */
+                // ===============================
+                // LIVE UNREAD UPDATES
+                // ===============================
 
-                chats.forEach(
-                    chat => {
+                for (
+                    const chat of chats
+                ) {
 
-                        const messagesRef =
-                            collection(
-                                db,
-                                "chats",
-                                chat.id,
-                                "messages"
-                            );
+                    if (
+                        messageListeners.has(
+                            chat.id
+                        )
+                    ) {
+                        continue;
+                    }
 
 
+                    const messagesRef =
+                        collection(
+                            db,
+                            "chats",
+                            chat.id,
+                            "messages"
+                        );
+
+
+                    const unsubscribe =
                         onSnapshot(
                             messagesRef,
                             () => {
@@ -971,23 +896,27 @@ onAuthStateChanged(
                             }
                         );
 
-                    }
-                );
+
+                    messageListeners.set(
+                        chat.id,
+                        unsubscribe
+                    );
+
+                }
 
             },
 
             error => {
 
                 console.error(
-                    "Chat list error:",
+                    "Chats listener error:",
                     error
                 );
-
 
                 showEmptyState(
                     "⚠️",
                     "Unable to load messages",
-                    "Please check your internet connection and try again."
+                    "Check your connection and try again."
                 );
 
             }
@@ -997,9 +926,9 @@ onAuthStateChanged(
 );
 
 
-/* ============================================================
-   SEARCH
-============================================================ */
+// ===============================
+// SEARCH
+// ===============================
 
 if (searchInput) {
 
@@ -1011,4 +940,5 @@ if (searchInput) {
 
         }
     );
+
 }
