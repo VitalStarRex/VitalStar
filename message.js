@@ -22,15 +22,11 @@ import {
 const messageList = document.getElementById("messageList");
 const searchInput = document.getElementById("searchInput");
 
-const DEFAULT_PROFILE_PIC = "default.png";
-
 let currentUser = null;
 let allChats = [];
 
 const chatListeners = new Map();
 const unreadCounts = new Map();
-
-let firstLoad = true;
 
 
 // ======================================
@@ -38,10 +34,7 @@ let firstLoad = true;
 // ======================================
 
 function escapeHtml(text) {
-
-    if (text === null || text === undefined) {
-        return "";
-    }
+    if (text === null || text === undefined) return "";
 
     return String(text)
         .replace(/&/g, "&amp;")
@@ -53,11 +46,10 @@ function escapeHtml(text) {
 
 
 // ======================================
-// TIMESTAMP
+// GET TIMESTAMP
 // ======================================
 
 function getTimestampValue(timestamp) {
-
     if (!timestamp) return 0;
 
     if (typeof timestamp.toMillis === "function") {
@@ -85,7 +77,6 @@ function getTimestampValue(timestamp) {
 // ======================================
 
 function formatTime(timestamp) {
-
     const time = getTimestampValue(timestamp);
 
     if (!time) return "";
@@ -99,19 +90,14 @@ function formatTime(timestamp) {
         date.getFullYear() === now.getFullYear();
 
     if (sameDay) {
-
         return date.toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit"
         });
-
     }
 
     const yesterday = new Date();
-
-    yesterday.setDate(
-        now.getDate() - 1
-    );
+    yesterday.setDate(now.getDate() - 1);
 
     const isYesterday =
         date.getDate() === yesterday.getDate() &&
@@ -134,7 +120,6 @@ function formatTime(timestamp) {
 // ======================================
 
 function getLastMessageHtml(chat) {
-
     if (chat.lastMessage) {
         return escapeHtml(chat.lastMessage);
     }
@@ -156,14 +141,11 @@ function getLastMessageHtml(chat) {
 
 
 // ======================================
-// PROFILE IMAGE
+// GET PROFILE PICTURE
 // ======================================
 
 function getProfilePicture(userData) {
-
-    if (!userData) {
-        return DEFAULT_PROFILE_PIC;
-    }
+    if (!userData) return "";
 
     const pictures = [
         userData.profilePic,
@@ -175,22 +157,79 @@ function getProfilePicture(userData) {
     ];
 
     for (const picture of pictures) {
-
         if (
             typeof picture === "string" &&
             picture.trim() !== ""
         ) {
             return picture.trim();
         }
-
     }
 
-    return DEFAULT_PROFILE_PIC;
+    return "";
 }
 
 
 // ======================================
-// CREATE CARD
+// GET FIRST LETTER
+// ======================================
+
+function getFirstLetter(name) {
+    const cleanName = String(name || "U").trim();
+
+    if (!cleanName) return "U";
+
+    return cleanName
+        .charAt(0)
+        .toUpperCase();
+}
+
+
+// ======================================
+// CREATE AVATAR
+// ======================================
+
+function createAvatar(chat) {
+    const letter = getFirstLetter(chat.fullName);
+
+    // User has profile picture
+    if (chat.profilePic) {
+        return `
+            <div class="avatar-wrapper">
+
+                <img
+                    src="${escapeHtml(chat.profilePic)}"
+                    class="profile-picture"
+                    alt="${escapeHtml(chat.fullName)}"
+                >
+
+                <span class="avatar-letter">
+                    ${escapeHtml(letter)}
+                </span>
+
+                <span class="online-dot"></span>
+
+            </div>
+        `;
+    }
+
+    // No profile picture:
+    // show first letter
+    return `
+        <div class="avatar-wrapper">
+
+            <div class="profile-letter">
+                ${escapeHtml(letter)}
+            </div>
+
+            <span class="online-dot"></span>
+
+        </div>
+    `;
+}
+
+
+// ======================================
+// CREATE CHAT CARD
 // ======================================
 
 function createChatCard(chat) {
@@ -207,9 +246,6 @@ function createChatCard(chat) {
         card.classList.add("unread-card");
     }
 
-    const profilePic =
-        chat.profilePic || DEFAULT_PROFILE_PIC;
-
     const unreadBadge =
         unreadCount > 0
             ? `
@@ -225,18 +261,7 @@ function createChatCard(chat) {
 
     card.innerHTML = `
 
-        <div class="avatar-wrapper">
-
-            <img
-                src="${escapeHtml(profilePic)}"
-                class="profile-picture"
-                alt="${escapeHtml(chat.fullName)}"
-            >
-
-            <span class="online-dot"></span>
-
-        </div>
-
+        ${createAvatar(chat)}
 
         <div class="message-info">
 
@@ -279,7 +304,7 @@ function createChatCard(chat) {
 
 
     // ==================================
-    // IMAGE FALLBACK
+    // PROFILE IMAGE FALLBACK
     // ==================================
 
     const image =
@@ -291,16 +316,27 @@ function createChatCard(chat) {
             "error",
             () => {
 
-                if (
-                    !image.src.endsWith(
-                        DEFAULT_PROFILE_PIC
-                    )
-                ) {
+                const wrapper =
+                    image.closest(
+                        ".avatar-wrapper"
+                    );
 
-                    image.src =
-                        DEFAULT_PROFILE_PIC;
+                if (!wrapper) return;
 
-                }
+                const letter =
+                    getFirstLetter(
+                        chat.fullName
+                    );
+
+                wrapper.innerHTML = `
+
+                    <div class="profile-letter">
+                        ${escapeHtml(letter)}
+                    </div>
+
+                    <span class="online-dot"></span>
+
+                `;
 
             }
         );
@@ -326,7 +362,7 @@ function createChatCard(chat) {
 
 
     // ==================================
-    // DELETE
+    // DELETE CHAT
     // ==================================
 
     const deleteButton =
@@ -334,20 +370,24 @@ function createChatCard(chat) {
             ".delete-chat-btn"
         );
 
-    deleteButton.addEventListener(
-        "click",
-        event => {
+    if (deleteButton) {
 
-            event.preventDefault();
-            event.stopPropagation();
+        deleteButton.addEventListener(
+            "click",
+            event => {
 
-            deleteChat(
-                chat.id,
-                card
-            );
+                event.preventDefault();
+                event.stopPropagation();
 
-        }
-    );
+                deleteChat(
+                    chat.id,
+                    card
+                );
+
+            }
+        );
+
+    }
 
 
     return card;
@@ -355,7 +395,7 @@ function createChatCard(chat) {
 
 
 // ======================================
-// RENDER LIST IMMEDIATELY
+// RENDER CHATS
 // ======================================
 
 function renderChats() {
@@ -370,10 +410,7 @@ function renderChats() {
     let chats = [...allChats];
 
 
-    // ==================================
     // SEARCH
-    // ==================================
-
     if (search) {
 
         chats = chats.filter(chat => {
@@ -396,10 +433,7 @@ function renderChats() {
     }
 
 
-    // ==================================
-    // SORT
-    // ==================================
-
+    // SORT NEWEST FIRST
     chats.sort(
         (a, b) =>
             getTimestampValue(
@@ -411,10 +445,7 @@ function renderChats() {
     );
 
 
-    // ==================================
     // EMPTY
-    // ==================================
-
     if (!chats.length) {
 
         messageList.innerHTML = `
@@ -449,10 +480,7 @@ function renderChats() {
     }
 
 
-    // ==================================
-    // RENDER FAST
-    // ==================================
-
+    // FAST RENDER
     const fragment =
         document.createDocumentFragment();
 
@@ -473,7 +501,7 @@ function renderChats() {
 
 
 // ======================================
-// UPDATE ONE UNREAD BADGE
+// UPDATE UNREAD BADGE
 // ======================================
 
 function updateUnreadBadge(chatId) {
@@ -489,78 +517,77 @@ function updateUnreadBadge(chatId) {
     if (!chat) return;
 
 
-    // Find the current card
-    const cards =
-        messageList.querySelectorAll(
-            ".message-card"
+    /*
+       Find card using the user's
+       unique chat ID instead of name.
+    */
+
+    const card =
+        messageList.querySelector(
+            `[data-chat-id="${CSS.escape(chatId)}"]`
         );
 
-    for (const card of cards) {
+    if (!card) {
 
-        const name =
-            card.querySelector(".name");
+        renderChats();
 
-        if (!name) continue;
-
-        if (
-            name.textContent.trim() ===
-            chat.fullName
-        ) {
-
-            const bottomRow =
-                card.querySelector(
-                    ".bottom-row"
-                );
-
-            const oldBadge =
-                bottomRow.querySelector(
-                    ".unread-badge"
-                );
-
-            if (oldBadge) {
-                oldBadge.remove();
-            }
+        return;
+    }
 
 
-            if (count > 0) {
+    const bottomRow =
+        card.querySelector(
+            ".bottom-row"
+        );
 
-                const badge =
-                    document.createElement(
-                        "span"
-                    );
+    if (!bottomRow) return;
 
-                badge.className =
-                    "unread-badge";
 
-                badge.textContent =
-                    count > 99
-                        ? "99+"
-                        : count;
+    const oldBadge =
+        bottomRow.querySelector(
+            ".unread-badge"
+        );
 
-                bottomRow.appendChild(
-                    badge
-                );
+    if (oldBadge) {
+        oldBadge.remove();
+    }
 
-                card.classList.add(
-                    "unread-card"
-                );
 
-            } else {
+    if (count > 0) {
 
-                card.classList.remove(
-                    "unread-card"
-                );
+        const badge =
+            document.createElement(
+                "span"
+            );
 
-            }
+        badge.className =
+            "unread-badge";
 
-            break;
-        }
+        badge.textContent =
+            count > 99
+                ? "99+"
+                : count;
+
+        bottomRow.appendChild(
+            badge
+        );
+
+        card.classList.add(
+            "unread-card"
+        );
+
+    } else {
+
+        card.classList.remove(
+            "unread-card"
+        );
+
     }
 }
 
 
 // ======================================
-// COUNT UNREAD MESSAGES
+// LOAD UNREAD COUNT
 // ======================================
 
 async function loadUnreadCount(chatId) {
@@ -577,13 +604,10 @@ async function loadUnreadCount(chatId) {
                 "messages"
             );
 
-
         const snapshot =
             await getDocs(messagesRef);
 
-
         let count = 0;
-
 
         snapshot.forEach(
             messageDoc => {
@@ -591,26 +615,21 @@ async function loadUnreadCount(chatId) {
                 const message =
                     messageDoc.data();
 
-
                 if (
                     message.receiverId ===
                         currentUser.uid &&
                     message.read === false
                 ) {
-
                     count++;
-
                 }
 
             }
         );
 
-
         unreadCounts.set(
             chatId,
             count
         );
-
 
         updateUnreadBadge(
             chatId
@@ -682,9 +701,13 @@ function listenToChat(chatId) {
                 );
 
 
-                updateUnreadBadge(
-                    chatId
-                );
+                /*
+                   Re-rendering keeps the
+                   conversation badge and
+                   latest data synchronized.
+                */
+
+                renderChats();
 
             },
             error => {
@@ -788,7 +811,7 @@ async function deleteChat(
         );
 
 
-        // Remove listener
+        // Stop listener
 
         if (
             chatListeners.has(
@@ -818,16 +841,7 @@ async function deleteChat(
             );
 
 
-        card.remove();
-
-
-        if (
-            allChats.length === 0
-        ) {
-
-            renderChats();
-
-        }
+        renderChats();
 
 
     } catch (error) {
@@ -853,7 +867,7 @@ async function deleteChat(
 
 
 // ======================================
-// AUTH
+// AUTHENTICATION
 // ======================================
 
 onAuthStateChanged(
@@ -871,10 +885,6 @@ onAuthStateChanged(
 
         currentUser = user;
 
-
-        // ==================================
-        // LOAD CONVERSATIONS
-        // ==================================
 
         const chatsQuery =
             query(
@@ -901,7 +911,7 @@ onAuthStateChanged(
 
 
                 // ==================================
-                // GET BASIC CHAT DATA FIRST
+                // GET CHAT DATA FIRST
                 // ==================================
 
                 for (
@@ -952,7 +962,7 @@ onAuthStateChanged(
                             "Loading...",
 
                         profilePic:
-                            DEFAULT_PROFILE_PIC
+                            ""
 
                     });
 
@@ -960,7 +970,7 @@ onAuthStateChanged(
 
 
                 // ==================================
-                // SHOW CHAT LIST IMMEDIATELY
+                // SHOW CONVERSATIONS IMMEDIATELY
                 // ==================================
 
                 allChats = chats;
@@ -969,7 +979,36 @@ onAuthStateChanged(
 
 
                 // ==================================
-                // LOAD PROFILES IN BACKGROUND
+                // REMOVE OLD LISTENERS
+                // ==================================
+
+                for (
+                    const [
+                        chatId,
+                        unsubscribe
+                    ]
+                    of chatListeners
+                ) {
+
+                    if (
+                        !activeChatIds.has(
+                            chatId
+                        )
+                    ) {
+
+                        unsubscribe();
+
+                        chatListeners.delete(
+                            chatId
+                        );
+
+                    }
+
+                }
+
+
+                // ==================================
+                // LOAD PROFILES
                 // ==================================
 
                 for (
@@ -1012,11 +1051,7 @@ onAuthStateChanged(
                             chat.fullName =
                                 "Unknown User";
 
-                            chat.profilePic =
-                                DEFAULT_PROFILE_PIC;
-
                         }
-
 
                     } catch (error) {
 
@@ -1025,53 +1060,19 @@ onAuthStateChanged(
                             error
                         );
 
-
                         chat.fullName =
                             "Unknown User";
-
-                        chat.profilePic =
-                            DEFAULT_PROFILE_PIC;
 
                     }
 
 
-                    // Update screen
                     renderChats();
 
                 }
 
 
                 // ==================================
-                // REMOVE OLD LISTENERS
-                // ==================================
-
-                for (
-                    const [
-                        chatId,
-                        unsubscribe
-                    ]
-                    of chatListeners
-                ) {
-
-                    if (
-                        !activeChatIds.has(
-                            chatId
-                        )
-                    ) {
-
-                        unsubscribe();
-
-                        chatListeners.delete(
-                            chatId
-                        );
-
-                    }
-
-                }
-
-
-                // ==================================
-                // START LIVE UNREAD LISTENERS
+                // LIVE MESSAGE LISTENERS
                 // ==================================
 
                 for (
@@ -1083,9 +1084,6 @@ onAuthStateChanged(
                     );
 
                 }
-
-
-                firstLoad = false;
 
             },
 
@@ -1108,6 +1106,38 @@ onAuthStateChanged(
 
     }
 );
+
+
+// ======================================
+// EMPTY STATE
+// ======================================
+
+function showEmptyState(
+    icon,
+    title,
+    text
+) {
+
+    messageList.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                ${icon}
+            </div>
+
+            <h2>
+                ${escapeHtml(title)}
+            </h2>
+
+            <p>
+                ${escapeHtml(text)}
+            </p>
+
+        </div>
+
+    `;
+}
 
 
 // ======================================
