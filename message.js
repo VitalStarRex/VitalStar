@@ -27,19 +27,21 @@ const DEFAULT_PROFILE_PIC = "default.png";
 let currentUser = null;
 let allChats = [];
 
-let rendering = false;
-let renderAgain = false;
+const chatListeners = new Map();
+const unreadCounts = new Map();
 
-// Keep message listeners so we don't create duplicates
-const messageListeners = new Map();
+let firstLoad = true;
 
 
-// ===============================
+// ======================================
 // ESCAPE HTML
-// ===============================
+// ======================================
 
 function escapeHtml(text) {
-    if (text === null || text === undefined) return "";
+
+    if (text === null || text === undefined) {
+        return "";
+    }
 
     return String(text)
         .replace(/&/g, "&amp;")
@@ -50,11 +52,12 @@ function escapeHtml(text) {
 }
 
 
-// ===============================
+// ======================================
 // TIMESTAMP
-// ===============================
+// ======================================
 
 function getTimestampValue(timestamp) {
+
     if (!timestamp) return 0;
 
     if (typeof timestamp.toMillis === "function") {
@@ -77,11 +80,12 @@ function getTimestampValue(timestamp) {
 }
 
 
-// ===============================
+// ======================================
 // FORMAT TIME
-// ===============================
+// ======================================
 
 function formatTime(timestamp) {
+
     const time = getTimestampValue(timestamp);
 
     if (!time) return "";
@@ -95,14 +99,19 @@ function formatTime(timestamp) {
         date.getFullYear() === now.getFullYear();
 
     if (sameDay) {
+
         return date.toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit"
         });
+
     }
 
     const yesterday = new Date();
-    yesterday.setDate(now.getDate() - 1);
+
+    yesterday.setDate(
+        now.getDate() - 1
+    );
 
     const isYesterday =
         date.getDate() === yesterday.getDate() &&
@@ -120,9 +129,9 @@ function formatTime(timestamp) {
 }
 
 
-// ===============================
+// ======================================
 // LAST MESSAGE
-// ===============================
+// ======================================
 
 function getLastMessageHtml(chat) {
 
@@ -146,182 +155,9 @@ function getLastMessageHtml(chat) {
 }
 
 
-// ===============================
-// GET UNREAD COUNT
-// ===============================
-
-async function getUnreadCount(chatId, userId) {
-
-    try {
-
-        const messagesRef = collection(
-            db,
-            "chats",
-            chatId,
-            "messages"
-        );
-
-        const snapshot = await getDocs(messagesRef);
-
-        let count = 0;
-
-        snapshot.forEach(messageDoc => {
-
-            const message = messageDoc.data();
-
-            if (
-                message.receiverId === userId &&
-                message.read === false
-            ) {
-                count++;
-            }
-
-        });
-
-        return count;
-
-    } catch (error) {
-
-        console.error(
-            "Unread count error:",
-            error
-        );
-
-        return 0;
-    }
-}
-
-
-// ===============================
-// DELETE CHAT
-// ===============================
-
-async function deleteChat(chatId, card) {
-
-    const confirmed = confirm(
-        "Delete this conversation?\n\nAll messages in this chat will be deleted."
-    );
-
-    if (!confirmed) return;
-
-    try {
-
-        card.style.opacity = "0.45";
-        card.style.pointerEvents = "none";
-
-        const messagesRef = collection(
-            db,
-            "chats",
-            chatId,
-            "messages"
-        );
-
-        const snapshot = await getDocs(messagesRef);
-
-        let batch = writeBatch(db);
-        let count = 0;
-
-        for (const messageDoc of snapshot.docs) {
-
-            batch.delete(messageDoc.ref);
-
-            count++;
-
-            if (count === 500) {
-
-                await batch.commit();
-
-                batch = writeBatch(db);
-
-                count = 0;
-            }
-        }
-
-        if (count > 0) {
-            await batch.commit();
-        }
-
-        await deleteDoc(
-            doc(db, "chats", chatId)
-        );
-
-        // Remove listener
-        if (messageListeners.has(chatId)) {
-
-            messageListeners.get(chatId)();
-
-            messageListeners.delete(chatId);
-        }
-
-        card.remove();
-
-        allChats = allChats.filter(
-            chat => chat.id !== chatId
-        );
-
-        if (
-            !messageList.querySelector(
-                ".message-card"
-            )
-        ) {
-
-            showEmptyState(
-                "💬",
-                "No conversations",
-                "Start chatting with your friends."
-            );
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Delete chat error:",
-            error
-        );
-
-        card.style.opacity = "1";
-        card.style.pointerEvents = "auto";
-
-        alert(
-            "Unable to delete this conversation."
-        );
-    }
-}
-
-
-// ===============================
-// EMPTY STATE
-// ===============================
-
-function showEmptyState(
-    icon,
-    title,
-    text
-) {
-
-    messageList.innerHTML = `
-        <div class="empty-state">
-
-            <div class="empty-icon">
-                ${icon}
-            </div>
-
-            <h2>
-                ${escapeHtml(title)}
-            </h2>
-
-            <p>
-                ${escapeHtml(text)}
-            </p>
-
-        </div>
-    `;
-}
-
-
-// ===============================
+// ======================================
 // PROFILE IMAGE
-// ===============================
+// ======================================
 
 function getProfilePicture(userData) {
 
@@ -329,7 +165,7 @@ function getProfilePicture(userData) {
         return DEFAULT_PROFILE_PIC;
     }
 
-    const possiblePictures = [
+    const pictures = [
         userData.profilePic,
         userData.profilePicture,
         userData.photoURL,
@@ -338,7 +174,7 @@ function getProfilePicture(userData) {
         userData.imageUrl
     ];
 
-    for (const picture of possiblePictures) {
+    for (const picture of pictures) {
 
         if (
             typeof picture === "string" &&
@@ -346,24 +182,24 @@ function getProfilePicture(userData) {
         ) {
             return picture.trim();
         }
+
     }
 
     return DEFAULT_PROFILE_PIC;
 }
 
 
-// ===============================
-// CREATE CHAT CARD
-// ===============================
+// ======================================
+// CREATE CARD
+// ======================================
 
-async function createChatCard(chat) {
+function createChatCard(chat) {
 
-    const unreadCount = await getUnreadCount(
-        chat.id,
-        currentUser.uid
-    );
+    const unreadCount =
+        unreadCounts.get(chat.id) || 0;
 
-    const card = document.createElement("div");
+    const card =
+        document.createElement("div");
 
     card.className = "message-card";
 
@@ -373,6 +209,19 @@ async function createChatCard(chat) {
 
     const profilePic =
         chat.profilePic || DEFAULT_PROFILE_PIC;
+
+    const unreadBadge =
+        unreadCount > 0
+            ? `
+                <span class="unread-badge">
+                    ${
+                        unreadCount > 99
+                            ? "99+"
+                            : unreadCount
+                    }
+                </span>
+            `
+            : "";
 
     card.innerHTML = `
 
@@ -410,19 +259,7 @@ async function createChatCard(chat) {
                     ${getLastMessageHtml(chat)}
                 </div>
 
-                ${
-                    unreadCount > 0
-                        ? `
-                            <span class="unread-badge">
-                                ${
-                                    unreadCount > 99
-                                        ? "99+"
-                                        : unreadCount
-                                }
-                            </span>
-                        `
-                        : ""
-                }
+                ${unreadBadge}
 
             </div>
 
@@ -441,9 +278,9 @@ async function createChatCard(chat) {
     `;
 
 
-    // ===============================
-    // PROFILE IMAGE FALLBACK
-    // ===============================
+    // ==================================
+    // IMAGE FALLBACK
+    // ==================================
 
     const image =
         card.querySelector(".profile-picture");
@@ -454,25 +291,26 @@ async function createChatCard(chat) {
             "error",
             () => {
 
-                // Prevent infinite loop
                 if (
-                    image.src.endsWith(
+                    !image.src.endsWith(
                         DEFAULT_PROFILE_PIC
                     )
                 ) {
-                    return;
+
+                    image.src =
+                        DEFAULT_PROFILE_PIC;
+
                 }
 
-                image.src = DEFAULT_PROFILE_PIC;
             }
         );
 
     }
 
 
-    // ===============================
+    // ==================================
     // OPEN CHAT
-    // ===============================
+    // ==================================
 
     card.addEventListener(
         "click",
@@ -487,195 +325,536 @@ async function createChatCard(chat) {
     );
 
 
-    // ===============================
-    // DELETE BUTTON
-    // ===============================
+    // ==================================
+    // DELETE
+    // ==================================
 
     const deleteButton =
         card.querySelector(
             ".delete-chat-btn"
         );
 
-    if (deleteButton) {
+    deleteButton.addEventListener(
+        "click",
+        event => {
 
-        deleteButton.addEventListener(
-            "click",
-            event => {
+            event.preventDefault();
+            event.stopPropagation();
 
-                event.preventDefault();
-                event.stopPropagation();
+            deleteChat(
+                chat.id,
+                card
+            );
 
-                deleteChat(
-                    chat.id,
-                    card
-                );
-
-            }
-        );
-
-    }
+        }
+    );
 
 
     return card;
 }
 
 
-// ===============================
-// RENDER CHATS
-// ===============================
+// ======================================
+// RENDER LIST IMMEDIATELY
+// ======================================
 
-async function renderChats() {
+function renderChats() {
 
-    if (!currentUser) return;
+    if (!messageList) return;
 
-    if (rendering) {
+    const search =
+        searchInput?.value
+            ?.trim()
+            .toLowerCase() || "";
 
-        renderAgain = true;
+    let chats = [...allChats];
+
+
+    // ==================================
+    // SEARCH
+    // ==================================
+
+    if (search) {
+
+        chats = chats.filter(chat => {
+
+            const name =
+                (chat.fullName || "")
+                    .toLowerCase();
+
+            const message =
+                (chat.lastMessage || "")
+                    .toLowerCase();
+
+            return (
+                name.includes(search) ||
+                message.includes(search)
+            );
+
+        });
+
+    }
+
+
+    // ==================================
+    // SORT
+    // ==================================
+
+    chats.sort(
+        (a, b) =>
+            getTimestampValue(
+                b.lastTimestamp
+            ) -
+            getTimestampValue(
+                a.lastTimestamp
+            )
+    );
+
+
+    // ==================================
+    // EMPTY
+    // ==================================
+
+    if (!chats.length) {
+
+        messageList.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ${search ? "🔎" : "💬"}
+                </div>
+
+                <h2>
+                    ${
+                        search
+                            ? "No results"
+                            : "No conversations"
+                    }
+                </h2>
+
+                <p>
+                    ${
+                        search
+                            ? "No conversations match your search."
+                            : "Start chatting with your friends."
+                    }
+                </p>
+
+            </div>
+
+        `;
 
         return;
     }
 
-    rendering = true;
 
-    try {
+    // ==================================
+    // RENDER FAST
+    // ==================================
 
-        const search =
-            searchInput?.value
-                ?.trim()
-                .toLowerCase() || "";
+    const fragment =
+        document.createDocumentFragment();
 
-        let chats = [...allChats];
+    for (const chat of chats) {
 
-
-        // ===============================
-        // SEARCH
-        // ===============================
-
-        if (search) {
-
-            chats = chats.filter(chat => {
-
-                const name =
-                    (chat.fullName || "")
-                        .toLowerCase();
-
-                const lastMessage =
-                    (chat.lastMessage || "")
-                        .toLowerCase();
-
-                return (
-                    name.includes(search) ||
-                    lastMessage.includes(search)
-                );
-
-            });
-
-        }
-
-
-        // ===============================
-        // NEWEST FIRST
-        // ===============================
-
-        chats.sort(
-            (a, b) =>
-                getTimestampValue(
-                    b.lastTimestamp
-                ) -
-                getTimestampValue(
-                    a.lastTimestamp
-                )
+        fragment.appendChild(
+            createChatCard(chat)
         );
 
+    }
 
-        // ===============================
-        // EMPTY
-        // ===============================
+    messageList.innerHTML = "";
 
-        if (!chats.length) {
+    messageList.appendChild(
+        fragment
+    );
+}
 
-            if (search) {
 
-                showEmptyState(
-                    "🔎",
-                    "No results",
-                    "No conversations match your search."
+// ======================================
+// UPDATE ONE UNREAD BADGE
+// ======================================
+
+function updateUnreadBadge(chatId) {
+
+    const count =
+        unreadCounts.get(chatId) || 0;
+
+    const chat =
+        allChats.find(
+            item => item.id === chatId
+        );
+
+    if (!chat) return;
+
+
+    // Find the current card
+    const cards =
+        messageList.querySelectorAll(
+            ".message-card"
+        );
+
+    for (const card of cards) {
+
+        const name =
+            card.querySelector(".name");
+
+        if (!name) continue;
+
+        if (
+            name.textContent.trim() ===
+            chat.fullName
+        ) {
+
+            const bottomRow =
+                card.querySelector(
+                    ".bottom-row"
+                );
+
+            const oldBadge =
+                bottomRow.querySelector(
+                    ".unread-badge"
+                );
+
+            if (oldBadge) {
+                oldBadge.remove();
+            }
+
+
+            if (count > 0) {
+
+                const badge =
+                    document.createElement(
+                        "span"
+                    );
+
+                badge.className =
+                    "unread-badge";
+
+                badge.textContent =
+                    count > 99
+                        ? "99+"
+                        : count;
+
+                bottomRow.appendChild(
+                    badge
+                );
+
+                card.classList.add(
+                    "unread-card"
                 );
 
             } else {
 
-                showEmptyState(
-                    "💬",
-                    "No conversations",
-                    "Start chatting with your friends."
+                card.classList.remove(
+                    "unread-card"
                 );
 
             }
 
-            return;
+            break;
         }
+    }
+}
 
 
-        // ===============================
-        // BUILD LIST
-        // ===============================
+// ======================================
+// COUNT UNREAD MESSAGES
+// ======================================
 
-        const fragment =
-            document.createDocumentFragment();
+async function loadUnreadCount(chatId) {
 
-        for (const chat of chats) {
+    if (!currentUser) return;
 
-            const card =
-                await createChatCard(chat);
+    try {
 
-            fragment.appendChild(card);
+        const messagesRef =
+            collection(
+                db,
+                "chats",
+                chatId,
+                "messages"
+            );
 
-        }
+
+        const snapshot =
+            await getDocs(messagesRef);
 
 
-        // Replace everything at once
-        messageList.innerHTML = "";
+        let count = 0;
 
-        messageList.appendChild(
-            fragment
+
+        snapshot.forEach(
+            messageDoc => {
+
+                const message =
+                    messageDoc.data();
+
+
+                if (
+                    message.receiverId ===
+                        currentUser.uid &&
+                    message.read === false
+                ) {
+
+                    count++;
+
+                }
+
+            }
         );
 
+
+        unreadCounts.set(
+            chatId,
+            count
+        );
+
+
+        updateUnreadBadge(
+            chatId
+        );
 
     } catch (error) {
 
         console.error(
-            "Render chats error:",
+            "Unread count error:",
             error
         );
-
-        showEmptyState(
-            "⚠️",
-            "Unable to load messages",
-            "Please refresh the page and try again."
-        );
-
-    } finally {
-
-        rendering = false;
-
-        if (renderAgain) {
-
-            renderAgain = false;
-
-            setTimeout(
-                renderChats,
-                50
-            );
-
-        }
 
     }
 }
 
 
-// ===============================
-// AUTHENTICATION
-// ===============================
+// ======================================
+// LIVE MESSAGE LISTENER
+// ======================================
+
+function listenToChat(chatId) {
+
+    if (
+        chatListeners.has(chatId)
+    ) {
+        return;
+    }
+
+
+    const messagesRef =
+        collection(
+            db,
+            "chats",
+            chatId,
+            "messages"
+        );
+
+
+    const unsubscribe =
+        onSnapshot(
+            messagesRef,
+            snapshot => {
+
+                let unread = 0;
+
+                snapshot.forEach(
+                    messageDoc => {
+
+                        const message =
+                            messageDoc.data();
+
+                        if (
+                            message.receiverId ===
+                                currentUser.uid &&
+                            message.read === false
+                        ) {
+
+                            unread++;
+
+                        }
+
+                    }
+                );
+
+
+                unreadCounts.set(
+                    chatId,
+                    unread
+                );
+
+
+                updateUnreadBadge(
+                    chatId
+                );
+
+            },
+            error => {
+
+                console.error(
+                    "Message listener error:",
+                    error
+                );
+
+            }
+        );
+
+
+    chatListeners.set(
+        chatId,
+        unsubscribe
+    );
+}
+
+
+// ======================================
+// DELETE CHAT
+// ======================================
+
+async function deleteChat(
+    chatId,
+    card
+) {
+
+    const confirmed =
+        confirm(
+            "Delete this conversation?\n\nAll messages in this chat will be deleted."
+        );
+
+    if (!confirmed) return;
+
+
+    try {
+
+        card.style.opacity = "0.45";
+        card.style.pointerEvents =
+            "none";
+
+
+        const messagesRef =
+            collection(
+                db,
+                "chats",
+                chatId,
+                "messages"
+            );
+
+
+        const snapshot =
+            await getDocs(messagesRef);
+
+
+        let batch =
+            writeBatch(db);
+
+        let count = 0;
+
+
+        for (
+            const messageDoc
+            of snapshot.docs
+        ) {
+
+            batch.delete(
+                messageDoc.ref
+            );
+
+            count++;
+
+
+            if (count === 500) {
+
+                await batch.commit();
+
+                batch =
+                    writeBatch(db);
+
+                count = 0;
+
+            }
+
+        }
+
+
+        if (count > 0) {
+            await batch.commit();
+        }
+
+
+        await deleteDoc(
+            doc(
+                db,
+                "chats",
+                chatId
+            )
+        );
+
+
+        // Remove listener
+
+        if (
+            chatListeners.has(
+                chatId
+            )
+        ) {
+
+            chatListeners
+                .get(chatId)();
+
+            chatListeners.delete(
+                chatId
+            );
+
+        }
+
+
+        unreadCounts.delete(
+            chatId
+        );
+
+
+        allChats =
+            allChats.filter(
+                chat =>
+                    chat.id !== chatId
+            );
+
+
+        card.remove();
+
+
+        if (
+            allChats.length === 0
+        ) {
+
+            renderChats();
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete chat error:",
+            error
+        );
+
+
+        card.style.opacity = "1";
+
+        card.style.pointerEvents =
+            "auto";
+
+
+        alert(
+            "Unable to delete this conversation."
+        );
+
+    }
+}
+
+
+// ======================================
+// AUTH
+// ======================================
 
 onAuthStateChanged(
     auth,
@@ -689,21 +868,26 @@ onAuthStateChanged(
             return;
         }
 
+
         currentUser = user;
 
 
-        // ===============================
-        // CHATS QUERY
-        // ===============================
+        // ==================================
+        // LOAD CONVERSATIONS
+        // ==================================
 
-        const chatsQuery = query(
-            collection(db, "chats"),
-            where(
-                "participants",
-                "array-contains",
-                user.uid
-            )
-        );
+        const chatsQuery =
+            query(
+                collection(
+                    db,
+                    "chats"
+                ),
+                where(
+                    "participants",
+                    "array-contains",
+                    user.uid
+                )
+            );
 
 
         onSnapshot(
@@ -716,9 +900,9 @@ onAuthStateChanged(
                     new Set();
 
 
-                // ===============================
-                // LOAD CHAT USERS
-                // ===============================
+                // ==================================
+                // GET BASIC CHAT DATA FIRST
+                // ==================================
 
                 for (
                     const chatDoc
@@ -727,6 +911,7 @@ onAuthStateChanged(
 
                     const data =
                         chatDoc.data();
+
 
                     if (
                         !Array.isArray(
@@ -754,12 +939,42 @@ onAuthStateChanged(
                     );
 
 
-                    let fullName =
-                        "Unknown User";
+                    chats.push({
 
-                    let profilePic =
-                        DEFAULT_PROFILE_PIC;
+                        id:
+                            chatDoc.id,
 
+                        ...data,
+
+                        otherUserId,
+
+                        fullName:
+                            "Loading...",
+
+                        profilePic:
+                            DEFAULT_PROFILE_PIC
+
+                    });
+
+                }
+
+
+                // ==================================
+                // SHOW CHAT LIST IMMEDIATELY
+                // ==================================
+
+                allChats = chats;
+
+                renderChats();
+
+
+                // ==================================
+                // LOAD PROFILES IN BACKGROUND
+                // ==================================
+
+                for (
+                    const chat of chats
+                ) {
 
                     try {
 
@@ -768,7 +983,7 @@ onAuthStateChanged(
                                 doc(
                                     db,
                                     "users",
-                                    otherUserId
+                                    chat.otherUserId
                                 )
                             );
 
@@ -781,56 +996,61 @@ onAuthStateChanged(
                                 userSnap.data();
 
 
-                            fullName =
+                            chat.fullName =
                                 userData.fullName ||
                                 userData.username ||
                                 "Unknown User";
 
 
-                            profilePic =
+                            chat.profilePic =
                                 getProfilePicture(
                                     userData
                                 );
 
+                        } else {
+
+                            chat.fullName =
+                                "Unknown User";
+
+                            chat.profilePic =
+                                DEFAULT_PROFILE_PIC;
+
                         }
+
 
                     } catch (error) {
 
                         console.error(
-                            "User profile error:",
+                            "Profile loading error:",
                             error
                         );
+
+
+                        chat.fullName =
+                            "Unknown User";
+
+                        chat.profilePic =
+                            DEFAULT_PROFILE_PIC;
 
                     }
 
 
-                    chats.push({
-
-                        id: chatDoc.id,
-
-                        ...data,
-
-                        otherUserId,
-
-                        fullName,
-
-                        profilePic
-
-                    });
+                    // Update screen
+                    renderChats();
 
                 }
 
 
-                // ===============================
+                // ==================================
                 // REMOVE OLD LISTENERS
-                // ===============================
+                // ==================================
 
                 for (
                     const [
                         chatId,
                         unsubscribe
                     ]
-                    of messageListeners
+                    of chatListeners
                 ) {
 
                     if (
@@ -841,7 +1061,7 @@ onAuthStateChanged(
 
                         unsubscribe();
 
-                        messageListeners.delete(
+                        chatListeners.delete(
                             chatId
                         );
 
@@ -850,68 +1070,32 @@ onAuthStateChanged(
                 }
 
 
-                allChats = chats;
-
-
-                // ===============================
-                // RENDER
-                // ===============================
-
-                await renderChats();
-
-
-                // ===============================
-                // LIVE UNREAD UPDATES
-                // ===============================
+                // ==================================
+                // START LIVE UNREAD LISTENERS
+                // ==================================
 
                 for (
                     const chat of chats
                 ) {
 
-                    if (
-                        messageListeners.has(
-                            chat.id
-                        )
-                    ) {
-                        continue;
-                    }
-
-
-                    const messagesRef =
-                        collection(
-                            db,
-                            "chats",
-                            chat.id,
-                            "messages"
-                        );
-
-
-                    const unsubscribe =
-                        onSnapshot(
-                            messagesRef,
-                            () => {
-
-                                renderChats();
-
-                            }
-                        );
-
-
-                    messageListeners.set(
-                        chat.id,
-                        unsubscribe
+                    listenToChat(
+                        chat.id
                     );
 
                 }
+
+
+                firstLoad = false;
 
             },
 
             error => {
 
                 console.error(
-                    "Chats listener error:",
+                    "Chats error:",
                     error
                 );
+
 
                 showEmptyState(
                     "⚠️",
@@ -926,9 +1110,9 @@ onAuthStateChanged(
 );
 
 
-// ===============================
+// ======================================
 // SEARCH
-// ===============================
+// ======================================
 
 if (searchInput) {
 
