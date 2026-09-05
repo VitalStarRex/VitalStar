@@ -1,181 +1,780 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Messages - VitalStar</title>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-        }
+<meta charset="UTF-8">
 
-        .header {
-            background: purple;
-            color: white;
-            padding: 20px;
-            font-size: 24px;
-            font-weight: 900;
-        }
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-        .message-list {
-            padding: 10px;
-        }
+<title>Messages - VitalStar</title>
 
-        .message-card {
-            background: white;
-            margin-bottom: 12px;
-            padding: 15px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-        }
+<meta name="theme-color"
+      content="#6c2bd9">
 
-        .message-card:hover {
-            background: #eee;
-            transform: scale(1.02);
-        }
+<style>
 
-        .profile-picture {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 12px;
-            border: 3px solid purple;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        .message-info {
-            flex: 1;
-        }
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    background:
+        linear-gradient(
+            135deg,
+            #f7f3ff,
+            #eef5ff,
+            #ffffff
+        );
+    color: #222;
+}
 
-        .name {
-            font-size: 20px;
-            font-weight: 900;
-            color: purple;
-        }
+body {
+    min-height: 100vh;
+    padding-bottom: 90px;
+}
 
-        .last-message {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin-top: 5px;
-        }
 
-        .time {
-            font-size: 14px;
-            font-weight: bold;
-            color: purple;
-            margin-top: 5px;
-        }
+/* =========================
+   HEADER
+========================= */
 
-    </style>
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    padding:
+        18px
+        16px
+        14px;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6a11cb,
+            #2575fc
+        );
+
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(72, 42, 150, 0.25);
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-title {
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+    margin-top: 4px;
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.header-icon {
+    width: 44px;
+    height: 44px;
+
+    border: none;
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,0.18);
+
+    color: white;
+    font-size: 21px;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   SEARCH
+========================= */
+
+.search-box {
+    margin-top: 15px;
+    position: relative;
+}
+
+.search-box input {
+    width: 100%;
+
+    padding:
+        13px
+        16px
+        13px
+        45px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 18px;
+
+    background:
+        rgba(255,255,255,0.95);
+
+    color: #222;
+
+    font-size: 15px;
+
+    box-shadow:
+        0 3px 12px
+        rgba(0,0,0,0.08);
+}
+
+.search-icon {
+    position: absolute;
+
+    left: 16px;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    font-size: 18px;
+}
+
+
+/* =========================
+   MESSAGE LIST
+========================= */
+
+.message-list {
+    padding:
+        15px
+        12px
+        20px;
+}
+
+
+/* =========================
+   MESSAGE CARD
+========================= */
+
+.message-card {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+
+    padding: 13px;
+
+    margin-bottom: 10px;
+
+    border-radius: 22px;
+
+    background:
+        rgba(255,255,255,0.90);
+
+    border:
+        1px solid
+        rgba(120,80,200,0.08);
+
+    box-shadow:
+        0 5px 18px
+        rgba(50,40,100,0.08);
+
+    cursor: pointer;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+
+    animation:
+        cardAppear 0.3s ease;
+}
+
+.message-card:hover {
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 9px 25px
+        rgba(50,40,100,0.13);
+}
+
+.message-card:active {
+    transform:
+        scale(0.98);
+}
+
+@keyframes cardAppear {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================
+   PROFILE
+========================= */
+
+.avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-picture {
+    width: 58px;
+    height: 58px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    border:
+        3px solid
+        #ffffff;
+
+    box-shadow:
+        0 2px 8px
+        rgba(0,0,0,0.15);
+
+    background: #eee;
+}
+
+.online-dot {
+    position: absolute;
+
+    right: 1px;
+    bottom: 2px;
+
+    width: 14px;
+    height: 14px;
+
+    border-radius: 50%;
+
+    background: #21c66b;
+
+    border:
+        3px solid
+        white;
+}
+
+
+/* =========================
+   MESSAGE INFO
+========================= */
+
+.message-info {
+    flex: 1;
+    min-width: 0;
+
+    margin-left: 12px;
+
+    padding-right: 8px;
+}
+
+.top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+}
+
+.name {
+    min-width: 0;
+
+    color: #351477;
+
+    font-size: 17px;
+    font-weight: 900;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.time-text {
+    flex-shrink: 0;
+
+    color: #888;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.bottom-row {
+    display: flex;
+    align-items: center;
+
+    margin-top: 6px;
+
+    gap: 8px;
+}
+
+.last-message {
+    flex: 1;
+    min-width: 0;
+}
+
+.last-message-text {
+    color: #666;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unread-card .last-message-text {
+    color: #222;
+    font-weight: 800;
+}
+
+
+/* =========================
+   UNREAD BADGE
+========================= */
+
+.unread-badge {
+    flex-shrink: 0;
+
+    min-width: 23px;
+    height: 23px;
+
+    padding:
+        0 7px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6a11cb,
+            #2575fc
+        );
+
+    color: white;
+
+    font-size: 11px;
+    font-weight: 900;
+
+    box-shadow:
+        0 3px 8px
+        rgba(75,60,200,0.28);
+
+    animation:
+        unreadPulse 1.8s infinite;
+}
+
+@keyframes unreadPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+}
+
+
+/* =========================
+   DELETE BUTTON
+========================= */
+
+.delete-chat-btn {
+    flex-shrink: 0;
+
+    width: 38px;
+    height: 38px;
+
+    border: none;
+    border-radius: 50%;
+
+    background:
+        #fff1f3;
+
+    color:
+        #e63950;
+
+    font-size: 17px;
+
+    cursor: pointer;
+
+    transition:
+        0.2s ease;
+}
+
+.delete-chat-btn:hover {
+    background:
+        #ffe0e5;
+
+    transform:
+        scale(1.08);
+}
+
+.delete-chat-btn:active {
+    transform:
+        scale(0.9);
+}
+
+
+/* =========================
+   EMPTY / LOADING
+========================= */
+
+.empty-state {
+    margin: 45px 20px;
+
+    padding: 30px 20px;
+
+    text-align: center;
+
+    background:
+        rgba(255,255,255,0.8);
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0,0,0,0.06);
+}
+
+.empty-icon {
+    font-size: 45px;
+    margin-bottom: 10px;
+}
+
+.empty-title {
+    font-size: 19px;
+    font-weight: 900;
+    color: #351477;
+}
+
+.empty-text {
+    margin-top: 7px;
+    color: #777;
+    font-size: 14px;
+}
+
+
+/* =========================
+   BOTTOM NAVIGATION
+========================= */
+
+.bottom-nav {
+    position: fixed;
+
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+
+    background:
+        rgba(255,255,255,0.96);
+
+    backdrop-filter:
+        blur(15px);
+
+    border-top:
+        1px solid
+        rgba(0,0,0,0.08);
+
+    box-shadow:
+        0 -5px 20px
+        rgba(0,0,0,0.08);
+
+    z-index: 1000;
+}
+
+.nav-item {
+    width: 20%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    text-decoration: none;
+
+    color: #777;
+
+    font-size: 22px;
+
+    transition:
+        0.2s ease;
+}
+
+.nav-item small {
+    margin-top: 3px;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.nav-item.active {
+    color: #6a11cb;
+}
+
+.nav-item:hover {
+    transform:
+        translateY(-2px);
+}
+
+.create-btn {
+    width: 54px;
+    height: 54px;
+
+    margin-top: -27px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6a11cb,
+            #2575fc
+        );
+
+    color: white;
+
+    font-size: 28px;
+
+    box-shadow:
+        0 6px 18px
+        rgba(70,50,180,0.3);
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 420px) {
+
+    .message-card {
+        padding: 11px;
+        border-radius: 19px;
+    }
+
+    .profile-picture {
+        width: 53px;
+        height: 53px;
+    }
+
+    .name {
+        font-size: 16px;
+    }
+
+    .last-message-text {
+        font-size: 13px;
+    }
+
+    .delete-chat-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+
+}
+
+</style>
 
 </head>
 
+
 <body>
 
-<div class="header">
-    Messages
-</div>
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<header class="header">
+
+    <div class="header-top">
+
+        <div>
+
+            <div class="header-title">
+                Messages
+            </div>
+
+            <div class="header-subtitle">
+                Stay connected with your people
+            </div>
+
+        </div>
 
 
-<div id="messageList" class="message-list">
-    Loading messages...
-</div>
+        <button
+            class="header-icon"
+            onclick="location.reload()"
+            aria-label="Refresh">
+
+            ↻
+
+        </button>
+
+    </div>
 
 
-<script type="module" src="message.js"></script>
+    <div class="search-box">
+
+        <span class="search-icon">
+            🔍
+        </span>
+
+        <input
+            id="searchInput"
+            type="search"
+            placeholder="Search conversations..."
+            autocomplete="off">
+
+    </div>
+
+</header>
 
 
+<!-- =========================
+     MESSAGES
+========================= -->
 
-<script type="module" src="presence.js"></script>
+<main
+    id="messageList"
+    class="message-list">
+
+    <div class="empty-state">
+
+        <div class="empty-icon">
+            💬
+        </div>
+
+        <div class="empty-title">
+            Loading messages...
+        </div>
+
+        <div class="empty-text">
+            Your conversations will appear here.
+        </div>
+
+    </div>
+
+</main>
 
 
+<!-- =========================
+     BOTTOM NAV
+========================= -->
+
+<nav class="bottom-nav">
+
+    <a
+        href="home.html"
+        class="nav-item">
+
+        <span>🏠</span>
+        <small>Home</small>
+
+    </a>
 
 
+    <a
+        href="users.html"
+        class="nav-item">
+
+        <span>👥</span>
+        <small>Friends</small>
+
+    </a>
 
 
+    <a
+        href="create-post.html"
+        class="create-btn"
+        aria-label="Create post">
+
+        +
+
+    </a>
 
 
+    <a
+        href="general-room.html"
+        class="nav-item active">
+
+        <span>💬</span>
+        <small>Chat</small>
+
+    </a>
 
 
+    <a
+        href="profile.html"
+        class="nav-item">
+
+        <span>👤</span>
+        <small>Profile</small>
+
+    </a>
+
+</nav>
 
 
+<script
+    type="module"
+    src="message.js">
+</script>
+
+
+<script
+    type="module"
+    src="presence.js">
+</script>
 
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Bottom Navigation -->
-<div style="
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:65px;
-background:#e5e5e5;
-border-top:1px solid #ccc;
-display:flex;
-justify-content:space-around;
-align-items:center;
-box-shadow:0 -2px 8px rgba(0,0,0,0.1);
-z-index:1000;
-">
-
-    <a href="home.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>🏠</span>
-        <small style="font-size:12px;">Home</small>
-    </a>
-
-    <a href="users.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👥</span>
-        <small style="font-size:12px;">Friends</small>
-    </a>
-
-    <a href="create-post.html" style="
-    width:55px;
-    height:55px;
-    background:#1877f2;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-decoration:none;
-    font-size:30px;
-    margin-top:-25px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-    ">
-        ➕
-    </a>
-
-    <a href="general-room.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>💬</span>
-        <small style="font-size:12px;">Chat</small>
-    </a>
-
-    <a href="profile.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👤</span>
-        <small style="font-size:12px;">Profile</small>
-    </a>
-
-</div>
