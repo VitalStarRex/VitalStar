@@ -24,13 +24,15 @@ const searchInput =
     document.getElementById("searchInput");
 
 
-let allChats = [];
 let currentUser = null;
+let allChats = [];
+let rendering = false;
+let renderAgain = false;
 
 
-/* ===============================
+/* ============================================================
    ESCAPE HTML
-================================ */
+============================================================ */
 
 function escapeHtml(text) {
 
@@ -43,9 +45,9 @@ function escapeHtml(text) {
 }
 
 
-/* ===============================
-   TIMESTAMP
-================================ */
+/* ============================================================
+   TIMESTAMP VALUE
+============================================================ */
 
 function getTimestampValue(timestamp) {
 
@@ -54,14 +56,12 @@ function getTimestampValue(timestamp) {
     }
 
     if (
-        typeof timestamp.toDate ===
-        "function"
+        typeof timestamp.toDate === "function"
     ) {
         return timestamp.toDate().getTime();
     }
 
     if (timestamp.seconds) {
-
         return timestamp.seconds * 1000;
     }
 
@@ -74,9 +74,9 @@ function getTimestampValue(timestamp) {
 }
 
 
-/* ===============================
+/* ============================================================
    FORMAT TIME
-================================ */
+============================================================ */
 
 function formatTime(timestamp) {
 
@@ -87,24 +87,17 @@ function formatTime(timestamp) {
     let date;
 
     if (
-        typeof timestamp.toDate ===
-        "function"
+        typeof timestamp.toDate === "function"
     ) {
+        date = timestamp.toDate();
 
-        date =
-            timestamp.toDate();
-
-    } else if (
-        timestamp.seconds
-    ) {
-
+    } else if (timestamp.seconds) {
         date =
             new Date(
                 timestamp.seconds * 1000
             );
 
     } else {
-
         date =
             new Date(timestamp);
     }
@@ -118,28 +111,27 @@ function formatTime(timestamp) {
     const now =
         new Date();
 
-
-    const diff =
+    const seconds =
         Math.floor(
             (now - date) / 1000
         );
 
 
-    if (diff < 60) {
+    if (seconds < 60) {
         return "Just now";
     }
 
 
-    if (diff < 3600) {
+    if (seconds < 3600) {
 
         return (
-            Math.floor(diff / 60) +
+            Math.floor(seconds / 60) +
             " min"
         );
     }
 
 
-    if (diff < 86400) {
+    if (seconds < 86400) {
 
         return date.toLocaleTimeString(
             [],
@@ -151,7 +143,7 @@ function formatTime(timestamp) {
     }
 
 
-    if (diff < 604800) {
+    if (seconds < 604800) {
 
         return date.toLocaleDateString(
             [],
@@ -172,9 +164,9 @@ function formatTime(timestamp) {
 }
 
 
-/* ===============================
+/* ============================================================
    LAST MESSAGE
-================================ */
+============================================================ */
 
 function getLastMessageHtml(chat) {
 
@@ -229,9 +221,9 @@ function getLastMessageHtml(chat) {
 }
 
 
-/* ===============================
-   COUNT UNREAD MESSAGES
-================================ */
+/* ============================================================
+   GET UNREAD COUNT
+============================================================ */
 
 async function getUnreadCount(
     chatId,
@@ -249,31 +241,36 @@ async function getUnreadCount(
             );
 
 
-        const unreadQuery =
-            query(
-                messagesRef,
-
-                where(
-                    "receiverId",
-                    "==",
-                    userId
-                ),
-
-                where(
-                    "read",
-                    "==",
-                    false
-                )
-            );
-
-
         const snapshot =
             await getDocs(
-                unreadQuery
+                messagesRef
             );
 
 
-        return snapshot.size;
+        let count = 0;
+
+
+        snapshot.forEach(
+            messageDoc => {
+
+                const message =
+                    messageDoc.data();
+
+
+                if (
+                    message.receiverId ===
+                    userId &&
+                    message.read === false
+                ) {
+
+                    count++;
+                }
+
+            }
+        );
+
+
+        return count;
 
     } catch (error) {
 
@@ -287,9 +284,41 @@ async function getUnreadCount(
 }
 
 
-/* ===============================
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+
+function showEmptyState(
+    icon,
+    title,
+    text
+) {
+
+    messageList.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                ${icon}
+            </div>
+
+            <div class="empty-title">
+                ${escapeHtml(title)}
+            </div>
+
+            <div class="empty-text">
+                ${escapeHtml(text)}
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+/* ============================================================
    DELETE CHAT
-================================ */
+============================================================ */
 
 async function deleteChat(
     chatId,
@@ -310,11 +339,8 @@ async function deleteChat(
 
     try {
 
-        card.style.opacity =
-            "0.45";
-
-        card.style.pointerEvents =
-            "none";
+        card.style.opacity = "0.45";
+        card.style.pointerEvents = "none";
 
 
         const messagesRef =
@@ -331,11 +357,6 @@ async function deleteChat(
                 messagesRef
             );
 
-
-        /*
-         * Firestore allows a maximum
-         * of 500 writes per batch.
-         */
 
         let batch =
             writeBatch(db);
@@ -368,7 +389,6 @@ async function deleteChat(
 
 
         if (count > 0) {
-
             await batch.commit();
         }
 
@@ -401,10 +421,9 @@ async function deleteChat(
             showEmptyState(
                 "💬",
                 "No conversations",
-                "Start a conversation with someone on VitalStar."
+                "Start a conversation on VitalStar."
             );
         }
-
 
     } catch (error) {
 
@@ -414,55 +433,169 @@ async function deleteChat(
         );
 
 
-        card.style.opacity =
-            "1";
-
-        card.style.pointerEvents =
-            "auto";
+        card.style.opacity = "1";
+        card.style.pointerEvents = "auto";
 
 
         alert(
-            "Unable to delete this chat. Please try again."
+            "Failed to delete chat. Please try again."
         );
     }
 }
 
 
-/* ===============================
-   EMPTY STATE
-================================ */
+/* ============================================================
+   CREATE CHAT CARD
+============================================================ */
 
-function showEmptyState(
-    icon,
-    title,
-    text
-) {
+async function createChatCard(chat) {
 
-    messageList.innerHTML = `
+    const unreadCount =
+        await getUnreadCount(
+            chat.id,
+            currentUser.uid
+        );
 
-        <div class="empty-state">
 
-            <div class="empty-icon">
-                ${icon}
+    const card =
+        document.createElement("div");
+
+
+    card.className =
+        "message-card";
+
+
+    if (unreadCount > 0) {
+
+        card.classList.add(
+            "unread-card"
+        );
+    }
+
+
+    const profilePic =
+        chat.profilePic ||
+        "default.png";
+
+
+    card.innerHTML = `
+
+        <div class="avatar-wrapper">
+
+            <img
+                src="${escapeHtml(profilePic)}"
+                class="profile-picture"
+                alt="${escapeHtml(chat.fullName)}"
+                onerror="this.src='default.png'">
+
+            <span class="online-dot"></span>
+
+        </div>
+
+
+        <div class="message-info">
+
+            <div class="top-row">
+
+                <div class="name">
+                    ${escapeHtml(chat.fullName)}
+                </div>
+
+                <div class="time-text">
+                    ${formatTime(
+                        chat.lastTimestamp
+                    )}
+                </div>
+
             </div>
 
-            <div class="empty-title">
-                ${escapeHtml(title)}
-            </div>
 
-            <div class="empty-text">
-                ${escapeHtml(text)}
+            <div class="bottom-row">
+
+                <div class="last-message">
+
+                    ${getLastMessageHtml(chat)}
+
+                </div>
+
+
+                ${
+                    unreadCount > 0
+                        ? `
+                            <span class="unread-badge">
+                                ${
+                                    unreadCount > 99
+                                        ? "99+"
+                                        : unreadCount
+                                }
+                            </span>
+                          `
+                        : ""
+                }
+
             </div>
 
         </div>
 
+
+        <button
+            class="delete-chat-btn"
+            type="button"
+            title="Delete chat"
+            aria-label="Delete chat">
+
+            🗑️
+
+        </button>
+
     `;
+
+
+    /* OPEN CHAT */
+
+    card.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                `chat.html?uid=${chat.otherUserId}`;
+
+        }
+    );
+
+
+    /* DELETE CHAT */
+
+    const deleteButton =
+        card.querySelector(
+            ".delete-chat-btn"
+        );
+
+
+    deleteButton.addEventListener(
+        "click",
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            deleteChat(
+                chat.id,
+                card
+            );
+
+        }
+    );
+
+
+    return card;
 }
 
 
-/* ===============================
-   RENDER CHATS
-================================ */
+/* ============================================================
+   RENDER CHAT LIST
+============================================================ */
 
 async function renderChats() {
 
@@ -471,255 +604,184 @@ async function renderChats() {
     }
 
 
-    const search =
-        searchInput?.value
-            ?.trim()
-            .toLowerCase() || "";
-
-
-    messageList.innerHTML = "";
-
-
-    let chats =
-        [...allChats];
-
-
     /*
-     * Search by user's name
-     * or latest message.
+     * Prevent multiple renders from
+     * fighting with each other.
      */
 
-    if (search) {
+    if (rendering) {
 
-        chats =
-            chats.filter(chat => {
-
-                const name =
-                    (
-                        chat.fullName ||
-                        ""
-                    ).toLowerCase();
-
-                const message =
-                    (
-                        chat.lastMessage ||
-                        ""
-                    ).toLowerCase();
-
-                return (
-                    name.includes(search) ||
-                    message.includes(search)
-                );
-            });
-    }
-
-
-    if (!chats.length) {
-
-        if (search) {
-
-            showEmptyState(
-                "🔍",
-                "No results",
-                "No conversation matches your search."
-            );
-
-        } else {
-
-            showEmptyState(
-                "💬",
-                "No conversations",
-                "Start chatting with your friends on VitalStar."
-            );
-        }
-
+        renderAgain = true;
         return;
     }
 
 
-    /*
-     * Newest conversation first.
-     */
-
-    chats.sort(
-        (a, b) =>
-            getTimestampValue(
-                b.lastTimestamp
-            ) -
-            getTimestampValue(
-                a.lastTimestamp
-            )
-    );
+    rendering = true;
 
 
-    /*
-     * Render one card at a time.
-     */
+    try {
 
-    for (
-        const chat of chats
-    ) {
-
-        const card =
-            document.createElement(
-                "div"
-            );
+        const search =
+            searchInput?.value
+                ?.trim()
+                .toLowerCase() || "";
 
 
-        card.className =
-            "message-card";
+        let chats =
+            [...allChats];
+
+
+        /* SEARCH */
+
+        if (search) {
+
+            chats =
+                chats.filter(
+                    chat => {
+
+                        const name =
+                            (
+                                chat.fullName ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const lastMessage =
+                            (
+                                chat.lastMessage ||
+                                ""
+                            ).toLowerCase();
+
+
+                        return (
+                            name.includes(search) ||
+                            lastMessage.includes(search)
+                        );
+
+                    }
+                );
+        }
+
+
+        /* SORT */
+
+        chats.sort(
+            (a, b) => {
+
+                return (
+                    getTimestampValue(
+                        b.lastTimestamp
+                    ) -
+                    getTimestampValue(
+                        a.lastTimestamp
+                    )
+                );
+
+            }
+        );
+
+
+        /* EMPTY */
+
+        if (!chats.length) {
+
+            if (search) {
+
+                showEmptyState(
+                    "🔍",
+                    "No results",
+                    "No conversation matches your search."
+                );
+
+            } else {
+
+                showEmptyState(
+                    "💬",
+                    "No conversations",
+                    "Start chatting with your friends on VitalStar."
+                );
+            }
+
+            return;
+        }
 
 
         /*
-         * Get unread count.
+         * Build everything in a temporary
+         * container first.
+         *
+         * This prevents the page from
+         * becoming blank during rendering.
          */
 
-        const unreadCount =
-            await getUnreadCount(
-                chat.id,
-                currentUser.uid
-            );
+        const fragment =
+            document.createDocumentFragment();
 
 
-        if (unreadCount > 0) {
+        for (
+            const chat
+            of chats
+        ) {
 
-            card.classList.add(
-                "unread-card"
+            const card =
+                await createChatCard(
+                    chat
+                );
+
+
+            fragment.appendChild(
+                card
             );
         }
 
 
-        const profilePic =
-            chat.profilePic ||
-            "default.png";
-
-
-        card.innerHTML = `
-
-            <div class="avatar-wrapper">
-
-                <img
-                    src="${escapeHtml(profilePic)}"
-                    class="profile-picture"
-                    alt="${escapeHtml(chat.fullName)}"
-                    onerror="this.src='default.png'">
-
-                <span class="online-dot"></span>
-
-            </div>
-
-
-            <div class="message-info">
-
-                <div class="top-row">
-
-                    <div class="name">
-                        ${escapeHtml(
-                            chat.fullName
-                        )}
-                    </div>
-
-                    <div class="time-text">
-                        ${formatTime(
-                            chat.lastTimestamp
-                        )}
-                    </div>
-
-                </div>
-
-
-                <div class="bottom-row">
-
-                    <div class="last-message">
-
-                        ${getLastMessageHtml(
-                            chat
-                        )}
-
-                    </div>
-
-
-                    ${
-                        unreadCount > 0
-                            ? `
-                                <span
-                                    class="unread-badge">
-                                    ${
-                                        unreadCount > 99
-                                            ? "99+"
-                                            : unreadCount
-                                    }
-                                </span>
-                              `
-                            : ""
-                    }
-
-                </div>
-
-            </div>
-
-
-            <button
-                class="delete-chat-btn"
-                title="Delete chat"
-                aria-label="Delete chat">
-
-                🗑️
-
-            </button>
-
-        `;
-
-
         /*
-         * Open chat.
+         * Replace the list only after
+         * everything is ready.
          */
 
-        card.addEventListener(
-            "click",
-            () => {
-
-                window.location.href =
-                    `chat.html?uid=${chat.otherUserId}`;
-            }
-        );
-
-
-        /*
-         * Delete button.
-         */
-
-        const deleteButton =
-            card.querySelector(
-                ".delete-chat-btn"
-            );
-
-
-        deleteButton.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-
-                deleteChat(
-                    chat.id,
-                    card
-                );
-            }
-        );
-
+        messageList.innerHTML = "";
 
         messageList.appendChild(
-            card
+            fragment
         );
+
+
+    } catch (error) {
+
+        console.error(
+            "Render error:",
+            error
+        );
+
+
+        showEmptyState(
+            "⚠️",
+            "Something went wrong",
+            "Unable to display your conversations."
+        );
+
+    } finally {
+
+        rendering = false;
+
+
+        if (renderAgain) {
+
+            renderAgain = false;
+
+            setTimeout(
+                renderChats,
+                50
+            );
+        }
     }
 }
 
 
-/* ===============================
-   AUTH
-================================ */
+/* ============================================================
+   AUTHENTICATION
+============================================================ */
 
 onAuthStateChanged(
     auth,
@@ -738,13 +800,17 @@ onAuthStateChanged(
             user;
 
 
+        /*
+         * Get all chats belonging
+         * to the current user.
+         */
+
         const chatsQuery =
             query(
                 collection(
                     db,
                     "chats"
                 ),
-
                 where(
                     "participants",
                     "array-contains",
@@ -753,16 +819,17 @@ onAuthStateChanged(
             );
 
 
-        /*
-         * Listen for conversations.
-         */
-
         onSnapshot(
             chatsQuery,
+
             async snapshot => {
 
                 const chats = [];
 
+
+                /*
+                 * Read each conversation.
+                 */
 
                 for (
                     const chatDoc
@@ -773,8 +840,18 @@ onAuthStateChanged(
                         chatDoc.data();
 
 
+                    if (
+                        !Array.isArray(
+                            data.participants
+                        )
+                    ) {
+
+                        continue;
+                    }
+
+
                     const otherUserId =
-                        data.participants?.find(
+                        data.participants.find(
                             id =>
                                 id !== user.uid
                         );
@@ -832,7 +909,7 @@ onAuthStateChanged(
                     } catch (error) {
 
                         console.error(
-                            "User loading error:",
+                            "Profile loading error:",
                             error
                         );
                     }
@@ -853,6 +930,7 @@ onAuthStateChanged(
 
                         profilePic:
                             profilePic
+
                     });
                 }
 
@@ -865,42 +943,43 @@ onAuthStateChanged(
 
 
                 /*
-                 * Live unread updates.
+                 * Listen for new/read messages.
                  *
-                 * Listen to each conversation's
-                 * message collection so the badge
-                 * changes immediately.
+                 * This updates unread numbers
+                 * without clearing the list
+                 * unnecessarily.
                  */
 
-                for (
-                    const chat
-                    of chats
-                ) {
+                chats.forEach(
+                    chat => {
 
-                    const messagesRef =
-                        collection(
-                            db,
-                            "chats",
-                            chat.id,
-                            "messages"
+                        const messagesRef =
+                            collection(
+                                db,
+                                "chats",
+                                chat.id,
+                                "messages"
+                            );
+
+
+                        onSnapshot(
+                            messagesRef,
+                            () => {
+
+                                renderChats();
+
+                            }
                         );
 
-
-                    onSnapshot(
-                        messagesRef,
-                        () => {
-
-                            renderChats();
-                        }
-                    );
-                }
+                    }
+                );
 
             },
 
             error => {
 
                 console.error(
-                    "Chat loading error:",
+                    "Chat list error:",
                     error
                 );
 
@@ -910,6 +989,7 @@ onAuthStateChanged(
                     "Unable to load messages",
                     "Please check your internet connection and try again."
                 );
+
             }
         );
 
@@ -917,9 +997,9 @@ onAuthStateChanged(
 );
 
 
-/* ===============================
+/* ============================================================
    SEARCH
-================================ */
+============================================================ */
 
 if (searchInput) {
 
@@ -928,6 +1008,7 @@ if (searchInput) {
         () => {
 
             renderChats();
+
         }
     );
 }
