@@ -1,0 +1,14 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "VitalStar",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "VitalStar",
+  "start_url": "/VitalStar/",
+  "theme_color": "#ffffff",
+  "description": "Connect, Share &amp; Shine with VitalStar",
+  "id": "com.vitalstar.app",
+  "lang": "en"
+}
