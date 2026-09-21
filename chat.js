@@ -1,1261 +1,248 @@
 // ============================================================
-// VITALSTAR — chat.js
-// Handles:
-// - Chat messages
-// - Image/video preview
-// - Image/video uploads
-// - Voice notes
-// - Sending state
-// - Message read/delivered status
+// VITALSTAR CHAT — LOADING SCREEN
 // ============================================================
 
-import { auth, db } from "./firebase.js";
-
-import {
-    doc,
-    getDoc,
-    collection,
-    addDoc,
-    query,
-    orderBy,
-    limit,
-    onSnapshot,
-    serverTimestamp,
-    setDoc,
-    updateDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-// ============================================================
-// HTML ELEMENTS
-// ============================================================
-
-const backBtn =
-    document.getElementById("backBtn");
-
-const chatAvatar =
-    document.getElementById("chatAvatar");
-
-const chatName =
-    document.getElementById("chatName");
-
-const chatStatus =
-    document.getElementById("chatStatus");
-
-const messages =
-    document.getElementById("messages");
-
-const messageForm =
-    document.getElementById("messageForm");
-
-const messageInput =
-    document.getElementById("messageInput");
-
-const imageInput =
-    document.getElementById("imageInput");
-
-const videoInput =
-    document.getElementById("videoInput");
-
-const imageBtn =
-    document.getElementById("imageBtn");
-
-const videoBtn =
-    document.getElementById("videoBtn");
-
-const recordBtn =
-    document.getElementById("recordBtn");
-
-
-// ============================================================
-// CREATE MEDIA PREVIEW AREA
-// ============================================================
-
-const mediaPreview =
+const vitalStarChatLoader =
     document.createElement("div");
 
-mediaPreview.id =
-    "chatMediaPreview";
+vitalStarChatLoader.id =
+    "vitalStarChatLoader";
 
-mediaPreview.style.display =
-    "none";
+vitalStarChatLoader.innerHTML = `
 
-mediaPreview.style.width =
-    "100%";
+    <div class="vs-chat-loader-content">
 
-mediaPreview.style.margin =
-    "8px 0";
+        <div class="vs-chat-spinner">
 
-mediaPreview.style.textAlign =
-    "left";
+            <span>VS</span>
 
-mediaPreview.style.minHeight =
-    "0";
+        </div>
 
+        <div class="vs-chat-loading-text">
+            Loading Chat...
+        </div>
 
-// Put preview above message form
+    </div>
 
-if (messageForm) {
-
-    messageForm.parentNode.insertBefore(
-        mediaPreview,
-        messageForm
-    );
-
-}
+`;
 
 
-// ============================================================
-// CREATE SENDING STATUS
-// ============================================================
+const vitalStarChatLoaderStyle =
+    document.createElement("style");
 
-const sendingStatus =
-    document.createElement("div");
+vitalStarChatLoaderStyle.textContent = `
 
-sendingStatus.id =
-    "messageSendingStatus";
+    #vitalStarChatLoader {
 
-sendingStatus.style.display =
-    "none";
+        position: fixed;
 
-sendingStatus.style.textAlign =
-    "center";
+        inset: 0;
 
-sendingStatus.style.fontSize =
-    "13px";
+        z-index: 999999;
 
-sendingStatus.style.fontWeight =
-    "bold";
+        background:
+            radial-gradient(
+                circle at center,
+                #100b2b 0%,
+                #070512 45%,
+                #03020a 100%
+            );
 
-sendingStatus.style.color =
-    "#1877f2";
+        display: flex;
 
-sendingStatus.style.padding =
-    "6px";
+        align-items: center;
 
+        justify-content: center;
 
-// Put status above form
+        opacity: 1;
 
-if (messageForm) {
+        visibility: visible;
 
-    messageForm.parentNode.insertBefore(
-        sendingStatus,
-        messageForm
-    );
+        transition:
+            opacity 0.55s ease,
+            visibility 0.55s ease;
 
-}
+    }
 
 
-// ============================================================
-// FIND SEND BUTTON
-// ============================================================
+    #vitalStarChatLoader.hide {
 
-let sendButton =
-    messageForm?.querySelector(
-        'button[type="submit"]'
-    );
+        opacity: 0;
+
+        visibility: hidden;
+
+        pointer-events: none;
+
+    }
 
 
-// ============================================================
-// SENDING STATE
-// ============================================================
+    .vs-chat-loader-content {
 
-function setSendingState(isSending) {
+        display: flex;
 
-    if (sendButton) {
+        flex-direction: column;
 
-        sendButton.disabled =
-            isSending;
+        align-items: center;
 
-        if (isSending) {
+        justify-content: center;
 
-            sendButton.dataset.originalText =
-                sendButton.textContent;
+    }
 
-            sendButton.textContent =
-                "⏳ Sending...";
 
-        } else {
+    .vs-chat-spinner {
 
-            sendButton.textContent =
-                sendButton.dataset.originalText ||
-                "Send";
+        width: 90px;
 
+        height: 90px;
+
+        border-radius: 50%;
+
+        border:
+            5px solid
+            rgba(255,255,255,0.10);
+
+        border-top-color:
+            #FFD54F;
+
+        border-right-color:
+            #9C4DFF;
+
+        border-bottom-color:
+            #7C4DFF;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        animation:
+            vsChatRotate
+            1s linear infinite;
+
+        box-shadow:
+            0 0 18px
+            rgba(255,213,79,0.25),
+
+            0 0 35px
+            rgba(124,77,255,0.18);
+
+    }
+
+
+    .vs-chat-spinner span {
+
+        font-size: 25px;
+
+        font-weight: 900;
+
+        letter-spacing: 2px;
+
+        color: #FFD54F;
+
+        text-shadow:
+            0 0 12px
+            rgba(255,213,79,0.45);
+
+        animation:
+            vsChatCounterRotate
+            1s linear infinite;
+
+    }
+
+
+    .vs-chat-loading-text {
+
+        margin-top: 18px;
+
+        color:
+            rgba(255,255,255,0.88);
+
+        font-size: 14px;
+
+        font-weight: 600;
+
+        letter-spacing: 0.5px;
+
+    }
+
+
+    @keyframes vsChatRotate {
+
+        from {
+            transform:
+                rotate(0deg);
+        }
+
+        to {
+            transform:
+                rotate(360deg);
         }
 
     }
 
 
-    sendingStatus.style.display =
-        isSending
-            ? "block"
-            : "none";
+    @keyframes vsChatCounterRotate {
 
-
-    sendingStatus.textContent =
-        isSending
-            ? "Uploading, please wait..."
-            : "";
-
-}
-
-
-// ============================================================
-// CLEAR MEDIA PREVIEW
-// ============================================================
-
-function clearMediaPreview() {
-
-    mediaPreview.innerHTML = "";
-
-    mediaPreview.style.display =
-        "none";
-
-}
-
-
-// ============================================================
-// IMAGE PREVIEW
-// ============================================================
-
-if (imageInput) {
-
-    imageInput.addEventListener(
-        "change",
-        () => {
-
-            const file =
-                imageInput.files[0];
-
-            if (!file) {
-                return;
-            }
-
-
-            // Clear video selection
-            if (videoInput) {
-
-                videoInput.value =
-                    "";
-
-            }
-
-
-            clearMediaPreview();
-
-
-            const image =
-                document.createElement("img");
-
-
-            image.src =
-                URL.createObjectURL(file);
-
-
-            image.alt =
-                "Image preview";
-
-
-            // EXACT SIZE
-            image.style.width =
-                "100px";
-
-            image.style.height =
-                "120px";
-
-            image.style.objectFit =
-                "cover";
-
-            image.style.borderRadius =
-                "10px";
-
-            image.style.display =
-                "block";
-
-
-            mediaPreview.appendChild(
-                image
-            );
-
-
-            mediaPreview.style.display =
-                "block";
-
+        from {
+            transform:
+                rotate(0deg);
         }
-    );
 
-}
-
-
-// ============================================================
-// VIDEO PREVIEW
-// ============================================================
-
-if (videoInput) {
-
-    videoInput.addEventListener(
-        "change",
-        () => {
-
-            const file =
-                videoInput.files[0];
-
-            if (!file) {
-                return;
-            }
-
-
-            // Clear image selection
-            if (imageInput) {
-
-                imageInput.value =
-                    "";
-
-            }
-
-
-            clearMediaPreview();
-
-
-            const video =
-                document.createElement("video");
-
-
-            video.src =
-                URL.createObjectURL(file);
-
-
-            video.controls =
-                true;
-
-
-            video.preload =
-                "metadata";
-
-
-            // EXACT SIZE
-            video.style.width =
-                "100px";
-
-            video.style.height =
-                "120px";
-
-            video.style.objectFit =
-                "cover";
-
-            video.style.borderRadius =
-                "10px";
-
-            video.style.display =
-                "block";
-
-
-            mediaPreview.appendChild(
-                video
-            );
-
-
-            mediaPreview.style.display =
-                "block";
-
+        to {
+            transform:
+                rotate(-360deg);
         }
-    );
-
-}
-
-
-// ============================================================
-// CLOUDINARY UPLOAD
-// ============================================================
-
-async function uploadToCloudinary(file) {
-
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "file",
-        file
-    );
-
-
-    formData.append(
-        "upload_preset",
-        "vitalstar_upload"
-    );
-
-
-    const response =
-        await fetch(
-            "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
-
-
-    const data =
-        await response.json();
-
-
-    console.log(data);
-
-
-    if (!response.ok || !data.secure_url) {
-
-        throw new Error(
-            data?.error?.message ||
-            "Upload failed."
-        );
 
     }
 
+`;
 
-    return data.secure_url;
 
-}
-
-
-// ============================================================
-// OPEN FILE PICKERS
-// ============================================================
-
-if (imageBtn) {
-
-    imageBtn.onclick = () => {
-
-        imageInput.click();
-
-    };
-
-}
-
-
-if (videoBtn) {
-
-    videoBtn.onclick = () => {
-
-        videoInput.click();
-
-    };
-
-}
-
-
-// ============================================================
-// VOICE RECORDING
-// ============================================================
-
-let recorder;
-
-let audioChunks = [];
-
-
-recordBtn.onclick = async () => {
-
-    try {
-
-        if (
-            !recorder ||
-            recorder.state === "inactive"
-        ) {
-
-            const stream =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true
-                });
-
-
-            recorder =
-                new MediaRecorder(stream);
-
-
-            audioChunks = [];
-
-
-            recorder.ondataavailable =
-                (e) => {
-
-                    audioChunks.push(
-                        e.data
-                    );
-
-                };
-
-
-            recorder.onstop =
-                async () => {
-
-                    const audioBlob =
-                        new Blob(
-                            audioChunks,
-                            {
-                                type:
-                                    "audio/webm"
-                            }
-                        );
-
-
-                    try {
-
-                        setSendingState(true);
-
-
-                        const url =
-                            await uploadToCloudinary(
-                                audioBlob
-                            );
-
-
-                        window.voiceUrl =
-                            url;
-
-
-                        alert(
-                            "Voice note ready 🎤"
-                        );
-
-
-                    } catch (error) {
-
-                        console.error(
-                            error
-                        );
-
-
-                        alert(
-                            "Voice note upload failed."
-                        );
-
-                    } finally {
-
-                        setSendingState(false);
-
-                    }
-
-                };
-
-
-            recorder.start();
-
-
-            recordBtn.textContent =
-                "⏹";
-
-        } else {
-
-            recorder.stop();
-
-
-            recordBtn.textContent =
-                "🎤";
-
-        }
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        alert(
-            "Microphone permission is required."
-        );
-
-    }
-
-};
-
-
-// ============================================================
-// GET RECEIVER UID
-// ============================================================
-
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
-
-const receiverUid =
-    params.get("uid");
-
-
-// ============================================================
-// BACK BUTTON
-// ============================================================
-
-if (backBtn) {
-
-    backBtn.onclick = () => {
-
-        history.back();
-
-    };
-
-}
-
-
-// ============================================================
-// AUTHENTICATION
-// ============================================================
-
-auth.onAuthStateChanged(
-    async (user) => {
-
-        if (!user) {
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        if (!receiverUid) {
-
-            alert(
-                "No chat recipient found."
-            );
-
-            return;
-
-        }
-
-
-        // ====================================================
-        // CHAT ID
-        // ====================================================
-
-        const chatId =
-            user.uid < receiverUid
-                ? `${user.uid}_${receiverUid}`
-                : `${receiverUid}_${user.uid}`;
-
-
-        // ====================================================
-        // CREATE CHAT DOCUMENT
-        // ====================================================
-
-        await setDoc(
-            doc(
-                db,
-                "chats",
-                chatId
-            ),
-            {
-                participants: [
-                    user.uid,
-                    receiverUid
-                ]
-            },
-            {
-                merge: true
-            }
-        );
-
-
-        // ====================================================
-        // GET RECEIVER
-        // ====================================================
-
-        const receiverRef =
-            doc(
-                db,
-                "users",
-                receiverUid
-            );
-
-
-        const receiverSnap =
-            await getDoc(
-                receiverRef
-            );
-
-
-        if (receiverSnap.exists()) {
-
-            const data =
-                receiverSnap.data();
-
-
-            chatName.textContent =
-                data.fullName ||
-                data.username ||
-                "User";
-
-
-            chatName.style.cursor =
-                "pointer";
-
-
-            chatName.onclick = () => {
-
-                window.location.href =
-                    `profile.html?uid=${receiverUid}`;
-
-            };
-
-
-            chatAvatar.src =
-                data.profilePicture ||
-                "https://via.placeholder.com/50";
-
-
-            chatStatus.textContent =
-                "Online";
-
-        }
-
-
-        // ====================================================
-        // MESSAGES COLLECTION
-        // ====================================================
-
-        const messagesRef =
-            collection(
-                db,
-                "chats",
-                chatId,
-                "messages"
-            );
-
-
-        // ====================================================
-        // SEND MESSAGE
-        // ====================================================
-
-        messageForm.addEventListener(
-            "submit",
-            async (e) => {
-
-                e.preventDefault();
-
-
-                const text =
-                    messageInput.value.trim();
-
-
-                let image = "";
-
-                let video = "";
-
-                let audio = "";
-
-
-                // Prevent duplicate sends
-                if (
-                    sendButton?.disabled
-                ) {
-
-                    return;
-
-                }
-
-
-                try {
-
-                    // START SENDING STATE
-                    setSendingState(true);
-
-
-                    // ----------------------------------------
-                    // IMAGE
-                    // ----------------------------------------
-
-                    if (
-                        imageInput.files[0]
-                    ) {
-
-                        image =
-                            await uploadToCloudinary(
-                                imageInput.files[0]
-                            );
-
-                    }
-
-
-                    // ----------------------------------------
-                    // VIDEO
-                    // ----------------------------------------
-
-                    if (
-                        videoInput.files[0]
-                    ) {
-
-                        video =
-                            await uploadToCloudinary(
-                                videoInput.files[0]
-                            );
-
-                    }
-
-
-                    // ----------------------------------------
-                    // VOICE
-                    // ----------------------------------------
-
-                    if (
-                        window.voiceUrl
-                    ) {
-
-                        audio =
-                            window.voiceUrl;
-
-
-                        window.voiceUrl =
-                            "";
-
-                    }
-
-
-                    // ----------------------------------------
-                    // CHECK EMPTY MESSAGE
-                    // ----------------------------------------
-
-                    if (
-                        !text &&
-                        !image &&
-                        !video &&
-                        !audio
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    // ----------------------------------------
-                    // ADD MESSAGE
-                    // ----------------------------------------
-
-                    await addDoc(
-                        messagesRef,
-                        {
-
-                            senderId:
-                                user.uid,
-
-                            receiverId:
-                                receiverUid,
-
-                            text:
-                                text,
-
-                            image:
-                                image,
-
-                            video:
-                                video,
-
-                            audio:
-                                audio,
-
-                            timestamp:
-                                serverTimestamp(),
-
-                            sent:
-                                true,
-
-                            delivered:
-                                false,
-
-                            read:
-                                false
-
-                        }
-                    );
-
-
-                    // ----------------------------------------
-                    // CHAT PREVIEW
-                    // ----------------------------------------
-
-                    const preview =
-                        text ||
-                        (
-                            image
-                                ? "📷 Photo"
-                                : video
-                                    ? "🎥 Video"
-                                    : audio
-                                        ? "🎤 Voice message"
-                                        : "New message"
-                        );
-
-
-                    // ----------------------------------------
-                    // UPDATE CHAT
-                    // ----------------------------------------
-
-                    await setDoc(
-                        doc(
-                            db,
-                            "chats",
-                            chatId
-                        ),
-                        {
-
-                            participants: [
-                                user.uid,
-                                receiverUid
-                            ],
-
-                            lastMessage:
-                                preview,
-
-                            lastImage:
-                                image || "",
-
-                            lastVideo:
-                                video || "",
-
-                            lastAudio:
-                                audio || "",
-
-                            lastTimestamp:
-                                serverTimestamp(),
-
-                            lastSenderId:
-                                user.uid,
-
-                            lastReceiverId:
-                                receiverUid,
-
-                            lastDelivered:
-                                false,
-
-                            lastRead:
-                                false
-
-                        },
-                        {
-                            merge: true
-                        }
-                    );
-
-
-                    // ----------------------------------------
-                    // CLEAR FORM
-                    // ----------------------------------------
-
-                    messageInput.value =
-                        "";
-
-
-                    imageInput.value =
-                        "";
-
-
-                    videoInput.value =
-                        "";
-
-
-                    clearMediaPreview();
-
-
-                }
-                catch (err) {
-
-                    console.error(
-                        "Send message error:",
-                        err
-                    );
-
-
-                    alert(
-                        err.message ||
-                        "Failed to send message."
-                    );
-
-                }
-                finally {
-
-                    // STOP SENDING STATE
-                    setSendingState(false);
-
-                }
-
-            }
-        );
-
-
-        // ====================================================
-        // DISPLAY MESSAGES
-        // ====================================================
-
-        const q =
-            query(
-                messagesRef,
-                orderBy(
-                    "timestamp",
-                    "desc"
-                ),
-                limit(15)
-            );
-
-
-        onSnapshot(
-            q,
-            async (snapshot) => {
-
-                messages.innerHTML =
-                    "";
-
-
-                const messageDocs =
-                    snapshot.docs.reverse();
-
-
-                for (
-                    const messageDoc
-                    of messageDocs
-                ) {
-
-                    const msg =
-                        messageDoc.data();
-
-
-                    let delivered =
-                        msg.delivered ||
-                        false;
-
-
-                    let read =
-                        msg.read ||
-                        false;
-
-
-                    // ----------------------------------------
-                    // MARK RECEIVED AS READ
-                    // ----------------------------------------
-
-                    if (
-                        msg.receiverId ===
-                            user.uid &&
-                        (
-                            !msg.delivered ||
-                            !msg.read
-                        )
-                    ) {
-
-                        await updateDoc(
-                            messageDoc.ref,
-                            {
-                                delivered:
-                                    true,
-
-                                read:
-                                    true
-                            }
-                        );
-
-
-                        await setDoc(
-                            doc(
-                                db,
-                                "chats",
-                                chatId
-                            ),
-                            {
-                                lastDelivered:
-                                    true,
-
-                                lastRead:
-                                    true
-                            },
-                            {
-                                merge:
-                                    true
-                            }
-                        );
-
-
-                        delivered =
-                            true;
-
-
-                        read =
-                            true;
-
-                    }
-
-
-                    // ----------------------------------------
-                    // MESSAGE BUBBLE
-                    // ----------------------------------------
-
-                    const div =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    div.className =
-                        msg.senderId ===
-                            user.uid
-                            ? "message sent"
-                            : "message received";
-
-
-                    // ----------------------------------------
-                    // TIME
-                    // ----------------------------------------
-
-                    let messageTime =
-                        "";
-
-
-                    const date =
-                        msg.timestamp
-                            ?.toDate?.();
-
-
-                    if (date) {
-
-                        messageTime =
-                            date.toLocaleTimeString(
-                                [],
-                                {
-                                    hour:
-                                        "numeric",
-
-                                    minute:
-                                        "2-digit"
-                                }
-                            );
-
-                    }
-
-
-                    // ----------------------------------------
-                    // STATUS
-                    // ----------------------------------------
-
-                    let status =
-                        "";
-
-
-                    if (
-                        msg.senderId ===
-                        user.uid
-                    ) {
-
-                        status =
-                            "✓ Sent";
-
-
-                        if (delivered) {
-
-                            status =
-                                "✓✓ Delivered";
-
-                        }
-
-
-                        if (read) {
-
-                            status =
-                                "✓✓ Read";
-
-                        }
-
-                    }
-
-
-                    // ----------------------------------------
-                    // MESSAGE HTML
-                    // ----------------------------------------
-
-                    div.innerHTML = `
-
-                        ${
-                            msg.text
-                                ? `<p>${msg.text}</p>`
-                                : ""
-                        }
-
-
-                        ${
-                            msg.image
-                                ? `
-                                    <img
-                                        src="${msg.image}"
-                                        style="
-                                            max-width:200px;
-                                            max-height:220px;
-                                            object-fit:contain;
-                                            border-radius:10px;
-                                            display:block;
-                                        "
-                                    >
-                                  `
-                                : ""
-                        }
-
-
-                        ${
-                            msg.video
-                                ? `
-                                    <video
-                                        controls
-                                        style="
-                                            max-width:220px;
-                                            max-height:220px;
-                                            border-radius:10px;
-                                            display:block;
-                                        "
-                                    >
-                                        <source src="${msg.video}">
-                                    </video>
-                                  `
-                                : ""
-                        }
-
-
-                        ${
-                            msg.audio
-                                ? `
-                                    <audio controls>
-                                        <source src="${msg.audio}">
-                                    </audio>
-                                  `
-                                : ""
-                        }
-
-
-                        <div class="message-footer">
-
-                            <span class="message-time">
-                                ${messageTime}
-                            </span>
-
-
-                            <span class="message-status">
-                                ${status}
-                            </span>
-
-                        </div>
-
-                    `;
-
-
-                    messages.appendChild(
-                        div
-                    );
-
-                }
-
-
-                messages.scrollTop =
-                    messages.scrollHeight;
-
-            }
-        );
-
-    }
+document.head.appendChild(
+    vitalStarChatLoaderStyle
 );
+
+
+document.body.appendChild(
+    vitalStarChatLoader
+);
+
+
+// ============================================================
+// HIDE CHAT LOADING SCREEN
+// ============================================================
+
+let chatLoaderHidden = false;
+
+
+function hideChatLoader() {
+
+    if (chatLoaderHidden) {
+        return;
+    }
+
+    chatLoaderHidden = true;
+
+
+    const loader =
+        document.getElementById(
+            "vitalStarChatLoader"
+        );
+
+
+    if (!loader) {
+        return;
+    }
+
+
+    loader.classList.add("hide");
+
+
+    setTimeout(() => {
+
+        loader.remove();
+
+    }, 650);
+
+}
