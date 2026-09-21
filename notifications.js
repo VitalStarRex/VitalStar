@@ -2,7 +2,7 @@ import { db, auth, messaging } from "./firebase.js";
 
 import {
   doc,
-  updateDoc,
+  setDoc,
   collection,
   query,
   where,
@@ -44,76 +44,185 @@ window.markAllNotificationsRead = async function () {
     const batch = writeBatch(db);
 
     snapshot.forEach((notificationDoc) => {
-      batch.update(notificationDoc.ref, { read: true });
+      batch.update(notificationDoc.ref, {
+        read: true
+      });
     });
 
     await batch.commit();
 
   } catch (error) {
-    console.error("Failed to mark notifications as read:", error);
+
+    console.error(
+      "Failed to mark notifications as read:",
+      error
+    );
+
   }
 
 };
 
-const markAllReadLink = document.getElementById("markAllReadLink");
+
+const markAllReadLink =
+  document.getElementById("markAllReadLink");
 
 if (markAllReadLink) {
+
   markAllReadLink.addEventListener("click", (e) => {
+
     e.preventDefault();
+
     window.markAllNotificationsRead();
+
   });
+
 }
 
 
-(async () => {
+// PUSH NOTIFICATIONS
+
+async function setupPushNotifications() {
+
   try {
 
-    const permission = await Notification.requestPermission();
-
-    if (permission !== "granted") {
-      alert("Notification permission was not granted.");
+    if (!("Notification" in window)) {
+      console.log("Notifications are not supported.");
       return;
     }
 
-    const registration = await navigator.serviceWorker.ready;
+    if (!("serviceWorker" in navigator)) {
+      console.log("Service workers are not supported.");
+      return;
+    }
+
+
+    const permission =
+      await Notification.requestPermission();
+
+    if (permission !== "granted") {
+
+      console.log(
+        "Notification permission was not granted."
+      );
+
+      return;
+    }
+
+
+    const registration =
+      await navigator.serviceWorker.register(
+        "/firebase-messaging-sw.js"
+      );
+
 
     const token = await getToken(messaging, {
-      vapidKey: "BEkwoctvtqjDmybrhAY-gGrG8_aBxTBmxDUoqq5w43H8MW6z0IwvOzmCLI3AZKY1KLqc5YuTFrt2cL-952QjV7o",
-      serviceWorkerRegistration: registration
+
+      vapidKey:
+        "BEkwoctvtqjDmybrhAY-gGrG8_aBxTBmxDUoqq5w43H8MW6z0IwvOzmCLI3AZKY1KLqc5YuTFrt2cL-952QjV7o",
+
+      serviceWorkerRegistration:
+        registration
+
     });
 
-    console.log("Token:", token);
+
+    if (!token) {
+
+      console.log(
+        "No FCM token received."
+      );
+
+      return;
+    }
 
 
-
-auth.onAuthStateChanged(async (user) => {
-
-    if (!user) return;
-
-    await updateDoc(doc(db, "users", user.uid), {
-        fcmToken: token
-    });
-
-    console.log("FCM token saved!");
-
-});
+    console.log(
+      "FCM Token:",
+      token
+    );
 
 
+    auth.onAuthStateChanged(
+      async (user) => {
 
+        if (!user) {
+          return;
+        }
 
+        try {
+
+          await setDoc(
+            doc(db, "users", user.uid),
+            {
+              fcmToken: token
+            },
+            {
+              merge: true
+            }
+          );
+
+          console.log(
+            "FCM token saved!"
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Failed to save FCM token:",
+            error
+          );
+
+        }
+
+      }
+    );
 
 
   } catch (error) {
-    console.error(error);
-    alert(error.message);
+
+    console.error(
+      "Push notification setup failed:",
+      error
+    );
+
   }
 
-})();
+}
+
+
+setupPushNotifications();
+
+
+// FOREGROUND NOTIFICATIONS
 
 onMessage(messaging, (payload) => {
 
-  alert(payload.notification?.title || "New notification");
+  console.log(
+    "Foreground notification:",
+    payload
+  );
 
-  console.log(payload);
+
+  const title =
+    payload.notification?.title ||
+    "VitalStar";
+
+
+  const body =
+    payload.notification?.body ||
+    "You have a new notification.";
+
+
+  if (
+    Notification.permission ===
+    "granted"
+  ) {
+
+    new Notification(title, {
+      body: body,
+      icon: "/icon-192.png"
+    });
+
+  }
 
 });
