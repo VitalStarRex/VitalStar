@@ -1,7 +1,21 @@
+// ============================================================
 // VITALSTAR MESSAGES
 // message.js
+//
+// Handles:
+// - Conversations
+// - Search
+// - Profile pictures
+// - First-letter avatars
+// - Unread counts
+// - Live message updates
+// - Delete conversations
+// - Full-screen VS loading indicator
+// ============================================================
+
 
 import { auth, db } from "./firebase.js";
+
 
 import {
     collection,
@@ -15,191 +29,663 @@ import {
     writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const messageList = document.getElementById("messageList");
-const searchInput = document.getElementById("searchInput");
 
-let currentUser = null;
-let allChats = [];
+// ============================================================
+// VITALSTAR — FULL SCREEN LOADING INDICATOR
+// ============================================================
 
-const chatListeners = new Map();
-const unreadCounts = new Map();
+const vitalStarLoader =
+    document.createElement("div");
+
+vitalStarLoader.id =
+    "vitalStarLoader";
 
 
-// ======================================
+vitalStarLoader.innerHTML = `
+
+    <div class="vs-loader-content">
+
+        <div class="vs-loader-spinner">
+
+            <span>VS</span>
+
+        </div>
+
+        <div class="vs-loader-text">
+            Loading Messages...
+        </div>
+
+    </div>
+
+`;
+
+
+const vitalStarLoaderStyle =
+    document.createElement("style");
+
+
+vitalStarLoaderStyle.textContent = `
+
+    #vitalStarLoader {
+
+        position: fixed;
+
+        inset: 0;
+
+        width: 100%;
+
+        height: 100%;
+
+        z-index: 999999;
+
+        background:
+            radial-gradient(
+                circle at center,
+                #12082f 0%,
+                #070512 45%,
+                #000000 100%
+            );
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        opacity: 1;
+
+        visibility: visible;
+
+        pointer-events: all;
+
+        transition:
+            opacity 0.55s ease,
+            visibility 0.55s ease;
+
+    }
+
+
+    #vitalStarLoader.hide {
+
+        opacity: 0;
+
+        visibility: hidden;
+
+        pointer-events: none;
+
+    }
+
+
+    .vs-loader-content {
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+
+    }
+
+
+    .vs-loader-spinner {
+
+        width: 90px;
+
+        height: 90px;
+
+        border-radius: 50%;
+
+        border:
+            5px solid
+            rgba(255,255,255,0.10);
+
+        border-top-color:
+            #FFD54F;
+
+        border-right-color:
+            #9C4DFF;
+
+        border-bottom-color:
+            #7C4DFF;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        animation:
+            vitalStarMessageSpin
+            1s linear infinite;
+
+        box-shadow:
+            0 0 18px
+            rgba(255,213,79,0.25),
+
+            0 0 35px
+            rgba(124,77,255,0.20);
+
+    }
+
+
+    .vs-loader-spinner span {
+
+        color: #FFD54F;
+
+        font-size: 25px;
+
+        font-weight: 900;
+
+        letter-spacing: 2px;
+
+        text-shadow:
+            0 0 12px
+            rgba(255,213,79,0.5);
+
+        animation:
+            vitalStarMessageSpinReverse
+            1s linear infinite;
+
+    }
+
+
+    .vs-loader-text {
+
+        margin-top: 18px;
+
+        color:
+            rgba(255,255,255,0.88);
+
+        font-size: 14px;
+
+        font-weight: 600;
+
+        letter-spacing: 0.5px;
+
+    }
+
+
+    @keyframes vitalStarMessageSpin {
+
+        from {
+
+            transform:
+                rotate(0deg);
+
+        }
+
+        to {
+
+            transform:
+                rotate(360deg);
+
+        }
+
+    }
+
+
+    @keyframes vitalStarMessageSpinReverse {
+
+        from {
+
+            transform:
+                rotate(0deg);
+
+        }
+
+        to {
+
+            transform:
+                rotate(-360deg);
+
+        }
+
+    }
+
+`;
+
+
+document.head.appendChild(
+    vitalStarLoaderStyle
+);
+
+
+document.body.appendChild(
+    vitalStarLoader
+);
+
+
+// ============================================================
+// HIDE LOADING INDICATOR
+// ============================================================
+
+let vitalStarLoaderHidden =
+    false;
+
+
+function hideVitalStarLoader() {
+
+    if (vitalStarLoaderHidden) {
+        return;
+    }
+
+
+    vitalStarLoaderHidden =
+        true;
+
+
+    const loader =
+        document.getElementById(
+            "vitalStarLoader"
+        );
+
+
+    if (!loader) {
+        return;
+    }
+
+
+    loader.classList.add(
+        "hide"
+    );
+
+
+    setTimeout(() => {
+
+        loader.remove();
+
+    }, 600);
+
+}
+
+
+// ============================================================
+// HTML ELEMENTS
+// ============================================================
+
+const messageList =
+    document.getElementById(
+        "messageList"
+    );
+
+
+const searchInput =
+    document.getElementById(
+        "searchInput"
+    );
+
+
+let currentUser =
+    null;
+
+
+let allChats =
+    [];
+
+
+const chatListeners =
+    new Map();
+
+
+const unreadCounts =
+    new Map();
+
+
+// ============================================================
 // ESCAPE HTML
-// ======================================
+// ============================================================
 
 function escapeHtml(text) {
-    if (text === null || text === undefined) return "";
+
+    if (
+        text === null ||
+        text === undefined
+    ) {
+
+        return "";
+
+    }
+
 
     return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
 
-// ======================================
+// ============================================================
 // GET TIMESTAMP
-// ======================================
+// ============================================================
 
-function getTimestampValue(timestamp) {
-    if (!timestamp) return 0;
+function getTimestampValue(
+    timestamp
+) {
 
-    if (typeof timestamp.toMillis === "function") {
-        return timestamp.toMillis();
+    if (!timestamp) {
+        return 0;
     }
+
+
+    if (
+        typeof timestamp.toMillis ===
+        "function"
+    ) {
+
+        return timestamp.toMillis();
+
+    }
+
 
     if (timestamp.seconds) {
+
         return timestamp.seconds * 1000;
+
     }
+
 
     if (timestamp instanceof Date) {
+
         return timestamp.getTime();
+
     }
 
-    if (typeof timestamp === "number") {
+
+    if (
+        typeof timestamp ===
+        "number"
+    ) {
+
         return timestamp;
+
     }
+
 
     return 0;
+
 }
 
 
-// ======================================
+// ============================================================
 // FORMAT TIME
-// ======================================
+// ============================================================
 
-function formatTime(timestamp) {
-    const time = getTimestampValue(timestamp);
+function formatTime(
+    timestamp
+) {
 
-    if (!time) return "";
+    const time =
+        getTimestampValue(
+            timestamp
+        );
 
-    const date = new Date(time);
-    const now = new Date();
+
+    if (!time) {
+        return "";
+    }
+
+
+    const date =
+        new Date(time);
+
+
+    const now =
+        new Date();
+
 
     const sameDay =
-        date.getDate() === now.getDate() &&
-        date.getMonth() === now.getMonth() &&
-        date.getFullYear() === now.getFullYear();
+
+        date.getDate() ===
+            now.getDate() &&
+
+        date.getMonth() ===
+            now.getMonth() &&
+
+        date.getFullYear() ===
+            now.getFullYear();
+
 
     if (sameDay) {
-        return date.toLocaleTimeString([], {
-            hour: "numeric",
-            minute: "2-digit"
-        });
+
+        return date.toLocaleTimeString(
+            [],
+            {
+                hour:
+                    "numeric",
+
+                minute:
+                    "2-digit"
+            }
+        );
+
     }
 
-    const yesterday = new Date();
-    yesterday.setDate(now.getDate() - 1);
+
+    const yesterday =
+        new Date();
+
+
+    yesterday.setDate(
+        now.getDate() - 1
+    );
+
 
     const isYesterday =
-        date.getDate() === yesterday.getDate() &&
-        date.getMonth() === yesterday.getMonth() &&
-        date.getFullYear() === yesterday.getFullYear();
+
+        date.getDate() ===
+            yesterday.getDate() &&
+
+        date.getMonth() ===
+            yesterday.getMonth() &&
+
+        date.getFullYear() ===
+            yesterday.getFullYear();
+
 
     if (isYesterday) {
+
         return "Yesterday";
+
     }
 
-    return date.toLocaleDateString([], {
-        day: "numeric",
-        month: "short"
-    });
+
+    return date.toLocaleDateString(
+        [],
+        {
+            day:
+                "numeric",
+
+            month:
+                "short"
+        }
+    );
+
 }
 
 
-// ======================================
+// ============================================================
 // LAST MESSAGE
-// ======================================
+// ============================================================
 
-function getLastMessageHtml(chat) {
+function getLastMessageHtml(
+    chat
+) {
+
     if (chat.lastMessage) {
-        return escapeHtml(chat.lastMessage);
+
+        return escapeHtml(
+            chat.lastMessage
+        );
+
     }
+
 
     if (chat.lastImage) {
+
         return "🖼️ Photo";
+
     }
+
 
     if (chat.lastVideo) {
+
         return "🎥 Video";
+
     }
+
 
     if (chat.lastAudio) {
+
         return "🎤 Voice message";
+
     }
+
 
     return "Start a conversation";
+
 }
 
 
-// ======================================
+// ============================================================
 // GET PROFILE PICTURE
-// ======================================
+// ============================================================
 
-function getProfilePicture(userData) {
-    if (!userData) return "";
+function getProfilePicture(
+    userData
+) {
 
-    const pictures = [
-        userData.profilePic,
-        userData.profilePicture,
-        userData.photoURL,
-        userData.photoUrl,
-        userData.profileImage,
-        userData.imageUrl
-    ];
-
-    for (const picture of pictures) {
-        if (
-            typeof picture === "string" &&
-            picture.trim() !== ""
-        ) {
-            return picture.trim();
-        }
+    if (!userData) {
+        return "";
     }
 
+
+    const pictures = [
+
+        userData.profilePic,
+
+        userData.profilePicture,
+
+        userData.photoURL,
+
+        userData.photoUrl,
+
+        userData.profileImage,
+
+        userData.imageUrl
+
+    ];
+
+
+    for (
+        const picture
+        of pictures
+    ) {
+
+        if (
+
+            typeof picture ===
+                "string" &&
+
+            picture.trim() !== ""
+
+        ) {
+
+            return picture.trim();
+
+        }
+
+    }
+
+
     return "";
+
 }
 
 
-// ======================================
+// ============================================================
 // GET FIRST LETTER
-// ======================================
+// ============================================================
 
-function getFirstLetter(name) {
-    const cleanName = String(name || "U").trim();
+function getFirstLetter(
+    name
+) {
 
-    if (!cleanName) return "U";
+    const cleanName =
+        String(
+            name || "U"
+        ).trim();
+
+
+    if (!cleanName) {
+        return "U";
+    }
+
 
     return cleanName
         .charAt(0)
         .toUpperCase();
+
 }
 
 
-// ======================================
+// ============================================================
 // CREATE AVATAR
-// ======================================
+// ============================================================
 
-function createAvatar(chat) {
-    const letter = getFirstLetter(chat.fullName);
+function createAvatar(
+    chat
+) {
 
-    // User has profile picture
+    const letter =
+        getFirstLetter(
+            chat.fullName
+        );
+
+
     if (chat.profilePic) {
+
         return `
+
             <div class="avatar-wrapper">
 
                 <img
-                    src="${escapeHtml(chat.profilePic)}"
+                    src="${escapeHtml(
+                        chat.profilePic
+                    )}"
                     class="profile-picture"
-                    alt="${escapeHtml(chat.fullName)}"
+                    alt="${escapeHtml(
+                        chat.fullName
+                    )}"
                 >
 
                 <span class="avatar-letter">
@@ -209,12 +695,14 @@ function createAvatar(chat) {
                 <span class="online-dot"></span>
 
             </div>
+
         `;
+
     }
 
-    // No profile picture:
-    // show first letter
+
     return `
+
         <div class="avatar-wrapper">
 
             <div class="profile-letter">
@@ -224,69 +712,122 @@ function createAvatar(chat) {
             <span class="online-dot"></span>
 
         </div>
+
     `;
+
 }
 
 
-// ======================================
+// ============================================================
 // CREATE CHAT CARD
-// ======================================
+// ============================================================
 
-function createChatCard(chat) {
+function createChatCard(
+    chat
+) {
 
     const unreadCount =
-        unreadCounts.get(chat.id) || 0;
+        unreadCounts.get(
+            chat.id
+        ) || 0;
+
 
     const card =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    card.className = "message-card";
+
+    card.className =
+        "message-card";
+
+
+    // Important:
+    // Add chat ID so the badge updater
+    // can find the correct card.
+
+    card.dataset.chatId =
+        chat.id;
+
 
     if (unreadCount > 0) {
-        card.classList.add("unread-card");
+
+        card.classList.add(
+            "unread-card"
+        );
+
     }
+
 
     const unreadBadge =
         unreadCount > 0
+
             ? `
+
                 <span class="unread-badge">
+
                     ${
                         unreadCount > 99
                             ? "99+"
                             : unreadCount
                     }
+
                 </span>
+
             `
+
             : "";
+
 
     card.innerHTML = `
 
         ${createAvatar(chat)}
 
+
         <div class="message-info">
+
 
             <div class="top-row">
 
+
                 <div class="name">
-                    ${escapeHtml(chat.fullName)}
+
+                    ${escapeHtml(
+                        chat.fullName
+                    )}
+
                 </div>
 
+
                 <div class="time-text">
-                    ${formatTime(chat.lastTimestamp)}
+
+                    ${formatTime(
+                        chat.lastTimestamp
+                    )}
+
                 </div>
+
 
             </div>
 
 
             <div class="bottom-row">
 
+
                 <div class="last-message">
-                    ${getLastMessageHtml(chat)}
+
+                    ${getLastMessageHtml(
+                        chat
+                    )}
+
                 </div>
+
 
                 ${unreadBadge}
 
+
             </div>
+
 
         </div>
 
@@ -303,12 +844,15 @@ function createChatCard(chat) {
     `;
 
 
-    // ==================================
+    // ========================================================
     // PROFILE IMAGE FALLBACK
-    // ==================================
+    // ========================================================
 
     const image =
-        card.querySelector(".profile-picture");
+        card.querySelector(
+            ".profile-picture"
+        );
+
 
     if (image) {
 
@@ -321,18 +865,28 @@ function createChatCard(chat) {
                         ".avatar-wrapper"
                     );
 
-                if (!wrapper) return;
+
+                if (!wrapper) {
+                    return;
+                }
+
 
                 const letter =
                     getFirstLetter(
                         chat.fullName
                     );
 
+
                 wrapper.innerHTML = `
 
                     <div class="profile-letter">
-                        ${escapeHtml(letter)}
+
+                        ${escapeHtml(
+                            letter
+                        )}
+
                     </div>
+
 
                     <span class="online-dot"></span>
 
@@ -344,31 +898,34 @@ function createChatCard(chat) {
     }
 
 
-    // ==================================
+    // ========================================================
     // OPEN CHAT
-    // ==================================
+    // ========================================================
 
     card.addEventListener(
         "click",
         () => {
 
             window.location.href =
-                `chat.html?uid=${encodeURIComponent(
-                    chat.otherUserId
-                )}`;
+                `chat.html?uid=${
+                    encodeURIComponent(
+                        chat.otherUserId
+                    )
+                }`;
 
         }
     );
 
 
-    // ==================================
+    // ========================================================
     // DELETE CHAT
-    // ==================================
+    // ========================================================
 
     const deleteButton =
         card.querySelector(
             ".delete-chat-btn"
         );
+
 
     if (deleteButton) {
 
@@ -377,7 +934,9 @@ function createChatCard(chat) {
             event => {
 
                 event.preventDefault();
+
                 event.stopPropagation();
+
 
                 deleteChat(
                     chat.id,
@@ -391,61 +950,96 @@ function createChatCard(chat) {
 
 
     return card;
+
 }
 
 
-// ======================================
+// ============================================================
 // RENDER CHATS
-// ======================================
+// ============================================================
 
 function renderChats() {
 
-    if (!messageList) return;
+    if (!messageList) {
+        return;
+    }
+
 
     const search =
         searchInput?.value
             ?.trim()
             .toLowerCase() || "";
 
-    let chats = [...allChats];
+
+    let chats =
+        [...allChats];
 
 
+    // ========================================================
     // SEARCH
+    // ========================================================
+
     if (search) {
 
-        chats = chats.filter(chat => {
+        chats =
+            chats.filter(
+                chat => {
 
-            const name =
-                (chat.fullName || "")
-                    .toLowerCase();
+                    const name =
+                        (
+                            chat.fullName ||
+                            ""
+                        ).toLowerCase();
 
-            const message =
-                (chat.lastMessage || "")
-                    .toLowerCase();
 
-            return (
-                name.includes(search) ||
-                message.includes(search)
+                    const message =
+                        (
+                            chat.lastMessage ||
+                            ""
+                        ).toLowerCase();
+
+
+                    return (
+
+                        name.includes(
+                            search
+                        ) ||
+
+                        message.includes(
+                            search
+                        )
+
+                    );
+
+                }
             );
-
-        });
 
     }
 
 
+    // ========================================================
     // SORT NEWEST FIRST
+    // ========================================================
+
     chats.sort(
         (a, b) =>
+
             getTimestampValue(
                 b.lastTimestamp
-            ) -
+            )
+
+            -
+
             getTimestampValue(
                 a.lastTimestamp
             )
     );
 
 
+    // ========================================================
     // EMPTY
+    // ========================================================
+
     if (!chats.length) {
 
         messageList.innerHTML = `
@@ -453,85 +1047,123 @@ function renderChats() {
             <div class="empty-state">
 
                 <div class="empty-icon">
-                    ${search ? "🔎" : "💬"}
+
+                    ${
+                        search
+                            ? "🔎"
+                            : "💬"
+                    }
+
                 </div>
 
+
                 <h2>
+
                     ${
                         search
                             ? "No results"
                             : "No conversations"
                     }
+
                 </h2>
 
+
                 <p>
+
                     ${
                         search
+
                             ? "No conversations match your search."
+
                             : "Start chatting with your friends."
+
                     }
+
                 </p>
 
             </div>
 
         `;
 
+
         return;
+
     }
 
 
+    // ========================================================
     // FAST RENDER
+    // ========================================================
+
     const fragment =
         document.createDocumentFragment();
 
-    for (const chat of chats) {
+
+    for (
+        const chat
+        of chats
+    ) {
 
         fragment.appendChild(
-            createChatCard(chat)
+            createChatCard(
+                chat
+            )
         );
 
     }
 
-    messageList.innerHTML = "";
+
+    messageList.innerHTML =
+        "";
+
 
     messageList.appendChild(
         fragment
     );
+
 }
 
 
-// ======================================
+// ============================================================
 // UPDATE UNREAD BADGE
-// ======================================
+// ============================================================
 
-function updateUnreadBadge(chatId) {
+function updateUnreadBadge(
+    chatId
+) {
 
     const count =
-        unreadCounts.get(chatId) || 0;
+        unreadCounts.get(
+            chatId
+        ) || 0;
+
 
     const chat =
         allChats.find(
-            item => item.id === chatId
+            item =>
+                item.id === chatId
         );
 
-    if (!chat) return;
 
+    if (!chat) {
+        return;
+    }
 
-    /*
-       Find card using the user's
-       unique chat ID instead of name.
-    */
 
     const card =
         messageList.querySelector(
-            `[data-chat-id="${CSS.escape(chatId)}"]`
+            `[data-chat-id="${CSS.escape(
+                chatId
+            )}"]`
         );
+
 
     if (!card) {
 
         renderChats();
 
         return;
+
     }
 
 
@@ -540,7 +1172,10 @@ function updateUnreadBadge(chatId) {
             ".bottom-row"
         );
 
-    if (!bottomRow) return;
+
+    if (!bottomRow) {
+        return;
+    }
 
 
     const oldBadge =
@@ -548,8 +1183,11 @@ function updateUnreadBadge(chatId) {
             ".unread-badge"
         );
 
+
     if (oldBadge) {
+
         oldBadge.remove();
+
     }
 
 
@@ -560,17 +1198,21 @@ function updateUnreadBadge(chatId) {
                 "span"
             );
 
+
         badge.className =
             "unread-badge";
+
 
         badge.textContent =
             count > 99
                 ? "99+"
                 : count;
 
+
         bottomRow.appendChild(
             badge
         );
+
 
         card.classList.add(
             "unread-card"
@@ -583,16 +1225,22 @@ function updateUnreadBadge(chatId) {
         );
 
     }
+
 }
 
 
-// ======================================
+// ============================================================
 // LOAD UNREAD COUNT
-// ======================================
+// ============================================================
 
-async function loadUnreadCount(chatId) {
+async function loadUnreadCount(
+    chatId
+) {
 
-    if (!currentUser) return;
+    if (!currentUser) {
+        return;
+    }
+
 
     try {
 
@@ -604,10 +1252,15 @@ async function loadUnreadCount(chatId) {
                 "messages"
             );
 
+
         const snapshot =
-            await getDocs(messagesRef);
+            await getDocs(
+                messagesRef
+            );
+
 
         let count = 0;
+
 
         snapshot.forEach(
             messageDoc => {
@@ -615,25 +1268,34 @@ async function loadUnreadCount(chatId) {
                 const message =
                     messageDoc.data();
 
+
                 if (
+
                     message.receiverId ===
                         currentUser.uid &&
+
                     message.read === false
+
                 ) {
+
                     count++;
+
                 }
 
             }
         );
+
 
         unreadCounts.set(
             chatId,
             count
         );
 
+
         updateUnreadBadge(
             chatId
         );
+
 
     } catch (error) {
 
@@ -643,19 +1305,26 @@ async function loadUnreadCount(chatId) {
         );
 
     }
+
 }
 
 
-// ======================================
+// ============================================================
 // LIVE MESSAGE LISTENER
-// ======================================
+// ============================================================
 
-function listenToChat(chatId) {
+function listenToChat(
+    chatId
+) {
 
     if (
-        chatListeners.has(chatId)
+        chatListeners.has(
+            chatId
+        )
     ) {
+
         return;
+
     }
 
 
@@ -675,16 +1344,21 @@ function listenToChat(chatId) {
 
                 let unread = 0;
 
+
                 snapshot.forEach(
                     messageDoc => {
 
                         const message =
                             messageDoc.data();
 
+
                         if (
+
                             message.receiverId ===
                                 currentUser.uid &&
+
                             message.read === false
+
                         ) {
 
                             unread++;
@@ -701,15 +1375,11 @@ function listenToChat(chatId) {
                 );
 
 
-                /*
-                   Re-rendering keeps the
-                   conversation badge and
-                   latest data synchronized.
-                */
-
                 renderChats();
 
             },
+
+
             error => {
 
                 console.error(
@@ -725,12 +1395,13 @@ function listenToChat(chatId) {
         chatId,
         unsubscribe
     );
+
 }
 
 
-// ======================================
+// ============================================================
 // DELETE CHAT
-// ======================================
+// ============================================================
 
 async function deleteChat(
     chatId,
@@ -742,12 +1413,18 @@ async function deleteChat(
             "Delete this conversation?\n\nAll messages in this chat will be deleted."
         );
 
-    if (!confirmed) return;
+
+    if (!confirmed) {
+        return;
+    }
 
 
     try {
 
-        card.style.opacity = "0.45";
+        card.style.opacity =
+            "0.45";
+
+
         card.style.pointerEvents =
             "none";
 
@@ -762,11 +1439,14 @@ async function deleteChat(
 
 
         const snapshot =
-            await getDocs(messagesRef);
+            await getDocs(
+                messagesRef
+            );
 
 
         let batch =
             writeBatch(db);
+
 
         let count = 0;
 
@@ -780,6 +1460,7 @@ async function deleteChat(
                 messageDoc.ref
             );
 
+
             count++;
 
 
@@ -787,8 +1468,10 @@ async function deleteChat(
 
                 await batch.commit();
 
+
                 batch =
                     writeBatch(db);
+
 
                 count = 0;
 
@@ -798,7 +1481,9 @@ async function deleteChat(
 
 
         if (count > 0) {
+
             await batch.commit();
+
         }
 
 
@@ -811,7 +1496,9 @@ async function deleteChat(
         );
 
 
-        // Stop listener
+        // ====================================================
+        // STOP LISTENER
+        // ====================================================
 
         if (
             chatListeners.has(
@@ -821,6 +1508,7 @@ async function deleteChat(
 
             chatListeners
                 .get(chatId)();
+
 
             chatListeners.delete(
                 chatId
@@ -852,7 +1540,9 @@ async function deleteChat(
         );
 
 
-        card.style.opacity = "1";
+        card.style.opacity =
+            "1";
+
 
         card.style.pointerEvents =
             "auto";
@@ -863,16 +1553,21 @@ async function deleteChat(
         );
 
     }
+
 }
 
 
-// ======================================
+// ============================================================
 // AUTHENTICATION
-// ======================================
+// ============================================================
 
 onAuthStateChanged(
     auth,
     async user => {
+
+        // ====================================================
+        // NOT LOGGED IN
+        // ====================================================
 
         if (!user) {
 
@@ -880,11 +1575,17 @@ onAuthStateChanged(
                 "login.html";
 
             return;
+
         }
 
 
-        currentUser = user;
+        currentUser =
+            user;
 
+
+        // ====================================================
+        // CHAT QUERY
+        // ====================================================
 
         const chatsQuery =
             query(
@@ -892,6 +1593,7 @@ onAuthStateChanged(
                     db,
                     "chats"
                 ),
+
                 where(
                     "participants",
                     "array-contains",
@@ -900,19 +1602,26 @@ onAuthStateChanged(
             );
 
 
+        // ====================================================
+        // LIVE CHAT LISTENER
+        // ====================================================
+
         onSnapshot(
             chatsQuery,
+
             async snapshot => {
 
-                const chats = [];
+                const chats =
+                    [];
+
 
                 const activeChatIds =
                     new Set();
 
 
-                // ==================================
+                // ============================================
                 // GET CHAT DATA FIRST
-                // ==================================
+                // ============================================
 
                 for (
                     const chatDoc
@@ -928,14 +1637,17 @@ onAuthStateChanged(
                             data.participants
                         )
                     ) {
+
                         continue;
+
                     }
 
 
                     const otherUserId =
                         data.participants.find(
                             id =>
-                                id !== user.uid
+                                id !==
+                                user.uid
                         );
 
 
@@ -969,18 +1681,20 @@ onAuthStateChanged(
                 }
 
 
-                // ==================================
+                // ============================================
                 // SHOW CONVERSATIONS IMMEDIATELY
-                // ==================================
+                // ============================================
 
-                allChats = chats;
+                allChats =
+                    chats;
+
 
                 renderChats();
 
 
-                // ==================================
+                // ============================================
                 // REMOVE OLD LISTENERS
-                // ==================================
+                // ============================================
 
                 for (
                     const [
@@ -1007,12 +1721,13 @@ onAuthStateChanged(
                 }
 
 
-                // ==================================
+                // ============================================
                 // LOAD PROFILES
-                // ==================================
+                // ============================================
 
                 for (
-                    const chat of chats
+                    const chat
+                    of chats
                 ) {
 
                     try {
@@ -1060,6 +1775,7 @@ onAuthStateChanged(
                             error
                         );
 
+
                         chat.fullName =
                             "Unknown User";
 
@@ -1071,12 +1787,13 @@ onAuthStateChanged(
                 }
 
 
-                // ==================================
+                // ============================================
                 // LIVE MESSAGE LISTENERS
-                // ==================================
+                // ============================================
 
                 for (
-                    const chat of chats
+                    const chat
+                    of chats
                 ) {
 
                     listenToChat(
@@ -1085,7 +1802,15 @@ onAuthStateChanged(
 
                 }
 
+
+                // ============================================
+                // LOADING FINISHED
+                // ============================================
+
+                hideVitalStarLoader();
+
             },
+
 
             error => {
 
@@ -1101,16 +1826,24 @@ onAuthStateChanged(
                     "Check your connection and try again."
                 );
 
+
+                // Don't leave the user
+                // stuck behind the loader.
+
+                hideVitalStarLoader();
+
             }
+
         );
 
     }
+
 );
 
 
-// ======================================
+// ============================================================
 // EMPTY STATE
-// ======================================
+// ============================================================
 
 function showEmptyState(
     icon,
@@ -1118,31 +1851,49 @@ function showEmptyState(
     text
 ) {
 
+    if (!messageList) {
+        return;
+    }
+
+
     messageList.innerHTML = `
 
         <div class="empty-state">
 
             <div class="empty-icon">
+
                 ${icon}
+
             </div>
 
+
             <h2>
-                ${escapeHtml(title)}
+
+                ${escapeHtml(
+                    title
+                )}
+
             </h2>
 
+
             <p>
-                ${escapeHtml(text)}
+
+                ${escapeHtml(
+                    text
+                )}
+
             </p>
 
         </div>
 
     `;
+
 }
 
 
-// ======================================
+// ============================================================
 // SEARCH
-// ======================================
+// ============================================================
 
 if (searchInput) {
 
