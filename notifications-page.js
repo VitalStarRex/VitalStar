@@ -24,6 +24,7 @@ import { auth, db } from "./firebase.js";
 
 import {
     collection,
+    addDoc,
     query,
     where,
     orderBy,
@@ -349,10 +350,6 @@ function getNotificationDestination(notification) {
 
     // --------------------------------------------------------
     // GROUP POST
-    //
-    // IMPORTANT:
-    // Group post notifications MUST open group.html.
-    // They must NOT open comments.html.
     // --------------------------------------------------------
 
     if (
@@ -734,10 +731,6 @@ async function approveJoinRequest(
         }
 
 
-        // ----------------------------------------------------
-        // Mark original notification as handled
-        // ----------------------------------------------------
-
         await updateDoc(
             notificationDoc.ref,
             {
@@ -750,10 +743,6 @@ async function approveJoinRequest(
             }
         );
 
-
-        // ----------------------------------------------------
-        // Notify applicant
-        // ----------------------------------------------------
 
         let groupName =
             notification.groupName ||
@@ -826,10 +815,6 @@ async function approveJoinRequest(
             }
         );
 
-
-        // ----------------------------------------------------
-        // Update card
-        // ----------------------------------------------------
 
         const actionArea =
             card.querySelector(
@@ -964,10 +949,6 @@ async function rejectJoinRequest(
             }
         );
 
-
-        // ----------------------------------------------------
-        // Notify applicant
-        // ----------------------------------------------------
 
         const groupSnap =
             await getDoc(
@@ -1112,8 +1093,6 @@ function renderJoinRequestActions(
         flex-wrap:wrap;
     `;
 
-
-    // Already processed
 
     if (
         notification.requestStatus ===
@@ -1382,10 +1361,6 @@ function renderNotification(
     }
 
 
-    // --------------------------------------------------------
-    // GROUP LABEL
-    // --------------------------------------------------------
-
     let groupLabel = "";
 
 
@@ -1407,10 +1382,6 @@ function renderNotification(
         `;
     }
 
-
-    // --------------------------------------------------------
-    // POST LABEL
-    // --------------------------------------------------------
 
     let postLabel = "";
 
@@ -1446,10 +1417,6 @@ function renderNotification(
         `;
     }
 
-
-    // --------------------------------------------------------
-    // CARD
-    // --------------------------------------------------------
 
     card.innerHTML = `
 
@@ -1519,10 +1486,6 @@ function renderNotification(
     `;
 
 
-    // --------------------------------------------------------
-    // JOIN REQUEST ACTIONS
-    // --------------------------------------------------------
-
     renderJoinRequestActions(
         card,
         notificationDoc,
@@ -1530,15 +1493,9 @@ function renderNotification(
     );
 
 
-    // --------------------------------------------------------
-    // CLICK
-    // --------------------------------------------------------
-
     card.addEventListener(
         "click",
         event => {
-
-            // Don't navigate when clicking buttons.
 
             if (
                 event.target.closest(
