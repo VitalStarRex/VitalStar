@@ -1,0 +1,13 @@
+{
+  "background_color": "#000000",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "VITALSTAR",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Vitastar",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "com.vitalstar.app",
+  "description": "VitalStar is a social networking platform where people can connect, chat, share posts, create and join communities, play games, discover new people, and express themselves. Built to bring connection, creativity, entertainment, and community together in one place."
+}
