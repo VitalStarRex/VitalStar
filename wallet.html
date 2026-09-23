@@ -157,11 +157,37 @@ header{
     opacity:.85;
 }
 
+/* =========================================================
+   VITALSTAR ACCOUNT NUMBER
+   ========================================================= */
+
+.wallet-account{
+    margin-top:18px;
+    padding:13px 15px;
+    border-radius:15px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.18);
+}
+
+.wallet-account-label{
+    display:block;
+    font-size:11px;
+    opacity:.8;
+    font-weight:bold;
+}
+
+.wallet-account-number{
+    display:block;
+    margin-top:4px;
+    font-size:19px;
+    letter-spacing:2px;
+}
+
 .wallet-footer{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-top:28px;
+    margin-top:20px;
 }
 
 .wallet-owner{
@@ -555,6 +581,11 @@ body.dark-mode .cancel-btn{
         padding:24px 18px;
     }
 
+    .wallet-account-number{
+        font-size:17px;
+        letter-spacing:1.5px;
+    }
+
     .actions{
         gap:10px;
     }
@@ -618,6 +649,25 @@ body.dark-mode .cancel-btn{
     <div class="wallet-currency">
         Nigerian Naira • NGN
     </div>
+
+
+    <!-- VITALSTAR ACCOUNT NUMBER -->
+
+    <div class="wallet-account">
+
+        <span class="wallet-account-label">
+            VitalStar Account Number
+        </span>
+
+        <strong
+            id="walletAccountNumber"
+            class="wallet-account-number"
+        >
+            Generating...
+        </strong>
+
+    </div>
+
 
     <div class="wallet-footer">
 
