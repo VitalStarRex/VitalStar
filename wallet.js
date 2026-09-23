@@ -14,7 +14,8 @@ import {
     orderBy,
     limit,
     getDocs,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction
 } from
 "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -34,6 +35,9 @@ const walletPageBalance =
 
 const walletOwner =
     document.getElementById("walletOwner");
+
+const walletAccountNumber =
+    document.getElementById("walletAccountNumber");
 
 const totalDeposited =
     document.getElementById("totalDeposited");
@@ -92,7 +96,24 @@ function formatMoney(amount){
 
 
 // ============================================================
-// UPDATE BALANCE
+// FORMAT ACCOUNT NUMBER
+// ============================================================
+
+function formatAccountNumber(accountNumber){
+
+    if(!accountNumber){
+
+        return "Generating...";
+
+    }
+
+    return String(accountNumber);
+
+}
+
+
+// ============================================================
+// UPDATE BALANCE DISPLAYS
 // ============================================================
 
 function updateBalanceDisplays(balance){
@@ -111,6 +132,24 @@ function updateBalanceDisplays(balance){
             walletPageBalance.textContent =
                 formatMoney(currentBalance)
         );
+
+}
+
+
+// ============================================================
+// UPDATE ACCOUNT NUMBER DISPLAY
+// ============================================================
+
+function updateAccountNumberDisplay(accountNumber){
+
+    if(!walletAccountNumber){
+
+        return;
+
+    }
+
+    walletAccountNumber.textContent =
+        formatAccountNumber(accountNumber);
 
 }
 
@@ -282,13 +321,11 @@ continueDeposit?.addEventListener(
 
             }
 
-            // SAVE REFERENCE
             localStorage.setItem(
                 "walletPaymentReference",
                 data.reference
             );
 
-            // OPEN PAYSTACK
             window.location.href =
                 data.authorizationUrl;
 
@@ -362,10 +399,6 @@ async function verifyPayment(user){
 
         }
 
-        // IMPORTANT:
-        // Credit will be added by the backend
-        // in the next step.
-
         localStorage.removeItem(
             "walletPaymentReference"
         );
@@ -432,21 +465,93 @@ continueWithdraw?.addEventListener(
 
 
 // ============================================================
+// GENERATE UNIQUE ACCOUNT NUMBER
+// ============================================================
+
+async function generateAccountNumber(){
+
+    const counterRef =
+        doc(
+            db,
+            "system",
+            "accountNumberCounter"
+        );
+
+    const accountNumber =
+        await runTransaction(
+            db,
+            async transaction => {
+
+                const counterSnapshot =
+                    await transaction.get(
+                        counterRef
+                    );
+
+                let nextNumber =
+                    1000000000;
+
+                if(counterSnapshot.exists()){
+
+                    const data =
+                        counterSnapshot.data();
+
+                    nextNumber =
+                        Number(
+                            data.nextNumber
+                        ) || 1000000000;
+
+                }
+
+                transaction.set(
+                    counterRef,
+                    {
+                        nextNumber:
+                            nextNumber + 1,
+
+                        updatedAt:
+                            serverTimestamp()
+                    },
+                    {
+                        merge:true
+                    }
+                );
+
+                return String(
+                    nextNumber
+                );
+
+            }
+        );
+
+    return accountNumber;
+
+}
+
+
+// ============================================================
 // CREATE WALLET
 // ============================================================
 
 async function createWallet(user){
 
-    await setDoc(
+    const walletRef =
         doc(
             db,
             "wallets",
             user.uid
-        ),
+        );
+
+    const accountNumber =
+        await generateAccountNumber();
+
+    await setDoc(
+        walletRef,
         {
             balance:0,
 
             currency:"NGN",
+
+            accountNumber,
 
             createdAt:
                 serverTimestamp(),
@@ -456,7 +561,55 @@ async function createWallet(user){
         }
     );
 
+    updateAccountNumberDisplay(
+        accountNumber
+    );
+
     return 0;
+
+}
+
+
+// ============================================================
+// ENSURE ACCOUNT NUMBER EXISTS
+// ============================================================
+
+async function ensureAccountNumber(
+    walletRef,
+    walletData
+){
+
+    if(walletData.accountNumber){
+
+        updateAccountNumberDisplay(
+            walletData.accountNumber
+        );
+
+        return walletData.accountNumber;
+
+    }
+
+    const accountNumber =
+        await generateAccountNumber();
+
+    await setDoc(
+        walletRef,
+        {
+            accountNumber,
+
+            updatedAt:
+                serverTimestamp()
+        },
+        {
+            merge:true
+        }
+    );
+
+    updateAccountNumberDisplay(
+        accountNumber
+    );
+
+    return accountNumber;
 
 }
 
@@ -487,8 +640,16 @@ async function loadWallet(user){
 
     }
 
+    const walletData =
+        snapshot.data();
+
     updateBalanceDisplays(
-        snapshot.data().balance
+        walletData.balance
+    );
+
+    await ensureAccountNumber(
+        walletRef,
+        walletData
     );
 
 }
@@ -726,10 +887,8 @@ onAuthStateChanged(
 
         try{
 
-            // VERIFY FIRST
             await verifyPayment(user);
 
-            // THEN LOAD UPDATED DATA
             await loadWallet(user);
 
             await loadWalletOwner(user);
