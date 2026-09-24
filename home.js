@@ -63,7 +63,7 @@ vitalStarLoader.innerHTML = `
 
 
 // ============================================================
-// LOADING SCREEN STYLE
+// FAST CHANGING-COLOR LOADING SCREEN
 // ============================================================
 
 const vitalStarLoaderStyle =
@@ -79,14 +79,6 @@ vitalStarLoaderStyle.textContent = `
 
         z-index: 999999;
 
-        background:
-            radial-gradient(
-                circle at center,
-                #100b2b 0%,
-                #070512 45%,
-                #03020a 100%
-            );
-
         display: flex;
 
         align-items: center;
@@ -97,9 +89,22 @@ vitalStarLoaderStyle.textContent = `
 
         visibility: visible;
 
+        pointer-events: all;
+
+        background:
+            radial-gradient(
+                circle at center,
+                #24105c 0%,
+                #09051c 45%,
+                #03020a 100%
+            );
+
+        animation:
+            vsBackgroundColors 5s ease-in-out infinite;
+
         transition:
-            opacity 0.55s ease,
-            visibility 0.55s ease;
+            opacity 0.35s ease,
+            visibility 0.35s ease;
 
     }
 
@@ -130,9 +135,9 @@ vitalStarLoaderStyle.textContent = `
 
     .vs-spinner {
 
-        width: 90px;
+        width: 88px;
 
-        height: 90px;
+        height: 88px;
 
         border-radius: 50%;
 
@@ -147,7 +152,7 @@ vitalStarLoaderStyle.textContent = `
             #9C4DFF;
 
         border-bottom-color:
-            #7C4DFF;
+            #00E5FF;
 
         display: flex;
 
@@ -156,14 +161,18 @@ vitalStarLoaderStyle.textContent = `
         justify-content: center;
 
         animation:
-            vsRotate 1s linear infinite;
+            vsRotate 0.9s linear infinite,
+            vsSpinnerColors 5s ease-in-out infinite;
 
         box-shadow:
             0 0 18px
-            rgba(255,213,79,0.25),
+            rgba(255,213,79,0.30),
 
             0 0 35px
-            rgba(124,77,255,0.18);
+            rgba(124,77,255,0.25),
+
+            0 0 55px
+            rgba(0,229,255,0.12);
 
     }
 
@@ -180,11 +189,11 @@ vitalStarLoaderStyle.textContent = `
 
         text-shadow:
             0 0 12px
-            rgba(255,213,79,0.45);
+            rgba(255,213,79,0.60);
 
         animation:
-            vsCounterRotate
-            1s linear infinite;
+            vsCounterRotate 0.9s linear infinite,
+            vsTextColors 5s ease-in-out infinite;
 
     }
 
@@ -194,7 +203,7 @@ vitalStarLoaderStyle.textContent = `
         margin-top: 18px;
 
         color:
-            rgba(255,255,255,0.88);
+            rgba(255,255,255,0.92);
 
         font-size: 14px;
 
@@ -202,23 +211,20 @@ vitalStarLoaderStyle.textContent = `
 
         letter-spacing: 0.5px;
 
+        animation:
+            vsTextGlow 5s ease-in-out infinite;
+
     }
 
 
     @keyframes vsRotate {
 
         from {
-
-            transform:
-                rotate(0deg);
-
+            transform: rotate(0deg);
         }
 
         to {
-
-            transform:
-                rotate(360deg);
-
+            transform: rotate(360deg);
         }
 
     }
@@ -227,16 +233,210 @@ vitalStarLoaderStyle.textContent = `
     @keyframes vsCounterRotate {
 
         from {
-
-            transform:
-                rotate(0deg);
-
+            transform: rotate(0deg);
         }
 
         to {
+            transform: rotate(-360deg);
+        }
 
-            transform:
-                rotate(-360deg);
+    }
+
+
+    /* ============================================
+       CHANGING BACKGROUND COLORS
+       ============================================ */
+
+    @keyframes vsBackgroundColors {
+
+        0% {
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #24105c 0%,
+                    #09051c 45%,
+                    #03020a 100%
+                );
+
+        }
+
+        25% {
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #40105f 0%,
+                    #12051f 45%,
+                    #03020a 100%
+                );
+
+        }
+
+        50% {
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #053b52 0%,
+                    #06121f 45%,
+                    #02060a 100%
+                );
+
+        }
+
+        75% {
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #3b124f 0%,
+                    #11051c 45%,
+                    #03020a 100%
+                );
+
+        }
+
+        100% {
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    #24105c 0%,
+                    #09051c 45%,
+                    #03020a 100%
+                );
+
+        }
+
+    }
+
+
+    /* ============================================
+       CHANGING SPINNER COLORS
+       ============================================ */
+
+    @keyframes vsSpinnerColors {
+
+        0% {
+
+            border-top-color: #FFD54F;
+            border-right-color: #9C4DFF;
+            border-bottom-color: #00E5FF;
+
+        }
+
+        25% {
+
+            border-top-color: #FF4FD8;
+            border-right-color: #FFD54F;
+            border-bottom-color: #7C4DFF;
+
+        }
+
+        50% {
+
+            border-top-color: #00E5FF;
+            border-right-color: #00FF95;
+            border-bottom-color: #FFD54F;
+
+        }
+
+        75% {
+
+            border-top-color: #9C4DFF;
+            border-right-color: #FF4FD8;
+            border-bottom-color: #00E5FF;
+
+        }
+
+        100% {
+
+            border-top-color: #FFD54F;
+            border-right-color: #9C4DFF;
+            border-bottom-color: #00E5FF;
+
+        }
+
+    }
+
+
+    /* ============================================
+       CHANGING VS TEXT COLOR
+       ============================================ */
+
+    @keyframes vsTextColors {
+
+        0% {
+
+            color: #FFD54F;
+
+            text-shadow:
+                0 0 12px
+                rgba(255,213,79,0.70);
+
+        }
+
+        25% {
+
+            color: #FF4FD8;
+
+            text-shadow:
+                0 0 15px
+                rgba(255,79,216,0.70);
+
+        }
+
+        50% {
+
+            color: #00E5FF;
+
+            text-shadow:
+                0 0 15px
+                rgba(0,229,255,0.70);
+
+        }
+
+        75% {
+
+            color: #9C4DFF;
+
+            text-shadow:
+                0 0 15px
+                rgba(156,77,255,0.70);
+
+        }
+
+        100% {
+
+            color: #FFD54F;
+
+            text-shadow:
+                0 0 12px
+                rgba(255,213,79,0.70);
+
+        }
+
+    }
+
+
+    @keyframes vsTextGlow {
+
+        0% {
+
+            opacity: 0.75;
+
+        }
+
+        50% {
+
+            opacity: 1;
+
+        }
+
+        100% {
+
+            opacity: 0.75;
 
         }
 
@@ -286,40 +486,30 @@ document.body.appendChild(
 
 let vitalStarLoaderHidden = false;
 
-
 function hideVitalStarLoader() {
 
     if (vitalStarLoaderHidden) {
-
         return;
-
     }
 
-
     vitalStarLoaderHidden = true;
-
 
     const loader =
         document.getElementById(
             "vitalStarLoader"
         );
 
-
     if (!loader) {
-
         return;
-
     }
 
-
     loader.classList.add("hide");
-
 
     setTimeout(() => {
 
         loader.remove();
 
-    }, 650);
+    }, 400);
 
 }
 
@@ -338,7 +528,6 @@ const feed =
 
 const postFeedStyle =
     document.createElement("style");
-
 
 postFeedStyle.textContent = `
 
@@ -513,10 +702,6 @@ postFeedStyle.textContent = `
 
     }
 
-
-    /* ========================================================
-       POST BUTTONS
-       ======================================================== */
 
     .post-buttons {
 
@@ -695,20 +880,95 @@ onSnapshot(
 
 
         // ====================================================
-        // LOAD EACH POST
+        // LOAD ALL USER PROFILES IN PARALLEL
+        // This is much faster than waiting for each one.
         // ====================================================
 
+        const profileResults =
+            await Promise.all(
+
+                snapshot.docs.map(
+                    async (docSnap) => {
+
+                        const post =
+                            docSnap.data();
+
+                        let profilePicture = "";
+
+                        let fullName =
+                            post.fullName ||
+                            "VitalStar User";
+
+                        try {
+
+                            const userSnap =
+                                await getDoc(
+                                    doc(
+                                        db,
+                                        "users",
+                                        post.uid
+                                    )
+                                );
+
+                            if (
+                                userSnap.exists()
+                            ) {
+
+                                const userData =
+                                    userSnap.data();
+
+                                fullName =
+                                    userData.fullName ||
+                                    userData.username ||
+                                    post.fullName ||
+                                    "VitalStar User";
+
+                                profilePicture =
+                                    userData.profilePicture ||
+                                    "";
+
+                            }
+
+                        } catch (error) {
+
+                            console.error(
+                                "Could not load profile:",
+                                error
+                            );
+
+                        }
+
+                        return {
+                            post,
+                            postId: docSnap.id,
+                            fullName,
+                            profilePicture
+                        };
+
+                    }
+                )
+
+            );
+
+
+        // ====================================================
+        // BUILD FEED
+        // ====================================================
+
+        let feedHTML = "";
+
+
         for (
-            const docSnap
-            of snapshot.docs
+            const item
+            of profileResults
         ) {
 
-            const post =
-                docSnap.data();
-
-
-            const postId =
-                docSnap.id;
+            const {
+                post,
+                postId,
+                fullName,
+                profilePicture
+            } = item;
 
 
             // ==================================================
@@ -741,62 +1001,6 @@ onSnapshot(
 
 
             // ==================================================
-            // USER PROFILE
-            // ==================================================
-
-            let profilePicture =
-                "";
-
-
-            let fullName =
-                post.fullName ||
-                "VitalStar User";
-
-
-            try {
-
-                const userSnap =
-                    await getDoc(
-                        doc(
-                            db,
-                            "users",
-                            post.uid
-                        )
-                    );
-
-
-                if (
-                    userSnap.exists()
-                ) {
-
-                    const userData =
-                        userSnap.data();
-
-
-                    fullName =
-                        userData.fullName ||
-                        userData.username ||
-                        post.fullName ||
-                        "VitalStar User";
-
-
-                    profilePicture =
-                        userData.profilePicture ||
-                        "";
-
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "Could not load profile:",
-                    error
-                );
-
-            }
-
-
-            // ==================================================
             // AVATAR
             // ==================================================
 
@@ -808,6 +1012,7 @@ onSnapshot(
                     <img
                         src="${profilePicture}"
                         alt="${fullName}"
+                        loading="lazy"
                         style="
                             width:50px;
                             height:50px;
@@ -865,12 +1070,9 @@ onSnapshot(
             // POST HTML
             // ==================================================
 
-            feed.innerHTML += `
+            feedHTML += `
 
                 <div class="post-card">
-
-
-                    <!-- USER INFORMATION -->
 
                     <div class="user-info">
 
@@ -907,8 +1109,6 @@ onSnapshot(
                     </div>
 
 
-                    <!-- POST TEXT -->
-
                     ${
                         post.text
 
@@ -928,8 +1128,6 @@ onSnapshot(
                     }
 
 
-                    <!-- POST IMAGE -->
-
                     ${
                         post.image
 
@@ -939,6 +1137,7 @@ onSnapshot(
                                     class="post-photo"
                                     src="${post.image}"
                                     alt="Post Image"
+                                    loading="lazy"
                                 >
 
                             `
@@ -946,8 +1145,6 @@ onSnapshot(
                             : ""
                     }
 
-
-                    <!-- POST VIDEO -->
 
                     ${
                         post.video
@@ -958,6 +1155,7 @@ onSnapshot(
                                     class="post-video"
                                     controls
                                     preload="metadata"
+                                    playsinline
                                 >
 
                                     <source
@@ -976,14 +1174,9 @@ onSnapshot(
                     }
 
 
-                    <!-- ACTION BUTTONS -->
-
                     <div
                         class="post-buttons"
                     >
-
-
-                        <!-- LIKE -->
 
                         <button
                             onclick="
@@ -997,8 +1190,6 @@ onSnapshot(
                         </button>
 
 
-                        <!-- COMMENTS -->
-
                         <button
                             onclick="
                                 openComments('${postId}')
@@ -1011,8 +1202,6 @@ onSnapshot(
                         </button>
 
 
-                        <!-- REPOST -->
-
                         <button>
 
                             🔁
@@ -1020,8 +1209,6 @@ onSnapshot(
 
                         </button>
 
-
-                        <!-- SHARE -->
 
                         <button
                             onclick="
@@ -1034,9 +1221,7 @@ onSnapshot(
 
                         </button>
 
-
                     </div>
-
 
                 </div>
 
@@ -1046,11 +1231,19 @@ onSnapshot(
 
 
         // ====================================================
-        // ALL POSTS LOADED
+        // INSERT EVERYTHING AT ONCE
+        // Faster than repeatedly changing innerHTML.
+        // ====================================================
+
+        feed.innerHTML =
+            feedHTML;
+
+
+        // ====================================================
+        // POSTS LOADED
         // ====================================================
 
         hideVitalStarLoader();
-
 
     },
 
@@ -1138,10 +1331,6 @@ async function(postId) {
         );
 
 
-    // ========================================================
-    // UNLIKE
-    // ========================================================
-
     if (likeSnap.exists()) {
 
         await deleteDoc(
@@ -1152,10 +1341,8 @@ async function(postId) {
         await updateDoc(
             postRef,
             {
-
                 likes:
                     increment(-1)
-
             }
         );
 
@@ -1164,10 +1351,6 @@ async function(postId) {
 
     }
 
-
-    // ========================================================
-    // LIKE
-    // ========================================================
 
     await setDoc(
         likeRef,
@@ -1197,10 +1380,6 @@ async function(postId) {
     );
 
 
-    // ========================================================
-    // LIKE NOTIFICATION
-    // ========================================================
-
     const postSnap =
         await getDoc(
             postRef
@@ -1208,9 +1387,7 @@ async function(postId) {
 
 
     if (!postSnap.exists()) {
-
         return;
-
     }
 
 
@@ -1218,14 +1395,10 @@ async function(postId) {
         postSnap.data();
 
 
-    // Don't notify yourself
-
     if (
         postData.uid === user.uid
     ) {
-
         return;
-
     }
 
 
@@ -1240,9 +1413,7 @@ async function(postId) {
 
 
     if (!userSnap.exists()) {
-
         return;
-
     }
 
 
@@ -1413,15 +1584,9 @@ auth.onAuthStateChanged(
 async (user) => {
 
     if (!user) {
-
         return;
-
     }
 
-
-    // ========================================================
-    // ONLINE USER COUNT
-    // ========================================================
 
     const onlineUsersCount =
         document.getElementById(
@@ -1473,10 +1638,6 @@ async (user) => {
     );
 
 
-    // ========================================================
-    // WELCOME MESSAGE
-    // ========================================================
-
     const userSnap =
         await getDoc(
             doc(
@@ -1490,9 +1651,7 @@ async (user) => {
     if (
         !userSnap.exists()
     ) {
-
         return;
-
     }
 
 
@@ -1560,8 +1719,6 @@ const notificationBadge =
     );
 
 
-// Always show 0 first
-
 if (
     notificationBadge
 ) {
@@ -1583,10 +1740,6 @@ onAuthStateChanged(
     auth,
     (user) => {
 
-        // ====================================================
-        // NOT LOGGED IN
-        // ====================================================
-
         if (!user) {
 
             if (
@@ -1605,10 +1758,6 @@ onAuthStateChanged(
 
         }
 
-
-        // ====================================================
-        // NOTIFICATION QUERY
-        // ====================================================
 
         const notificationQuery =
             query(
@@ -1654,10 +1803,6 @@ onAuthStateChanged(
                 );
 
 
-                // =================================================
-                // ALWAYS SHOW NUMBER
-                // =================================================
-
                 if (
                     notificationBadge
                 ) {
@@ -1701,3 +1846,7 @@ onAuthStateChanged(
 
     }
 );
+
+This version removes a major bottleneck: the 10 profile requests now run at the same time, and the feed HTML is inserted once instead of repeatedly. Images are also lazy-loaded.
+
+The loading screen now cycles through yellow → purple → pink → cyan → green/purple tones while the VS spinner keeps rotating.
