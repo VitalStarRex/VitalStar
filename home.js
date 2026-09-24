@@ -1846,7 +1846,3 @@ onAuthStateChanged(
 
     }
 );
-
-This version removes a major bottleneck: the 10 profile requests now run at the same time, and the feed HTML is inserted once instead of repeatedly. Images are also lazy-loaded.
-
-The loading screen now cycles through yellow → purple → pink → cyan → green/purple tones while the VS spinner keeps rotating.
