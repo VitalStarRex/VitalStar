@@ -7,6 +7,7 @@
 <title>VitalStar — Connect, Share & Shine</title>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -28,6 +29,7 @@ body{
     min-height:100vh;
     overflow-x:hidden;
 }
+
 
 /* STARS */
 
@@ -56,6 +58,7 @@ body::before{
     z-index:0;
 }
 
+
 /* MAIN */
 
 .container{
@@ -65,6 +68,7 @@ body::before{
     position:relative;
     z-index:2;
 }
+
 
 /* HERO */
 
@@ -93,6 +97,7 @@ body::before{
     color:#ffd000;
     text-shadow:0 0 12px rgba(255,208,0,.6);
 }
+
 
 /* CTA */
 
@@ -167,9 +172,14 @@ body::before{
     color:#f4f4f7;
 }
 
-/* LOGIN STATUS */
+
+/* =====================================================
+   AUTH STATUS BOX
+===================================================== */
 
 .auth-status{
+    position:relative;
+
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -177,39 +187,125 @@ body::before{
     gap:8px;
 
     margin-top:18px;
-    padding:8px 16px;
+    padding:9px 18px;
 
-    border-radius:20px;
+    border-radius:25px;
 
     font-size:14px;
     font-weight:bold;
 
-    background:rgba(0,255,120,.08);
-    border:1px solid rgba(0,255,120,.45);
-
     color:#45ff83;
 
-    box-shadow:0 0 15px rgba(0,255,120,.15);
+    background:#08051e;
 
-    transition:.3s ease;
+    isolation:isolate;
+    overflow:hidden;
+
+    box-shadow:
+        0 0 18px rgba(0,255,120,.18);
 }
 
-.auth-status.hidden{
-    display:none;
+
+/* Spinning border */
+
+.auth-status::before{
+    content:"";
+
+    position:absolute;
+    inset:-3px;
+
+    border-radius:inherit;
+
+    background:
+        conic-gradient(
+            from 0deg,
+            #ff27c7,
+            #00eaff,
+            #40ff68,
+            #ffd000,
+            #ff27c7
+        );
+
+    animation:
+        authSpin 2s linear infinite;
+
+    z-index:-2;
 }
+
+
+/* Inner background */
+
+.auth-status::after{
+    content:"";
+
+    position:absolute;
+    inset:2px;
+
+    border-radius:inherit;
+
+    background:#08051e;
+
+    z-index:-1;
+}
+
+
+@keyframes authSpin{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+
+/* Status dot */
 
 .auth-dot{
     width:9px;
     height:9px;
 
+    flex-shrink:0;
+
     border-radius:50%;
 
     background:#35ff72;
 
-    box-shadow:0 0 10px #35ff72;
+    box-shadow:
+        0 0 8px #35ff72,
+        0 0 18px #35ff72;
+
+    animation:
+        authPulse 1s ease-in-out infinite;
 }
 
-/* BUTTONS */
+
+@keyframes authPulse{
+
+    0%,100%{
+        transform:scale(.8);
+        opacity:.55;
+    }
+
+    50%{
+        transform:scale(1.2);
+        opacity:1;
+    }
+
+}
+
+
+.auth-status.hidden{
+    display:none;
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
 
 .buttons{
     margin-top:23px;
@@ -219,6 +315,8 @@ body::before{
     align-items:center;
 
     gap:22px;
+
+    flex-wrap:nowrap;
 }
 
 .btn{
@@ -236,11 +334,16 @@ body::before{
     transition:.25s ease;
 
     cursor:pointer;
+
+    user-select:none;
 }
 
 .btn:hover{
     transform:translateY(-3px);
 }
+
+
+/* REGISTER */
 
 .join{
     color:#fff;
@@ -257,6 +360,9 @@ body::before{
         0 0 22px rgba(255,30,190,.45);
 }
 
+
+/* LOGIN / ENTER */
+
 .login{
     color:#fff;
 
@@ -265,6 +371,7 @@ body::before{
     box-shadow:
         0 0 15px rgba(255,208,0,.3);
 }
+
 
 /* LOGOUT */
 
@@ -279,7 +386,10 @@ body::before{
         0 0 15px rgba(255,40,80,.25);
 }
 
-/* FEATURES */
+
+/* =====================================================
+   FEATURES
+===================================================== */
 
 .features-heading{
     text-align:center;
@@ -302,7 +412,6 @@ body::before{
     color:#eeeef5;
 }
 
-/* FEATURE GRID */
 
 .features{
     display:grid;
@@ -312,7 +421,6 @@ body::before{
     padding-bottom:35px;
 }
 
-/* FEATURE CARD */
 
 .feature{
     height:205px;
@@ -343,7 +451,6 @@ body::before{
         inset 0 0 35px rgba(90,0,255,.12);
 }
 
-/* COLORED BORDERS */
 
 .feature:nth-child(1){
     border-color:#ffd000;
@@ -369,7 +476,6 @@ body::before{
     border-color:#e63cff;
 }
 
-/* ICON */
 
 .icon{
     width:61px;
@@ -415,7 +521,6 @@ body::before{
     color:#d738ff;
 }
 
-/* FEATURE TEXT */
 
 .feature h3{
     font-size:19px;
@@ -428,7 +533,10 @@ body::before{
     color:#eeeef5;
 }
 
-/* FOOTER */
+
+/* =====================================================
+   FOOTER
+===================================================== */
 
 footer{
     border-top:1px solid rgba(255,205,0,.75);
@@ -444,13 +552,11 @@ footer{
     display:flex;
 
     align-items:center;
-
     justify-content:space-between;
 
     gap:20px;
 }
 
-/* LOGO */
 
 .logo{
     font-size:36px;
@@ -475,7 +581,6 @@ footer{
     margin-left:7px;
 }
 
-/* COPYRIGHT */
 
 .copyright{
     font-size:15px;
@@ -486,7 +591,10 @@ footer{
     color:#ffd000;
 }
 
-/* TABLET */
+
+/* =====================================================
+   TABLET
+===================================================== */
 
 @media(max-width:800px){
 
@@ -501,9 +609,13 @@ footer{
     .footer-inner{
         width:90%;
     }
+
 }
 
-/* MOBILE */
+
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media(max-width:600px){
 
@@ -555,20 +667,21 @@ footer{
         font-size:30px;
     }
 
-    .buttons{
-        margin-top:17px;
-        gap:10px;
-        flex-wrap:wrap;
-    }
-
-    .btn{
-        padding:10px 21px;
-        font-size:14px;
-    }
-
     .auth-status{
         font-size:12px;
         padding:7px 13px;
+        max-width:100%;
+    }
+
+    .buttons{
+        margin-top:17px;
+        gap:10px;
+    }
+
+    .btn{
+        padding:10px 17px;
+        font-size:13px;
+        white-space:nowrap;
     }
 
     .features-heading{
@@ -641,9 +754,13 @@ footer{
         font-size:12px;
         line-height:1.4;
     }
+
 }
 
-/* VERY SMALL PHONES */
+
+/* =====================================================
+   VERY SMALL PHONES
+===================================================== */
 
 @media(max-width:380px){
 
@@ -663,6 +780,15 @@ footer{
         font-size:29px;
     }
 
+    .buttons{
+        gap:7px;
+    }
+
+    .btn{
+        padding:9px 12px;
+        font-size:12px;
+    }
+
     .features{
         gap:10px;
     }
@@ -675,13 +801,17 @@ footer{
     .feature p{
         font-size:10.5px;
     }
+
 }
+
 </style>
 </head>
+
 
 <body>
 
 <main class="container">
+
 
     <!-- HERO -->
 
@@ -706,6 +836,7 @@ footer{
             <span class="yellow">Shine?</span>
         </h1>
 
+
         <p id="welcomeText">
             Join VitalStar and become part
             of a colorful community where
@@ -713,14 +844,14 @@ footer{
         </p>
 
 
-        <!-- LOGIN STATUS -->
+        <!-- AUTH STATUS -->
 
-        <div id="authStatus" class="auth-status hidden">
+        <div id="authStatus" class="auth-status">
 
             <span class="auth-dot"></span>
 
             <span id="authStatusText">
-                Logged in
+                Checking login...
             </span>
 
         </div>
@@ -735,7 +866,7 @@ footer{
                 class="btn join"
                 id="joinBtn"
             >
-                Join VitalStar
+                Register
             </a>
 
 
@@ -770,19 +901,14 @@ footer{
     </section>
 
 
-    <!-- SIX FEATURES -->
-
     <section class="features">
+
 
         <div class="feature">
 
-            <div class="icon">
-                👥
-            </div>
+            <div class="icon">👥</div>
 
-            <h3>
-                Connect
-            </h3>
+            <h3>Connect</h3>
 
             <p>
                 Find friends and build
@@ -794,13 +920,9 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">
-                💬
-            </div>
+            <div class="icon">💬</div>
 
-            <h3>
-                Chat
-            </h3>
+            <h3>Chat</h3>
 
             <p>
                 Talk with friends and
@@ -812,13 +934,9 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">
-                📷
-            </div>
+            <div class="icon">📷</div>
 
-            <h3>
-                Share
-            </h3>
+            <h3>Share</h3>
 
             <p>
                 Share photos, videos
@@ -830,13 +948,9 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">
-                🌐
-            </div>
+            <div class="icon">🌐</div>
 
-            <h3>
-                Communities
-            </h3>
+            <h3>Communities</h3>
 
             <p>
                 Discover groups and
@@ -848,13 +962,9 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">
-                🔔
-            </div>
+            <div class="icon">🔔</div>
 
-            <h3>
-                Notifications
-            </h3>
+            <h3>Notifications</h3>
 
             <p>
                 Never miss important
@@ -866,13 +976,9 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">
-                ★
-            </div>
+            <div class="icon">★</div>
 
-            <h3>
-                Shine
-            </h3>
+            <h3>Shine</h3>
 
             <p>
                 Express yourself and
@@ -880,6 +986,7 @@ footer{
             </p>
 
         </div>
+
 
     </section>
 
@@ -917,17 +1024,22 @@ footer{
 
 
 <!-- =====================================================
-     FIREBASE AUTH DETECTION
+     FIREBASE AUTH
 ===================================================== -->
 
 <script type="module">
 
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 
 import {
     onAuthStateChanged,
     signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
 const authStatus =
@@ -946,38 +1058,150 @@ const loginBtn =
     document.getElementById("loginBtn");
 
 
-onAuthStateChanged(auth, (user) => {
+/* =====================================================
+   DISABLE BUTTONS
+===================================================== */
+
+function disableButtons(){
+
+    joinBtn.style.pointerEvents = "none";
+    loginBtn.style.pointerEvents = "none";
+
+    joinBtn.style.opacity = "0.55";
+    loginBtn.style.opacity = "0.55";
+
+    joinBtn.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+
+    loginBtn.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+
+}
+
+
+/* =====================================================
+   ENABLE BUTTONS
+===================================================== */
+
+function enableButtons(){
+
+    joinBtn.style.pointerEvents = "auto";
+    loginBtn.style.pointerEvents = "auto";
+
+    joinBtn.style.opacity = "1";
+    loginBtn.style.opacity = "1";
+
+    joinBtn.removeAttribute(
+        "aria-disabled"
+    );
+
+    loginBtn.removeAttribute(
+        "aria-disabled"
+    );
+
+}
+
+
+/* =====================================================
+   START AUTH CHECK
+===================================================== */
+
+disableButtons();
+
+authStatus.classList.remove("hidden");
+
+authStatusText.textContent =
+    "Checking login...";
+
+
+/* =====================================================
+   AUTH STATE
+===================================================== */
+
+onAuthStateChanged(auth, async (user) => {
+
+    /* =================================================
+       LOGGED IN
+    ================================================= */
 
     if(user){
 
-        /*
-         * USER IS LOGGED IN
-         */
+        let fullName =
+            user.displayName || "";
 
-        authStatus.classList.remove("hidden");
+
+        /* Get full name */
+
+        try{
+
+            const userSnap =
+                await getDoc(
+                    doc(
+                        db,
+                        "users",
+                        user.uid
+                    )
+                );
+
+
+            if(userSnap.exists()){
+
+                const data =
+                    userSnap.data();
+
+                fullName =
+                    data.fullName ||
+                    data.name ||
+                    user.displayName ||
+                    "";
+
+            }
+
+        }catch(error){
+
+            console.error(
+                "Unable to load full name:",
+                error
+            );
+
+        }
+
+
+        /* Fallback */
+
+        if(!fullName){
+
+            fullName =
+                user.email
+                ? user.email.split("@")[0]
+                : "VitalStar User";
+
+        }
+
+
+        /* Status */
+
+        authStatus.classList.remove(
+            "hidden"
+        );
 
         authStatusText.textContent =
-            "✓ You are logged in";
+            `✓ Welcome, ${fullName}`;
 
+
+        /* Welcome */
 
         welcomeText.textContent =
-            "Welcome back to VitalStar! You are already part of our colorful community.";
+            `Welcome back, ${fullName}! You are already part of our colorful community.`;
 
 
-        /*
-         * Change Join button
-         */
-
-        joinBtn.textContent =
-            "Go to VitalStar";
-
-        joinBtn.href =
-            "home.html";
-
-
-        /*
-         * Change Login button to Logout
-         */
+        /* =================================================
+           LOGOUT
+        ================================================= */
 
         loginBtn.textContent =
             "Logout";
@@ -985,59 +1209,126 @@ onAuthStateChanged(auth, (user) => {
         loginBtn.href =
             "#";
 
-        loginBtn.classList.remove("login");
+        loginBtn.classList.remove(
+            "login"
+        );
 
-        loginBtn.classList.add("logout");
+        loginBtn.classList.add(
+            "logout"
+        );
 
 
-        loginBtn.onclick = async (event) => {
+        loginBtn.onclick =
+            async (event) => {
 
-            event.preventDefault();
+                event.preventDefault();
 
-            try{
+                disableButtons();
 
-                await signOut(auth);
-
-                /*
-                 * Refresh the page so the
-                 * buttons return to normal.
-                 */
-
-                location.reload();
-
-            }catch(error){
-
-                console.error(
-                    "Logout error:",
-                    error
+                authStatus.classList.remove(
+                    "hidden"
                 );
 
-                alert(
-                    "Unable to log out. Please try again."
-                );
+                authStatusText.textContent =
+                    "Logging out...";
 
-            }
+                try{
 
-        };
+                    await signOut(auth);
 
-    }else{
+                    location.reload();
 
-        /*
-         * USER IS NOT LOGGED IN
-         */
+                }catch(error){
 
-        authStatus.classList.add("hidden");
+                    console.error(
+                        "Logout error:",
+                        error
+                    );
+
+                    authStatusText.textContent =
+                        "Logout failed";
+
+                    enableButtons();
+
+                }
+
+            };
+
+
+        /* =================================================
+           ENTER VITALSTAR
+        ================================================= */
+
+        joinBtn.textContent =
+            "ENTER VITALSTAR";
+
+        joinBtn.href =
+            "home.html";
+
+        joinBtn.classList.remove(
+            "join"
+        );
+
+        joinBtn.classList.add(
+            "login"
+        );
+
+
+        /* Logout LEFT */
+
+        joinBtn.parentElement.appendChild(
+            loginBtn
+        );
+
+
+        /* Enter VitalStar RIGHT */
+
+        joinBtn.parentElement.appendChild(
+            joinBtn
+        );
+
+    }
+
+
+    /* =================================================
+       LOGGED OUT
+    ================================================= */
+
+    else{
+
+        /* Hide status */
+
+        authStatus.classList.add(
+            "hidden"
+        );
+
 
         welcomeText.textContent =
             "Join VitalStar and become part of a colorful community where people connect, share and shine.";
 
 
+        /* =================================================
+           REGISTER
+        ================================================= */
+
         joinBtn.textContent =
-            "Join VitalStar";
+            "Register";
 
         joinBtn.href =
             "register.html";
 
+        joinBtn.classList.remove(
+            "login"
+        );
+
+        joinBtn.classList.add(
+            "join"
+        );
+
+
+        /* =================================================
+           LOGIN
+        ================================================= */
 
         loginBtn.textContent =
             "Login";
@@ -1045,13 +1336,38 @@ onAuthStateChanged(auth, (user) => {
         loginBtn.href =
             "login.html";
 
-        loginBtn.classList.remove("logout");
+        loginBtn.classList.remove(
+            "logout"
+        );
 
-        loginBtn.classList.add("login");
+        loginBtn.classList.add(
+            "login"
+        );
 
         loginBtn.onclick = null;
 
+
+        /* Register LEFT */
+
+        joinBtn.parentElement.appendChild(
+            joinBtn
+        );
+
+
+        /* Login RIGHT */
+
+        joinBtn.parentElement.appendChild(
+            loginBtn
+        );
+
     }
+
+
+    /* =================================================
+       AUTH CHECK COMPLETE
+    ================================================= */
+
+    enableButtons();
 
 });
 
