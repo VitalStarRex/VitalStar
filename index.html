@@ -174,7 +174,7 @@ body::before{
 
 
 /* =====================================================
-   AUTH STATUS BOX
+   AUTH STATUS
 ===================================================== */
 
 .auth-status{
@@ -206,9 +206,9 @@ body::before{
 }
 
 
-/* Spinning border */
+/* SPIN ONLY WHILE CHECKING */
 
-.auth-status::before{
+.auth-status.loading::before{
     content:"";
 
     position:absolute;
@@ -233,7 +233,14 @@ body::before{
 }
 
 
-/* Inner background */
+/* STATIC BORDER AFTER CHECKING */
+
+.auth-status:not(.loading){
+    border:2px solid #35ff72;
+}
+
+
+/* INNER BACKGROUND */
 
 .auth-status::after{
     content:"";
@@ -262,7 +269,7 @@ body::before{
 }
 
 
-/* Status dot */
+/* STATUS DOT */
 
 .auth-dot{
     width:9px;
@@ -303,9 +310,7 @@ body::before{
 }
 
 
-/* =====================================================
-   BUTTONS
-===================================================== */
+/* BUTTONS */
 
 .buttons{
     margin-top:23px;
@@ -387,9 +392,7 @@ body::before{
 }
 
 
-/* =====================================================
-   FEATURES
-===================================================== */
+/* FEATURES */
 
 .features-heading{
     text-align:center;
@@ -477,6 +480,8 @@ body::before{
 }
 
 
+/* ICON */
+
 .icon{
     width:61px;
     height:61px;
@@ -522,6 +527,8 @@ body::before{
 }
 
 
+/* FEATURE TEXT */
+
 .feature h3{
     font-size:19px;
     margin-bottom:8px;
@@ -534,9 +541,7 @@ body::before{
 }
 
 
-/* =====================================================
-   FOOTER
-===================================================== */
+/* FOOTER */
 
 footer{
     border-top:1px solid rgba(255,205,0,.75);
@@ -592,9 +597,7 @@ footer{
 }
 
 
-/* =====================================================
-   TABLET
-===================================================== */
+/* TABLET */
 
 @media(max-width:800px){
 
@@ -613,9 +616,7 @@ footer{
 }
 
 
-/* =====================================================
-   MOBILE
-===================================================== */
+/* MOBILE */
 
 @media(max-width:600px){
 
@@ -758,9 +759,7 @@ footer{
 }
 
 
-/* =====================================================
-   VERY SMALL PHONES
-===================================================== */
+/* VERY SMALL PHONES */
 
 @media(max-width:380px){
 
@@ -846,7 +845,10 @@ footer{
 
         <!-- AUTH STATUS -->
 
-        <div id="authStatus" class="auth-status">
+        <div
+            id="authStatus"
+            class="auth-status loading"
+        >
 
             <span class="auth-dot"></span>
 
@@ -865,6 +867,7 @@ footer{
                 href="register.html"
                 class="btn join"
                 id="joinBtn"
+                aria-disabled="true"
             >
                 Register
             </a>
@@ -874,6 +877,7 @@ footer{
                 href="login.html"
                 class="btn login"
                 id="loginBtn"
+                aria-disabled="true"
             >
                 Login
             </a>
@@ -906,9 +910,13 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">👥</div>
+            <div class="icon">
+                👥
+            </div>
 
-            <h3>Connect</h3>
+            <h3>
+                Connect
+            </h3>
 
             <p>
                 Find friends and build
@@ -920,9 +928,13 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">💬</div>
+            <div class="icon">
+                💬
+            </div>
 
-            <h3>Chat</h3>
+            <h3>
+                Chat
+            </h3>
 
             <p>
                 Talk with friends and
@@ -934,9 +946,13 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">📷</div>
+            <div class="icon">
+                📷
+            </div>
 
-            <h3>Share</h3>
+            <h3>
+                Share
+            </h3>
 
             <p>
                 Share photos, videos
@@ -948,9 +964,13 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">🌐</div>
+            <div class="icon">
+                🌐
+            </div>
 
-            <h3>Communities</h3>
+            <h3>
+                Communities
+            </h3>
 
             <p>
                 Discover groups and
@@ -962,9 +982,13 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">🔔</div>
+            <div class="icon">
+                🔔
+            </div>
 
-            <h3>Notifications</h3>
+            <h3>
+                Notifications
+            </h3>
 
             <p>
                 Never miss important
@@ -976,9 +1000,13 @@ footer{
 
         <div class="feature">
 
-            <div class="icon">★</div>
+            <div class="icon">
+                ★
+            </div>
 
-            <h3>Shine</h3>
+            <h3>
+                Shine
+            </h3>
 
             <p>
                 Express yourself and
@@ -1113,6 +1141,7 @@ function enableButtons(){
 disableButtons();
 
 authStatus.classList.remove("hidden");
+authStatus.classList.add("loading");
 
 authStatusText.textContent =
     "Checking login...";
@@ -1130,11 +1159,18 @@ onAuthStateChanged(auth, async (user) => {
 
     if(user){
 
+        /* STOP SPINNING */
+
+        authStatus.classList.remove(
+            "loading"
+        );
+
+
         let fullName =
             user.displayName || "";
 
 
-        /* Get full name */
+        /* GET FULL NAME FROM FIRESTORE */
 
         try{
 
@@ -1171,7 +1207,7 @@ onAuthStateChanged(auth, async (user) => {
         }
 
 
-        /* Fallback */
+        /* FALLBACK */
 
         if(!fullName){
 
@@ -1183,7 +1219,7 @@ onAuthStateChanged(auth, async (user) => {
         }
 
 
-        /* Status */
+        /* AUTH STATUS */
 
         authStatus.classList.remove(
             "hidden"
@@ -1193,14 +1229,14 @@ onAuthStateChanged(auth, async (user) => {
             `✓ Welcome, ${fullName}`;
 
 
-        /* Welcome */
+        /* WELCOME TEXT */
 
         welcomeText.textContent =
             `Welcome back, ${fullName}! You are already part of our colorful community.`;
 
 
         /* =================================================
-           LOGOUT
+           LOGOUT BUTTON
         ================================================= */
 
         loginBtn.textContent =
@@ -1229,8 +1265,13 @@ onAuthStateChanged(auth, async (user) => {
                     "hidden"
                 );
 
+                authStatus.classList.add(
+                    "loading"
+                );
+
                 authStatusText.textContent =
                     "Logging out...";
+
 
                 try{
 
@@ -1243,6 +1284,10 @@ onAuthStateChanged(auth, async (user) => {
                     console.error(
                         "Logout error:",
                         error
+                    );
+
+                    authStatus.classList.remove(
+                        "loading"
                     );
 
                     authStatusText.textContent =
@@ -1274,14 +1319,14 @@ onAuthStateChanged(auth, async (user) => {
         );
 
 
-        /* Logout LEFT */
+        /* LOGOUT LEFT */
 
         joinBtn.parentElement.appendChild(
             loginBtn
         );
 
 
-        /* Enter VitalStar RIGHT */
+        /* ENTER VITALSTAR RIGHT */
 
         joinBtn.parentElement.appendChild(
             joinBtn
@@ -1296,12 +1341,21 @@ onAuthStateChanged(auth, async (user) => {
 
     else{
 
+        /* STOP SPINNING */
+
+        authStatus.classList.remove(
+            "loading"
+        );
+
+
         /* Hide status */
 
         authStatus.classList.add(
             "hidden"
         );
 
+
+        /* WELCOME TEXT */
 
         welcomeText.textContent =
             "Join VitalStar and become part of a colorful community where people connect, share and shine.";
@@ -1347,14 +1401,14 @@ onAuthStateChanged(auth, async (user) => {
         loginBtn.onclick = null;
 
 
-        /* Register LEFT */
+        /* REGISTER LEFT */
 
         joinBtn.parentElement.appendChild(
             joinBtn
         );
 
 
-        /* Login RIGHT */
+        /* LOGIN RIGHT */
 
         joinBtn.parentElement.appendChild(
             loginBtn
@@ -1364,7 +1418,7 @@ onAuthStateChanged(auth, async (user) => {
 
 
     /* =================================================
-       AUTH CHECK COMPLETE
+       AUTH CHECK FINISHED
     ================================================= */
 
     enableButtons();
