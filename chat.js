@@ -2073,7 +2073,7 @@ function setupMessages() {
                 `;
             }
         );
-}
+} 
 
 // ============================================================
 // CREATE WHATSAPP-STYLE AUDIO PLAYER
