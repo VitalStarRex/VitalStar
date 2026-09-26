@@ -40,14 +40,15 @@ import {
 // ELEMENTS
 // ============================================================
 
-const feed = document.getElementById("feed");
+const feed =
+    document.getElementById("feed");
+
 const notificationBadge =
     document.getElementById("notificationBadge");
 
 
 // ============================================================
 // SAFE HTML
-// Prevent user text from being interpreted as HTML
 // ============================================================
 
 function escapeHTML(value = "") {
@@ -66,7 +67,8 @@ function escapeHTML(value = "") {
 // MODERN VITALSTAR STYLES
 // ============================================================
 
-const style = document.createElement("style");
+const style =
+    document.createElement("style");
 
 style.textContent = `
 
@@ -97,18 +99,7 @@ style.textContent = `
 
 body {
 
-    background:
-        radial-gradient(
-            circle at 15% 0%,
-            rgba(139,92,246,0.14),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 90% 20%,
-            rgba(0,217,255,0.08),
-            transparent 28%
-        ),
-        var(--vs-bg);
+    background: #ffffff;
 
 }
 
@@ -187,7 +178,6 @@ body {
 
 }
 
-
 .post-card::before {
 
     content: "";
@@ -210,7 +200,6 @@ body {
 
 }
 
-
 .post-card:hover {
 
     transform:
@@ -228,12 +217,12 @@ body {
 
 }
 
-
 @keyframes vsPostIn {
 
     from {
 
         opacity: 0;
+
         transform:
             translateY(12px)
             scale(.985);
@@ -243,6 +232,7 @@ body {
     to {
 
         opacity: 1;
+
         transform:
             translateY(0)
             scale(1);
@@ -272,7 +262,6 @@ body {
 
 }
 
-
 .avatar {
 
     width:
@@ -288,7 +277,6 @@ body {
         relative;
 
 }
-
 
 .avatar img,
 .avatar-fallback {
@@ -307,7 +295,6 @@ body {
 
 }
 
-
 .avatar img {
 
     display:
@@ -322,7 +309,6 @@ body {
         rgba(0,0,0,.25);
 
 }
-
 
 .avatar-fallback {
 
@@ -353,7 +339,6 @@ body {
 
 }
 
-
 .user-details {
 
     min-width:
@@ -363,7 +348,6 @@ body {
         1;
 
 }
-
 
 .user-details h3 {
 
@@ -381,7 +365,6 @@ body {
 
 }
 
-
 .user-details h3 a {
 
     color:
@@ -392,14 +375,12 @@ body {
 
 }
 
-
 .user-details h3 a:hover {
 
     color:
         var(--vs-gold);
 
 }
-
 
 .post-time {
 
@@ -496,7 +477,6 @@ body {
 
 }
 
-
 .post-photo,
 .post-video {
 
@@ -523,14 +503,12 @@ body {
 
 }
 
-
 .post-photo {
 
     transition:
         transform .4s ease;
 
 }
-
 
 .post-media:hover .post-photo {
 
@@ -569,7 +547,6 @@ body {
         rgba(255,255,255,.075);
 
 }
-
 
 .post-buttons button {
 
@@ -612,7 +589,6 @@ body {
 
 }
 
-
 .post-buttons button:hover {
 
     transform:
@@ -628,7 +604,6 @@ body {
         rgba(255,213,79,.16);
 
 }
-
 
 .post-buttons button:active {
 
@@ -652,23 +627,26 @@ body {
 
 }
 
-
 @keyframes vsHeart {
 
     0% {
-        transform: scale(1);
+        transform:
+            scale(1);
     }
 
     35% {
-        transform: scale(1.25);
+        transform:
+            scale(1.25);
     }
 
     70% {
-        transform: scale(.92);
+        transform:
+            scale(.92);
     }
 
     100% {
-        transform: scale(1);
+        transform:
+            scale(1);
     }
 
 }
@@ -712,7 +690,6 @@ body {
 
 }
 
-
 #vitalStarLoader.hide {
 
     opacity:
@@ -726,7 +703,6 @@ body {
 
 }
 
-
 .vs-loader-content {
 
     display:
@@ -739,7 +715,6 @@ body {
         center;
 
 }
-
 
 .vs-spinner {
 
@@ -783,7 +758,6 @@ body {
 
 }
 
-
 .vs-spinner span {
 
     font-size:
@@ -803,7 +777,6 @@ body {
 
 }
 
-
 .vs-loading-text {
 
     margin-top:
@@ -820,22 +793,24 @@ body {
 
 }
 
-
 @keyframes vsRotate {
 
     to {
+
         transform:
             rotate(360deg);
+
     }
 
 }
 
-
 @keyframes vsCounterRotate {
 
     to {
+
         transform:
             rotate(-360deg);
+
     }
 
 }
@@ -865,7 +840,6 @@ body {
 
 }
 
-
 .vs-empty-icon {
 
     font-size:
@@ -875,7 +849,6 @@ body {
         10px;
 
 }
-
 
 .vs-empty-title {
 
@@ -889,7 +862,6 @@ body {
         750;
 
 }
-
 
 .vs-empty-text {
 
@@ -996,7 +968,6 @@ body {
 
     }
 
-
     .post-card {
 
         padding:
@@ -1007,14 +978,12 @@ body {
 
     }
 
-
     .post-buttons {
 
         gap:
             5px !important;
 
     }
-
 
     .post-buttons button {
 
@@ -1025,7 +994,6 @@ body {
             10px 2px;
 
     }
-
 
     .post-text {
 
@@ -1045,16 +1013,20 @@ document.head.appendChild(style);
 // LOADING SCREEN
 // ============================================================
 
-const loader = document.createElement("div");
+const loader =
+    document.createElement("div");
 
-loader.id = "vitalStarLoader";
+loader.id =
+    "vitalStarLoader";
 
 loader.innerHTML = `
 
     <div class="vs-loader-content">
 
         <div class="vs-spinner">
+
             <span>VS</span>
+
         </div>
 
         <div class="vs-loading-text">
@@ -1095,14 +1067,18 @@ function hideVitalStarLoader() {
 function formatPostDate(timestamp) {
 
     if (!timestamp) {
+
         return "Just now";
+
     }
 
     try {
 
-        const date = timestamp.toDate();
+        const date =
+            timestamp.toDate();
 
-        const now = new Date();
+        const now =
+            new Date();
 
         const seconds =
             Math.floor(
@@ -1110,7 +1086,9 @@ function formatPostDate(timestamp) {
             );
 
         if (seconds < 60) {
+
             return "Just now";
+
         }
 
         const minutes =
@@ -1119,7 +1097,9 @@ function formatPostDate(timestamp) {
             );
 
         if (minutes < 60) {
+
             return `${minutes}m ago`;
+
         }
 
         const hours =
@@ -1128,7 +1108,9 @@ function formatPostDate(timestamp) {
             );
 
         if (hours < 24) {
+
             return `${hours}h ago`;
+
         }
 
         const days =
@@ -1137,15 +1119,22 @@ function formatPostDate(timestamp) {
             );
 
         if (days < 7) {
+
             return `${days}d ago`;
+
         }
 
         return date.toLocaleDateString(
             undefined,
             {
-                day: "numeric",
-                month: "short",
-                year: "numeric"
+                day:
+                    "numeric",
+
+                month:
+                    "short",
+
+                year:
+                    "numeric"
             }
         );
 
@@ -1212,18 +1201,17 @@ function createAvatar(
 // LOAD POSTS
 // ============================================================
 
-const postsQuery = query(
+const postsQuery =
+    query(
+        collection(db, "posts"),
 
-    collection(db, "posts"),
+        orderBy(
+            "createdAt",
+            "desc"
+        ),
 
-    orderBy(
-        "createdAt",
-        "desc"
-    ),
-
-    limit(10)
-
-);
+        limit(10)
+    );
 
 
 onSnapshot(
@@ -1239,7 +1227,6 @@ onSnapshot(
             return;
 
         }
-
 
         if (snapshot.empty) {
 
@@ -1369,7 +1356,9 @@ onSnapshot(
                     escapeHTML(fullName);
 
                 const safeUid =
-                    escapeHTML(post.uid || "");
+                    escapeHTML(
+                        post.uid || ""
+                    );
 
 
                 const text =
@@ -1462,10 +1451,13 @@ onSnapshot(
                                     <a
                                         href="profile.html?uid=${encodeURIComponent(safeUid)}"
                                     >
+
                                         ${safeName}
+
                                     </a>
 
                                 </h3>
+
 
                                 <small class="post-time">
 
@@ -1481,9 +1473,13 @@ onSnapshot(
                         ${
                             text
                                 ? `
+
                                     <div class="post-text">
+
                                         ${text}
+
                                     </div>
+
                                 `
                                 : ""
                         }
@@ -1501,10 +1497,13 @@ onSnapshot(
                                 onclick="likePost('${escapeHTML(postId)}')"
                                 aria-label="Like post"
                             >
+
                                 ❤️
+
                                 <span>
                                     ${Number(post.likes) || 0}
                                 </span>
+
                             </button>
 
 
@@ -1513,10 +1512,13 @@ onSnapshot(
                                 onclick="openComments('${escapeHTML(postId)}')"
                                 aria-label="Comments"
                             >
+
                                 💬
+
                                 <span>
                                     ${Number(post.comments) || 0}
                                 </span>
+
                             </button>
 
 
@@ -1525,10 +1527,13 @@ onSnapshot(
                                 onclick="repostPost('${escapeHTML(postId)}')"
                                 aria-label="Repost"
                             >
+
                                 🔁
+
                                 <span>
                                     ${Number(post.reposts) || 0}
                                 </span>
+
                             </button>
 
 
@@ -1537,10 +1542,13 @@ onSnapshot(
                                 onclick="sharePost('${escapeHTML(postId)}')"
                                 aria-label="Share post"
                             >
+
                                 🔗
+
                                 <span>
                                     ${Number(post.shares) || 0}
                                 </span>
+
                             </button>
 
                         </div>
@@ -1552,9 +1560,11 @@ onSnapshot(
             }
 
 
-            feed.innerHTML = html;
+            feed.innerHTML =
+                html;
 
             hideVitalStarLoader();
+
 
         } catch (error) {
 
@@ -1566,9 +1576,7 @@ onSnapshot(
             feed.innerHTML = `
 
                 <div class="vs-error">
-
                     Unable to load posts right now.
-
                 </div>
 
             `;
@@ -1591,9 +1599,7 @@ onSnapshot(
             feed.innerHTML = `
 
                 <div class="vs-error">
-
                     Unable to load posts.
-
                 </div>
 
             `;
@@ -1611,247 +1617,241 @@ onSnapshot(
 // LIKE
 // ============================================================
 
-window.likePost = async function(postId) {
+window.likePost =
+    async function(postId) {
 
-    const user =
-        auth.currentUser;
-
-
-    if (!user) {
-
-        alert(
-            "Please login first."
-        );
-
-        return;
-
-    }
+        const user =
+            auth.currentUser;
 
 
-    const button =
-        document.querySelector(
-            `[data-post-id="${CSS.escape(postId)}"] .post-buttons button:first-child`
-        );
+        if (!user) {
 
-
-    if (button) {
-
-        button.style.animation =
-            "vsHeart .35s ease";
-
-        setTimeout(() => {
-
-            button.style.animation = "";
-
-        }, 400);
-
-    }
-
-
-    try {
-
-        const likeId =
-            `${postId}_${user.uid}`;
-
-        const likeRef =
-            doc(
-                db,
-                "likes",
-                likeId
+            alert(
+                "Please login first."
             );
 
-        const postRef =
-            doc(
-                db,
-                "posts",
-                postId
+            return;
+
+        }
+
+
+        const button =
+            document.querySelector(
+                `[data-post-id="${CSS.escape(postId)}"] .post-buttons button:first-child`
             );
 
-        const likeSnap =
-            await getDoc(likeRef);
+
+        if (button) {
+
+            button.style.animation =
+                "vsHeart .35s ease";
+
+            setTimeout(() => {
+
+                button.style.animation =
+                    "";
+
+            }, 400);
+
+        }
 
 
-        if (likeSnap.exists()) {
+        try {
 
-            await deleteDoc(likeRef);
+            const likeId =
+                `${postId}_${user.uid}`;
+
+
+            const likeRef =
+                doc(
+                    db,
+                    "likes",
+                    likeId
+                );
+
+
+            const postRef =
+                doc(
+                    db,
+                    "posts",
+                    postId
+                );
+
+
+            const likeSnap =
+                await getDoc(
+                    likeRef
+                );
+
+
+            if (likeSnap.exists()) {
+
+                await deleteDoc(
+                    likeRef
+                );
+
+                await updateDoc(
+                    postRef,
+                    {
+                        likes:
+                            increment(-1)
+                    }
+                );
+
+                return;
+
+            }
+
+
+            await setDoc(
+                likeRef,
+                {
+
+                    uid:
+                        user.uid,
+
+                    postId,
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
+            );
+
 
             await updateDoc(
                 postRef,
                 {
+
                     likes:
-                        increment(-1)
+                        increment(1)
+
                 }
             );
 
-            return;
 
-        }
-
-
-        await setDoc(
-            likeRef,
-            {
-
-                uid:
-                    user.uid,
-
-                postId,
-
-                createdAt:
-                    serverTimestamp()
-
-            }
-        );
+            const postSnap =
+                await getDoc(
+                    postRef
+                );
 
 
-        await updateDoc(
-            postRef,
-            {
+            if (!postSnap.exists())
+                return;
 
-                likes:
-                    increment(1)
+
+            const postData =
+                postSnap.data();
+
+
+            if (
+                postData.uid ===
+                user.uid
+            ) {
+
+                return;
 
             }
-        );
 
 
-        const postSnap =
-            await getDoc(postRef);
+            const userSnap =
+                await getDoc(
+                    doc(
+                        db,
+                        "users",
+                        user.uid
+                    )
+                );
 
 
-        if (!postSnap.exists()) return;
+            if (!userSnap.exists())
+                return;
 
 
-        const postData =
-            postSnap.data();
+            const currentUser =
+                userSnap.data();
 
 
-        if (
-            postData.uid === user.uid
-        ) {
-            return;
-        }
-
-
-        const userSnap =
-            await getDoc(
-                doc(
+            await addDoc(
+                collection(
                     db,
-                    "users",
-                    user.uid
-                )
+                    "notifications"
+                ),
+                {
+
+                    receiverId:
+                        postData.uid,
+
+                    senderId:
+                        user.uid,
+
+                    senderName:
+                        currentUser.fullName ||
+                        currentUser.username ||
+                        "VitalStar User",
+
+                    senderPhoto:
+                        currentUser.profilePicture ||
+                        "",
+
+                    text:
+                        "liked your post ❤️",
+
+                    type:
+                        "like",
+
+                    postId,
+
+                    read:
+                        false,
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
             );
 
 
-        if (!userSnap.exists()) return;
+        } catch (error) {
 
+            console.error(
+                "Like error:",
+                error
+            );
 
-        const currentUser =
-            userSnap.data();
+        }
 
-
-        await addDoc(
-            collection(
-                db,
-                "notifications"
-            ),
-            {
-
-                receiverId:
-                    postData.uid,
-
-                senderId:
-                    user.uid,
-
-                senderName:
-                    currentUser.fullName ||
-                    currentUser.username ||
-                    "VitalStar User",
-
-                senderPhoto:
-                    currentUser.profilePicture ||
-                    "",
-
-                text:
-                    "liked your post ❤️",
-
-                type:
-                    "like",
-
-                postId,
-
-                read:
-                    false,
-
-                createdAt:
-                    serverTimestamp()
-
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Like error:",
-            error
-        );
-
-    }
-
-};
+    };
 
 
 // ============================================================
 // COMMENTS
 // ============================================================
 
-window.openComments = function(postId) {
+window.openComments =
+    function(postId) {
 
-    window.location.href =
-        `comments.html?postId=${encodeURIComponent(postId)}`;
+        window.location.href =
+            `comments.html?postId=${encodeURIComponent(postId)}`;
 
-};
+    };
 
 
 // ============================================================
 // REPOST
 // ============================================================
 
-window.repostPost = async function(postId) {
+window.repostPost =
+    async function(postId) {
 
-    const user =
-        auth.currentUser;
-
-
-    if (!user) {
-
-        alert(
-            "Please login first."
-        );
-
-        return;
-
-    }
+        const user =
+            auth.currentUser;
 
 
-    try {
-
-        const postRef =
-            doc(
-                db,
-                "posts",
-                postId
-            );
-
-
-        const postSnap =
-            await getDoc(postRef);
-
-
-        if (!postSnap.exists()) {
+        if (!user) {
 
             alert(
-                "Post not found."
+                "Please login first."
             );
 
             return;
@@ -1859,132 +1859,164 @@ window.repostPost = async function(postId) {
         }
 
 
-        await updateDoc(
-            postRef,
-            {
+        try {
 
-                reposts:
-                    increment(1)
+            const postRef =
+                doc(
+                    db,
+                    "posts",
+                    postId
+                );
+
+
+            const postSnap =
+                await getDoc(
+                    postRef
+                );
+
+
+            if (!postSnap.exists()) {
+
+                alert(
+                    "Post not found."
+                );
+
+                return;
 
             }
-        );
 
 
-        alert(
-            "Post reposted 🔁"
-        );
+            await updateDoc(
+                postRef,
+                {
 
-    } catch (error) {
+                    reposts:
+                        increment(1)
 
-        console.error(
-            "Repost error:",
-            error
-        );
+                }
+            );
 
-    }
 
-};
+            alert(
+                "Post reposted 🔁"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Repost error:",
+                error
+            );
+
+        }
+
+    };
 
 
 // ============================================================
 // SHARE
 // ============================================================
 
-window.sharePost = async function(postId) {
+window.sharePost =
+    async function(postId) {
 
-    try {
+        try {
 
-        const postRef =
-            doc(
-                db,
-                "posts",
-                postId
-            );
-
-
-        const postSnap =
-            await getDoc(postRef);
+            const postRef =
+                doc(
+                    db,
+                    "posts",
+                    postId
+                );
 
 
-        if (!postSnap.exists()) {
-
-            alert(
-                "Post not found."
-            );
-
-            return;
-
-        }
+            const postSnap =
+                await getDoc(
+                    postRef
+                );
 
 
-        const post =
-            postSnap.data();
+            if (!postSnap.exists()) {
 
+                alert(
+                    "Post not found."
+                );
 
-        const shareUrl =
-            `${window.location.origin}/comments.html?postId=${encodeURIComponent(postId)}`;
-
-
-        if (
-            navigator.share
-        ) {
-
-            await navigator.share({
-
-                title:
-                    "VitalStar Post",
-
-                text:
-                    post.text ||
-                    "Check out this post on VitalStar!",
-
-                url:
-                    shareUrl
-
-            });
-
-        } else if (
-            navigator.clipboard
-        ) {
-
-            await navigator.clipboard.writeText(
-                shareUrl
-            );
-
-            alert(
-                "Post link copied 🔗"
-            );
-
-        }
-
-
-        await updateDoc(
-            postRef,
-            {
-
-                shares:
-                    increment(1)
+                return;
 
             }
-        );
 
-    } catch (error) {
 
-        if (
-            error.name !==
-            "AbortError"
-        ) {
+            const post =
+                postSnap.data();
 
-            console.error(
-                "Share error:",
-                error
+
+            const shareUrl =
+                `${window.location.origin}/comments.html?postId=${encodeURIComponent(postId)}`;
+
+
+            if (
+                navigator.share
+            ) {
+
+                await navigator.share({
+
+                    title:
+                        "VitalStar Post",
+
+                    text:
+                        post.text ||
+                        "Check out this post on VitalStar!",
+
+                    url:
+                        shareUrl
+
+                });
+
+            } else if (
+                navigator.clipboard
+            ) {
+
+                await navigator.clipboard.writeText(
+                    shareUrl
+                );
+
+                alert(
+                    "Post link copied 🔗"
+                );
+
+            }
+
+
+            await updateDoc(
+                postRef,
+                {
+
+                    shares:
+                        increment(1)
+
+                }
             );
+
+
+        } catch (error) {
+
+            if (
+                error.name !==
+                "AbortError"
+            ) {
+
+                console.error(
+                    "Share error:",
+                    error
+                );
+
+            }
 
         }
 
-    }
-
-};
+    };
 
 
 // ============================================================
@@ -1994,7 +2026,8 @@ window.sharePost = async function(postId) {
 auth.onAuthStateChanged(
     async user => {
 
-        if (!user) return;
+        if (!user)
+            return;
 
 
         const onlineUsersCount =
@@ -2058,7 +2091,8 @@ auth.onAuthStateChanged(
                 );
 
 
-            if (!userSnap.exists()) return;
+            if (!userSnap.exists())
+                return;
 
 
             const userData =
@@ -2110,7 +2144,9 @@ auth.onAuthStateChanged(
                             font-weight:800;
                         "
                     >
+
                         ${escapeHTML(fullName)}
+
                     </span>
 
                     👋
@@ -2118,6 +2154,7 @@ auth.onAuthStateChanged(
                 `;
 
             }
+
 
         } catch (error) {
 
