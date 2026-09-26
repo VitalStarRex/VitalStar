@@ -87,8 +87,8 @@ style.textContent = `
     --vs-card: #ffffff;
     --vs-card-border: rgba(0,0,0,0.08);
 
-    --vs-text: #333333;
-    --vs-muted: rgba(51,51,51,0.6);
+    --vs-text: #808080;
+    --vs-muted: rgba(128,128,128,0.7);
 
 }
 
@@ -123,17 +123,17 @@ style.textContent = `
     width: 100%;
 
     margin:
-        0 auto 18px;
+        0 auto 12px;
 
     padding:
-        16px;
+        10px;
 
     border:
         1px solid
         var(--vs-card-border);
 
     border-radius:
-        24px;
+        14px;
 
     background:
         var(--vs-card);
@@ -235,23 +235,23 @@ style.textContent = `
         center;
 
     gap:
-        11px;
+        9px;
 
     margin-bottom:
-        12px;
+        8px;
 
 }
 
 .avatar {
 
     width:
-        48px;
+        38px;
 
     height:
-        48px;
+        38px;
 
     flex:
-        0 0 48px;
+        0 0 38px;
 
     position:
         relative;
@@ -262,10 +262,10 @@ style.textContent = `
 .avatar-fallback {
 
     width:
-        48px;
+        38px;
 
     height:
-        48px;
+        38px;
 
     border-radius:
         50%;
@@ -411,16 +411,16 @@ style.textContent = `
 .post-text {
 
     margin:
-        14px 2px 16px;
+        10px 2px 12px;
 
     color:
-        #333333;
+        gray;
 
     font-size:
-        15px;
+        13px;
 
     line-height:
-        1.7;
+        1.55;
 
     text-align:
         left;
@@ -511,16 +511,16 @@ style.textContent = `
         repeat(4, 1fr);
 
     gap:
-        7px !important;
+        5px !important;
 
     width:
         100%;
 
     margin-top:
-        15px !important;
+        10px !important;
 
     padding-top:
-        12px;
+        8px;
 
     border-top:
         1px solid
@@ -538,22 +538,22 @@ style.textContent = `
         transparent;
 
     border-radius:
-        13px;
+        10px;
 
     padding:
-        10px 5px;
+        7px 4px;
 
     background:
         rgba(0,0,0,.03);
 
     color:
-        rgba(51,51,51,.75);
+        gray;
 
     font:
         inherit;
 
     font-size:
-        12px;
+        11px;
 
     font-weight:
         650;
@@ -954,10 +954,10 @@ style.textContent = `
     .post-card {
 
         padding:
-            14px;
+            8px;
 
         border-radius:
-            21px;
+            12px;
 
     }
 
