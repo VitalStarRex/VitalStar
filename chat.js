@@ -1,5 +1,7 @@
 // ============================================================
 // VITALSTAR CHAT.JS
+// Messages + Media + Voice Notes + Delete + Block
+// Last Seen + Voice Call + Video Call
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -16,228 +18,9 @@ import {
     serverTimestamp,
     setDoc,
     updateDoc,
-    deleteDoc
+    deleteDoc,
+    where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import {
-    getDatabase,
-    ref,
-    onValue
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-
-// ============================================================
-// LOADER
-// ============================================================
-
-const loader = document.createElement("div");
-
-loader.id = "vitalStarChatLoader";
-
-loader.innerHTML = `
-    <div class="vs-chat-loader-content">
-        <div class="vs-chat-spinner">VS</div>
-        <div class="vs-chat-loading-text">Loading chat...</div>
-    </div>
-`;
-
-document.body.appendChild(loader);
-
-const loaderStyle = document.createElement("style");
-
-loaderStyle.textContent = `
-#vitalStarChatLoader {
-    position: fixed;
-    inset: 0;
-    background: #05030b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999999;
-    transition: opacity .35s ease;
-}
-
-.vs-chat-loader-content {
-    text-align: center;
-}
-
-.vs-chat-spinner {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    border: 4px solid rgba(255,255,255,.15);
-    border-top-color: #00ff88;
-    border-right-color: #7b2cff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 24px;
-    font-weight: 900;
-    animation: vsChatSpin 1s linear infinite;
-    margin: auto;
-}
-
-.vs-chat-loading-text {
-    color: white;
-    margin-top: 15px;
-    font-size: 14px;
-    opacity: .8;
-}
-
-@keyframes vsChatSpin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* ============================================================
-   CHAT FORM FIX
-   ============================================================ */
-
-#messageForm {
-    position: relative !important;
-    z-index: 100 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Keep the form above a fixed footer */
-#messageForm,
-#messageForm * {
-    box-sizing: border-box;
-}
-
-/* ============================================================
-   ATTACHMENT MENU
-   ============================================================ */
-
-.vs-media-wrapper {
-    position: relative;
-    display: inline-flex;
-    flex-shrink: 0;
-    z-index: 200;
-}
-
-.vs-media-main-button {
-    width: 42px;
-    height: 42px;
-    border: 0;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#7b2cff,#00bfff);
-    color: white;
-    font-size: 23px;
-    cursor: pointer;
-}
-
-.vs-media-menu {
-    position: absolute;
-    left: 0;
-    bottom: 48px;
-    min-width: 175px;
-    padding: 7px;
-    background: #171322;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 14px;
-    box-shadow: 0 12px 35px rgba(0,0,0,.5);
-    z-index: 99999;
-}
-
-.vs-media-menu button {
-    display: block;
-    width: 100%;
-    border: 0;
-    background: transparent;
-    color: white;
-    padding: 11px;
-    border-radius: 9px;
-    text-align: left;
-    cursor: pointer;
-}
-
-.vs-media-menu button:hover {
-    background: rgba(255,255,255,.08);
-}
-
-/* ============================================================
-   CHAT OPTIONS
-   ============================================================ */
-
-.vs-chat-options {
-    position: absolute;
-    right: 5px;
-    top: 42px;
-    min-width: 170px;
-    padding: 7px;
-    background: #171322;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 13px;
-    box-shadow: 0 12px 35px rgba(0,0,0,.5);
-    z-index: 99999;
-}
-
-.vs-chat-options button {
-    width: 100%;
-    border: 0;
-    background: transparent;
-    color: white;
-    padding: 11px;
-    border-radius: 9px;
-    text-align: left;
-}
-
-.vs-chat-options button:hover {
-    background: rgba(255,255,255,.08);
-}
-
-/* ============================================================
-   MESSAGE DELETE
-   ============================================================ */
-
-.vs-message-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 4px;
-}
-
-.vs-delete-message {
-    border: 0;
-    background: transparent;
-    color: #ff7373;
-    font-size: 11px;
-    padding: 2px 0;
-    cursor: pointer;
-}
-
-.vs-delete-message:disabled {
-    opacity: .5;
-    cursor: wait;
-}
-
-.vs-blocked-input {
-    opacity: .7;
-}
-
-.vs-sending-status {
-    display: none;
-    color: #aaa;
-    font-size: 12px;
-    padding: 3px 8px;
-}
-
-.vs-media-preview {
-    display: none;
-    margin: 5px 8px;
-    padding: 7px 10px;
-    border-radius: 9px;
-    background: rgba(255,255,255,.06);
-    color: #ddd;
-    font-size: 12px;
-}
-`;
-
-document.head.appendChild(loaderStyle);
-
 
 // ============================================================
 // ELEMENTS
@@ -248,399 +31,1053 @@ const chatAvatar = document.getElementById("chatAvatar");
 const chatName = document.getElementById("chatName");
 const chatStatus = document.getElementById("chatStatus");
 const messages = document.getElementById("messages");
-
 const messageForm = document.getElementById("messageForm");
 const messageInput = document.getElementById("messageInput");
-
 const imageInput = document.getElementById("imageInput");
 const videoInput = document.getElementById("videoInput");
-
 const imageBtn = document.getElementById("imageBtn");
 const videoBtn = document.getElementById("videoBtn");
 const recordBtn = document.getElementById("recordBtn");
 
+let currentUser = null;
+let receiverUid = null;
+let chatId = null;
+let receiverData = {};
+
+let unsubscribeMessages = null;
+let unsubscribeStatus = null;
+let unsubscribeIncomingCalls = null;
+
+let selectedImage = null;
+let selectedVideo = null;
+let voiceUrl = "";
+
+let mediaRecorder = null;
+let audioChunks = [];
+
+let activeCall = null;
+let activeCallListener = null;
+let activeCandidateListener = null;
 
 // ============================================================
-// BACK BUTTON
+// LOADER
 // ============================================================
 
-backBtn?.addEventListener("click", () => {
-    window.history.back();
+const loader = document.createElement("div");
+
+loader.id = "vitalStarChatLoader";
+
+loader.innerHTML = `
+    <div class="vs-loader-box">
+        <div class="vs-loader-logo">VS</div>
+        <div class="vs-loader-text">Loading chat...</div>
+    </div>
+`;
+
+Object.assign(loader.style, {
+    position: "fixed",
+    inset: "0",
+    background: "#080611",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: "999999"
 });
 
+document.body.appendChild(loader);
 
-// ============================================================
-// PREVIEW
-// ============================================================
+const chatStyle = document.createElement("style");
 
-const mediaPreview = document.createElement("div");
-
-mediaPreview.className = "vs-media-preview";
-
-const sendingStatus = document.createElement("div");
-
-sendingStatus.className = "vs-sending-status";
-
-if (messageForm?.parentElement) {
-    messageForm.parentElement.insertBefore(
-        mediaPreview,
-        messageForm
-    );
-
-    messageForm.parentElement.insertBefore(
-        sendingStatus,
-        messageForm
-    );
+chatStyle.textContent = `
+#vitalStarChatLoader .vs-loader-box {
+    text-align:center;
+    color:white;
+    font-family:Arial,sans-serif;
 }
 
+#vitalStarChatLoader .vs-loader-logo {
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:900;
+    border:4px solid rgba(255,255,255,.15);
+    border-top-color:#7c3aed;
+    border-right-color:#22c55e;
+    animation:vsChatSpin .9s linear infinite;
+}
 
-// ============================================================
-// SEND BUTTON
-// ============================================================
+#vitalStarChatLoader .vs-loader-text {
+    margin-top:15px;
+    font-size:14px;
+    opacity:.8;
+}
 
-const sendButton =
-    messageForm?.querySelector(
-        'button[type="submit"]'
-    );
+@keyframes vsChatSpin {
+    to {
+        transform:rotate(360deg);
+    }
+}
 
-const originalSendText =
-    sendButton?.textContent || "Send";
+/* ============================================================
+   FIXED MESSAGE COMPOSER
+   ============================================================ */
 
-function setSendingState(sending) {
+#messageForm {
+    position:fixed !important;
+    z-index:99999 !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    box-sizing:border-box !important;
+    margin:0 !important;
+    display:flex !important;
+    max-width:none !important;
+    background:rgba(9,6,17,.98) !important;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-top:1px solid rgba(255,255,255,.12);
+    box-shadow:0 -8px 30px rgba(0,0,0,.35);
+    padding:8px !important;
+}
 
-    if (sendButton) {
-        sendButton.disabled = sending;
-        sendButton.textContent =
-            sending
-                ? "⏳ Sending..."
-                : originalSendText;
+#messageForm * {
+    box-sizing:border-box;
+}
+
+#messages {
+    padding-bottom:120px !important;
+    scroll-padding-bottom:140px !important;
+}
+
+/* ============================================================
+   CALL BUTTONS
+   ============================================================ */
+
+.vs-call-controls {
+    position:absolute;
+    right:45px;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    gap:5px;
+    z-index:100;
+}
+
+.vs-call-btn {
+    width:34px;
+    height:34px;
+    border:none;
+    border-radius:50%;
+    background:rgba(124,58,237,.18);
+    color:#fff;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+}
+
+.vs-call-btn:active {
+    transform:scale(.92);
+}
+
+/* ============================================================
+   CALL SCREEN
+   ============================================================ */
+
+.vs-call-overlay {
+    position:fixed;
+    inset:0;
+    background:#05030a;
+    z-index:1000000;
+    display:none;
+    flex-direction:column;
+    color:#fff;
+    font-family:Arial,sans-serif;
+}
+
+.vs-call-top {
+    padding:15px;
+    min-height:60px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.vs-call-title {
+    font-size:17px;
+    font-weight:800;
+}
+
+.vs-call-status {
+    font-size:12px;
+    opacity:.7;
+}
+
+.vs-call-media {
+    flex:1;
+    min-height:0;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+}
+
+.vs-remote-video {
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#000;
+}
+
+.vs-local-video {
+    position:absolute;
+    right:14px;
+    bottom:14px;
+    width:110px;
+    height:155px;
+    object-fit:cover;
+    border-radius:14px;
+    border:2px solid rgba(255,255,255,.3);
+    background:#111;
+}
+
+.vs-call-avatar {
+    width:110px;
+    height:110px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg,#7c3aed,#22c55e);
+    font-size:42px;
+    font-weight:900;
+}
+
+.vs-call-bottom {
+    padding:20px;
+    display:flex;
+    justify-content:center;
+}
+
+.vs-end-call {
+    width:62px;
+    height:62px;
+    border:none;
+    border-radius:50%;
+    background:#dc2626;
+    color:white;
+    font-size:24px;
+    cursor:pointer;
+}
+
+/* ============================================================
+   INCOMING CALL
+   ============================================================ */
+
+.vs-incoming-call {
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(90vw,360px);
+    padding:25px;
+    border-radius:22px;
+    background:#17121f;
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 20px 70px rgba(0,0,0,.6);
+    text-align:center;
+    color:white;
+    z-index:1000001;
+}
+
+.vs-incoming-actions {
+    display:flex;
+    gap:12px;
+    margin-top:20px;
+}
+
+.vs-incoming-actions button {
+    flex:1;
+    border:none;
+    border-radius:12px;
+    padding:13px;
+    color:white;
+    font-weight:800;
+}
+
+.vs-decline {
+    background:#dc2626;
+}
+
+.vs-accept {
+    background:#16a34a;
+}
+
+/* ============================================================
+   DELETE BUTTON
+   ============================================================ */
+
+.vs-delete-message {
+    border:none;
+    background:transparent;
+    color:#ef4444;
+    font-size:11px;
+    cursor:pointer;
+    margin-left:7px;
+}
+
+/* ============================================================
+   MEDIA PREVIEW
+   ============================================================ */
+
+#mediaPreview {
+    font-size:12px;
+    color:#ddd;
+    padding:5px;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media(max-width:600px) {
+
+    .vs-call-controls {
+        right:42px;
     }
 
-    sendingStatus.style.display =
-        sending
-            ? "block"
-            : "none";
+    .vs-call-btn {
+        width:31px;
+        height:31px;
+        font-size:14px;
+    }
 
-    sendingStatus.textContent =
-        sending
-            ? "Sending message..."
-            : "";
+    .vs-local-video {
+        width:95px;
+        height:135px;
+    }
+}
+`;
+
+document.head.appendChild(chatStyle);
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function hideLoader() {
+    if (!loader) return;
+
+    loader.style.opacity = "0";
+    loader.style.transition = "opacity .25s ease";
+
+    setTimeout(() => {
+        loader.remove();
+    }, 300);
 }
 
+function escapeHTML(value = "") {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function randomId() {
+    if (crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+
+    return Date.now() + "_" + Math.random()
+        .toString(36)
+        .slice(2);
+}
+
+function formatTime(timestamp) {
+    if (!timestamp) return "";
+
+    const date = timestamp.toDate
+        ? timestamp.toDate()
+        : new Date(timestamp);
+
+    return date.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
 
 // ============================================================
-// FILE PREVIEW
+// RELATIVE LAST SEEN
 // ============================================================
 
-function showFilePreview(file) {
+function relativeLastSeen(value) {
 
-    if (!file) {
-        mediaPreview.style.display = "none";
-        mediaPreview.textContent = "";
+    if (!value) {
+        return "Last seen recently";
+    }
+
+    let time = 0;
+
+    if (typeof value === "number") {
+        time = value;
+    } else if (value.toMillis) {
+        time = value.toMillis();
+    } else if (value.seconds) {
+        time = value.seconds * 1000;
+    } else {
+        time = new Date(value).getTime();
+    }
+
+    if (!time || Number.isNaN(time)) {
+        return "Last seen recently";
+    }
+
+    const difference = Math.max(
+        0,
+        Date.now() - time
+    );
+
+    const second = 1000;
+    const minute = second * 60;
+    const hour = minute * 60;
+    const day = hour * 24;
+    const week = day * 7;
+    const month = day * 30;
+    const year = day * 365;
+
+    if (difference < minute) {
+
+        const n = Math.max(
+            1,
+            Math.floor(difference / second)
+        );
+
+        return `Last seen ${n} second${n === 1 ? "" : "s"} ago`;
+    }
+
+    if (difference < hour) {
+
+        const n = Math.floor(
+            difference / minute
+        );
+
+        return `Last seen ${n} minute${n === 1 ? "" : "s"} ago`;
+    }
+
+    if (difference < day) {
+
+        const n = Math.floor(
+            difference / hour
+        );
+
+        return `Last seen ${n} hour${n === 1 ? "" : "s"} ago`;
+    }
+
+    if (difference < week) {
+
+        const n = Math.floor(
+            difference / day
+        );
+
+        return `Last seen ${n} day${n === 1 ? "" : "s"} ago`;
+    }
+
+    if (difference < month) {
+
+        const n = Math.floor(
+            difference / week
+        );
+
+        return `Last seen ${n} week${n === 1 ? "" : "s"} ago`;
+    }
+
+    if (difference < year) {
+
+        const n = Math.floor(
+            difference / month
+        );
+
+        return `Last seen ${n} month${n === 1 ? "" : "s"} ago`;
+    }
+
+    const n = Math.floor(
+        difference / year
+    );
+
+    return `Last seen ${n} year${n === 1 ? "" : "s"} ago`;
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+
+auth.onAuthStateChanged(async user => {
+
+    if (!user) {
+        window.location.href = "login.html";
         return;
     }
 
-    mediaPreview.style.display = "block";
+    currentUser = user;
 
-    mediaPreview.textContent =
-        `📎 ${file.name}`;
-}
+    const params = new URLSearchParams(
+        window.location.search
+    );
 
+    receiverUid = params.get("uid");
+
+    if (
+        !receiverUid ||
+        receiverUid === currentUser.uid
+    ) {
+        window.location.href = "home.html";
+        return;
+    }
+
+    chatId =
+        currentUser.uid < receiverUid
+            ? `${currentUser.uid}_${receiverUid}`
+            : `${receiverUid}_${currentUser.uid}`;
+
+    try {
+
+        await initializeChat();
+
+        setupMessageListener();
+
+        setupIncomingCalls();
+
+        fixComposer();
+
+        hideLoader();
+
+    } catch (error) {
+
+        console.error(
+            "VitalStar chat initialization error:",
+            error
+        );
+
+        hideLoader();
+
+        if (chatStatus) {
+            chatStatus.textContent =
+                "Unable to load chat";
+        }
+    }
+});
 
 // ============================================================
-// ORIGINAL INPUTS
+// INITIALIZE CHAT
+// ============================================================
+
+async function initializeChat() {
+
+    const receiverRef =
+        doc(db, "users", receiverUid);
+
+    const receiverSnap =
+        await getDoc(receiverRef);
+
+    receiverData =
+        receiverSnap.exists()
+            ? receiverSnap.data()
+            : {};
+
+    const name =
+        receiverData.fullName ||
+        receiverData.username ||
+        "VitalStar User";
+
+    if (chatName) {
+
+        chatName.textContent = name;
+
+        chatName.style.cursor = "pointer";
+
+        chatName.onclick = () => {
+
+            window.location.href =
+                `profile.html?uid=${encodeURIComponent(receiverUid)}`;
+        };
+    }
+
+    if (chatAvatar) {
+
+        const avatar =
+            receiverData.profileImage ||
+            receiverData.photoURL ||
+            receiverData.avatar ||
+            "";
+
+        if (avatar) {
+
+            chatAvatar.src = avatar;
+            chatAvatar.style.objectFit = "cover";
+
+        } else {
+
+            chatAvatar.src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`;
+        }
+    }
+
+    await setDoc(
+        doc(db, "chats", chatId),
+        {
+            participants: [
+                currentUser.uid,
+                receiverUid
+            ]
+        },
+        {
+            merge: true
+        }
+    );
+
+    listenToStatus();
+
+    createCallButtons();
+
+    createBlockButton();
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+
+function listenToStatus() {
+
+    if (unsubscribeStatus) {
+        unsubscribeStatus();
+    }
+
+    unsubscribeStatus = onSnapshot(
+        doc(db, "status", receiverUid),
+        snapshot => {
+
+            const data =
+                snapshot.exists()
+                    ? snapshot.data()
+                    : {};
+
+            if (!chatStatus) return;
+
+            if (data.online === true) {
+
+                chatStatus.textContent =
+                    "🟢 Online";
+
+                chatStatus.style.color =
+                    "#22c55e";
+
+            } else {
+
+                chatStatus.textContent =
+                    relativeLastSeen(
+                        data.lastSeen ||
+                        data.timestamp
+                    );
+
+                chatStatus.style.color = "";
+            }
+        }
+    );
+}
+
+// ============================================================
+// MESSAGES
+// ============================================================
+
+function setupMessageListener() {
+
+    const messagesRef =
+        collection(
+            db,
+            "chats",
+            chatId,
+            "messages"
+        );
+
+    const messagesQuery =
+        query(
+            messagesRef,
+            orderBy("timestamp", "desc"),
+            limit(100)
+        );
+
+    unsubscribeMessages = onSnapshot(
+        messagesQuery,
+        snapshot => {
+
+            messages.innerHTML = "";
+
+            const docs =
+                [...snapshot.docs].reverse();
+
+            docs.forEach(messageDoc => {
+
+                const data =
+                    messageDoc.data();
+
+                if (
+                    data.receiverId === currentUser.uid &&
+                    (!data.read || !data.delivered)
+                ) {
+
+                    updateDoc(
+                        messageDoc.ref,
+                        {
+                            delivered: true,
+                            read: true
+                        }
+                    ).catch(() => {});
+                }
+
+                renderMessage(
+                    messageDoc.id,
+                    data
+                );
+            });
+
+            requestAnimationFrame(() => {
+
+                messages.scrollTop =
+                    messages.scrollHeight;
+            });
+        },
+        error => {
+
+            console.error(
+                "Messages error:",
+                error
+            );
+
+            messages.innerHTML = `
+                <div style="
+                    text-align:center;
+                    padding:20px;
+                    color:#aaa;
+                ">
+                    Unable to load messages.
+                </div>
+            `;
+        }
+    );
+}
+
+// ============================================================
+// RENDER MESSAGE
+// ============================================================
+
+function renderMessage(messageId, data) {
+
+    const mine =
+        data.senderId === currentUser.uid;
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        mine
+            ? "message sent"
+            : "message received";
+
+    wrapper.dataset.messageId =
+        messageId;
+
+    let content = "";
+
+    if (data.text) {
+
+        content += `
+            <div class="message-text">
+                ${escapeHTML(data.text)}
+            </div>
+        `;
+    }
+
+    if (data.image) {
+
+        content += `
+            <img
+                src="${escapeHTML(data.image)}"
+                style="
+                    display:block;
+                    max-width:240px;
+                    border-radius:12px;
+                    margin-top:5px;
+                    cursor:pointer;
+                "
+                loading="lazy"
+                alt="Image"
+            >
+        `;
+    }
+
+    if (data.video) {
+
+        content += `
+            <video
+                src="${escapeHTML(data.video)}"
+                controls
+                preload="metadata"
+                style="
+                    display:block;
+                    max-width:260px;
+                    width:100%;
+                    border-radius:12px;
+                    margin-top:5px;
+                "
+            ></video>
+        `;
+    }
+
+    if (data.audio) {
+
+        content += `
+            <audio
+                src="${escapeHTML(data.audio)}"
+                controls
+                style="
+                    max-width:250px;
+                    width:100%;
+                    margin-top:5px;
+                "
+            ></audio>
+        `;
+    }
+
+    if (!content) {
+        content =
+            `<div class="message-text">Message</div>`;
+    }
+
+    let status = "";
+
+    if (mine) {
+
+        status =
+            data.read
+                ? "✓✓"
+                : data.delivered
+                    ? "✓✓"
+                    : data.sent
+                        ? "✓"
+                        : "";
+    }
+
+    wrapper.innerHTML = `
+        <div class="message-bubble">
+
+            ${content}
+
+            <div
+                class="message-meta"
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:3px;
+                "
+            >
+
+                <span>
+                    ${formatTime(data.timestamp)}
+                </span>
+
+                ${
+                    status
+                        ? `<span>${status}</span>`
+                        : ""
+                }
+
+                ${
+                    mine
+                        ? `
+                            <button
+                                class="vs-delete-message"
+                                data-delete-id="${messageId}"
+                            >
+                                Delete
+                            </button>
+                        `
+                        : ""
+                }
+
+            </div>
+
+        </div>
+    `;
+
+    const image =
+        wrapper.querySelector("img");
+
+    if (image) {
+
+        image.addEventListener(
+            "click",
+            () => {
+                window.open(
+                    data.image,
+                    "_blank"
+                );
+            }
+        );
+    }
+
+    const deleteButton =
+        wrapper.querySelector(
+            ".vs-delete-message"
+        );
+
+    if (deleteButton) {
+
+        deleteButton.addEventListener(
+            "click",
+            async event => {
+
+                event.stopPropagation();
+
+                const exactId =
+                    event.currentTarget.dataset.deleteId;
+
+                if (!exactId) return;
+
+                if (
+                    !confirm(
+                        "Delete this message?"
+                    )
+                ) {
+                    return;
+                }
+
+                try {
+
+                    await deleteDoc(
+                        doc(
+                            db,
+                            "chats",
+                            chatId,
+                            "messages",
+                            exactId
+                        )
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Delete message error:",
+                        error
+                    );
+
+                    alert(
+                        "Unable to delete this message."
+                    );
+                }
+            }
+        );
+    }
+
+    messages.appendChild(wrapper);
+}
+
+// ============================================================
+// MEDIA PREVIEW
+// ============================================================
+
+let mediaPreview =
+    document.getElementById(
+        "mediaPreview"
+    );
+
+if (!mediaPreview && messageForm) {
+
+    mediaPreview =
+        document.createElement("div");
+
+    mediaPreview.id =
+        "mediaPreview";
+
+    messageForm.prepend(
+        mediaPreview
+    );
+}
+
+function updateMediaPreview() {
+
+    if (!mediaPreview) return;
+
+    let text = "";
+
+    if (selectedImage) {
+        text +=
+            `📷 ${selectedImage.name}`;
+    }
+
+    if (selectedVideo) {
+
+        text +=
+            `${text ? " • " : ""}🎥 ${selectedVideo.name}`;
+    }
+
+    if (voiceUrl) {
+
+        text +=
+            `${text ? " • " : ""}🎤 Voice ready`;
+    }
+
+    mediaPreview.textContent =
+        text;
+
+    mediaPreview.style.display =
+        text ? "block" : "none";
+}
+
+// ============================================================
+// IMAGE
 // ============================================================
 
 imageInput?.addEventListener(
     "change",
     () => {
-        showFilePreview(
-            imageInput.files?.[0]
-        );
+
+        selectedImage =
+            imageInput.files?.[0] ||
+            null;
+
+        updateMediaPreview();
     }
 );
+
+// ============================================================
+// VIDEO
+// ============================================================
 
 videoInput?.addEventListener(
     "change",
     () => {
-        showFilePreview(
-            videoInput.files?.[0]
-        );
+
+        selectedVideo =
+            videoInput.files?.[0] ||
+            null;
+
+        updateMediaPreview();
     }
 );
-
-
-// ============================================================
-// ATTACHMENT MENU
-// ============================================================
-
-const mediaWrapper =
-    document.createElement("div");
-
-mediaWrapper.className =
-    "vs-media-wrapper";
-
-const mediaMainButton =
-    document.createElement("button");
-
-mediaMainButton.type = "button";
-mediaMainButton.className =
-    "vs-media-main-button";
-
-mediaMainButton.textContent = "＋";
-mediaMainButton.title =
-    "Attachments";
-
-const mediaMenu =
-    document.createElement("div");
-
-mediaMenu.className =
-    "vs-media-menu";
-
-mediaMenu.style.display =
-    "none";
-
-const photoButton =
-    document.createElement("button");
-
-photoButton.type = "button";
-photoButton.textContent =
-    "🖼️ Photo";
-
-const videoButton =
-    document.createElement("button");
-
-videoButton.type = "button";
-videoButton.textContent =
-    "🎥 Video";
-
-const voiceButton =
-    document.createElement("button");
-
-voiceButton.type = "button";
-voiceButton.textContent =
-    "🎤 Voice note";
-
-mediaMenu.appendChild(photoButton);
-mediaMenu.appendChild(videoButton);
-mediaMenu.appendChild(voiceButton);
-
-mediaWrapper.appendChild(mediaMainButton);
-mediaWrapper.appendChild(mediaMenu);
-
-
-// ============================================================
-// INSERT MENU WITHOUT CHANGING FORM DISPLAY
-// ============================================================
-
-if (messageForm) {
-
-    messageForm.insertBefore(
-        mediaWrapper,
-        sendButton || null
-    );
-}
-
-mediaMainButton.addEventListener(
-    "click",
-    event => {
-
-        event.stopPropagation();
-
-        mediaMenu.style.display =
-            mediaMenu.style.display === "none"
-                ? "block"
-                : "none";
-    }
-);
-
-document.addEventListener(
-    "click",
-    () => {
-        mediaMenu.style.display = "none";
-    }
-);
-
-mediaMenu.addEventListener(
-    "click",
-    event => {
-        event.stopPropagation();
-    }
-);
-
-photoButton.addEventListener(
-    "click",
-    () => {
-        imageInput?.click();
-        mediaMenu.style.display = "none";
-    }
-);
-
-videoButton.addEventListener(
-    "click",
-    () => {
-        videoInput?.click();
-        mediaMenu.style.display = "none";
-    }
-);
-
-
-// Hide only the old visible buttons.
-// The actual inputs remain available.
-if (imageBtn) {
-    imageBtn.style.display = "none";
-}
-
-if (videoBtn) {
-    videoBtn.style.display = "none";
-}
-
-if (recordBtn) {
-    recordBtn.style.display = "none";
-}
-
-
-// ============================================================
-// VOICE RECORDING
-// ============================================================
-
-let mediaRecorder = null;
-let audioChunks = [];
-let recordingStream = null;
-
-voiceButton.addEventListener(
-    "click",
-    async () => {
-
-        mediaMenu.style.display = "none";
-
-        if (
-            mediaRecorder &&
-            mediaRecorder.state === "recording"
-        ) {
-
-            mediaRecorder.stop();
-
-            voiceButton.textContent =
-                "🎤 Voice note";
-
-            return;
-        }
-
-        try {
-
-            recordingStream =
-                await navigator.mediaDevices
-                    .getUserMedia({
-                        audio: true
-                    });
-
-            mediaRecorder =
-                new MediaRecorder(
-                    recordingStream
-                );
-
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable =
-                event => {
-
-                    if (
-                        event.data.size > 0
-                    ) {
-                        audioChunks.push(
-                            event.data
-                        );
-                    }
-                };
-
-            mediaRecorder.onstop =
-                async () => {
-
-                    try {
-
-                        const blob =
-                            new Blob(
-                                audioChunks,
-                                {
-                                    type:
-                                        "audio/webm"
-                                }
-                            );
-
-                        sendingStatus.style.display =
-                            "block";
-
-                        sendingStatus.textContent =
-                            "Uploading voice note...";
-
-                        const url =
-                            await uploadToCloudinary(
-                                blob,
-                                "video"
-                            );
-
-                        window.voiceUrl =
-                            url;
-
-                        mediaPreview.style.display =
-                            "block";
-
-                        mediaPreview.textContent =
-                            "🎤 Voice note ready";
-
-                    } catch (error) {
-
-                        console.error(
-                            error
-                        );
-
-                        alert(
-                            "Unable to upload voice note."
-                        );
-
-                    } finally {
-
-                        sendingStatus.style.display =
-                            "none";
-
-                        recordingStream
-                            ?.getTracks()
-                            .forEach(
-                                track =>
-                                    track.stop()
-                            );
-                    }
-                };
-
-            mediaRecorder.start();
-
-            voiceButton.textContent =
-                "⏹️ Stop recording";
-
-            mediaMenu.style.display =
-                "none";
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(
-                "Microphone permission is required."
-            );
-        }
-    }
-);
-
 
 // ============================================================
 // CLOUDINARY
 // ============================================================
 
-async function uploadToCloudinary(
-    file,
-    resourceType = "auto"
-) {
+async function uploadToCloudinary(file) {
 
     const formData =
         new FormData();
@@ -657,574 +1094,216 @@ async function uploadToCloudinary(
 
     const response =
         await fetch(
-            `https://api.cloudinary.com/v1_1/m0scmqqv/${resourceType}/upload`,
+            "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
             {
                 method: "POST",
                 body: formData
             }
         );
 
-    const data =
+    if (!response.ok) {
+        throw new Error(
+            "Cloudinary upload failed"
+        );
+    }
+
+    const result =
         await response.json();
 
-    if (
-        !response.ok ||
-        !data.secure_url
-    ) {
-
-        console.error(
-            "Cloudinary error:",
-            data
-        );
-
+    if (!result.secure_url) {
         throw new Error(
-            data.error?.message ||
-            "Upload failed."
+            "Cloudinary URL missing"
         );
     }
 
-    return data.secure_url;
+    return result.secure_url;
 }
 
-
 // ============================================================
-// URL
-// ============================================================
-
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
-
-const receiverUid =
-    params.get("uid");
-
-
-// ============================================================
-// STATE
+// VOICE RECORDING
 // ============================================================
 
-let currentUser = null;
-let chatId = null;
+recordBtn?.addEventListener(
+    "click",
+    async () => {
 
-let blockedByMe = false;
-let blockedMe = false;
+        if (
+            mediaRecorder &&
+            mediaRecorder.state === "recording"
+        ) {
 
-
-// ============================================================
-// LAST SEEN
-// ============================================================
-
-function formatRelativeTime(timestamp) {
-
-    if (!timestamp) {
-        return "Last seen unavailable";
-    }
-
-    let time = null;
-
-    if (typeof timestamp === "number") {
-
-        time = timestamp;
-
-    } else if (timestamp instanceof Date) {
-
-        time = timestamp.getTime();
-
-    } else if (
-        typeof timestamp?.toDate ===
-        "function"
-    ) {
-
-        time =
-            timestamp.toDate().getTime();
-
-    } else if (
-        typeof timestamp === "object" &&
-        timestamp.seconds
-    ) {
-
-        time =
-            timestamp.seconds * 1000;
-
-    } else {
-
-        time =
-            new Date(timestamp).getTime();
-    }
-
-    if (!Number.isFinite(time)) {
-        return "Last seen unavailable";
-    }
-
-    const seconds =
-        Math.max(
-            0,
-            Math.floor(
-                (Date.now() - time) / 1000
-            )
-        );
-
-    if (seconds < 60) {
-
-        return `Last seen ${seconds} ${
-            seconds === 1
-                ? "second"
-                : "seconds"
-        } ago`;
-    }
-
-    const minutes =
-        Math.floor(seconds / 60);
-
-    if (minutes < 60) {
-
-        return `Last seen ${minutes} ${
-            minutes === 1
-                ? "minute"
-                : "minutes"
-        } ago`;
-    }
-
-    const hours =
-        Math.floor(minutes / 60);
-
-    if (hours < 24) {
-
-        return `Last seen ${hours} ${
-            hours === 1
-                ? "hour"
-                : "hours"
-        } ago`;
-    }
-
-    const days =
-        Math.floor(hours / 24);
-
-    if (days < 7) {
-
-        return `Last seen ${days} ${
-            days === 1
-                ? "day"
-                : "days"
-        } ago`;
-    }
-
-    const weeks =
-        Math.floor(days / 7);
-
-    if (weeks < 4) {
-
-        return `Last seen ${weeks} ${
-            weeks === 1
-                ? "week"
-                : "weeks"
-        } ago`;
-    }
-
-    const months =
-        Math.floor(days / 30);
-
-    if (months < 12) {
-
-        return `Last seen ${months} ${
-            months === 1
-                ? "month"
-                : "months"
-        } ago`;
-    }
-
-    const years =
-        Math.floor(days / 365);
-
-    return `Last seen ${years} ${
-        years === 1
-            ? "year"
-            : "years"
-    } ago`;
-}
-
-
-// ============================================================
-// AUTH
-// ============================================================
-
-auth.onAuthStateChanged(
-    async user => {
-
-        if (!user) {
-
-            window.location.href =
-                "login.html";
+            mediaRecorder.stop();
 
             return;
         }
-
-        if (!receiverUid) {
-
-            loader.style.display =
-                "none";
-
-            return;
-        }
-
-        currentUser = user;
-
-        chatId =
-            user.uid < receiverUid
-                ? `${user.uid}_${receiverUid}`
-                : `${receiverUid}_${user.uid}`;
 
         try {
 
-            // ==================================================
-            // CHAT
-            // ==================================================
+            const stream =
+                await navigator.mediaDevices
+                    .getUserMedia({
+                        audio:true
+                    });
 
-            const chatRef =
-                doc(
-                    db,
-                    "chats",
-                    chatId
+            audioChunks = [];
+
+            mediaRecorder =
+                new MediaRecorder(
+                    stream
                 );
 
-            await setDoc(
-                chatRef,
-                {
-                    participants: [
-                        user.uid,
-                        receiverUid
-                    ]
-                },
-                {
-                    merge: true
-                }
-            );
+            mediaRecorder.ondataavailable =
+                event => {
 
+                    if (event.data.size > 0) {
 
-            // ==================================================
-            // USER
-            // ==================================================
-
-            const receiverRef =
-                doc(
-                    db,
-                    "users",
-                    receiverUid
-                );
-
-            const receiverSnap =
-                await getDoc(
-                    receiverRef
-                );
-
-            if (
-                receiverSnap.exists()
-            ) {
-
-                const data =
-                    receiverSnap.data();
-
-                chatName.textContent =
-                    data.fullName ||
-                    data.username ||
-                    "User";
-
-                chatAvatar.src =
-                    data.profilePicture ||
-                    "https://via.placeholder.com/50";
-            }
-
-
-            chatName?.addEventListener(
-                "click",
-                () => {
-
-                    window.location.href =
-                        `profile.html?uid=${receiverUid}`;
-                }
-            );
-
-
-            // ==================================================
-            // REAL TIME PRESENCE
-            // ==================================================
-
-            const rtdb =
-                getDatabase();
-
-            const statusRef =
-                ref(
-                    rtdb,
-                    `status/${receiverUid}`
-                );
-
-            onValue(
-                statusRef,
-                snapshot => {
-
-                    const status =
-                        snapshot.val();
-
-                    if (!status) {
-
-                        chatStatus.textContent =
-                            "Last seen unavailable";
-
-                        return;
-                    }
-
-                    if (
-                        status.online === true
-                    ) {
-
-                        chatStatus.textContent =
-                            "🟢 Online";
-
-                    } else {
-
-                        chatStatus.textContent =
-                            formatRelativeTime(
-                                status.lastSeen
-                            );
-                    }
-                }
-            );
-
-
-            // ==================================================
-            // BLOCK STATUS
-            // ==================================================
-
-            await checkBlockStatus();
-
-            createChatOptions();
-
-
-            // ==================================================
-            // SEND MESSAGE
-            // ==================================================
-
-            messageForm?.addEventListener(
-                "submit",
-                async event => {
-
-                    event.preventDefault();
-
-                    if (
-                        blockedByMe ||
-                        blockedMe
-                    ) {
-
-                        alert(
-                            blockedByMe
-                                ? "You blocked this user."
-                                : "This user has blocked you."
+                        audioChunks.push(
+                            event.data
                         );
-
-                        return;
                     }
+                };
 
-                    const text =
-                        messageInput?.value
-                            .trim() || "";
+            mediaRecorder.onstop =
+                async () => {
 
-                    const imageFile =
-                        imageInput
-                            ?.files?.[0];
-
-                    const videoFile =
-                        videoInput
-                            ?.files?.[0];
-
-                    const voiceUrl =
-                        window.voiceUrl || "";
-
-                    if (
-                        !text &&
-                        !imageFile &&
-                        !videoFile &&
-                        !voiceUrl
-                    ) {
-                        return;
-                    }
+                    stream
+                        .getTracks()
+                        .forEach(
+                            track =>
+                                track.stop()
+                        );
 
                     try {
 
-                        setSendingState(true);
+                        recordBtn.textContent =
+                            "Uploading...";
 
-                        let imageUrl = "";
-                        let videoUrl = "";
-
-                        if (imageFile) {
-
-                            imageUrl =
-                                await uploadToCloudinary(
-                                    imageFile,
-                                    "image"
-                                );
-                        }
-
-                        if (videoFile) {
-
-                            videoUrl =
-                                await uploadToCloudinary(
-                                    videoFile,
-                                    "video"
-                                );
-                        }
-
-                        const messagesRef =
-                            collection(
-                                db,
-                                "chats",
-                                chatId,
-                                "messages"
+                        const blob =
+                            new Blob(
+                                audioChunks,
+                                {
+                                    type:
+                                        "audio/webm"
+                                }
                             );
 
-                        await addDoc(
-                            messagesRef,
-                            {
-                                senderId:
-                                    user.uid,
+                        const file =
+                            new File(
+                                [blob],
+                                `voice_${Date.now()}.webm`,
+                                {
+                                    type:
+                                        "audio/webm"
+                                }
+                            );
 
-                                receiverId:
-                                    receiverUid,
+                        voiceUrl =
+                            await uploadToCloudinary(
+                                file
+                            );
 
-                                text,
+                        recordBtn.textContent =
+                            "🎤";
 
-                                image:
-                                    imageUrl,
-
-                                video:
-                                    videoUrl,
-
-                                audio:
-                                    voiceUrl,
-
-                                timestamp:
-                                    serverTimestamp(),
-
-                                sent: true,
-
-                                delivered: false,
-
-                                read: false
-                            }
-                        );
-
-
-                        // =========================================
-                        // CHAT PREVIEW
-                        // =========================================
-
-                        let preview =
-                            text;
-
-                        if (!preview) {
-
-                            if (imageUrl) {
-                                preview =
-                                    "📷 Photo";
-
-                            } else if (
-                                videoUrl
-                            ) {
-                                preview =
-                                    "🎥 Video";
-
-                            } else if (
-                                voiceUrl
-                            ) {
-                                preview =
-                                    "🎤 Voice note";
-                            }
-                        }
-
-                        await updateDoc(
-                            chatRef,
-                            {
-                                lastMessage:
-                                    preview,
-
-                                lastImage:
-                                    imageUrl,
-
-                                lastVideo:
-                                    videoUrl,
-
-                                lastAudio:
-                                    voiceUrl,
-
-                                lastTimestamp:
-                                    serverTimestamp(),
-
-                                lastSenderId:
-                                    user.uid,
-
-                                lastReceiverId:
-                                    receiverUid,
-
-                                lastDelivered:
-                                    false,
-
-                                lastRead:
-                                    false
-                            }
-                        );
-
-
-                        // =========================================
-                        // CLEAR
-                        // =========================================
-
-                        if (messageInput) {
-                            messageInput.value =
-                                "";
-                        }
-
-                        if (imageInput) {
-                            imageInput.value =
-                                "";
-                        }
-
-                        if (videoInput) {
-                            videoInput.value =
-                                "";
-                        }
-
-                        window.voiceUrl =
-                            "";
-
-                        mediaPreview.style.display =
-                            "none";
-
-                        mediaPreview.textContent =
-                            "";
+                        updateMediaPreview();
 
                     } catch (error) {
 
                         console.error(
-                            "Send error:",
+                            "Voice upload:",
                             error
                         );
 
+                        voiceUrl = "";
+
+                        recordBtn.textContent =
+                            "🎤";
+
                         alert(
-                            error.message ||
-                            "Unable to send message."
+                            "Voice note upload failed."
                         );
-
-                    } finally {
-
-                        setSendingState(false);
                     }
-                }
+                };
+
+            mediaRecorder.start();
+
+            recordBtn.textContent =
+                "⏹️";
+
+        } catch (error) {
+
+            console.error(
+                "Microphone:",
+                error
             );
 
+            alert(
+                "Microphone permission is required."
+            );
+        }
+    }
+);
 
-            // ==================================================
-            // LOAD MESSAGES
-            // ==================================================
+// ============================================================
+// SEND MESSAGE
+// ============================================================
+
+messageForm?.addEventListener(
+    "submit",
+    async event => {
+
+        event.preventDefault();
+
+        if (!currentUser || !chatId) {
+            return;
+        }
+
+        const text =
+            messageInput?.value.trim() ||
+            "";
+
+        if (
+            !text &&
+            !selectedImage &&
+            !selectedVideo &&
+            !voiceUrl
+        ) {
+            return;
+        }
+
+        const sendButton =
+            messageForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        if (sendButton) {
+            sendButton.disabled = true;
+            sendButton.dataset.oldText =
+                sendButton.textContent;
+            sendButton.textContent =
+                "Sending...";
+        }
+
+        try {
+
+            let imageUrl = "";
+            let videoUrl = "";
+
+            if (selectedImage) {
+
+                imageUrl =
+                    await uploadToCloudinary(
+                        selectedImage
+                    );
+            }
+
+            if (selectedVideo) {
+
+                videoUrl =
+                    await uploadToCloudinary(
+                        selectedVideo
+                    );
+            }
 
             const messagesRef =
                 collection(
@@ -1234,818 +1313,1639 @@ auth.onAuthStateChanged(
                     "messages"
                 );
 
-            const messagesQuery =
-                query(
-                    messagesRef,
-                    orderBy(
-                        "timestamp",
-                        "desc"
-                    ),
-                    limit(15)
-                );
-
-            onSnapshot(
-                messagesQuery,
-                async snapshot => {
-
-                    if (!messages) {
-                        return;
-                    }
-
-                    messages.innerHTML =
-                        "";
-
-                    const messageDocs =
-                        [...snapshot.docs]
-                            .reverse();
+            await addDoc(
+                messagesRef,
+                {
+                    senderId:
+                        currentUser.uid,
+
+                    receiverId:
+                        receiverUid,
+
+                    text,
+
+                    image:
+                        imageUrl,
+
+                    video:
+                        videoUrl,
+
+                    audio:
+                        voiceUrl || "",
+
+                    timestamp:
+                        serverTimestamp(),
+
+                    sent:
+                        true,
+
+                    delivered:
+                        false,
+
+                    read:
+                        false
+                }
+            );
+
+            await setDoc(
+                doc(
+                    db,
+                    "chats",
+                    chatId
+                ),
+                {
+                    participants:[
+                        currentUser.uid,
+                        receiverUid
+                    ],
+
+                    lastMessage:
+                        text ||
+                        (
+                            imageUrl
+                                ? "📷 Image"
+                                : videoUrl
+                                    ? "🎥 Video"
+                                    : voiceUrl
+                                        ? "🎤 Voice note"
+                                        : "Message"
+                        ),
+
+                    lastImage:
+                        imageUrl,
+
+                    lastVideo:
+                        videoUrl,
+
+                    lastAudio:
+                        voiceUrl || "",
+
+                    lastTimestamp:
+                        serverTimestamp(),
+
+                    lastSenderId:
+                        currentUser.uid,
+
+                    lastReceiverId:
+                        receiverUid,
+
+                    lastDelivered:
+                        false,
+
+                    lastRead:
+                        false
+                },
+                {
+                    merge:true
+                }
+            );
+
+            if (messageInput) {
+                messageInput.value = "";
+            }
+
+            selectedImage = null;
+            selectedVideo = null;
+            voiceUrl = "";
+
+            if (imageInput) {
+                imageInput.value = "";
+            }
+
+            if (videoInput) {
+                videoInput.value = "";
+            }
 
-
-                    // ==========================================
-                    // READ / DELIVERED
-                    // ==========================================
-
-                    for (
-                        const messageDoc
-                        of messageDocs
-                    ) {
+            updateMediaPreview();
 
-                        const msg =
-                            messageDoc.data();
-
-                        if (
-                            msg.receiverId ===
-                            user.uid &&
-                            (
-                                !msg.read ||
-                                !msg.delivered
-                            )
-                        ) {
-
-                            try {
-
-                                await updateDoc(
-                                    messageDoc.ref,
-                                    {
-                                        delivered:
-                                            true,
-
-                                        read:
-                                            true
-                                    }
-                                );
-
-                            } catch (
-                                error
-                            ) {
-
-                                console.error(
-                                    "Read update error:",
-                                    error
-                                );
-                            }
-                        }
-                    }
-
-
-                    // ==========================================
-                    // DISPLAY
-                    // ==========================================
-
-                    messageDocs.forEach(
-                        messageDoc => {
-
-                            const msg =
-                                messageDoc.data();
-
-                            const messageId =
-                                messageDoc.id;
-
-                            const isSent =
-                                msg.senderId ===
-                                user.uid;
-
-                            const messageDiv =
-                                document.createElement(
-                                    "div"
-                                );
-
-                            messageDiv.className =
-                                isSent
-                                    ? "message sent"
-                                    : "message received";
-
-
-                            const content =
-                                document.createElement(
-                                    "div"
-                                );
-
-                            content.className =
-                                "message-content";
-
-
-                            // ==================================
-                            // TEXT
-                            // ==================================
-
-                            if (msg.text) {
-
-                                const text =
-                                    document.createElement(
-                                        "div"
-                                    );
-
-                                text.textContent =
-                                    msg.text;
-
-                                content.appendChild(
-                                    text
-                                );
-                            }
-
-
-                            // ==================================
-                            // IMAGE
-                            // ==================================
-
-                            if (msg.image) {
-
-                                const image =
-                                    document.createElement(
-                                        "img"
-                                    );
-
-                                image.src =
-                                    msg.image;
-
-                                image.loading =
-                                    "lazy";
-
-                                image.style.cssText = `
-                                    max-width:100%;
-                                    border-radius:12px;
-                                    display:block;
-                                    margin-top:6px;
-                                `;
-
-                                content.appendChild(
-                                    image
-                                );
-                            }
-
-
-                            // ==================================
-                            // VIDEO
-                            // ==================================
-
-                            if (msg.video) {
-
-                                const video =
-                                    document.createElement(
-                                        "video"
-                                    );
-
-                                video.src =
-                                    msg.video;
-
-                                video.controls =
-                                    true;
-
-                                video.playsInline =
-                                    true;
-
-                                video.style.cssText = `
-                                    max-width:100%;
-                                    border-radius:12px;
-                                    display:block;
-                                    margin-top:6px;
-                                `;
-
-                                content.appendChild(
-                                    video
-                                );
-                            }
-
-
-                            // ==================================
-                            // AUDIO
-                            // ==================================
-
-                            if (msg.audio) {
-
-                                const audio =
-                                    document.createElement(
-                                        "audio"
-                                    );
-
-                                audio.src =
-                                    msg.audio;
-
-                                audio.controls =
-                                    true;
-
-                                audio.style.cssText = `
-                                    max-width:100%;
-                                    margin-top:6px;
-                                `;
-
-                                content.appendChild(
-                                    audio
-                                );
-                            }
-
-
-                            // ==================================
-                            // META
-                            // ==================================
-
-                            const meta =
-                                document.createElement(
-                                    "div"
-                                );
-
-                            meta.style.cssText = `
-                                display:flex;
-                                align-items:center;
-                                justify-content:flex-end;
-                                gap:6px;
-                                margin-top:5px;
-                                font-size:10px;
-                                opacity:.65;
-                            `;
-
-                            const time =
-                                document.createElement(
-                                    "span"
-                                );
-
-                            if (
-                                msg.timestamp &&
-                                typeof msg.timestamp
-                                    .toDate ===
-                                    "function"
-                            ) {
-
-                                time.textContent =
-                                    msg.timestamp
-                                        .toDate()
-                                        .toLocaleTimeString(
-                                            [],
-                                            {
-                                                hour:
-                                                    "numeric",
-                                                minute:
-                                                    "2-digit"
-                                            }
-                                        );
-                            }
-
-                            meta.appendChild(
-                                time
-                            );
-
-
-                            // ==================================
-                            // MESSAGE STATUS
-                            // ==================================
-
-                            if (isSent) {
-
-                                const status =
-                                    document.createElement(
-                                        "span"
-                                    );
-
-                                if (msg.read) {
-
-                                    status.textContent =
-                                        "✓✓";
-
-                                    status.style.color =
-                                        "#00d9ff";
-
-                                } else if (
-                                    msg.delivered
-                                ) {
-
-                                    status.textContent =
-                                        "✓✓";
-
-                                } else {
-
-                                    status.textContent =
-                                        "✓";
-                                }
-
-                                meta.appendChild(
-                                    status
-                                );
-                            }
-
-                            content.appendChild(
-                                meta
-                            );
-
-
-                            // ==================================
-                            // DELETE ONLY THIS MESSAGE
-                            // ==================================
-
-                            if (isSent) {
-
-                                const actionRow =
-                                    document.createElement(
-                                        "div"
-                                    );
-
-                                actionRow.className =
-                                    "vs-message-actions";
-
-                                const deleteButton =
-                                    document.createElement(
-                                        "button"
-                                    );
-
-                                deleteButton.type =
-                                    "button";
-
-                                deleteButton.className =
-                                    "vs-delete-message";
-
-                                deleteButton.textContent =
-                                    "Delete";
-
-                                deleteButton.dataset.messageId =
-                                    messageId;
-
-                                deleteButton.addEventListener(
-                                    "click",
-                                    async event => {
-
-                                        event.preventDefault();
-                                        event.stopPropagation();
-
-                                        const exactMessageId =
-                                            deleteButton
-                                                .dataset
-                                                .messageId;
-
-                                        if (
-                                            !exactMessageId
-                                        ) {
-                                            return;
-                                        }
-
-                                        const confirmed =
-                                            window.confirm(
-                                                "Delete this message?"
-                                            );
-
-                                        if (
-                                            !confirmed
-                                        ) {
-                                            return;
-                                        }
-
-                                        deleteButton.disabled =
-                                            true;
-
-                                        try {
-
-                                            // IMPORTANT:
-                                            // Delete ONLY the clicked
-                                            // message document.
-                                            const exactMessageRef =
-                                                doc(
-                                                    db,
-                                                    "chats",
-                                                    chatId,
-                                                    "messages",
-                                                    exactMessageId
-                                                );
-
-                                            await deleteDoc(
-                                                exactMessageRef
-                                            );
-
-                                        } catch (
-                                            error
-                                        ) {
-
-                                            console.error(
-                                                "Delete message error:",
-                                                error
-                                            );
-
-                                            alert(
-                                                "Unable to delete this message."
-                                            );
-
-                                            deleteButton.disabled =
-                                                false;
-                                        }
-                                    }
-                                );
-
-                                actionRow.appendChild(
-                                    deleteButton
-                                );
-
-                                content.appendChild(
-                                    actionRow
-                                );
-                            }
-
-
-                            messageDiv.appendChild(
-                                content
-                            );
-
-                            messages.appendChild(
-                                messageDiv
-                            );
-                        }
-                    );
-
-
-                    // ==========================================
-                    // SCROLL
-                    // ==========================================
-
+            requestAnimationFrame(
+                () => {
                     messages.scrollTop =
                         messages.scrollHeight;
-
-
-                    // ==========================================
-                    // HIDE LOADER
-                    // ==========================================
-
-                    loader.style.opacity =
-                        "0";
-
-                    setTimeout(
-                        () => {
-                            loader.style.display =
-                                "none";
-                        },
-                        350
-                    );
-                },
-
-                error => {
-
-                    console.error(
-                        "Messages error:",
-                        error
-                    );
-
-                    messages.innerHTML = `
-                        <div style="
-                            color:#aaa;
-                            text-align:center;
-                            padding:30px;
-                        ">
-                            Unable to load messages.
-                        </div>
-                    `;
-
-                    loader.style.display =
-                        "none";
                 }
             );
 
         } catch (error) {
 
             console.error(
-                "Chat initialization error:",
+                "Send error:",
                 error
             );
 
-            loader.style.display =
-                "none";
-
             alert(
-                error.message ||
-                "Unable to open chat."
+                "Unable to send message."
             );
+
+        } finally {
+
+            if (sendButton) {
+
+                sendButton.disabled = false;
+
+                sendButton.textContent =
+                    sendButton.dataset.oldText ||
+                    "Send";
+            }
         }
     }
 );
 
-
 // ============================================================
-// BLOCK STATUS
-// ============================================================
-
-async function checkBlockStatus() {
-
-    if (
-        !currentUser ||
-        !receiverUid
-    ) {
-        return;
-    }
-
-    try {
-
-        const myBlockRef =
-            doc(
-                db,
-                "users",
-                currentUser.uid,
-                "blockedUsers",
-                receiverUid
-            );
-
-        const theirBlockRef =
-            doc(
-                db,
-                "users",
-                receiverUid,
-                "blockedUsers",
-                currentUser.uid
-            );
-
-        const [
-            myBlockSnap,
-            theirBlockSnap
-        ] = await Promise.all([
-            getDoc(myBlockRef),
-            getDoc(theirBlockRef)
-        ]);
-
-        blockedByMe =
-            myBlockSnap.exists();
-
-        blockedMe =
-            theirBlockSnap.exists();
-
-        updateBlockedUI();
-
-    } catch (error) {
-
-        console.error(
-            "Block status error:",
-            error
-        );
-    }
-}
-
-
-// ============================================================
-// BLOCK / UNBLOCK
+// BACK
 // ============================================================
 
-async function toggleBlockUser() {
+backBtn?.addEventListener(
+    "click",
+    () => {
 
-    if (
-        !currentUser ||
-        !receiverUid
-    ) {
-        return;
-    }
+        if (history.length > 1) {
 
-    const blockRef =
-        doc(
-            db,
-            "users",
-            currentUser.uid,
-            "blockedUsers",
-            receiverUid
-        );
-
-    try {
-
-        if (blockedByMe) {
-
-            await deleteDoc(
-                blockRef
-            );
-
-            blockedByMe =
-                false;
+            history.back();
 
         } else {
 
-            await setDoc(
-                blockRef,
-                {
-                    blockedAt:
-                        serverTimestamp()
-                }
-            );
-
-            blockedByMe =
-                true;
-        }
-
-        updateBlockedUI();
-
-    } catch (error) {
-
-        console.error(
-            "Block error:",
-            error
-        );
-
-        alert(
-            "Unable to change block status."
-        );
-    }
-}
-
-
-// ============================================================
-// BLOCK UI
-// ============================================================
-
-function updateBlockedUI() {
-
-    if (!messageInput) {
-        return;
-    }
-
-    if (
-        blockedByMe ||
-        blockedMe
-    ) {
-
-        messageInput.disabled =
-            true;
-
-        messageInput.classList.add(
-            "vs-blocked-input"
-        );
-
-        messageInput.placeholder =
-            blockedByMe
-                ? "You blocked this user"
-                : "You can't message this user";
-
-        if (sendButton) {
-            sendButton.disabled =
-                true;
-        }
-
-    } else {
-
-        messageInput.disabled =
-            false;
-
-        messageInput.classList.remove(
-            "vs-blocked-input"
-        );
-
-        messageInput.placeholder =
-            "Type a message...";
-
-        if (sendButton) {
-            sendButton.disabled =
-                false;
+            window.location.href =
+                "home.html";
         }
     }
-}
-
+);
 
 // ============================================================
-// CHAT OPTIONS
+// BLOCK USER
 // ============================================================
 
-function createChatOptions() {
+function createBlockButton() {
+
+    const header =
+        chatName?.closest("header") ||
+        chatName?.parentElement?.parentElement ||
+        chatName?.parentElement;
+
+    if (!header) return;
 
     if (
-        !chatName ||
-        !chatName.parentElement
-    ) {
-        return;
-    }
-
-    const parent =
-        chatName.parentElement;
-
-    if (
-        document.getElementById(
-            "vitalStarChatOptionsButton"
+        header.querySelector(
+            "#vsBlockUserBtn"
         )
     ) {
         return;
     }
 
-    parent.style.position =
-        parent.style.position ||
-        "relative";
+    if (
+        getComputedStyle(header).position ===
+        "static"
+    ) {
+        header.style.position =
+            "relative";
+    }
 
-    const optionsButton =
-        document.createElement(
-            "button"
-        );
+    const button =
+        document.createElement("button");
 
-    optionsButton.id =
-        "vitalStarChatOptionsButton";
+    button.id =
+        "vsBlockUserBtn";
 
-    optionsButton.type =
+    button.type =
         "button";
 
-    optionsButton.textContent =
-        "⋮";
+    button.textContent =
+        "🚫";
 
-    optionsButton.style.cssText = `
-        position:absolute;
-        right:0;
-        top:50%;
-        transform:translateY(-50%);
-        border:0;
-        background:transparent;
-        color:white;
-        font-size:25px;
-        padding:4px 8px;
-        cursor:pointer;
-        z-index:20;
-    `;
+    button.title =
+        "Block user";
 
-    const optionsMenu =
-        document.createElement(
-            "div"
-        );
-
-    optionsMenu.className =
-        "vs-chat-options";
-
-    optionsMenu.style.display =
-        "none";
-
-    const blockButton =
-        document.createElement(
-            "button"
-        );
-
-    blockButton.type =
-        "button";
-
-    blockButton.textContent =
-        blockedByMe
-            ? "🚫 Unblock User"
-            : "🚫 Block User";
-
-    optionsMenu.appendChild(
-        blockButton
-    );
-
-    parent.appendChild(
-        optionsButton
-    );
-
-    parent.appendChild(
-        optionsMenu
-    );
-
-    optionsButton.addEventListener(
-        "click",
-        event => {
-
-            event.stopPropagation();
-
-            optionsMenu.style.display =
-                optionsMenu.style.display ===
-                "none"
-                    ? "block"
-                    : "none";
-
-            blockButton.textContent =
-                blockedByMe
-                    ? "🚫 Unblock User"
-                    : "🚫 Block User";
+    Object.assign(
+        button.style,
+        {
+            position:"absolute",
+            right:"7px",
+            top:"50%",
+            transform:"translateY(-50%)",
+            width:"34px",
+            height:"34px",
+            border:"none",
+            borderRadius:"50%",
+            background:"rgba(239,68,68,.15)",
+            color:"#fff",
+            cursor:"pointer",
+            zIndex:"60"
         }
     );
 
-    blockButton.addEventListener(
-        "click",
-        async event => {
-
-            event.stopPropagation();
-
-            optionsMenu.style.display =
-                "none";
-
-            const action =
-                blockedByMe
-                    ? "unblock"
-                    : "block";
+    button.onclick =
+        async () => {
 
             if (
-                !window.confirm(
-                    `Are you sure you want to ${action} this user?`
+                !confirm(
+                    "Block this user?"
                 )
             ) {
                 return;
             }
 
-            await toggleBlockUser();
+            try {
 
-            blockButton.textContent =
-                blockedByMe
-                    ? "🚫 Unblock User"
-                    : "🚫 Block User";
-        }
-    );
+                await setDoc(
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid,
+                        "blocked",
+                        receiverUid
+                    ),
+                    {
+                        blockedUid:
+                            receiverUid,
+
+                        createdAt:
+                            serverTimestamp()
+                    }
+                );
+
+                alert(
+                    "User blocked."
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Block error:",
+                    error
+                );
+
+                alert(
+                    "Unable to block this user."
+                );
+            }
+        };
+
+    header.appendChild(button);
 }
+
+// ============================================================
+// CALL BUTTONS
+// ============================================================
+
+function createCallButtons() {
+
+    const header =
+        chatName?.closest("header") ||
+        chatName?.parentElement?.parentElement ||
+        chatName?.parentElement;
+
+    if (!header) return;
+
+    if (
+        header.querySelector(
+            "#vsCallControls"
+        )
+    ) {
+        return;
+    }
+
+    if (
+        getComputedStyle(header).position ===
+        "static"
+    ) {
+        header.style.position =
+            "relative";
+    }
+
+    const controls =
+        document.createElement("div");
+
+    controls.id =
+        "vsCallControls";
+
+    controls.className =
+        "vs-call-controls";
+
+    controls.innerHTML = `
+        <button
+            class="vs-call-btn"
+            id="vsVoiceCallBtn"
+            title="Voice call"
+        >
+            📞
+        </button>
+
+        <button
+            class="vs-call-btn"
+            id="vsVideoCallBtn"
+            title="Video call"
+        >
+            📹
+        </button>
+    `;
+
+    header.appendChild(
+        controls
+    );
+
+    document
+        .getElementById(
+            "vsVoiceCallBtn"
+        )
+        ?.addEventListener(
+            "click",
+            () => startCall("voice")
+        );
+
+    document
+        .getElementById(
+            "vsVideoCallBtn"
+        )
+        ?.addEventListener(
+            "click",
+            () => startCall("video")
+        );
+}
+
+// ============================================================
+// CALL SCREEN
+// ============================================================
+
+function createCallScreen(type) {
+
+    document
+        .getElementById(
+            "vsCallOverlay"
+        )
+        ?.remove();
+
+    const name =
+        receiverData.fullName ||
+        receiverData.username ||
+        "VitalStar User";
+
+    const overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "vsCallOverlay";
+
+    overlay.className =
+        "vs-call-overlay";
+
+    overlay.innerHTML = `
+
+        <div class="vs-call-top">
+
+            <div>
+                <div class="vs-call-title">
+                    ${
+                        type === "video"
+                            ? "📹 Video call"
+                            : "📞 Voice call"
+                    }
+                </div>
+
+                <div style="
+                    font-size:12px;
+                    opacity:.65;
+                ">
+                    ${escapeHTML(name)}
+                </div>
+            </div>
+
+            <div
+                id="vsCallStatus"
+                class="vs-call-status"
+            >
+                Calling...
+            </div>
+
+        </div>
+
+        <div class="vs-call-media">
+
+            <div
+                id="vsCallAvatar"
+                class="vs-call-avatar"
+            >
+                ${escapeHTML(
+                    name.charAt(0)
+                )}
+            </div>
+
+            <video
+                id="vsRemoteVideo"
+                class="vs-remote-video"
+                autoplay
+                playsinline
+                style="
+                    display:${
+                        type === "video"
+                            ? "block"
+                            : "none"
+                    };
+                "
+            ></video>
+
+            <video
+                id="vsLocalVideo"
+                class="vs-local-video"
+                autoplay
+                muted
+                playsinline
+                style="
+                    display:${
+                        type === "video"
+                            ? "block"
+                            : "none"
+                    };
+                "
+            ></video>
+
+            <audio
+                id="vsRemoteAudio"
+                autoplay
+            ></audio>
+
+        </div>
+
+        <div class="vs-call-bottom">
+
+            <button
+                id="vsEndCall"
+                class="vs-end-call"
+            >
+                📵
+            </button>
+
+        </div>
+    `;
+
+    document.body.appendChild(
+        overlay
+    );
+
+    overlay.style.display =
+        "flex";
+
+    document
+        .getElementById(
+            "vsEndCall"
+        )
+        ?.addEventListener(
+            "click",
+            endCall
+        );
+}
+
+function setCallStatus(text) {
+
+    const element =
+        document.getElementById(
+            "vsCallStatus"
+        );
+
+    if (element) {
+        element.textContent =
+            text;
+    }
+}
+
+// ============================================================
+// WEBRTC
+// ============================================================
+
+const rtcConfiguration = {
+
+    iceServers: [
+
+        {
+            urls:
+                "stun:stun.l.google.com:19302"
+        },
+
+        {
+            urls:
+                "stun:stun1.l.google.com:19302"
+        }
+    ]
+};
+
+async function createPeer(
+    callId,
+    type
+) {
+
+    const peer =
+        new RTCPeerConnection(
+            rtcConfiguration
+        );
+
+    const stream =
+        await navigator.mediaDevices
+            .getUserMedia({
+                audio:true,
+                video:
+                    type === "video"
+            });
+
+    activeCall.localStream =
+        stream;
+
+    const localVideo =
+        document.getElementById(
+            "vsLocalVideo"
+        );
+
+    if (
+        localVideo &&
+        type === "video"
+    ) {
+        localVideo.srcObject =
+            stream;
+    }
+
+    stream
+        .getTracks()
+        .forEach(
+            track => {
+                peer.addTrack(
+                    track,
+                    stream
+                );
+            }
+        );
+
+    peer.ontrack =
+        event => {
+
+            const remoteStream =
+                event.streams[0];
+
+            const remoteVideo =
+                document.getElementById(
+                    "vsRemoteVideo"
+                );
+
+            const remoteAudio =
+                document.getElementById(
+                    "vsRemoteAudio"
+                );
+
+            if (
+                remoteVideo &&
+                type === "video"
+            ) {
+                remoteVideo.srcObject =
+                    remoteStream;
+            }
+
+            if (remoteAudio) {
+                remoteAudio.srcObject =
+                    remoteStream;
+            }
+
+            document
+                .getElementById(
+                    "vsCallAvatar"
+                )
+                ?.remove();
+        };
+
+    peer.onicecandidate =
+        async event => {
+
+            if (!event.candidate) {
+                return;
+            }
+
+            try {
+
+                await addDoc(
+                    collection(
+                        db,
+                        "calls",
+                        callId,
+                        "candidates"
+                    ),
+                    {
+                        senderId:
+                            currentUser.uid,
+
+                        candidate:
+                            event.candidate.toJSON()
+                    }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "ICE error:",
+                    error
+                );
+            }
+        };
+
+    peer.onconnectionstatechange =
+        () => {
+
+            if (
+                peer.connectionState ===
+                "connected"
+            ) {
+
+                setCallStatus(
+                    "Connected"
+                );
+            }
+
+            if (
+                peer.connectionState ===
+                    "failed" ||
+                peer.connectionState ===
+                    "disconnected"
+            ) {
+
+                setCallStatus(
+                    "Connection lost"
+                );
+            }
+        };
+
+    return peer;
+}
+
+// ============================================================
+// ICE LISTENER
+// ============================================================
+
+function listenForCandidates(
+    callId,
+    peer
+) {
+
+    if (activeCandidateListener) {
+        activeCandidateListener();
+    }
+
+    const candidates =
+        collection(
+            db,
+            "calls",
+            callId,
+            "candidates"
+        );
+
+    activeCandidateListener =
+        onSnapshot(
+            candidates,
+            async snapshot => {
+
+                for (
+                    const change
+                    of snapshot.docChanges()
+                ) {
+
+                    if (
+                        change.type !==
+                        "added"
+                    ) {
+                        continue;
+                    }
+
+                    const data =
+                        change.doc.data();
+
+                    if (
+                        data.senderId ===
+                        currentUser.uid
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        !data.candidate
+                    ) {
+                        continue;
+                    }
+
+                    try {
+
+                        const candidate =
+                            new RTCIceCandidate(
+                                data.candidate
+                            );
+
+                        if (
+                            peer.remoteDescription
+                        ) {
+
+                            await peer
+                                .addIceCandidate(
+                                    candidate
+                                );
+
+                        } else {
+
+                            activeCall
+                                .pendingCandidates
+                                .push(
+                                    candidate
+                                );
+                        }
+
+                    } catch (error) {
+
+                        console.error(
+                            "Remote ICE:",
+                            error
+                        );
+                    }
+                }
+
+                if (
+                    peer.remoteDescription &&
+                    activeCall?.pendingCandidates
+                        ?.length
+                ) {
+
+                    for (
+                        const candidate
+                        of activeCall.pendingCandidates
+                    ) {
+
+                        try {
+
+                            await peer
+                                .addIceCandidate(
+                                    candidate
+                                );
+
+                        } catch {}
+                    }
+
+                    activeCall
+                        .pendingCandidates = [];
+                }
+            }
+        );
+}
+
+// ============================================================
+// START CALL
+// ============================================================
+
+async function startCall(type) {
+
+    if (activeCall) {
+
+        alert(
+            "You are already in a call."
+        );
+
+        return;
+    }
+
+    if (
+        !window.RTCPeerConnection ||
+        !navigator.mediaDevices
+    ) {
+
+        alert(
+            "Calling is not supported on this browser."
+        );
+
+        return;
+    }
+
+    const callId =
+        randomId();
+
+    activeCall = {
+
+        callId,
+
+        type,
+
+        pendingCandidates:[],
+
+        pc:null,
+
+        localStream:null
+    };
+
+    createCallScreen(
+        type
+    );
+
+    setCallStatus(
+        "Calling..."
+    );
+
+    const callRef =
+        doc(
+            db,
+            "calls",
+            callId
+        );
+
+    try {
+
+        await setDoc(
+            callRef,
+            {
+                callerId:
+                    currentUser.uid,
+
+                receiverId:
+                    receiverUid,
+
+                type,
+
+                status:
+                    "ringing",
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+        const peer =
+            await createPeer(
+                callId,
+                type
+            );
+
+        activeCall.pc =
+            peer;
+
+        listenForCandidates(
+            callId,
+            peer
+        );
+
+        const offer =
+            await peer.createOffer();
+
+        await peer.setLocalDescription(
+            offer
+        );
+
+        await updateDoc(
+            callRef,
+            {
+                offer:
+                    peer.localDescription.toJSON()
+            }
+        );
+
+        activeCallListener =
+            onSnapshot(
+                callRef,
+                async snapshot => {
+
+                    if (
+                        !snapshot.exists()
+                    ) {
+                        return;
+                    }
+
+                    const data =
+                        snapshot.data();
+
+                    if (
+                        data.answer &&
+                        !peer.currentRemoteDescription
+                    ) {
+
+                        await peer
+                            .setRemoteDescription(
+                                new RTCSessionDescription(
+                                    data.answer
+                                )
+                            );
+
+                        setCallStatus(
+                            "Connecting..."
+                        );
+
+                        if (
+                            activeCall.pendingCandidates
+                                .length
+                        ) {
+
+                            for (
+                                const candidate
+                                of activeCall.pendingCandidates
+                            ) {
+
+                                try {
+
+                                    await peer
+                                        .addIceCandidate(
+                                            candidate
+                                        );
+
+                                } catch {}
+                            }
+
+                            activeCall
+                                .pendingCandidates = [];
+                        }
+                    }
+
+                    if (
+                        data.status ===
+                        "declined"
+                    ) {
+
+                        setCallStatus(
+                            "Call declined"
+                        );
+
+                        setTimeout(
+                            cleanupCall,
+                            1000
+                        );
+                    }
+
+                    if (
+                        data.status ===
+                        "ended"
+                    ) {
+
+                        cleanupCall();
+                    }
+                }
+            );
+
+        setTimeout(
+            async () => {
+
+                if (
+                    activeCall &&
+                    activeCall.callId ===
+                    callId
+                ) {
+
+                    try {
+
+                        await updateDoc(
+                            callRef,
+                            {
+                                status:
+                                    "ended"
+                            }
+                        );
+
+                    } catch {}
+
+                    cleanupCall();
+                }
+
+            },
+            60000
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Start call error:",
+            error
+        );
+
+        alert(
+            "Unable to start the call. Check microphone/camera permission and Firebase permissions."
+        );
+
+        cleanupCall();
+    }
+}
+
+// ============================================================
+// INCOMING CALL LISTENER
+// ============================================================
+
+function setupIncomingCalls() {
+
+    const calls =
+        collection(
+            db,
+            "calls"
+        );
+
+    const incomingQuery =
+        query(
+            calls,
+            where(
+                "receiverId",
+                "==",
+                currentUser.uid
+            )
+        );
+
+    unsubscribeIncomingCalls =
+        onSnapshot(
+            incomingQuery,
+            snapshot => {
+
+                snapshot.docChanges()
+                    .forEach(
+                        change => {
+
+                            if (
+                                change.type !==
+                                    "added" &&
+                                change.type !==
+                                    "modified"
+                            ) {
+                                return;
+                            }
+
+                            const data =
+                                change.doc.data();
+
+                            if (
+                                data.callerId ===
+                                currentUser.uid
+                            ) {
+                                return;
+                            }
+
+                            if (
+                                data.status !==
+                                "ringing"
+                            ) {
+                                return;
+                            }
+
+                            if (
+                                !data.offer
+                            ) {
+                                return;
+                            }
+
+                            if (
+                                activeCall
+                            ) {
+                                return;
+                            }
+
+                            showIncomingCall(
+                                change.doc.id,
+                                data
+                            );
+                        }
+                    );
+            },
+            error => {
+
+                console.error(
+                    "Incoming calls:",
+                    error
+                );
+            }
+        );
+}
+
+// ============================================================
+// INCOMING CALL UI
+// ============================================================
+
+function showIncomingCall(
+    callId,
+    data
+) {
+
+    if (
+        document.querySelector(
+            ".vs-incoming-call"
+        )
+    ) {
+        return;
+    }
+
+    const name =
+        receiverData.fullName ||
+        receiverData.username ||
+        "VitalStar User";
+
+    const box =
+        document.createElement("div");
+
+    box.className =
+        "vs-incoming-call";
+
+    box.innerHTML = `
+
+        <div style="
+            font-size:42px;
+            margin-bottom:10px;
+        ">
+            ${
+                data.type === "video"
+                    ? "📹"
+                    : "📞"
+            }
+        </div>
+
+        <div style="
+            font-size:19px;
+            font-weight:900;
+        ">
+            Incoming ${
+                data.type === "video"
+                    ? "video"
+                    : "voice"
+            } call
+        </div>
+
+        <div style="
+            margin-top:6px;
+            opacity:.7;
+            font-size:13px;
+        ">
+            ${escapeHTML(name)}
+        </div>
+
+        <div class="vs-incoming-actions">
+
+            <button
+                class="vs-decline"
+                id="vsDeclineCall"
+            >
+                Decline
+            </button>
+
+            <button
+                class="vs-accept"
+                id="vsAcceptCall"
+            >
+                Accept
+            </button>
+
+        </div>
+    `;
+
+    document.body.appendChild(
+        box
+    );
+
+    document
+        .getElementById(
+            "vsDeclineCall"
+        )
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                try {
+
+                    await updateDoc(
+                        doc(
+                            db,
+                            "calls",
+                            callId
+                        ),
+                        {
+                            status:
+                                "declined"
+                        }
+                    );
+
+                } catch {}
+
+                box.remove();
+            }
+        );
+
+    document
+        .getElementById(
+            "vsAcceptCall"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                box.remove();
+
+                acceptCall(
+                    callId,
+                    data
+                );
+            }
+        );
+}
+
+// ============================================================
+// ACCEPT CALL
+// ============================================================
+
+async function acceptCall(
+    callId,
+    data
+) {
+
+    if (activeCall) return;
+
+    activeCall = {
+
+        callId,
+
+        type:
+            data.type,
+
+        pendingCandidates:[],
+
+        pc:null,
+
+        localStream:null
+    };
+
+    createCallScreen(
+        data.type
+    );
+
+    setCallStatus(
+        "Connecting..."
+    );
+
+    try {
+
+        const callRef =
+            doc(
+                db,
+                "calls",
+                callId
+            );
+
+        const peer =
+            await createPeer(
+                callId,
+                data.type
+            );
+
+        activeCall.pc =
+            peer;
+
+        listenForCandidates(
+            callId,
+            peer
+        );
+
+        await peer
+            .setRemoteDescription(
+                new RTCSessionDescription(
+                    data.offer
+                )
+            );
+
+        if (
+            activeCall.pendingCandidates
+                .length
+        ) {
+
+            for (
+                const candidate
+                of activeCall.pendingCandidates
+            ) {
+
+                try {
+
+                    await peer
+                        .addIceCandidate(
+                            candidate
+                        );
+
+                } catch {}
+            }
+
+            activeCall
+                .pendingCandidates = [];
+        }
+
+        const answer =
+            await peer.createAnswer();
+
+        await peer.setLocalDescription(
+            answer
+        );
+
+        await updateDoc(
+            callRef,
+            {
+                answer:
+                    peer.localDescription.toJSON(),
+
+                status:
+                    "accepted"
+            }
+        );
+
+        activeCallListener =
+            onSnapshot(
+                callRef,
+                snapshot => {
+
+                    if (
+                        !snapshot.exists()
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        snapshot.data()
+                            .status ===
+                        "ended"
+                    ) {
+
+                        cleanupCall();
+                    }
+                }
+            );
+
+    } catch (error) {
+
+        console.error(
+            "Accept call error:",
+            error
+        );
+
+        try {
+
+            await updateDoc(
+                doc(
+                    db,
+                    "calls",
+                    callId
+                ),
+                {
+                    status:
+                        "ended"
+                }
+            );
+
+        } catch {}
+
+        cleanupCall();
+
+        alert(
+            "Unable to answer the call."
+        );
+    }
+}
+
+// ============================================================
+// END CALL
+// ============================================================
+
+async function endCall() {
+
+    if (!activeCall) {
+        return;
+    }
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "calls",
+                activeCall.callId
+            ),
+            {
+                status:
+                    "ended"
+            }
+        );
+
+    } catch {}
+
+    cleanupCall();
+}
+
+// ============================================================
+// CLEANUP CALL
+// ============================================================
+
+function cleanupCall() {
+
+    if (activeCall?.pc) {
+
+        try {
+            activeCall.pc.close();
+        } catch {}
+    }
+
+    if (activeCall?.localStream) {
+
+        activeCall.localStream
+            .getTracks()
+            .forEach(
+                track => {
+
+                    try {
+                        track.stop();
+                    } catch {}
+                }
+            );
+    }
+
+    if (activeCallListener) {
+
+        activeCallListener();
+
+        activeCallListener =
+            null;
+    }
+
+    if (activeCandidateListener) {
+
+        activeCandidateListener();
+
+        activeCandidateListener =
+            null;
+    }
+
+    document
+        .getElementById(
+            "vsCallOverlay"
+        )
+        ?.remove();
+
+    activeCall =
+        null;
+}
+
+// ============================================================
+// FORCE COMPOSER ABOVE FOOTER
+// ============================================================
+
+function fixComposer() {
+
+    if (!messageForm) {
+        return;
+    }
+
+    messageForm.style.position =
+        "fixed";
+
+    messageForm.style.visibility =
+        "visible";
+
+    messageForm.style.opacity =
+        "1";
+
+    messageForm.style.display =
+        "flex";
+
+    messageForm.style.zIndex =
+        "99999";
+
+    function updateComposer() {
+
+        const footer =
+            document.querySelector(
+                "footer, #footer, .footer, .bottom-nav, #bottomNav, [data-footer]"
+            );
+
+        let footerHeight = 0;
+        let footerFixed = false;
+
+        if (footer) {
+
+            const rect =
+                footer.getBoundingClientRect();
+
+            const style =
+                getComputedStyle(
+                    footer
+                );
+
+            footerHeight =
+                rect.height;
+
+            footerFixed =
+                style.position ===
+                    "fixed" ||
+                style.position ===
+                    "sticky";
+        }
+
+        const parent =
+            messageForm.parentElement;
+
+        if (parent) {
+
+            const rect =
+                parent.getBoundingClientRect();
+
+            if (
+                rect.width > 0 &&
+                rect.left >= 0
+            ) {
+
+                messageForm.style.left =
+                    rect.left + "px";
+
+                messageForm.style.width =
+                    rect.width + "px";
+
+            } else {
+
+                messageForm.style.left =
+                    "0";
+
+                messageForm.style.width =
+                    "100%";
+            }
+        }
+
+        messageForm.style.bottom =
+            footerFixed
+                ? `${footerHeight + 4}px`
+                : "0px";
+
+        const formHeight =
+            messageForm.getBoundingClientRect()
+                .height;
+
+        messages.style.paddingBottom =
+            (
+                formHeight +
+                footerHeight +
+                35
+            ) + "px";
+
+        messages.style.scrollPaddingBottom =
+            (
+                formHeight +
+                footerHeight +
+                35
+            ) + "px";
+    }
+
+    requestAnimationFrame(
+        updateComposer
+    );
+
+    window.addEventListener(
+        "resize",
+        updateComposer
+    );
+
+    if (window.ResizeObserver) {
+
+        const observer =
+            new ResizeObserver(
+                updateComposer
+            );
+
+        observer.observe(
+            messageForm
+        );
+
+        const footer =
+            document.querySelector(
+                "footer, #footer, .footer, .bottom-nav, #bottomNav, [data-footer]"
+            );
+
+        if (footer) {
+            observer.observe(
+                footer
+            );
+        }
+    }
+}
+
+// ============================================================
+// CLEANUP
+// ============================================================
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        if (activeCall) {
+
+            updateDoc(
+                doc(
+                    db,
+                    "calls",
+                    activeCall.callId
+                ),
+                {
+                    status:
+                        "ended"
+                }
+            ).catch(() => {});
+        }
+
+        if (unsubscribeMessages) {
+            unsubscribeMessages();
+        }
+
+        if (unsubscribeStatus) {
+            unsubscribeStatus();
+        }
+
+        if (unsubscribeIncomingCalls) {
+            unsubscribeIncomingCalls();
+        }
+    }
+);
