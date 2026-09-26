@@ -2,8 +2,8 @@
 // VITALSTAR — CHAT.JS
 // Messages + Media Menu + Voice Notes + Delete + Block/Unblock
 // Last Seen + Voice Call + Video Call
+// WhatsApp-Style Voice Note Player
 // Fixed Composer Above Footer
-// WhatsApp-style Voice Note Player
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -181,17 +181,14 @@ chatStyle.textContent = `
 
     overflow:visible !important;
 
-    /* NAVY BLUE */
     background:#001f4d !important;
 
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
 
-    /* THICK YELLOW BORDER */
     border:3px solid #facc15 !important;
     border-radius:16px 16px 0 0 !important;
 
-    /* YELLOW GLOW */
     box-shadow:
         0 -4px 18px rgba(250,204,21,.45),
         0 -8px 35px rgba(250,204,21,.18);
@@ -355,6 +352,220 @@ chatStyle.textContent = `
     background:rgba(8,6,17,.95);
 
     color:#8b5cf6 !important;
+}
+
+/* ============================================================
+   WHATSAPP-STYLE VOICE PLAYER
+   ============================================================ */
+
+.vs-audio-player {
+    width:250px;
+    max-width:100%;
+
+    min-height:58px;
+
+    display:flex;
+    align-items:center;
+
+    gap:9px;
+
+    padding:7px 9px;
+
+    border-radius:18px;
+
+    background:rgba(124,58,237,.14);
+
+    border:1px solid rgba(255,255,255,.10);
+
+    color:#fff;
+
+    user-select:none;
+}
+
+.message.sent .vs-audio-player {
+    background:rgba(124,58,237,.24);
+}
+
+.message.received .vs-audio-player {
+    background:rgba(255,255,255,.08);
+}
+
+.vs-audio-play {
+    width:38px;
+    height:38px;
+
+    flex:0 0 38px;
+
+    border:none;
+    border-radius:50%;
+
+    background:linear-gradient(
+        135deg,
+        #7c3aed,
+        #22c55e
+    );
+
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:16px;
+    line-height:1;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,.25);
+
+    transition:
+        transform .15s ease,
+        filter .15s ease;
+}
+
+.vs-audio-play:active {
+    transform:scale(.92);
+}
+
+.vs-audio-play:hover {
+    filter:brightness(1.12);
+}
+
+.vs-audio-main {
+    min-width:0;
+    flex:1;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:4px;
+}
+
+.vs-audio-track {
+    width:100%;
+    height:5px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.20);
+
+    cursor:pointer;
+
+    overflow:hidden;
+
+    position:relative;
+}
+
+.vs-audio-progress {
+    position:absolute;
+
+    left:0;
+    top:0;
+    bottom:0;
+
+    width:0%;
+
+    border-radius:999px;
+
+    background:#fff;
+
+    pointer-events:none;
+
+    transition:width .05s linear;
+}
+
+.vs-audio-bottom {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:8px;
+
+    font-size:10px;
+
+    color:rgba(255,255,255,.72);
+}
+
+.vs-audio-time {
+    white-space:nowrap;
+}
+
+.vs-audio-bars {
+    display:flex;
+    align-items:center;
+    gap:2px;
+
+    height:15px;
+
+    opacity:.55;
+}
+
+.vs-audio-bars span {
+    width:2px;
+    border-radius:2px;
+    background:#fff;
+}
+
+.vs-audio-bars span:nth-child(1) { height:5px; }
+.vs-audio-bars span:nth-child(2) { height:9px; }
+.vs-audio-bars span:nth-child(3) { height:13px; }
+.vs-audio-bars span:nth-child(4) { height:8px; }
+.vs-audio-bars span:nth-child(5) { height:15px; }
+.vs-audio-bars span:nth-child(6) { height:10px; }
+.vs-audio-bars span:nth-child(7) { height:6px; }
+.vs-audio-bars span:nth-child(8) { height:12px; }
+.vs-audio-bars span:nth-child(9) { height:8px; }
+.vs-audio-bars span:nth-child(10) { height:14px; }
+.vs-audio-bars span:nth-child(11) { height:7px; }
+.vs-audio-bars span:nth-child(12) { height:11px; }
+
+.vs-audio-player.playing
+.vs-audio-bars span {
+    animation:
+        vsAudioBars .75s ease-in-out infinite alternate;
+}
+
+.vs-audio-player.playing
+.vs-audio-bars span:nth-child(2) {
+    animation-delay:.08s;
+}
+
+.vs-audio-player.playing
+.vs-audio-bars span:nth-child(3) {
+    animation-delay:.16s;
+}
+
+.vs-audio-player.playing
+.vs-audio-bars span:nth-child(4) {
+    animation-delay:.24s;
+}
+
+.vs-audio-player.playing
+.vs-audio-bars span:nth-child(5) {
+    animation-delay:.32s;
+}
+
+.vs-audio-player.playing
+.vs-audio-bars span:nth-child(6) {
+    animation-delay:.40s;
+}
+
+@keyframes vsAudioBars {
+    from {
+        transform:scaleY(.55);
+        opacity:.45;
+    }
+
+    to {
+        transform:scaleY(1);
+        opacity:1;
+    }
+}
+
+/* Hidden real audio element */
+.vs-hidden-audio {
+    display:none !important;
 }
 
 /* ============================================================
@@ -601,105 +812,6 @@ chatStyle.textContent = `
 }
 
 /* ============================================================
-   VOICE MESSAGE PLAYER (WhatsApp-style)
-   ============================================================ */
-
-.vs-voice-message {
-    display:flex;
-    align-items:center;
-    gap:9px;
-
-    background:rgba(255,255,255,.07);
-    border-radius:22px;
-
-    padding:8px 12px 8px 8px;
-
-    max-width:250px;
-    width:100%;
-
-    margin-top:5px;
-}
-
-.vs-voice-play {
-    flex:0 0 auto;
-
-    width:34px;
-    height:34px;
-
-    border:none;
-    border-radius:50%;
-
-    background:#7c3aed;
-    color:#fff;
-
-    font-size:13px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    cursor:pointer;
-}
-
-.vs-voice-play:active {
-    transform:scale(.92);
-}
-
-.vs-voice-seek {
-    flex:1 1 auto;
-    min-width:0;
-
-    -webkit-appearance:none;
-    appearance:none;
-
-    height:4px;
-    border-radius:2px;
-
-    background:rgba(255,255,255,.25);
-
-    outline:none;
-    cursor:pointer;
-    margin:0;
-}
-
-.vs-voice-seek::-webkit-slider-thumb {
-    -webkit-appearance:none;
-    appearance:none;
-
-    width:12px;
-    height:12px;
-
-    border-radius:50%;
-
-    background:#fff;
-
-    cursor:pointer;
-}
-
-.vs-voice-seek::-moz-range-thumb {
-    width:12px;
-    height:12px;
-
-    border:none;
-    border-radius:50%;
-
-    background:#fff;
-
-    cursor:pointer;
-}
-
-.vs-voice-time {
-    flex:0 0 auto;
-
-    font-size:11px;
-    color:rgba(255,255,255,.75);
-
-    min-width:34px;
-
-    text-align:right;
-}
-
-/* ============================================================
    MOBILE
    ============================================================ */
 
@@ -738,6 +850,16 @@ chatStyle.textContent = `
     .vs-local-video {
         width:95px;
         height:135px;
+    }
+
+    .vs-audio-player {
+        width:235px;
+    }
+
+    .vs-audio-play {
+        width:36px;
+        height:36px;
+        flex-basis:36px;
     }
 }
 `;
@@ -790,6 +912,10 @@ function formatTime(timestamp) {
             ? timestamp.toDate()
             : new Date(timestamp);
 
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+
     return date.toLocaleTimeString([], {
         hour:"numeric",
         minute:"2-digit"
@@ -797,67 +923,136 @@ function formatTime(timestamp) {
 }
 
 // ============================================================
-// LAST SEEN
+// AUDIO TIME FORMAT
+// ============================================================
+
+function formatAudioTime(seconds) {
+
+    if (
+        !Number.isFinite(seconds) ||
+        seconds < 0
+    ) {
+        return "0:00";
+    }
+
+    seconds =
+        Math.floor(seconds);
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const remaining =
+        seconds % 60;
+
+    return `${minutes}:${String(remaining).padStart(2, "0")}`;
+}
+
+// ============================================================
+// LAST SEEN — ROBUST TIMESTAMP READER
+// ============================================================
+
+function getStatusTimestamp(data = {}) {
+
+    const possibleValues = [
+        data.lastSeen,
+        data.lastOnline,
+        data.updatedAt,
+        data.timestamp,
+        data.lastSeenAt
+    ];
+
+    for (const value of possibleValues) {
+
+        if (value === null || value === undefined) {
+            continue;
+        }
+
+        let time = null;
+
+        // Firestore Timestamp
+        if (
+            typeof value?.toMillis === "function"
+        ) {
+
+            time =
+                value.toMillis();
+
+        // Firestore Timestamp-like object
+        } else if (
+            typeof value?.seconds === "number"
+        ) {
+
+            time =
+                value.seconds * 1000;
+
+        // JavaScript Date
+        } else if (
+            value instanceof Date
+        ) {
+
+            time =
+                value.getTime();
+
+        // Number
+        } else if (
+            typeof value === "number"
+        ) {
+
+            time =
+                value < 10000000000
+                    ? value * 1000
+                    : value;
+
+        // String
+        } else if (
+            typeof value === "string"
+        ) {
+
+            const parsed =
+                Date.parse(value);
+
+            if (!Number.isNaN(parsed)) {
+                time = parsed;
+            }
+        }
+
+        if (
+            time &&
+            Number.isFinite(time) &&
+            time <= Date.now() + 60000
+        ) {
+            return time;
+        }
+    }
+
+    return null;
+}
+
+// ============================================================
+// LAST SEEN TEXT
 // ============================================================
 
 function relativeLastSeen(value) {
 
-    if (!value) {
-        return "Last seen recently";
-    }
+    const time =
+        typeof value === "object" &&
+        value !== null &&
+        !(
+            value instanceof Date
+        ) &&
+        (
+            value.lastSeen ||
+            value.lastOnline ||
+            value.updatedAt ||
+            value.timestamp ||
+            value.lastSeenAt
+        )
+            ? getStatusTimestamp(value)
+            : getStatusTimestamp({
+                lastSeen:value
+            });
 
-    let time = null;
-
-    // Firestore Timestamp
-    if (typeof value?.toMillis === "function") {
-
-        time = value.toMillis();
-
-    // Firestore Timestamp-like object
-    } else if (
-        typeof value?.seconds === "number"
-    ) {
-
-        time =
-            value.seconds * 1000;
-
-    // JavaScript Date
-    } else if (
-        value instanceof Date
-    ) {
-
-        time =
-            value.getTime();
-
-    // Number
-    } else if (
-        typeof value === "number"
-    ) {
-
-        // Support both seconds and milliseconds
-        time =
-            value < 10000000000
-                ? value * 1000
-                : value;
-
-    // String date
-    } else if (
-        typeof value === "string"
-    ) {
-
-        const parsed =
-            Date.parse(value);
-
-        if (!Number.isNaN(parsed)) {
-            time = parsed;
-        }
-    }
-
-    if (
-        !time ||
-        !Number.isFinite(time) ||
-        time > Date.now() + 60000
-    ) {
+    if (!time) {
         return "Last seen recently";
     }
 
@@ -876,15 +1071,7 @@ function relativeLastSeen(value) {
 
     if (difference < minute) {
 
-        const n =
-            Math.max(
-                1,
-                Math.floor(
-                    difference / 1000
-                )
-            );
-
-        return `Last seen ${n} second${n === 1 ? "" : "s"} ago`;
+        return "Last seen just now";
     }
 
     if (difference < hour) {
@@ -943,6 +1130,32 @@ function relativeLastSeen(value) {
         );
 
     return `Last seen ${n} year${n === 1 ? "" : "s"} ago`;
+}
+
+// ============================================================
+// UPDATE STATUS DISPLAY
+// ============================================================
+
+function updateChatStatus(data = {}) {
+
+    if (!chatStatus) return;
+
+    if (data.online === true) {
+
+        chatStatus.textContent =
+            "🟢 Online";
+
+        chatStatus.style.color =
+            "#22c55e";
+
+        return;
+    }
+
+    chatStatus.textContent =
+        relativeLastSeen(data);
+
+    chatStatus.style.color =
+        "";
 }
 
 // ============================================================
@@ -1037,267 +1250,6 @@ function showVideoPreview(file) {
 
     mediaPreview.style.display =
         "block";
-}
-
-// ============================================================
-// VOICE MESSAGE PLAYER (WhatsApp-style)
-// ============================================================
-
-// Keeps track of every voice player rendered on screen so that
-// starting one automatically pauses any other that's playing —
-// same behavior as WhatsApp (only one voice note plays at a time).
-const voicePlayers = [];
-
-function formatDuration(seconds) {
-
-    if (
-        !Number.isFinite(seconds) ||
-        seconds < 0
-    ) {
-        return "0:00";
-    }
-
-    const minutes =
-        Math.floor(seconds / 60);
-
-    const secs =
-        Math.floor(seconds % 60)
-            .toString()
-            .padStart(2, "0");
-
-    return `${minutes}:${secs}`;
-}
-
-function pauseOtherVoicePlayers(currentAudio) {
-
-    voicePlayers.forEach(player => {
-
-        if (
-            player.audio !== currentAudio &&
-            !player.audio.paused
-        ) {
-
-            player.audio.pause();
-        }
-    });
-}
-
-function createVoiceMessage(url) {
-
-    const wrapper =
-        document.createElement("div");
-
-    wrapper.className =
-        "vs-voice-message";
-
-    const playBtn =
-        document.createElement("button");
-
-    playBtn.type =
-        "button";
-
-    playBtn.className =
-        "vs-voice-play";
-
-    playBtn.textContent =
-        "▶";
-
-    playBtn.title =
-        "Play voice note";
-
-    const seek =
-        document.createElement("input");
-
-    seek.type =
-        "range";
-
-    seek.className =
-        "vs-voice-seek";
-
-    seek.min =
-        "0";
-
-    seek.max =
-        "0";
-
-    seek.value =
-        "0";
-
-    seek.step =
-        "0.01";
-
-    const time =
-        document.createElement("span");
-
-    time.className =
-        "vs-voice-time";
-
-    time.textContent =
-        "0:00";
-
-    const audio =
-        document.createElement("audio");
-
-    audio.src =
-        url;
-
-    audio.preload =
-        "metadata";
-
-    let isSeeking = false;
-
-    audio.addEventListener(
-        "loadedmetadata",
-        () => {
-
-            seek.max =
-                audio.duration || 0;
-
-            time.textContent =
-                formatDuration(
-                    audio.duration
-                );
-        }
-    );
-
-    audio.addEventListener(
-        "timeupdate",
-        () => {
-
-            if (isSeeking) return;
-
-            seek.value =
-                audio.currentTime;
-
-            time.textContent =
-                formatDuration(
-                    audio.currentTime
-                );
-        }
-    );
-
-    audio.addEventListener(
-        "play",
-        () => {
-
-            playBtn.textContent =
-                "⏸";
-
-            pauseOtherVoicePlayers(
-                audio
-            );
-        }
-    );
-
-    audio.addEventListener(
-        "pause",
-        () => {
-
-            playBtn.textContent =
-                "▶";
-
-            time.textContent =
-                formatDuration(
-                    audio.duration
-                );
-        }
-    );
-
-    audio.addEventListener(
-        "ended",
-        () => {
-
-            playBtn.textContent =
-                "▶";
-
-            seek.value =
-                0;
-
-            time.textContent =
-                formatDuration(
-                    audio.duration
-                );
-        }
-    );
-
-    audio.addEventListener(
-        "error",
-        () => {
-
-            wrapper.title =
-                "Unable to load this voice note.";
-        }
-    );
-
-    playBtn.addEventListener(
-        "click",
-        () => {
-
-            if (audio.paused) {
-
-                audio.play()
-                    .catch(error => {
-
-                        console.error(
-                            "Voice playback:",
-                            error
-                        );
-
-                        alert(
-                            "Unable to play this voice note."
-                        );
-                    });
-
-            } else {
-
-                audio.pause();
-            }
-        }
-    );
-
-    seek.addEventListener(
-        "input",
-        () => {
-
-            isSeeking =
-                true;
-
-            time.textContent =
-                formatDuration(
-                    Number(seek.value)
-                );
-        }
-    );
-
-    seek.addEventListener(
-        "change",
-        () => {
-
-            audio.currentTime =
-                Number(seek.value);
-
-            isSeeking =
-                false;
-        }
-    );
-
-    wrapper.appendChild(
-        playBtn
-    );
-
-    wrapper.appendChild(
-        seek
-    );
-
-    wrapper.appendChild(
-        time
-    );
-
-    voicePlayers.push({
-        audio
-    });
-
-    return wrapper;
 }
 
 // ============================================================
@@ -1396,10 +1348,6 @@ function setupMediaMenu() {
     menu.className =
         "vs-media-menu";
 
-    // --------------------------------------------------------
-    // IMAGE BUTTON
-    // --------------------------------------------------------
-
     if (imageBtn) {
 
         imageBtn.textContent =
@@ -1431,10 +1379,6 @@ function setupMediaMenu() {
         );
     }
 
-    // --------------------------------------------------------
-    // VIDEO BUTTON
-    // --------------------------------------------------------
-
     if (videoBtn) {
 
         videoBtn.textContent =
@@ -1465,10 +1409,6 @@ function setupMediaMenu() {
             button
         );
     }
-
-    // --------------------------------------------------------
-    // VOICE BUTTON
-    // --------------------------------------------------------
 
     if (recordBtn) {
 
@@ -1923,10 +1863,6 @@ async function initializeChat() {
             };
     }
 
-    // --------------------------------------------------------
-    // PROFILE IMAGE
-    // --------------------------------------------------------
-
     if (chatAvatar) {
 
         const avatar =
@@ -1980,24 +1916,18 @@ function listenToStatus() {
                         ? snapshot.data()
                         : {};
 
-                if (data.online === true) {
+                updateChatStatus(data);
+            },
+            error => {
 
+                console.error(
+                    "Status listener:",
+                    error
+                );
+
+                if (chatStatus) {
                     chatStatus.textContent =
-                        "🟢 Online";
-
-                    chatStatus.style.color =
-                        "#22c55e";
-
-                } else {
-
-                    chatStatus.textContent =
-                        relativeLastSeen(
-                            data.lastSeen ||
-                            data.timestamp
-                        );
-
-                    chatStatus.style.color =
-                        "";
+                        "Last seen recently";
                 }
             }
         );
@@ -2028,30 +1958,17 @@ setInterval(
                     return;
                 }
 
-                const data =
-                    snapshot.data();
-
-                if (data.online === true) {
-
-                    chatStatus.textContent =
-                        "🟢 Online";
-
-                    chatStatus.style.color =
-                        "#22c55e";
-
-                } else {
-
-                    chatStatus.textContent =
-                        relativeLastSeen(
-                            data.lastSeen ||
-                            data.timestamp
-                        );
-
-                    chatStatus.style.color =
-                        "";
-                }
+                updateChatStatus(
+                    snapshot.data()
+                );
             })
-            .catch(() => {});
+            .catch(error => {
+
+                console.error(
+                    "Last seen refresh:",
+                    error
+                );
+            });
 
     },
     30000
@@ -2155,6 +2072,365 @@ function setupMessages() {
 }
 
 // ============================================================
+// CREATE WHATSAPP-STYLE AUDIO PLAYER
+// ============================================================
+
+function createVoicePlayer(
+    audioUrl
+) {
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        "vs-audio-player";
+
+    const audio =
+        document.createElement("audio");
+
+    audio.src =
+        audioUrl;
+
+    audio.preload =
+        "metadata";
+
+    audio.className =
+        "vs-hidden-audio";
+
+    const playButton =
+        document.createElement("button");
+
+    playButton.type =
+        "button";
+
+    playButton.className =
+        "vs-audio-play";
+
+    playButton.textContent =
+        "▶";
+
+    playButton.setAttribute(
+        "aria-label",
+        "Play voice note"
+    );
+
+    const main =
+        document.createElement("div");
+
+    main.className =
+        "vs-audio-main";
+
+    const track =
+        document.createElement("div");
+
+    track.className =
+        "vs-audio-track";
+
+    const progress =
+        document.createElement("div");
+
+    progress.className =
+        "vs-audio-progress";
+
+    track.appendChild(
+        progress
+    );
+
+    const bottom =
+        document.createElement("div");
+
+    bottom.className =
+        "vs-audio-bottom";
+
+    const time =
+        document.createElement("span");
+
+    time.className =
+        "vs-audio-time";
+
+    time.textContent =
+        "0:00";
+
+    const bars =
+        document.createElement("div");
+
+    bars.className =
+        "vs-audio-bars";
+
+    for (
+        let i = 0;
+        i < 12;
+        i++
+    ) {
+
+        bars.appendChild(
+            document.createElement("span")
+        );
+    }
+
+    bottom.appendChild(
+        time
+    );
+
+    bottom.appendChild(
+        bars
+    );
+
+    main.appendChild(
+        track
+    );
+
+    main.appendChild(
+        bottom
+    );
+
+    wrapper.appendChild(
+        playButton
+    );
+
+    wrapper.appendChild(
+        main
+    );
+
+    wrapper.appendChild(
+        audio
+    );
+
+    function updateProgress() {
+
+        if (
+            !audio.duration ||
+            !Number.isFinite(audio.duration)
+        ) {
+            return;
+        }
+
+        const percent =
+            Math.min(
+                100,
+                Math.max(
+                    0,
+                    (
+                        audio.currentTime /
+                        audio.duration
+                    ) * 100
+                )
+            );
+
+        progress.style.width =
+            `${percent}%`;
+
+        time.textContent =
+            formatAudioTime(
+                audio.currentTime
+            );
+    }
+
+    audio.addEventListener(
+        "loadedmetadata",
+        () => {
+
+            time.textContent =
+                `0:00 / ${formatAudioTime(audio.duration)}`;
+        }
+    );
+
+    audio.addEventListener(
+        "timeupdate",
+        () => {
+
+            if (
+                audio.duration &&
+                Number.isFinite(audio.duration)
+            ) {
+
+                const percent =
+                    (
+                        audio.currentTime /
+                        audio.duration
+                    ) * 100;
+
+                progress.style.width =
+                    `${percent}%`;
+
+                time.textContent =
+                    `${formatAudioTime(audio.currentTime)} / ${formatAudioTime(audio.duration)}`;
+            }
+        }
+    );
+
+    audio.addEventListener(
+        "play",
+        () => {
+
+            document
+                .querySelectorAll(
+                    ".vs-hidden-audio"
+                )
+                .forEach(otherAudio => {
+
+                    if (
+                        otherAudio !== audio &&
+                        !otherAudio.paused
+                    ) {
+
+                        otherAudio.pause();
+                    }
+                });
+
+            document
+                .querySelectorAll(
+                    ".vs-audio-player"
+                )
+                .forEach(player => {
+
+                    if (
+                        player !== wrapper
+                    ) {
+                        player.classList.remove(
+                            "playing"
+                        );
+
+                        const button =
+                            player.querySelector(
+                                ".vs-audio-play"
+                            );
+
+                        if (button) {
+                            button.textContent =
+                                "▶";
+                        }
+                    }
+                });
+
+            wrapper.classList.add(
+                "playing"
+            );
+
+            playButton.textContent =
+                "❚❚";
+
+            playButton.setAttribute(
+                "aria-label",
+                "Pause voice note"
+            );
+        }
+    );
+
+    audio.addEventListener(
+        "pause",
+        () => {
+
+            wrapper.classList.remove(
+                "playing"
+            );
+
+            playButton.textContent =
+                "▶";
+
+            playButton.setAttribute(
+                "aria-label",
+                "Play voice note"
+            );
+        }
+    );
+
+    audio.addEventListener(
+        "ended",
+        () => {
+
+            wrapper.classList.remove(
+                "playing"
+            );
+
+            playButton.textContent =
+                "▶";
+
+            progress.style.width =
+                "0%";
+
+            time.textContent =
+                `0:00 / ${formatAudioTime(audio.duration)}`;
+        }
+    );
+
+    audio.addEventListener(
+        "error",
+        () => {
+
+            playButton.textContent =
+                "⚠";
+
+            playButton.title =
+                "Unable to play this voice note";
+        }
+    );
+
+    playButton.addEventListener(
+        "click",
+        async event => {
+
+            event.stopPropagation();
+
+            try {
+
+                if (audio.paused) {
+
+                    await audio.play();
+
+                } else {
+
+                    audio.pause();
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Audio playback:",
+                    error
+                );
+            }
+        }
+    );
+
+    track.addEventListener(
+        "click",
+        event => {
+
+            if (
+                !audio.duration ||
+                !Number.isFinite(audio.duration)
+            ) {
+                return;
+            }
+
+            const rect =
+                track.getBoundingClientRect();
+
+            const position =
+                Math.min(
+                    1,
+                    Math.max(
+                        0,
+                        (
+                            event.clientX -
+                            rect.left
+                        ) / rect.width
+                    )
+                );
+
+            audio.currentTime =
+                position *
+                audio.duration;
+
+            updateProgress();
+        }
+    );
+
+    return wrapper;
+}
+
+// ============================================================
 // RENDER MESSAGE
 // ============================================================
 
@@ -2175,7 +2451,7 @@ function renderMessage(
             ? "message sent"
             : "message received";
 
-    let content =
+    const content =
         document.createElement("div");
 
     // --------------------------------------------------------
@@ -2278,15 +2554,18 @@ function renderMessage(
     }
 
     // --------------------------------------------------------
-    // AUDIO (WhatsApp-style voice note player)
+    // WHATSAPP-STYLE VOICE NOTE
     // --------------------------------------------------------
 
     if (msg.audio) {
 
-        content.appendChild(
-            createVoiceMessage(
+        const voicePlayer =
+            createVoicePlayer(
                 msg.audio
-            )
+            );
+
+        content.appendChild(
+            voicePlayer
         );
     }
 
@@ -2341,10 +2620,6 @@ function renderMessage(
         footer.appendChild(
             status
         );
-
-        // ----------------------------------------------------
-        // DELETE
-        // ----------------------------------------------------
 
         const deleteButton =
             document.createElement("button");
