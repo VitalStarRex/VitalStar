@@ -178,7 +178,7 @@ chatStyle.textContent = `
     box-shadow:
         0 -8px 30px rgba(0,0,0,.45);
 
-    z-index:2147483000 !important;
+    z-index:2147483646 !important;
 
     isolation:isolate;
 }
@@ -265,7 +265,7 @@ chatStyle.textContent = `
     flex-direction:column;
     gap:5px;
 
-    z-index:2147483001;
+    z-index:2147483647;
 }
 
 .vs-media-menu.open {
@@ -301,7 +301,6 @@ chatStyle.textContent = `
     background:rgba(124,58,237,.25) !important;
 }
 
-/* Hide the original media buttons until placed inside menu */
 .vs-original-media-hidden {
     display:flex !important;
 }
@@ -331,7 +330,7 @@ chatStyle.textContent = `
     overflow:hidden;
     text-overflow:ellipsis;
 
-    z-index:2147482999;
+    z-index:2147483645;
 }
 
 /* ============================================================
@@ -1537,7 +1536,6 @@ function setupMediaMenu() {
     menu.className =
         "vs-media-menu";
 
-    // Move the existing buttons into the menu.
     if (imageBtn) {
 
         imageBtn.classList.add(
@@ -1592,7 +1590,6 @@ function setupMediaMenu() {
         menu
     );
 
-    // Put menu at the beginning of composer.
     messageForm.insertBefore(
         wrapper,
         messageForm.firstChild
@@ -2081,7 +2078,7 @@ backBtn?.addEventListener(
 );
 
 // ============================================================
-// BLOCK USER
+// BLOCK / UNBLOCK USER
 // ============================================================
 
 function createBlockButton() {
@@ -2093,13 +2090,10 @@ function createBlockButton() {
 
     if (!header) return;
 
-    if (
+    let button =
         header.querySelector(
             "#vsBlockUserBtn"
-        )
-    ) {
-        return;
-    }
+        );
 
     if (
         getComputedStyle(header)
@@ -2111,89 +2105,173 @@ function createBlockButton() {
             "relative";
     }
 
-    const button =
-        document.createElement("button");
+    if (!button) {
 
-    button.id =
-        "vsBlockUserBtn";
+        button =
+            document.createElement("button");
 
-    button.type =
-        "button";
+        button.id =
+            "vsBlockUserBtn";
 
-    button.textContent =
-        "🚫";
+        button.type =
+            "button";
 
-    button.title =
-        "Block user";
+        Object.assign(
+            button.style,
+            {
+                position:"absolute",
+                right:"7px",
+                top:"50%",
+                transform:"translateY(-50%)",
+                width:"34px",
+                height:"34px",
+                border:"none",
+                borderRadius:"50%",
+                color:"#fff",
+                cursor:"pointer",
+                zIndex:"60"
+            }
+        );
 
-    Object.assign(
-        button.style,
-        {
-            position:"absolute",
-            right:"7px",
-            top:"50%",
-            transform:"translateY(-50%)",
-            width:"34px",
-            height:"34px",
-            border:"none",
-            borderRadius:"50%",
-            background:"rgba(239,68,68,.15)",
-            color:"#fff",
-            cursor:"pointer",
-            zIndex:"60"
+        header.appendChild(
+            button
+        );
+    }
+
+    const blockedRef =
+        doc(
+            db,
+            "users",
+            currentUser.uid,
+            "blocked",
+            receiverUid
+        );
+
+    async function updateBlockButton() {
+
+        try {
+
+            const blockedSnap =
+                await getDoc(
+                    blockedRef
+                );
+
+            if (
+                blockedSnap.exists()
+            ) {
+
+                button.textContent =
+                    "🔓";
+
+                button.title =
+                    "Unblock user";
+
+                button.setAttribute(
+                    "aria-label",
+                    "Unblock user"
+                );
+
+                button.style.background =
+                    "rgba(34,197,94,.18)";
+
+            } else {
+
+                button.textContent =
+                    "🚫";
+
+                button.title =
+                    "Block user";
+
+                button.setAttribute(
+                    "aria-label",
+                    "Block user"
+                );
+
+                button.style.background =
+                    "rgba(239,68,68,.15)";
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Check block status:",
+                error
+            );
         }
-    );
+    }
 
     button.onclick =
         async () => {
 
-            if (
-                !confirm(
-                    "Block this user?"
-                )
-            ) {
-                return;
-            }
-
             try {
 
-                await setDoc(
-                    doc(
-                        db,
-                        "users",
-                        currentUser.uid,
-                        "blocked",
-                        receiverUid
-                    ),
-                    {
-                        blockedUid:
-                            receiverUid,
+                const blockedSnap =
+                    await getDoc(
+                        blockedRef
+                    );
 
-                        createdAt:
-                            serverTimestamp()
+                if (
+                    blockedSnap.exists()
+                ) {
+
+                    if (
+                        !confirm(
+                            "Unblock this user?"
+                        )
+                    ) {
+                        return;
                     }
-                );
 
-                alert(
-                    "User blocked."
-                );
+                    await deleteDoc(
+                        blockedRef
+                    );
+
+                    alert(
+                        "User unblocked."
+                    );
+
+                } else {
+
+                    if (
+                        !confirm(
+                            "Block this user?"
+                        )
+                    ) {
+                        return;
+                    }
+
+                    await setDoc(
+                        blockedRef,
+                        {
+                            blockedUid:
+                                receiverUid,
+
+                            createdAt:
+                                serverTimestamp()
+                        }
+                    );
+
+                    alert(
+                        "User blocked."
+                    );
+                }
+
+                await updateBlockButton();
 
             } catch (error) {
 
                 console.error(
-                    "Block error:",
+                    "Block/unblock error:",
                     error
                 );
 
                 alert(
-                    "Unable to block this user."
+                    "Unable to update block status."
                 );
             }
         };
 
-    header.appendChild(
-        button
-    );
+    updateBlockButton();
 }
 
 // ============================================================
@@ -3440,46 +3518,70 @@ function fixComposer() {
         return;
     }
 
+    /*
+     * IMPORTANT:
+     * Move the composer directly into BODY.
+     * This prevents position:fixed from being trapped
+     * inside a transformed/positioned parent or footer.
+     */
+
+    if (
+        messageForm.parentElement !==
+        document.body
+    ) {
+
+        document.body.appendChild(
+            messageForm
+        );
+    }
+
+    function findFooter() {
+
+        const selectors = [
+            "footer",
+            "#footer",
+            ".footer",
+            ".bottom-nav",
+            "#bottomNav",
+            "[data-footer]",
+            ".bottom-navigation",
+            "#bottom-navigation",
+            ".mobile-bottom-nav"
+        ];
+
+        for (
+            const selector of selectors
+        ) {
+
+            const element =
+                document.querySelector(
+                    selector
+                );
+
+            if (!element) {
+                continue;
+            }
+
+            const style =
+                getComputedStyle(
+                    element
+                );
+
+            if (
+                style.position === "fixed" ||
+                style.position === "sticky"
+            ) {
+                return element;
+            }
+        }
+
+        return null;
+    }
+
     function updateComposer() {
 
-        /*
-         * IMPORTANT:
-         * Do NOT use the form's parent width.
-         * The composer is intentionally full-width
-         * and fixed to the viewport.
-         */
-
-        messageForm.style.position =
-            "fixed";
-
-        messageForm.style.left =
-            "0px";
-
-        messageForm.style.right =
-            "0px";
-
-        messageForm.style.width =
-            "100%";
-
-        messageForm.style.visibility =
-            "visible";
-
-        messageForm.style.opacity =
-            "1";
-
-        messageForm.style.display =
-            "flex";
-
-        messageForm.style.zIndex =
-            "2147483000";
-
-        messageForm.style.overflow =
-            "visible";
-
         const footer =
-            document.querySelector(
-                "footer, #footer, .footer, .bottom-nav, #bottomNav, [data-footer]"
-            );
+            findFooter();
 
         let footerHeight = 0;
         let footerFixed = false;
@@ -3507,10 +3609,73 @@ function fixComposer() {
                     "sticky";
         }
 
-        messageForm.style.bottom =
+        messageForm.style.setProperty(
+            "position",
+            "fixed",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "left",
+            "0px",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "right",
+            "0px",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "width",
+            "100%",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "bottom",
             footerFixed
                 ? `${footerHeight + 4}px`
-                : "0px";
+                : "0px",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "z-index",
+            "2147483646",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "display",
+            "flex",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "margin",
+            "0",
+            "important"
+        );
+
+        messageForm.style.setProperty(
+            "box-sizing",
+            "border-box",
+            "important"
+        );
 
         const formHeight =
             messageForm
@@ -3524,18 +3689,36 @@ function fixComposer() {
                 (footerFixed
                     ? footerHeight
                     : 0) +
-                40;
+                50;
 
-            messages.style.paddingBottom =
-                `${bottomSpace}px`;
+            messages.style.setProperty(
+                "padding-bottom",
+                `${bottomSpace}px`,
+                "important"
+            );
 
-            messages.style.scrollPaddingBottom =
-                `${bottomSpace}px`;
+            messages.style.setProperty(
+                "scroll-padding-bottom",
+                `${bottomSpace}px`,
+                "important"
+            );
         }
     }
 
+    updateComposer();
+
     requestAnimationFrame(
         updateComposer
+    );
+
+    setTimeout(
+        updateComposer,
+        300
+    );
+
+    setTimeout(
+        updateComposer,
+        1000
     );
 
     window.addEventListener(
@@ -3545,8 +3728,26 @@ function fixComposer() {
 
     window.addEventListener(
         "orientationchange",
-        updateComposer
+        () => {
+            setTimeout(
+                updateComposer,
+                200
+            );
+        }
     );
+
+    if (window.visualViewport) {
+
+        window.visualViewport.addEventListener(
+            "resize",
+            updateComposer
+        );
+
+        window.visualViewport.addEventListener(
+            "scroll",
+            updateComposer
+        );
+    }
 
     if (window.ResizeObserver) {
 
@@ -3560,9 +3761,7 @@ function fixComposer() {
         );
 
         const footer =
-            document.querySelector(
-                "footer, #footer, .footer, .bottom-nav, #bottomNav, [data-footer]"
-            );
+            findFooter();
 
         if (footer) {
 
