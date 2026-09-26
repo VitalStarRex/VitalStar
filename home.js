@@ -1,5 +1,6 @@
 // ============================================================
-// FIREBASE IMPORTS
+// VITALSTAR — MODERN FEED
+// Firebase v10.12.2
 // ============================================================
 
 import {
@@ -36,21 +37,1024 @@ import {
 
 
 // ============================================================
-// VITALSTAR LOADING SCREEN
+// ELEMENTS
 // ============================================================
 
-const vitalStarLoader = document.createElement("div");
+const feed = document.getElementById("feed");
+const notificationBadge =
+    document.getElementById("notificationBadge");
 
-vitalStarLoader.id = "vitalStarLoader";
 
-vitalStarLoader.innerHTML = `
+// ============================================================
+// SAFE HTML
+// Prevent user text from being interpreted as HTML
+// ============================================================
+
+function escapeHTML(value = "") {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// ============================================================
+// MODERN VITALSTAR STYLES
+// ============================================================
+
+const style = document.createElement("style");
+
+style.textContent = `
+
+/* ==========================================================
+   ROOT
+   ========================================================== */
+
+:root {
+
+    --vs-gold: #FFD54F;
+    --vs-purple: #8B5CF6;
+    --vs-blue: #00D9FF;
+    --vs-pink: #FF4FD8;
+
+    --vs-bg: #060711;
+    --vs-card: rgba(255,255,255,0.055);
+    --vs-card-border: rgba(255,255,255,0.10);
+
+    --vs-text: #ffffff;
+    --vs-muted: rgba(255,255,255,0.58);
+
+}
+
+
+/* ==========================================================
+   BODY
+   ========================================================== */
+
+body {
+
+    background:
+        radial-gradient(
+            circle at 15% 0%,
+            rgba(139,92,246,0.14),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 90% 20%,
+            rgba(0,217,255,0.08),
+            transparent 28%
+        ),
+        var(--vs-bg);
+
+}
+
+
+/* ==========================================================
+   FEED
+   ========================================================== */
+
+#feed {
+
+    width: 100%;
+    max-width: 720px;
+
+    margin:
+        0 auto;
+
+    padding:
+        12px 12px 100px;
+
+}
+
+
+/* ==========================================================
+   POST CARD
+   ========================================================== */
+
+.post-card {
+
+    position: relative;
+
+    width: 100%;
+
+    margin:
+        0 auto 18px;
+
+    padding:
+        16px;
+
+    border:
+        1px solid
+        var(--vs-card-border);
+
+    border-radius:
+        24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,0.075),
+            rgba(255,255,255,0.025)
+        );
+
+    backdrop-filter:
+        blur(22px);
+
+    -webkit-backdrop-filter:
+        blur(22px);
+
+    box-shadow:
+        0 15px 50px
+        rgba(0,0,0,0.22),
+
+        inset 0 1px 0
+        rgba(255,255,255,0.08);
+
+    overflow:
+        hidden;
+
+    animation:
+        vsPostIn .45s ease both;
+
+    transition:
+        transform .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
+
+}
+
+
+.post-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 20%;
+
+    width: 60%;
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,213,79,.55),
+            transparent
+        );
+
+}
+
+
+.post-card:hover {
+
+    transform:
+        translateY(-2px);
+
+    border-color:
+        rgba(255,213,79,.22);
+
+    box-shadow:
+        0 20px 60px
+        rgba(0,0,0,.28),
+
+        0 0 35px
+        rgba(139,92,246,.06);
+
+}
+
+
+@keyframes vsPostIn {
+
+    from {
+
+        opacity: 0;
+        transform:
+            translateY(12px)
+            scale(.985);
+
+    }
+
+    to {
+
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* ==========================================================
+   USER HEADER
+   ========================================================== */
+
+.user-info {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        11px;
+
+    margin-bottom:
+        12px;
+
+}
+
+
+.avatar {
+
+    width:
+        48px;
+
+    height:
+        48px;
+
+    flex:
+        0 0 48px;
+
+    position:
+        relative;
+
+}
+
+
+.avatar img,
+.avatar-fallback {
+
+    width:
+        48px;
+
+    height:
+        48px;
+
+    border-radius:
+        50%;
+
+    object-fit:
+        cover;
+
+}
+
+
+.avatar img {
+
+    display:
+        block;
+
+    border:
+        2px solid
+        rgba(255,255,255,.15);
+
+    box-shadow:
+        0 5px 18px
+        rgba(0,0,0,.25);
+
+}
+
+
+.avatar-fallback {
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #8B5CF6,
+            #00D9FF
+        );
+
+    color:
+        white;
+
+    font-size:
+        20px;
+
+    font-weight:
+        800;
+
+}
+
+
+.user-details {
+
+    min-width:
+        0;
+
+    flex:
+        1;
+
+}
+
+
+.user-details h3 {
+
+    margin:
+        0;
+
+    font-size:
+        15px;
+
+    font-weight:
+        750;
+
+    line-height:
+        1.25;
+
+}
+
+
+.user-details h3 a {
+
+    color:
+        var(--vs-text);
+
+    text-decoration:
+        none;
+
+}
+
+
+.user-details h3 a:hover {
+
+    color:
+        var(--vs-gold);
+
+}
+
+
+.post-time {
+
+    display:
+        block;
+
+    margin-top:
+        4px;
+
+    color:
+        var(--vs-muted);
+
+    font-size:
+        11px;
+
+}
+
+
+/* ==========================================================
+   ONLINE DOT
+   ========================================================== */
+
+.user-online-dot {
+
+    width:
+        8px;
+
+    height:
+        8px;
+
+    border-radius:
+        50%;
+
+    background:
+        #22c55e;
+
+    box-shadow:
+        0 0 10px
+        rgba(34,197,94,.8);
+
+}
+
+
+/* ==========================================================
+   POST TEXT
+   ========================================================== */
+
+.post-text {
+
+    margin:
+        14px 2px 16px;
+
+    color:
+        rgba(255,255,255,.91);
+
+    font-size:
+        15px;
+
+    line-height:
+        1.7;
+
+    text-align:
+        left;
+
+    white-space:
+        pre-wrap;
+
+    overflow-wrap:
+        anywhere;
+
+}
+
+
+/* ==========================================================
+   MEDIA
+   ========================================================== */
+
+.post-media {
+
+    position:
+        relative;
+
+    margin:
+        12px auto;
+
+    overflow:
+        hidden;
+
+    border-radius:
+        19px;
+
+    background:
+        rgba(0,0,0,.25);
+
+}
+
+
+.post-photo,
+.post-video {
+
+    width:
+        100% !important;
+
+    max-width:
+        100% !important;
+
+    max-height:
+        560px;
+
+    height:
+        auto !important;
+
+    display:
+        block;
+
+    object-fit:
+        cover;
+
+    border-radius:
+        19px !important;
+
+}
+
+
+.post-photo {
+
+    transition:
+        transform .4s ease;
+
+}
+
+
+.post-media:hover .post-photo {
+
+    transform:
+        scale(1.015);
+
+}
+
+
+/* ==========================================================
+   ACTION BAR
+   ========================================================== */
+
+.post-buttons {
+
+    display:
+        grid !important;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap:
+        7px !important;
+
+    width:
+        100%;
+
+    margin-top:
+        15px !important;
+
+    padding-top:
+        12px;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,.075);
+
+}
+
+
+.post-buttons button {
+
+    min-width:
+        0;
+
+    border:
+        1px solid
+        transparent;
+
+    border-radius:
+        13px;
+
+    padding:
+        10px 5px;
+
+    background:
+        rgba(255,255,255,.045);
+
+    color:
+        rgba(255,255,255,.75);
+
+    font:
+        inherit;
+
+    font-size:
+        12px;
+
+    font-weight:
+        650;
+
+    cursor:
+        pointer;
+
+    transition:
+        transform .18s ease,
+        background .18s ease,
+        color .18s ease,
+        border-color .18s ease;
+
+}
+
+
+.post-buttons button:hover {
+
+    transform:
+        translateY(-2px);
+
+    background:
+        rgba(255,213,79,.10);
+
+    color:
+        var(--vs-gold);
+
+    border-color:
+        rgba(255,213,79,.16);
+
+}
+
+
+.post-buttons button:active {
+
+    transform:
+        scale(.94);
+
+}
+
+
+/* ==========================================================
+   LIKE EFFECT
+   ========================================================== */
+
+.post-buttons button:first-child:hover {
+
+    color:
+        #ff5577;
+
+    background:
+        rgba(255,85,119,.09);
+
+}
+
+
+@keyframes vsHeart {
+
+    0% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1.25);
+    }
+
+    70% {
+        transform: scale(.92);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+}
+
+
+/* ==========================================================
+   LOADING SCREEN
+   ========================================================== */
+
+#vitalStarLoader {
+
+    position:
+        fixed;
+
+    inset:
+        0;
+
+    z-index:
+        999999;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #29105f 0%,
+            #0b061c 43%,
+            #03030a 100%
+        );
+
+    transition:
+        opacity .4s ease,
+        visibility .4s ease;
+
+}
+
+
+#vitalStarLoader.hide {
+
+    opacity:
+        0;
+
+    visibility:
+        hidden;
+
+    pointer-events:
+        none;
+
+}
+
+
+.vs-loader-content {
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+}
+
+
+.vs-spinner {
+
+    width:
+        82px;
+
+    height:
+        82px;
+
+    border-radius:
+        50%;
+
+    border:
+        4px solid
+        rgba(255,255,255,.08);
+
+    border-top-color:
+        var(--vs-gold);
+
+    border-right-color:
+        var(--vs-purple);
+
+    border-bottom-color:
+        var(--vs-blue);
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    animation:
+        vsRotate .85s linear infinite;
+
+    box-shadow:
+        0 0 30px
+        rgba(139,92,246,.25);
+
+}
+
+
+.vs-spinner span {
+
+    font-size:
+        23px;
+
+    font-weight:
+        900;
+
+    color:
+        var(--vs-gold);
+
+    letter-spacing:
+        2px;
+
+    animation:
+        vsCounterRotate .85s linear infinite;
+
+}
+
+
+.vs-loading-text {
+
+    margin-top:
+        17px;
+
+    color:
+        rgba(255,255,255,.8);
+
+    font-size:
+        13px;
+
+    font-weight:
+        600;
+
+}
+
+
+@keyframes vsRotate {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+
+@keyframes vsCounterRotate {
+
+    to {
+        transform:
+            rotate(-360deg);
+    }
+
+}
+
+
+/* ==========================================================
+   EMPTY FEED
+   ========================================================== */
+
+.vs-empty {
+
+    padding:
+        45px 20px;
+
+    text-align:
+        center;
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    border-radius:
+        22px;
+
+    background:
+        rgba(255,255,255,.035);
+
+}
+
+
+.vs-empty-icon {
+
+    font-size:
+        38px;
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.vs-empty-title {
+
+    margin:
+        0 0 5px;
+
+    font-size:
+        17px;
+
+    font-weight:
+        750;
+
+}
+
+
+.vs-empty-text {
+
+    margin:
+        0;
+
+    color:
+        var(--vs-muted);
+
+    font-size:
+        13px;
+
+}
+
+
+/* ==========================================================
+   ERROR
+   ========================================================== */
+
+.vs-error {
+
+    margin:
+        20px 0;
+
+    padding:
+        18px;
+
+    text-align:
+        center;
+
+    border-radius:
+        18px;
+
+    background:
+        rgba(239,68,68,.08);
+
+    border:
+        1px solid
+        rgba(239,68,68,.18);
+
+    color:
+        #ff8d8d;
+
+}
+
+
+/* ==========================================================
+   NOTIFICATION BADGE
+   ========================================================== */
+
+#notificationBadge {
+
+    min-width:
+        18px;
+
+    height:
+        18px;
+
+    padding:
+        0 5px;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff416c,
+            #ff4b2b
+        );
+
+    color:
+        white;
+
+    font-size:
+        10px;
+
+    font-weight:
+        800;
+
+    box-shadow:
+        0 4px 12px
+        rgba(255,65,108,.35);
+
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+    #feed {
+
+        padding:
+            8px 8px 90px;
+
+    }
+
+
+    .post-card {
+
+        padding:
+            14px;
+
+        border-radius:
+            21px;
+
+    }
+
+
+    .post-buttons {
+
+        gap:
+            5px !important;
+
+    }
+
+
+    .post-buttons button {
+
+        font-size:
+            11px;
+
+        padding:
+            10px 2px;
+
+    }
+
+
+    .post-text {
+
+        font-size:
+            14px;
+
+    }
+
+}
+
+`;
+
+document.head.appendChild(style);
+
+
+// ============================================================
+// LOADING SCREEN
+// ============================================================
+
+const loader = document.createElement("div");
+
+loader.id = "vitalStarLoader";
+
+loader.innerHTML = `
 
     <div class="vs-loader-content">
 
         <div class="vs-spinner">
-
             <span>VS</span>
-
         </div>
 
         <div class="vs-loading-text">
@@ -61,447 +1065,17 @@ vitalStarLoader.innerHTML = `
 
 `;
 
+document.body.appendChild(loader);
 
-// ============================================================
-// FAST CHANGING-COLOR LOADING SCREEN
-// ============================================================
 
-const vitalStarLoaderStyle =
-    document.createElement("style");
+let loaderHidden = false;
 
-vitalStarLoaderStyle.textContent = `
-
-    #vitalStarLoader {
-
-        position: fixed;
-
-        inset: 0;
-
-        z-index: 999999;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        opacity: 1;
-
-        visibility: visible;
-
-        pointer-events: all;
-
-        background:
-            radial-gradient(
-                circle at center,
-                #24105c 0%,
-                #09051c 45%,
-                #03020a 100%
-            );
-
-        animation:
-            vsBackgroundColors 5s ease-in-out infinite;
-
-        transition:
-            opacity 0.35s ease,
-            visibility 0.35s ease;
-
-    }
-
-
-    #vitalStarLoader.hide {
-
-        opacity: 0;
-
-        visibility: hidden;
-
-        pointer-events: none;
-
-    }
-
-
-    .vs-loader-content {
-
-        display: flex;
-
-        flex-direction: column;
-
-        align-items: center;
-
-        justify-content: center;
-
-    }
-
-
-    .vs-spinner {
-
-        width: 88px;
-
-        height: 88px;
-
-        border-radius: 50%;
-
-        border:
-            5px solid
-            rgba(255,255,255,0.10);
-
-        border-top-color:
-            #FFD54F;
-
-        border-right-color:
-            #9C4DFF;
-
-        border-bottom-color:
-            #00E5FF;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        animation:
-            vsRotate 0.9s linear infinite,
-            vsSpinnerColors 5s ease-in-out infinite;
-
-        box-shadow:
-            0 0 18px
-            rgba(255,213,79,0.30),
-
-            0 0 35px
-            rgba(124,77,255,0.25),
-
-            0 0 55px
-            rgba(0,229,255,0.12);
-
-    }
-
-
-    .vs-spinner span {
-
-        font-size: 25px;
-
-        font-weight: 900;
-
-        letter-spacing: 2px;
-
-        color: #FFD54F;
-
-        text-shadow:
-            0 0 12px
-            rgba(255,213,79,0.60);
-
-        animation:
-            vsCounterRotate 0.9s linear infinite,
-            vsTextColors 5s ease-in-out infinite;
-
-    }
-
-
-    .vs-loading-text {
-
-        margin-top: 18px;
-
-        color:
-            rgba(255,255,255,0.92);
-
-        font-size: 14px;
-
-        font-weight: 600;
-
-        letter-spacing: 0.5px;
-
-        animation:
-            vsTextGlow 5s ease-in-out infinite;
-
-    }
-
-
-    @keyframes vsRotate {
-
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-
-    }
-
-
-    @keyframes vsCounterRotate {
-
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(-360deg);
-        }
-
-    }
-
-
-    /* ============================================
-       CHANGING BACKGROUND COLORS
-       ============================================ */
-
-    @keyframes vsBackgroundColors {
-
-        0% {
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    #24105c 0%,
-                    #09051c 45%,
-                    #03020a 100%
-                );
-
-        }
-
-        25% {
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    #40105f 0%,
-                    #12051f 45%,
-                    #03020a 100%
-                );
-
-        }
-
-        50% {
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    #053b52 0%,
-                    #06121f 45%,
-                    #02060a 100%
-                );
-
-        }
-
-        75% {
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    #3b124f 0%,
-                    #11051c 45%,
-                    #03020a 100%
-                );
-
-        }
-
-        100% {
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    #24105c 0%,
-                    #09051c 45%,
-                    #03020a 100%
-                );
-
-        }
-
-    }
-
-
-    /* ============================================
-       CHANGING SPINNER COLORS
-       ============================================ */
-
-    @keyframes vsSpinnerColors {
-
-        0% {
-
-            border-top-color: #FFD54F;
-            border-right-color: #9C4DFF;
-            border-bottom-color: #00E5FF;
-
-        }
-
-        25% {
-
-            border-top-color: #FF4FD8;
-            border-right-color: #FFD54F;
-            border-bottom-color: #7C4DFF;
-
-        }
-
-        50% {
-
-            border-top-color: #00E5FF;
-            border-right-color: #00FF95;
-            border-bottom-color: #FFD54F;
-
-        }
-
-        75% {
-
-            border-top-color: #9C4DFF;
-            border-right-color: #FF4FD8;
-            border-bottom-color: #00E5FF;
-
-        }
-
-        100% {
-
-            border-top-color: #FFD54F;
-            border-right-color: #9C4DFF;
-            border-bottom-color: #00E5FF;
-
-        }
-
-    }
-
-
-    /* ============================================
-       CHANGING VS TEXT COLOR
-       ============================================ */
-
-    @keyframes vsTextColors {
-
-        0% {
-
-            color: #FFD54F;
-
-            text-shadow:
-                0 0 12px
-                rgba(255,213,79,0.70);
-
-        }
-
-        25% {
-
-            color: #FF4FD8;
-
-            text-shadow:
-                0 0 15px
-                rgba(255,79,216,0.70);
-
-        }
-
-        50% {
-
-            color: #00E5FF;
-
-            text-shadow:
-                0 0 15px
-                rgba(0,229,255,0.70);
-
-        }
-
-        75% {
-
-            color: #9C4DFF;
-
-            text-shadow:
-                0 0 15px
-                rgba(156,77,255,0.70);
-
-        }
-
-        100% {
-
-            color: #FFD54F;
-
-            text-shadow:
-                0 0 12px
-                rgba(255,213,79,0.70);
-
-        }
-
-    }
-
-
-    @keyframes vsTextGlow {
-
-        0% {
-
-            opacity: 0.75;
-
-        }
-
-        50% {
-
-            opacity: 1;
-
-        }
-
-        100% {
-
-            opacity: 0.75;
-
-        }
-
-    }
-
-
-    @media (max-width: 450px) {
-
-        .vs-spinner {
-
-            width: 82px;
-
-            height: 82px;
-
-        }
-
-
-        .vs-spinner span {
-
-            font-size: 23px;
-
-        }
-
-
-        .vs-loading-text {
-
-            font-size: 13px;
-
-        }
-
-    }
-
-`;
-
-document.head.appendChild(
-    vitalStarLoaderStyle
-);
-
-document.body.appendChild(
-    vitalStarLoader
-);
-
-
-// ============================================================
-// HIDE LOADING SCREEN
-// ============================================================
-
-let vitalStarLoaderHidden = false;
 
 function hideVitalStarLoader() {
 
-    if (vitalStarLoaderHidden) {
-        return;
-    }
+    if (loaderHidden) return;
 
-    vitalStarLoaderHidden = true;
-
-    const loader =
-        document.getElementById(
-            "vitalStarLoader"
-        );
-
-    if (!loader) {
-        return;
-    }
+    loaderHidden = true;
 
     loader.classList.add("hide");
 
@@ -509,328 +1083,147 @@ function hideVitalStarLoader() {
 
         loader.remove();
 
-    }, 400);
+    }, 450);
 
 }
 
 
 // ============================================================
-// PAGE ELEMENTS
+// FORMAT DATE
 // ============================================================
 
-const feed =
-    document.getElementById("feed");
+function formatPostDate(timestamp) {
 
+    if (!timestamp) {
+        return "Just now";
+    }
 
-// ============================================================
-// POST FEED STYLES
-// ============================================================
+    try {
 
-const postFeedStyle =
-    document.createElement("style");
+        const date = timestamp.toDate();
 
-postFeedStyle.textContent = `
+        const now = new Date();
 
-    .post-card {
-
-        position: relative;
-
-        width: min(100%, 680px);
-
-        margin: 0 auto 18px;
-
-        padding: 18px;
-
-        text-align: center;
-
-        background:
-            linear-gradient(
-                145deg,
-                rgba(255,255,255,0.08),
-                rgba(255,255,255,0.025)
+        const seconds =
+            Math.floor(
+                (now - date) / 1000
             );
 
-        border:
-            1px solid
-            rgba(255,255,255,0.10);
-
-        border-radius: 22px;
-
-        box-shadow:
-            0 12px 35px
-            rgba(0,0,0,0.14),
-
-            inset 0 1px 0
-            rgba(255,255,255,0.08);
-
-        overflow: hidden;
-
-        transition:
-            transform 0.25s ease,
-            box-shadow 0.25s ease,
-            border-color 0.25s ease;
-
-    }
-
-
-    .post-card:hover {
-
-        transform:
-            translateY(-3px);
-
-        box-shadow:
-            0 18px 45px
-            rgba(0,0,0,0.20),
-
-            inset 0 1px 0
-            rgba(255,255,255,0.10);
-
-        border-color:
-            rgba(255,213,79,0.35);
-
-    }
-
-
-    .user-info {
-
-        display: flex;
-
-        justify-content: center;
-
-        align-items: center;
-
-        gap: 12px;
-
-        text-align: left;
-
-        margin-bottom: 8px;
-
-    }
-
-
-    .avatar {
-
-        flex-shrink: 0;
-
-    }
-
-
-    .user-info h3 {
-
-        margin: 0 0 3px;
-
-        font-size: 17px;
-
-        line-height: 1.2;
-
-    }
-
-
-    .user-info h3 a {
-
-        text-decoration: none;
-
-        color: inherit;
-
-        transition:
-            opacity 0.2s ease;
-
-    }
-
-
-    .user-info h3 a:hover {
-
-        opacity: 0.75;
-
-    }
-
-
-    .user-info small {
-
-        opacity: 0.7;
-
-        font-size: 12px;
-
-    }
-
-
-    .post-text {
-
-        max-width: 580px;
-
-        margin: 16px auto;
-
-        line-height: 1.65;
-
-        font-size: 15px;
-
-        word-break: break-word;
-
-        white-space: pre-wrap;
-
-    }
-
-
-    .post-photo,
-    .post-video {
-
-        width:
-            min(100%, 420px) !important;
-
-        max-height: 500px;
-
-        height: auto !important;
-
-        aspect-ratio: auto;
-
-        object-fit: cover;
-
-        border-radius:
-            18px !important;
-
-        display: block;
-
-        margin:
-            14px auto !important;
-
-        background:
-            rgba(0,0,0,0.15);
-
-        box-shadow:
-            0 10px 28px
-            rgba(0,0,0,0.18);
-
-    }
-
-
-    .post-buttons {
-
-        display: flex !important;
-
-        justify-content:
-            space-between;
-
-        align-items: center;
-
-        gap: 4px !important;
-
-        flex-wrap: nowrap !important;
-
-        margin-top:
-            16px !important;
-
-        padding-top: 14px;
-
-        border-top:
-            1px solid
-            rgba(255,255,255,0.08);
-
-        width: 100%;
-
-    }
-
-
-    .post-buttons button {
-
-        flex: 1;
-
-        min-width: 0;
-
-        white-space: nowrap;
-
-        border: none;
-
-        border-radius: 12px;
-
-        padding: 10px 4px;
-
-        cursor: pointer;
-
-        font: inherit;
-
-        font-size: 13px;
-
-        font-weight: 600;
-
-        background:
-            rgba(255,255,255,0.08);
-
-        color: inherit;
-
-        transition:
-            transform 0.2s ease,
-            background 0.2s ease;
-
-    }
-
-
-    .post-buttons button:hover {
-
-        transform:
-            translateY(-2px);
-
-        background:
-            rgba(255,213,79,0.16);
-
-    }
-
-
-    .post-buttons button:active {
-
-        transform:
-            scale(0.96);
-
-    }
-
-
-    @media (max-width: 450px) {
-
-        .post-card {
-
-            padding: 14px;
-
-            border-radius: 18px;
-
+        if (seconds < 60) {
+            return "Just now";
         }
 
+        const minutes =
+            Math.floor(
+                seconds / 60
+            );
 
-        .post-buttons {
-
-            gap: 2px !important;
-
+        if (minutes < 60) {
+            return `${minutes}m ago`;
         }
 
+        const hours =
+            Math.floor(
+                minutes / 60
+            );
 
-        .post-buttons button {
-
-            font-size: 12px;
-
-            padding: 10px 2px;
-
+        if (hours < 24) {
+            return `${hours}h ago`;
         }
+
+        const days =
+            Math.floor(
+                hours / 24
+            );
+
+        if (days < 7) {
+            return `${days}d ago`;
+        }
+
+        return date.toLocaleDateString(
+            undefined,
+            {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            }
+        );
+
+    } catch {
+
+        return "Just now";
 
     }
 
-`;
+}
 
-document.head.appendChild(
-    postFeedStyle
-);
+
+// ============================================================
+// AVATAR
+// ============================================================
+
+function createAvatar(
+    profilePicture,
+    fullName
+) {
+
+    const safeName =
+        escapeHTML(fullName);
+
+    if (profilePicture) {
+
+        return `
+
+            <img
+                src="${escapeHTML(profilePicture)}"
+                alt="${safeName}"
+                loading="lazy"
+                onerror="
+                    this.style.display='none';
+                    this.nextElementSibling.style.display='flex';
+                "
+            >
+
+            <div
+                class="avatar-fallback"
+                style="display:none;"
+            >
+                ${safeName.charAt(0).toUpperCase() || "V"}
+            </div>
+
+        `;
+
+    }
+
+    return `
+
+        <div class="avatar-fallback">
+
+            ${safeName.charAt(0).toUpperCase() || "V"}
+
+        </div>
+
+    `;
+
+}
 
 
 // ============================================================
 // LOAD POSTS
 // ============================================================
 
-const postsQuery =
-    query(
-        collection(db, "posts"),
-        orderBy(
-            "createdAt",
-            "desc"
-        ),
-        limit(10)
-    );
+const postsQuery = query(
+
+    collection(db, "posts"),
+
+    orderBy(
+        "createdAt",
+        "desc"
+    ),
+
+    limit(10)
+
+);
 
 
 onSnapshot(
@@ -848,27 +1241,25 @@ onSnapshot(
         }
 
 
-        feed.innerHTML = "";
-
-
-        // ====================================================
-        // NO POSTS
-        // ====================================================
-
         if (snapshot.empty) {
 
             feed.innerHTML = `
 
-                <p style="
-                    text-align:center;
-                    padding:25px;
-                    opacity:0.8;
-                ">
+                <div class="vs-empty">
 
-                    No posts yet.
-                    Be the first to post ⭐
+                    <div class="vs-empty-icon">
+                        ⭐
+                    </div>
 
-                </p>
+                    <p class="vs-empty-title">
+                        No posts yet
+                    </p>
+
+                    <p class="vs-empty-text">
+                        Be the first person to share something.
+                    </p>
+
+                </div>
 
             `;
 
@@ -879,277 +1270,151 @@ onSnapshot(
         }
 
 
-        // ====================================================
-        // LOAD ALL USER PROFILES IN PARALLEL
-        // This is much faster than waiting for each one.
-        // ====================================================
+        try {
 
-        const profileResults =
-            await Promise.all(
+            const profileResults =
+                await Promise.all(
 
-                snapshot.docs.map(
-                    async (docSnap) => {
+                    snapshot.docs.map(
+                        async postDoc => {
 
-                        const post =
-                            docSnap.data();
+                            const post =
+                                postDoc.data();
 
-                        let profilePicture = "";
+                            let fullName =
+                                post.fullName ||
+                                "VitalStar User";
 
-                        let fullName =
-                            post.fullName ||
-                            "VitalStar User";
+                            let profilePicture =
+                                "";
 
-                        try {
+                            try {
 
-                            const userSnap =
-                                await getDoc(
-                                    doc(
-                                        db,
-                                        "users",
-                                        post.uid
-                                    )
+                                if (post.uid) {
+
+                                    const userSnap =
+                                        await getDoc(
+                                            doc(
+                                                db,
+                                                "users",
+                                                post.uid
+                                            )
+                                        );
+
+                                    if (
+                                        userSnap.exists()
+                                    ) {
+
+                                        const userData =
+                                            userSnap.data();
+
+                                        fullName =
+                                            userData.fullName ||
+                                            userData.username ||
+                                            fullName;
+
+                                        profilePicture =
+                                            userData.profilePicture ||
+                                            "";
+
+                                    }
+
+                                }
+
+                            } catch (error) {
+
+                                console.error(
+                                    "Profile loading error:",
+                                    error
                                 );
-
-                            if (
-                                userSnap.exists()
-                            ) {
-
-                                const userData =
-                                    userSnap.data();
-
-                                fullName =
-                                    userData.fullName ||
-                                    userData.username ||
-                                    post.fullName ||
-                                    "VitalStar User";
-
-                                profilePicture =
-                                    userData.profilePicture ||
-                                    "";
 
                             }
 
-                        } catch (error) {
+                            return {
 
-                            console.error(
-                                "Could not load profile:",
-                                error
-                            );
+                                post,
+
+                                postId:
+                                    postDoc.id,
+
+                                fullName,
+
+                                profilePicture
+
+                            };
 
                         }
+                    )
 
-                        return {
-                            post,
-                            postId: docSnap.id,
-                            fullName,
-                            profilePicture
-                        };
-
-                    }
-                )
-
-            );
+                );
 
 
-        // ====================================================
-        // BUILD FEED
-        // ====================================================
-
-        let feedHTML = "";
+            let html = "";
 
 
-        for (
-            const item
-            of profileResults
-        ) {
+            for (
+                const item
+                of profileResults
+            ) {
 
-            const {
-                post,
-                postId,
-                fullName,
-                profilePicture
-            } = item;
-
-
-            // ==================================================
-            // POST DATE
-            // ==================================================
-
-            let date =
-                "Just now";
+                const {
+                    post,
+                    postId,
+                    fullName,
+                    profilePicture
+                } = item;
 
 
-            if (post.createdAt) {
+                const safeName =
+                    escapeHTML(fullName);
 
-                try {
+                const safeUid =
+                    escapeHTML(post.uid || "");
 
-                    date =
+
+                const text =
+                    post.text
+                        ? escapeHTML(post.text)
+                        : "";
+
+
+                const date =
+                    formatPostDate(
                         post.createdAt
-                            .toDate()
-                            .toLocaleString();
-
-                } catch (e) {
-
-                    console.log(
-                        "Could not format post date:",
-                        e
                     );
 
-                }
 
-            }
-
-
-            // ==================================================
-            // AVATAR
-            // ==================================================
-
-            const avatarHTML =
-                profilePicture
-
-                ? `
-
-                    <img
-                        src="${profilePicture}"
-                        alt="${fullName}"
-                        loading="lazy"
-                        style="
-                            width:50px;
-                            height:50px;
-                            border-radius:50%;
-                            object-fit:cover;
-                            display:block;
-                            box-shadow:
-                                0 4px 15px
-                                rgba(0,0,0,0.15);
-                        "
-                        onerror="
-                            this.style.display='none';
-                            this.nextElementSibling.style.display='flex';
-                        "
-                    >
-
-                    <div
-                        style="
-                            width:50px;
-                            height:50px;
-                            border-radius:50%;
-                            background:#e5e7eb;
-                            display:none;
-                            align-items:center;
-                            justify-content:center;
-                            font-size:25px;
-                        "
-                    >
-                        👤
-                    </div>
-
-                `
-
-                : `
-
-                    <div
-                        style="
-                            width:50px;
-                            height:50px;
-                            border-radius:50%;
-                            background:#e5e7eb;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            font-size:25px;
-                        "
-                    >
-                        👤
-                    </div>
-
-                `;
+                const avatar =
+                    createAvatar(
+                        profilePicture,
+                        fullName
+                    );
 
 
-            // ==================================================
-            // POST HTML
-            // ==================================================
+                const imageHTML =
+                    post.image
+                        ? `
 
-            feedHTML += `
-
-                <div class="post-card">
-
-                    <div class="user-info">
-
-                        <div class="avatar">
-
-                            ${avatarHTML}
-
-                        </div>
-
-
-                        <div>
-
-                            <h3>
-
-                                <a
-                                    href="profile.html?uid=${post.uid}"
-                                >
-
-                                    ${fullName}
-
-                                </a>
-
-                            </h3>
-
-
-                            <small>
-
-                                ${date}
-
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    ${
-                        post.text
-
-                            ? `
-
-                                <p
-                                    class="post-text"
-                                >
-
-                                    ${post.text}
-
-                                </p>
-
-                            `
-
-                            : ""
-                    }
-
-
-                    ${
-                        post.image
-
-                            ? `
+                            <div class="post-media">
 
                                 <img
                                     class="post-photo"
-                                    src="${post.image}"
-                                    alt="Post Image"
+                                    src="${escapeHTML(post.image)}"
+                                    alt="Post image"
                                     loading="lazy"
                                 >
 
-                            `
+                            </div>
 
-                            : ""
-                    }
+                        `
+                        : "";
 
 
-                    ${
-                        post.video
+                const videoHTML =
+                    post.video
+                        ? `
 
-                            ? `
+                            <div class="post-media">
 
                                 <video
                                     class="post-video"
@@ -1159,122 +1424,181 @@ onSnapshot(
                                 >
 
                                     <source
-                                        src="${post.video}"
+                                        src="${escapeHTML(post.video)}"
                                         type="video/mp4"
                                     >
 
-                                    Your browser does
-                                    not support video.
+                                    Your browser does not
+                                    support video.
 
                                 </video>
 
-                            `
+                            </div>
 
-                            : ""
-                    }
+                        `
+                        : "";
 
 
-                    <div
-                        class="post-buttons"
+                html += `
+
+                    <article
+                        class="post-card"
+                        data-post-id="${escapeHTML(postId)}"
                     >
 
-                        <button
-                            onclick="
-                                likePost('${postId}')
-                            "
-                        >
+                        <div class="user-info">
 
-                            ❤️
-                            ${post.likes || 0}
+                            <div class="avatar">
 
-                        </button>
+                                ${avatar}
+
+                            </div>
 
 
-                        <button
-                            onclick="
-                                openComments('${postId}')
-                            "
-                        >
+                            <div class="user-details">
 
-                            💬
-                            ${post.comments || 0}
+                                <h3>
 
-                        </button>
+                                    <a
+                                        href="profile.html?uid=${encodeURIComponent(safeUid)}"
+                                    >
+                                        ${safeName}
+                                    </a>
+
+                                </h3>
+
+                                <small class="post-time">
+
+                                    ${escapeHTML(date)}
+
+                                </small>
+
+                            </div>
+
+                        </div>
 
 
-                        <button>
+                        ${
+                            text
+                                ? `
+                                    <div class="post-text">
+                                        ${text}
+                                    </div>
+                                `
+                                : ""
+                        }
 
-                            🔁
-                            ${post.reposts || 0}
 
-                        </button>
+                        ${imageHTML}
+
+                        ${videoHTML}
 
 
-                        <button
-                            onclick="
-                                sharePost('${postId}')
-                            "
-                        >
+                        <div class="post-buttons">
 
-                            🔗
-                            ${post.shares || 0}
+                            <button
+                                type="button"
+                                onclick="likePost('${escapeHTML(postId)}')"
+                                aria-label="Like post"
+                            >
+                                ❤️
+                                <span>
+                                    ${Number(post.likes) || 0}
+                                </span>
+                            </button>
 
-                        </button>
 
-                    </div>
+                            <button
+                                type="button"
+                                onclick="openComments('${escapeHTML(postId)}')"
+                                aria-label="Comments"
+                            >
+                                💬
+                                <span>
+                                    ${Number(post.comments) || 0}
+                                </span>
+                            </button>
+
+
+                            <button
+                                type="button"
+                                onclick="repostPost('${escapeHTML(postId)}')"
+                                aria-label="Repost"
+                            >
+                                🔁
+                                <span>
+                                    ${Number(post.reposts) || 0}
+                                </span>
+                            </button>
+
+
+                            <button
+                                type="button"
+                                onclick="sharePost('${escapeHTML(postId)}')"
+                                aria-label="Share post"
+                            >
+                                🔗
+                                <span>
+                                    ${Number(post.shares) || 0}
+                                </span>
+                            </button>
+
+                        </div>
+
+                    </article>
+
+                `;
+
+            }
+
+
+            feed.innerHTML = html;
+
+            hideVitalStarLoader();
+
+        } catch (error) {
+
+            console.error(
+                "Feed rendering error:",
+                error
+            );
+
+            feed.innerHTML = `
+
+                <div class="vs-error">
+
+                    Unable to load posts right now.
 
                 </div>
 
             `;
 
+            hideVitalStarLoader();
+
         }
-
-
-        // ====================================================
-        // INSERT EVERYTHING AT ONCE
-        // Faster than repeatedly changing innerHTML.
-        // ====================================================
-
-        feed.innerHTML =
-            feedHTML;
-
-
-        // ====================================================
-        // POSTS LOADED
-        // ====================================================
-
-        hideVitalStarLoader();
 
     },
 
-    (error) => {
+    error => {
 
         console.error(
             "Post loading error:",
             error
         );
 
-
         if (feed) {
 
             feed.innerHTML = `
 
-                <p
-                    style="
-                        color:red;
-                        text-align:center;
-                        padding:20px;
-                    "
-                >
+                <div class="vs-error">
 
-                    Unable to load posts
+                    Unable to load posts.
 
-                </p>
+                </div>
 
             `;
 
         }
-
 
         hideVitalStarLoader();
 
@@ -1284,11 +1608,10 @@ onSnapshot(
 
 
 // ============================================================
-// LIKE SYSTEM
+// LIKE
 // ============================================================
 
-window.likePost =
-async function(postId) {
+window.likePost = async function(postId) {
 
     const user =
         auth.currentUser;
@@ -1297,7 +1620,7 @@ async function(postId) {
     if (!user) {
 
         alert(
-            "Please login first"
+            "Please login first."
         );
 
         return;
@@ -1305,220 +1628,302 @@ async function(postId) {
     }
 
 
-    const likeId =
-        postId + "_" + user.uid;
-
-
-    const likeRef =
-        doc(
-            db,
-            "likes",
-            likeId
+    const button =
+        document.querySelector(
+            `[data-post-id="${CSS.escape(postId)}"] .post-buttons button:first-child`
         );
 
 
-    const likeSnap =
-        await getDoc(
-            likeRef
-        );
+    if (button) {
+
+        button.style.animation =
+            "vsHeart .35s ease";
+
+        setTimeout(() => {
+
+            button.style.animation = "";
+
+        }, 400);
+
+    }
 
 
-    const postRef =
-        doc(
-            db,
-            "posts",
-            postId
-        );
+    try {
+
+        const likeId =
+            `${postId}_${user.uid}`;
+
+        const likeRef =
+            doc(
+                db,
+                "likes",
+                likeId
+            );
+
+        const postRef =
+            doc(
+                db,
+                "posts",
+                postId
+            );
+
+        const likeSnap =
+            await getDoc(likeRef);
 
 
-    if (likeSnap.exists()) {
+        if (likeSnap.exists()) {
 
-        await deleteDoc(
-            likeRef
+            await deleteDoc(likeRef);
+
+            await updateDoc(
+                postRef,
+                {
+                    likes:
+                        increment(-1)
+                }
+            );
+
+            return;
+
+        }
+
+
+        await setDoc(
+            likeRef,
+            {
+
+                uid:
+                    user.uid,
+
+                postId,
+
+                createdAt:
+                    serverTimestamp()
+
+            }
         );
 
 
         await updateDoc(
             postRef,
             {
+
                 likes:
-                    increment(-1)
+                    increment(1)
+
             }
         );
 
 
-        return;
+        const postSnap =
+            await getDoc(postRef);
 
-    }
+
+        if (!postSnap.exists()) return;
 
 
-    await setDoc(
-        likeRef,
-        {
+        const postData =
+            postSnap.data();
 
-            uid:
-                user.uid,
 
-            postId:
-                postId,
-
-            createdAt:
-                new Date()
-
+        if (
+            postData.uid === user.uid
+        ) {
+            return;
         }
-    );
 
 
-    await updateDoc(
-        postRef,
-        {
-
-            likes:
-                increment(1)
-
-        }
-    );
-
-
-    const postSnap =
-        await getDoc(
-            postRef
-        );
+        const userSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "users",
+                    user.uid
+                )
+            );
 
 
-    if (!postSnap.exists()) {
-        return;
-    }
+        if (!userSnap.exists()) return;
 
 
-    const postData =
-        postSnap.data();
+        const currentUser =
+            userSnap.data();
 
 
-    if (
-        postData.uid === user.uid
-    ) {
-        return;
-    }
-
-
-    const userSnap =
-        await getDoc(
-            doc(
+        await addDoc(
+            collection(
                 db,
-                "users",
-                user.uid
-            )
-        );
+                "notifications"
+            ),
+            {
 
+                receiverId:
+                    postData.uid,
 
-    if (!userSnap.exists()) {
-        return;
-    }
+                senderId:
+                    user.uid,
 
+                senderName:
+                    currentUser.fullName ||
+                    currentUser.username ||
+                    "VitalStar User",
 
-    const currentUser =
-        userSnap.data();
+                senderPhoto:
+                    currentUser.profilePicture ||
+                    "",
 
+                text:
+                    "liked your post ❤️",
 
-    await addDoc(
-        collection(
-            db,
-            "notifications"
-        ),
-        {
+                type:
+                    "like",
 
-            receiverId:
-                postData.uid,
-
-            senderId:
-                user.uid,
-
-            senderName:
-                currentUser.fullName ||
-                currentUser.username ||
-                "VitalStar User",
-
-            senderPhoto:
-                currentUser.profilePicture ||
-                "",
-
-            text:
-                "liked your post ❤️",
-
-            type:
-                "like",
-
-            postId:
                 postId,
 
-            read:
-                false,
+                read:
+                    false,
 
-            createdAt:
-                serverTimestamp()
+                createdAt:
+                    serverTimestamp()
 
-        }
-    );
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Like error:",
+            error
+        );
+
+    }
 
 };
 
 
 // ============================================================
-// OPEN COMMENTS
+// COMMENTS
 // ============================================================
 
-window.openComments =
-function(postId) {
+window.openComments = function(postId) {
 
     window.location.href =
-        "comments.html?postId=" +
-        postId;
+        `comments.html?postId=${encodeURIComponent(postId)}`;
 
 };
 
 
 // ============================================================
-// SHARE POST
+// REPOST
 // ============================================================
 
-window.sharePost =
-async function(postId) {
+window.repostPost = async function(postId) {
 
-    const postRef =
-        doc(
-            db,
-            "posts",
-            postId
-        );
+    const user =
+        auth.currentUser;
 
 
-    const postSnap =
-        await getDoc(
-            postRef
-        );
-
-
-    if (!postSnap.exists()) {
+    if (!user) {
 
         alert(
-            "Post not found."
+            "Please login first."
         );
 
         return;
 
     }
-
-
-    const post =
-        postSnap.data();
-
-
-    const shareUrl =
-        `${window.location.origin}/comments.html?postId=${postId}`;
 
 
     try {
+
+        const postRef =
+            doc(
+                db,
+                "posts",
+                postId
+            );
+
+
+        const postSnap =
+            await getDoc(postRef);
+
+
+        if (!postSnap.exists()) {
+
+            alert(
+                "Post not found."
+            );
+
+            return;
+
+        }
+
+
+        await updateDoc(
+            postRef,
+            {
+
+                reposts:
+                    increment(1)
+
+            }
+        );
+
+
+        alert(
+            "Post reposted 🔁"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Repost error:",
+            error
+        );
+
+    }
+
+};
+
+
+// ============================================================
+// SHARE
+// ============================================================
+
+window.sharePost = async function(postId) {
+
+    try {
+
+        const postRef =
+            doc(
+                db,
+                "posts",
+                postId
+            );
+
+
+        const postSnap =
+            await getDoc(postRef);
+
+
+        if (!postSnap.exists()) {
+
+            alert(
+                "Post not found."
+            );
+
+            return;
+
+        }
+
+
+        const post =
+            postSnap.data();
+
+
+        const shareUrl =
+            `${window.location.origin}/comments.html?postId=${encodeURIComponent(postId)}`;
+
 
         if (
             navigator.share
@@ -1527,27 +1932,27 @@ async function(postId) {
             await navigator.share({
 
                 title:
-                    post.fullName ||
                     "VitalStar Post",
 
                 text:
                     post.text ||
-                    "Check out this post!",
+                    "Check out this post on VitalStar!",
 
                 url:
                     shareUrl
 
             });
 
-        } else {
+        } else if (
+            navigator.clipboard
+        ) {
 
             await navigator.clipboard.writeText(
                 shareUrl
             );
 
-
             alert(
-                "Post link copied to clipboard."
+                "Post link copied 🔗"
             );
 
         }
@@ -1563,13 +1968,19 @@ async function(postId) {
             }
         );
 
-
     } catch (error) {
 
-        console.log(
-            "Share cancelled.",
-            error
-        );
+        if (
+            error.name !==
+            "AbortError"
+        ) {
+
+            console.error(
+                "Share error:",
+                error
+            );
+
+        }
 
     }
 
@@ -1577,151 +1988,155 @@ async function(postId) {
 
 
 // ============================================================
-// WELCOME MESSAGE + ONLINE USERS
+// WELCOME + ONLINE USERS
 // ============================================================
 
 auth.onAuthStateChanged(
-async (user) => {
+    async user => {
 
-    if (!user) {
-        return;
-    }
+        if (!user) return;
 
 
-    const onlineUsersCount =
-        document.getElementById(
-            "onlineUsersCount"
-        );
-
-
-    onValue(
-        ref(
-            rtdb,
-            "status"
-        ),
-        (snapshot) => {
-
-            let count =
-                0;
-
-
-            snapshot.forEach(
-                (child) => {
-
-                    const status =
-                        child.val();
-
-
-                    if (
-                        status &&
-                        status.online === true
-                    ) {
-
-                        count++;
-
-                    }
-
-                }
+        const onlineUsersCount =
+            document.getElementById(
+                "onlineUsersCount"
             );
 
 
-            if (
-                onlineUsersCount
-            ) {
+        onValue(
+            ref(
+                rtdb,
+                "status"
+            ),
+            snapshot => {
 
-                onlineUsersCount.textContent =
-                    `🟢 Online: ${count}`;
+                let count = 0;
+
+
+                snapshot.forEach(
+                    child => {
+
+                        const status =
+                            child.val();
+
+
+                        if (
+                            status &&
+                            status.online === true
+                        ) {
+
+                            count++;
+
+                        }
+
+                    }
+                );
+
+
+                if (
+                    onlineUsersCount
+                ) {
+
+                    onlineUsersCount.textContent =
+                        `🟢 ${count} online`;
+
+                }
+
+            }
+        );
+
+
+        try {
+
+            const userSnap =
+                await getDoc(
+                    doc(
+                        db,
+                        "users",
+                        user.uid
+                    )
+                );
+
+
+            if (!userSnap.exists()) return;
+
+
+            const userData =
+                userSnap.data();
+
+
+            const fullName =
+                userData.fullName ||
+                userData.username ||
+                "User";
+
+
+            const hour =
+                new Date().getHours();
+
+
+            let greeting =
+                "Good Evening";
+
+
+            if (hour < 12) {
+
+                greeting =
+                    "Good Morning";
+
+            } else if (hour < 17) {
+
+                greeting =
+                    "Good Afternoon";
 
             }
 
+
+            const welcome =
+                document.getElementById(
+                    "welcomeText"
+                );
+
+
+            if (welcome) {
+
+                welcome.innerHTML = `
+
+                    ${escapeHTML(greeting)},
+
+                    <span
+                        style="
+                            color:#FFD54F;
+                            font-weight:800;
+                        "
+                    >
+                        ${escapeHTML(fullName)}
+                    </span>
+
+                    👋
+
+                `;
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Welcome error:",
+                error
+            );
+
         }
-    );
-
-
-    const userSnap =
-        await getDoc(
-            doc(
-                db,
-                "users",
-                user.uid
-            )
-        );
-
-
-    if (
-        !userSnap.exists()
-    ) {
-        return;
-    }
-
-
-    const userData =
-        userSnap.data();
-
-
-    const fullName =
-        userData.fullName ||
-        userData.username ||
-        "User";
-
-
-    const hour =
-        new Date().getHours();
-
-
-    let greeting =
-        "Good Evening";
-
-
-    if (
-        hour < 12
-    ) {
-
-        greeting =
-            "Good Morning";
-
-    } else if (
-        hour < 17
-    ) {
-
-        greeting =
-            "Good Afternoon";
 
     }
-
-
-    const welcome =
-        document.getElementById(
-            "welcomeText"
-        );
-
-
-    if (welcome) {
-
-        welcome.innerHTML =
-            `${greeting},
-            <span style="color:#FFD54F">
-                ${fullName}
-            </span> 👋`;
-
-    }
-
-});
+);
 
 
 // ============================================================
-// UNREAD NOTIFICATION BADGE
+// NOTIFICATION BADGE
 // ============================================================
 
-const notificationBadge =
-    document.getElementById(
-        "notificationBadge"
-    );
-
-
-if (
-    notificationBadge
-) {
+if (notificationBadge) {
 
     notificationBadge.textContent =
         "0";
@@ -1732,25 +2147,16 @@ if (
 }
 
 
-// ============================================================
-// LOAD UNREAD NOTIFICATIONS
-// ============================================================
-
 onAuthStateChanged(
     auth,
-    (user) => {
+    user => {
 
         if (!user) {
 
-            if (
-                notificationBadge
-            ) {
+            if (notificationBadge) {
 
                 notificationBadge.textContent =
                     "0";
-
-                notificationBadge.style.display =
-                    "inline-flex";
 
             }
 
@@ -1778,24 +2184,24 @@ onAuthStateChanged(
 
             notificationQuery,
 
-            (snapshot) => {
+            snapshot => {
 
-                let unreadNotifications =
+                let unread =
                     0;
 
 
                 snapshot.forEach(
-                    (notificationDoc) => {
+                    notificationDoc => {
 
-                        const notification =
+                        const data =
                             notificationDoc.data();
 
 
                         if (
-                            notification.read === false
+                            data.read === false
                         ) {
 
-                            unreadNotifications++;
+                            unread++;
 
                         }
 
@@ -1808,10 +2214,9 @@ onAuthStateChanged(
                 ) {
 
                     notificationBadge.textContent =
-                        unreadNotifications > 0
-                            ? unreadNotifications
-                            : "0";
-
+                        unread > 99
+                            ? "99+"
+                            : String(unread);
 
                     notificationBadge.style.display =
                         "inline-flex";
@@ -1820,25 +2225,12 @@ onAuthStateChanged(
 
             },
 
-            (error) => {
+            error => {
 
                 console.error(
-                    "Notification badge error:",
+                    "Notification error:",
                     error
                 );
-
-
-                if (
-                    notificationBadge
-                ) {
-
-                    notificationBadge.textContent =
-                        "0";
-
-                    notificationBadge.style.display =
-                        "inline-flex";
-
-                }
 
             }
 
