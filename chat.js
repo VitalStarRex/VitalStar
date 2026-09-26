@@ -163,7 +163,7 @@ chatStyle.textContent = `
     width:100% !important;
     max-width:none !important;
 
-    min-height:58px !important;
+    min-height:62px !important;
 
     margin:0 !important;
     padding:8px 10px !important;
@@ -180,15 +180,20 @@ chatStyle.textContent = `
 
     overflow:visible !important;
 
-    background:rgba(9,6,17,.98) !important;
+    /* NAVY BLUE */
+    background:#001f4d !important;
 
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
 
-    border-top:1px solid rgba(255,255,255,.12);
+    /* THICK YELLOW BORDER */
+    border:3px solid #facc15 !important;
+    border-radius:16px 16px 0 0 !important;
 
+    /* YELLOW GLOW */
     box-shadow:
-        0 -8px 30px rgba(0,0,0,.45);
+        0 -4px 18px rgba(250,204,21,.45),
+        0 -8px 35px rgba(250,204,21,.18);
 
     z-index:2147483000 !important;
 
@@ -521,6 +526,7 @@ chatStyle.textContent = `
     position:fixed;
 
     left:50%;
+
     top:50%;
 
     transform:translate(-50%,-50%);
@@ -606,6 +612,8 @@ chatStyle.textContent = `
             calc(7px + env(safe-area-inset-bottom))
             max(7px, env(safe-area-inset-left))
             !important;
+
+        border-width:3px !important;
     }
 
     .vs-media-toggle {
@@ -698,31 +706,66 @@ function relativeLastSeen(value) {
         return "Last seen recently";
     }
 
-    let time = 0;
+    let time = null;
 
-    if (typeof value === "number") {
-
-        time = value;
-
-    } else if (value?.toMillis) {
+    // Firestore Timestamp
+    if (typeof value?.toMillis === "function") {
 
         time = value.toMillis();
 
-    } else if (value?.seconds) {
+    // Firestore Timestamp-like object
+    } else if (
+        typeof value?.seconds === "number"
+    ) {
 
-        time = value.seconds * 1000;
+        time =
+            value.seconds * 1000;
 
-    } else {
+    // JavaScript Date
+    } else if (
+        value instanceof Date
+    ) {
 
-        time = new Date(value).getTime();
+        time =
+            value.getTime();
+
+    // Number
+    } else if (
+        typeof value === "number"
+    ) {
+
+        // Support both seconds and milliseconds
+        time =
+            value < 10000000000
+                ? value * 1000
+                : value;
+
+    // String date
+    } else if (
+        typeof value === "string"
+    ) {
+
+        const parsed =
+            Date.parse(value);
+
+        if (!Number.isNaN(parsed)) {
+            time = parsed;
+        }
     }
 
-    if (!time || Number.isNaN(time)) {
+    if (
+        !time ||
+        !Number.isFinite(time) ||
+        time > Date.now() + 60000
+    ) {
         return "Last seen recently";
     }
 
     const difference =
-        Math.max(0, Date.now() - time);
+        Math.max(
+            0,
+            Date.now() - time
+        );
 
     const minute = 60000;
     const hour = minute * 60;
@@ -736,7 +779,9 @@ function relativeLastSeen(value) {
         const n =
             Math.max(
                 1,
-                Math.floor(difference / 1000)
+                Math.floor(
+                    difference / 1000
+                )
             );
 
         return `Last seen ${n} second${n === 1 ? "" : "s"} ago`;
@@ -745,7 +790,9 @@ function relativeLastSeen(value) {
     if (difference < hour) {
 
         const n =
-            Math.floor(difference / minute);
+            Math.floor(
+                difference / minute
+            );
 
         return `Last seen ${n} minute${n === 1 ? "" : "s"} ago`;
     }
@@ -753,7 +800,9 @@ function relativeLastSeen(value) {
     if (difference < day) {
 
         const n =
-            Math.floor(difference / hour);
+            Math.floor(
+                difference / hour
+            );
 
         return `Last seen ${n} hour${n === 1 ? "" : "s"} ago`;
     }
@@ -761,7 +810,9 @@ function relativeLastSeen(value) {
     if (difference < week) {
 
         const n =
-            Math.floor(difference / day);
+            Math.floor(
+                difference / day
+            );
 
         return `Last seen ${n} day${n === 1 ? "" : "s"} ago`;
     }
@@ -769,7 +820,9 @@ function relativeLastSeen(value) {
     if (difference < month) {
 
         const n =
-            Math.floor(difference / week);
+            Math.floor(
+                difference / week
+            );
 
         return `Last seen ${n} week${n === 1 ? "" : "s"} ago`;
     }
@@ -777,13 +830,17 @@ function relativeLastSeen(value) {
     if (difference < year) {
 
         const n =
-            Math.floor(difference / month);
+            Math.floor(
+                difference / month
+            );
 
         return `Last seen ${n} month${n === 1 ? "" : "s"} ago`;
     }
 
     const n =
-        Math.floor(difference / year);
+        Math.floor(
+            difference / year
+        );
 
     return `Last seen ${n} year${n === 1 ? "" : "s"} ago`;
 }
