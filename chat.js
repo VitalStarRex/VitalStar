@@ -1,7 +1,8 @@
 // ============================================================
-// VITALSTAR CHAT.JS
-// Messages + Media Menu + Voice Notes + Delete + Block
+// VITALSTAR — CHAT.JS
+// Messages + Media Menu + Voice Notes + Delete + Block/Unblock
 // Last Seen + Voice Call + Video Call
+// Fixed Composer Above Footer
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -23,7 +24,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ============================================================
-// ELEMENTS
+// HTML ELEMENTS
 // ============================================================
 
 const backBtn = document.getElementById("backBtn");
@@ -31,13 +32,20 @@ const chatAvatar = document.getElementById("chatAvatar");
 const chatName = document.getElementById("chatName");
 const chatStatus = document.getElementById("chatStatus");
 const messages = document.getElementById("messages");
+
 const messageForm = document.getElementById("messageForm");
 const messageInput = document.getElementById("messageInput");
+
 const imageInput = document.getElementById("imageInput");
 const videoInput = document.getElementById("videoInput");
+
 const imageBtn = document.getElementById("imageBtn");
 const videoBtn = document.getElementById("videoBtn");
 const recordBtn = document.getElementById("recordBtn");
+
+// ============================================================
+// STATE
+// ============================================================
 
 let currentUser = null;
 let receiverUid = null;
@@ -52,12 +60,18 @@ let selectedImage = null;
 let selectedVideo = null;
 let voiceUrl = "";
 
-let mediaRecorder = null;
+let recorder = null;
 let audioChunks = [];
 
 let activeCall = null;
 let activeCallListener = null;
 let activeCandidateListener = null;
+
+const params = new URLSearchParams(
+    window.location.search
+);
+
+receiverUid = params.get("uid");
 
 // ============================================================
 // LOADER
@@ -68,9 +82,36 @@ const loader = document.createElement("div");
 loader.id = "vitalStarChatLoader";
 
 loader.innerHTML = `
-    <div class="vs-loader-box">
-        <div class="vs-loader-logo">VS</div>
-        <div class="vs-loader-text">Loading chat...</div>
+    <div style="
+        text-align:center;
+        color:#fff;
+        font-family:Arial,sans-serif;
+    ">
+        <div style="
+            width:72px;
+            height:72px;
+            border-radius:50%;
+            margin:auto;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:22px;
+            font-weight:900;
+            border:4px solid rgba(255,255,255,.15);
+            border-top-color:#7c3aed;
+            border-right-color:#22c55e;
+            animation:vitalStarSpin .9s linear infinite;
+        ">
+            VS
+        </div>
+
+        <div style="
+            margin-top:15px;
+            font-size:14px;
+            opacity:.8;
+        ">
+            Loading chat...
+        </div>
     </div>
 `;
 
@@ -86,43 +127,15 @@ Object.assign(loader.style, {
 
 document.body.appendChild(loader);
 
+// ============================================================
+// CHAT STYLE
+// ============================================================
+
 const chatStyle = document.createElement("style");
 
 chatStyle.textContent = `
 
-/* ============================================================
-   LOADER
-   ============================================================ */
-
-#vitalStarChatLoader .vs-loader-box {
-    text-align:center;
-    color:white;
-    font-family:Arial,sans-serif;
-}
-
-#vitalStarChatLoader .vs-loader-logo {
-    width:72px;
-    height:72px;
-    border-radius:50%;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-    font-weight:900;
-    border:4px solid rgba(255,255,255,.15);
-    border-top-color:#7c3aed;
-    border-right-color:#22c55e;
-    animation:vsChatSpin .9s linear infinite;
-}
-
-#vitalStarChatLoader .vs-loader-text {
-    margin-top:15px;
-    font-size:14px;
-    opacity:.8;
-}
-
-@keyframes vsChatSpin {
+@keyframes vitalStarSpin {
     to {
         transform:rotate(360deg);
     }
@@ -133,17 +146,16 @@ chatStyle.textContent = `
    ============================================================ */
 
 #messages {
-    padding-bottom:150px !important;
-    scroll-padding-bottom:170px !important;
+    padding-bottom:170px !important;
+    scroll-padding-bottom:190px !important;
 }
 
 /* ============================================================
-   FIXED MESSAGE COMPOSER
+   COMPOSER
    ============================================================ */
 
 #messageForm {
     position:fixed !important;
-
     left:0 !important;
     right:0 !important;
     bottom:0 !important;
@@ -159,8 +171,8 @@ chatStyle.textContent = `
     box-sizing:border-box !important;
 
     display:flex !important;
-    flex-direction:row !important;
     align-items:center !important;
+
     gap:7px !important;
 
     visibility:visible !important;
@@ -178,7 +190,7 @@ chatStyle.textContent = `
     box-shadow:
         0 -8px 30px rgba(0,0,0,.45);
 
-    z-index:2147483646 !important;
+    z-index:2147483000 !important;
 
     isolation:isolate;
 }
@@ -186,10 +198,6 @@ chatStyle.textContent = `
 #messageForm * {
     box-sizing:border-box;
 }
-
-/* ============================================================
-   INPUT
-   ============================================================ */
 
 #messageForm input[type="text"],
 #messageForm input:not([type]),
@@ -205,7 +213,7 @@ chatStyle.textContent = `
 .vs-media-wrapper {
     position:relative;
     flex:0 0 auto;
-    z-index:50;
+    z-index:2147483001;
 }
 
 .vs-media-toggle {
@@ -216,13 +224,14 @@ chatStyle.textContent = `
     border-radius:50%;
 
     background:rgba(124,58,237,.2);
+
     color:#fff;
 
     display:flex;
     align-items:center;
     justify-content:center;
 
-    font-size:23px;
+    font-size:24px;
     font-weight:900;
 
     cursor:pointer;
@@ -230,10 +239,6 @@ chatStyle.textContent = `
     transition:
         transform .18s ease,
         background .18s ease;
-}
-
-.vs-media-toggle:active {
-    transform:scale(.9);
 }
 
 .vs-media-toggle.open {
@@ -247,13 +252,13 @@ chatStyle.textContent = `
     left:0;
     bottom:52px;
 
-    width:170px;
+    width:175px;
 
     padding:8px;
 
     border-radius:16px;
 
-    background:rgba(22,17,31,.98);
+    background:rgba(22,17,31,.99);
 
     border:1px solid rgba(255,255,255,.12);
 
@@ -265,7 +270,7 @@ chatStyle.textContent = `
     flex-direction:column;
     gap:5px;
 
-    z-index:2147483647;
+    z-index:2147483002;
 }
 
 .vs-media-menu.open {
@@ -274,12 +279,15 @@ chatStyle.textContent = `
 
 .vs-media-menu button {
     width:100% !important;
+
     min-height:42px !important;
 
     border:none !important;
+
     border-radius:11px !important;
 
     background:rgba(255,255,255,.07) !important;
+
     color:#fff !important;
 
     text-align:left !important;
@@ -291,56 +299,66 @@ chatStyle.textContent = `
     font-size:14px;
 
     display:flex !important;
+
     align-items:center;
+
     gap:8px;
 
     margin:0 !important;
 }
 
-.vs-media-menu button:hover {
-    background:rgba(124,58,237,.25) !important;
-}
-
-.vs-original-media-hidden {
-    display:flex !important;
-}
-
 /* ============================================================
-   MEDIA PREVIEW
+   PREVIEW
    ============================================================ */
 
-#mediaPreview {
-    position:absolute !important;
+#chatMediaPreview {
+    position:fixed !important;
 
     left:10px !important;
     right:10px !important;
-    bottom:100% !important;
 
-    padding:7px 10px !important;
+    bottom:65px !important;
 
-    border-radius:10px 10px 0 0;
+    padding:8px !important;
+
+    border-radius:10px;
 
     background:rgba(20,15,28,.97) !important;
 
     color:#ddd !important;
 
-    font-size:12px;
+    z-index:2147482999;
 
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-
-    z-index:2147483645;
+    box-sizing:border-box !important;
 }
 
 /* ============================================================
-   CALL BUTTONS
+   SENDING STATUS
+   ============================================================ */
+
+#messageSendingStatus {
+    position:fixed !important;
+
+    left:0 !important;
+    right:0 !important;
+
+    bottom:62px !important;
+
+    z-index:2147482998;
+
+    background:rgba(8,6,17,.95);
+
+    color:#8b5cf6 !important;
+}
+
+/* ============================================================
+   CALL CONTROLS
    ============================================================ */
 
 .vs-call-controls {
     position:absolute;
 
-    right:45px;
+    right:48px;
     top:50%;
 
     transform:translateY(-50%);
@@ -371,10 +389,6 @@ chatStyle.textContent = `
     font-size:16px;
 }
 
-.vs-call-btn:active {
-    transform:scale(.92);
-}
-
 /* ============================================================
    CALL SCREEN
    ============================================================ */
@@ -402,28 +416,23 @@ chatStyle.textContent = `
     min-height:60px;
 
     display:flex;
+
     justify-content:space-between;
+
     align-items:center;
-}
-
-.vs-call-title {
-    font-size:17px;
-    font-weight:800;
-}
-
-.vs-call-status {
-    font-size:12px;
-    opacity:.7;
 }
 
 .vs-call-media {
     flex:1;
+
     min-height:0;
 
     position:relative;
 
     display:flex;
+
     align-items:center;
+
     justify-content:center;
 
     overflow:hidden;
@@ -463,7 +472,9 @@ chatStyle.textContent = `
     border-radius:50%;
 
     display:flex;
+
     align-items:center;
+
     justify-content:center;
 
     background:linear-gradient(
@@ -473,6 +484,7 @@ chatStyle.textContent = `
     );
 
     font-size:42px;
+
     font-weight:900;
 }
 
@@ -480,6 +492,7 @@ chatStyle.textContent = `
     padding:20px;
 
     display:flex;
+
     justify-content:center;
 }
 
@@ -488,11 +501,12 @@ chatStyle.textContent = `
     height:62px;
 
     border:none;
+
     border-radius:50%;
 
     background:#dc2626;
 
-    color:white;
+    color:#fff;
 
     font-size:24px;
 
@@ -526,14 +540,16 @@ chatStyle.textContent = `
 
     text-align:center;
 
-    color:white;
+    color:#fff;
 
     z-index:2147483641;
 }
 
 .vs-incoming-actions {
     display:flex;
+
     gap:12px;
+
     margin-top:20px;
 }
 
@@ -541,11 +557,12 @@ chatStyle.textContent = `
     flex:1;
 
     border:none;
+
     border-radius:12px;
 
     padding:13px;
 
-    color:white;
+    color:#fff;
 
     font-weight:800;
 }
@@ -559,11 +576,12 @@ chatStyle.textContent = `
 }
 
 /* ============================================================
-   DELETE BUTTON
+   DELETE
    ============================================================ */
 
 .vs-delete-message {
     border:none;
+
     background:transparent;
 
     color:#ef4444;
@@ -600,7 +618,7 @@ chatStyle.textContent = `
     }
 
     .vs-call-controls {
-        right:42px;
+        right:43px;
     }
 
     .vs-call-btn {
@@ -624,8 +642,6 @@ document.head.appendChild(chatStyle);
 
 function hideLoader() {
 
-    if (!loader) return;
-
     loader.style.opacity = "0";
     loader.style.transition = "opacity .25s ease";
 
@@ -647,16 +663,14 @@ function escapeHTML(value = "") {
 function randomId() {
 
     if (
-        crypto &&
-        typeof crypto.randomUUID === "function"
+        window.crypto &&
+        typeof window.crypto.randomUUID === "function"
     ) {
-        return crypto.randomUUID();
+        return window.crypto.randomUUID();
     }
 
     return Date.now() + "_" +
-        Math.random()
-            .toString(36)
-            .slice(2);
+        Math.random().toString(36).slice(2);
 }
 
 function formatTime(timestamp) {
@@ -675,7 +689,7 @@ function formatTime(timestamp) {
 }
 
 // ============================================================
-// RELATIVE LAST SEEN
+// LAST SEEN
 // ============================================================
 
 function relativeLastSeen(value) {
@@ -690,36 +704,27 @@ function relativeLastSeen(value) {
 
         time = value;
 
-    } else if (value.toMillis) {
+    } else if (value?.toMillis) {
 
         time = value.toMillis();
 
-    } else if (value.seconds) {
+    } else if (value?.seconds) {
 
-        time =
-            value.seconds * 1000;
+        time = value.seconds * 1000;
 
     } else {
 
-        time =
-            new Date(value).getTime();
+        time = new Date(value).getTime();
     }
 
-    if (
-        !time ||
-        Number.isNaN(time)
-    ) {
+    if (!time || Number.isNaN(time)) {
         return "Last seen recently";
     }
 
     const difference =
-        Math.max(
-            0,
-            Date.now() - time
-        );
+        Math.max(0, Date.now() - time);
 
-    const second = 1000;
-    const minute = second * 60;
+    const minute = 60000;
     const hour = minute * 60;
     const day = hour * 24;
     const week = day * 7;
@@ -731,9 +736,7 @@ function relativeLastSeen(value) {
         const n =
             Math.max(
                 1,
-                Math.floor(
-                    difference / second
-                )
+                Math.floor(difference / 1000)
             );
 
         return `Last seen ${n} second${n === 1 ? "" : "s"} ago`;
@@ -742,9 +745,7 @@ function relativeLastSeen(value) {
     if (difference < hour) {
 
         const n =
-            Math.floor(
-                difference / minute
-            );
+            Math.floor(difference / minute);
 
         return `Last seen ${n} minute${n === 1 ? "" : "s"} ago`;
     }
@@ -752,9 +753,7 @@ function relativeLastSeen(value) {
     if (difference < day) {
 
         const n =
-            Math.floor(
-                difference / hour
-            );
+            Math.floor(difference / hour);
 
         return `Last seen ${n} hour${n === 1 ? "" : "s"} ago`;
     }
@@ -762,9 +761,7 @@ function relativeLastSeen(value) {
     if (difference < week) {
 
         const n =
-            Math.floor(
-                difference / day
-            );
+            Math.floor(difference / day);
 
         return `Last seen ${n} day${n === 1 ? "" : "s"} ago`;
     }
@@ -772,9 +769,7 @@ function relativeLastSeen(value) {
     if (difference < month) {
 
         const n =
-            Math.floor(
-                difference / week
-            );
+            Math.floor(difference / week);
 
         return `Last seen ${n} week${n === 1 ? "" : "s"} ago`;
     }
@@ -782,705 +777,160 @@ function relativeLastSeen(value) {
     if (difference < year) {
 
         const n =
-            Math.floor(
-                difference / month
-            );
+            Math.floor(difference / month);
 
         return `Last seen ${n} month${n === 1 ? "" : "s"} ago`;
     }
 
     const n =
-        Math.floor(
-            difference / year
-        );
+        Math.floor(difference / year);
 
     return `Last seen ${n} year${n === 1 ? "" : "s"} ago`;
-}
-
-// ============================================================
-// AUTH
-// ============================================================
-
-auth.onAuthStateChanged(async user => {
-
-    if (!user) {
-
-        window.location.href =
-            "login.html";
-
-        return;
-    }
-
-    currentUser = user;
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-    receiverUid =
-        params.get("uid");
-
-    if (
-        !receiverUid ||
-        receiverUid === currentUser.uid
-    ) {
-
-        window.location.href =
-            "home.html";
-
-        return;
-    }
-
-    chatId =
-        currentUser.uid < receiverUid
-            ? `${currentUser.uid}_${receiverUid}`
-            : `${receiverUid}_${currentUser.uid}`;
-
-    try {
-
-        await initializeChat();
-
-        setupMessageListener();
-
-        setupIncomingCalls();
-
-        setupMediaMenu();
-
-        fixComposer();
-
-        hideLoader();
-
-    } catch (error) {
-
-        console.error(
-            "VitalStar chat initialization error:",
-            error
-        );
-
-        hideLoader();
-
-        if (chatStatus) {
-            chatStatus.textContent =
-                "Unable to load chat";
-        }
-    }
-});
-
-// ============================================================
-// INITIALIZE CHAT
-// ============================================================
-
-async function initializeChat() {
-
-    const receiverRef =
-        doc(
-            db,
-            "users",
-            receiverUid
-        );
-
-    const receiverSnap =
-        await getDoc(receiverRef);
-
-    receiverData =
-        receiverSnap.exists()
-            ? receiverSnap.data()
-            : {};
-
-    const name =
-        receiverData.fullName ||
-        receiverData.username ||
-        "VitalStar User";
-
-    if (chatName) {
-
-        chatName.textContent =
-            name;
-
-        chatName.style.cursor =
-            "pointer";
-
-        chatName.onclick = () => {
-
-            window.location.href =
-                `profile.html?uid=${encodeURIComponent(receiverUid)}`;
-        };
-    }
-
-    // KEEP EXISTING PROFILE IMAGE LOGIC
-    if (chatAvatar) {
-
-        const avatar =
-            receiverData.profileImage ||
-            receiverData.photoURL ||
-            receiverData.avatar ||
-            "";
-
-        if (avatar) {
-
-            chatAvatar.src =
-                avatar;
-
-            chatAvatar.style.objectFit =
-                "cover";
-
-        } else {
-
-            chatAvatar.src =
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`;
-        }
-    }
-
-    await setDoc(
-        doc(
-            db,
-            "chats",
-            chatId
-        ),
-        {
-            participants:[
-                currentUser.uid,
-                receiverUid
-            ]
-        },
-        {
-            merge:true
-        }
-    );
-
-    listenToStatus();
-
-    createCallButtons();
-
-    createBlockButton();
-}
-
-// ============================================================
-// STATUS
-// ============================================================
-
-function listenToStatus() {
-
-    if (unsubscribeStatus) {
-        unsubscribeStatus();
-    }
-
-    unsubscribeStatus =
-        onSnapshot(
-            doc(
-                db,
-                "status",
-                receiverUid
-            ),
-            snapshot => {
-
-                const data =
-                    snapshot.exists()
-                        ? snapshot.data()
-                        : {};
-
-                if (!chatStatus) return;
-
-                if (data.online === true) {
-
-                    chatStatus.textContent =
-                        "🟢 Online";
-
-                    chatStatus.style.color =
-                        "#22c55e";
-
-                } else {
-
-                    chatStatus.textContent =
-                        relativeLastSeen(
-                            data.lastSeen ||
-                            data.timestamp
-                        );
-
-                    chatStatus.style.color =
-                        "";
-                }
-            }
-        );
-}
-
-// ============================================================
-// KEEP LAST SEEN TEXT FRESH
-// ============================================================
-
-setInterval(() => {
-
-    if (!chatStatus) return;
-
-    if (
-        chatStatus.textContent
-            .includes("Online")
-    ) {
-        return;
-    }
-
-    if (!receiverUid) return;
-
-    getDoc(
-        doc(
-            db,
-            "status",
-            receiverUid
-        )
-    )
-        .then(snapshot => {
-
-            if (!snapshot.exists()) {
-                return;
-            }
-
-            const data =
-                snapshot.data();
-
-            if (data.online === true) {
-
-                chatStatus.textContent =
-                    "🟢 Online";
-
-                chatStatus.style.color =
-                    "#22c55e";
-
-            } else {
-
-                chatStatus.textContent =
-                    relativeLastSeen(
-                        data.lastSeen ||
-                        data.timestamp
-                    );
-            }
-        })
-        .catch(() => {});
-
-}, 30000);
-
-// ============================================================
-// MESSAGES
-// ============================================================
-
-function setupMessageListener() {
-
-    const messagesRef =
-        collection(
-            db,
-            "chats",
-            chatId,
-            "messages"
-        );
-
-    const messagesQuery =
-        query(
-            messagesRef,
-            orderBy(
-                "timestamp",
-                "desc"
-            ),
-            limit(100)
-        );
-
-    unsubscribeMessages =
-        onSnapshot(
-            messagesQuery,
-            snapshot => {
-
-                if (!messages) return;
-
-                messages.innerHTML =
-                    "";
-
-                const docs =
-                    [...snapshot.docs]
-                        .reverse();
-
-                docs.forEach(
-                    messageDoc => {
-
-                        const data =
-                            messageDoc.data();
-
-                        if (
-                            data.receiverId ===
-                                currentUser.uid &&
-                            (
-                                !data.read ||
-                                !data.delivered
-                            )
-                        ) {
-
-                            updateDoc(
-                                messageDoc.ref,
-                                {
-                                    delivered:true,
-                                    read:true
-                                }
-                            ).catch(() => {});
-                        }
-
-                        renderMessage(
-                            messageDoc.id,
-                            data
-                        );
-                    }
-                );
-
-                requestAnimationFrame(
-                    () => {
-
-                        messages.scrollTop =
-                            messages.scrollHeight;
-                    }
-                );
-            },
-            error => {
-
-                console.error(
-                    "Messages error:",
-                    error
-                );
-
-                messages.innerHTML = `
-                    <div style="
-                        text-align:center;
-                        padding:20px;
-                        color:#aaa;
-                    ">
-                        Unable to load messages.
-                    </div>
-                `;
-            }
-        );
-}
-
-// ============================================================
-// RENDER MESSAGE
-// ============================================================
-
-function renderMessage(
-    messageId,
-    data
-) {
-
-    const mine =
-        data.senderId ===
-        currentUser.uid;
-
-    const wrapper =
-        document.createElement("div");
-
-    wrapper.className =
-        mine
-            ? "message sent"
-            : "message received";
-
-    wrapper.dataset.messageId =
-        messageId;
-
-    let content = "";
-
-    if (data.text) {
-
-        content += `
-            <div class="message-text">
-                ${escapeHTML(data.text)}
-            </div>
-        `;
-    }
-
-    if (data.image) {
-
-        content += `
-            <img
-                src="${escapeHTML(data.image)}"
-                style="
-                    display:block;
-                    max-width:240px;
-                    border-radius:12px;
-                    margin-top:5px;
-                    cursor:pointer;
-                "
-                loading="lazy"
-                alt="Image"
-            >
-        `;
-    }
-
-    if (data.video) {
-
-        content += `
-            <video
-                src="${escapeHTML(data.video)}"
-                controls
-                preload="metadata"
-                style="
-                    display:block;
-                    max-width:260px;
-                    width:100%;
-                    border-radius:12px;
-                    margin-top:5px;
-                "
-            ></video>
-        `;
-    }
-
-    if (data.audio) {
-
-        content += `
-            <audio
-                src="${escapeHTML(data.audio)}"
-                controls
-                style="
-                    max-width:250px;
-                    width:100%;
-                    margin-top:5px;
-                "
-            ></audio>
-        `;
-    }
-
-    if (!content) {
-
-        content =
-            `<div class="message-text">Message</div>`;
-    }
-
-    let status = "";
-
-    if (mine) {
-
-        status =
-            data.read
-                ? "✓✓"
-                : data.delivered
-                    ? "✓✓"
-                    : data.sent
-                        ? "✓"
-                        : "";
-    }
-
-    wrapper.innerHTML = `
-        <div class="message-bubble">
-
-            ${content}
-
-            <div
-                class="message-meta"
-                style="
-                    display:flex;
-                    align-items:center;
-                    gap:3px;
-                "
-            >
-
-                <span>
-                    ${formatTime(data.timestamp)}
-                </span>
-
-                ${
-                    status
-                        ? `<span>${status}</span>`
-                        : ""
-                }
-
-                ${
-                    mine
-                        ? `
-                            <button
-                                class="vs-delete-message"
-                                data-delete-id="${messageId}"
-                                type="button"
-                            >
-                                Delete
-                            </button>
-                        `
-                        : ""
-                }
-
-            </div>
-
-        </div>
-    `;
-
-    const image =
-        wrapper.querySelector(
-            "img"
-        );
-
-    if (image) {
-
-        image.addEventListener(
-            "click",
-            () => {
-
-                window.open(
-                    data.image,
-                    "_blank"
-                );
-            }
-        );
-    }
-
-    const deleteButton =
-        wrapper.querySelector(
-            ".vs-delete-message"
-        );
-
-    if (deleteButton) {
-
-        deleteButton.addEventListener(
-            "click",
-            async event => {
-
-                event.stopPropagation();
-
-                const exactId =
-                    event.currentTarget
-                        .dataset
-                        .deleteId;
-
-                if (!exactId) {
-                    return;
-                }
-
-                if (
-                    !confirm(
-                        "Delete this message?"
-                    )
-                ) {
-                    return;
-                }
-
-                try {
-
-                    await deleteDoc(
-                        doc(
-                            db,
-                            "chats",
-                            chatId,
-                            "messages",
-                            exactId
-                        )
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Delete message error:",
-                        error
-                    );
-
-                    alert(
-                        "Unable to delete this message."
-                    );
-                }
-            }
-        );
-    }
-
-    messages.appendChild(
-        wrapper
-    );
 }
 
 // ============================================================
 // MEDIA PREVIEW
 // ============================================================
 
-let mediaPreview =
-    document.getElementById(
-        "mediaPreview"
-    );
+const mediaPreview =
+    document.createElement("div");
 
-if (
-    !mediaPreview &&
-    messageForm
-) {
+mediaPreview.id =
+    "chatMediaPreview";
 
-    mediaPreview =
-        document.createElement("div");
+mediaPreview.style.display =
+    "none";
 
-    mediaPreview.id =
-        "mediaPreview";
+document.body.appendChild(
+    mediaPreview
+);
 
-    messageForm.appendChild(
-        mediaPreview
-    );
-}
+function clearMediaPreview() {
 
-function updateMediaPreview() {
-
-    if (!mediaPreview) {
-        return;
-    }
-
-    let text = "";
-
-    if (selectedImage) {
-
-        text +=
-            `📷 ${selectedImage.name}`;
-    }
-
-    if (selectedVideo) {
-
-        text +=
-            `${text ? " • " : ""}🎥 ${selectedVideo.name}`;
-    }
-
-    if (voiceUrl) {
-
-        text +=
-            `${text ? " • " : ""}🎤 Voice ready`;
-    }
-
-    mediaPreview.textContent =
-        text;
+    mediaPreview.innerHTML = "";
 
     mediaPreview.style.display =
-        text
-            ? "block"
-            : "none";
+        "none";
+}
+
+function showImagePreview(file) {
+
+    clearMediaPreview();
+
+    const image =
+        document.createElement("img");
+
+    image.src =
+        URL.createObjectURL(file);
+
+    image.alt =
+        "Image preview";
+
+    image.style.width =
+        "100px";
+
+    image.style.height =
+        "120px";
+
+    image.style.objectFit =
+        "cover";
+
+    image.style.borderRadius =
+        "10px";
+
+    mediaPreview.appendChild(
+        image
+    );
+
+    mediaPreview.style.display =
+        "block";
+}
+
+function showVideoPreview(file) {
+
+    clearMediaPreview();
+
+    const video =
+        document.createElement("video");
+
+    video.src =
+        URL.createObjectURL(file);
+
+    video.controls =
+        true;
+
+    video.preload =
+        "metadata";
+
+    video.style.width =
+        "100px";
+
+    video.style.height =
+        "120px";
+
+    video.style.objectFit =
+        "cover";
+
+    video.style.borderRadius =
+        "10px";
+
+    mediaPreview.appendChild(
+        video
+    );
+
+    mediaPreview.style.display =
+        "block";
 }
 
 // ============================================================
-// IMAGE
+// CLOUDINARY
 // ============================================================
 
-imageInput?.addEventListener(
-    "change",
-    () => {
+async function uploadToCloudinary(file) {
 
-        selectedImage =
-            imageInput.files?.[0] ||
-            null;
+    const formData =
+        new FormData();
 
-        updateMediaPreview();
+    formData.append(
+        "file",
+        file
+    );
 
-        closeMediaMenu();
+    formData.append(
+        "upload_preset",
+        "vitalstar_upload"
+    );
+
+    const response =
+        await fetch(
+            "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
+            {
+                method:"POST",
+                body:formData
+            }
+        );
+
+    const data =
+        await response.json();
+
+    console.log(
+        "Cloudinary:",
+        data
+    );
+
+    if (
+        !response.ok ||
+        !data.secure_url
+    ) {
+
+        throw new Error(
+            data?.error?.message ||
+            "Upload failed."
+        );
     }
-);
 
-// ============================================================
-// VIDEO
-// ============================================================
-
-videoInput?.addEventListener(
-    "change",
-    () => {
-
-        selectedVideo =
-            videoInput.files?.[0] ||
-            null;
-
-        updateMediaPreview();
-
-        closeMediaMenu();
-    }
-);
+    return data.secure_url;
+}
 
 // ============================================================
 // MEDIA MENU
@@ -1488,9 +938,7 @@ videoInput?.addEventListener(
 
 function setupMediaMenu() {
 
-    if (!messageForm) {
-        return;
-    }
+    if (!messageForm) return;
 
     if (
         document.getElementById(
@@ -1515,13 +963,10 @@ function setupMediaMenu() {
     toggle.type =
         "button";
 
-    toggle.id =
-        "vsMediaToggle";
-
     toggle.className =
         "vs-media-toggle";
 
-    toggle.innerHTML =
+    toggle.textContent =
         "＋";
 
     toggle.title =
@@ -1530,55 +975,111 @@ function setupMediaMenu() {
     const menu =
         document.createElement("div");
 
-    menu.id =
-        "vsMediaMenu";
-
     menu.className =
         "vs-media-menu";
 
-    if (imageBtn) {
+    // --------------------------------------------------------
+    // IMAGE BUTTON
+    // --------------------------------------------------------
 
-        imageBtn.classList.add(
-            "vs-original-media-hidden"
-        );
+    if (imageBtn) {
 
         imageBtn.textContent =
             "📷 Image";
 
+        imageBtn.style.display =
+            "flex";
+
         menu.appendChild(
             imageBtn
         );
+
+    } else {
+
+        const button =
+            document.createElement("button");
+
+        button.type =
+            "button";
+
+        button.textContent =
+            "📷 Image";
+
+        button.onclick =
+            () => imageInput?.click();
+
+        menu.appendChild(
+            button
+        );
     }
 
-    if (videoBtn) {
+    // --------------------------------------------------------
+    // VIDEO BUTTON
+    // --------------------------------------------------------
 
-        videoBtn.classList.add(
-            "vs-original-media-hidden"
-        );
+    if (videoBtn) {
 
         videoBtn.textContent =
             "🎥 Video";
 
+        videoBtn.style.display =
+            "flex";
+
         menu.appendChild(
             videoBtn
         );
+
+    } else {
+
+        const button =
+            document.createElement("button");
+
+        button.type =
+            "button";
+
+        button.textContent =
+            "🎥 Video";
+
+        button.onclick =
+            () => videoInput?.click();
+
+        menu.appendChild(
+            button
+        );
     }
+
+    // --------------------------------------------------------
+    // VOICE BUTTON
+    // --------------------------------------------------------
 
     if (recordBtn) {
 
-        recordBtn.classList.add(
-            "vs-original-media-hidden"
-        );
+        recordBtn.textContent =
+            "🎤 Voice note";
 
-        if (
-            !recordBtn.textContent.trim()
-        ) {
-            recordBtn.textContent =
-                "🎤 Voice note";
-        }
+        recordBtn.style.display =
+            "flex";
 
         menu.appendChild(
             recordBtn
+        );
+
+    } else {
+
+        const button =
+            document.createElement("button");
+
+        button.type =
+            "button";
+
+        button.textContent =
+            "🎤 Voice note";
+
+        button.onclick =
+            startVoiceRecording;
+
+        menu.appendChild(
+            button
         );
     }
 
@@ -1620,217 +1121,893 @@ function setupMediaMenu() {
 
     document.addEventListener(
         "click",
-        event => {
-
-            if (
-                !wrapper.contains(
-                    event.target
-                )
-            ) {
-                closeMediaMenu();
-            }
+        () => {
+            closeMediaMenu();
         }
     );
 }
 
 function closeMediaMenu() {
 
-    const menu =
-        document.getElementById(
-            "vsMediaMenu"
-        );
+    document
+        .querySelector(
+            ".vs-media-menu"
+        )
+        ?.classList.remove("open");
 
-    const toggle =
-        document.getElementById(
-            "vsMediaToggle"
-        );
-
-    menu?.classList.remove(
-        "open"
-    );
-
-    toggle?.classList.remove(
-        "open"
-    );
+    document
+        .querySelector(
+            ".vs-media-toggle"
+        )
+        ?.classList.remove("open");
 }
 
 // ============================================================
-// CLOUDINARY
+// IMAGE INPUT
 // ============================================================
 
-async function uploadToCloudinary(
-    file
-) {
+imageInput?.addEventListener(
+    "change",
+    () => {
 
-    const formData =
-        new FormData();
+        const file =
+            imageInput.files?.[0];
 
-    formData.append(
-        "file",
-        file
-    );
+        if (!file) return;
 
-    formData.append(
-        "upload_preset",
-        "vitalstar_upload"
-    );
+        if (videoInput) {
+            videoInput.value = "";
+        }
 
-    const response =
-        await fetch(
-            "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
-            {
-                method:"POST",
-                body:formData
-            }
+        selectedImage =
+            file;
+
+        selectedVideo =
+            null;
+
+        showImagePreview(
+            file
         );
 
-    if (!response.ok) {
-
-        throw new Error(
-            "Cloudinary upload failed"
-        );
+        closeMediaMenu();
     }
+);
 
-    const result =
-        await response.json();
+// ============================================================
+// VIDEO INPUT
+// ============================================================
 
-    if (!result.secure_url) {
+videoInput?.addEventListener(
+    "change",
+    () => {
 
-        throw new Error(
-            "Cloudinary URL missing"
+        const file =
+            videoInput.files?.[0];
+
+        if (!file) return;
+
+        if (imageInput) {
+            imageInput.value = "";
+        }
+
+        selectedVideo =
+            file;
+
+        selectedImage =
+            null;
+
+        showVideoPreview(
+            file
         );
-    }
 
-    return result.secure_url;
-}
+        closeMediaMenu();
+    }
+);
+
+// ============================================================
+// BUTTON FALLBACKS
+// ============================================================
+
+imageBtn?.addEventListener(
+    "click",
+    event => {
+
+        event.preventDefault();
+
+        imageInput?.click();
+    }
+);
+
+videoBtn?.addEventListener(
+    "click",
+    event => {
+
+        event.preventDefault();
+
+        videoInput?.click();
+    }
+);
 
 // ============================================================
 // VOICE RECORDING
 // ============================================================
 
+async function startVoiceRecording() {
+
+    if (
+        recorder &&
+        recorder.state === "recording"
+    ) {
+
+        recorder.stop();
+
+        return;
+    }
+
+    try {
+
+        const stream =
+            await navigator.mediaDevices
+                .getUserMedia({
+                    audio:true
+                });
+
+        audioChunks = [];
+
+        recorder =
+            new MediaRecorder(
+                stream
+            );
+
+        recorder.ondataavailable =
+            event => {
+
+                if (
+                    event.data &&
+                    event.data.size > 0
+                ) {
+
+                    audioChunks.push(
+                        event.data
+                    );
+                }
+            };
+
+        recorder.onstop =
+            async () => {
+
+                stream
+                    .getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
+
+                try {
+
+                    if (recordBtn) {
+                        recordBtn.textContent =
+                            "⏳ Uploading...";
+                    }
+
+                    const blob =
+                        new Blob(
+                            audioChunks,
+                            {
+                                type:
+                                    "audio/webm"
+                            }
+                        );
+
+                    const file =
+                        new File(
+                            [blob],
+                            `voice_${Date.now()}.webm`,
+                            {
+                                type:
+                                    "audio/webm"
+                            }
+                        );
+
+                    voiceUrl =
+                        await uploadToCloudinary(
+                            file
+                        );
+
+                    clearMediaPreview();
+
+                    mediaPreview.textContent =
+                        "🎤 Voice note ready";
+
+                    mediaPreview.style.display =
+                        "block";
+
+                } catch (error) {
+
+                    console.error(
+                        "Voice upload:",
+                        error
+                    );
+
+                    voiceUrl =
+                        "";
+
+                    alert(
+                        error.message ||
+                        "Voice note upload failed."
+                    );
+
+                } finally {
+
+                    if (recordBtn) {
+                        recordBtn.textContent =
+                            "🎤 Voice note";
+                    }
+                }
+            };
+
+        recorder.start();
+
+        if (recordBtn) {
+
+            recordBtn.textContent =
+                "⏹ Stop recording";
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Microphone:",
+            error
+        );
+
+        alert(
+            "Microphone permission is required."
+        );
+    }
+}
+
 recordBtn?.addEventListener(
     "click",
-    async () => {
+    event => {
 
-        if (
-            mediaRecorder &&
-            mediaRecorder.state ===
-                "recording"
-        ) {
+        event.preventDefault();
 
-            mediaRecorder.stop();
+        startVoiceRecording();
+    }
+);
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+auth.onAuthStateChanged(
+    async user => {
+
+        if (!user) {
+
+            window.location.href =
+                "login.html";
 
             return;
         }
 
+        currentUser =
+            user;
+
+        if (
+            !receiverUid ||
+            receiverUid === user.uid
+        ) {
+
+            window.location.href =
+                "home.html";
+
+            return;
+        }
+
+        chatId =
+            user.uid < receiverUid
+                ? `${user.uid}_${receiverUid}`
+                : `${receiverUid}_${user.uid}`;
+
         try {
 
-            const stream =
-                await navigator.mediaDevices
-                    .getUserMedia({
-                        audio:true
-                    });
+            await initializeChat();
 
-            audioChunks = [];
+            setupMediaMenu();
 
-            mediaRecorder =
-                new MediaRecorder(
-                    stream
-                );
+            setupMessages();
 
-            mediaRecorder.ondataavailable =
-                event => {
+            setupIncomingCalls();
 
-                    if (
-                        event.data.size > 0
-                    ) {
+            createCallButtons();
 
-                        audioChunks.push(
-                            event.data
-                        );
-                    }
-                };
+            createBlockButton();
 
-            mediaRecorder.onstop =
-                async () => {
+            fixComposer();
 
-                    stream
-                        .getTracks()
-                        .forEach(
-                            track =>
-                                track.stop()
-                        );
-
-                    try {
-
-                        recordBtn.textContent =
-                            "⏳ Uploading...";
-
-                        const blob =
-                            new Blob(
-                                audioChunks,
-                                {
-                                    type:
-                                        "audio/webm"
-                                }
-                            );
-
-                        const file =
-                            new File(
-                                [blob],
-                                `voice_${Date.now()}.webm`,
-                                {
-                                    type:
-                                        "audio/webm"
-                                }
-                            );
-
-                        voiceUrl =
-                            await uploadToCloudinary(
-                                file
-                            );
-
-                        recordBtn.textContent =
-                            "🎤 Voice note";
-
-                        updateMediaPreview();
-
-                    } catch (error) {
-
-                        console.error(
-                            "Voice upload:",
-                            error
-                        );
-
-                        voiceUrl = "";
-
-                        recordBtn.textContent =
-                            "🎤 Voice note";
-
-                        alert(
-                            "Voice note upload failed."
-                        );
-                    }
-                };
-
-            mediaRecorder.start();
-
-            recordBtn.textContent =
-                "⏹️ Stop recording";
+            hideLoader();
 
         } catch (error) {
 
             console.error(
-                "Microphone:",
+                "Chat initialization:",
                 error
             );
 
-            alert(
-                "Microphone permission is required."
-            );
+            if (chatStatus) {
+
+                chatStatus.textContent =
+                    "Unable to load chat";
+            }
+
+            hideLoader();
         }
     }
 );
+
+// ============================================================
+// INITIALIZE CHAT
+// ============================================================
+
+async function initializeChat() {
+
+    await setDoc(
+        doc(
+            db,
+            "chats",
+            chatId
+        ),
+        {
+            participants:[
+                currentUser.uid,
+                receiverUid
+            ]
+        },
+        {
+            merge:true
+        }
+    );
+
+    const receiverSnap =
+        await getDoc(
+            doc(
+                db,
+                "users",
+                receiverUid
+            )
+        );
+
+    receiverData =
+        receiverSnap.exists()
+            ? receiverSnap.data()
+            : {};
+
+    const name =
+        receiverData.fullName ||
+        receiverData.username ||
+        "VitalStar User";
+
+    if (chatName) {
+
+        chatName.textContent =
+            name;
+
+        chatName.style.cursor =
+            "pointer";
+
+        chatName.onclick =
+            () => {
+
+                window.location.href =
+                    `profile.html?uid=${encodeURIComponent(receiverUid)}`;
+            };
+    }
+
+    // --------------------------------------------------------
+    // PROFILE IMAGE
+    // --------------------------------------------------------
+
+    if (chatAvatar) {
+
+        const avatar =
+            receiverData.profileImage ||
+            receiverData.profilePicture ||
+            receiverData.photoURL ||
+            receiverData.avatar ||
+            "";
+
+        if (avatar) {
+
+            chatAvatar.src =
+                avatar;
+
+            chatAvatar.style.objectFit =
+                "cover";
+
+        } else {
+
+            chatAvatar.src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff`;
+        }
+    }
+
+    listenToStatus();
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+
+function listenToStatus() {
+
+    if (unsubscribeStatus) {
+        unsubscribeStatus();
+    }
+
+    unsubscribeStatus =
+        onSnapshot(
+            doc(
+                db,
+                "status",
+                receiverUid
+            ),
+            snapshot => {
+
+                if (!chatStatus) return;
+
+                const data =
+                    snapshot.exists()
+                        ? snapshot.data()
+                        : {};
+
+                if (data.online === true) {
+
+                    chatStatus.textContent =
+                        "🟢 Online";
+
+                    chatStatus.style.color =
+                        "#22c55e";
+
+                } else {
+
+                    chatStatus.textContent =
+                        relativeLastSeen(
+                            data.lastSeen ||
+                            data.timestamp
+                        );
+
+                    chatStatus.style.color =
+                        "";
+                }
+            }
+        );
+}
+
+// ============================================================
+// REFRESH LAST SEEN
+// ============================================================
+
+setInterval(
+    () => {
+
+        if (!receiverUid) return;
+
+        getDoc(
+            doc(
+                db,
+                "status",
+                receiverUid
+            )
+        )
+            .then(snapshot => {
+
+                if (
+                    !snapshot.exists() ||
+                    !chatStatus
+                ) {
+                    return;
+                }
+
+                const data =
+                    snapshot.data();
+
+                if (data.online === true) {
+
+                    chatStatus.textContent =
+                        "🟢 Online";
+
+                    chatStatus.style.color =
+                        "#22c55e";
+
+                } else {
+
+                    chatStatus.textContent =
+                        relativeLastSeen(
+                            data.lastSeen ||
+                            data.timestamp
+                        );
+
+                    chatStatus.style.color =
+                        "";
+                }
+            })
+            .catch(() => {});
+
+    },
+    30000
+);
+
+// ============================================================
+// MESSAGES
+// ============================================================
+
+function setupMessages() {
+
+    const messagesRef =
+        collection(
+            db,
+            "chats",
+            chatId,
+            "messages"
+        );
+
+    const q =
+        query(
+            messagesRef,
+            orderBy(
+                "timestamp",
+                "desc"
+            ),
+            limit(100)
+        );
+
+    unsubscribeMessages =
+        onSnapshot(
+            q,
+            snapshot => {
+
+                if (!messages) return;
+
+                messages.innerHTML =
+                    "";
+
+                const docs =
+                    [...snapshot.docs]
+                        .reverse();
+
+                docs.forEach(
+                    messageDoc => {
+
+                        const msg =
+                            messageDoc.data();
+
+                        if (
+                            msg.receiverId ===
+                                currentUser.uid &&
+                            (
+                                !msg.delivered ||
+                                !msg.read
+                            )
+                        ) {
+
+                            updateDoc(
+                                messageDoc.ref,
+                                {
+                                    delivered:true,
+                                    read:true
+                                }
+                            ).catch(() => {});
+                        }
+
+                        renderMessage(
+                            messageDoc.id,
+                            msg
+                        );
+                    }
+                );
+
+                requestAnimationFrame(
+                    () => {
+
+                        messages.scrollTop =
+                            messages.scrollHeight;
+                    }
+                );
+            },
+            error => {
+
+                console.error(
+                    "Messages error:",
+                    error
+                );
+
+                messages.innerHTML = `
+                    <div style="
+                        text-align:center;
+                        padding:20px;
+                        color:#aaa;
+                    ">
+                        Unable to load messages.
+                    </div>
+                `;
+            }
+        );
+}
+
+// ============================================================
+// RENDER MESSAGE
+// ============================================================
+
+function renderMessage(
+    messageId,
+    msg
+) {
+
+    const mine =
+        msg.senderId ===
+        currentUser.uid;
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        mine
+            ? "message sent"
+            : "message received";
+
+    let content =
+        document.createElement("div");
+
+    // --------------------------------------------------------
+    // TEXT
+    // --------------------------------------------------------
+
+    if (msg.text) {
+
+        const text =
+            document.createElement("p");
+
+        text.textContent =
+            msg.text;
+
+        content.appendChild(
+            text
+        );
+    }
+
+    // --------------------------------------------------------
+    // IMAGE
+    // --------------------------------------------------------
+
+    if (msg.image) {
+
+        const image =
+            document.createElement("img");
+
+        image.src =
+            msg.image;
+
+        image.alt =
+            "Image";
+
+        image.style.maxWidth =
+            "220px";
+
+        image.style.maxHeight =
+            "260px";
+
+        image.style.objectFit =
+            "contain";
+
+        image.style.borderRadius =
+            "10px";
+
+        image.style.display =
+            "block";
+
+        image.style.cursor =
+            "pointer";
+
+        image.onclick =
+            () => {
+
+                window.open(
+                    msg.image,
+                    "_blank"
+                );
+            };
+
+        content.appendChild(
+            image
+        );
+    }
+
+    // --------------------------------------------------------
+    // VIDEO
+    // --------------------------------------------------------
+
+    if (msg.video) {
+
+        const video =
+            document.createElement("video");
+
+        video.src =
+            msg.video;
+
+        video.controls =
+            true;
+
+        video.preload =
+            "metadata";
+
+        video.style.maxWidth =
+            "240px";
+
+        video.style.width =
+            "100%";
+
+        video.style.borderRadius =
+            "10px";
+
+        video.style.display =
+            "block";
+
+        content.appendChild(
+            video
+        );
+    }
+
+    // --------------------------------------------------------
+    // AUDIO
+    // --------------------------------------------------------
+
+    if (msg.audio) {
+
+        const audio =
+            document.createElement("audio");
+
+        audio.src =
+            msg.audio;
+
+        audio.controls =
+            true;
+
+        audio.style.maxWidth =
+            "250px";
+
+        audio.style.width =
+            "100%";
+
+        content.appendChild(
+            audio
+        );
+    }
+
+    // --------------------------------------------------------
+    // TIME / STATUS
+    // --------------------------------------------------------
+
+    const footer =
+        document.createElement("div");
+
+    footer.className =
+        "message-footer";
+
+    footer.style.display =
+        "flex";
+
+    footer.style.alignItems =
+        "center";
+
+    footer.style.gap =
+        "4px";
+
+    footer.style.fontSize =
+        "11px";
+
+    const time =
+        document.createElement("span");
+
+    time.textContent =
+        formatTime(
+            msg.timestamp
+        );
+
+    footer.appendChild(
+        time
+    );
+
+    if (mine) {
+
+        const status =
+            document.createElement("span");
+
+        status.textContent =
+            msg.read
+                ? "✓✓ Read"
+                : msg.delivered
+                    ? "✓✓ Delivered"
+                    : msg.sent
+                        ? "✓ Sent"
+                        : "";
+
+        footer.appendChild(
+            status
+        );
+
+        // ----------------------------------------------------
+        // DELETE
+        // ----------------------------------------------------
+
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.type =
+            "button";
+
+        deleteButton.className =
+            "vs-delete-message";
+
+        deleteButton.textContent =
+            "Delete";
+
+        deleteButton.onclick =
+            async event => {
+
+                event.stopPropagation();
+
+                if (
+                    !confirm(
+                        "Delete this message?"
+                    )
+                ) {
+                    return;
+                }
+
+                try {
+
+                    await deleteDoc(
+                        doc(
+                            db,
+                            "chats",
+                            chatId,
+                            "messages",
+                            messageId
+                        )
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Delete message:",
+                        error
+                    );
+
+                    alert(
+                        "Unable to delete message."
+                    );
+                }
+            };
+
+        footer.appendChild(
+            deleteButton
+        );
+    }
+
+    content.appendChild(
+        footer
+    );
+
+    div.appendChild(
+        content
+    );
+
+    messages.appendChild(
+        div
+    );
+}
 
 // ============================================================
 // SEND MESSAGE
@@ -1849,6 +2026,17 @@ messageForm?.addEventListener(
             return;
         }
 
+        const sendButton =
+            messageForm.querySelector(
+                'button[type="submit"]'
+            );
+
+        if (
+            sendButton?.disabled
+        ) {
+            return;
+        }
+
         const text =
             messageInput?.value.trim() ||
             "";
@@ -1862,27 +2050,23 @@ messageForm?.addEventListener(
             return;
         }
 
-        const sendButton =
-            messageForm.querySelector(
-                'button[type="submit"]'
-            );
-
         if (sendButton) {
 
             sendButton.disabled =
                 true;
 
-            sendButton.dataset.oldText =
+            sendButton.dataset.originalText =
                 sendButton.textContent;
 
             sendButton.textContent =
-                "Sending...";
+                "⏳ Sending...";
         }
 
         try {
 
             let imageUrl = "";
             let videoUrl = "";
+            let audioUrl = voiceUrl || "";
 
             if (selectedImage) {
 
@@ -1900,16 +2084,13 @@ messageForm?.addEventListener(
                     );
             }
 
-            const messagesRef =
+            await addDoc(
                 collection(
                     db,
                     "chats",
                     chatId,
                     "messages"
-                );
-
-            await addDoc(
-                messagesRef,
+                ),
                 {
                     senderId:
                         currentUser.uid,
@@ -1926,7 +2107,7 @@ messageForm?.addEventListener(
                         videoUrl,
 
                     audio:
-                        voiceUrl || "",
+                        audioUrl,
 
                     timestamp:
                         serverTimestamp(),
@@ -1942,6 +2123,18 @@ messageForm?.addEventListener(
                 }
             );
 
+            const preview =
+                text ||
+                (
+                    imageUrl
+                        ? "📷 Photo"
+                        : videoUrl
+                            ? "🎥 Video"
+                            : audioUrl
+                                ? "🎤 Voice message"
+                                : "New message"
+                );
+
             await setDoc(
                 doc(
                     db,
@@ -1955,16 +2148,7 @@ messageForm?.addEventListener(
                     ],
 
                     lastMessage:
-                        text ||
-                        (
-                            imageUrl
-                                ? "📷 Image"
-                                : videoUrl
-                                    ? "🎥 Video"
-                                    : voiceUrl
-                                        ? "🎤 Voice note"
-                                        : "Message"
-                        ),
+                        preview,
 
                     lastImage:
                         imageUrl,
@@ -1973,7 +2157,7 @@ messageForm?.addEventListener(
                         videoUrl,
 
                     lastAudio:
-                        voiceUrl || "",
+                        audioUrl,
 
                     lastTimestamp:
                         serverTimestamp(),
@@ -2000,15 +2184,6 @@ messageForm?.addEventListener(
                     "";
             }
 
-            selectedImage =
-                null;
-
-            selectedVideo =
-                null;
-
-            voiceUrl =
-                "";
-
             if (imageInput) {
                 imageInput.value =
                     "";
@@ -2019,9 +2194,18 @@ messageForm?.addEventListener(
                     "";
             }
 
-            closeMediaMenu();
+            selectedImage =
+                null;
 
-            updateMediaPreview();
+            selectedVideo =
+                null;
+
+            voiceUrl =
+                "";
+
+            clearMediaPreview();
+
+            closeMediaMenu();
 
             requestAnimationFrame(
                 () => {
@@ -2034,12 +2218,13 @@ messageForm?.addEventListener(
         } catch (error) {
 
             console.error(
-                "Send error:",
+                "Send message error:",
                 error
             );
 
             alert(
-                "Unable to send message."
+                error.message ||
+                "Failed to send message."
             );
 
         } finally {
@@ -2050,7 +2235,7 @@ messageForm?.addEventListener(
                     false;
 
                 sendButton.textContent =
-                    sendButton.dataset.oldText ||
+                    sendButton.dataset.originalText ||
                     "Send";
             }
         }
@@ -2058,27 +2243,7 @@ messageForm?.addEventListener(
 );
 
 // ============================================================
-// BACK
-// ============================================================
-
-backBtn?.addEventListener(
-    "click",
-    () => {
-
-        if (history.length > 1) {
-
-            history.back();
-
-        } else {
-
-            window.location.href =
-                "home.html";
-        }
-    }
-);
-
-// ============================================================
-// BLOCK / UNBLOCK USER
+// BLOCK / UNBLOCK
 // ============================================================
 
 function createBlockButton() {
@@ -2090,62 +2255,48 @@ function createBlockButton() {
 
     if (!header) return;
 
-    let button =
+    if (
         header.querySelector(
             "#vsBlockUserBtn"
-        );
+        )
+    ) {
+        return;
+    }
 
     if (
         getComputedStyle(header)
-            .position ===
-        "static"
+            .position === "static"
     ) {
 
         header.style.position =
             "relative";
     }
 
-    if (!button) {
+    const button =
+        document.createElement("button");
 
-        button =
-            document.createElement("button");
+    button.id =
+        "vsBlockUserBtn";
 
-        button.id =
-            "vsBlockUserBtn";
+    button.type =
+        "button";
 
-        button.type =
-            "button";
-
-        Object.assign(
-            button.style,
-            {
-                position:"absolute",
-                right:"7px",
-                top:"50%",
-                transform:"translateY(-50%)",
-                width:"34px",
-                height:"34px",
-                border:"none",
-                borderRadius:"50%",
-                color:"#fff",
-                cursor:"pointer",
-                zIndex:"60"
-            }
-        );
-
-        header.appendChild(
-            button
-        );
-    }
-
-    const blockedRef =
-        doc(
-            db,
-            "users",
-            currentUser.uid,
-            "blocked",
-            receiverUid
-        );
+    Object.assign(
+        button.style,
+        {
+            position:"absolute",
+            right:"7px",
+            top:"50%",
+            transform:"translateY(-50%)",
+            width:"34px",
+            height:"34px",
+            border:"none",
+            borderRadius:"50%",
+            color:"#fff",
+            cursor:"pointer",
+            zIndex:"60"
+        }
+    );
 
     async function updateBlockButton() {
 
@@ -2153,23 +2304,22 @@ function createBlockButton() {
 
             const blockedSnap =
                 await getDoc(
-                    blockedRef
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid,
+                        "blocked",
+                        receiverUid
+                    )
                 );
 
-            if (
-                blockedSnap.exists()
-            ) {
+            if (blockedSnap.exists()) {
 
                 button.textContent =
                     "🔓";
 
                 button.title =
                     "Unblock user";
-
-                button.setAttribute(
-                    "aria-label",
-                    "Unblock user"
-                );
 
                 button.style.background =
                     "rgba(34,197,94,.18)";
@@ -2182,11 +2332,6 @@ function createBlockButton() {
                 button.title =
                     "Block user";
 
-                button.setAttribute(
-                    "aria-label",
-                    "Block user"
-                );
-
                 button.style.background =
                     "rgba(239,68,68,.15)";
             }
@@ -2194,7 +2339,7 @@ function createBlockButton() {
         } catch (error) {
 
             console.error(
-                "Check block status:",
+                "Block status:",
                 error
             );
         }
@@ -2205,14 +2350,21 @@ function createBlockButton() {
 
             try {
 
+                const blockedRef =
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid,
+                        "blocked",
+                        receiverUid
+                    );
+
                 const blockedSnap =
                     await getDoc(
                         blockedRef
                     );
 
-                if (
-                    blockedSnap.exists()
-                ) {
+                if (blockedSnap.exists()) {
 
                     if (
                         !confirm(
@@ -2256,12 +2408,12 @@ function createBlockButton() {
                     );
                 }
 
-                await updateBlockButton();
+                updateBlockButton();
 
             } catch (error) {
 
                 console.error(
-                    "Block/unblock error:",
+                    "Block/unblock:",
                     error
                 );
 
@@ -2270,6 +2422,10 @@ function createBlockButton() {
                 );
             }
         };
+
+    header.appendChild(
+        button
+    );
 
     updateBlockButton();
 }
@@ -2297,8 +2453,7 @@ function createCallButtons() {
 
     if (
         getComputedStyle(header)
-            .position ===
-        "static"
+            .position === "static"
     ) {
 
         header.style.position =
@@ -2315,7 +2470,6 @@ function createCallButtons() {
         "vs-call-controls";
 
     controls.innerHTML = `
-
         <button
             class="vs-call-btn"
             id="vsVoiceCallBtn"
@@ -2390,7 +2544,10 @@ function createCallScreen(type) {
 
             <div>
 
-                <div class="vs-call-title">
+                <div style="
+                    font-size:17px;
+                    font-weight:800;
+                ">
                     ${
                         type === "video"
                             ? "📹 Video call"
@@ -2409,7 +2566,10 @@ function createCallScreen(type) {
 
             <div
                 id="vsCallStatus"
-                class="vs-call-status"
+                style="
+                    font-size:12px;
+                    opacity:.7;
+                "
             >
                 Calling...
             </div>
@@ -2495,13 +2655,13 @@ function createCallScreen(type) {
 
 function setCallStatus(text) {
 
-    const element =
+    const status =
         document.getElementById(
             "vsCallStatus"
         );
 
-    if (element) {
-        element.textContent =
+    if (status) {
+        status.textContent =
             text;
     }
 }
@@ -2513,12 +2673,10 @@ function setCallStatus(text) {
 const rtcConfiguration = {
 
     iceServers:[
-
         {
             urls:
                 "stun:stun.l.google.com:19302"
         },
-
         {
             urls:
                 "stun:stun1.l.google.com:19302"
@@ -2544,8 +2702,10 @@ async function createPeer(
                     type === "video"
             });
 
-    activeCall.localStream =
-        stream;
+    if (activeCall) {
+        activeCall.localStream =
+            stream;
+    }
 
     const localVideo =
         document.getElementById(
@@ -2684,21 +2844,17 @@ function listenForCandidates(
 ) {
 
     if (activeCandidateListener) {
-
         activeCandidateListener();
     }
 
-    const candidates =
-        collection(
-            db,
-            "calls",
-            callId,
-            "candidates"
-        );
-
     activeCandidateListener =
         onSnapshot(
-            candidates,
+            collection(
+                db,
+                "calls",
+                callId,
+                "candidates"
+            ),
             async snapshot => {
 
                 for (
@@ -2723,9 +2879,7 @@ function listenForCandidates(
                         continue;
                     }
 
-                    if (
-                        !data.candidate
-                    ) {
+                    if (!data.candidate) {
                         continue;
                     }
 
@@ -2764,31 +2918,6 @@ function listenForCandidates(
                         );
                     }
                 }
-
-                if (
-                    peer.remoteDescription &&
-                    activeCall?.pendingCandidates
-                        ?.length
-                ) {
-
-                    for (
-                        const candidate
-                        of activeCall.pendingCandidates
-                    ) {
-
-                        try {
-
-                            await peer
-                                .addIceCandidate(
-                                    candidate
-                                );
-
-                        } catch {}
-                    }
-
-                    activeCall
-                        .pendingCandidates = [];
-                }
             }
         );
 }
@@ -2824,24 +2953,15 @@ async function startCall(type) {
         randomId();
 
     activeCall = {
-
         callId,
-
         type,
-
         pendingCandidates:[],
-
         pc:null,
-
         localStream:null
     };
 
     createCallScreen(
         type
-    );
-
-    setCallStatus(
-        "Calling..."
     );
 
     const callRef =
@@ -2908,7 +3028,8 @@ async function startCall(type) {
                 async snapshot => {
 
                     if (
-                        !snapshot.exists()
+                        !snapshot.exists() ||
+                        !activeCall
                     ) {
                         return;
                     }
@@ -2931,31 +3052,6 @@ async function startCall(type) {
                         setCallStatus(
                             "Connecting..."
                         );
-
-                        if (
-                            activeCall
-                                .pendingCandidates
-                                .length
-                        ) {
-
-                            for (
-                                const candidate
-                                of activeCall.pendingCandidates
-                            ) {
-
-                                try {
-
-                                    await peer
-                                        .addIceCandidate(
-                                            candidate
-                                        );
-
-                                } catch {}
-                            }
-
-                            activeCall
-                                .pendingCandidates = [];
-                        }
                     }
 
                     if (
@@ -3014,7 +3110,7 @@ async function startCall(type) {
     } catch (error) {
 
         console.error(
-            "Start call error:",
+            "Start call:",
             error
         );
 
@@ -3027,20 +3123,17 @@ async function startCall(type) {
 }
 
 // ============================================================
-// INCOMING CALL LISTENER
+// INCOMING CALLS
 // ============================================================
 
 function setupIncomingCalls() {
 
-    const calls =
-        collection(
-            db,
-            "calls"
-        );
-
-    const incomingQuery =
+    const q =
         query(
-            calls,
+            collection(
+                db,
+                "calls"
+            ),
             where(
                 "receiverId",
                 "==",
@@ -3050,7 +3143,7 @@ function setupIncomingCalls() {
 
     unsubscribeIncomingCalls =
         onSnapshot(
-            incomingQuery,
+            q,
             snapshot => {
 
                 snapshot.docChanges()
@@ -3083,15 +3176,11 @@ function setupIncomingCalls() {
                                 return;
                             }
 
-                            if (
-                                !data.offer
-                            ) {
+                            if (!data.offer) {
                                 return;
                             }
 
-                            if (
-                                activeCall
-                            ) {
+                            if (activeCall) {
                                 return;
                             }
 
@@ -3198,16 +3287,16 @@ async function showIncomingCall(
 
             <button
                 class="vs-decline"
-                id="vsDeclineCall"
                 type="button"
+                id="vsDeclineCall"
             >
                 Decline
             </button>
 
             <button
                 class="vs-accept"
-                id="vsAcceptCall"
                 type="button"
+                id="vsAcceptCall"
             >
                 Accept
             </button>
@@ -3219,50 +3308,46 @@ async function showIncomingCall(
         box
     );
 
-    document
-        .getElementById(
-            "vsDeclineCall"
-        )
-        ?.addEventListener(
-            "click",
-            async () => {
+    box.querySelector(
+        "#vsDeclineCall"
+    )?.addEventListener(
+        "click",
+        async () => {
 
-                try {
+            try {
 
-                    await updateDoc(
-                        doc(
-                            db,
-                            "calls",
-                            callId
-                        ),
-                        {
-                            status:
-                                "declined"
-                        }
-                    );
-
-                } catch {}
-
-                box.remove();
-            }
-        );
-
-    document
-        .getElementById(
-            "vsAcceptCall"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                box.remove();
-
-                acceptCall(
-                    callId,
-                    data
+                await updateDoc(
+                    doc(
+                        db,
+                        "calls",
+                        callId
+                    ),
+                    {
+                        status:
+                            "declined"
+                    }
                 );
-            }
-        );
+
+            } catch {}
+
+            box.remove();
+        }
+    );
+
+    box.querySelector(
+        "#vsAcceptCall"
+    )?.addEventListener(
+        "click",
+        () => {
+
+            box.remove();
+
+            acceptCall(
+                callId,
+                data
+            );
+        }
+    );
 }
 
 // ============================================================
@@ -3274,21 +3359,13 @@ async function acceptCall(
     data
 ) {
 
-    if (activeCall) {
-        return;
-    }
+    if (activeCall) return;
 
     activeCall = {
-
         callId,
-
-        type:
-            data.type,
-
+        type:data.type,
         pendingCandidates:[],
-
         pc:null,
-
         localStream:null
     };
 
@@ -3323,36 +3400,11 @@ async function acceptCall(
             peer
         );
 
-        await peer
-            .setRemoteDescription(
-                new RTCSessionDescription(
-                    data.offer
-                )
-            );
-
-        if (
-            activeCall.pendingCandidates
-                .length
-        ) {
-
-            for (
-                const candidate
-                of activeCall.pendingCandidates
-            ) {
-
-                try {
-
-                    await peer
-                        .addIceCandidate(
-                            candidate
-                        );
-
-                } catch {}
-            }
-
-            activeCall
-                .pendingCandidates = [];
-        }
+        await peer.setRemoteDescription(
+            new RTCSessionDescription(
+                data.offer
+            )
+        );
 
         const answer =
             await peer.createAnswer();
@@ -3379,7 +3431,8 @@ async function acceptCall(
                 snapshot => {
 
                     if (
-                        !snapshot.exists()
+                        !snapshot.exists() ||
+                        !activeCall
                     ) {
                         return;
                     }
@@ -3398,7 +3451,7 @@ async function acceptCall(
     } catch (error) {
 
         console.error(
-            "Accept call error:",
+            "Accept call:",
             error
         );
 
@@ -3432,9 +3485,7 @@ async function acceptCall(
 
 async function endCall() {
 
-    if (!activeCall) {
-        return;
-    }
+    if (!activeCall) return;
 
     try {
 
@@ -3514,77 +3565,17 @@ function cleanupCall() {
 
 function fixComposer() {
 
-    if (!messageForm) {
-        return;
-    }
-
-    /*
-     * IMPORTANT:
-     * Move the composer directly into BODY.
-     * This prevents position:fixed from being trapped
-     * inside a transformed/positioned parent or footer.
-     */
-
-    if (
-        messageForm.parentElement !==
-        document.body
-    ) {
-
-        document.body.appendChild(
-            messageForm
-        );
-    }
-
-    function findFooter() {
-
-        const selectors = [
-            "footer",
-            "#footer",
-            ".footer",
-            ".bottom-nav",
-            "#bottomNav",
-            "[data-footer]",
-            ".bottom-navigation",
-            "#bottom-navigation",
-            ".mobile-bottom-nav"
-        ];
-
-        for (
-            const selector of selectors
-        ) {
-
-            const element =
-                document.querySelector(
-                    selector
-                );
-
-            if (!element) {
-                continue;
-            }
-
-            const style =
-                getComputedStyle(
-                    element
-                );
-
-            if (
-                style.position === "fixed" ||
-                style.position === "sticky"
-            ) {
-                return element;
-            }
-        }
-
-        return null;
-    }
+    if (!messageForm) return;
 
     function updateComposer() {
 
         const footer =
-            findFooter();
+            document.querySelector(
+                "footer, #footer, .footer, .bottom-nav, #bottomNav, [data-footer], nav"
+            );
 
         let footerHeight = 0;
-        let footerFixed = false;
+        let footerIsFixed = false;
 
         if (footer) {
 
@@ -3602,11 +3593,9 @@ function fixComposer() {
                     rect.height
                 );
 
-            footerFixed =
-                style.position ===
-                    "fixed" ||
-                style.position ===
-                    "sticky";
+            footerIsFixed =
+                style.position === "fixed" ||
+                style.position === "sticky";
         }
 
         messageForm.style.setProperty(
@@ -3634,22 +3623,8 @@ function fixComposer() {
         );
 
         messageForm.style.setProperty(
-            "bottom",
-            footerFixed
-                ? `${footerHeight + 4}px`
-                : "0px",
-            "important"
-        );
-
-        messageForm.style.setProperty(
             "z-index",
-            "2147483646",
-            "important"
-        );
-
-        messageForm.style.setProperty(
-            "display",
-            "flex",
+            "2147483000",
             "important"
         );
 
@@ -3666,30 +3641,31 @@ function fixComposer() {
         );
 
         messageForm.style.setProperty(
-            "margin",
-            "0",
+            "display",
+            "flex",
             "important"
         );
 
         messageForm.style.setProperty(
-            "box-sizing",
-            "border-box",
+            "bottom",
+            footerIsFixed
+                ? `${footerHeight + 4}px`
+                : "0px",
             "important"
         );
 
         const formHeight =
-            messageForm
-                .getBoundingClientRect()
+            messageForm.getBoundingClientRect()
                 .height;
 
         if (messages) {
 
             const bottomSpace =
                 formHeight +
-                (footerFixed
+                (footerIsFixed
                     ? footerHeight
                     : 0) +
-                50;
+                45;
 
             messages.style.setProperty(
                 "padding-bottom",
@@ -3703,9 +3679,10 @@ function fixComposer() {
                 "important"
             );
         }
-    }
 
-    updateComposer();
+        mediaPreview.style.bottom =
+            `${formHeight + 5}px`;
+    }
 
     requestAnimationFrame(
         updateComposer
@@ -3761,16 +3738,37 @@ function fixComposer() {
         );
 
         const footer =
-            findFooter();
+            document.querySelector(
+                "footer, #footer, .footer, .bottom-nav, #bottomNav, [data-footer], nav"
+            );
 
         if (footer) {
-
             observer.observe(
                 footer
             );
         }
     }
 }
+
+// ============================================================
+// BACK BUTTON
+// ============================================================
+
+backBtn?.addEventListener(
+    "click",
+    () => {
+
+        if (history.length > 1) {
+
+            history.back();
+
+        } else {
+
+            window.location.href =
+                "home.html";
+        }
+    }
+);
 
 // ============================================================
 // CLEANUP
