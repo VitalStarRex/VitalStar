@@ -87,7 +87,7 @@ style.textContent = `
     --vs-card: #ffffff;
     --vs-card-border: rgba(0,0,0,0.08);
 
-    --vs-text: #808080;
+    --vs-text: #333333;
     --vs-muted: rgba(128,128,128,0.7);
 
 }
@@ -123,17 +123,17 @@ style.textContent = `
     width: 100%;
 
     margin:
-        0 auto 12px;
+        0 auto 15px;
 
     padding:
-        10px;
+        13px;
 
     border:
         1px solid
         var(--vs-card-border);
 
     border-radius:
-        14px;
+        18px;
 
     background:
         var(--vs-card);
@@ -235,23 +235,23 @@ style.textContent = `
         center;
 
     gap:
-        9px;
+        10px;
 
     margin-bottom:
-        8px;
+        10px;
 
 }
 
 .avatar {
 
     width:
-        38px;
+        42px;
 
     height:
-        38px;
+        42px;
 
     flex:
-        0 0 38px;
+        0 0 42px;
 
     position:
         relative;
@@ -262,10 +262,10 @@ style.textContent = `
 .avatar-fallback {
 
     width:
-        38px;
+        42px;
 
     height:
-        38px;
+        42px;
 
     border-radius:
         50%;
@@ -411,16 +411,16 @@ style.textContent = `
 .post-text {
 
     margin:
-        10px 2px 12px;
+        11px 2px 13px;
 
     color:
-        gray;
+        #333333;
 
     font-size:
-        13px;
+        14px;
 
     line-height:
-        1.55;
+        1.6;
 
     text-align:
         left;
@@ -954,10 +954,10 @@ style.textContent = `
     .post-card {
 
         padding:
-            8px;
+            11px;
 
         border-radius:
-            12px;
+            16px;
 
     }
 
