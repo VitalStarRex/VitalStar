@@ -33,8 +33,7 @@ html{
 
 body{
     background:#ffffff;
-
-    color:#222;
+    color:#333333;
     min-height:100vh;
     overflow-x:hidden;
 }
@@ -234,7 +233,7 @@ header{
 
     padding:14px 15px;
 
-    color:#333;
+    color:#333333;
 
     text-decoration:none;
 
@@ -426,7 +425,7 @@ header{
 
     background:none;
 
-    color:#333;
+    color:#333333;
 
     font-size:15px;
 
@@ -459,6 +458,8 @@ header{
         82px
         14px
         100px;
+
+    color:#333333;
 }
 
 
@@ -567,32 +568,35 @@ header{
 
 
 /* =========================================================
-   STORIES / FLOWERS
+   STORIES — 4 SMALL SQUARE BOXES
    ========================================================= */
 
 .stories{
-    display:grid;
+    display:flex;
 
-    grid-template-columns:
-        repeat(4, 1fr);
+    gap:10px;
 
-    gap:8px;
+    overflow-x:auto;
 
-    width:100%;
+    padding:16px 2px;
 
-    padding:14px 2px;
+    scrollbar-width:none;
 
-    overflow:hidden;
+    justify-content:flex-start;
+}
+
+.stories::-webkit-scrollbar{
+    display:none;
 }
 
 .story{
     position:relative;
 
-    width:100%;
-    aspect-ratio:1 / 1;
+    min-width:78px;
+    width:78px;
+    height:78px;
 
-    min-width:0;
-    height:auto;
+    flex:0 0 78px;
 
     border-radius:14px;
 
@@ -608,7 +612,8 @@ header{
 
     color:white;
 
-    font-size:12px;
+    font-size:11px;
+
     font-weight:900;
 
     background:
@@ -620,8 +625,8 @@ header{
         );
 
     box-shadow:
-        0 4px 12px
-        rgba(0,0,0,.15);
+        0 5px 14px
+        rgba(0,0,0,.16);
 }
 
 .story:before{
@@ -629,13 +634,13 @@ header{
 
     position:absolute;
 
-    top:50%;
+    top:14px;
     left:50%;
 
     transform:
-        translate(-50%,-55%);
+        translateX(-50%);
 
-    font-size:28px;
+    font-size:25px;
 }
 
 .story:after{
@@ -644,9 +649,9 @@ header{
     position:absolute;
 
     right:5px;
-    top:5px;
+    top:4px;
 
-    font-size:14px;
+    font-size:13px;
 }
 
 
@@ -696,6 +701,8 @@ header{
 .post-card{
     background:white;
 
+    color:#333333;
+
     border-radius:22px;
 
     overflow:hidden;
@@ -731,6 +738,8 @@ header{
 .post-card p{
     padding:15px;
 
+    color:#333333;
+
     font-size:16px;
 
     line-height:1.5;
@@ -758,6 +767,8 @@ header{
     border:none;
 
     background:none;
+
+    color:#444444;
 
     font-size:15px;
 
@@ -962,6 +973,10 @@ body.dark-mode .post-card{
     color:#eee;
 }
 
+body.dark-mode .post-card p{
+    color:#eee;
+}
+
 body.dark-mode .post-buttons{
     border-top-color:#333;
 }
@@ -1045,33 +1060,23 @@ body.dark-mode .create-btn{
             6px 8px;
     }
 
-    .stories{
-        grid-template-columns:
-            repeat(4, 1fr);
-
-        gap:6px;
-
-        padding:
-            12px 0;
-    }
-
     .story{
-        width:100%;
-        aspect-ratio:1 / 1;
+        min-width:70px;
+        width:70px;
+        height:70px;
+
+        flex-basis:70px;
 
         border-radius:12px;
-
-        padding-bottom:7px;
-
-        font-size:11px;
     }
 
     .story:before{
-        font-size:24px;
+        font-size:22px;
+        top:12px;
     }
 
     .story:after{
-        font-size:12px;
+        font-size:11px;
     }
 
     .latest-title{
@@ -1087,10 +1092,6 @@ body.dark-mode .create-btn{
 
 <body>
 
-
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
 
 <header>
 
@@ -1162,10 +1163,6 @@ body.dark-mode .create-btn{
 
 </header>
 
-
-<!-- =========================================================
-     SIDEBAR
-     ========================================================= -->
 
 <div
     class="sidebar"
@@ -1267,10 +1264,6 @@ body.dark-mode .create-btn{
 </div>
 
 
-<!-- =========================================================
-     MENU
-     ========================================================= -->
-
 <script>
 
 function openMenu(){
@@ -1296,10 +1289,6 @@ function openMenu(){
 
 </script>
 
-
-<!-- =========================================================
-     MAIN
-     ========================================================= -->
 
 <main class="container">
 
@@ -1335,7 +1324,7 @@ function openMenu(){
 
 
 <!-- =========================================================
-     FLOWER STORIES
+     4 SMALL SQUARE STORIES
      ========================================================= -->
 
 <div class="stories">
@@ -1359,10 +1348,6 @@ function openMenu(){
 </div>
 
 
-<!-- =========================================================
-     LATEST
-     ========================================================= -->
-
 <div class="latest-wrap">
 
 <h2 class="latest-title">
@@ -1379,17 +1364,11 @@ function openMenu(){
 </div>
 
 
-<!-- FIREBASE FEED -->
-
 <div id="feed"></div>
 
 
 </main>
 
-
-<!-- =========================================================
-     FOOTER
-     ========================================================= -->
 
 <footer class="vital-footer">
 
@@ -1434,10 +1413,6 @@ function openMenu(){
 
 </footer>
 
-
-<!-- =========================================================
-     BOTTOM NAVIGATION
-     ========================================================= -->
 
 <nav class="bottom-nav">
 
@@ -1495,10 +1470,6 @@ function openMenu(){
 </nav>
 
 
-<!-- =========================================================
-     FIREBASE / VITALSTAR
-     ========================================================= -->
-
 <script
     type="module"
     src="auth-guard.js"
@@ -1542,10 +1513,6 @@ function openMenu(){
 <script src="dark-mode.js"></script>
 
 
-<!-- =========================================================
-     SERVICE WORKER
-     ========================================================= -->
-
 <script>
 
 if(
@@ -1581,5 +1548,4 @@ if(
 
 
 </body>
-
 </html>
