@@ -1,6 +1,6 @@
 // ============================================================
 // VITALSTAR CHAT.JS
-// Messages + Media + Voice Notes + Delete + Block
+// Messages + Media Menu + Voice Notes + Delete + Block
 // Last Seen + Voice Call + Video Call
 // ============================================================
 
@@ -81,7 +81,7 @@ Object.assign(loader.style, {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: "999999"
+    zIndex: "2147483647"
 });
 
 document.body.appendChild(loader);
@@ -89,6 +89,11 @@ document.body.appendChild(loader);
 const chatStyle = document.createElement("style");
 
 chatStyle.textContent = `
+
+/* ============================================================
+   LOADER
+   ============================================================ */
+
 #vitalStarChatLoader .vs-loader-box {
     text-align:center;
     color:white;
@@ -124,33 +129,209 @@ chatStyle.textContent = `
 }
 
 /* ============================================================
+   MESSAGE AREA
+   ============================================================ */
+
+#messages {
+    padding-bottom:150px !important;
+    scroll-padding-bottom:170px !important;
+}
+
+/* ============================================================
    FIXED MESSAGE COMPOSER
    ============================================================ */
 
 #messageForm {
     position:fixed !important;
-    z-index:99999 !important;
+
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+
+    width:100% !important;
+    max-width:none !important;
+
+    min-height:58px !important;
+
+    margin:0 !important;
+    padding:8px 10px !important;
+
+    box-sizing:border-box !important;
+
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:7px !important;
+
     visibility:visible !important;
     opacity:1 !important;
-    box-sizing:border-box !important;
-    margin:0 !important;
-    display:flex !important;
-    max-width:none !important;
+
+    overflow:visible !important;
+
     background:rgba(9,6,17,.98) !important;
-    backdrop-filter:blur(16px);
-    -webkit-backdrop-filter:blur(16px);
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
     border-top:1px solid rgba(255,255,255,.12);
-    box-shadow:0 -8px 30px rgba(0,0,0,.35);
-    padding:8px !important;
+
+    box-shadow:
+        0 -8px 30px rgba(0,0,0,.45);
+
+    z-index:2147483000 !important;
+
+    isolation:isolate;
 }
 
 #messageForm * {
     box-sizing:border-box;
 }
 
-#messages {
-    padding-bottom:120px !important;
-    scroll-padding-bottom:140px !important;
+/* ============================================================
+   INPUT
+   ============================================================ */
+
+#messageForm input[type="text"],
+#messageForm input:not([type]),
+#messageForm textarea {
+    flex:1 1 auto !important;
+    min-width:0 !important;
+}
+
+/* ============================================================
+   MEDIA MENU
+   ============================================================ */
+
+.vs-media-wrapper {
+    position:relative;
+    flex:0 0 auto;
+    z-index:50;
+}
+
+.vs-media-toggle {
+    width:42px;
+    height:42px;
+
+    border:none;
+    border-radius:50%;
+
+    background:rgba(124,58,237,.2);
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:23px;
+    font-weight:900;
+
+    cursor:pointer;
+
+    transition:
+        transform .18s ease,
+        background .18s ease;
+}
+
+.vs-media-toggle:active {
+    transform:scale(.9);
+}
+
+.vs-media-toggle.open {
+    background:rgba(124,58,237,.4);
+    transform:rotate(45deg);
+}
+
+.vs-media-menu {
+    position:absolute;
+
+    left:0;
+    bottom:52px;
+
+    width:170px;
+
+    padding:8px;
+
+    border-radius:16px;
+
+    background:rgba(22,17,31,.98);
+
+    border:1px solid rgba(255,255,255,.12);
+
+    box-shadow:
+        0 15px 45px rgba(0,0,0,.55);
+
+    display:none;
+
+    flex-direction:column;
+    gap:5px;
+
+    z-index:2147483001;
+}
+
+.vs-media-menu.open {
+    display:flex;
+}
+
+.vs-media-menu button {
+    width:100% !important;
+    min-height:42px !important;
+
+    border:none !important;
+    border-radius:11px !important;
+
+    background:rgba(255,255,255,.07) !important;
+    color:#fff !important;
+
+    text-align:left !important;
+
+    padding:9px 12px !important;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    display:flex !important;
+    align-items:center;
+    gap:8px;
+
+    margin:0 !important;
+}
+
+.vs-media-menu button:hover {
+    background:rgba(124,58,237,.25) !important;
+}
+
+/* Hide the original media buttons until placed inside menu */
+.vs-original-media-hidden {
+    display:flex !important;
+}
+
+/* ============================================================
+   MEDIA PREVIEW
+   ============================================================ */
+
+#mediaPreview {
+    position:absolute !important;
+
+    left:10px !important;
+    right:10px !important;
+    bottom:100% !important;
+
+    padding:7px 10px !important;
+
+    border-radius:10px 10px 0 0;
+
+    background:rgba(20,15,28,.97) !important;
+
+    color:#ddd !important;
+
+    font-size:12px;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    z-index:2147482999;
 }
 
 /* ============================================================
@@ -159,25 +340,35 @@ chatStyle.textContent = `
 
 .vs-call-controls {
     position:absolute;
+
     right:45px;
     top:50%;
+
     transform:translateY(-50%);
+
     display:flex;
     gap:5px;
+
     z-index:100;
 }
 
 .vs-call-btn {
     width:34px;
     height:34px;
+
     border:none;
     border-radius:50%;
+
     background:rgba(124,58,237,.18);
+
     color:#fff;
+
     cursor:pointer;
+
     display:flex;
     align-items:center;
     justify-content:center;
+
     font-size:16px;
 }
 
@@ -192,17 +383,25 @@ chatStyle.textContent = `
 .vs-call-overlay {
     position:fixed;
     inset:0;
+
     background:#05030a;
-    z-index:1000000;
+
+    z-index:2147483640;
+
     display:none;
+
     flex-direction:column;
+
     color:#fff;
+
     font-family:Arial,sans-serif;
 }
 
 .vs-call-top {
     padding:15px;
+
     min-height:60px;
+
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -221,46 +420,66 @@ chatStyle.textContent = `
 .vs-call-media {
     flex:1;
     min-height:0;
+
     position:relative;
+
     display:flex;
     align-items:center;
     justify-content:center;
+
     overflow:hidden;
 }
 
 .vs-remote-video {
     width:100%;
     height:100%;
+
     object-fit:contain;
+
     background:#000;
 }
 
 .vs-local-video {
     position:absolute;
+
     right:14px;
     bottom:14px;
+
     width:110px;
     height:155px;
+
     object-fit:cover;
+
     border-radius:14px;
+
     border:2px solid rgba(255,255,255,.3);
+
     background:#111;
 }
 
 .vs-call-avatar {
     width:110px;
     height:110px;
+
     border-radius:50%;
+
     display:flex;
     align-items:center;
     justify-content:center;
-    background:linear-gradient(135deg,#7c3aed,#22c55e);
+
+    background:linear-gradient(
+        135deg,
+        #7c3aed,
+        #22c55e
+    );
+
     font-size:42px;
     font-weight:900;
 }
 
 .vs-call-bottom {
     padding:20px;
+
     display:flex;
     justify-content:center;
 }
@@ -268,11 +487,16 @@ chatStyle.textContent = `
 .vs-end-call {
     width:62px;
     height:62px;
+
     border:none;
     border-radius:50%;
+
     background:#dc2626;
+
     color:white;
+
     font-size:24px;
+
     cursor:pointer;
 }
 
@@ -282,18 +506,30 @@ chatStyle.textContent = `
 
 .vs-incoming-call {
     position:fixed;
+
     left:50%;
     top:50%;
+
     transform:translate(-50%,-50%);
+
     width:min(90vw,360px);
+
     padding:25px;
+
     border-radius:22px;
+
     background:#17121f;
+
     border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 20px 70px rgba(0,0,0,.6);
+
+    box-shadow:
+        0 20px 70px rgba(0,0,0,.6);
+
     text-align:center;
+
     color:white;
-    z-index:1000001;
+
+    z-index:2147483641;
 }
 
 .vs-incoming-actions {
@@ -304,10 +540,14 @@ chatStyle.textContent = `
 
 .vs-incoming-actions button {
     flex:1;
+
     border:none;
     border-radius:12px;
+
     padding:13px;
+
     color:white;
+
     font-weight:800;
 }
 
@@ -326,20 +566,14 @@ chatStyle.textContent = `
 .vs-delete-message {
     border:none;
     background:transparent;
+
     color:#ef4444;
+
     font-size:11px;
+
     cursor:pointer;
+
     margin-left:7px;
-}
-
-/* ============================================================
-   MEDIA PREVIEW
-   ============================================================ */
-
-#mediaPreview {
-    font-size:12px;
-    color:#ddd;
-    padding:5px;
 }
 
 /* ============================================================
@@ -347,6 +581,24 @@ chatStyle.textContent = `
    ============================================================ */
 
 @media(max-width:600px) {
+
+    #messageForm {
+        padding:
+            7px
+            max(7px, env(safe-area-inset-right))
+            calc(7px + env(safe-area-inset-bottom))
+            max(7px, env(safe-area-inset-left))
+            !important;
+    }
+
+    .vs-media-toggle {
+        width:40px;
+        height:40px;
+    }
+
+    .vs-media-menu {
+        width:165px;
+    }
 
     .vs-call-controls {
         right:42px;
@@ -372,6 +624,7 @@ document.head.appendChild(chatStyle);
 // ============================================================
 
 function hideLoader() {
+
     if (!loader) return;
 
     loader.style.opacity = "0";
@@ -383,6 +636,7 @@ function hideLoader() {
 }
 
 function escapeHTML(value = "") {
+
     return String(value)
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -392,25 +646,32 @@ function escapeHTML(value = "") {
 }
 
 function randomId() {
-    if (crypto.randomUUID) {
+
+    if (
+        crypto &&
+        typeof crypto.randomUUID === "function"
+    ) {
         return crypto.randomUUID();
     }
 
-    return Date.now() + "_" + Math.random()
-        .toString(36)
-        .slice(2);
+    return Date.now() + "_" +
+        Math.random()
+            .toString(36)
+            .slice(2);
 }
 
 function formatTime(timestamp) {
+
     if (!timestamp) return "";
 
-    const date = timestamp.toDate
-        ? timestamp.toDate()
-        : new Date(timestamp);
+    const date =
+        timestamp.toDate
+            ? timestamp.toDate()
+            : new Date(timestamp);
 
     return date.toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit"
+        hour:"numeric",
+        minute:"2-digit"
     });
 }
 
@@ -427,23 +688,36 @@ function relativeLastSeen(value) {
     let time = 0;
 
     if (typeof value === "number") {
+
         time = value;
+
     } else if (value.toMillis) {
+
         time = value.toMillis();
+
     } else if (value.seconds) {
-        time = value.seconds * 1000;
+
+        time =
+            value.seconds * 1000;
+
     } else {
-        time = new Date(value).getTime();
+
+        time =
+            new Date(value).getTime();
     }
 
-    if (!time || Number.isNaN(time)) {
+    if (
+        !time ||
+        Number.isNaN(time)
+    ) {
         return "Last seen recently";
     }
 
-    const difference = Math.max(
-        0,
-        Date.now() - time
-    );
+    const difference =
+        Math.max(
+            0,
+            Date.now() - time
+        );
 
     const second = 1000;
     const minute = second * 60;
@@ -455,62 +729,71 @@ function relativeLastSeen(value) {
 
     if (difference < minute) {
 
-        const n = Math.max(
-            1,
-            Math.floor(difference / second)
-        );
+        const n =
+            Math.max(
+                1,
+                Math.floor(
+                    difference / second
+                )
+            );
 
         return `Last seen ${n} second${n === 1 ? "" : "s"} ago`;
     }
 
     if (difference < hour) {
 
-        const n = Math.floor(
-            difference / minute
-        );
+        const n =
+            Math.floor(
+                difference / minute
+            );
 
         return `Last seen ${n} minute${n === 1 ? "" : "s"} ago`;
     }
 
     if (difference < day) {
 
-        const n = Math.floor(
-            difference / hour
-        );
+        const n =
+            Math.floor(
+                difference / hour
+            );
 
         return `Last seen ${n} hour${n === 1 ? "" : "s"} ago`;
     }
 
     if (difference < week) {
 
-        const n = Math.floor(
-            difference / day
-        );
+        const n =
+            Math.floor(
+                difference / day
+            );
 
         return `Last seen ${n} day${n === 1 ? "" : "s"} ago`;
     }
 
     if (difference < month) {
 
-        const n = Math.floor(
-            difference / week
-        );
+        const n =
+            Math.floor(
+                difference / week
+            );
 
         return `Last seen ${n} week${n === 1 ? "" : "s"} ago`;
     }
 
     if (difference < year) {
 
-        const n = Math.floor(
-            difference / month
-        );
+        const n =
+            Math.floor(
+                difference / month
+            );
 
         return `Last seen ${n} month${n === 1 ? "" : "s"} ago`;
     }
 
-    const n = Math.floor(
-        difference / year
-    );
+    const n =
+        Math.floor(
+            difference / year
+        );
 
     return `Last seen ${n} year${n === 1 ? "" : "s"} ago`;
 }
@@ -522,23 +805,31 @@ function relativeLastSeen(value) {
 auth.onAuthStateChanged(async user => {
 
     if (!user) {
-        window.location.href = "login.html";
+
+        window.location.href =
+            "login.html";
+
         return;
     }
 
     currentUser = user;
 
-    const params = new URLSearchParams(
-        window.location.search
-    );
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
 
-    receiverUid = params.get("uid");
+    receiverUid =
+        params.get("uid");
 
     if (
         !receiverUid ||
         receiverUid === currentUser.uid
     ) {
-        window.location.href = "home.html";
+
+        window.location.href =
+            "home.html";
+
         return;
     }
 
@@ -554,6 +845,8 @@ auth.onAuthStateChanged(async user => {
         setupMessageListener();
 
         setupIncomingCalls();
+
+        setupMediaMenu();
 
         fixComposer();
 
@@ -582,7 +875,11 @@ auth.onAuthStateChanged(async user => {
 async function initializeChat() {
 
     const receiverRef =
-        doc(db, "users", receiverUid);
+        doc(
+            db,
+            "users",
+            receiverUid
+        );
 
     const receiverSnap =
         await getDoc(receiverRef);
@@ -599,9 +896,11 @@ async function initializeChat() {
 
     if (chatName) {
 
-        chatName.textContent = name;
+        chatName.textContent =
+            name;
 
-        chatName.style.cursor = "pointer";
+        chatName.style.cursor =
+            "pointer";
 
         chatName.onclick = () => {
 
@@ -610,6 +909,7 @@ async function initializeChat() {
         };
     }
 
+    // KEEP EXISTING PROFILE IMAGE LOGIC
     if (chatAvatar) {
 
         const avatar =
@@ -620,8 +920,11 @@ async function initializeChat() {
 
         if (avatar) {
 
-            chatAvatar.src = avatar;
-            chatAvatar.style.objectFit = "cover";
+            chatAvatar.src =
+                avatar;
+
+            chatAvatar.style.objectFit =
+                "cover";
 
         } else {
 
@@ -631,15 +934,19 @@ async function initializeChat() {
     }
 
     await setDoc(
-        doc(db, "chats", chatId),
+        doc(
+            db,
+            "chats",
+            chatId
+        ),
         {
-            participants: [
+            participants:[
                 currentUser.uid,
                 receiverUid
             ]
         },
         {
-            merge: true
+            merge:true
         }
     );
 
@@ -660,16 +967,77 @@ function listenToStatus() {
         unsubscribeStatus();
     }
 
-    unsubscribeStatus = onSnapshot(
-        doc(db, "status", receiverUid),
-        snapshot => {
+    unsubscribeStatus =
+        onSnapshot(
+            doc(
+                db,
+                "status",
+                receiverUid
+            ),
+            snapshot => {
+
+                const data =
+                    snapshot.exists()
+                        ? snapshot.data()
+                        : {};
+
+                if (!chatStatus) return;
+
+                if (data.online === true) {
+
+                    chatStatus.textContent =
+                        "🟢 Online";
+
+                    chatStatus.style.color =
+                        "#22c55e";
+
+                } else {
+
+                    chatStatus.textContent =
+                        relativeLastSeen(
+                            data.lastSeen ||
+                            data.timestamp
+                        );
+
+                    chatStatus.style.color =
+                        "";
+                }
+            }
+        );
+}
+
+// ============================================================
+// KEEP LAST SEEN TEXT FRESH
+// ============================================================
+
+setInterval(() => {
+
+    if (!chatStatus) return;
+
+    if (
+        chatStatus.textContent
+            .includes("Online")
+    ) {
+        return;
+    }
+
+    if (!receiverUid) return;
+
+    getDoc(
+        doc(
+            db,
+            "status",
+            receiverUid
+        )
+    )
+        .then(snapshot => {
+
+            if (!snapshot.exists()) {
+                return;
+            }
 
             const data =
-                snapshot.exists()
-                    ? snapshot.data()
-                    : {};
-
-            if (!chatStatus) return;
+                snapshot.data();
 
             if (data.online === true) {
 
@@ -686,12 +1054,11 @@ function listenToStatus() {
                         data.lastSeen ||
                         data.timestamp
                     );
-
-                chatStatus.style.color = "";
             }
-        }
-    );
-}
+        })
+        .catch(() => {});
+
+}, 30000);
 
 // ============================================================
 // MESSAGES
@@ -710,78 +1077,98 @@ function setupMessageListener() {
     const messagesQuery =
         query(
             messagesRef,
-            orderBy("timestamp", "desc"),
+            orderBy(
+                "timestamp",
+                "desc"
+            ),
             limit(100)
         );
 
-    unsubscribeMessages = onSnapshot(
-        messagesQuery,
-        snapshot => {
+    unsubscribeMessages =
+        onSnapshot(
+            messagesQuery,
+            snapshot => {
 
-            messages.innerHTML = "";
+                if (!messages) return;
 
-            const docs =
-                [...snapshot.docs].reverse();
+                messages.innerHTML =
+                    "";
 
-            docs.forEach(messageDoc => {
+                const docs =
+                    [...snapshot.docs]
+                        .reverse();
 
-                const data =
-                    messageDoc.data();
+                docs.forEach(
+                    messageDoc => {
 
-                if (
-                    data.receiverId === currentUser.uid &&
-                    (!data.read || !data.delivered)
-                ) {
+                        const data =
+                            messageDoc.data();
 
-                    updateDoc(
-                        messageDoc.ref,
-                        {
-                            delivered: true,
-                            read: true
+                        if (
+                            data.receiverId ===
+                                currentUser.uid &&
+                            (
+                                !data.read ||
+                                !data.delivered
+                            )
+                        ) {
+
+                            updateDoc(
+                                messageDoc.ref,
+                                {
+                                    delivered:true,
+                                    read:true
+                                }
+                            ).catch(() => {});
                         }
-                    ).catch(() => {});
-                }
 
-                renderMessage(
-                    messageDoc.id,
-                    data
+                        renderMessage(
+                            messageDoc.id,
+                            data
+                        );
+                    }
                 );
-            });
 
-            requestAnimationFrame(() => {
+                requestAnimationFrame(
+                    () => {
 
-                messages.scrollTop =
-                    messages.scrollHeight;
-            });
-        },
-        error => {
+                        messages.scrollTop =
+                            messages.scrollHeight;
+                    }
+                );
+            },
+            error => {
 
-            console.error(
-                "Messages error:",
-                error
-            );
+                console.error(
+                    "Messages error:",
+                    error
+                );
 
-            messages.innerHTML = `
-                <div style="
-                    text-align:center;
-                    padding:20px;
-                    color:#aaa;
-                ">
-                    Unable to load messages.
-                </div>
-            `;
-        }
-    );
+                messages.innerHTML = `
+                    <div style="
+                        text-align:center;
+                        padding:20px;
+                        color:#aaa;
+                    ">
+                        Unable to load messages.
+                    </div>
+                `;
+            }
+        );
 }
 
 // ============================================================
 // RENDER MESSAGE
 // ============================================================
 
-function renderMessage(messageId, data) {
+function renderMessage(
+    messageId,
+    data
+) {
 
     const mine =
-        data.senderId === currentUser.uid;
+        data.senderId ===
+        currentUser.uid;
 
     const wrapper =
         document.createElement("div");
@@ -857,6 +1244,7 @@ function renderMessage(messageId, data) {
     }
 
     if (!content) {
+
         content =
             `<div class="message-text">Message</div>`;
     }
@@ -905,6 +1293,7 @@ function renderMessage(messageId, data) {
                             <button
                                 class="vs-delete-message"
                                 data-delete-id="${messageId}"
+                                type="button"
                             >
                                 Delete
                             </button>
@@ -918,13 +1307,16 @@ function renderMessage(messageId, data) {
     `;
 
     const image =
-        wrapper.querySelector("img");
+        wrapper.querySelector(
+            "img"
+        );
 
     if (image) {
 
         image.addEventListener(
             "click",
             () => {
+
                 window.open(
                     data.image,
                     "_blank"
@@ -947,9 +1339,13 @@ function renderMessage(messageId, data) {
                 event.stopPropagation();
 
                 const exactId =
-                    event.currentTarget.dataset.deleteId;
+                    event.currentTarget
+                        .dataset
+                        .deleteId;
 
-                if (!exactId) return;
+                if (!exactId) {
+                    return;
+                }
 
                 if (
                     !confirm(
@@ -986,7 +1382,9 @@ function renderMessage(messageId, data) {
         );
     }
 
-    messages.appendChild(wrapper);
+    messages.appendChild(
+        wrapper
+    );
 }
 
 // ============================================================
@@ -998,7 +1396,10 @@ let mediaPreview =
         "mediaPreview"
     );
 
-if (!mediaPreview && messageForm) {
+if (
+    !mediaPreview &&
+    messageForm
+) {
 
     mediaPreview =
         document.createElement("div");
@@ -1006,18 +1407,21 @@ if (!mediaPreview && messageForm) {
     mediaPreview.id =
         "mediaPreview";
 
-    messageForm.prepend(
+    messageForm.appendChild(
         mediaPreview
     );
 }
 
 function updateMediaPreview() {
 
-    if (!mediaPreview) return;
+    if (!mediaPreview) {
+        return;
+    }
 
     let text = "";
 
     if (selectedImage) {
+
         text +=
             `📷 ${selectedImage.name}`;
     }
@@ -1038,7 +1442,9 @@ function updateMediaPreview() {
         text;
 
     mediaPreview.style.display =
-        text ? "block" : "none";
+        text
+            ? "block"
+            : "none";
 }
 
 // ============================================================
@@ -1054,6 +1460,8 @@ imageInput?.addEventListener(
             null;
 
         updateMediaPreview();
+
+        closeMediaMenu();
     }
 );
 
@@ -1070,14 +1478,192 @@ videoInput?.addEventListener(
             null;
 
         updateMediaPreview();
+
+        closeMediaMenu();
     }
 );
+
+// ============================================================
+// MEDIA MENU
+// ============================================================
+
+function setupMediaMenu() {
+
+    if (!messageForm) {
+        return;
+    }
+
+    if (
+        document.getElementById(
+            "vsMediaWrapper"
+        )
+    ) {
+        return;
+    }
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.id =
+        "vsMediaWrapper";
+
+    wrapper.className =
+        "vs-media-wrapper";
+
+    const toggle =
+        document.createElement("button");
+
+    toggle.type =
+        "button";
+
+    toggle.id =
+        "vsMediaToggle";
+
+    toggle.className =
+        "vs-media-toggle";
+
+    toggle.innerHTML =
+        "＋";
+
+    toggle.title =
+        "Media";
+
+    const menu =
+        document.createElement("div");
+
+    menu.id =
+        "vsMediaMenu";
+
+    menu.className =
+        "vs-media-menu";
+
+    // Move the existing buttons into the menu.
+    if (imageBtn) {
+
+        imageBtn.classList.add(
+            "vs-original-media-hidden"
+        );
+
+        imageBtn.textContent =
+            "📷 Image";
+
+        menu.appendChild(
+            imageBtn
+        );
+    }
+
+    if (videoBtn) {
+
+        videoBtn.classList.add(
+            "vs-original-media-hidden"
+        );
+
+        videoBtn.textContent =
+            "🎥 Video";
+
+        menu.appendChild(
+            videoBtn
+        );
+    }
+
+    if (recordBtn) {
+
+        recordBtn.classList.add(
+            "vs-original-media-hidden"
+        );
+
+        if (
+            !recordBtn.textContent.trim()
+        ) {
+            recordBtn.textContent =
+                "🎤 Voice note";
+        }
+
+        menu.appendChild(
+            recordBtn
+        );
+    }
+
+    wrapper.appendChild(
+        toggle
+    );
+
+    wrapper.appendChild(
+        menu
+    );
+
+    // Put menu at the beginning of composer.
+    messageForm.insertBefore(
+        wrapper,
+        messageForm.firstChild
+    );
+
+    toggle.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            menu.classList.toggle(
+                "open"
+            );
+
+            toggle.classList.toggle(
+                "open"
+            );
+        }
+    );
+
+    menu.addEventListener(
+        "click",
+        event => {
+            event.stopPropagation();
+        }
+    );
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            if (
+                !wrapper.contains(
+                    event.target
+                )
+            ) {
+                closeMediaMenu();
+            }
+        }
+    );
+}
+
+function closeMediaMenu() {
+
+    const menu =
+        document.getElementById(
+            "vsMediaMenu"
+        );
+
+    const toggle =
+        document.getElementById(
+            "vsMediaToggle"
+        );
+
+    menu?.classList.remove(
+        "open"
+    );
+
+    toggle?.classList.remove(
+        "open"
+    );
+}
 
 // ============================================================
 // CLOUDINARY
 // ============================================================
 
-async function uploadToCloudinary(file) {
+async function uploadToCloudinary(
+    file
+) {
 
     const formData =
         new FormData();
@@ -1096,12 +1682,13 @@ async function uploadToCloudinary(file) {
         await fetch(
             "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
             {
-                method: "POST",
-                body: formData
+                method:"POST",
+                body:formData
             }
         );
 
     if (!response.ok) {
+
         throw new Error(
             "Cloudinary upload failed"
         );
@@ -1111,6 +1698,7 @@ async function uploadToCloudinary(file) {
         await response.json();
 
     if (!result.secure_url) {
+
         throw new Error(
             "Cloudinary URL missing"
         );
@@ -1129,7 +1717,8 @@ recordBtn?.addEventListener(
 
         if (
             mediaRecorder &&
-            mediaRecorder.state === "recording"
+            mediaRecorder.state ===
+                "recording"
         ) {
 
             mediaRecorder.stop();
@@ -1155,7 +1744,9 @@ recordBtn?.addEventListener(
             mediaRecorder.ondataavailable =
                 event => {
 
-                    if (event.data.size > 0) {
+                    if (
+                        event.data.size > 0
+                    ) {
 
                         audioChunks.push(
                             event.data
@@ -1176,7 +1767,7 @@ recordBtn?.addEventListener(
                     try {
 
                         recordBtn.textContent =
-                            "Uploading...";
+                            "⏳ Uploading...";
 
                         const blob =
                             new Blob(
@@ -1203,7 +1794,7 @@ recordBtn?.addEventListener(
                             );
 
                         recordBtn.textContent =
-                            "🎤";
+                            "🎤 Voice note";
 
                         updateMediaPreview();
 
@@ -1217,7 +1808,7 @@ recordBtn?.addEventListener(
                         voiceUrl = "";
 
                         recordBtn.textContent =
-                            "🎤";
+                            "🎤 Voice note";
 
                         alert(
                             "Voice note upload failed."
@@ -1228,7 +1819,7 @@ recordBtn?.addEventListener(
             mediaRecorder.start();
 
             recordBtn.textContent =
-                "⏹️";
+                "⏹️ Stop recording";
 
         } catch (error) {
 
@@ -1254,7 +1845,10 @@ messageForm?.addEventListener(
 
         event.preventDefault();
 
-        if (!currentUser || !chatId) {
+        if (
+            !currentUser ||
+            !chatId
+        ) {
             return;
         }
 
@@ -1277,9 +1871,13 @@ messageForm?.addEventListener(
             );
 
         if (sendButton) {
-            sendButton.disabled = true;
+
+            sendButton.disabled =
+                true;
+
             sendButton.dataset.oldText =
                 sendButton.textContent;
+
             sendButton.textContent =
                 "Sending...";
         }
@@ -1401,25 +1999,36 @@ messageForm?.addEventListener(
             );
 
             if (messageInput) {
-                messageInput.value = "";
+                messageInput.value =
+                    "";
             }
 
-            selectedImage = null;
-            selectedVideo = null;
-            voiceUrl = "";
+            selectedImage =
+                null;
+
+            selectedVideo =
+                null;
+
+            voiceUrl =
+                "";
 
             if (imageInput) {
-                imageInput.value = "";
+                imageInput.value =
+                    "";
             }
 
             if (videoInput) {
-                videoInput.value = "";
+                videoInput.value =
+                    "";
             }
+
+            closeMediaMenu();
 
             updateMediaPreview();
 
             requestAnimationFrame(
                 () => {
+
                     messages.scrollTop =
                         messages.scrollHeight;
                 }
@@ -1440,7 +2049,8 @@ messageForm?.addEventListener(
 
             if (sendButton) {
 
-                sendButton.disabled = false;
+                sendButton.disabled =
+                    false;
 
                 sendButton.textContent =
                     sendButton.dataset.oldText ||
@@ -1492,9 +2102,11 @@ function createBlockButton() {
     }
 
     if (
-        getComputedStyle(header).position ===
+        getComputedStyle(header)
+            .position ===
         "static"
     ) {
+
         header.style.position =
             "relative";
     }
@@ -1579,7 +2191,9 @@ function createBlockButton() {
             }
         };
 
-    header.appendChild(button);
+    header.appendChild(
+        button
+    );
 }
 
 // ============================================================
@@ -1604,9 +2218,11 @@ function createCallButtons() {
     }
 
     if (
-        getComputedStyle(header).position ===
+        getComputedStyle(header)
+            .position ===
         "static"
     ) {
+
         header.style.position =
             "relative";
     }
@@ -1621,9 +2237,11 @@ function createCallButtons() {
         "vs-call-controls";
 
     controls.innerHTML = `
+
         <button
             class="vs-call-btn"
             id="vsVoiceCallBtn"
+            type="button"
             title="Voice call"
         >
             📞
@@ -1632,6 +2250,7 @@ function createCallButtons() {
         <button
             class="vs-call-btn"
             id="vsVideoCallBtn"
+            type="button"
             title="Video call"
         >
             📹
@@ -1692,6 +2311,7 @@ function createCallScreen(type) {
         <div class="vs-call-top">
 
             <div>
+
                 <div class="vs-call-title">
                     ${
                         type === "video"
@@ -1706,6 +2326,7 @@ function createCallScreen(type) {
                 ">
                     ${escapeHTML(name)}
                 </div>
+
             </div>
 
             <div
@@ -1769,6 +2390,7 @@ function createCallScreen(type) {
             <button
                 id="vsEndCall"
                 class="vs-end-call"
+                type="button"
             >
                 📵
             </button>
@@ -1812,7 +2434,7 @@ function setCallStatus(text) {
 
 const rtcConfiguration = {
 
-    iceServers: [
+    iceServers:[
 
         {
             urls:
@@ -1856,6 +2478,7 @@ async function createPeer(
         localVideo &&
         type === "video"
     ) {
+
         localVideo.srcObject =
             stream;
     }
@@ -1864,6 +2487,7 @@ async function createPeer(
         .getTracks()
         .forEach(
             track => {
+
                 peer.addTrack(
                     track,
                     stream
@@ -1891,11 +2515,13 @@ async function createPeer(
                 remoteVideo &&
                 type === "video"
             ) {
+
                 remoteVideo.srcObject =
                     remoteStream;
             }
 
             if (remoteAudio) {
+
                 remoteAudio.srcObject =
                     remoteStream;
             }
@@ -1980,6 +2606,7 @@ function listenForCandidates(
 ) {
 
     if (activeCandidateListener) {
+
         activeCandidateListener();
     }
 
@@ -2040,7 +2667,9 @@ function listenForCandidates(
                                     candidate
                                 );
 
-                        } else {
+                        } else if (
+                            activeCall
+                        ) {
 
                             activeCall
                                 .pendingCandidates
@@ -2190,7 +2819,8 @@ async function startCall(type) {
             callRef,
             {
                 offer:
-                    peer.localDescription.toJSON()
+                    peer.localDescription
+                        .toJSON()
             }
         );
 
@@ -2225,7 +2855,8 @@ async function startCall(type) {
                         );
 
                         if (
-                            activeCall.pendingCandidates
+                            activeCall
+                                .pendingCandidates
                                 .length
                         ) {
 
@@ -2407,7 +3038,7 @@ function setupIncomingCalls() {
 // INCOMING CALL UI
 // ============================================================
 
-function showIncomingCall(
+async function showIncomingCall(
     callId,
     data
 ) {
@@ -2420,10 +3051,32 @@ function showIncomingCall(
         return;
     }
 
-    const name =
-        receiverData.fullName ||
-        receiverData.username ||
+    let callerName =
         "VitalStar User";
+
+    try {
+
+        const callerSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "users",
+                    data.callerId
+                )
+            );
+
+        if (callerSnap.exists()) {
+
+            const caller =
+                callerSnap.data();
+
+            callerName =
+                caller.fullName ||
+                caller.username ||
+                "VitalStar User";
+        }
+
+    } catch {}
 
     const box =
         document.createElement("div");
@@ -2460,7 +3113,7 @@ function showIncomingCall(
             opacity:.7;
             font-size:13px;
         ">
-            ${escapeHTML(name)}
+            ${escapeHTML(callerName)}
         </div>
 
         <div class="vs-incoming-actions">
@@ -2468,6 +3121,7 @@ function showIncomingCall(
             <button
                 class="vs-decline"
                 id="vsDeclineCall"
+                type="button"
             >
                 Decline
             </button>
@@ -2475,6 +3129,7 @@ function showIncomingCall(
             <button
                 class="vs-accept"
                 id="vsAcceptCall"
+                type="button"
             >
                 Accept
             </button>
@@ -2541,7 +3196,9 @@ async function acceptCall(
     data
 ) {
 
-    if (activeCall) return;
+    if (activeCall) {
+        return;
+    }
 
     activeCall = {
 
@@ -2630,7 +3287,8 @@ async function acceptCall(
             callRef,
             {
                 answer:
-                    peer.localDescription.toJSON(),
+                    peer.localDescription
+                        .toJSON(),
 
                 status:
                     "accepted"
@@ -2782,22 +3440,41 @@ function fixComposer() {
         return;
     }
 
-    messageForm.style.position =
-        "fixed";
-
-    messageForm.style.visibility =
-        "visible";
-
-    messageForm.style.opacity =
-        "1";
-
-    messageForm.style.display =
-        "flex";
-
-    messageForm.style.zIndex =
-        "99999";
-
     function updateComposer() {
+
+        /*
+         * IMPORTANT:
+         * Do NOT use the form's parent width.
+         * The composer is intentionally full-width
+         * and fixed to the viewport.
+         */
+
+        messageForm.style.position =
+            "fixed";
+
+        messageForm.style.left =
+            "0px";
+
+        messageForm.style.right =
+            "0px";
+
+        messageForm.style.width =
+            "100%";
+
+        messageForm.style.visibility =
+            "visible";
+
+        messageForm.style.opacity =
+            "1";
+
+        messageForm.style.display =
+            "flex";
+
+        messageForm.style.zIndex =
+            "2147483000";
+
+        messageForm.style.overflow =
+            "visible";
 
         const footer =
             document.querySelector(
@@ -2818,7 +3495,10 @@ function fixComposer() {
                 );
 
             footerHeight =
-                rect.height;
+                Math.max(
+                    0,
+                    rect.height
+                );
 
             footerFixed =
                 style.position ===
@@ -2827,57 +3507,31 @@ function fixComposer() {
                     "sticky";
         }
 
-        const parent =
-            messageForm.parentElement;
-
-        if (parent) {
-
-            const rect =
-                parent.getBoundingClientRect();
-
-            if (
-                rect.width > 0 &&
-                rect.left >= 0
-            ) {
-
-                messageForm.style.left =
-                    rect.left + "px";
-
-                messageForm.style.width =
-                    rect.width + "px";
-
-            } else {
-
-                messageForm.style.left =
-                    "0";
-
-                messageForm.style.width =
-                    "100%";
-            }
-        }
-
         messageForm.style.bottom =
             footerFixed
                 ? `${footerHeight + 4}px`
                 : "0px";
 
         const formHeight =
-            messageForm.getBoundingClientRect()
+            messageForm
+                .getBoundingClientRect()
                 .height;
 
-        messages.style.paddingBottom =
-            (
-                formHeight +
-                footerHeight +
-                35
-            ) + "px";
+        if (messages) {
 
-        messages.style.scrollPaddingBottom =
-            (
+            const bottomSpace =
                 formHeight +
-                footerHeight +
-                35
-            ) + "px";
+                (footerFixed
+                    ? footerHeight
+                    : 0) +
+                40;
+
+            messages.style.paddingBottom =
+                `${bottomSpace}px`;
+
+            messages.style.scrollPaddingBottom =
+                `${bottomSpace}px`;
+        }
     }
 
     requestAnimationFrame(
@@ -2886,6 +3540,11 @@ function fixComposer() {
 
     window.addEventListener(
         "resize",
+        updateComposer
+    );
+
+    window.addEventListener(
+        "orientationchange",
         updateComposer
     );
 
@@ -2906,6 +3565,7 @@ function fixComposer() {
             );
 
         if (footer) {
+
             observer.observe(
                 footer
             );
