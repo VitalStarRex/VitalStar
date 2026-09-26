@@ -10,7 +10,7 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>VitalStar</title>  
+<title>VitalStar</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -32,23 +32,7 @@ html{
 }
 
 body{
-    background:
-        radial-gradient(
-            circle at 10% 20%,
-            rgba(255,105,180,.15),
-            transparent 25%
-        ),
-        radial-gradient(
-            circle at 90% 30%,
-            rgba(123,47,247,.15),
-            transparent 25%
-        ),
-        radial-gradient(
-            circle at 50% 90%,
-            rgba(24,119,242,.12),
-            transparent 30%
-        ),
-        #eef2ff;
+    background:#ffffff;
 
     color:#222;
     min-height:100vh;
@@ -587,28 +571,30 @@ header{
    ========================================================= */
 
 .stories{
-    display:flex;
+    display:grid;
 
-    gap:12px;
+    grid-template-columns:
+        repeat(4, 1fr);
 
-    overflow-x:auto;
+    gap:8px;
 
-    padding:18px 2px;
+    width:100%;
 
-    scrollbar-width:none;
-}
+    padding:14px 2px;
 
-.stories::-webkit-scrollbar{
-    display:none;
+    overflow:hidden;
 }
 
 .story{
     position:relative;
 
-    min-width:105px;
-    height:150px;
+    width:100%;
+    aspect-ratio:1 / 1;
 
-    border-radius:20px;
+    min-width:0;
+    height:auto;
+
+    border-radius:14px;
 
     overflow:hidden;
 
@@ -618,10 +604,11 @@ header{
 
     justify-content:center;
 
-    padding-bottom:13px;
+    padding-bottom:8px;
 
     color:white;
 
+    font-size:12px;
     font-weight:900;
 
     background:
@@ -633,8 +620,8 @@ header{
         );
 
     box-shadow:
-        0 6px 18px
-        rgba(0,0,0,.18);
+        0 4px 12px
+        rgba(0,0,0,.15);
 }
 
 .story:before{
@@ -642,13 +629,13 @@ header{
 
     position:absolute;
 
-    top:20px;
+    top:50%;
     left:50%;
 
     transform:
-        translateX(-50%);
+        translate(-50%,-55%);
 
-    font-size:48px;
+    font-size:28px;
 }
 
 .story:after{
@@ -656,10 +643,10 @@ header{
 
     position:absolute;
 
-    right:8px;
-    top:8px;
+    right:5px;
+    top:5px;
 
-    font-size:22px;
+    font-size:14px;
 }
 
 
@@ -1058,9 +1045,33 @@ body.dark-mode .create-btn{
             6px 8px;
     }
 
+    .stories{
+        grid-template-columns:
+            repeat(4, 1fr);
+
+        gap:6px;
+
+        padding:
+            12px 0;
+    }
+
     .story{
-        min-width:92px;
-        height:135px;
+        width:100%;
+        aspect-ratio:1 / 1;
+
+        border-radius:12px;
+
+        padding-bottom:7px;
+
+        font-size:11px;
+    }
+
+    .story:before{
+        font-size:24px;
+    }
+
+    .story:after{
+        font-size:12px;
     }
 
     .latest-title{
@@ -1328,10 +1339,6 @@ function openMenu(){
      ========================================================= -->
 
 <div class="stories">
-
-<div class="story">
-    Story
-</div>
 
 <div class="story">
     Story
