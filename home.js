@@ -84,22 +84,11 @@ style.textContent = `
     --vs-pink: #FF4FD8;
 
     --vs-bg: #060711;
-    --vs-card: rgba(255,255,255,0.055);
+    --vs-card: #1d1d1d;
     --vs-card-border: rgba(255,255,255,0.10);
 
     --vs-text: #ffffff;
     --vs-muted: rgba(255,255,255,0.58);
-
-}
-
-
-/* ==========================================================
-   BODY
-   ========================================================== */
-
-body {
-
-    background: #ffffff;
 
 }
 
@@ -124,6 +113,7 @@ body {
 
 /* ==========================================================
    POST CARD
+   (always dark, regardless of light/dark mode)
    ========================================================== */
 
 .post-card {
@@ -146,17 +136,7 @@ body {
         24px;
 
     background:
-        linear-gradient(
-            145deg,
-            rgba(255,255,255,0.075),
-            rgba(255,255,255,0.025)
-        );
-
-    backdrop-filter:
-        blur(22px);
-
-    -webkit-backdrop-filter:
-        blur(22px);
+        var(--vs-card);
 
     box-shadow:
         0 15px 50px
@@ -836,7 +816,7 @@ body {
         22px;
 
     background:
-        rgba(255,255,255,.035);
+        var(--vs-card);
 
 }
 
@@ -860,6 +840,9 @@ body {
 
     font-weight:
         750;
+
+    color:
+        var(--vs-text);
 
 }
 
