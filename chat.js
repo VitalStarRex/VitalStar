@@ -157,6 +157,24 @@ chatStyle.textContent = `
 }
 
 /* ============================================================
+   RECEIVED MESSAGE BUBBLE — DARK GREY
+   ============================================================ */
+
+.message.received {
+    background:#3a3a3a !important;
+    color:#f1f1f1 !important;
+}
+
+.message.received p {
+    color:#f1f1f1 !important;
+}
+
+.message.received .message-footer,
+.message.received .message-footer span {
+    color:#cfcfcf !important;
+}
+
+/* ============================================================
    COMPOSER
    ============================================================ */
 
