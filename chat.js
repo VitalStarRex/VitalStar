@@ -6,7 +6,7 @@
 // Fixed Composer Above Footer
 // ============================================================
 
-import { auth, db } from "./firebase.js";
+import { auth, db, rtdb } from "./firebase.js";
 
 import {
     doc,
@@ -23,6 +23,11 @@ import {
     deleteDoc,
     where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+    ref,
+    onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // ============================================================
 // HTML ELEMENTS
@@ -563,7 +568,6 @@ chatStyle.textContent = `
     }
 }
 
-/* Hidden real audio element */
 .vs-hidden-audio {
     display:none !important;
 }
@@ -963,21 +967,34 @@ function getStatusTimestamp(data = {}) {
 
     for (const value of possibleValues) {
 
-        if (value === null || value === undefined) {
+        if (
+            value === null ||
+            value === undefined
+        ) {
             continue;
         }
 
         let time = null;
 
-        // Firestore Timestamp
+        // Realtime Database / numeric timestamp
         if (
+            typeof value === "number"
+        ) {
+
+            time =
+                value < 10000000000
+                    ? value * 1000
+                    : value;
+
+        // Firestore Timestamp
+        } else if (
             typeof value?.toMillis === "function"
         ) {
 
             time =
                 value.toMillis();
 
-        // Firestore Timestamp-like object
+        // Timestamp-like object
         } else if (
             typeof value?.seconds === "number"
         ) {
@@ -993,17 +1010,7 @@ function getStatusTimestamp(data = {}) {
             time =
                 value.getTime();
 
-        // Number
-        } else if (
-            typeof value === "number"
-        ) {
-
-            time =
-                value < 10000000000
-                    ? value * 1000
-                    : value;
-
-        // String
+        // Date string
         } else if (
             typeof value === "string"
         ) {
@@ -1017,10 +1024,11 @@ function getStatusTimestamp(data = {}) {
         }
 
         if (
-            time &&
             Number.isFinite(time) &&
+            time > 0 &&
             time <= Date.now() + 60000
         ) {
+
             return time;
         }
     }
@@ -1032,25 +1040,10 @@ function getStatusTimestamp(data = {}) {
 // LAST SEEN TEXT
 // ============================================================
 
-function relativeLastSeen(value) {
+function relativeLastSeen(data = {}) {
 
     const time =
-        typeof value === "object" &&
-        value !== null &&
-        !(
-            value instanceof Date
-        ) &&
-        (
-            value.lastSeen ||
-            value.lastOnline ||
-            value.updatedAt ||
-            value.timestamp ||
-            value.lastSeenAt
-        )
-            ? getStatusTimestamp(value)
-            : getStatusTimestamp({
-                lastSeen:value
-            });
+        getStatusTimestamp(data);
 
     if (!time) {
         return "Last seen recently";
@@ -1081,7 +1074,9 @@ function relativeLastSeen(value) {
                 difference / minute
             );
 
-        return `Last seen ${n} minute${n === 1 ? "" : "s"} ago`;
+        return `Last seen ${n} minute${
+            n === 1 ? "" : "s"
+        } ago`;
     }
 
     if (difference < day) {
@@ -1091,7 +1086,9 @@ function relativeLastSeen(value) {
                 difference / hour
             );
 
-        return `Last seen ${n} hour${n === 1 ? "" : "s"} ago`;
+        return `Last seen ${n} hour${
+            n === 1 ? "" : "s"
+        } ago`;
     }
 
     if (difference < week) {
@@ -1101,7 +1098,9 @@ function relativeLastSeen(value) {
                 difference / day
             );
 
-        return `Last seen ${n} day${n === 1 ? "" : "s"} ago`;
+        return `Last seen ${n} day${
+            n === 1 ? "" : "s"
+        } ago`;
     }
 
     if (difference < month) {
@@ -1111,7 +1110,9 @@ function relativeLastSeen(value) {
                 difference / week
             );
 
-        return `Last seen ${n} week${n === 1 ? "" : "s"} ago`;
+        return `Last seen ${n} week${
+            n === 1 ? "" : "s"
+        } ago`;
     }
 
     if (difference < year) {
@@ -1121,7 +1122,9 @@ function relativeLastSeen(value) {
                 difference / month
             );
 
-        return `Last seen ${n} month${n === 1 ? "" : "s"} ago`;
+        return `Last seen ${n} month${
+            n === 1 ? "" : "s"
+        } ago`;
     }
 
     const n =
@@ -1129,7 +1132,9 @@ function relativeLastSeen(value) {
             difference / year
         );
 
-    return `Last seen ${n} year${n === 1 ? "" : "s"} ago`;
+    return `Last seen ${n} year${
+        n === 1 ? "" : "s"
+    } ago`;
 }
 
 // ============================================================
@@ -1140,22 +1145,31 @@ function updateChatStatus(data = {}) {
 
     if (!chatStatus) return;
 
+    // ONLINE
     if (data.online === true) {
 
         chatStatus.textContent =
             "🟢 Online";
 
+        // LEMON GREEN
         chatStatus.style.color =
-            "#22c55e";
+            "#BFFF00";
+
+        chatStatus.style.fontWeight =
+            "800";
 
         return;
     }
 
+    // OFFLINE / LAST SEEN
     chatStatus.textContent =
         relativeLastSeen(data);
 
     chatStatus.style.color =
-        "";
+        "#BFFF00";
+
+    chatStatus.style.fontWeight =
+        "600";
 }
 
 // ============================================================
@@ -1891,88 +1905,60 @@ async function initializeChat() {
 }
 
 // ============================================================
-// STATUS
+// STATUS — REALTIME DATABASE
 // ============================================================
 
 function listenToStatus() {
 
     if (unsubscribeStatus) {
+
         unsubscribeStatus();
+
+        unsubscribeStatus =
+            null;
     }
 
-    unsubscribeStatus =
-        onSnapshot(
-            doc(
-                db,
-                "status",
-                receiverUid
-            ),
-            snapshot => {
+    if (
+        !rtdb ||
+        !receiverUid
+    ) {
 
-                if (!chatStatus) return;
+        updateChatStatus({});
+
+        return;
+    }
+
+    const statusRef =
+        ref(
+            rtdb,
+            `status/${receiverUid}`
+        );
+
+    unsubscribeStatus =
+        onValue(
+            statusRef,
+            snapshot => {
 
                 const data =
                     snapshot.exists()
-                        ? snapshot.data()
+                        ? snapshot.val()
                         : {};
 
-                updateChatStatus(data);
+                updateChatStatus(
+                    data
+                );
             },
             error => {
 
                 console.error(
-                    "Status listener:",
+                    "Realtime Database status:",
                     error
                 );
 
-                if (chatStatus) {
-                    chatStatus.textContent =
-                        "Last seen recently";
-                }
+                updateChatStatus({});
             }
         );
 }
-
-// ============================================================
-// REFRESH LAST SEEN
-// ============================================================
-
-setInterval(
-    () => {
-
-        if (!receiverUid) return;
-
-        getDoc(
-            doc(
-                db,
-                "status",
-                receiverUid
-            )
-        )
-            .then(snapshot => {
-
-                if (
-                    !snapshot.exists() ||
-                    !chatStatus
-                ) {
-                    return;
-                }
-
-                updateChatStatus(
-                    snapshot.data()
-                );
-            })
-            .catch(error => {
-
-                console.error(
-                    "Last seen refresh:",
-                    error
-                );
-            });
-
-    },
-    30000
-);
 
 // ============================================================
 // MESSAGES
@@ -2287,6 +2273,7 @@ function createVoicePlayer(
                     if (
                         player !== wrapper
                     ) {
+
                         player.classList.remove(
                             "playing"
                         );
@@ -2297,6 +2284,7 @@ function createVoicePlayer(
                             );
 
                         if (button) {
+
                             button.textContent =
                                 "▶";
                         }
