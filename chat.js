@@ -1,91 +1,256 @@
 // ============================================================
-// VITALSTAR CHAT.JS
-// Modern chat UI + attachment menu + voice recorder + delete
+// VITALSTAR — chat.js
+// Handles:
+// - Full-screen VS loading screen
+// - Beautiful modern chat UI
+// - Chat messages
+// - Image/video preview
+// - Image/video uploads
+// - Voice notes
+// - Sending state
+// - Message read/delivered status
+// - Delete own messages
+// - Block / unblock user
+// - Real-time online status
+// - Real last seen time
 // ============================================================
 
 import { auth, db } from "./firebase.js";
 
 import {
-    collection,
     doc,
     getDoc,
-    setDoc,
+    collection,
     addDoc,
-    updateDoc,
-    deleteDoc,
-    onSnapshot,
     query,
     orderBy,
-    serverTimestamp
+    limit,
+    onSnapshot,
+    serverTimestamp,
+    setDoc,
+    updateDoc,
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import {
+    getDatabase,
+    ref,
+    onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 
 // ============================================================
-// VS LOADER
+// FULL-SCREEN VITALSTAR LOADER
 // ============================================================
 
-const loader = document.createElement("div");
+const vitalStarChatLoader =
+    document.createElement("div");
 
-loader.innerHTML = `
-    <div class="vs-loader">
-        <div class="vs-loader-logo">VS</div>
+vitalStarChatLoader.id =
+    "vitalStarChatLoader";
+
+vitalStarChatLoader.innerHTML = `
+    <div class="vs-chat-loader-content">
+
+        <div class="vs-chat-spinner">
+            <span>VS</span>
+        </div>
+
+        <div class="vs-chat-loading-text">
+            Loading Chat...
+        </div>
+
     </div>
 `;
 
-document.body.appendChild(loader);
+const vitalStarChatLoaderStyle =
+    document.createElement("style");
 
-const loaderStyle = document.createElement("style");
+vitalStarChatLoaderStyle.textContent = `
 
-loaderStyle.textContent = `
-    .vs-loader {
-        position: fixed;
-        inset: 0;
-        background: #080510;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
+#vitalStarChatLoader {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background:
+        radial-gradient(
+            circle at center,
+            #17103d 0%,
+            #090616 48%,
+            #03020a 100%
+        );
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 1;
+    visibility: visible;
+
+    transition:
+        opacity 0.55s ease,
+        visibility 0.55s ease;
+}
+
+#vitalStarChatLoader.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.vs-chat-loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.vs-chat-spinner {
+    width: 90px;
+    height: 90px;
+
+    border-radius: 50%;
+
+    border:
+        5px solid
+        rgba(255,255,255,0.10);
+
+    border-top-color: #FFD54F;
+    border-right-color: #9C4DFF;
+    border-bottom-color: #7C4DFF;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    animation:
+        vsChatRotate
+        1s linear infinite;
+
+    box-shadow:
+        0 0 18px
+        rgba(255,213,79,0.25),
+
+        0 0 35px
+        rgba(124,77,255,0.18);
+}
+
+.vs-chat-spinner span {
+    font-size: 25px;
+    font-weight: 900;
+    letter-spacing: 2px;
+
+    color: #FFD54F;
+
+    text-shadow:
+        0 0 12px
+        rgba(255,213,79,0.45);
+
+    animation:
+        vsChatCounterRotate
+        1s linear infinite;
+}
+
+.vs-chat-loading-text {
+    margin-top: 18px;
+
+    color:
+        rgba(255,255,255,0.88);
+
+    font-size: 14px;
+    font-weight: 600;
+
+    letter-spacing: 0.5px;
+}
+
+@keyframes vsChatRotate {
+
+    from {
+        transform: rotate(0deg);
     }
 
-    .vs-loader-logo {
-        width: 65px;
-        height: 65px;
-        border: 4px solid #222;
-        border-top-color: #00ff88;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 22px;
-        font-weight: 900;
-        animation: vsSpin 1s linear infinite;
-        box-shadow: 0 0 25px rgba(0,255,136,.25);
+    to {
+        transform: rotate(360deg);
     }
 
-    @keyframes vsSpin {
-        to {
-            transform: rotate(360deg);
-        }
+}
+
+@keyframes vsChatCounterRotate {
+
+    from {
+        transform: rotate(0deg);
     }
+
+    to {
+        transform: rotate(-360deg);
+    }
+
+}
+
 `;
 
-document.head.appendChild(loaderStyle);
+document.head.appendChild(
+    vitalStarChatLoaderStyle
+);
+
+document.body.appendChild(
+    vitalStarChatLoader
+);
+
+
+let chatLoaderHidden = false;
+
+function hideChatLoader() {
+
+    if (chatLoaderHidden) return;
+
+    chatLoaderHidden = true;
+
+    const loader =
+        document.getElementById(
+            "vitalStarChatLoader"
+        );
+
+    if (!loader) return;
+
+    loader.classList.add("hide");
+
+    setTimeout(() => {
+        loader.remove();
+    }, 650);
+}
 
 
 // ============================================================
-// ELEMENTS
+// HTML ELEMENTS
 // ============================================================
 
-const messagesContainer =
-    document.getElementById("messages") ||
-    document.getElementById("chatMessages");
+const backBtn =
+    document.getElementById("backBtn");
+
+const chatAvatar =
+    document.getElementById("chatAvatar");
+
+const chatName =
+    document.getElementById("chatName");
+
+const chatStatus =
+    document.getElementById("chatStatus");
+
+const messages =
+    document.getElementById("messages");
+
+const messageForm =
+    document.getElementById("messageForm");
 
 const messageInput =
     document.getElementById("messageInput");
 
-const sendBtn =
-    document.getElementById("sendBtn");
+const imageInput =
+    document.getElementById("imageInput");
+
+const videoInput =
+    document.getElementById("videoInput");
 
 const imageBtn =
     document.getElementById("imageBtn");
@@ -96,669 +261,879 @@ const videoBtn =
 const recordBtn =
     document.getElementById("recordBtn");
 
-const imageInput =
-    document.getElementById("imageInput");
 
-const videoInput =
-    document.getElementById("videoInput");
+// ============================================================
+// GET RECEIVER UID
+// ============================================================
 
-const chatForm =
-    document.getElementById("chatForm") ||
-    messageInput?.closest("form");
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const receiverUid =
+    params.get("uid");
 
 
 // ============================================================
-// GET RECEIVER
+// BACK BUTTON
 // ============================================================
 
-const params = new URLSearchParams(location.search);
+if (backBtn) {
 
-const receiverId =
-    params.get("uid") ||
-    params.get("userId") ||
-    params.get("id");
+    backBtn.onclick = () => {
+        history.back();
+    };
 
-const currentUser =
-    auth.currentUser;
-
-if (!currentUser || !receiverId) {
-    loader.remove();
-    throw new Error("Chat user not found.");
-}
-
-const currentUid =
-    currentUser.uid;
-
-
-// ============================================================
-// CHAT ID
-// ============================================================
-
-const chatId = [
-    currentUid,
-    receiverId
-].sort().join("_");
-
-const chatRef =
-    doc(db, "chats", chatId);
-
-const messagesRef =
-    collection(db, "chats", chatId, "messages");
-
-
-// ============================================================
-// CLOUDINARY
-// ============================================================
-
-const CLOUDINARY_CLOUD =
-    "m0scmqqv";
-
-const CLOUDINARY_PRESET =
-    "vitalstar_upload";
-
-
-// ============================================================
-// STATE
-// ============================================================
-
-let imageUrl = "";
-let videoUrl = "";
-let voiceUrl = "";
-
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
-
-let attachmentMenu = null;
-
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text || "";
-    return div.innerHTML;
-}
-
-
-function formatTime(timestamp) {
-    if (!timestamp) return "";
-
-    const date =
-        timestamp.toDate
-            ? timestamp.toDate()
-            : new Date(timestamp);
-
-    return date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-}
-
-
-function scrollToBottom() {
-    if (!messagesContainer) return;
-
-    messagesContainer.scrollTop =
-        messagesContainer.scrollHeight;
 }
 
 
 // ============================================================
-// CHAT STYLE
+// CHAT UI STYLE
 // ============================================================
 
-const chatStyle = document.createElement("style");
+const modernChatStyle =
+    document.createElement("style");
 
-chatStyle.textContent = `
+modernChatStyle.textContent = `
 
-    .vs-attachment-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
+/* =========================================================
+   CHAT HEADER
+   ========================================================= */
+
+#chatStatus {
+    transition:
+        color .25s ease,
+        opacity .25s ease;
+}
+
+.vs-online-dot {
+    display: inline-block;
+
+    width: 8px;
+    height: 8px;
+
+    margin-right: 5px;
+
+    border-radius: 50%;
+
+    background: #35e889;
+
+    box-shadow:
+        0 0 8px
+        rgba(53,232,137,.75);
+}
+
+.vs-offline-dot {
+    display: inline-block;
+
+    width: 8px;
+    height: 8px;
+
+    margin-right: 5px;
+
+    border-radius: 50%;
+
+    background: #888;
+}
+
+
+/* =========================================================
+   ATTACHMENT BUTTON
+   ========================================================= */
+
+.vs-attachment-wrapper {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+.vs-attachment-button {
+    width: 42px;
+    height: 42px;
+
+    border: none;
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c4dff,
+            #9c4dff
+        );
+
+    color: white;
+
+    font-size: 25px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow:
+        0 5px 18px
+        rgba(124,77,255,.35);
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.vs-attachment-button:active {
+    transform: scale(.9);
+}
+
+.vs-attachment-button.active {
+    transform: rotate(45deg);
+}
+
+.vs-attachment-menu {
+    position: absolute;
+
+    left: 0;
+    bottom: 52px;
+
+    width: 190px;
+
+    padding: 7px;
+
+    background:
+        rgba(20,16,35,.98);
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    border-radius: 17px;
+
+    box-shadow:
+        0 18px 45px
+        rgba(0,0,0,.45);
+
+    backdrop-filter:
+        blur(18px);
+
+    display: none;
+
+    z-index: 9999;
+
+    animation:
+        vsAttachmentOpen
+        .18s ease;
+}
+
+.vs-attachment-menu.show {
+    display: block;
+}
+
+@keyframes vsAttachmentOpen {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(8px)
+            scale(.96);
     }
 
-    .vs-plus-button {
-        width: 42px;
-        height: 42px;
-        border: none;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #7c3aed, #00d084);
-        color: white;
-        font-size: 25px;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: .2s;
-        flex-shrink: 0;
+    to {
+        opacity: 1;
+        transform:
+            translateY(0)
+            scale(1);
     }
 
-    .vs-plus-button:active {
-        transform: scale(.9);
+}
+
+.vs-attachment-item {
+    width: 100%;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    padding: 11px;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    font-size: 14px;
+
+    transition:
+        background .18s ease;
+}
+
+.vs-attachment-item:hover {
+    background:
+        rgba(255,255,255,.08);
+}
+
+.vs-attachment-icon {
+    width: 35px;
+    height: 35px;
+
+    border-radius: 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        rgba(124,77,255,.18);
+
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   MESSAGE DESIGN
+   ========================================================= */
+
+.message {
+    position: relative;
+
+    animation:
+        vsMessageIn
+        .18s ease;
+}
+
+@keyframes vsMessageIn {
+
+    from {
+        opacity: 0;
+        transform:
+            translateY(5px);
     }
 
-    .vs-plus-button.active {
-        transform: rotate(45deg);
+    to {
+        opacity: 1;
+        transform:
+            translateY(0);
     }
 
-    .vs-attachment-menu {
-        position: absolute;
-        bottom: 52px;
-        left: 0;
-        width: 190px;
-        padding: 8px;
-        background: rgba(18, 14, 32, .98);
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 16px;
-        box-shadow: 0 15px 40px rgba(0,0,0,.4);
-        display: none;
-        z-index: 9999;
-        backdrop-filter: blur(15px);
+}
+
+.message.sent {
+    position: relative;
+}
+
+.message.received {
+    position: relative;
+}
+
+.message p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   MESSAGE ACTION BUTTON
+   ========================================================= */
+
+.vs-message-more {
+    position: absolute;
+
+    top: 4px;
+    right: -35px;
+
+    width: 28px;
+    height: 28px;
+
+    border: none;
+    border-radius: 50%;
+
+    background:
+        rgba(30,30,40,.92);
+
+    color: white;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: .65;
+
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+.vs-message-more:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+
+/* =========================================================
+   MESSAGE ACTION MENU
+   ========================================================= */
+
+.vs-message-actions {
+    position: absolute;
+
+    right: -5px;
+    top: 35px;
+
+    min-width: 125px;
+
+    background:
+        rgba(25,21,36,.98);
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    border-radius: 12px;
+
+    padding: 5px;
+
+    box-shadow:
+        0 15px 35px
+        rgba(0,0,0,.45);
+
+    z-index: 5000;
+}
+
+.vs-message-action {
+    width: 100%;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    padding: 10px 12px;
+
+    border-radius: 8px;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.vs-message-action:hover {
+    background:
+        rgba(255,255,255,.08);
+}
+
+.vs-message-action.delete {
+    color: #ff6978;
+}
+
+
+/* =========================================================
+   BLOCK MENU
+   ========================================================= */
+
+.vs-chat-options {
+    position: absolute;
+
+    top: 55px;
+    right: 12px;
+
+    width: 170px;
+
+    padding: 6px;
+
+    background:
+        rgba(20,16,35,.98);
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 15px 40px
+        rgba(0,0,0,.45);
+
+    display: none;
+
+    z-index: 10000;
+}
+
+.vs-chat-options.show {
+    display: block;
+
+    animation:
+        vsAttachmentOpen
+        .18s ease;
+}
+
+.vs-chat-option {
+    width: 100%;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    padding: 11px 12px;
+
+    border-radius: 9px;
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.vs-chat-option:hover {
+    background:
+        rgba(255,255,255,.08);
+}
+
+.vs-chat-option.block {
+    color: #ff6978;
+}
+
+
+/* =========================================================
+   BLOCKED CHAT
+   ========================================================= */
+
+.vs-blocked-message {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    text-align: center;
+
+    padding: 12px 15px;
+
+    margin-bottom: 5px;
+
+    color: #ff8995;
+
+    font-size: 13px;
+
+    background:
+        rgba(255,80,100,.08);
+
+    border-top:
+        1px solid
+        rgba(255,80,100,.12);
+}
+
+
+/* =========================================================
+   SENDING STATUS
+   ========================================================= */
+
+#messageSendingStatus {
+    animation:
+        vsPulse
+        1.2s ease-in-out infinite;
+}
+
+@keyframes vsPulse {
+
+    0%,
+    100% {
+        opacity: .55;
     }
 
-    .vs-attachment-menu.show {
-        display: block;
-        animation: vsMenu .16s ease;
-    }
-
-    @keyframes vsMenu {
-        from {
-            opacity: 0;
-            transform: translateY(8px) scale(.96);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    .vs-attachment-item {
-        width: 100%;
-        border: none;
-        background: transparent;
-        color: white;
-        padding: 12px;
-        border-radius: 11px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        cursor: pointer;
-        font-size: 14px;
-        text-align: left;
-    }
-
-    .vs-attachment-item:hover {
-        background: rgba(255,255,255,.08);
-    }
-
-    .vs-attachment-icon {
-        width: 35px;
-        height: 35px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        background: rgba(124,58,237,.2);
-    }
-
-    .vs-message-container {
-        position: relative;
-        margin: 6px 10px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .vs-message-container.mine {
-        align-items: flex-end;
-    }
-
-    .vs-message-container.theirs {
-        align-items: flex-start;
-    }
-
-    .vs-message-bubble {
-        position: relative;
-        max-width: min(78%, 500px);
-        padding: 10px 12px;
-        border-radius: 17px;
-        word-break: break-word;
-    }
-
-    .mine .vs-message-bubble {
-        background: linear-gradient(135deg, #6336d8, #4325a8);
-        color: white;
-        border-bottom-right-radius: 5px;
-    }
-
-    .theirs .vs-message-bubble {
-        background: #20202b;
-        color: white;
-        border-bottom-left-radius: 5px;
-    }
-
-    .vs-message-text {
-        margin: 0;
-        white-space: pre-wrap;
-        line-height: 1.4;
-    }
-
-    .vs-message-time {
-        font-size: 10px;
-        opacity: .65;
-        margin-top: 4px;
-        text-align: right;
-    }
-
-    .vs-message-media {
-        max-width: 240px;
-        max-height: 300px;
-        border-radius: 12px;
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    .vs-audio-player {
-        max-width: 230px;
-    }
-
-    .vs-message-more {
-        position: absolute;
-        top: 3px;
-        right: -32px;
-        width: 28px;
-        height: 28px;
-        border: none;
-        border-radius: 50%;
-        background: rgba(30,30,40,.9);
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: .65;
-    }
-
-    .theirs .vs-message-more {
-        left: -32px;
-        right: auto;
-    }
-
-    .vs-message-more:hover {
+    50% {
         opacity: 1;
     }
 
-    .vs-message-actions {
-        position: absolute;
-        right: 0;
-        top: 32px;
-        min-width: 110px;
-        background: #191522;
-        border: 1px solid rgba(255,255,255,.1);
-        border-radius: 10px;
-        overflow: hidden;
-        z-index: 1000;
-        box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+
+
+/* =========================================================
+   DELETE CONFIRMATION
+   ========================================================= */
+
+.vs-delete-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 100000;
+
+    background:
+        rgba(0,0,0,.68);
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.vs-delete-box {
+    width: min(340px, 100%);
+
+    background:
+        #181522;
+
+    color: white;
+
+    border-radius: 20px;
+
+    padding: 22px;
+
+    box-shadow:
+        0 25px 70px
+        rgba(0,0,0,.55);
+}
+
+.vs-delete-box h3 {
+    margin:
+        0 0 8px;
+}
+
+.vs-delete-box p {
+    margin:
+        0;
+
+    opacity: .7;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+}
+
+.vs-delete-buttons {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+.vs-delete-buttons button {
+    flex: 1;
+
+    border: none;
+
+    border-radius: 11px;
+
+    padding: 11px;
+
+    cursor: pointer;
+}
+
+.vs-delete-cancel {
+    background: #30303a;
+    color: white;
+}
+
+.vs-delete-confirm {
+    background: #e53955;
+    color: white;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .vs-message-more {
+        right: -31px;
     }
 
-    .vs-message-action {
-        width: 100%;
-        padding: 10px 13px;
-        border: none;
-        background: transparent;
-        color: white;
-        text-align: left;
-        cursor: pointer;
+    .message.received
+    .vs-message-more {
+        left: -31px;
+        right: auto;
     }
 
-    .vs-message-action:hover {
-        background: rgba(255,255,255,.08);
+    .vs-attachment-menu {
+        width: 175px;
     }
 
-    .vs-message-action.delete {
-        color: #ff6b6b;
-    }
-
-    .vs-recording {
-        color: #ff5b6e !important;
-    }
-
-    .vs-upload-status {
-        position: fixed;
-        left: 50%;
-        bottom: 90px;
-        transform: translateX(-50%);
-        background: rgba(20,18,28,.96);
-        color: white;
-        padding: 10px 16px;
-        border-radius: 20px;
-        font-size: 13px;
-        z-index: 99999;
-        display: none;
-    }
-
-    .vs-confirm-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.65);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 100000;
-        padding: 20px;
-    }
-
-    .vs-confirm-box {
-        width: min(330px, 100%);
-        background: #181522;
-        border-radius: 18px;
-        padding: 22px;
-        color: white;
-        box-shadow: 0 20px 60px rgba(0,0,0,.5);
-    }
-
-    .vs-confirm-box h3 {
-        margin: 0 0 8px;
-    }
-
-    .vs-confirm-box p {
-        opacity: .7;
-        font-size: 14px;
-    }
-
-    .vs-confirm-buttons {
-        display: flex;
-        gap: 10px;
-        margin-top: 18px;
-    }
-
-    .vs-confirm-buttons button {
-        flex: 1;
-        border: none;
-        padding: 11px;
-        border-radius: 10px;
-        cursor: pointer;
-    }
-
-    .vs-cancel-delete {
-        background: #30303a;
-        color: white;
-    }
-
-    .vs-confirm-delete {
-        background: #e53955;
-        color: white;
-    }
+}
 
 `;
 
-document.head.appendChild(chatStyle);
+document.head.appendChild(
+    modernChatStyle
+);
 
 
 // ============================================================
-// UPLOAD STATUS
+// CREATE MEDIA PREVIEW AREA
 // ============================================================
 
-const uploadStatus =
+const mediaPreview =
     document.createElement("div");
 
-uploadStatus.className =
-    "vs-upload-status";
+mediaPreview.id =
+    "chatMediaPreview";
 
-document.body.appendChild(uploadStatus);
+mediaPreview.style.display =
+    "none";
 
+mediaPreview.style.width =
+    "100%";
 
-function showStatus(text) {
-    uploadStatus.textContent = text;
-    uploadStatus.style.display = "block";
-}
+mediaPreview.style.margin =
+    "8px 0";
 
+mediaPreview.style.textAlign =
+    "left";
 
-function hideStatus() {
-    uploadStatus.style.display = "none";
-}
+mediaPreview.style.minHeight =
+    "0";
 
+if (messageForm) {
 
-// ============================================================
-// HIDE OLD BUTTONS
-// ============================================================
+    messageForm.parentNode.insertBefore(
+        mediaPreview,
+        messageForm
+    );
 
-if (imageBtn) imageBtn.style.display = "none";
-if (videoBtn) videoBtn.style.display = "none";
-if (recordBtn) recordBtn.style.display = "none";
-
-
-// ============================================================
-// FILE INPUTS
-// ============================================================
-
-const hiddenImageInput =
-    imageInput || document.createElement("input");
-
-const hiddenVideoInput =
-    videoInput || document.createElement("input");
-
-if (!imageInput) {
-    hiddenImageInput.type = "file";
-    hiddenImageInput.accept = "image/*";
-    hiddenImageInput.style.display = "none";
-    document.body.appendChild(hiddenImageInput);
-}
-
-if (!videoInput) {
-    hiddenVideoInput.type = "file";
-    hiddenVideoInput.accept = "video/*";
-    hiddenVideoInput.style.display = "none";
-    document.body.appendChild(hiddenVideoInput);
 }
 
 
 // ============================================================
-// ATTACHMENT MENU
+// CREATE SENDING STATUS
 // ============================================================
 
-function createAttachmentMenu() {
+const sendingStatus =
+    document.createElement("div");
 
-    if (!chatForm || attachmentMenu) return;
+sendingStatus.id =
+    "messageSendingStatus";
 
-    const wrapper =
-        document.createElement("div");
+sendingStatus.style.display =
+    "none";
 
-    wrapper.className =
-        "vs-attachment-wrapper";
+sendingStatus.style.textAlign =
+    "center";
 
-    const plusButton =
-        document.createElement("button");
+sendingStatus.style.fontSize =
+    "13px";
 
-    plusButton.type = "button";
-    plusButton.className =
-        "vs-plus-button";
+sendingStatus.style.fontWeight =
+    "bold";
 
-    plusButton.textContent = "+";
+sendingStatus.style.color =
+    "#1877f2";
 
-    attachmentMenu =
-        document.createElement("div");
+sendingStatus.style.padding =
+    "6px";
 
-    attachmentMenu.className =
-        "vs-attachment-menu";
+if (messageForm) {
 
-    attachmentMenu.innerHTML = `
+    messageForm.parentNode.insertBefore(
+        sendingStatus,
+        messageForm
+    );
 
-        <button type="button"
-            class="vs-attachment-item"
-            data-action="photo">
+}
 
-            <span class="vs-attachment-icon">📷</span>
-            <span>Photo</span>
 
-        </button>
+// ============================================================
+// FIND SEND BUTTON
+// ============================================================
 
-        <button type="button"
-            class="vs-attachment-item"
-            data-action="video">
+let sendButton =
+    messageForm?.querySelector(
+        'button[type="submit"]'
+    );
 
-            <span class="vs-attachment-icon">🎥</span>
-            <span>Video</span>
 
-        </button>
+// ============================================================
+// SENDING STATE
+// ============================================================
 
-        <button type="button"
-            class="vs-attachment-item"
-            data-action="voice">
+function setSendingState(isSending) {
 
-            <span class="vs-attachment-icon">🎙️</span>
-            <span class="voice-label">Voice note</span>
+    if (sendButton) {
 
-        </button>
+        sendButton.disabled =
+            isSending;
 
-    `;
+        if (isSending) {
 
-    wrapper.appendChild(plusButton);
-    wrapper.appendChild(attachmentMenu);
+            sendButton.dataset.originalText =
+                sendButton.textContent;
 
-    if (sendBtn && sendBtn.parentElement) {
-        sendBtn.parentElement.insertBefore(
-            wrapper,
-            sendBtn
-        );
-    } else {
-        chatForm.prepend(wrapper);
+            sendButton.textContent =
+                "⏳ Sending...";
+
+        } else {
+
+            sendButton.textContent =
+                sendButton.dataset.originalText ||
+                "Send";
+        }
     }
 
-    plusButton.addEventListener("click", e => {
+    sendingStatus.style.display =
+        isSending
+            ? "block"
+            : "none";
 
-        e.stopPropagation();
+    sendingStatus.textContent =
+        isSending
+            ? "Uploading, please wait..."
+            : "";
+}
 
-        attachmentMenu.classList.toggle("show");
-        plusButton.classList.toggle("active");
 
-    });
+// ============================================================
+// CLEAR MEDIA PREVIEW
+// ============================================================
+
+function clearMediaPreview() {
+
+    mediaPreview.innerHTML =
+        "";
+
+    mediaPreview.style.display =
+        "none";
+}
 
 
-    attachmentMenu.addEventListener("click", async e => {
+// ============================================================
+// IMAGE PREVIEW
+// ============================================================
 
-        const button =
-            e.target.closest(".vs-attachment-item");
+if (imageInput) {
 
-        if (!button) return;
+    imageInput.addEventListener(
+        "change",
+        () => {
 
-        const action =
-            button.dataset.action;
+            const file =
+                imageInput.files[0];
 
-        if (action === "photo") {
+            if (!file) return;
 
-            hiddenImageInput.click();
+            if (videoInput) {
 
-        }
-
-        if (action === "video") {
-
-            hiddenVideoInput.click();
-
-        }
-
-        if (action === "voice") {
-
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
+                videoInput.value =
+                    "";
             }
 
+            clearMediaPreview();
+
+            const image =
+                document.createElement("img");
+
+            image.src =
+                URL.createObjectURL(file);
+
+            image.alt =
+                "Image preview";
+
+            image.style.width =
+                "100px";
+
+            image.style.height =
+                "120px";
+
+            image.style.objectFit =
+                "cover";
+
+            image.style.borderRadius =
+                "10px";
+
+            image.style.display =
+                "block";
+
+            mediaPreview.appendChild(
+                image
+            );
+
+            mediaPreview.style.display =
+                "block";
+
         }
+    );
 
-    });
-
-    document.addEventListener("click", e => {
-
-        if (!wrapper.contains(e.target)) {
-            attachmentMenu.classList.remove("show");
-            plusButton.classList.remove("active");
-        }
-
-    });
 }
 
-createAttachmentMenu();
-
 
 // ============================================================
-// IMAGE SELECTED
+// VIDEO PREVIEW
 // ============================================================
 
-hiddenImageInput.addEventListener("change", async () => {
+if (videoInput) {
 
-    const file =
-        hiddenImageInput.files?.[0];
+    videoInput.addEventListener(
+        "change",
+        () => {
 
-    if (!file) return;
+            const file =
+                videoInput.files[0];
 
-    try {
+            if (!file) return;
 
-        showStatus("Uploading photo...");
+            if (imageInput) {
 
-        imageUrl =
-            await uploadToCloudinary(file);
+                imageInput.value =
+                    "";
+            }
 
-        showStatus("Photo ready ✓");
+            clearMediaPreview();
 
-        setTimeout(hideStatus, 1200);
+            const video =
+                document.createElement("video");
 
-    } catch (error) {
+            video.src =
+                URL.createObjectURL(file);
 
-        console.error(error);
+            video.controls =
+                true;
 
-        showStatus("Photo upload failed");
+            video.preload =
+                "metadata";
 
-        setTimeout(hideStatus, 1800);
+            video.style.width =
+                "100px";
 
-    }
+            video.style.height =
+                "120px";
 
-    hiddenImageInput.value = "";
+            video.style.objectFit =
+                "cover";
 
-});
+            video.style.borderRadius =
+                "10px";
 
+            video.style.display =
+                "block";
 
-// ============================================================
-// VIDEO SELECTED
-// ============================================================
+            mediaPreview.appendChild(
+                video
+            );
 
-hiddenVideoInput.addEventListener("change", async () => {
+            mediaPreview.style.display =
+                "block";
 
-    const file =
-        hiddenVideoInput.files?.[0];
+        }
+    );
 
-    if (!file) return;
-
-    try {
-
-        showStatus("Uploading video...");
-
-        videoUrl =
-            await uploadToCloudinary(file);
-
-        showStatus("Video ready ✓");
-
-        setTimeout(hideStatus, 1200);
-
-    } catch (error) {
-
-        console.error(error);
-
-        showStatus("Video upload failed");
-
-        setTimeout(hideStatus, 1800);
-
-    }
-
-    hiddenVideoInput.value = "";
-
-});
+}
 
 
 // ============================================================
@@ -777,12 +1152,12 @@ async function uploadToCloudinary(file) {
 
     formData.append(
         "upload_preset",
-        CLOUDINARY_PRESET
+        "vitalstar_upload"
     );
 
     const response =
         await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`,
+            "https://api.cloudinary.com/v1_1/m0scmqqv/auto/upload",
             {
                 method: "POST",
                 body: formData
@@ -792,16 +1167,16 @@ async function uploadToCloudinary(file) {
     const data =
         await response.json();
 
-    if (!response.ok || !data.secure_url) {
+    console.log(data);
 
-        console.error(
-            "Cloudinary error:",
-            data
-        );
+    if (
+        !response.ok ||
+        !data.secure_url
+    ) {
 
         throw new Error(
             data?.error?.message ||
-            "Cloudinary upload failed"
+            "Upload failed."
         );
     }
 
@@ -810,47 +1185,268 @@ async function uploadToCloudinary(file) {
 
 
 // ============================================================
-// VOICE RECORDER
+// CREATE ATTACHMENT MENU
 // ============================================================
 
-async function startRecording() {
+let attachmentWrapper = null;
+let attachmentMenu = null;
+let attachmentButton = null;
+
+function createAttachmentMenu() {
+
+    if (!messageForm) return;
+
+    attachmentWrapper =
+        document.createElement("div");
+
+    attachmentWrapper.className =
+        "vs-attachment-wrapper";
+
+
+    attachmentButton =
+        document.createElement("button");
+
+    attachmentButton.type =
+        "button";
+
+    attachmentButton.className =
+        "vs-attachment-button";
+
+    attachmentButton.textContent =
+        "+";
+
+
+    attachmentMenu =
+        document.createElement("div");
+
+    attachmentMenu.className =
+        "vs-attachment-menu";
+
+
+    attachmentMenu.innerHTML = `
+
+        <button
+            type="button"
+            class="vs-attachment-item"
+            data-action="image">
+
+            <span class="vs-attachment-icon">
+                📷
+            </span>
+
+            <span>
+                Photo
+            </span>
+
+        </button>
+
+
+        <button
+            type="button"
+            class="vs-attachment-item"
+            data-action="video">
+
+            <span class="vs-attachment-icon">
+                🎥
+            </span>
+
+            <span>
+                Video
+            </span>
+
+        </button>
+
+
+        <button
+            type="button"
+            class="vs-attachment-item"
+            data-action="voice">
+
+            <span class="vs-attachment-icon">
+                🎙️
+            </span>
+
+            <span class="vs-voice-label">
+                Voice note
+            </span>
+
+        </button>
+
+    `;
+
+
+    attachmentWrapper.appendChild(
+        attachmentButton
+    );
+
+    attachmentWrapper.appendChild(
+        attachmentMenu
+    );
+
+
+    if (sendButton) {
+
+        messageForm.insertBefore(
+            attachmentWrapper,
+            sendButton
+        );
+
+    } else {
+
+        messageForm.appendChild(
+            attachmentWrapper
+        );
+
+    }
+
+
+    attachmentButton.onclick =
+        (event) => {
+
+            event.stopPropagation();
+
+            attachmentMenu.classList.toggle(
+                "show"
+            );
+
+            attachmentButton.classList.toggle(
+                "active"
+            );
+        };
+
+
+    attachmentMenu.addEventListener(
+        "click",
+        (event) => {
+
+            const button =
+                event.target.closest(
+                    ".vs-attachment-item"
+                );
+
+            if (!button) return;
+
+            const action =
+                button.dataset.action;
+
+
+            if (action === "image") {
+
+                attachmentMenu.classList.remove(
+                    "show"
+                );
+
+                attachmentButton.classList.remove(
+                    "active"
+                );
+
+                imageInput?.click();
+
+            }
+
+
+            if (action === "video") {
+
+                attachmentMenu.classList.remove(
+                    "show"
+                );
+
+                attachmentButton.classList.remove(
+                    "active"
+                );
+
+                videoInput?.click();
+
+            }
+
+
+            if (action === "voice") {
+
+                if (
+                    recorder &&
+                    recorder.state !==
+                    "inactive"
+                ) {
+
+                    stopVoiceRecording();
+
+                } else {
+
+                    startVoiceRecording();
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+createAttachmentMenu();
+
+
+// ============================================================
+// HIDE OLD MEDIA BUTTONS
+// ============================================================
+
+if (imageBtn) {
+
+    imageBtn.style.display =
+        "none";
+}
+
+if (videoBtn) {
+
+    videoBtn.style.display =
+        "none";
+}
+
+if (recordBtn) {
+
+    recordBtn.style.display =
+        "none";
+}
+
+
+// ============================================================
+// VOICE RECORDING
+// ============================================================
+
+let recorder;
+
+let audioChunks = [];
+
+
+async function startVoiceRecording() {
 
     try {
 
         const stream =
-            await navigator.mediaDevices.getUserMedia({
-                audio: true
-            });
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+                    audio: true
+                });
 
-        audioChunks = [];
 
-        mediaRecorder =
-            new MediaRecorder(stream);
-
-        isRecording = true;
-
-        const voiceButton =
-            attachmentMenu?.querySelector(
-                '[data-action="voice"]'
+        recorder =
+            new MediaRecorder(
+                stream
             );
 
-        if (voiceButton) {
-
-            voiceButton.classList.add(
-                "vs-recording"
-            );
-
-            voiceButton.querySelector(
-                ".voice-label"
-            ).textContent =
-                "Stop recording";
-        }
+        audioChunks =
+            [];
 
 
-        mediaRecorder.ondataavailable =
-            event => {
+        recorder.ondataavailable =
+            (event) => {
 
-                if (event.data.size > 0) {
+                if (
+                    event.data.size > 0
+                ) {
+
                     audioChunks.push(
                         event.data
                     );
@@ -859,108 +1455,122 @@ async function startRecording() {
             };
 
 
-        mediaRecorder.onstop =
+        recorder.onstop =
             async () => {
 
                 stream
                     .getTracks()
-                    .forEach(track =>
-                        track.stop()
+                    .forEach(
+                        track =>
+                            track.stop()
                     );
 
-                const blob =
+
+                const audioBlob =
                     new Blob(
                         audioChunks,
                         {
                             type:
-                                mediaRecorder.mimeType ||
                                 "audio/webm"
                         }
                     );
 
+
                 try {
 
-                    showStatus(
-                        "Uploading voice note..."
+                    setSendingState(
+                        true
                     );
 
-                    voiceUrl =
+
+                    const url =
                         await uploadToCloudinary(
-                            blob
+                            audioBlob
                         );
 
-                    showStatus(
-                        "Voice note ready ✓"
-                    );
 
-                    setTimeout(
-                        hideStatus,
-                        1200
+                    window.voiceUrl =
+                        url;
+
+
+                    alert(
+                        "Voice note ready 🎤"
                     );
 
                 } catch (error) {
 
-                    console.error(error);
-
-                    showStatus(
-                        "Voice upload failed"
+                    console.error(
+                        error
                     );
 
-                    setTimeout(
-                        hideStatus,
-                        1800
+                    alert(
+                        "Voice note upload failed."
+                    );
+
+                } finally {
+
+                    setSendingState(
+                        false
                     );
                 }
 
             };
 
-        mediaRecorder.start();
 
-        showStatus(
-            "Recording voice note..."
+        recorder.start();
+
+
+        const label =
+            attachmentMenu?.querySelector(
+                ".vs-voice-label"
+            );
+
+        if (label) {
+
+            label.textContent =
+                "⏹ Stop recording";
+        }
+
+
+        attachmentButton?.classList.add(
+            "active"
         );
+
 
     } catch (error) {
 
-        console.error(error);
-
-        showStatus(
-            "Microphone permission is required"
+        console.error(
+            error
         );
 
-        setTimeout(
-            hideStatus,
-            2000
+        alert(
+            "Microphone permission is required."
         );
     }
+
 }
 
 
-function stopRecording() {
+function stopVoiceRecording() {
 
     if (
-        mediaRecorder &&
-        mediaRecorder.state !== "inactive"
+        recorder &&
+        recorder.state !==
+        "inactive"
     ) {
-        mediaRecorder.stop();
+
+        recorder.stop();
     }
 
-    isRecording = false;
 
-    const voiceButton =
+    const label =
         attachmentMenu?.querySelector(
-            '[data-action="voice"]'
+            ".vs-voice-label"
         );
 
-    if (voiceButton) {
+    if (label) {
 
-        voiceButton.classList.remove(
-            "vs-recording"
-        );
-
-        voiceButton.querySelector(
-            ".voice-label"
-        ).textContent =
+        label.textContent =
             "Voice note";
     }
 
@@ -968,158 +1578,185 @@ function stopRecording() {
 
 
 // ============================================================
-// SEND MESSAGE
+// CHAT ID / STATE
 // ============================================================
 
-async function sendMessage() {
+let currentUser = null;
 
-    const text =
-        messageInput?.value.trim() || "";
+let currentChatId = null;
+
+let currentMessagesRef = null;
+
+let currentUserBlocked = false;
+
+let receiverBlockedMe = false;
+
+
+// ============================================================
+// BLOCK STORAGE
+// ============================================================
+
+function blockedUserRef(uid, blockedUid) {
+
+    return doc(
+        db,
+        "users",
+        uid,
+        "blockedUsers",
+        blockedUid
+    );
+}
+
+
+async function checkBlockStatus() {
 
     if (
-        !text &&
-        !imageUrl &&
-        !videoUrl &&
-        !voiceUrl
+        !currentUser ||
+        !receiverUid
     ) {
         return;
     }
 
-    if (sendBtn) {
-        sendBtn.disabled = true;
-    }
 
     try {
 
-        const messageData = {
-
-            senderId: currentUid,
-
-            receiverId: receiverId,
-
-            text: text,
-
-            image: imageUrl || "",
-
-            video: videoUrl || "",
-
-            audio: voiceUrl || "",
-
-            timestamp:
-                serverTimestamp(),
-
-            sent: true,
-
-            delivered: false,
-
-            read: false
-        };
+        const myBlock =
+            await getDoc(
+                blockedUserRef(
+                    currentUser.uid,
+                    receiverUid
+                )
+            );
 
 
-        await addDoc(
-            messagesRef,
-            messageData
-        );
+        currentUserBlocked =
+            myBlock.exists();
 
-
-        await setDoc(
-            chatRef,
-            {
-                participants: [
-                    currentUid,
-                    receiverId
-                ],
-
-                lastMessage:
-                    text ||
-                    (
-                        imageUrl
-                            ? "📷 Photo"
-                            : videoUrl
-                                ? "🎥 Video"
-                                : "🎙️ Voice note"
-                    ),
-
-                lastMessageAt:
-                    serverTimestamp(),
-
-                lastSenderId:
-                    currentUid
-            },
-            {
-                merge: true
-            }
-        );
-
-
-        if (messageInput) {
-            messageInput.value = "";
-        }
-
-        imageUrl = "";
-        videoUrl = "";
-        voiceUrl = "";
-
-        scrollToBottom();
 
     } catch (error) {
 
         console.error(
-            "Send message error:",
+            "My block status error:",
             error
         );
 
-        showStatus(
-            "Message failed to send"
-        );
-
-        setTimeout(
-            hideStatus,
-            1800
-        );
-
-    } finally {
-
-        if (sendBtn) {
-            sendBtn.disabled = false;
-        }
+        currentUserBlocked =
+            false;
     }
+
+
+    try {
+
+        const theirBlock =
+            await getDoc(
+                blockedUserRef(
+                    receiverUid,
+                    currentUser.uid
+                )
+            );
+
+
+        receiverBlockedMe =
+            theirBlock.exists();
+
+
+    } catch (error) {
+
+        console.error(
+            "Receiver block status error:",
+            error
+        );
+
+        receiverBlockedMe =
+            false;
+    }
+
+
+    updateBlockedUI();
 }
 
 
 // ============================================================
-// SEND BUTTON
+// BLOCK / UNBLOCK UI
 // ============================================================
 
-if (sendBtn) {
+let chatOptionsButton = null;
 
-    sendBtn.addEventListener(
+let chatOptionsMenu = null;
+
+
+function createChatOptions() {
+
+    if (!chatName) return;
+
+
+    chatOptionsButton =
+        document.createElement("button");
+
+    chatOptionsButton.type =
+        "button";
+
+    chatOptionsButton.textContent =
+        "⋮";
+
+    chatOptionsButton.style.cssText = `
+
+        border:none;
+        background:transparent;
+        color:white;
+        font-size:25px;
+        cursor:pointer;
+        padding:5px 10px;
+
+    `;
+
+
+    chatOptionsMenu =
+        document.createElement("div");
+
+    chatOptionsMenu.className =
+        "vs-chat-options";
+
+
+    const header =
+        chatName.parentElement;
+
+
+    if (header) {
+
+        header.style.position =
+            "relative";
+
+        header.appendChild(
+            chatOptionsButton
+        );
+
+        header.appendChild(
+            chatOptionsMenu
+        );
+    }
+
+
+    chatOptionsButton.onclick =
+        (event) => {
+
+            event.stopPropagation();
+
+            chatOptionsMenu.classList.toggle(
+                "show"
+            );
+
+            updateBlockOption();
+        };
+
+
+    document.addEventListener(
         "click",
-        e => {
+        () => {
 
-            e.preventDefault();
-
-            sendMessage();
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// FORM SUBMIT
-// ============================================================
-
-if (chatForm) {
-
-    chatForm.addEventListener(
-        "submit",
-        e => {
-
-            e.preventDefault();
-
-            sendMessage();
+            chatOptionsMenu?.classList.remove(
+                "show"
+            );
 
         }
     );
@@ -1127,28 +1764,474 @@ if (chatForm) {
 }
 
 
-// ============================================================
-// ENTER TO SEND
-// ============================================================
+function updateBlockOption() {
 
-if (messageInput) {
+    if (!chatOptionsMenu) return;
 
-    messageInput.addEventListener(
-        "keydown",
-        e => {
 
-            if (
-                e.key === "Enter" &&
-                !e.shiftKey
-            ) {
+    chatOptionsMenu.innerHTML = `
 
-                e.preventDefault();
+        <button
+            type="button"
+            class="vs-chat-option block"
+            id="vsBlockUserButton">
 
-                sendMessage();
+            ${
+                currentUserBlocked
+                    ? "🔓 Unblock User"
+                    : "🚫 Block User"
             }
 
+        </button>
+
+    `;
+
+
+    const blockButton =
+        document.getElementById(
+            "vsBlockUserButton"
+        );
+
+
+    if (blockButton) {
+
+        blockButton.onclick =
+            async (event) => {
+
+                event.stopPropagation();
+
+                if (
+                    currentUserBlocked
+                ) {
+
+                    await unblockUser();
+
+                } else {
+
+                    await blockUser();
+
+                }
+
+            };
+    }
+
+}
+
+
+async function blockUser() {
+
+    if (
+        !currentUser ||
+        !receiverUid
+    ) {
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            "Block this user? You can unblock them later."
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await setDoc(
+            blockedUserRef(
+                currentUser.uid,
+                receiverUid
+            ),
+            {
+                blockedAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        currentUserBlocked =
+            true;
+
+
+        updateBlockedUI();
+
+
+        chatOptionsMenu?.classList.remove(
+            "show"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Block user error:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to block this user."
+        );
+    }
+
+}
+
+
+async function unblockUser() {
+
+    if (
+        !currentUser ||
+        !receiverUid
+    ) {
+        return;
+    }
+
+
+    try {
+
+        await deleteDoc(
+            blockedUserRef(
+                currentUser.uid,
+                receiverUid
+            )
+        );
+
+
+        currentUserBlocked =
+            false;
+
+
+        updateBlockedUI();
+
+
+        chatOptionsMenu?.classList.remove(
+            "show"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Unblock user error:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Unable to unblock this user."
+        );
+    }
+
+}
+
+
+// ============================================================
+// BLOCKED UI
+// ============================================================
+
+let blockedNotice = null;
+
+
+function updateBlockedUI() {
+
+    const blocked =
+        currentUserBlocked ||
+        receiverBlockedMe;
+
+
+    if (blocked) {
+
+        if (!blockedNotice) {
+
+            blockedNotice =
+                document.createElement("div");
+
+            blockedNotice.className =
+                "vs-blocked-message";
+
+            if (messageForm) {
+
+                messageForm.parentNode.insertBefore(
+                    blockedNotice,
+                    messageForm
+                );
+            }
         }
-    );
+
+
+        if (
+            currentUserBlocked
+        ) {
+
+            blockedNotice.textContent =
+                "🚫 You blocked this user. Unblock them to continue chatting.";
+
+        } else {
+
+            blockedNotice.textContent =
+                "🚫 You cannot send messages to this user.";
+        }
+
+
+        if (messageForm) {
+
+            messageForm.style.opacity =
+                "0.55";
+        }
+
+
+        if (sendButton) {
+
+            sendButton.disabled =
+                true;
+        }
+
+
+        if (messageInput) {
+
+            messageInput.disabled =
+                true;
+
+            messageInput.placeholder =
+                "Messaging is unavailable";
+        }
+
+
+    } else {
+
+        if (blockedNotice) {
+
+            blockedNotice.remove();
+
+            blockedNotice =
+                null;
+        }
+
+
+        if (messageForm) {
+
+            messageForm.style.opacity =
+                "1";
+        }
+
+
+        if (messageInput) {
+
+            messageInput.disabled =
+                false;
+
+            messageInput.placeholder =
+                messageInput.dataset.originalPlaceholder ||
+                "Write a message...";
+        }
+
+
+        if (sendButton) {
+
+            sendButton.disabled =
+                false;
+        }
+    }
+
+
+    updateBlockOption();
+}
+
+
+// ============================================================
+// REAL ONLINE / LAST SEEN
+// ============================================================
+
+let stopPresenceListener = null;
+
+
+function formatLastSeen(timestamp) {
+
+    if (!timestamp) {
+        return "Offline";
+    }
+
+
+    const date =
+        new Date(timestamp);
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "Offline";
+    }
+
+
+    const now =
+        new Date();
+
+
+    const today =
+        now.toDateString() ===
+        date.toDateString();
+
+
+    const yesterday =
+        new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() - 1
+        ).toDateString() ===
+        date.toDateString();
+
+
+    const time =
+        date.toLocaleTimeString(
+            [],
+            {
+                hour:
+                    "numeric",
+                minute:
+                    "2-digit"
+            }
+        );
+
+
+    if (today) {
+
+        return `Last seen today at ${time}`;
+
+    }
+
+
+    if (yesterday) {
+
+        return `Last seen yesterday at ${time}`;
+
+    }
+
+
+    return `Last seen ${date.toLocaleDateString(
+        [],
+        {
+            day:
+                "numeric",
+            month:
+                "short"
+        }
+    )} at ${time}`;
+
+}
+
+
+function updateChatStatus(
+    online,
+    lastSeen
+) {
+
+    if (!chatStatus) return;
+
+
+    if (online) {
+
+        chatStatus.innerHTML = `
+
+            <span class="vs-online-dot"></span>
+            Online
+
+        `;
+
+        chatStatus.style.color =
+            "#35e889";
+
+
+    } else {
+
+        chatStatus.innerHTML = `
+
+            <span class="vs-offline-dot"></span>
+            ${formatLastSeen(lastSeen)}
+
+        `;
+
+        chatStatus.style.color =
+            "rgba(255,255,255,.60)";
+    }
+
+}
+
+
+function listenToPresence() {
+
+    try {
+
+        const database =
+            getDatabase();
+
+
+        const presenceRef =
+            ref(
+                database,
+                `status/${receiverUid}`
+            );
+
+
+        stopPresenceListener =
+            onValue(
+                presenceRef,
+                snapshot => {
+
+                    const status =
+                        snapshot.val();
+
+
+                    if (!status) {
+
+                        updateChatStatus(
+                            false,
+                            null
+                        );
+
+                        return;
+                    }
+
+
+                    updateChatStatus(
+                        status.online === true,
+                        status.lastSeen
+                    );
+
+                },
+                error => {
+
+                    console.error(
+                        "Presence error:",
+                        error
+                    );
+
+                    updateChatStatus(
+                        false,
+                        null
+                    );
+                }
+            );
+
+
+    } catch (error) {
+
+        console.error(
+            "Presence setup error:",
+            error
+        );
+
+        updateChatStatus(
+            false,
+            null
+        );
+    }
 
 }
 
@@ -1157,32 +2240,41 @@ if (messageInput) {
 // DELETE CONFIRMATION
 // ============================================================
 
-const confirmOverlay =
+const deleteOverlay =
     document.createElement("div");
 
-confirmOverlay.className =
-    "vs-confirm-overlay";
+deleteOverlay.className =
+    "vs-delete-overlay";
 
-confirmOverlay.innerHTML = `
 
-    <div class="vs-confirm-box">
+deleteOverlay.innerHTML = `
 
-        <h3>Delete message?</h3>
+    <div class="vs-delete-box">
+
+        <h3>
+            Delete message?
+        </h3>
 
         <p>
-            This message will be removed from the chat.
+            This message will be permanently removed from this chat.
         </p>
 
-        <div class="vs-confirm-buttons">
+        <div class="vs-delete-buttons">
 
             <button
-                class="vs-cancel-delete">
+                type="button"
+                class="vs-delete-cancel">
+
                 Cancel
+
             </button>
 
             <button
-                class="vs-confirm-delete">
+                type="button"
+                class="vs-delete-confirm">
+
                 Delete
+
             </button>
 
         </div>
@@ -1191,87 +2283,92 @@ confirmOverlay.innerHTML = `
 
 `;
 
+
 document.body.appendChild(
-    confirmOverlay
+    deleteOverlay
 );
 
-let messageToDelete = null;
+
+let messageToDelete =
+    null;
 
 
-function askDelete(messageId) {
+function showDeleteDialog(
+    messageId
+) {
 
     messageToDelete =
         messageId;
 
-    confirmOverlay.style.display =
+    deleteOverlay.style.display =
         "flex";
 }
 
 
-function closeDeleteDialog() {
+function hideDeleteDialog() {
 
     messageToDelete =
         null;
 
-    confirmOverlay.style.display =
+    deleteOverlay.style.display =
         "none";
 }
 
 
-confirmOverlay
-    .querySelector(".vs-cancel-delete")
-    .addEventListener(
-        "click",
-        closeDeleteDialog
-    );
+deleteOverlay
+    .querySelector(
+        ".vs-delete-cancel"
+    )
+    .onclick =
+    hideDeleteDialog;
 
 
-confirmOverlay
-    .querySelector(".vs-confirm-delete")
-    .addEventListener(
-        "click",
-        async () => {
+deleteOverlay
+    .querySelector(
+        ".vs-delete-confirm"
+    )
+    .onclick =
+    async () => {
 
-            if (!messageToDelete) {
-                return;
-            }
-
-            try {
-
-                await deleteDoc(
-                    doc(
-                        messagesRef,
-                        messageToDelete
-                    )
-                );
-
-                closeDeleteDialog();
-
-            } catch (error) {
-
-                console.error(
-                    "Delete message error:",
-                    error
-                );
-
-                closeDeleteDialog();
-
-                showStatus(
-                    "Could not delete message"
-                );
-
-                setTimeout(
-                    hideStatus,
-                    1800
-                );
-            }
-
+        if (!messageToDelete) {
+            return;
         }
-    );
+
+
+        try {
+
+            await deleteDoc(
+                doc(
+                    currentMessagesRef,
+                    messageToDelete
+                )
+            );
+
+
+            hideDeleteDialog();
+
+
+        } catch (error) {
+
+            console.error(
+                "Delete message error:",
+                error
+            );
+
+            hideDeleteDialog();
+
+
+            alert(
+                error.message ||
+                "Unable to delete message."
+            );
+        }
+
+    };
 
 
 // ============================================================
-// MESSAGE MENU
+// MESSAGE MENU CLOSE
 // ============================================================
 
 document.addEventListener(
@@ -1282,109 +2379,165 @@ document.addEventListener(
             .querySelectorAll(
                 ".vs-message-actions"
             )
-            .forEach(menu => {
-                menu.remove();
-            });
+            .forEach(
+                menu => menu.remove()
+            );
 
     }
 );
 
 
 // ============================================================
-// DISPLAY MESSAGE
+// DISPLAY MESSAGES
 // ============================================================
 
-function renderMessage(
-    message,
-    messageId
+function displayMessage(
+    messageDoc,
+    user
 ) {
 
-    if (!messagesContainer) return;
-
-    const data =
-        message.data();
-
-    const mine =
-        data.senderId === currentUid;
-
-    const container =
-        document.createElement("div");
-
-    container.className =
-        `vs-message-container ${
-            mine ? "mine" : "theirs"
-        }`;
+    const msg =
+        messageDoc.data();
 
 
-    const bubble =
-        document.createElement("div");
+    const div =
+        document.createElement(
+            "div"
+        );
 
-    bubble.className =
-        "vs-message-bubble";
+
+    div.className =
+        msg.senderId === user.uid
+            ? "message sent"
+            : "message received";
 
 
-    // --------------------------------------------------------
-    // TEXT
-    // --------------------------------------------------------
+    // ========================================================
+    // TIME
+    // ========================================================
 
-    if (data.text) {
+    let messageTime =
+        "";
 
-        const text =
-            document.createElement("p");
 
-        text.className =
-            "vs-message-text";
+    const date =
+        msg.timestamp?.toDate?.();
 
-        text.textContent =
-            data.text;
 
-        bubble.appendChild(
-            text
+    if (date) {
+
+        messageTime =
+            date.toLocaleTimeString(
+                [],
+                {
+                    hour:
+                        "numeric",
+                    minute:
+                        "2-digit"
+                }
+            );
+    }
+
+
+    // ========================================================
+    // MESSAGE STATUS
+    // ========================================================
+
+    let status =
+        "";
+
+
+    if (
+        msg.senderId ===
+        user.uid
+    ) {
+
+        status =
+            "✓ Sent";
+
+
+        if (
+            msg.delivered
+        ) {
+
+            status =
+                "✓✓ Delivered";
+        }
+
+
+        if (
+            msg.read
+        ) {
+
+            status =
+                "✓✓ Read";
+        }
+    }
+
+
+    // ========================================================
+    // BUILD MESSAGE SAFELY
+    // ========================================================
+
+    if (msg.text) {
+
+        const paragraph =
+            document.createElement(
+                "p"
+            );
+
+        paragraph.textContent =
+            msg.text;
+
+        div.appendChild(
+            paragraph
         );
     }
 
 
-    // --------------------------------------------------------
-    // IMAGE
-    // --------------------------------------------------------
-
-    if (data.image) {
+    if (msg.image) {
 
         const image =
-            document.createElement("img");
-
-        image.className =
-            "vs-message-media";
+            document.createElement(
+                "img"
+            );
 
         image.src =
-            data.image;
+            msg.image;
 
         image.alt =
-            "Photo";
+            "Image";
 
         image.loading =
             "lazy";
 
-        bubble.appendChild(
+        image.style.maxWidth =
+            "200px";
+
+        image.style.maxHeight =
+            "220px";
+
+        image.style.objectFit =
+            "contain";
+
+        image.style.borderRadius =
+            "10px";
+
+        image.style.display =
+            "block";
+
+        div.appendChild(
             image
         );
     }
 
 
-    // --------------------------------------------------------
-    // VIDEO
-    // --------------------------------------------------------
-
-    if (data.video) {
+    if (msg.video) {
 
         const video =
-            document.createElement("video");
-
-        video.className =
-            "vs-message-media";
-
-        video.src =
-            data.video;
+            document.createElement(
+                "video"
+            );
 
         video.controls =
             true;
@@ -1392,97 +2545,182 @@ function renderMessage(
         video.preload =
             "metadata";
 
-        bubble.appendChild(
+        video.style.maxWidth =
+            "220px";
+
+        video.style.maxHeight =
+            "220px";
+
+        video.style.borderRadius =
+            "10px";
+
+        video.style.display =
+            "block";
+
+
+        const source =
+            document.createElement(
+                "source"
+            );
+
+        source.src =
+            msg.video;
+
+
+        video.appendChild(
+            source
+        );
+
+
+        div.appendChild(
             video
         );
     }
 
 
-    // --------------------------------------------------------
-    // AUDIO
-    // --------------------------------------------------------
-
-    if (data.audio) {
+    if (msg.audio) {
 
         const audio =
-            document.createElement("audio");
-
-        audio.className =
-            "vs-audio-player";
-
-        audio.src =
-            data.audio;
+            document.createElement(
+                "audio"
+            );
 
         audio.controls =
             true;
 
-        bubble.appendChild(
+        audio.style.maxWidth =
+            "230px";
+
+
+        const source =
+            document.createElement(
+                "source"
+            );
+
+        source.src =
+            msg.audio;
+
+
+        audio.appendChild(
+            source
+        );
+
+
+        div.appendChild(
             audio
         );
     }
 
 
-    // --------------------------------------------------------
-    // TIME
-    // --------------------------------------------------------
+    // ========================================================
+    // MESSAGE FOOTER
+    // ========================================================
 
-    const time =
-        document.createElement("div");
+    const footer =
+        document.createElement(
+            "div"
+        );
 
-    time.className =
-        "vs-message-time";
+    footer.className =
+        "message-footer";
 
-    time.textContent =
-        formatTime(data.timestamp);
 
-    bubble.appendChild(
-        time
+    const timeSpan =
+        document.createElement(
+            "span"
+        );
+
+    timeSpan.className =
+        "message-time";
+
+    timeSpan.textContent =
+        messageTime;
+
+
+    const statusSpan =
+        document.createElement(
+            "span"
+        );
+
+    statusSpan.className =
+        "message-status";
+
+    statusSpan.textContent =
+        status;
+
+
+    footer.appendChild(
+        timeSpan
+    );
+
+    footer.appendChild(
+        statusSpan
     );
 
 
-    // --------------------------------------------------------
-    // DELETE MENU
-    // --------------------------------------------------------
+    div.appendChild(
+        footer
+    );
 
-    if (mine) {
+
+    // ========================================================
+    // DELETE BUTTON
+    // ========================================================
+
+    if (
+        msg.senderId ===
+        user.uid
+    ) {
 
         const moreButton =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
 
-        moreButton.className =
-            "vs-message-more";
 
         moreButton.type =
             "button";
+
+        moreButton.className =
+            "vs-message-more";
 
         moreButton.textContent =
             "⋮";
 
 
-        moreButton.addEventListener(
-            "click",
-            e => {
+        moreButton.onclick =
+            (event) => {
 
-                e.stopPropagation();
+                event.stopPropagation();
+
 
                 document
                     .querySelectorAll(
                         ".vs-message-actions"
                     )
-                    .forEach(menu => {
-                        menu.remove();
-                    });
+                    .forEach(
+                        menu => menu.remove()
+                    );
 
 
-                const actions =
-                    document.createElement("div");
+                const menu =
+                    document.createElement(
+                        "div"
+                    );
 
-                actions.className =
+
+                menu.className =
                     "vs-message-actions";
 
 
                 const deleteButton =
-                    document.createElement("button");
+                    document.createElement(
+                        "button"
+                    );
+
+
+                deleteButton.type =
+                    "button";
 
                 deleteButton.className =
                     "vs-message-action delete";
@@ -1491,201 +2729,659 @@ function renderMessage(
                     "🗑 Delete";
 
 
-                deleteButton.addEventListener(
-                    "click",
-                    e => {
+                deleteButton.onclick =
+                    (deleteEvent) => {
 
-                        e.stopPropagation();
+                        deleteEvent.stopPropagation();
 
-                        actions.remove();
+                        menu.remove();
 
-                        askDelete(
-                            messageId
+                        showDeleteDialog(
+                            messageDoc.id
                         );
-
-                    }
-                );
+                    };
 
 
-                actions.appendChild(
+                menu.appendChild(
                     deleteButton
                 );
 
-                container.appendChild(
-                    actions
+
+                div.appendChild(
+                    menu
                 );
 
-            }
-        );
+            };
 
 
-        container.appendChild(
+        div.appendChild(
             moreButton
         );
     }
 
 
-    container.appendChild(
-        bubble
-    );
-
-    messagesContainer.appendChild(
-        container
+    messages.appendChild(
+        div
     );
 }
 
 
 // ============================================================
-// LOAD MESSAGES
+// AUTHENTICATION
 // ============================================================
 
-const messagesQuery =
-    query(
-        messagesRef,
-        orderBy(
-            "timestamp",
-            "asc"
-        )
-    );
+auth.onAuthStateChanged(
+    async (user) => {
 
+        if (!user) {
 
-onSnapshot(
-    messagesQuery,
-    snapshot => {
+            window.location.href =
+                "login.html";
 
-        messagesContainer.innerHTML = "";
-
-        snapshot.forEach(
-            message => {
-
-                renderMessage(
-                    message,
-                    message.id
-                );
-
-            }
-        );
-
-        scrollToBottom();
-
-    },
-    error => {
-
-        console.error(
-            "Messages listener error:",
-            error
-        );
-
-    }
-);
-
-
-// ============================================================
-// LOAD RECEIVER PROFILE
-// ============================================================
-
-async function loadReceiverProfile() {
-
-    try {
-
-        const userRef =
-            doc(
-                db,
-                "users",
-                receiverId
-            );
-
-        const userSnap =
-            await getDoc(
-                userRef
-            );
-
-        if (!userSnap.exists()) {
             return;
         }
 
-        const user =
-            userSnap.data();
+
+        currentUser =
+            user;
 
 
-        const name =
-            user.fullName ||
-            user.username ||
-            "VitalStar User";
+        if (!receiverUid) {
+
+            alert(
+                "No chat recipient found."
+            );
+
+            hideChatLoader();
+
+            return;
+        }
 
 
-        const avatar =
-            user.photoURL ||
-            user.profileImage ||
-            user.photo ||
-            "";
+        // ====================================================
+        // CHAT ID
+        // ====================================================
+
+        currentChatId =
+            user.uid < receiverUid
+                ? `${user.uid}_${receiverUid}`
+                : `${receiverUid}_${user.uid}`;
 
 
-        const nameElements =
-            document.querySelectorAll(
-                "[data-chat-name], #chatName, .chat-name"
+        // ====================================================
+        // MESSAGES REFERENCE
+        // ====================================================
+
+        currentMessagesRef =
+            collection(
+                db,
+                "chats",
+                currentChatId,
+                "messages"
             );
 
 
-        nameElements.forEach(
-            element => {
-                element.textContent =
-                    name;
+        // ====================================================
+        // CREATE CHAT DOCUMENT
+        // ====================================================
+
+        try {
+
+            await setDoc(
+                doc(
+                    db,
+                    "chats",
+                    currentChatId
+                ),
+                {
+                    participants: [
+                        user.uid,
+                        receiverUid
+                    ]
+                },
+                {
+                    merge: true
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Chat setup error:",
+                error
+            );
+        }
+
+
+        // ====================================================
+        // GET RECEIVER
+        // ====================================================
+
+        try {
+
+            const receiverRef =
+                doc(
+                    db,
+                    "users",
+                    receiverUid
+                );
+
+
+            const receiverSnap =
+                await getDoc(
+                    receiverRef
+                );
+
+
+            if (
+                receiverSnap.exists()
+            ) {
+
+                const data =
+                    receiverSnap.data();
+
+
+                chatName.textContent =
+                    data.fullName ||
+                    data.username ||
+                    "User";
+
+
+                chatName.style.cursor =
+                    "pointer";
+
+
+                chatName.onclick =
+                    () => {
+
+                        window.location.href =
+                            `profile.html?uid=${receiverUid}`;
+
+                    };
+
+
+                chatAvatar.src =
+                    data.profilePicture ||
+                    "https://via.placeholder.com/50";
+
+
+                chatStatus.textContent =
+                    "Checking status...";
             }
-        );
 
 
-        const avatarElements =
-            document.querySelectorAll(
-                "[data-chat-avatar], #chatAvatar, .chat-avatar"
+        } catch (error) {
+
+            console.error(
+                "Receiver loading error:",
+                error
+            );
+        }
+
+
+        // ====================================================
+        // CHAT OPTIONS
+        // ====================================================
+
+        createChatOptions();
+
+
+        // ====================================================
+        // BLOCK STATUS
+        // ====================================================
+
+        await checkBlockStatus();
+
+
+        // ====================================================
+        // REAL-TIME PRESENCE
+        // ====================================================
+
+        listenToPresence();
+
+
+        // ====================================================
+        // SEND MESSAGE
+        // ====================================================
+
+        if (messageForm) {
+
+            messageForm.addEventListener(
+                "submit",
+                async (e) => {
+
+                    e.preventDefault();
+
+
+                    if (
+                        currentUserBlocked ||
+                        receiverBlockedMe
+                    ) {
+
+                        alert(
+                            currentUserBlocked
+                                ? "You blocked this user."
+                                : "You cannot message this user."
+                        );
+
+                        return;
+                    }
+
+
+                    const text =
+                        messageInput.value.trim();
+
+
+                    let image =
+                        "";
+
+                    let video =
+                        "";
+
+                    let audio =
+                        "";
+
+
+                    if (
+                        sendButton?.disabled
+                    ) {
+
+                        return;
+                    }
+
+
+                    try {
+
+                        setSendingState(
+                            true
+                        );
+
+
+                        // ========================================
+                        // IMAGE
+                        // ========================================
+
+                        if (
+                            imageInput?.files[0]
+                        ) {
+
+                            image =
+                                await uploadToCloudinary(
+                                    imageInput.files[0]
+                                );
+                        }
+
+
+                        // ========================================
+                        // VIDEO
+                        // ========================================
+
+                        if (
+                            videoInput?.files[0]
+                        ) {
+
+                            video =
+                                await uploadToCloudinary(
+                                    videoInput.files[0]
+                                );
+                        }
+
+
+                        // ========================================
+                        // VOICE
+                        // ========================================
+
+                        if (
+                            window.voiceUrl
+                        ) {
+
+                            audio =
+                                window.voiceUrl;
+
+                            window.voiceUrl =
+                                "";
+                        }
+
+
+                        // ========================================
+                        // CHECK EMPTY
+                        // ========================================
+
+                        if (
+                            !text &&
+                            !image &&
+                            !video &&
+                            !audio
+                        ) {
+
+                            return;
+                        }
+
+
+                        // ========================================
+                        // ADD MESSAGE
+                        // ========================================
+
+                        await addDoc(
+                            currentMessagesRef,
+                            {
+
+                                senderId:
+                                    user.uid,
+
+                                receiverId:
+                                    receiverUid,
+
+                                text:
+                                    text,
+
+                                image:
+                                    image,
+
+                                video:
+                                    video,
+
+                                audio:
+                                    audio,
+
+                                timestamp:
+                                    serverTimestamp(),
+
+                                sent:
+                                    true,
+
+                                delivered:
+                                    false,
+
+                                read:
+                                    false
+
+                            }
+                        );
+
+
+                        // ========================================
+                        // CHAT PREVIEW
+                        // ========================================
+
+                        const preview =
+                            text ||
+                            (
+                                image
+                                    ? "📷 Photo"
+                                    : video
+                                        ? "🎥 Video"
+                                        : audio
+                                            ? "🎤 Voice message"
+                                            : "New message"
+                            );
+
+
+                        // ========================================
+                        // UPDATE CHAT
+                        // ========================================
+
+                        await setDoc(
+                            doc(
+                                db,
+                                "chats",
+                                currentChatId
+                            ),
+                            {
+
+                                participants: [
+                                    user.uid,
+                                    receiverUid
+                                ],
+
+                                lastMessage:
+                                    preview,
+
+                                lastImage:
+                                    image || "",
+
+                                lastVideo:
+                                    video || "",
+
+                                lastAudio:
+                                    audio || "",
+
+                                lastTimestamp:
+                                    serverTimestamp(),
+
+                                lastSenderId:
+                                    user.uid,
+
+                                lastReceiverId:
+                                    receiverUid,
+
+                                lastDelivered:
+                                    false,
+
+                                lastRead:
+                                    false
+
+                            },
+                            {
+                                merge: true
+                            }
+                        );
+
+
+                        // ========================================
+                        // CLEAR FORM
+                        // ========================================
+
+                        messageInput.value =
+                            "";
+
+                        imageInput.value =
+                            "";
+
+                        videoInput.value =
+                            "";
+
+                        clearMediaPreview();
+
+
+                    } catch (err) {
+
+                        console.error(
+                            "Send message error:",
+                            err
+                        );
+
+                        alert(
+                            err.message ||
+                            "Failed to send message."
+                        );
+
+
+                    } finally {
+
+                        setSendingState(
+                            false
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        // ====================================================
+        // DISPLAY MESSAGES
+        // ====================================================
+
+        const q =
+            query(
+                currentMessagesRef,
+
+                orderBy(
+                    "timestamp",
+                    "desc"
+                ),
+
+                limit(15)
             );
 
 
-        avatarElements.forEach(
-            element => {
+        onSnapshot(
+            q,
 
-                if (avatar) {
-                    element.src =
-                        avatar;
+            async (snapshot) => {
+
+                messages.innerHTML =
+                    "";
+
+
+                const messageDocs =
+                    snapshot.docs.reverse();
+
+
+                for (
+                    const messageDoc
+                    of messageDocs
+                ) {
+
+                    const msg =
+                        messageDoc.data();
+
+
+                    let delivered =
+                        msg.delivered ||
+                        false;
+
+
+                    let read =
+                        msg.read ||
+                        false;
+
+
+                    // ========================================
+                    // MARK RECEIVED AS READ
+                    // ========================================
+
+                    if (
+                        msg.receiverId ===
+                            user.uid &&
+                        (
+                            !msg.delivered ||
+                            !msg.read
+                        )
+                    ) {
+
+                        try {
+
+                            await updateDoc(
+                                messageDoc.ref,
+                                {
+
+                                    delivered:
+                                        true,
+
+                                    read:
+                                        true
+
+                                }
+                            );
+
+
+                            await setDoc(
+                                doc(
+                                    db,
+                                    "chats",
+                                    currentChatId
+                                ),
+                                {
+
+                                    lastDelivered:
+                                        true,
+
+                                    lastRead:
+                                        true
+
+                                },
+                                {
+                                    merge:
+                                        true
+                                }
+                            );
+
+
+                        } catch (error) {
+
+                            console.error(
+                                "Read status error:",
+                                error
+                            );
+
+                        }
+
+
+                        delivered =
+                            true;
+
+                        read =
+                            true;
+                    }
+
+
+                    // ========================================
+                    // DISPLAY MESSAGE
+                    // ========================================
+
+                    displayMessage(
+                        messageDoc,
+                        user
+                    );
+
                 }
 
-            }
-        );
 
-    } catch (error) {
-
-        console.error(
-            "Profile loading error:",
-            error
-        );
-
-    }
-
-}
+                messages.scrollTop =
+                    messages.scrollHeight;
 
 
-// ============================================================
-// START
-// ============================================================
+                // ========================================
+                // HIDE LOADER
+                // ========================================
 
-loadReceiverProfile();
-
-
-// ============================================================
-// REMOVE LOADER
-// ============================================================
-
-window.addEventListener(
-    "load",
-    () => {
-
-        setTimeout(
-            () => {
-
-                loader.remove();
+                hideChatLoader();
 
             },
-            350
+
+
+            (error) => {
+
+                console.error(
+                    "Messages loading error:",
+                    error
+                );
+
+
+                hideChatLoader();
+
+
+                messages.innerHTML = `
+
+                    <div
+                        style="
+                            text-align:center;
+                            padding:20px;
+                            color:#999;
+                        "
+                    >
+
+                        Unable to load messages.
+
+                    </div>
+
+                `;
+
+            }
         );
 
     }
