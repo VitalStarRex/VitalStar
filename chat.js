@@ -3,6 +3,7 @@
 // Messages + Media Menu + Voice Notes + Delete + Block/Unblock
 // Last Seen + Voice Call + Video Call
 // Fixed Composer Above Footer
+// WhatsApp-style Voice Note Player
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -600,6 +601,105 @@ chatStyle.textContent = `
 }
 
 /* ============================================================
+   VOICE MESSAGE PLAYER (WhatsApp-style)
+   ============================================================ */
+
+.vs-voice-message {
+    display:flex;
+    align-items:center;
+    gap:9px;
+
+    background:rgba(255,255,255,.07);
+    border-radius:22px;
+
+    padding:8px 12px 8px 8px;
+
+    max-width:250px;
+    width:100%;
+
+    margin-top:5px;
+}
+
+.vs-voice-play {
+    flex:0 0 auto;
+
+    width:34px;
+    height:34px;
+
+    border:none;
+    border-radius:50%;
+
+    background:#7c3aed;
+    color:#fff;
+
+    font-size:13px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    cursor:pointer;
+}
+
+.vs-voice-play:active {
+    transform:scale(.92);
+}
+
+.vs-voice-seek {
+    flex:1 1 auto;
+    min-width:0;
+
+    -webkit-appearance:none;
+    appearance:none;
+
+    height:4px;
+    border-radius:2px;
+
+    background:rgba(255,255,255,.25);
+
+    outline:none;
+    cursor:pointer;
+    margin:0;
+}
+
+.vs-voice-seek::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    appearance:none;
+
+    width:12px;
+    height:12px;
+
+    border-radius:50%;
+
+    background:#fff;
+
+    cursor:pointer;
+}
+
+.vs-voice-seek::-moz-range-thumb {
+    width:12px;
+    height:12px;
+
+    border:none;
+    border-radius:50%;
+
+    background:#fff;
+
+    cursor:pointer;
+}
+
+.vs-voice-time {
+    flex:0 0 auto;
+
+    font-size:11px;
+    color:rgba(255,255,255,.75);
+
+    min-width:34px;
+
+    text-align:right;
+}
+
+/* ============================================================
    MOBILE
    ============================================================ */
 
@@ -937,6 +1037,267 @@ function showVideoPreview(file) {
 
     mediaPreview.style.display =
         "block";
+}
+
+// ============================================================
+// VOICE MESSAGE PLAYER (WhatsApp-style)
+// ============================================================
+
+// Keeps track of every voice player rendered on screen so that
+// starting one automatically pauses any other that's playing —
+// same behavior as WhatsApp (only one voice note plays at a time).
+const voicePlayers = [];
+
+function formatDuration(seconds) {
+
+    if (
+        !Number.isFinite(seconds) ||
+        seconds < 0
+    ) {
+        return "0:00";
+    }
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const secs =
+        Math.floor(seconds % 60)
+            .toString()
+            .padStart(2, "0");
+
+    return `${minutes}:${secs}`;
+}
+
+function pauseOtherVoicePlayers(currentAudio) {
+
+    voicePlayers.forEach(player => {
+
+        if (
+            player.audio !== currentAudio &&
+            !player.audio.paused
+        ) {
+
+            player.audio.pause();
+        }
+    });
+}
+
+function createVoiceMessage(url) {
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        "vs-voice-message";
+
+    const playBtn =
+        document.createElement("button");
+
+    playBtn.type =
+        "button";
+
+    playBtn.className =
+        "vs-voice-play";
+
+    playBtn.textContent =
+        "▶";
+
+    playBtn.title =
+        "Play voice note";
+
+    const seek =
+        document.createElement("input");
+
+    seek.type =
+        "range";
+
+    seek.className =
+        "vs-voice-seek";
+
+    seek.min =
+        "0";
+
+    seek.max =
+        "0";
+
+    seek.value =
+        "0";
+
+    seek.step =
+        "0.01";
+
+    const time =
+        document.createElement("span");
+
+    time.className =
+        "vs-voice-time";
+
+    time.textContent =
+        "0:00";
+
+    const audio =
+        document.createElement("audio");
+
+    audio.src =
+        url;
+
+    audio.preload =
+        "metadata";
+
+    let isSeeking = false;
+
+    audio.addEventListener(
+        "loadedmetadata",
+        () => {
+
+            seek.max =
+                audio.duration || 0;
+
+            time.textContent =
+                formatDuration(
+                    audio.duration
+                );
+        }
+    );
+
+    audio.addEventListener(
+        "timeupdate",
+        () => {
+
+            if (isSeeking) return;
+
+            seek.value =
+                audio.currentTime;
+
+            time.textContent =
+                formatDuration(
+                    audio.currentTime
+                );
+        }
+    );
+
+    audio.addEventListener(
+        "play",
+        () => {
+
+            playBtn.textContent =
+                "⏸";
+
+            pauseOtherVoicePlayers(
+                audio
+            );
+        }
+    );
+
+    audio.addEventListener(
+        "pause",
+        () => {
+
+            playBtn.textContent =
+                "▶";
+
+            time.textContent =
+                formatDuration(
+                    audio.duration
+                );
+        }
+    );
+
+    audio.addEventListener(
+        "ended",
+        () => {
+
+            playBtn.textContent =
+                "▶";
+
+            seek.value =
+                0;
+
+            time.textContent =
+                formatDuration(
+                    audio.duration
+                );
+        }
+    );
+
+    audio.addEventListener(
+        "error",
+        () => {
+
+            wrapper.title =
+                "Unable to load this voice note.";
+        }
+    );
+
+    playBtn.addEventListener(
+        "click",
+        () => {
+
+            if (audio.paused) {
+
+                audio.play()
+                    .catch(error => {
+
+                        console.error(
+                            "Voice playback:",
+                            error
+                        );
+
+                        alert(
+                            "Unable to play this voice note."
+                        );
+                    });
+
+            } else {
+
+                audio.pause();
+            }
+        }
+    );
+
+    seek.addEventListener(
+        "input",
+        () => {
+
+            isSeeking =
+                true;
+
+            time.textContent =
+                formatDuration(
+                    Number(seek.value)
+                );
+        }
+    );
+
+    seek.addEventListener(
+        "change",
+        () => {
+
+            audio.currentTime =
+                Number(seek.value);
+
+            isSeeking =
+                false;
+        }
+    );
+
+    wrapper.appendChild(
+        playBtn
+    );
+
+    wrapper.appendChild(
+        seek
+    );
+
+    wrapper.appendChild(
+        time
+    );
+
+    voicePlayers.push({
+        audio
+    });
+
+    return wrapper;
 }
 
 // ============================================================
@@ -1917,28 +2278,15 @@ function renderMessage(
     }
 
     // --------------------------------------------------------
-    // AUDIO
+    // AUDIO (WhatsApp-style voice note player)
     // --------------------------------------------------------
 
     if (msg.audio) {
 
-        const audio =
-            document.createElement("audio");
-
-        audio.src =
-            msg.audio;
-
-        audio.controls =
-            true;
-
-        audio.style.maxWidth =
-            "250px";
-
-        audio.style.width =
-            "100%";
-
         content.appendChild(
-            audio
+            createVoiceMessage(
+                msg.audio
+            )
         );
     }
 
