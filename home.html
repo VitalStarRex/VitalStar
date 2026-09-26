@@ -696,12 +696,13 @@ header{
 
 /* =========================================================
    POSTS
+   (always dark, regardless of light/dark mode)
    ========================================================= */
 
 .post-card{
-    background:white;
+    background:#1d1d1d;
 
-    color:#333333;
+    color:#eee;
 
     border-radius:22px;
 
@@ -738,7 +739,7 @@ header{
 .post-card p{
     padding:15px;
 
-    color:#333333;
+    color:#eee;
 
     font-size:16px;
 
@@ -760,7 +761,7 @@ header{
 
     padding:13px;
 
-    border-top:1px solid #eee;
+    border-top:1px solid #333;
 }
 
 .post-buttons button{
@@ -768,7 +769,7 @@ header{
 
     background:none;
 
-    color:#444444;
+    color:#ccc;
 
     font-size:15px;
 
@@ -965,20 +966,6 @@ body.dark-mode .sidebar a,
 body.dark-mode .darkModeBtn,
 body.dark-mode #logoutBtn{
     color:#eee;
-}
-
-body.dark-mode .post-card{
-    background:#1d1d1d;
-
-    color:#eee;
-}
-
-body.dark-mode .post-card p{
-    color:#eee;
-}
-
-body.dark-mode .post-buttons{
-    border-top-color:#333;
 }
 
 body.dark-mode .bottom-nav{
