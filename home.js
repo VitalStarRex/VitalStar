@@ -84,11 +84,11 @@ style.textContent = `
     --vs-pink: #FF4FD8;
 
     --vs-bg: #060711;
-    --vs-card: #1d1d1d;
-    --vs-card-border: rgba(255,255,255,0.10);
+    --vs-card: #ffffff;
+    --vs-card-border: rgba(0,0,0,0.08);
 
-    --vs-text: #ffffff;
-    --vs-muted: rgba(255,255,255,0.58);
+    --vs-text: #333333;
+    --vs-muted: rgba(51,51,51,0.6);
 
 }
 
@@ -414,7 +414,7 @@ style.textContent = `
         14px 2px 16px;
 
     color:
-        rgba(255,255,255,.91);
+        #333333;
 
     font-size:
         15px;
@@ -524,7 +524,7 @@ style.textContent = `
 
     border-top:
         1px solid
-        rgba(255,255,255,.075);
+        rgba(0,0,0,.08);
 
 }
 
@@ -544,10 +544,10 @@ style.textContent = `
         10px 5px;
 
     background:
-        rgba(255,255,255,.045);
+        rgba(0,0,0,.03);
 
     color:
-        rgba(255,255,255,.75);
+        rgba(51,51,51,.75);
 
     font:
         inherit;
