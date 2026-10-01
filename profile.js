@@ -1,7 +1,7 @@
 // ============================================================
 // VITALSTAR — PROFILE PAGE
 // Dark Theme + Friends + Privacy Protection
-// VITALSTAR Loading Indicator + See More Posts
+// Full-Screen VITALSTAR Loading Indicator + See More Posts
 // Firebase v10.12.2
 // ============================================================
 
@@ -169,7 +169,7 @@ let postsLoading = false;
 
 
 // ============================================================
-// VITALSTAR INDICATOR
+// FULL-SCREEN VITALSTAR INDICATOR
 // ============================================================
 
 function injectVitalStarIndicatorStyles() {
@@ -190,6 +190,353 @@ function injectVitalStarIndicatorStyles() {
 
     style.textContent = `
 
+        /* =====================================================
+           FULL SCREEN OVERLAY
+           ===================================================== */
+
+        #vitalstarLoadingOverlay {
+
+            position:fixed;
+
+            inset:0;
+
+            width:100vw;
+            height:100vh;
+
+            min-height:100dvh;
+
+            display:flex;
+
+            flex-direction:column;
+
+            align-items:center;
+
+            justify-content:center;
+
+            text-align:center;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(0,255,136,.18) 0%,
+                    rgba(0,45,28,.38) 20%,
+                    rgba(3,10,18,.97) 58%,
+                    #000 100%
+                );
+
+            z-index:999999999;
+
+            overflow:hidden;
+
+            opacity:1;
+
+            visibility:visible;
+
+            pointer-events:auto;
+
+            transition:
+                opacity .18s ease,
+                visibility .18s ease;
+        }
+
+
+        #vitalstarLoadingOverlay.hidden {
+
+            opacity:0;
+
+            visibility:hidden;
+
+            pointer-events:none;
+        }
+
+
+        /* =====================================================
+           BACKGROUND GLOW
+           ===================================================== */
+
+        #vitalstarLoadingOverlay::before {
+
+            content:"";
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:360px;
+            height:360px;
+
+            transform:
+                translate(-50%, -50%);
+
+            border-radius:50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,136,.16),
+                    rgba(0,217,255,.06) 35%,
+                    transparent 72%
+                );
+
+            filter:blur(25px);
+
+            animation:
+                vitalStarScreenGlow
+                1.4s
+                ease-in-out
+                infinite;
+
+            pointer-events:none;
+        }
+
+
+        /* =====================================================
+           MAIN INDICATOR
+           ===================================================== */
+
+        .vitalstar-indicator {
+
+            position:relative;
+
+            width:110px;
+            height:110px;
+
+            flex-shrink:0;
+
+            display:flex;
+
+            align-items:center;
+            justify-content:center;
+
+            border-radius:50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,136,.25) 0%,
+                    rgba(0,255,136,.10) 42%,
+                    transparent 72%
+                );
+
+            box-shadow:
+                0 0 20px
+                    rgba(0,255,136,.30),
+
+                0 0 45px
+                    rgba(0,255,136,.20),
+
+                0 0 80px
+                    rgba(0,217,255,.10),
+
+                inset 0 0 25px
+                    rgba(0,255,136,.12);
+
+            z-index:2;
+        }
+
+
+        /* =====================================================
+           COLORFUL ROTATING RING
+           ===================================================== */
+
+        .vitalstar-indicator::before {
+
+            content:"";
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:92px;
+            height:92px;
+
+            transform:
+                translate(-50%, -50%);
+
+            border-radius:50%;
+
+            border:5px solid transparent;
+
+            border-top-color:#00ff88;
+
+            border-right-color:#00d9ff;
+
+            border-bottom-color:#a855f7;
+
+            border-left-color:#ff3cac;
+
+            box-sizing:border-box;
+
+            animation:
+                vitalStarRingSpin
+                .65s
+                linear
+                infinite;
+
+            filter:
+                drop-shadow(
+                    0 0 6px
+                    rgba(0,255,136,.95)
+                )
+
+                drop-shadow(
+                    0 0 13px
+                    rgba(0,217,255,.70)
+                )
+
+                drop-shadow(
+                    0 0 20px
+                    rgba(168,85,247,.55)
+                );
+        }
+
+
+        /* =====================================================
+           SECOND ROTATING RING
+           ===================================================== */
+
+        .vitalstar-indicator::after {
+
+            content:"";
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:72px;
+            height:72px;
+
+            transform:
+                translate(-50%, -50%);
+
+            border-radius:50%;
+
+            border:
+                2px dashed
+                rgba(255,255,255,.40);
+
+            box-sizing:border-box;
+
+            animation:
+                vitalStarRingSpinReverse
+                1.05s
+                linear
+                infinite;
+        }
+
+
+        /* =====================================================
+           GREEN INNER GLOW
+           ===================================================== */
+
+        .vitalstar-glow {
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:82px;
+            height:82px;
+
+            transform:
+                translate(-50%, -50%);
+
+            border-radius:50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,136,.35),
+                    rgba(0,255,136,.10) 45%,
+                    transparent 72%
+                );
+
+            filter:blur(3px);
+
+            animation:
+                vitalStarGlow
+                1s
+                ease-in-out
+                infinite;
+
+            pointer-events:none;
+        }
+
+
+        /* =====================================================
+           VS TEXT
+           ===================================================== */
+
+        .vitalstar-vs {
+
+            position:relative;
+
+            z-index:5;
+
+            font-size:30px;
+
+            font-weight:1000;
+
+            letter-spacing:2px;
+
+            color:#ffffff;
+
+            user-select:none;
+
+            animation:
+                vitalStarPulse
+                1s
+                ease-in-out
+                infinite;
+
+            text-shadow:
+                0 0 7px #ffffff,
+                0 0 15px #00ff88,
+                0 0 28px #00d9ff,
+                0 0 45px #a855f7;
+        }
+
+
+        /* =====================================================
+           LOADING TEXT
+           ===================================================== */
+
+        .vitalstar-loading-text {
+
+            position:relative;
+
+            z-index:3;
+
+            margin-top:28px;
+
+            color:#eafff5;
+
+            font-size:15px;
+
+            font-weight:800;
+
+            letter-spacing:.6px;
+
+            text-shadow:
+                0 0 8px
+                rgba(0,255,136,.55);
+
+            animation:
+                vitalStarTextFade
+                1s
+                ease-in-out
+                infinite alternate;
+        }
+
+
+        /* =====================================================
+           ANIMATIONS
+           ===================================================== */
+
         @keyframes vitalStarRingSpin {
 
             0% {
@@ -204,6 +551,7 @@ function injectVitalStarIndicatorStyles() {
                     rotate(360deg);
             }
         }
+
 
         @keyframes vitalStarRingSpinReverse {
 
@@ -220,207 +568,124 @@ function injectVitalStarIndicatorStyles() {
             }
         }
 
+
         @keyframes vitalStarPulse {
 
             0%,
             100% {
-                transform:scale(1);
+
+                transform:scale(.96);
+
+                opacity:.82;
 
                 text-shadow:
-                    0 0 8px #00ff88,
-                    0 0 18px #00ff88,
-                    0 0 35px #00ff88;
+                    0 0 7px #ffffff,
+                    0 0 15px #00ff88,
+                    0 0 28px #00d9ff,
+                    0 0 45px #a855f7;
             }
 
             50% {
+
                 transform:scale(1.08);
 
+                opacity:1;
+
                 text-shadow:
-                    0 0 12px #00ff88,
-                    0 0 25px #00ff88,
-                    0 0 50px #00ff88;
+                    0 0 10px #ffffff,
+                    0 0 20px #00ff88,
+                    0 0 38px #00d9ff,
+                    0 0 58px #a855f7;
             }
         }
+
 
         @keyframes vitalStarGlow {
 
             0%,
             100% {
+
                 opacity:.55;
-                transform:scale(.96);
+
+                transform:
+                    translate(-50%, -50%)
+                    scale(.92);
             }
 
             50% {
-                opacity:.9;
-                transform:scale(1.04);
+
+                opacity:1;
+
+                transform:
+                    translate(-50%, -50%)
+                    scale(1.08);
             }
         }
 
-        .vitalstar-indicator {
 
-            position:relative;
+        @keyframes vitalStarScreenGlow {
 
-            width:96px;
-            height:96px;
+            0%,
+            100% {
 
-            margin:0 auto 20px;
+                opacity:.65;
 
-            display:flex;
+                transform:
+                    translate(-50%, -50%)
+                    scale(.92);
+            }
 
-            align-items:center;
-            justify-content:center;
+            50% {
 
-            border-radius:50%;
+                opacity:1;
 
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(0,255,136,.22) 0%,
-                    rgba(0,180,100,.12) 42%,
-                    rgba(0,60,35,.08) 65%,
-                    transparent 72%
-                );
-
-            box-shadow:
-                0 0 18px rgba(0,255,136,.28),
-                0 0 40px rgba(0,255,136,.18),
-                inset 0 0 22px rgba(0,255,136,.12);
+                transform:
+                    translate(-50%, -50%)
+                    scale(1.08);
+            }
         }
 
-        .vitalstar-indicator::before {
 
-            content:"";
+        @keyframes vitalStarTextFade {
 
-            position:absolute;
+            from {
+                opacity:.45;
+            }
 
-            left:50%;
-            top:50%;
-
-            width:78px;
-            height:78px;
-
-            border-radius:50%;
-
-            border:4px solid transparent;
-
-            border-top-color:#00ff88;
-            border-right-color:#00d9ff;
-            border-bottom-color:#a855f7;
-            border-left-color:#ff3cac;
-
-            animation:
-                vitalStarRingSpin
-                .65s
-                linear
-                infinite;
-
-            filter:
-                drop-shadow(
-                    0 0 5px
-                    rgba(0,255,136,.9)
-                )
-                drop-shadow(
-                    0 0 10px
-                    rgba(168,85,247,.65)
-                );
-
-            box-sizing:border-box;
+            to {
+                opacity:1;
+            }
         }
 
-        .vitalstar-indicator::after {
 
-            content:"";
+        /* =====================================================
+           SMALL SCREENS
+           ===================================================== */
 
-            position:absolute;
+        @media (max-width:420px) {
 
-            left:50%;
-            top:50%;
+            .vitalstar-indicator {
 
-            width:66px;
-            height:66px;
+                width:100px;
+                height:100px;
+            }
 
-            border-radius:50%;
+            .vitalstar-indicator::before {
 
-            border:
-                2px dashed
-                rgba(255,255,255,.28);
+                width:84px;
+                height:84px;
+            }
 
-            animation:
-                vitalStarRingSpinReverse
-                1.1s
-                linear
-                infinite;
+            .vitalstar-indicator::after {
 
-            box-sizing:border-box;
-        }
+                width:66px;
+                height:66px;
+            }
 
-        .vitalstar-vs {
+            .vitalstar-vs {
 
-            position:relative;
-
-            z-index:5;
-
-            font-size:27px;
-
-            font-weight:1000;
-
-            letter-spacing:1px;
-
-            color:#ffffff;
-
-            animation:
-                vitalStarPulse
-                1s
-                ease-in-out
-                infinite;
-        }
-
-        .vitalstar-glow {
-
-            position:absolute;
-
-            left:50%;
-            top:50%;
-
-            width:120px;
-            height:120px;
-
-            transform:
-                translate(-50%, -50%);
-
-            border-radius:50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(0,255,136,.22),
-                    transparent 68%
-                );
-
-            filter:blur(8px);
-
-            animation:
-                vitalStarGlow
-                1.2s
-                ease-in-out
-                infinite;
-
-            pointer-events:none;
-        }
-
-        .vitalstar-loading-text {
-
-            font-size:15px;
-
-            font-weight:800;
-
-            color:#eafff5;
-
-            letter-spacing:.4px;
-
-            text-shadow:
-                0 0 8px
-                rgba(0,255,136,.3);
+                font-size:27px;
+            }
         }
     `;
 
@@ -431,47 +696,46 @@ injectVitalStarIndicatorStyles();
 
 
 // ============================================================
-// CREATE VITALSTAR INDICATOR
+// CREATE FULL-SCREEN INDICATOR
 // ============================================================
 
 function createVitalStarIndicator(
     text = "Loading..."
 ) {
 
-    const wrapper =
-        document.createElement("div");
+    let overlay =
+        document.getElementById(
+            "vitalstarLoadingOverlay"
+        );
 
-    wrapper.style.cssText = `
-        width:100%;
-        max-width:500px;
-        margin:30px auto;
-        padding:34px 20px;
-        box-sizing:border-box;
-        text-align:center;
-        border-radius:24px;
+    if (overlay) {
 
-        background:
-            radial-gradient(
-                circle at center,
-                rgba(0,255,136,.14) 0%,
-                rgba(3,25,17,.96) 45%,
-                rgba(2,9,7,.98) 100%
+        const textElement =
+            overlay.querySelector(
+                ".vitalstar-loading-text"
             );
 
-        border:
-            1px solid
-            rgba(0,255,136,.28);
+        if (textElement) {
 
-        box-shadow:
-            0 0 22px
-                rgba(0,255,136,.16),
-            inset 0 0 25px
-                rgba(0,255,136,.05);
+            textElement.textContent =
+                text;
+        }
 
-        color:#ffffff;
-    `;
+        overlay.classList.remove(
+            "hidden"
+        );
 
-    wrapper.innerHTML = `
+        return overlay;
+    }
+
+
+    overlay =
+        document.createElement("div");
+
+    overlay.id =
+        "vitalstarLoadingOverlay";
+
+    overlay.innerHTML = `
 
         <div class="vitalstar-indicator">
 
@@ -486,28 +750,73 @@ function createVitalStarIndicator(
         <div class="vitalstar-loading-text">
             ${escapeHTML(text)}
         </div>
+
     `;
 
-    return wrapper;
+    document.body.appendChild(
+        overlay
+    );
+
+    return overlay;
 }
 
 
 // ============================================================
-// SHOW LOADING
+// SHOW FULL-SCREEN LOADING
 // ============================================================
 
 function showLoadingIndicator(
     text = "Loading..."
 ) {
 
-    if (!gallery)
+    injectVitalStarIndicatorStyles();
+
+    const overlay =
+        createVitalStarIndicator(
+            text
+        );
+
+    overlay.classList.remove(
+        "hidden"
+    );
+
+    document.body.style.overflow =
+        "hidden";
+}
+
+
+// ============================================================
+// HIDE FULL-SCREEN LOADING
+// ============================================================
+
+function hideLoadingIndicator() {
+
+    const overlay =
+        document.getElementById(
+            "vitalstarLoadingOverlay"
+        );
+
+    if (!overlay)
         return;
 
-    gallery.innerHTML = "";
-
-    gallery.appendChild(
-        createVitalStarIndicator(text)
+    overlay.classList.add(
+        "hidden"
     );
+
+    document.body.style.overflow =
+        "";
+
+    setTimeout(() => {
+
+        if (
+            overlay &&
+            overlay.parentNode
+        ) {
+
+            overlay.remove();
+        }
+
+    }, 220);
 }
 
 
@@ -517,38 +826,8 @@ function showLoadingIndicator(
 
 function showPostsLoadingIndicator() {
 
-    if (!gallery)
-        return;
-
-    const existing =
-        document.getElementById(
-            "postsLoadingIndicator"
-        );
-
-    if (existing)
-        existing.remove();
-
-    const indicator =
-        document.createElement("div");
-
-    indicator.id =
-        "postsLoadingIndicator";
-
-    indicator.style.cssText = `
-        width:100%;
-        padding:25px 20px 35px;
-        box-sizing:border-box;
-        text-align:center;
-    `;
-
-    indicator.appendChild(
-        createVitalStarIndicator(
-            "Loading posts..."
-        )
-    );
-
-    gallery.appendChild(
-        indicator
+    showLoadingIndicator(
+        "Loading posts..."
     );
 }
 
@@ -558,6 +837,8 @@ function showPostsLoadingIndicator() {
 // ============================================================
 
 function hideLoader() {
+
+    hideLoadingIndicator();
 
     if (!loader)
         return;
@@ -930,6 +1211,10 @@ async function checkIfFriends(
 
     try {
 
+        // ----------------------------------------------------
+        // FIRST: CHECK THE NORMAL DETERMINISTIC FRIEND DOC
+        // ----------------------------------------------------
+
         const friendshipId =
             friendKey(
                 viewerUid,
@@ -948,17 +1233,70 @@ async function checkIfFriends(
                 friendshipRef
             );
 
-        if (!friendshipSnap.exists())
-            return false;
+        if (friendshipSnap.exists()) {
 
-        const data =
-            friendshipSnap.data();
+            const data =
+                friendshipSnap.data();
 
-        return (
-            Array.isArray(data.users) &&
-            data.users.includes(viewerUid) &&
-            data.users.includes(targetUid)
-        );
+            if (
+                Array.isArray(data.users) &&
+                data.users.includes(viewerUid) &&
+                data.users.includes(targetUid)
+            ) {
+
+                return true;
+            }
+        }
+
+
+        // ----------------------------------------------------
+        // SECOND: SEARCH FRIENDS COLLECTION
+        //
+        // This handles older friendship documents whose ID
+        // may not have been created with friendKey().
+        // ----------------------------------------------------
+
+        const friendsQuery =
+            query(
+                collection(
+                    db,
+                    "friends"
+                ),
+                where(
+                    "users",
+                    "array-contains",
+                    viewerUid
+                )
+            );
+
+
+        const friendsSnapshot =
+            await getDocs(
+                friendsQuery
+            );
+
+
+        for (
+            const friendDoc
+            of friendsSnapshot.docs
+        ) {
+
+            const data =
+                friendDoc.data();
+
+
+            if (
+                Array.isArray(data.users) &&
+                data.users.includes(viewerUid) &&
+                data.users.includes(targetUid)
+            ) {
+
+                return true;
+            }
+        }
+
+
+        return false;
 
     } catch (error) {
 
@@ -1780,18 +2118,14 @@ document.addEventListener(
 
 
 // ============================================================
-// NEW PROFILE PRIVACY SYSTEM
+// PROFILE PRIVACY
 // ============================================================
 //
 // PUBLIC = everyone can view
 // FRIENDS = only friends can view
 //
-// IMPORTANT:
-// - Missing privacy field = PUBLIC
-// - Empty privacy field = PUBLIC
-// - Unknown old value = PUBLIC
-// - Only exact "friends" locks the profile
-// - Owner/admin can always view
+// Missing/empty/unknown = PUBLIC
+// Owner/admin = always allowed
 // ============================================================
 
 async function canViewProfile(
@@ -1800,7 +2134,6 @@ async function canViewProfile(
     profileData
 ) {
 
-    // Own profile
     if (
         viewerUid === targetUid
     ) {
@@ -1808,7 +2141,6 @@ async function canViewProfile(
     }
 
 
-    // Owner/admin bypass
     const isAdmin =
         await checkViewerIsAdmin(
             viewerUid
@@ -1820,15 +2152,10 @@ async function canViewProfile(
     }
 
 
-    // --------------------------------------------------------
-    // Read privacy
-    // --------------------------------------------------------
-
     let privacy =
         profileData?.profilePrivacy;
 
 
-    // Missing/empty = PUBLIC
     if (
         privacy === undefined ||
         privacy === null ||
@@ -1846,10 +2173,6 @@ async function canViewProfile(
             .toLowerCase();
 
 
-    // --------------------------------------------------------
-    // PUBLIC
-    // --------------------------------------------------------
-
     if (
         privacy === "public"
     ) {
@@ -1857,10 +2180,6 @@ async function canViewProfile(
         return true;
     }
 
-
-    // --------------------------------------------------------
-    // FRIENDS ONLY
-    // --------------------------------------------------------
 
     if (
         privacy === "friends"
@@ -1872,14 +2191,6 @@ async function canViewProfile(
         );
     }
 
-
-    // --------------------------------------------------------
-    // Legacy/unknown value
-    //
-    // IMPORTANT:
-    // Never lock a profile because of an unknown
-    // or old privacy value.
-    // --------------------------------------------------------
 
     return true;
 }
