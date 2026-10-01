@@ -1,10 +1,32 @@
 // ============================================================
-// VITALSTAR — NOTIFICATIONS PAGE
-// Firebase v10.12.2
+// VITALSTAR — notifications-page.js
+// General notification system
+//
+// Supports:
+// likes
+// comments
+// follows
+// messages
+// friend requests
+// friend accepted
+// group joins
+// group join requests
+// group invites
+// group posts
+// group post likes
+// group post comments
+// group messages
+// group mentions
+// group admin actions
+// group subscriptions
+// etc.
 // ============================================================
+
+import { auth, db } from "./firebase.js";
 
 import {
     collection,
+    addDoc,
     query,
     where,
     orderBy,
@@ -15,122 +37,231 @@ import {
     getDoc,
     getDocs,
     writeBatch,
-    addDoc,
+    deleteDoc,
+    runTransaction,
+    increment,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-    onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+// ============================================================
+// DARK THEME
+// ============================================================
 
-import {
-    auth,
-    db
-} from "./firebase.js";
+const darkStyle = document.createElement("style");
+
+darkStyle.textContent = `
+    body {
+        background:#080b14 !important;
+        color:#f5f7ff !important;
+    }
+
+    #notifications {
+        background:#080b14;
+        color:#f5f7ff;
+    }
+
+    #markAllReadLink {
+        color:#63a4ff !important;
+    }
+
+    .notification-card {
+        background:#111827 !important;
+        color:#f5f7ff !important;
+        border:1px solid #202a3d !important;
+        border-radius:14px;
+        margin:8px 0;
+        padding:13px;
+        transition:background .2s ease,
+                   border-color .2s ease,
+                   transform .15s ease;
+    }
+
+    .notification-card:hover {
+        background:#151e31 !important;
+        border-color:#315b91 !important;
+    }
+
+    .notification-card.is-unread {
+        background:#101d31 !important;
+        border-color:#2463a8 !important;
+    }
+
+    .notification-card small {
+        color:#8f9bb3 !important;
+    }
+
+    .notification-card .notification-text {
+        color:#f5f7ff !important;
+    }
+
+    .notification-card .notification-text span {
+        color:#d9e0ef !important;
+    }
+
+    .notification-card b {
+        color:#ffffff !important;
+    }
+
+    .unread-dot {
+        color:#4da3ff !important;
+    }
+
+    .loading {
+        color:#9aa7bd !important;
+        background:#0d1220 !important;
+        padding:20px;
+        border-radius:14px;
+        text-align:center;
+    }
+`;
+
+document.head.appendChild(darkStyle);
 
 
 // ============================================================
-// ELEMENTS
+// DOM
 // ============================================================
 
-const notificationsContainer =
+const notifications =
     document.getElementById("notifications");
 
-if (!notificationsContainer) {
+if (!notifications) {
     console.error(
-        "VitalStar: #notifications element not found."
+        "Notifications container not found."
     );
 }
 
 
 // ============================================================
-// STATE
+// MARK ALL AS READ
 // ============================================================
 
-let currentUser = null;
-let unsubscribeNotifications = null;
+let markAllReadLink =
+    document.getElementById("markAllReadLink");
 
+if (
+    !markAllReadLink &&
+    notifications
+) {
 
-// ============================================================
-// ESCAPE HTML
-// ============================================================
+    markAllReadLink =
+        document.createElement("a");
 
-function escapeHTML(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+    markAllReadLink.href = "#";
+    markAllReadLink.id = "markAllReadLink";
+    markAllReadLink.textContent =
+        "Mark all as read";
 
+    markAllReadLink.style.cssText = `
+        display:block;
+        text-align:right;
+        padding:8px 12px;
+        color:#63a4ff;
+        text-decoration:none;
+        font-size:14px;
+        cursor:pointer;
+    `;
 
-// ============================================================
-// DISPLAY NAME
-// ============================================================
-
-function getDisplayName(user) {
-
-    if (!user) {
-        return "VitalStar User";
-    }
-
-    return (
-        user.fullName ||
-        user.displayName ||
-        user.username ||
-        "VitalStar User"
+    notifications.parentNode.insertBefore(
+        markAllReadLink,
+        notifications
     );
 }
 
 
 // ============================================================
-// GET SENDER PHOTO
+// MARK ALL READ
 // ============================================================
 
-function getSenderPhoto(notification) {
+if (markAllReadLink) {
 
-    if (notification.senderPhoto) {
-        return notification.senderPhoto;
-    }
+    markAllReadLink.addEventListener(
+        "click",
+        async event => {
 
-    if (notification.senderPhotoURL) {
-        return notification.senderPhotoURL;
-    }
+            event.preventDefault();
 
-    return (
-        "https://ui-avatars.com/api/?name=" +
-        encodeURIComponent(
-            notification.senderName ||
-            "VitalStar User"
-        ) +
-        "&background=171d32&color=ffffff"
+            const user =
+                auth.currentUser;
+
+            if (!user) {
+                return;
+            }
+
+            try {
+
+                const unreadQuery =
+                    query(
+                        collection(
+                            db,
+                            "notifications"
+                        ),
+
+                        where(
+                            "receiverId",
+                            "==",
+                            user.uid
+                        ),
+
+                        where(
+                            "read",
+                            "==",
+                            false
+                        )
+                    );
+
+                const snapshot =
+                    await getDocs(
+                        unreadQuery
+                    );
+
+                if (snapshot.empty) {
+                    return;
+                }
+
+                const batch =
+                    writeBatch(db);
+
+                snapshot.forEach(
+                    notificationDoc => {
+
+                        batch.update(
+                            notificationDoc.ref,
+                            {
+                                read: true
+                            }
+                        );
+
+                    }
+                );
+
+                await batch.commit();
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to mark all as read:",
+                    error
+                );
+
+                alert(
+                    "Failed to mark notifications as read."
+                );
+
+            }
+
+        }
     );
 }
 
 
 // ============================================================
-// NOTIFICATION ICON
+// ICON
 // ============================================================
 
 function getNotificationIcon(type) {
 
     switch (type) {
-
-        // ------------------------------
-        // FRIEND SYSTEM
-        // ------------------------------
-
-        case "friend_request":
-            return "👥";
-
-        case "friend_accepted":
-            return "🤝";
-
-
-        // ------------------------------
-        // NORMAL
-        // ------------------------------
 
         case "like":
             return "❤️";
@@ -144,13 +275,21 @@ function getNotificationIcon(type) {
         case "message":
             return "📩";
 
-        case "mention":
-            return "🔔";
+
+        // ====================================================
+        // FRIEND SYSTEM
+        // ====================================================
+
+        case "friend_request":
+            return "👥";
+
+        case "friend_accepted":
+            return "🤝";
 
 
-        // ------------------------------
-        // GROUP
-        // ------------------------------
+        // ====================================================
+        // GROUP SYSTEM
+        // ====================================================
 
         case "group":
             return "👥";
@@ -188,10 +327,8 @@ function getNotificationIcon(type) {
         case "group_subscription":
             return "⭐";
 
-
-        // ------------------------------
-        // SYSTEM
-        // ------------------------------
+        case "mention":
+            return "🔔";
 
         case "system":
             return "⚙️";
@@ -203,44 +340,7 @@ function getNotificationIcon(type) {
 
 
 // ============================================================
-// NOTIFICATION TEXT
-// ============================================================
-
-function getNotificationText(notification) {
-
-    // Friend request
-    if (notification.type === "friend_request") {
-
-        return (
-            notification.text ||
-            notification.message ||
-            `${notification.senderName || "Someone"} sent you a friend request.`
-        );
-    }
-
-
-    // Friend accepted
-    if (notification.type === "friend_accepted") {
-
-        return (
-            notification.text ||
-            notification.message ||
-            `${notification.senderName || "Someone"} accepted your friend request.`
-        );
-    }
-
-
-    // Everything else
-    return (
-        notification.text ||
-        notification.message ||
-        "You have a new notification."
-    );
-}
-
-
-// ============================================================
-// FORMAT TIME
+// DATE
 // ============================================================
 
 function formatNotificationTime(timestamp) {
@@ -251,88 +351,20 @@ function formatNotificationTime(timestamp) {
 
     try {
 
-        let date;
+        if (
+            typeof timestamp.toDate ===
+            "function"
+        ) {
 
-        if (timestamp.toDate) {
+            return timestamp
+                .toDate()
+                .toLocaleString();
 
-            date = timestamp.toDate();
-
-        } else if (timestamp.seconds) {
-
-            date = new Date(
-                timestamp.seconds * 1000
-            );
-
-        } else {
-
-            date = new Date(timestamp);
         }
 
-        if (isNaN(date.getTime())) {
-            return "Just now";
-        }
+        return "Just now";
 
-        const now = new Date();
-
-        const difference =
-            now.getTime() -
-            date.getTime();
-
-        const seconds =
-            Math.floor(
-                difference / 1000
-            );
-
-        const minutes =
-            Math.floor(
-                seconds / 60
-            );
-
-        const hours =
-            Math.floor(
-                minutes / 60
-            );
-
-        const days =
-            Math.floor(
-                hours / 24
-            );
-
-        if (seconds < 10) {
-            return "just now";
-        }
-
-        if (seconds < 60) {
-            return `${seconds}s ago`;
-        }
-
-        if (minutes < 60) {
-            return (
-                minutes === 1
-                    ? "1 min ago"
-                    : `${minutes} mins ago`
-            );
-        }
-
-        if (hours < 24) {
-            return (
-                hours === 1
-                    ? "1 hour ago"
-                    : `${hours} hours ago`
-            );
-        }
-
-        if (days < 7) {
-            return (
-                days === 1
-                    ? "yesterday"
-                    : `${days} days ago`
-            );
-        }
-
-        return date.toLocaleDateString();
-
-    } catch (error) {
+    } catch {
 
         return "Just now";
     }
@@ -340,357 +372,979 @@ function formatNotificationTime(timestamp) {
 
 
 // ============================================================
-// NOTIFICATION DESTINATION
+// ESCAPE HTML
 // ============================================================
 
-function getNotificationDestination(notification) {
+function escapeHTML(value) {
 
-    const type =
-        notification.type;
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value ?? "";
+
+    return div.innerHTML;
+}
 
 
-    // ========================================================
+// ============================================================
+// TEXT
+// ============================================================
+
+function getNotificationText(notification) {
+
+    // --------------------------------------------------------
     // FRIEND REQUEST
-    // ========================================================
+    // --------------------------------------------------------
 
-    if (type === "friend_request") {
+    if (
+        notification.type ===
+        "friend_request"
+    ) {
+
+        return (
+            notification.text ||
+            notification.message ||
+            `${notification.senderName || "Someone"} sent you a friend request.`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // FRIEND ACCEPTED
+    // --------------------------------------------------------
+
+    if (
+        notification.type ===
+        "friend_accepted"
+    ) {
+
+        return (
+            notification.text ||
+            notification.message ||
+            `${notification.senderName || "Someone"} accepted your friend request.`
+        );
+    }
+
+
+    return (
+        notification.text ||
+        notification.message ||
+        "New notification"
+    );
+}
+
+
+// ============================================================
+// SENDER PHOTO
+// ============================================================
+
+function getSenderPhoto(notification) {
+
+    return (
+        notification.senderPhoto ||
+        notification.senderPhotoURL ||
+        notification.photoURL ||
+        "https://via.placeholder.com/50"
+    );
+}
+
+
+// ============================================================
+// GROUP POST NOTIFICATION CHECK
+// ============================================================
+
+function isGroupPostNotification(notification) {
+
+    return (
+        Boolean(notification.groupId) &&
+        Boolean(notification.postId) &&
+        [
+            "group_post",
+            "group_post_like",
+            "group_post_comment",
+            "group_mention"
+        ].includes(notification.type)
+    );
+}
+
+
+// ============================================================
+// DESTINATION
+// ============================================================
+
+function getNotificationDestination(
+    notification
+) {
+
+    // --------------------------------------------------------
+    // FRIEND REQUEST
+    // --------------------------------------------------------
+
+    if (
+        notification.type ===
+        "friend_request"
+    ) {
 
         return "myfriends.html?tab=requests";
     }
 
 
-    // ========================================================
+    // --------------------------------------------------------
     // FRIEND ACCEPTED
-    // ========================================================
+    // --------------------------------------------------------
 
-    if (type === "friend_accepted") {
+    if (
+        notification.type ===
+        "friend_accepted"
+    ) {
 
         return "myfriends.html?tab=friends";
     }
 
 
-    // ========================================================
+    // --------------------------------------------------------
     // GROUP POST
-    // ========================================================
+    // --------------------------------------------------------
 
     if (
-        type === "group_post" ||
-        type === "group_post_like" ||
-        type === "group_post_comment"
+        isGroupPostNotification(
+            notification
+        )
     ) {
 
-        if (notification.groupId) {
-
-            let url =
-                "group.html?id=" +
+        return (
+            `group.html?id=${
                 encodeURIComponent(
                     notification.groupId
-                ) +
-                "&tab=posts";
-
-            if (notification.postId) {
-
-                url +=
-                    "&postId=" +
-                    encodeURIComponent(
-                        notification.postId
-                    );
-            }
-
-            return url;
-        }
+                )
+            }&tab=posts&postId=${
+                encodeURIComponent(
+                    notification.postId
+                )
+            }`
+        );
     }
 
 
-    // ========================================================
+    // --------------------------------------------------------
     // GROUP CHAT
-    // ========================================================
-
-    if (
-        type === "group_message"
-    ) {
-
-        if (notification.groupId) {
-
-            return (
-                "group.html?id=" +
-                encodeURIComponent(
-                    notification.groupId
-                ) +
-                "&tab=chat"
-            );
-        }
-    }
-
-
-    // ========================================================
-    // GROUP JOIN REQUEST
-    // ========================================================
-
-    if (
-        type === "group_join_request"
-    ) {
-
-        if (notification.groupId) {
-
-            return (
-                "group.html?id=" +
-                encodeURIComponent(
-                    notification.groupId
-                ) +
-                "&tab=members"
-            );
-        }
-    }
-
-
-    // ========================================================
-    // OTHER GROUP NOTIFICATIONS
-    // ========================================================
+    // --------------------------------------------------------
 
     if (
         notification.groupId &&
-        (
-            type === "group" ||
-            type === "group_join" ||
-            type === "group_invite" ||
-            type === "group_admin" ||
-            type === "group_member" ||
-            type === "group_mention" ||
-            type === "group_subscription"
-        )
+        notification.chatId
     ) {
 
         return (
-            "group.html?id=" +
-            encodeURIComponent(
-                notification.groupId
-            )
+            `group.html?id=${
+                encodeURIComponent(
+                    notification.groupId
+                )
+            }&tab=chat`
         );
     }
 
 
-    // ========================================================
-    // POST
-    // ========================================================
+    // --------------------------------------------------------
+    // GROUP JOIN REQUEST
+    // --------------------------------------------------------
 
     if (
-        notification.postId &&
-        (
-            type === "like" ||
-            type === "comment" ||
-            type === "mention"
-        )
+        notification.type ===
+        "group_join_request"
     ) {
 
         return (
-            "comments.html?postId=" +
-            encodeURIComponent(
-                notification.postId
-            )
+            `group.html?id=${
+                encodeURIComponent(
+                    notification.groupId
+                )
+            }&tab=members`
         );
     }
 
 
-    // ========================================================
-    // MESSAGE
-    // ========================================================
+    // --------------------------------------------------------
+    // OTHER GROUP NOTIFICATION
+    // --------------------------------------------------------
 
-    if (type === "message") {
+    if (
+        notification.groupId
+    ) {
 
-        if (notification.senderId) {
-
-            return (
-                "message.html?uid=" +
+        return (
+            `group.html?id=${
                 encodeURIComponent(
-                    notification.senderId
+                    notification.groupId
                 )
-            );
-        }
+            }`
+        );
     }
 
 
-    // ========================================================
-    // CUSTOM URL
-    // ========================================================
+    // --------------------------------------------------------
+    // NORMAL POST
+    // --------------------------------------------------------
 
-    if (notification.url) {
+    if (
+        notification.postId
+    ) {
+
+        return (
+            `comments.html?postId=${
+                encodeURIComponent(
+                    notification.postId
+                )
+            }`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // CHAT
+    // --------------------------------------------------------
+
+    if (
+        notification.chatId ||
+        notification.conversationId
+    ) {
+
+        const chatId =
+            notification.chatId ||
+            notification.conversationId;
+
+        return (
+            `chat.html?id=${
+                encodeURIComponent(chatId)
+            }`
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // CUSTOM URL
+    // --------------------------------------------------------
+
+    if (
+        notification.url
+    ) {
+
         return notification.url;
     }
 
 
-    // ========================================================
-    // SENDER PROFILE
-    // ========================================================
+    // --------------------------------------------------------
+    // PROFILE
+    // --------------------------------------------------------
 
-    if (notification.senderId) {
+    if (
+        notification.senderId
+    ) {
 
         return (
-            "profile.html?uid=" +
-            encodeURIComponent(
-                notification.senderId
-            )
+            `profile.html?uid=${
+                encodeURIComponent(
+                    notification.senderId
+                )
+            }`
         );
     }
 
 
-    return "#";
+    return null;
 }
 
 
 // ============================================================
-// MARK ONE AS READ
+// CURRENT USER CAN MANAGE GROUP
 // ============================================================
 
-async function markAsRead(notificationId) {
+async function canManageGroup(
+    groupId,
+    uid
+) {
 
-    if (!notificationId) {
-        return;
+    if (!groupId || !uid) {
+        return false;
     }
 
     try {
 
-        await updateDoc(
-            doc(
-                db,
-                "notifications",
-                notificationId
-            ),
-            {
-                read: true
-            }
+        const groupSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "groups",
+                    groupId
+                )
+            );
+
+        if (!groupSnap.exists()) {
+            return false;
+        }
+
+        const group =
+            groupSnap.data();
+
+        const ownerId =
+            group.ownerId ||
+            group.ownerUid ||
+            group.createdBy ||
+            group.creatorId;
+
+        if (
+            ownerId === uid
+        ) {
+            return true;
+        }
+
+        const memberSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "groups",
+                    groupId,
+                    "members",
+                    uid
+                )
+            );
+
+        if (!memberSnap.exists()) {
+            return false;
+        }
+
+        const member =
+            memberSnap.data();
+
+        return (
+            member.status === "active" &&
+            [
+                "owner",
+                "admin",
+                "moderator"
+            ].includes(
+                member.role
+            )
         );
 
     } catch (error) {
 
         console.error(
-            "Could not mark notification as read:",
+            "Permission check error:",
             error
         );
+
+        return false;
     }
 }
 
 
 // ============================================================
-// MARK ALL AS READ
+// APPROVE JOIN REQUEST
 // ============================================================
 
-async function markAllAsRead() {
+async function approveJoinRequest(
+    notificationDoc,
+    notification,
+    card
+) {
+
+    const currentUser =
+        auth.currentUser;
 
     if (!currentUser) {
         return;
     }
 
+    const groupId =
+        notification.groupId;
+
+    const applicantId =
+        notification.requesterId ||
+        notification.applicantId ||
+        notification.senderId;
+
+    if (
+        !groupId ||
+        !applicantId
+    ) {
+
+        alert(
+            "This join request is missing required information."
+        );
+
+        return;
+    }
+
+    const allowed =
+        await canManageGroup(
+            groupId,
+            currentUser.uid
+        );
+
+    if (!allowed) {
+
+        alert(
+            "You do not have permission to approve this request."
+        );
+
+        return;
+    }
+
     try {
 
-        const q = query(
+        const memberRef =
+            doc(
+                db,
+                "groups",
+                groupId,
+                "members",
+                applicantId
+            );
+
+        const groupRef =
+            doc(
+                db,
+                "groups",
+                groupId
+            );
+
+        let approved = false;
+
+        await runTransaction(
+            db,
+            async transaction => {
+
+                const memberSnap =
+                    await transaction.get(
+                        memberRef
+                    );
+
+                if (!memberSnap.exists()) {
+
+                    throw new Error(
+                        "Join request no longer exists."
+                    );
+                }
+
+                const member =
+                    memberSnap.data();
+
+                if (
+                    member.status !==
+                    "pending"
+                ) {
+
+                    throw new Error(
+                        "This request has already been processed."
+                    );
+                }
+
+                transaction.update(
+                    memberRef,
+                    {
+                        status: "active",
+                        role: "member",
+                        joinedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                transaction.update(
+                    groupRef,
+                    {
+                        memberCount:
+                            increment(1)
+                    }
+                );
+
+                approved = true;
+            }
+        );
+
+        if (!approved) {
+            return;
+        }
+
+        await updateDoc(
+            notificationDoc.ref,
+            {
+                read: true,
+                requestStatus: "approved",
+                processedAt:
+                    serverTimestamp(),
+                processedBy:
+                    currentUser.uid
+            }
+        );
+
+        let groupName =
+            notification.groupName ||
+            "the group";
+
+        const groupSnap =
+            await getDoc(
+                groupRef
+            );
+
+        if (groupSnap.exists()) {
+
+            groupName =
+                groupSnap.data().name ||
+                groupName;
+        }
+
+        await addDoc(
             collection(
                 db,
                 "notifications"
             ),
-            where(
-                "receiverId",
-                "==",
-                currentUser.uid
-            ),
-            where(
-                "read",
-                "==",
-                false
-            )
-        );
+            {
+                receiverId:
+                    applicantId,
 
-        const snapshot =
-            await getDocs(q);
+                recipientId:
+                    applicantId,
 
-        if (snapshot.empty) {
-            return;
-        }
+                senderId:
+                    currentUser.uid,
 
-        const batch =
-            writeBatch(db);
+                senderName:
+                    currentUser.displayName ||
+                    "Group Admin",
 
-        snapshot.docs.forEach(
-            function(notificationDoc) {
+                senderPhoto:
+                    currentUser.photoURL ||
+                    "",
 
-                batch.update(
-                    notificationDoc.ref,
-                    {
-                        read: true
-                    }
-                );
+                senderPhotoURL:
+                    currentUser.photoURL ||
+                    "",
+
+                type:
+                    "group_join",
+
+                text:
+                    `Your request to join ${groupName} was approved.`,
+
+                message:
+                    `Your request to join ${groupName} was approved.`,
+
+                groupId,
+
+                groupName,
+
+                read: false,
+
+                createdAt:
+                    serverTimestamp(),
+
+                url:
+                    `group.html?id=${encodeURIComponent(
+                        groupId
+                    )}`
             }
         );
 
-        await batch.commit();
+        const actionArea =
+            card.querySelector(
+                ".join-request-actions"
+            );
+
+        if (actionArea) {
+
+            actionArea.innerHTML = `
+                <div style="
+                    color:#4ade80;
+                    font-size:13px;
+                    font-weight:600;
+                    padding-top:8px;
+                ">
+                    ✓ Request approved
+                </div>
+            `;
+        }
 
     } catch (error) {
 
         console.error(
-            "Mark all as read error:",
+            "Approve join request error:",
             error
+        );
+
+        alert(
+            error.message ||
+            "Could not approve this request."
         );
     }
 }
 
 
 // ============================================================
-// MARK ALL BUTTON
+// REJECT / CANCEL JOIN REQUEST
 // ============================================================
 
-function createMarkAllButton() {
+async function rejectJoinRequest(
+    notificationDoc,
+    notification,
+    card
+) {
 
-    if (!notificationsContainer) {
+    const currentUser =
+        auth.currentUser;
+
+    if (!currentUser) {
         return;
     }
 
-    let button =
-        document.getElementById(
-            "markAllNotifications"
+    const groupId =
+        notification.groupId;
+
+    const applicantId =
+        notification.requesterId ||
+        notification.applicantId ||
+        notification.senderId;
+
+    if (
+        !groupId ||
+        !applicantId
+    ) {
+
+        alert(
+            "This join request is missing required information."
         );
 
-    if (button) {
         return;
     }
 
-    button =
+    const allowed =
+        await canManageGroup(
+            groupId,
+            currentUser.uid
+        );
+
+    if (!allowed) {
+
+        alert(
+            "You do not have permission to reject this request."
+        );
+
+        return;
+    }
+
+    try {
+
+        const memberRef =
+            doc(
+                db,
+                "groups",
+                groupId,
+                "members",
+                applicantId
+            );
+
+        const memberSnap =
+            await getDoc(
+                memberRef
+            );
+
+        if (
+            memberSnap.exists() &&
+            memberSnap.data().status ===
+                "pending"
+        ) {
+
+            await deleteDoc(
+                memberRef
+            );
+        }
+
+        await updateDoc(
+            notificationDoc.ref,
+            {
+                read: true,
+                requestStatus: "rejected",
+                processedAt:
+                    serverTimestamp(),
+                processedBy:
+                    currentUser.uid
+            }
+        );
+
+        const groupSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "groups",
+                    groupId
+                )
+            );
+
+        const groupName =
+            groupSnap.exists()
+                ? (
+                    groupSnap.data().name ||
+                    notification.groupName ||
+                    "the group"
+                )
+                : (
+                    notification.groupName ||
+                    "the group"
+                );
+
+        await addDoc(
+            collection(
+                db,
+                "notifications"
+            ),
+            {
+                receiverId:
+                    applicantId,
+
+                recipientId:
+                    applicantId,
+
+                senderId:
+                    currentUser.uid,
+
+                senderName:
+                    currentUser.displayName ||
+                    "Group Admin",
+
+                senderPhoto:
+                    currentUser.photoURL ||
+                    "",
+
+                senderPhotoURL:
+                    currentUser.photoURL ||
+                    "",
+
+                type:
+                    "group_join",
+
+                text:
+                    `Your request to join ${groupName} was declined.`,
+
+                message:
+                    `Your request to join ${groupName} was declined.`,
+
+                groupId,
+
+                groupName,
+
+                read: false,
+
+                createdAt:
+                    serverTimestamp(),
+
+                url:
+                    `group.html?id=${encodeURIComponent(
+                        groupId
+                    )}`
+            }
+        );
+
+        const actionArea =
+            card.querySelector(
+                ".join-request-actions"
+            );
+
+        if (actionArea) {
+
+            actionArea.innerHTML = `
+                <div style="
+                    color:#f87171;
+                    font-size:13px;
+                    font-weight:600;
+                    padding-top:8px;
+                ">
+                    ✕ Request declined
+                </div>
+            `;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Reject join request error:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Could not reject this request."
+        );
+    }
+}
+
+
+// ============================================================
+// JOIN REQUEST ACTIONS
+// ============================================================
+
+function renderJoinRequestActions(
+    card,
+    notificationDoc,
+    notification
+) {
+
+    if (
+        notification.type !==
+        "group_join_request"
+    ) {
+        return;
+    }
+
+    const actionArea =
+        document.createElement("div");
+
+    actionArea.className =
+        "join-request-actions";
+
+    actionArea.style.cssText = `
+        display:flex;
+        gap:8px;
+        margin-top:9px;
+        flex-wrap:wrap;
+    `;
+
+    if (
+        notification.requestStatus ===
+        "approved"
+    ) {
+
+        actionArea.innerHTML = `
+            <span style="
+                color:#4ade80;
+                font-size:13px;
+                font-weight:600;
+            ">
+                ✓ Request approved
+            </span>
+        `;
+
+        card.appendChild(
+            actionArea
+        );
+
+        return;
+    }
+
+    if (
+        notification.requestStatus ===
+        "rejected"
+    ) {
+
+        actionArea.innerHTML = `
+            <span style="
+                color:#f87171;
+                font-size:13px;
+                font-weight:600;
+            ">
+                ✕ Request declined
+            </span>
+        `;
+
+        card.appendChild(
+            actionArea
+        );
+
+        return;
+    }
+
+    const approveBtn =
         document.createElement("button");
 
-    button.id =
-        "markAllNotifications";
+    approveBtn.type = "button";
 
-    button.type = "button";
+    approveBtn.textContent =
+        "Approve";
 
-    button.textContent =
-        "✓ Mark all as read";
-
-    button.style.cssText = `
-        display:block;
-        margin:0 0 15px auto;
-        background:transparent;
+    approveBtn.style.cssText = `
         border:0;
-        color:#63a4ff;
-        font-size:14px;
+        border-radius:8px;
+        padding:7px 13px;
+        background:#16803c;
+        color:white;
+        font-size:13px;
         font-weight:600;
         cursor:pointer;
     `;
 
-    button.addEventListener(
+    const rejectBtn =
+        document.createElement("button");
+
+    rejectBtn.type = "button";
+
+    rejectBtn.textContent =
+        "Cancel";
+
+    rejectBtn.style.cssText = `
+        border:1px solid #3b465c;
+        border-radius:8px;
+        padding:7px 13px;
+        background:#151c2b;
+        color:#f87171;
+        font-size:13px;
+        font-weight:600;
+        cursor:pointer;
+    `;
+
+    approveBtn.addEventListener(
         "click",
-        markAllAsRead
+        async event => {
+
+            event.stopPropagation();
+
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+
+            await approveJoinRequest(
+                notificationDoc,
+                notification,
+                card
+            );
+
+            approveBtn.disabled = false;
+            rejectBtn.disabled = false;
+        }
     );
 
-    if (
-        notificationsContainer.parentElement
-    ) {
+    rejectBtn.addEventListener(
+        "click",
+        async event => {
 
-        notificationsContainer
-            .parentElement
-            .insertBefore(
-                button,
-                notificationsContainer
+            event.stopPropagation();
+
+            const confirmed =
+                window.confirm(
+                    "Reject this join request?"
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+
+            await rejectJoinRequest(
+                notificationDoc,
+                notification,
+                card
             );
-    }
+        }
+    );
+
+    actionArea.append(
+        approveBtn,
+        rejectBtn
+    );
+
+    card.appendChild(
+        actionArea
+    );
 }
 
 
@@ -699,32 +1353,42 @@ function createMarkAllButton() {
 // ============================================================
 
 async function openNotification(
+    notificationDoc,
     notification
 ) {
 
-    if (!notification) {
-        return;
-    }
+    try {
 
-    if (!notification.read) {
-
-        await markAsRead(
-            notification.id
-        );
-    }
-
-    const destination =
-        getNotificationDestination(
-            notification
+        await updateDoc(
+            notificationDoc.ref,
+            {
+                read: true
+            }
         );
 
-    if (
-        destination &&
-        destination !== "#"
-    ) {
+        const destination =
+            getNotificationDestination(
+                notification
+            );
 
-        window.location.href =
-            destination;
+        if (destination) {
+
+            window.location.href =
+                destination;
+
+            return;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Failed to open notification:",
+            error
+        );
+
+        alert(
+            "Failed to open notification."
+        );
     }
 }
 
@@ -734,29 +1398,15 @@ async function openNotification(
 // ============================================================
 
 function renderNotification(
-    notification
+    notificationDoc
 ) {
 
-    const unread =
-        notification.read !== true;
-
-    const senderName =
-        notification.senderName ||
-        "VitalStar User";
-
-    const photo =
-        getSenderPhoto(
-            notification
-        );
+    const notification =
+        notificationDoc.data();
 
     const icon =
         getNotificationIcon(
             notification.type
-        );
-
-    const text =
-        getNotificationText(
-            notification
         );
 
     const time =
@@ -764,315 +1414,253 @@ function renderNotification(
             notification.createdAt
         );
 
+    const senderName =
+        escapeHTML(
+            notification.senderName ||
+            notification.fullName ||
+            "Someone"
+        );
 
-    // Extra information
-    let label = "";
+    const text =
+        escapeHTML(
+            getNotificationText(
+                notification
+            )
+        );
 
+    const senderPhoto =
+        escapeHTML(
+            getSenderPhoto(
+                notification
+            )
+        );
 
-    if (notification.groupName) {
+    const card =
+        document.createElement("div");
 
-        label = `
-            <div class="notification-label">
-                👥 ${escapeHTML(
-                    notification.groupName
-                )}
-            </div>
-        `;
+    card.className =
+        "notification-card";
 
-    } else if (
-        notification.postId &&
-        notification.type !==
-            "friend_request" &&
-        notification.type !==
-            "friend_accepted"
+    card.style.cursor =
+        "pointer";
+
+    if (
+        notification.read !== true
     ) {
 
-        label = `
-            <div class="notification-label">
-                📝 Post
+        card.classList.add(
+            "is-unread"
+        );
+    }
+
+
+    // ========================================================
+    // FRIEND NOTIFICATION LABEL
+    // ========================================================
+
+    let friendLabel = "";
+
+    if (
+        notification.type ===
+        "friend_request"
+    ) {
+
+        friendLabel = `
+            <div style="
+                font-size:12px;
+                color:#63a4ff;
+                margin-top:5px;
+                font-weight:600;
+            ">
+                👥 Friend request
+            </div>
+        `;
+    }
+
+    if (
+        notification.type ===
+        "friend_accepted"
+    ) {
+
+        friendLabel = `
+            <div style="
+                font-size:12px;
+                color:#7ee787;
+                margin-top:5px;
+                font-weight:600;
+            ">
+                🤝 Friends
             </div>
         `;
     }
 
 
-    return `
-        <div
-            class="notification-item ${
-                unread
-                    ? "unread"
-                    : ""
-            }"
-            data-id="${escapeHTML(
-                notification.id
-            )}"
-        >
+    // ========================================================
+    // GROUP LABEL
+    // ========================================================
 
-            <div class="notification-icon">
-                ${icon}
+    let groupLabel = "";
+
+    if (
+        notification.groupId &&
+        notification.groupName
+    ) {
+
+        groupLabel = `
+            <div style="
+                font-size:12px;
+                color:#8f9bb3;
+                margin-top:3px;
+            ">
+                👥 ${escapeHTML(
+                    notification.groupName
+                )}
             </div>
+        `;
+    }
+
+
+    // ========================================================
+    // POST LABEL
+    // ========================================================
+
+    let postLabel = "";
+
+    if (
+        isGroupPostNotification(
+            notification
+        )
+    ) {
+
+        postLabel = `
+            <div style="
+                font-size:12px;
+                color:#8f9bb3;
+                margin-top:2px;
+            ">
+                📝 View post in group
+            </div>
+        `;
+
+    } else if (
+        notification.postId
+    ) {
+
+        postLabel = `
+            <div style="
+                font-size:12px;
+                color:#8f9bb3;
+                margin-top:2px;
+            ">
+                📝 View post
+            </div>
+        `;
+    }
+
+
+    // ========================================================
+    // CARD HTML
+    // ========================================================
+
+    card.innerHTML = `
+
+        <div style="
+            display:flex;
+            gap:10px;
+            align-items:flex-start;
+        ">
 
             <img
-                class="notification-avatar"
-                src="${escapeHTML(photo)}"
+                src="${senderPhoto}"
                 alt=""
-                loading="lazy"
+                style="
+                    width:44px;
+                    height:44px;
+                    border-radius:50%;
+                    object-fit:cover;
+                    flex-shrink:0;
+                    border:1px solid #29354d;
+                "
+                onerror="
+                    this.src='https://via.placeholder.com/50';
+                "
             >
 
-            <div class="notification-content">
+            <div
+                class="notification-text"
+                style="flex:1;"
+            >
 
-                <div class="notification-text">
-                    ${escapeHTML(text)}
-                </div>
+                <b>
+                    ${senderName}
+                </b>
 
-                ${label}
+                <br>
 
-                <div class="notification-time">
+                <span>
+                    ${icon}
+                    ${text}
+                </span>
+
+                ${friendLabel}
+
+                ${groupLabel}
+
+                ${postLabel}
+
+                <br>
+
+                <small>
                     ${escapeHTML(time)}
-                </div>
+                </small>
 
             </div>
 
             ${
-                unread
+                notification.read !== true
                     ? `
-                        <div
+                        <span
                             class="unread-dot"
-                        ></div>
+                            title="Unread"
+                        >
+                            ●
+                        </span>
                     `
                     : ""
             }
 
         </div>
     `;
-}
 
 
-// ============================================================
-// EMPTY
-// ============================================================
-
-function renderEmpty() {
-
-    notificationsContainer.innerHTML = `
-        <div class="notifications-empty">
-
-            <div class="empty-icon">
-                🔔
-            </div>
-
-            <strong>
-                No notifications yet
-            </strong>
-
-            <p>
-                Your likes, comments, friend requests,
-                messages and other activity will appear here.
-            </p>
-
-        </div>
-    `;
-}
+    renderJoinRequestActions(
+        card,
+        notificationDoc,
+        notification
+    );
 
 
-// ============================================================
-// LOADING
-// ============================================================
-
-function renderLoading() {
-
-    notificationsContainer.innerHTML = `
-        <div class="notifications-loading">
-
-            <div class="notification-spinner"></div>
-
-            <p>
-                Loading notifications...
-            </p>
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// ERROR
-// ============================================================
-
-function renderError(error) {
-
-    notificationsContainer.innerHTML = `
-        <div class="notifications-empty">
-
-            <div class="empty-icon">
-                ⚠️
-            </div>
-
-            <strong>
-                Could not load notifications
-            </strong>
-
-            <p>
-                ${escapeHTML(
-                    error?.message ||
-                    "Please try again."
-                )}
-            </p>
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// CLICK EVENTS
-// ============================================================
-
-function setupNotificationEvents() {
-
-    if (!notificationsContainer) {
-        return;
-    }
-
-    notificationsContainer.addEventListener(
+    card.addEventListener(
         "click",
-        async function(event) {
+        event => {
 
-            const item =
+            if (
                 event.target.closest(
-                    ".notification-item"
-                );
-
-            if (!item) {
+                    ".join-request-actions"
+                )
+            ) {
                 return;
             }
 
-            const id =
-                item.dataset.id;
-
-            if (!id) {
-                return;
-            }
-
-
-            // Find current notification
-            const notification =
-                window.__VitalStarNotifications
-                    ?.find(
-                        function(item) {
-                            return item.id === id;
-                        }
-                    );
-
-            if (!notification) {
-                return;
-            }
-
-            await openNotification(
+            openNotification(
+                notificationDoc,
                 notification
             );
         }
     );
-}
 
 
-// ============================================================
-// LOAD NOTIFICATIONS
-// ============================================================
-
-function listenToNotifications() {
-
-    if (
-        !currentUser ||
-        !notificationsContainer
-    ) {
-        return;
-    }
-
-
-    if (unsubscribeNotifications) {
-
-        unsubscribeNotifications();
-
-        unsubscribeNotifications =
-            null;
-    }
-
-
-    renderLoading();
-
-
-    const q = query(
-        collection(
-            db,
-            "notifications"
-        ),
-
-        where(
-            "receiverId",
-            "==",
-            currentUser.uid
-        ),
-
-        orderBy(
-            "createdAt",
-            "desc"
-        ),
-
-        limit(50)
-    );
-
-
-    unsubscribeNotifications =
-        onSnapshot(
-            q,
-
-            function(snapshot) {
-
-                const notifications =
-                    snapshot.docs.map(
-                        function(notificationDoc) {
-
-                            return {
-                                id:
-                                    notificationDoc.id,
-
-                                ...notificationDoc.data()
-                            };
-                        }
-                    );
-
-
-                // Save for click handling
-                window.__VitalStarNotifications =
-                    notifications;
-
-
-                if (!notifications.length) {
-
-                    renderEmpty();
-
-                    return;
-                }
-
-
-                notificationsContainer.innerHTML =
-                    notifications
-                        .map(
-                            renderNotification
-                        )
-                        .join("");
-            },
-
-            function(error) {
-
-                console.error(
-                    "Notifications listener:",
-                    error
-                );
-
-                renderError(error);
-            }
-        );
+    return card;
 }
 
 
@@ -1080,9 +1668,8 @@ function listenToNotifications() {
 // AUTH
 // ============================================================
 
-onAuthStateChanged(
-    auth,
-    function(user) {
+auth.onAuthStateChanged(
+    user => {
 
         if (!user) {
 
@@ -1092,12 +1679,110 @@ onAuthStateChanged(
             return;
         }
 
-        currentUser = user;
+        if (!notifications) {
+            return;
+        }
 
-        createMarkAllButton();
 
-        setupNotificationEvents();
+        const q =
+            query(
+                collection(
+                    db,
+                    "notifications"
+                ),
 
-        listenToNotifications();
+                where(
+                    "receiverId",
+                    "==",
+                    user.uid
+                ),
+
+                orderBy(
+                    "createdAt",
+                    "desc"
+                ),
+
+                limit(50)
+            );
+
+
+        onSnapshot(
+
+            q,
+
+            snapshot => {
+
+                notifications.innerHTML =
+                    "";
+
+                if (
+                    snapshot.empty
+                ) {
+
+                    notifications.innerHTML = `
+                        <div
+                            class="loading"
+                            style="
+                                background:#0d1220;
+                                color:#9aa7bd;
+                                border-radius:14px;
+                                padding:25px;
+                                text-align:center;
+                            "
+                        >
+                            🔔<br><br>
+                            No notifications yet.
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                snapshot.forEach(
+                    notificationDoc => {
+
+                        const card =
+                            renderNotification(
+                                notificationDoc
+                            );
+
+                        notifications.appendChild(
+                            card
+                        );
+                    }
+                );
+
+            },
+
+            error => {
+
+                console.error(
+                    "Notification listener error:",
+                    error
+                );
+
+                notifications.innerHTML = `
+                    <div
+                        class="loading"
+                        style="
+                            background:#0d1220;
+                            color:#ff7b7b;
+                            border-radius:14px;
+                            padding:25px;
+                            text-align:center;
+                        "
+                    >
+                        ⚠️<br><br>
+                        Unable to load notifications.
+                    </div>
+                `;
+            }
+        );
     }
 );
+
+
+// ============================================================
+// END OF NOTIFICATIONS-PAGE.JS
+// ============================================================
