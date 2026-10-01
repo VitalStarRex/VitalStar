@@ -1,15 +1,17 @@
 import { auth, db } from "./firebase.js";
 
 import {
-  doc,
-  getDoc,
-  updateDoc
+    doc,
+    getDoc,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
-  onAuthStateChanged,
-  updateEmail,
-  updatePassword
+    onAuthStateChanged,
+    updateEmail,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // Images
@@ -101,7 +103,6 @@ async function uploadImage(file) {
 
     formData.append("file", file);
 
-    // Correct upload preset
     formData.append("upload_preset", "vitalstar_upload");
 
     const response = await fetch(
@@ -115,18 +116,13 @@ async function uploadImage(file) {
     const result = await response.json();
 
     if (!response.ok) {
-        throw new Error(result.error?.message || "Image upload failed.");
+        throw new Error(
+            result.error?.message || "Image upload failed."
+        );
     }
 
     return result.secure_url;
 }
-
-
-
-
-
-
-
 
 // Save Profile
 form.addEventListener("submit", async (e) => {
@@ -166,30 +162,133 @@ form.addEventListener("submit", async (e) => {
             coverPhoto
         });
 
-        // Update email if changed
+        // =====================================================
+        // CHANGE EMAIL
+        // =====================================================
+
+        const newEmail = email.value.trim();
+        const currentEmail = user.email || "";
+
         if (
-            email.value.trim() &&
-            email.value.trim() !== user.email
+            newEmail &&
+            newEmail.toLowerCase() !== currentEmail.toLowerCase()
         ) {
-            try {
-                await updateEmail(user, email.value.trim());
-            } catch (err) {
-                console.error("Email Update Error:", err);
+
+            // Ask for the CURRENT password.
+            // This is different from the password field,
+            // which is used for the NEW password.
+            const currentPassword = prompt(
+                "Enter your current password to change your email:"
+            );
+
+            if (!currentPassword) {
                 alert(
-                    "Email could not be updated. Please log out and log in again before changing your email."
+                    "Email was not changed because your current password was not provided."
                 );
+            } else {
+
+                try {
+
+                    // Re-authenticate the account
+                    const credential = EmailAuthProvider.credential(
+                        currentEmail,
+                        currentPassword
+                    );
+
+                    await reauthenticateWithCredential(
+                        user,
+                        credential
+                    );
+
+                    // Now Firebase will allow the email change
+                    await updateEmail(user, newEmail);
+
+                    console.log("Email updated successfully.");
+
+                } catch (err) {
+
+                    console.error(
+                        "Email Update Error:",
+                        err
+                    );
+
+                    if (err.code === "auth/wrong-password" ||
+                        err.code === "auth/invalid-credential") {
+
+                        alert(
+                            "The current password is incorrect. Your email was not changed."
+                        );
+
+                    } else if (err.code === "auth/invalid-email") {
+
+                        alert(
+                            "The new email address is invalid."
+                        );
+
+                    } else if (err.code === "auth/email-already-in-use") {
+
+                        alert(
+                            "That email address is already being used by another account."
+                        );
+
+                    } else if (err.code === "auth/requires-recent-login") {
+
+                        alert(
+                            "Please log out and log in again, then try changing your email."
+                        );
+
+                    } else {
+
+                        alert(
+                            err.message ||
+                            "Email could not be updated."
+                        );
+                    }
+                }
             }
         }
 
-        // Update password if entered
+        // =====================================================
+        // CHANGE PASSWORD
+        // =====================================================
+
         if (password.value.trim()) {
+
             try {
-                await updatePassword(user, password.value.trim());
-            } catch (err) {
-                console.error("Password Update Error:", err);
-                alert(
-                    "Password could not be updated. Please log out and log in again before changing your password."
+
+                await updatePassword(
+                    user,
+                    password.value.trim()
                 );
+
+                console.log("Password updated successfully.");
+
+            } catch (err) {
+
+                console.error(
+                    "Password Update Error:",
+                    err
+                );
+
+                if (err.code === "auth/requires-recent-login") {
+
+                    alert(
+                        "Your password could not be changed because Firebase requires a recent login. Please log out and log in again, then try again."
+                    );
+
+                } else if (err.code === "auth/weak-password") {
+
+                    alert(
+                        "The new password is too weak. Please choose a stronger password."
+                    );
+
+                } else {
+
+                    alert(
+                        err.message ||
+                        "Password could not be updated."
+                    );
+                }
             }
         }
 
@@ -198,8 +297,16 @@ form.addEventListener("submit", async (e) => {
         window.location.href = "profile.html";
 
     } catch (err) {
-        console.error("Profile Update Error:", err);
-        alert(err.message || "Failed to update profile.");
+
+        console.error(
+            "Profile Update Error:",
+            err
+        );
+
+        alert(
+            err.message ||
+            "Failed to update profile."
+        );
     }
 
 });
