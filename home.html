@@ -17,14 +17,14 @@
 <style>
 
 /* =========================================================
-   RESET
+   VITALSTAR — MODERN SOCIAL HOME
    ========================================================= */
 
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:Arial,sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
 }
 
 html{
@@ -32,12 +32,43 @@ html{
 }
 
 body{
-    background:#ffffff;
-    color:#333333;
+    background:#070914;
+    color:#fff;
     min-height:100vh;
     overflow-x:hidden;
+    padding-bottom:88px;
 }
 
+/* =========================================================
+   BACKGROUND
+   ========================================================= */
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+
+    pointer-events:none;
+
+    background:
+        radial-gradient(
+            circle at 15% 10%,
+            rgba(0,183,255,.10),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 90% 20%,
+            rgba(168,59,255,.12),
+            transparent 25%
+        ),
+        radial-gradient(
+            circle at 50% 100%,
+            rgba(255,0,153,.07),
+            transparent 30%
+        );
+
+    z-index:-1;
+}
 
 /* =========================================================
    HEADER
@@ -49,124 +80,190 @@ header{
     left:0;
 
     width:100%;
-    height:62px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #1877f2,
-            #7b2ff7,
-            #ff1493
-        );
+    height:72px;
 
     display:flex;
     align-items:center;
-    justify-content:space-between;
 
     padding:0 14px;
 
-    color:white;
+    background:
+        rgba(7,9,20,.92);
+
+    backdrop-filter:blur(18px);
+
+    border-bottom:
+        1px solid rgba(255,255,255,.08);
 
     z-index:1000;
+}
 
-    box-shadow:
-        0 4px 20px rgba(0,0,0,.25);
+/* MENU */
+
+.menu{
+    width:42px;
+    height:42px;
+
+    border:0;
+    border-radius:50%;
+
+    background:#151a2d;
+
+    color:#fff;
+
+    font-size:21px;
+
+    cursor:pointer;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    margin-right:9px;
+}
+
+/* LOGO */
+
+.logo-area{
+    display:flex;
+    align-items:center;
+
+    gap:9px;
+
+    flex:1;
+}
+
+.logo-star{
+    width:42px;
+    height:42px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:35px;
+
+    color:#fff;
+
+    text-shadow:
+        0 0 7px #00cfff,
+        0 0 16px #7b2cff,
+        0 0 28px #ff19a8;
+}
+
+.logo-text{
+    line-height:1;
 }
 
 .logo{
     font-size:23px;
     font-weight:900;
 
-    text-shadow:
-        0 2px 8px rgba(0,0,0,.3);
+    letter-spacing:-.8px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #fff,
+            #00d9ff,
+            #8f4dff
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+
+    color:transparent;
 }
 
-.menu{
-    border:none;
-    background:none;
-    color:white;
+.logo-sub{
+    margin-top:4px;
 
-    font-size:28px;
+    color:#8991ae;
 
-    cursor:pointer;
+    font-size:11px;
 
-    width:40px;
-    height:40px;
+    letter-spacing:.3px;
 }
+
+/* HEADER ACTIONS */
 
 .icons{
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:8px;
 }
 
-.icon{
-    position:relative;
+.header-circle{
+    width:42px;
+    height:42px;
+
+    border:0;
+    border-radius:50%;
+
+    background:#151a2d;
+
+    color:#dce4ff;
 
     display:flex;
     align-items:center;
     justify-content:center;
+
+    text-decoration:none;
+
+    font-size:20px;
+
+    position:relative;
+
+    transition:.2s;
 }
 
-.icon-link{
-    color:white;
-    text-decoration:none;
+.header-circle:hover{
+    background:#202743;
+    transform:translateY(-1px);
+}
+
+/* SEARCH */
+
+.search-trigger{
     font-size:23px;
 }
 
-
-/* =========================================================
-   WALLET
-   ========================================================= */
+/* WALLET */
 
 .wallet-trigger{
-    border:none;
+    height:42px;
+
+    border:1px solid rgba(255,204,0,.45);
+
+    border-radius:22px;
+
+    padding:0 11px;
 
     background:
         linear-gradient(
             135deg,
-            #ffe600,
-            #ff9500
+            rgba(255,211,0,.18),
+            rgba(255,120,0,.14)
         );
 
-    color:#111;
-
-    min-width:76px;
-    height:38px;
-
-    padding:0 9px;
-
-    border-radius:13px;
+    color:#ffd84a;
 
     display:flex;
     align-items:center;
-    justify-content:center;
-
     gap:4px;
 
-    font-size:13px;
+    font-size:12px;
     font-weight:900;
 
     cursor:pointer;
 
     box-shadow:
-        0 4px 14px rgba(255,149,0,.4);
-
-    transition:.2s;
-}
-
-.wallet-trigger:hover{
-    transform:translateY(-2px);
-}
-
-.wallet-trigger:active{
-    transform:scale(.95);
+        0 0 15px rgba(255,180,0,.10);
 }
 
 #walletBalance{
     white-space:nowrap;
 }
-
 
 /* =========================================================
    BADGES
@@ -175,16 +272,13 @@ header{
 .badge{
     position:absolute;
 
-    top:-7px;
-    right:-8px;
+    top:-4px;
+    right:-3px;
 
     min-width:18px;
     height:18px;
 
     padding:0 5px;
-
-    background:#ff1744;
-    color:white;
 
     border-radius:20px;
 
@@ -192,12 +286,15 @@ header{
     align-items:center;
     justify-content:center;
 
+    background:#ff326d;
+
+    color:#fff;
+
     font-size:10px;
     font-weight:900;
 
-    border:2px solid white;
+    border:2px solid #080a15;
 }
-
 
 /* =========================================================
    SIDEBAR
@@ -207,161 +304,134 @@ header{
     position:fixed;
 
     top:0;
-    left:-270px;
+    left:-285px;
 
-    width:260px;
-    height:100%;
+    width:275px;
+    height:100vh;
 
-    background:white;
+    padding:
+        82px
+        12px
+        25px;
 
-    padding-top:75px;
+    background:
+        rgba(10,13,27,.98);
+
+    backdrop-filter:blur(20px);
+
+    border-right:
+        1px solid rgba(255,255,255,.08);
 
     box-shadow:
-        4px 0 20px rgba(0,0,0,.2);
+        10px 0 40px rgba(0,0,0,.4);
 
     transition:.3s;
 
-    z-index:999;
+    z-index:1500;
 
     overflow-y:auto;
 }
 
-.sidebar a{
-    display:block;
+.sidebar a,
+.darkModeBtn,
+#logoutBtn{
+    display:flex;
+    align-items:center;
 
-    margin:3px 10px;
+    width:100%;
 
-    padding:14px 15px;
+    margin:5px 0;
 
-    color:#333333;
+    padding:14px;
+
+    border:0;
+    border-radius:14px;
+
+    background:transparent;
+
+    color:#d9def4;
 
     text-decoration:none;
 
-    font-weight:800;
+    text-align:left;
 
-    border-radius:12px;
+    font-size:15px;
+    font-weight:700;
+
+    cursor:pointer;
 
     transition:.2s;
 }
 
-.sidebar a:hover{
-    background:#1877f2;
-    color:white;
+.sidebar a:hover,
+.darkModeBtn:hover,
+#logoutBtn:hover{
+    background:
+        linear-gradient(
+            90deg,
+            rgba(0,190,255,.12),
+            rgba(140,55,255,.14)
+        );
+
+    color:#fff;
 
     transform:translateX(3px);
 }
 
-
-/* =========================================================
-   ORION / PINKY / GAMES
-   ========================================================= */
+/* AI MENU */
 
 .orion-menu,
 .pinky-menu,
 .games-menu{
-    display:flex !important;
-
-    align-items:center;
-
     gap:10px;
-
-    margin:5px 10px;
-
-    padding:11px 10px !important;
-
-    border-radius:14px;
-
-    transition:.25s;
-}
-
-.orion-menu{
-    background:
-        linear-gradient(
-            135deg,
-            rgba(123,47,247,.12),
-            rgba(24,119,242,.12)
-        );
-}
-
-.pinky-menu{
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255,105,180,.15),
-            rgba(255,20,147,.1)
-        );
-}
-
-.games-menu{
-    background:
-        linear-gradient(
-            135deg,
-            rgba(24,119,242,.12),
-            rgba(52,199,89,.12)
-        );
 }
 
 .orion-icon,
 .pinky-icon,
 .games-icon{
-    width:34px;
-    height:34px;
+    width:36px;
+    height:36px;
 
-    min-width:34px;
+    min-width:36px;
 
-    border-radius:50%;
+    border-radius:12px;
 
     display:flex;
     align-items:center;
     justify-content:center;
 
-    color:white;
+    color:#fff;
 
     font-weight:900;
-
-    transition:.25s;
 }
 
 .orion-icon{
     background:
-        linear-gradient(
-            135deg,
-            #7b2ff7,
-            #1877f2
-        );
+        linear-gradient(135deg,#7b2cff,#00aaff);
 
     box-shadow:
-        0 0 12px rgba(123,47,247,.5);
+        0 0 15px rgba(123,44,255,.35);
 }
 
 .pinky-icon{
     background:
-        linear-gradient(
-            135deg,
-            #ff69b4,
-            #ff1493
-        );
+        linear-gradient(135deg,#ff49ad,#8b36ff);
 
     box-shadow:
-        0 0 12px rgba(255,20,147,.5);
+        0 0 15px rgba(255,45,170,.3);
 }
 
 .games-icon{
     background:
-        linear-gradient(
-            135deg,
-            #1877f2,
-            #34c759
-        );
+        linear-gradient(135deg,#00aaff,#20d98b);
 
     box-shadow:
-        0 0 12px rgba(24,119,242,.5);
+        0 0 15px rgba(0,180,255,.25);
 }
 
 .orion-name,
 .pinky-name,
 .games-name{
-    font-size:15px;
     font-weight:900;
 }
 
@@ -373,359 +443,344 @@ header{
 
     border-radius:8px;
 
-    color:white;
-
     font-size:9px;
     font-weight:900;
 }
 
 .ai-badge{
-    background:
-        linear-gradient(
-            135deg,
-            #7b2ff7,
-            #1877f2
-        );
+    background:#7135e8;
 }
 
 .pinky-badge{
-    background:
-        linear-gradient(
-            135deg,
-            #ff69b4,
-            #ff1493
-        );
+    background:#ed3c9d;
 }
 
 .games-badge{
-    background:
-        linear-gradient(
-            135deg,
-            #1877f2,
-            #34c759
-        );
+    background:#00aeea;
 }
-
 
 /* =========================================================
-   SIDEBAR BUTTONS
-   ========================================================= */
-
-.darkModeBtn,
-#logoutBtn{
-    width:calc(100% - 20px);
-
-    margin:3px 10px;
-
-    text-align:left;
-
-    padding:14px 15px;
-
-    border:none;
-
-    background:none;
-
-    color:#333333;
-
-    font-size:15px;
-
-    font-weight:800;
-
-    border-radius:12px;
-
-    cursor:pointer;
-}
-
-.darkModeBtn:hover,
-#logoutBtn:hover{
-    background:#1877f2;
-    color:white;
-}
-
-
-/* =========================================================
-   MAIN CONTENT
+   MAIN
    ========================================================= */
 
 .container{
     width:100%;
-
     max-width:900px;
 
     margin:auto;
 
     padding:
-        82px
-        14px
-        100px;
-
-    color:#333333;
+        86px
+        10px
+        20px;
 }
-
 
 /* =========================================================
-   HERO
+   STORIES
    ========================================================= */
 
-.hero-card{
-    position:relative;
-
-    overflow:hidden;
-
-    background:
-        linear-gradient(
-            135deg,
-            #1877f2,
-            #7b2ff7,
-            #ff1493
-        );
-
-    color:white;
-
-    border-radius:24px;
-
-    padding:23px;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    box-shadow:
-        0 10px 30px
-        rgba(80,50,200,.3);
+.stories-section{
+    margin-bottom:12px;
 }
-
-.hero-card:after{
-    content:"";
-
-    position:absolute;
-
-    right:-20px;
-    bottom:-30px;
-
-    width:130px;
-    height:130px;
-
-    border-radius:50%;
-
-    background:
-        rgba(255,255,255,.08);
-}
-
-.hero-left{
-    display:flex;
-
-    align-items:center;
-
-    gap:14px;
-}
-
-.hero-icon{
-    width:55px;
-    height:55px;
-
-    border-radius:18px;
-
-    background:
-        rgba(255,255,255,.2);
-
-    display:flex;
-
-    align-items:center;
-    justify-content:center;
-
-    font-size:32px;
-
-    backdrop-filter:blur(5px);
-}
-
-.hero-card h2{
-    font-size:21px;
-
-    margin-bottom:5px;
-}
-
-.hero-card p{
-    font-size:13px;
-
-    opacity:.9;
-}
-
-.hero-badge{
-    background:
-        rgba(255,255,255,.18);
-
-    padding:8px 11px;
-
-    border-radius:20px;
-
-    font-size:12px;
-
-    font-weight:900;
-}
-
-
-/* =========================================================
-   STORIES — 4 SMALL SQUARE BOXES
-   ========================================================= */
 
 .stories{
     display:flex;
 
-    gap:10px;
+    gap:13px;
 
     overflow-x:auto;
 
-    padding:16px 2px;
+    padding:
+        5px
+        3px
+        13px;
 
     scrollbar-width:none;
-
-    justify-content:flex-start;
 }
 
 .stories::-webkit-scrollbar{
     display:none;
 }
 
+.story-wrap{
+    flex:0 0 70px;
+
+    width:70px;
+
+    text-align:center;
+}
+
 .story{
     position:relative;
 
-    min-width:78px;
-    width:78px;
-    height:78px;
+    width:68px;
+    height:68px;
 
-    flex:0 0 78px;
+    padding:3px;
 
-    border-radius:14px;
-
-    overflow:hidden;
-
-    display:flex;
-
-    align-items:flex-end;
-
-    justify-content:center;
-
-    padding-bottom:8px;
-
-    color:white;
-
-    font-size:11px;
-
-    font-weight:900;
+    border-radius:50%;
 
     background:
         linear-gradient(
-            160deg,
-            #1877f2,
-            #7b2ff7,
-            #ff1493
+            135deg,
+            #00e5ff,
+            #8a35ff,
+            #ff239e
         );
 
     box-shadow:
-        0 5px 14px
-        rgba(0,0,0,.16);
+        0 0 13px rgba(119,52,255,.35);
+
+    cursor:pointer;
 }
 
-.story:before{
-    content:"🌸";
+.story-inner{
+    width:100%;
+    height:100%;
 
-    position:absolute;
-
-    top:14px;
-    left:50%;
-
-    transform:
-        translateX(-50%);
-
-    font-size:25px;
-}
-
-.story:after{
-    content:"🌺";
-
-    position:absolute;
-
-    right:5px;
-    top:4px;
-
-    font-size:13px;
-}
-
-
-/* =========================================================
-   LATEST
-   ========================================================= */
-
-.latest-wrap{
-    text-align:center;
-
-    margin:
-        10px 0
-        18px;
-}
-
-.latest-title{
-    display:inline-block;
-
-    padding:
-        10px 24px;
-
-    border-radius:16px;
-
-    background:#111;
-
-    font-size:30px;
-
-    font-weight:900;
-
-    box-shadow:
-        0 7px 20px
-        rgba(0,0,0,.2);
-}
-
-.red{color:#ff3b30;}
-.orange{color:#ff9500;}
-.yellow{color:#ffcc00;}
-.green{color:#34c759;}
-.blue{color:#007aff;}
-.purple{color:#af52de;}
-
-
-/* =========================================================
-   POSTS
-   (always dark, regardless of light/dark mode)
-   ========================================================= */
-
-.post-card{
-    background:#1d1d1d;
-
-    color:#eee;
-
-    border-radius:22px;
+    border-radius:50%;
 
     overflow:hidden;
 
-    margin-top:18px;
+    background:#14182b;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+}
+
+.story-inner img{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+}
+
+.story-placeholder{
+    font-size:27px;
+}
+
+.story-name{
+    display:block;
+
+    margin-top:7px;
+
+    color:#cbd1e8;
+
+    font-size:10px;
+    font-weight:700;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.story-add{
+    position:absolute;
+
+    right:-2px;
+    bottom:0;
+
+    width:23px;
+    height:23px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:#08bfff;
+
+    border:2px solid #090b17;
+
+    color:white;
+
+    font-size:17px;
+    font-weight:900;
+}
+
+/* =========================================================
+   COMPOSER
+   ========================================================= */
+
+.composer{
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20,25,45,.96),
+            rgba(12,15,29,.96)
+        );
+
+    border:
+        1px solid rgba(255,255,255,.08);
+
+    border-radius:22px;
+
+    padding:13px;
 
     box-shadow:
-        0 7px 22px
-        rgba(0,0,0,.12);
+        0 8px 30px rgba(0,0,0,.2);
+
+    margin-bottom:17px;
+}
+
+.composer-top{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.composer-avatar{
+    width:44px;
+    height:44px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3cff,
+            #00d5ff
+        );
+
+    border:2px solid #713cff;
+}
+
+.composer-input{
+    flex:1;
+
+    height:44px;
+
+    border:
+        1px solid rgba(255,255,255,.09);
+
+    border-radius:24px;
+
+    background:#171c31;
+
+    color:#dce2f8;
+
+    padding:0 17px;
+
+    display:flex;
+    align-items:center;
+
+    font-size:14px;
+
+    cursor:pointer;
+}
+
+.composer-input:hover{
+    background:#1d233b;
+}
+
+.composer-actions{
+    display:flex;
+
+    margin-top:12px;
+
+    padding-top:10px;
+
+    border-top:
+        1px solid rgba(255,255,255,.06);
+}
+
+.composer-action{
+    flex:1;
+
+    border:0;
+    background:none;
+
+    color:#bbc4e2;
+
+    font-size:12px;
+    font-weight:800;
+
+    padding:7px;
+
+    cursor:pointer;
+
+    border-radius:10px;
+}
+
+.composer-action:hover{
+    background:rgba(255,255,255,.05);
+}
+
+.photo-action{
+    color:#c348ff;
+}
+
+.video-action{
+    color:#00caff;
+}
+
+.live-action{
+    color:#ff39c7;
+}
+
+.feeling-action{
+    color:#00e6d0;
+}
+
+/* =========================================================
+   HIDDEN COMPATIBILITY ELEMENTS
+   ========================================================= */
+
+.compatibility-text{
+    display:none;
+}
+
+/* =========================================================
+   FEED
+   ========================================================= */
+
+#feed{
+    width:100%;
+}
+
+.post-card{
+    position:relative;
+
+    background:
+        linear-gradient(
+            145deg,
+            #111627,
+            #0d1120
+        );
+
+    color:#f3f5ff;
+
+    border:
+        1px solid rgba(255,255,255,.075);
+
+    border-radius:21px;
+
+    overflow:hidden;
+
+    margin-top:15px;
+
+    box-shadow:
+        0 9px 28px rgba(0,0,0,.28);
 }
 
 .user-info{
     display:flex;
-
     align-items:center;
 
-    padding:15px;
+    padding:14px 14px 9px;
 }
 
 .avatar{
-    width:48px;
-    height:48px;
+    width:45px;
+    height:45px;
+
+    min-width:45px;
 
     border-radius:50%;
 
@@ -733,161 +788,156 @@ header{
 
     object-fit:cover;
 
-    background:#ddd;
+    background:
+        linear-gradient(
+            135deg,
+            #7b2cff,
+            #00cfff
+        );
+
+    border:
+        2px solid rgba(120,75,255,.7);
 }
 
 .post-card p{
-    padding:15px;
+    padding:
+        5px
+        14px
+        13px;
 
-    color:#eee;
+    color:#edf0ff;
 
-    font-size:16px;
+    font-size:15px;
 
-    line-height:1.5;
+    line-height:1.48;
 }
 
 .post-photo{
-    width:100%;
+    display:block;
+
+    width:calc(100% - 18px);
+
+    margin:
+        0
+        9px;
 
     max-height:600px;
 
+    border-radius:15px;
+
     object-fit:cover;
+
+    background:#080b16;
 }
 
 .post-buttons{
     display:flex;
+    align-items:center;
 
     justify-content:space-around;
 
-    padding:13px;
+    padding:
+        10px 6px;
 
-    border-top:1px solid #333;
+    border-top:
+        1px solid rgba(255,255,255,.07);
 }
 
 .post-buttons button{
+    flex:1;
+
     border:none;
 
     background:none;
 
-    color:#ccc;
+    color:#aeb7d5;
 
-    font-size:15px;
-
+    font-size:13px;
     font-weight:800;
 
+    padding:8px 4px;
+
     cursor:pointer;
+
+    border-radius:10px;
+
+    transition:.2s;
 }
 
+.post-buttons button:hover{
+    background:rgba(255,255,255,.05);
+    color:#fff;
+}
+
+/* =========================================================
+   POST MEDIA GALLERY SUPPORT
+   ========================================================= */
+
+.post-card img{
+    max-width:100%;
+}
+
+.post-card video{
+    width:100%;
+    max-height:600px;
+
+    object-fit:cover;
+}
 
 /* =========================================================
    FOOTER
    ========================================================= */
 
 .vital-footer{
-    background:#050505;
-
-    color:#888;
-
-    text-align:center;
-
-    padding:
-        38px 15px
-        90px;
-
-    box-shadow:
-        0 -5px 25px
-        rgba(0,0,0,.7);
+    display:none;
 }
-
-.vital-footer h2{
-    color:white;
-
-    font-size:28px;
-
-    font-weight:900;
-
-    margin-bottom:8px;
-
-    text-shadow:
-        0 0 12px #777;
-}
-
-.vital-footer p{
-    font-weight:bold;
-}
-
-.footer-links{
-    margin:22px 0;
-}
-
-.footer-links a{
-    display:inline-block;
-
-    margin:7px;
-
-    color:#aaa;
-
-    text-decoration:none;
-
-    font-size:14px;
-
-    font-weight:bold;
-
-    transition:.2s;
-}
-
-.footer-links a:hover{
-    color:white;
-
-    transform:
-        translateY(-2px);
-}
-
-.copyright{
-    border-top:1px solid #333;
-
-    padding-top:15px;
-
-    font-size:12px;
-
-    color:#777;
-}
-
 
 /* =========================================================
-   BOTTOM NAVIGATION
+   BOTTOM NAV
    ========================================================= */
 
 .bottom-nav{
     position:fixed;
 
-    bottom:0;
-    left:0;
+    left:50%;
+    bottom:10px;
 
-    width:100%;
+    transform:translateX(-50%);
 
-    height:67px;
+    width:
+        min(96%, 620px);
 
-    background:
-        rgba(255,255,255,.96);
+    height:68px;
 
-    backdrop-filter:blur(12px);
+    padding:
+        5px 8px;
 
     display:flex;
-
+    align-items:center;
     justify-content:space-around;
 
-    align-items:center;
+    background:
+        rgba(11,14,28,.94);
+
+    backdrop-filter:blur(20px);
+
+    border:
+        1px solid rgba(255,255,255,.10);
+
+    border-radius:23px;
 
     box-shadow:
-        0 -4px 20px
-        rgba(0,0,0,.15);
+        0 12px 40px rgba(0,0,0,.55);
 
     z-index:1000;
 }
 
 .bottom-nav a{
-    color:#555;
+    position:relative;
+
+    min-width:54px;
+
+    color:#8e96b4;
 
     text-decoration:none;
 
@@ -895,179 +945,232 @@ header{
 
     font-size:21px;
 
-    min-width:55px;
+    padding:5px;
+
+    transition:.2s;
+}
+
+.bottom-nav a:hover{
+    color:#fff;
 }
 
 .bottom-nav small{
     display:block;
 
-    font-size:10px;
+    margin-top:3px;
 
-    font-weight:bold;
+    font-size:9px;
 
-    margin-top:2px;
+    font-weight:800;
 }
 
-.create-btn{
-    width:56px;
-    height:56px;
+/* ACTIVE */
 
-    border-radius:50%;
+.bottom-nav a:first-child{
+    color:#8f56ff;
+}
+
+.bottom-nav a:first-child::after{
+    content:"";
+
+    position:absolute;
+
+    bottom:-5px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    width:28px;
+    height:3px;
+
+    border-radius:10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #8b42ff,
+            #00d9ff
+        );
+
+    box-shadow:
+        0 0 8px #713cff;
+}
+
+/* CREATE */
+
+.create-btn{
+    width:57px !important;
+    height:57px;
+
+    min-width:57px !important;
+
+    margin-top:-25px;
+
+    border-radius:50% !important;
+
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
 
     background:
         linear-gradient(
             135deg,
-            #1877f2,
-            #7b2ff7,
-            #ff1493
+            #7639ff,
+            #00cfff,
+            #ff28a8
         );
 
-    color:white !important;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
+    color:#fff !important;
 
     font-size:30px !important;
 
-    margin-top:-27px;
-
-    border:4px solid white;
+    border:
+        4px solid #080b16;
 
     box-shadow:
-        0 5px 20px
-        rgba(123,47,247,.4);
+        0 0 20px rgba(106,54,255,.55);
+
+    text-shadow:
+        0 2px 5px rgba(0,0,0,.3);
 }
 
+.create-btn small{
+    display:none;
+}
 
 /* =========================================================
-   DARK MODE
+   DARK MODE COMPATIBILITY
    ========================================================= */
 
 body.dark-mode{
-    background:
-        radial-gradient(
-            circle at 10% 20%,
-            rgba(123,47,247,.12),
-            transparent 25%
-        ),
-        #111;
-
-    color:#eee;
+    background:#070914;
+    color:#fff;
 }
 
 body.dark-mode .sidebar{
-    background:#1d1d1d;
-}
-
-body.dark-mode .sidebar a,
-body.dark-mode .darkModeBtn,
-body.dark-mode #logoutBtn{
-    color:#eee;
+    background:rgba(10,13,27,.98);
 }
 
 body.dark-mode .bottom-nav{
-    background:
-        rgba(29,29,29,.96);
+    background:rgba(11,14,28,.94);
 }
-
-body.dark-mode .bottom-nav a{
-    color:#ccc;
-}
-
-body.dark-mode .create-btn{
-    border-color:#1d1d1d;
-}
-
 
 /* =========================================================
    MOBILE
    ========================================================= */
 
-@media(max-width:500px){
+@media(max-width:600px){
 
     header{
-        padding:0 9px;
+        height:68px;
+
+        padding:
+            0
+            9px;
+    }
+
+    .menu{
+        width:38px;
+        height:38px;
+
+        font-size:19px;
+
+        margin-right:4px;
+    }
+
+    .logo-star{
+        width:34px;
+        height:34px;
+
+        font-size:29px;
     }
 
     .logo{
-        font-size:18px;
-    }
-
-    .icons{
-        gap:7px;
-    }
-
-    .wallet-trigger{
-        min-width:auto;
-
-        height:36px;
-
-        padding:0 7px;
-
-        font-size:11px;
-    }
-
-    .icon-link{
         font-size:20px;
     }
 
-    .container{
-        padding-left:10px;
-        padding-right:10px;
+    .logo-sub{
+        font-size:9px;
     }
 
-    .hero-card{
-        padding:18px;
-
-        border-radius:20px;
+    .icons{
+        gap:5px;
     }
 
-    .hero-icon{
-        width:48px;
-        height:48px;
+    .header-circle{
+        width:38px;
+        height:38px;
 
-        font-size:27px;
-    }
-
-    .hero-card h2{
         font-size:18px;
     }
 
-    .hero-card p{
+    .wallet-trigger{
+        height:38px;
+
+        padding:
+            0
+            8px;
+
         font-size:11px;
     }
 
-    .hero-badge{
-        font-size:10px;
-
+    .container{
         padding:
-            6px 8px;
+            79px
+            8px
+            18px;
+    }
+
+    .stories{
+        gap:11px;
+    }
+
+    .story-wrap{
+        flex-basis:65px;
+        width:65px;
     }
 
     .story{
-        min-width:70px;
-        width:70px;
-        height:70px;
-
-        flex-basis:70px;
-
-        border-radius:12px;
+        width:63px;
+        height:63px;
     }
 
-    .story:before{
-        font-size:22px;
-        top:12px;
+    .story-name{
+        font-size:9px;
     }
 
-    .story:after{
-        font-size:11px;
+    .composer{
+        border-radius:19px;
     }
 
-    .latest-title{
-        font-size:26px;
+    .composer-action{
+        font-size:10px;
+    }
+
+    .post-card{
+        border-radius:18px;
+    }
+
+    .post-card p{
+        font-size:14px;
+    }
+
+    .post-buttons button{
+        font-size:12px;
+    }
+
+    .bottom-nav{
+        bottom:7px;
+        height:64px;
+        border-radius:21px;
+    }
+
+    .create-btn{
+        width:53px !important;
+        height:53px;
+        min-width:53px !important;
+
+        font-size:27px !important;
     }
 
 }
@@ -1080,40 +1183,81 @@ body.dark-mode .create-btn{
 <body>
 
 
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+
 <header>
 
 <button
     class="menu"
     onclick="openMenu()"
+    aria-label="Open menu"
 >
     ☰
 </button>
 
-<div class="logo">
-    ⭐ VitalStar
+
+<div class="logo-area">
+
+<div class="logo-star">
+    ☆
 </div>
 
+<div class="logo-text">
+
+<div class="logo">
+    VitalStar
+</div>
+
+<div class="logo-sub">
+    Connect • Share • Grow
+</div>
+
+</div>
+
+</div>
+
+
 <div class="icons">
+
+
+<!-- SEARCH -->
+
+<a
+    href="users.html"
+    class="header-circle search-trigger"
+    aria-label="Search"
+>
+    🔍
+</a>
+
+
+<!-- WALLET -->
 
 <button
     class="wallet-trigger"
     id="walletButton"
     type="button"
 >
-    💰
 
-    <span id="walletBalance">
-        ₦0
-    </span>
+<span>💰</span>
+
+<span id="walletBalance">
+    ₦0
+</span>
 
 </button>
 
 
-<div class="icon">
+<!-- NOTIFICATIONS -->
+
+<div style="position:relative">
 
 <a
     href="notifications.html"
-    class="icon-link"
+    class="header-circle"
+    aria-label="Notifications"
 >
     🔔
 </a>
@@ -1128,11 +1272,14 @@ body.dark-mode .create-btn{
 </div>
 
 
-<div class="icon">
+<!-- MESSAGES -->
+
+<div style="position:relative">
 
 <a
     href="message.html"
-    class="icon-link"
+    class="header-circle"
+    aria-label="Messages"
 >
     💬
 </a>
@@ -1146,10 +1293,15 @@ body.dark-mode .create-btn{
 
 </div>
 
+
 </div>
 
 </header>
 
+
+<!-- =========================================================
+     SIDEBAR
+     ========================================================= -->
 
 <div
     class="sidebar"
@@ -1157,15 +1309,15 @@ body.dark-mode .create-btn{
 >
 
 <a href="profile.html">
-    👤 Profile
+    👤 &nbsp; Profile
 </a>
 
 <a href="users.html">
-    👥 Friends
+    👥 &nbsp; Friends
 </a>
 
 <a href="messages.html">
-    💬 Messages
+    💬 &nbsp; Messages
 </a>
 
 
@@ -1230,7 +1382,7 @@ body.dark-mode .create-btn{
 
 
 <a href="edit-profile.html">
-    ⚙️ Settings
+    ⚙️ &nbsp; Settings
 </a>
 
 
@@ -1238,14 +1390,12 @@ body.dark-mode .create-btn{
     id="darkModeToggle"
     class="darkModeBtn"
 >
-    🌙 Dark Mode
+    🌙 &nbsp; Dark Mode
 </button>
 
 
-<button
-    id="logoutBtn"
->
-    🚪 Logout
+<button id="logoutBtn">
+    🚪 &nbsp; Logout
 </button>
 
 </div>
@@ -1263,7 +1413,7 @@ function openMenu(){
     ){
 
         sidebar.style.left =
-            "-270px";
+            "-285px";
 
     }else{
 
@@ -1277,18 +1427,213 @@ function openMenu(){
 </script>
 
 
+<!-- =========================================================
+     MAIN
+     ========================================================= -->
+
 <main class="container">
 
 
-<section class="hero-card">
+<!-- =========================================================
+     STORIES
+     ========================================================= -->
 
-<div class="hero-left">
+<section class="stories-section">
 
-<div class="hero-icon">
-    ✨
+<div class="stories">
+
+
+<!-- YOUR STORY -->
+
+<div class="story-wrap">
+
+<div class="story">
+
+<div class="story-inner">
+    <div class="story-placeholder">
+        👤
+    </div>
 </div>
 
-<div>
+<div class="story-add">
+    +
+</div>
+
+</div>
+
+<span class="story-name">
+    Your story
+</span>
+
+</div>
+
+
+<!-- STORY -->
+
+<div class="story-wrap">
+
+<div class="story">
+
+<div class="story-inner">
+    🌅
+</div>
+
+</div>
+
+<span class="story-name">
+    Kingsley
+</span>
+
+</div>
+
+
+<div class="story-wrap">
+
+<div class="story">
+
+<div class="story-inner">
+    👩🏽
+</div>
+
+</div>
+
+<span class="story-name">
+    Zara
+</span>
+
+</div>
+
+
+<div class="story-wrap">
+
+<div class="story">
+
+<div class="story-inner">
+    🌃
+</div>
+
+</div>
+
+<span class="story-name">
+    Bright
+</span>
+
+</div>
+
+
+<div class="story-wrap">
+
+<div class="story">
+
+<div class="story-inner">
+    🧑🏿
+</div>
+
+</div>
+
+<span class="story-name">
+    TeeJay
+</span>
+
+</div>
+
+
+<div class="story-wrap">
+
+<div class="story">
+
+<div class="story-inner">
+    🌴
+</div>
+
+</div>
+
+<span class="story-name">
+    Lola
+</span>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     CREATE POST
+     ========================================================= -->
+
+<section class="composer">
+
+
+<div class="composer-top">
+
+<div
+    class="composer-avatar"
+    id="composerAvatar"
+>
+    👤
+</div>
+
+
+<div
+    class="composer-input"
+    onclick="window.location.href='create-post.html'"
+>
+    What's on your mind?
+</div>
+
+
+</div>
+
+
+<div class="composer-actions">
+
+
+<button
+    class="composer-action photo-action"
+    onclick="window.location.href='create-post.html'"
+>
+    🖼️ Photo
+</button>
+
+
+<button
+    class="composer-action video-action"
+    onclick="window.location.href='create-post.html'"
+>
+    🎥 Video
+</button>
+
+
+<button
+    class="composer-action live-action"
+    onclick="window.location.href='create-post.html'"
+>
+    📡 Live
+</button>
+
+
+<button
+    class="composer-action feeling-action"
+    onclick="window.location.href='create-post.html'"
+>
+    ✏️ Feeling
+</button>
+
+
+</div>
+
+</section>
+
+
+<!-- =========================================================
+     COMPATIBILITY
+     Keeps IDs available for existing home.js
+     ========================================================= -->
+
+<div class="compatibility-text">
 
 <h2 id="welcomeText">
     Good Day...
@@ -1300,56 +1645,10 @@ function openMenu(){
 
 </div>
 
-</div>
-
-
-<div class="hero-badge">
-    ● Online
-</div>
-
-</section>
-
 
 <!-- =========================================================
-     4 SMALL SQUARE STORIES
+     FEED
      ========================================================= -->
-
-<div class="stories">
-
-<div class="story">
-    Story
-</div>
-
-<div class="story">
-    Story
-</div>
-
-<div class="story">
-    Story
-</div>
-
-<div class="story">
-    Story
-</div>
-
-</div>
-
-
-<div class="latest-wrap">
-
-<h2 class="latest-title">
-
-<span class="red">L</span>
-<span class="orange">a</span>
-<span class="yellow">t</span>
-<span class="green">e</span>
-<span class="blue">s</span>
-<span class="purple">t</span>
-
-</h2>
-
-</div>
-
 
 <div id="feed"></div>
 
@@ -1357,51 +1656,12 @@ function openMenu(){
 </main>
 
 
-<footer class="vital-footer">
-
-<h2>
-    ⭐ VitalStar
-</h2>
-
-<p>
-    Connect, share, and shine together.
-</p>
-
-<div class="footer-links">
-
-<a
-    href="online-users.html"
-    id="onlineUsersCount"
->
-    🟢 Online: 0
-</a>
-
-<a href="policy.html">
-    📜 Privacy & Policy
-</a>
-
-<a href="report.html">
-    🚨 Report
-</a>
-
-<a href="terms.html">
-    ⚖️ Terms
-</a>
-
-<a href="javascript:void(0)">
-    🚫 Do Not Copy Us
-</a>
-
-</div>
-
-<p class="copyright">
-    © 2026 VitalStar. All rights reserved.
-</p>
-
-</footer>
-
+<!-- =========================================================
+     BOTTOM NAVIGATION
+     ========================================================= -->
 
 <nav class="bottom-nav">
+
 
 <a href="home.html">
 
@@ -1416,10 +1676,10 @@ function openMenu(){
 
 <a href="users.html">
 
-    👥
+    🔎
 
     <small>
-        Friends
+        Explore
     </small>
 
 </a>
@@ -1429,16 +1689,16 @@ function openMenu(){
     href="create-post.html"
     class="create-btn"
 >
-    ➕
+    +
 </a>
 
 
-<a href="groups.html">
+<a href="notifications.html">
 
-    🌐
+    🔔
 
     <small>
-        Groups
+        Notifications
     </small>
 
 </a>
@@ -1454,57 +1714,73 @@ function openMenu(){
 
 </a>
 
+
 </nav>
 
+
+<!-- =========================================================
+     FIREBASE / VITALSTAR SCRIPTS
+     ========================================================= -->
 
 <script
     type="module"
     src="auth-guard.js"
 ></script>
 
+
 <script
     type="module"
     src="presence.js"
 ></script>
+
 
 <script
     type="module"
     src="message-badge.js"
 ></script>
 
+
 <script
     type="module"
     src="wallet.js"
 ></script>
+
 
 <script
     type="module"
     src="home.js"
 ></script>
 
+
 <script
     type="module"
     src="online-count.js"
 ></script>
+
 
 <script
     type="module"
     src="notifications.js"
 ></script>
 
+
 <script
     type="module"
     src="logout.js"
 ></script>
 
+
 <script src="dark-mode.js"></script>
 
+
+<!-- =========================================================
+     SERVICE WORKER
+     ========================================================= -->
 
 <script>
 
 if(
-    "serviceWorker"
-    in navigator
+    "serviceWorker" in navigator
 ){
 
     navigator.serviceWorker.register(
@@ -1535,4 +1811,5 @@ if(
 
 
 </body>
+
 </html>
