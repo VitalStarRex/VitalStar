@@ -1,247 +1,805 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
 <title>VitalStar Profile</title>
+
 <link rel="stylesheet" href="profile.css">
-</head>
-<body>
-
-<div class="profile-page">
-
-<div class="cover-container">
-<img id="coverPhoto" src="https://via.placeholder.com/1200x350" class="cover-photo">
-
-<div class="profile-image-box">
-<img id="profilePicture" src="https://via.placeholder.com/180" class="profile-picture">
-</div>
-</div>
-
-<div class="profile-info">
-
-<h1 id="fullName">Loading...</h1>
-
-<p class="username" id="username">@username</p>
-
-<div class="details">
-<p id="country">🌍 Country</p>
-<p id="dob">🎂 Birthday</p>
-<p id="gender">🚻 Gender</p>
-<p id="rank">🏅 Member</p>
-<p id="lastSeen">🟢 Online</p>
-</div>
-
-<p id="bio" class="bio">No bio yet.</p>
-
-<div class="stats">
-<div><h2 id="posts">0</h2><span>Posts</span></div>
-<div><h2 id="followers">0</h2><span>Followers</span></div>
-<div><h2 id="following">0</h2><span>Following</span></div>
-</div>
-
-<div class="buttons">
-<button id="editProfileBtn">✏ Edit Profile</button>
-<button id="followBtn">➕ Follow</button>
-<button id="messageBtn">💬 Message</button>
-</div>
-
-</div>
-
-<div class="posts-section">
-<h2>Posts</h2>
-<div id="gallery"></div>
-</div>
-
-</div>
-
-<!-- Bottom Navigation -->
-<div style="
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:70px;
-background:#d9d9d9;
-border-top:1px solid #bfbfbf;
-display:flex;
-justify-content:space-evenly;
-align-items:center;
-z-index:1000;
-box-shadow:0 -2px 8px rgba(0,0,0,.15);
-">
-<a href="home.html" style="text-decoration:none;color:#222;display:flex;flex-direction:column;align-items:center;font-size:30px;font-weight:bold;"><span>🏠</span><span style="font-size:16px;font-weight:900;">Home</span></a>
-<a href="users.html" style="text-decoration:none;color:#222;display:flex;flex-direction:column;align-items:center;font-size:30px;font-weight:bold;"><span>👥</span><span style="font-size:16px;font-weight:900;">Friends</span></a>
-<a href="create-post.html" style="width:60px;height:60px;background:#1877f2;color:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center;text-decoration:none;font-size:36px;font-weight:bold;margin-top:-28px;box-shadow:0 4px 12px rgba(0,0,0,.3);">➕</a>
-<a href="general-room.html" style="text-decoration:none;color:#222;display:flex;flex-direction:column;align-items:center;font-size:30px;font-weight:bold;"><span>💬</span><span style="font-size:16px;font-weight:900;">Chat</span></a>
-<a href="profile.html" style="text-decoration:none;color:#222;display:flex;flex-direction:column;align-items:center;font-size:30px;font-weight:bold;"><span>👤</span><span style="font-size:16px;font-weight:900;">Profile</span></a>
-</div>
-
-
-
-
-
-
-<footer class="vital-footer">
-
-<h2>⭐ VitalStar</h2>
-
-<p>
-Connect, share, and shine together.
-</p>
-
-<div class="footer-links">
-
-<a href="online-users.html" id="onlineUsersCount">
-🟢 Online: 0
-</a>
-
-<a href="policy.html">
-📜 Privacy & Policy
-</a>
-
-<a href="report.html">
-🚨 Report
-</a>
-
-<a href="terms.html">
-⚖️ Terms
-</a>
-
-<a href="javascript:void(0)">
-🚫 Do Not Copy Us
-</a>
-
-</div>
-
-
-<p class="copyright">
-© 2026 VitalStar. All rights reserved.
-</p>
-
-</footer>
-
 
 <style>
 
-.vital-footer{
+/* ============================================================
+   VITALSTAR PROFILE — DARK THEME
+   ============================================================ */
 
-background:#000;
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: #050914;
+    color: #ffffff;
+}
 
-color:#888;
+body {
+    font-family: Arial, sans-serif;
+    padding-bottom: 90px;
+}
 
-text-align:center;
+.profile-page {
+    min-height: 100vh;
 
-padding:35px 15px;
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(0, 76, 255, 0.16),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at top right,
+            rgba(150, 0, 255, 0.14),
+            transparent 35%
+        ),
+        #050914;
+}
 
-font-family:Arial,sans-serif;
 
-box-shadow:0 -5px 20px rgba(0,0,0,.8);
+/* ============================================================
+   COVER
+   ============================================================ */
+
+.cover-container {
+    position: relative;
+    width: 100%;
+    background: #080d1a;
+}
+
+.cover-photo {
+    display: block;
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    background: #0b1224;
+}
+
+.profile-image-box {
+    position: absolute;
+
+    left: 50%;
+    bottom: -75px;
+
+    transform: translateX(-50%);
+
+    width: 150px;
+    height: 150px;
+
+    border-radius: 50%;
+
+    padding: 5px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0066ff,
+            #7a00ff,
+            #ff00cc,
+            #ffd700
+        );
+
+    box-shadow:
+        0 0 15px rgba(0, 102, 255, 0.8),
+        0 0 35px rgba(122, 0, 255, 0.5);
+}
+
+.profile-picture {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    border-radius: 50%;
+
+    display: block;
+
+    background: #111827;
+
+    border: 4px solid #050914;
+}
+
+
+/* ============================================================
+   PROFILE INFO
+   ============================================================ */
+
+.profile-info {
+    max-width: 850px;
+
+    margin: 90px auto 0;
+
+    padding: 20px;
+
+    text-align: center;
+}
+
+#fullName {
+    margin: 0;
+
+    font-size: 30px;
+
+    font-weight: 900;
+
+    color: #ffffff;
+
+    text-shadow:
+        0 0 8px rgba(0, 102, 255, 0.7),
+        0 0 18px rgba(122, 0, 255, 0.4);
+}
+
+.username {
+    margin: 8px 0 20px;
+
+    color: #9ca3af;
+
+    font-weight: bold;
+}
+
+.details {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    margin: 15px 0;
+}
+
+.details p {
+    margin: 0;
+
+    padding: 9px 13px;
+
+    border-radius: 12px;
+
+    background: rgba(17, 24, 39, 0.9);
+
+    border: 1px solid rgba(0, 102, 255, 0.25);
+
+    color: #dbeafe;
+
+    font-size: 14px;
+}
+
+.bio {
+    max-width: 650px;
+
+    margin: 20px auto;
+
+    color: #cbd5e1;
+
+    line-height: 1.6;
+}
+
+
+/* ============================================================
+   STATS
+   ============================================================ */
+
+.stats {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 20px;
+
+    margin: 25px auto;
+
+    flex-wrap: wrap;
+}
+
+.stats > div {
+    min-width: 100px;
+
+    padding: 14px;
+
+    border-radius: 15px;
+
+    background: rgba(12, 20, 38, 0.95);
+
+    border: 1px solid rgba(0, 102, 255, 0.25);
+
+    box-shadow:
+        0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.stats h2 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: 23px;
+}
+
+.stats span {
+    color: #8fa3bf;
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.buttons {
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin-top: 25px;
+}
+
+.buttons button {
+    border: 0;
+
+    border-radius: 12px;
+
+    padding: 12px 18px;
+
+    cursor: pointer;
+
+    color: white;
+
+    font-weight: 800;
+
+    font-size: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #005eff,
+            #6a00ff
+        );
+
+    box-shadow:
+        0 0 10px rgba(0, 102, 255, 0.35),
+        0 4px 12px rgba(0, 0, 0, 0.35);
+
+    transition: 0.2s ease;
+}
+
+.buttons button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 0 15px rgba(0, 102, 255, 0.65),
+        0 5px 18px rgba(0, 0, 0, 0.45);
+}
+
+#friendBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #00a8ff,
+            #0066ff
+        );
+}
+
+#followBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #7a00ff,
+            #c000ff
+        );
+}
+
+#messageBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #008cff,
+            #00c6ff
+        );
+}
+
+#editProfileBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #ffb300,
+            #ff5e00
+        );
+}
+
+
+/* ============================================================
+   POSTS
+   ============================================================ */
+
+.posts-section {
+    max-width: 850px;
+
+    margin: 20px auto;
+
+    padding: 20px;
+}
+
+.posts-section h2 {
+    color: #ffffff;
+
+    text-align: center;
+
+    margin-bottom: 20px;
+}
+
+#gallery {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+}
+
+
+/* ============================================================
+   HOME-STYLE BOTTOM NAVIGATION
+   ============================================================ */
+
+.bottom-nav {
+
+    position: fixed;
+
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+
+    height: 70px;
+
+    background: #050914;
+
+    border-top:
+        1px solid
+        rgba(0, 102, 255, 0.35);
+
+    display: flex;
+
+    justify-content: space-around;
+
+    align-items: center;
+
+    z-index: 1000;
+
+    box-shadow:
+        0 -4px 20px rgba(0, 0, 0, 0.6),
+        0 -1px 10px rgba(0, 102, 255, 0.15);
+
+    backdrop-filter: blur(10px);
+}
+
+.bottom-nav a {
+
+    color: #b8c7dc;
+
+    text-decoration: none;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-width: 55px;
+
+    font-weight: 800;
+
+    transition: 0.2s ease;
+}
+
+.bottom-nav a:hover {
+    color: #ffffff;
+
+    transform: translateY(-2px);
+}
+
+.bottom-nav a span {
+    font-size: 25px;
+
+    line-height: 27px;
+}
+
+.bottom-nav a small {
+    font-size: 11px;
+
+    margin-top: 2px;
+}
+
+
+/* ============================================================
+   CREATE POST BUTTON
+   ============================================================ */
+
+.create-btn {
+
+    width: 58px !important;
+
+    height: 58px;
+
+    min-width: 58px !important;
+
+    margin-top: -28px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0066ff,
+            #8a00ff
+        );
+
+    color: #ffffff !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    font-size: 38px !important;
+
+    font-weight: 900 !important;
+
+    box-shadow:
+        0 0 15px rgba(0, 102, 255, 0.7),
+        0 0 25px rgba(138, 0, 255, 0.4);
+}
+
+.create-btn:hover {
+
+    color: #ffffff !important;
+
+    transform: scale(1.05);
 
 }
 
 
-.vital-footer h2{
+/* ============================================================
+   MOBILE
+   ============================================================ */
 
-color:#ddd;
+@media (max-width: 600px) {
 
-font-size:28px;
+    .cover-photo {
+        height: 210px;
+    }
 
-font-weight:900;
+    .profile-image-box {
+        width: 125px;
 
-text-shadow:
-0 0 8px #777,
-0 0 20px #444;
+        height: 125px;
 
-}
+        bottom: -62px;
+    }
 
+    .profile-info {
+        margin-top: 75px;
 
-.vital-footer p{
+        padding: 15px;
+    }
 
-font-weight:bold;
+    #fullName {
+        font-size: 25px;
+    }
 
-text-shadow:0 0 8px #333;
+    .stats {
+        gap: 8px;
+    }
 
-}
+    .stats > div {
+        min-width: 80px;
 
+        padding: 10px;
+    }
 
-.footer-links{
+    .buttons button {
+        padding: 11px 13px;
+    }
 
-margin:20px 0;
+    .bottom-nav {
+        height: 65px;
+    }
 
-}
+    .bottom-nav a span {
+        font-size: 23px;
+    }
 
+    .bottom-nav a small {
+        font-size: 10px;
+    }
 
-.footer-links a{
+    .create-btn {
+        width: 56px !important;
 
-display:inline-block;
+        height: 56px;
 
-margin:8px;
+        min-width: 56px !important;
 
-color:#999;
-
-font-weight:bold;
-
-text-decoration:none;
-
-text-shadow:
-0 0 8px #444;
-
-transition:.3s;
-
-}
-
-
-.footer-links a:hover{
-
-color:white;
-
-transform:translateY(-3px);
-
-text-shadow:
-0 0 10px white,
-0 0 20px #777;
-
-}
-
-
-#onlineUsersCount{
-
-color:#aaa;
-
-}
-
-
-.copyright{
-
-font-size:13px;
-
-border-top:1px solid #333;
-
-padding-top:15px;
-
+        font-size: 35px !important;
+    }
 }
 
 </style>
 
-<br/><br/><br/><br/>
+</head>
 
 
+<body>
 
 
+<div class="profile-page">
 
 
+    <!-- ========================================================
+         COVER + PROFILE PHOTO
+         ======================================================== -->
 
-<script type="module" src="profile.js"></script>
- 
+    <div class="cover-container">
 
-<script type="module" src="presence.js"></script>
+        <img
+            id="coverPhoto"
+            src="https://via.placeholder.com/1200x350"
+            class="cover-photo"
+            alt="Cover photo"
+        >
 
-<script type="module" src="follow.js"></script>
+        <div class="profile-image-box">
+
+            <img
+                id="profilePicture"
+                src="https://via.placeholder.com/180"
+                class="profile-picture"
+                alt="Profile picture"
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         PROFILE INFORMATION
+         ======================================================== -->
+
+    <div class="profile-info">
+
+        <h1 id="fullName">
+            Loading...
+        </h1>
+
+        <p class="username" id="username">
+            @username
+        </p>
+
+
+        <div class="details">
+
+            <p id="country">
+                🌍 Country
+            </p>
+
+            <p id="dob">
+                🎂 Birthday
+            </p>
+
+            <p id="gender">
+                🚻 Gender
+            </p>
+
+            <p id="rank">
+                🏅 Member
+            </p>
+
+            <p id="lastSeen">
+                🟢 Online
+            </p>
+
+        </div>
+
+
+        <p id="bio" class="bio">
+            No bio yet.
+        </p>
+
+
+        <!-- ====================================================
+             STATS
+             ==================================================== -->
+
+        <div class="stats">
+
+            <div>
+
+                <h2 id="posts">
+                    0
+                </h2>
+
+                <span>
+                    Posts
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <h2 id="followers">
+                    0
+                </h2>
+
+                <span>
+                    Followers
+                </span>
+
+            </div>
+
+
+            <div>
+
+                <h2 id="following">
+                    0
+                </h2>
+
+                <span>
+                    Following
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ====================================================
+             PROFILE ACTIONS
+             ==================================================== -->
+
+        <div class="buttons">
+
+            <button id="editProfileBtn">
+                ✏ Edit Profile
+            </button>
+
+            <button id="friendBtn">
+                👥 Add Friend
+            </button>
+
+            <button id="followBtn">
+                ➕ Follow
+            </button>
+
+            <button id="messageBtn">
+                💬 Message
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         POSTS
+         ======================================================== -->
+
+    <div class="posts-section">
+
+        <h2>
+            Posts
+        </h2>
+
+        <div id="gallery"></div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     HOME-STYLE BOTTOM NAVIGATION
+     ============================================================ -->
+
+<nav class="bottom-nav">
+
+    <a href="home.html">
+
+        <span>🏠</span>
+
+        <small>
+            Home
+        </small>
+
+    </a>
+
+
+    <a href="users.html">
+
+        <span>👥</span>
+
+        <small>
+            Explore
+        </small>
+
+    </a>
+
+
+    <a
+        href="create-post.html"
+        class="create-btn"
+    >
+        +
+    </a>
+
+
+    <a href="wallet.html">
+
+        <span>💰</span>
+
+        <small>
+            Finance
+        </small>
+
+    </a>
+
+
+    <a href="profile.html">
+
+        <span>👤</span>
+
+        <small>
+            Profile
+        </small>
+
+    </a>
+
+</nav>
+
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+
+<script
+    type="module"
+    src="profile.js">
+</script>
+
+<script
+    type="module"
+    src="presence.js">
+</script>
+
+<script
+    type="module"
+    src="follow.js">
+</script>
 
 <script src="dark-mode.js"></script>
-
-
 
 
 </body>
