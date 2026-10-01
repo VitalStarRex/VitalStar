@@ -1,7 +1,8 @@
 // ============================================================
 // VITALSTAR — PROFILE PAGE
 // Dark Theme + Friends + Privacy Protection
-// VITALSTAR Loading Indicator + See More Posts
+// VITALSTAR Loading Indicator + View More Posts
+// Footer + Button Control
 // Firebase v10.12.2
 // ============================================================
 
@@ -163,9 +164,270 @@ let requestReceived = false;
 
 let allProfilePosts = [];
 
-let visiblePostCount = 10;
-
 let postsLoading = false;
+
+
+// ============================================================
+// FOOTER + BUTTON
+// ============================================================
+
+function getFooterCreatePostButton() {
+
+    const byId =
+        document.getElementById("createPostBtn") ||
+        document.getElementById("footerCreatePost") ||
+        document.getElementById("createPost");
+
+    if (byId)
+        return byId;
+
+
+    const footer =
+        document.querySelector("footer") ||
+        document.querySelector(".bottom-nav") ||
+        document.querySelector(".bottom-navigation") ||
+        document.querySelector("nav");
+
+    if (!footer)
+        return null;
+
+
+    return (
+        footer.querySelector(
+            'button[data-action="create-post"]'
+        ) ||
+        footer.querySelector(
+            'button[href*="create-post"]'
+        ) ||
+        footer.querySelector(
+            'button'
+        )
+    );
+}
+
+
+// ============================================================
+// FOOTER + STYLES
+// ============================================================
+
+function injectFooterPlusStyles() {
+
+    if (
+        document.getElementById(
+            "vitalstarFooterPlusStyles"
+        )
+    ) {
+        return;
+    }
+
+
+    const style =
+        document.createElement("style");
+
+
+    style.id =
+        "vitalstarFooterPlusStyles";
+
+
+    style.textContent = `
+
+        .vitalstar-plus-locked {
+
+            opacity:.45 !important;
+
+            pointer-events:none !important;
+
+            filter:grayscale(.7) !important;
+
+            cursor:not-allowed !important;
+        }
+
+
+        .vitalstar-plus-unlocked {
+
+            opacity:1 !important;
+
+            pointer-events:auto !important;
+
+            filter:none !important;
+
+            cursor:pointer !important;
+
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                opacity .18s ease;
+        }
+
+
+        .vitalstar-plus-unlocked:active {
+
+            transform:scale(.9);
+        }
+
+    `;
+
+
+    document.head.appendChild(style);
+}
+
+
+// ============================================================
+// LOCK FOOTER +
+// ============================================================
+
+function lockFooterPlus() {
+
+    const plus =
+        getFooterCreatePostButton();
+
+    if (!plus)
+        return;
+
+
+    plus.classList.add(
+        "vitalstar-plus-locked"
+    );
+
+    plus.classList.remove(
+        "vitalstar-plus-unlocked"
+    );
+
+
+    plus.style.opacity =
+        "0.45";
+
+    plus.style.pointerEvents =
+        "none";
+
+    plus.style.cursor =
+        "not-allowed";
+
+    plus.style.filter =
+        "grayscale(.7)";
+
+    plus.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+}
+
+
+// ============================================================
+// UNLOCK FOOTER +
+// ============================================================
+
+function unlockFooterPlus() {
+
+    const plus =
+        getFooterCreatePostButton();
+
+    if (!plus)
+        return;
+
+
+    plus.classList.remove(
+        "vitalstar-plus-locked"
+    );
+
+    plus.classList.add(
+        "vitalstar-plus-unlocked"
+    );
+
+
+    plus.style.opacity =
+        "1";
+
+    plus.style.pointerEvents =
+        "auto";
+
+    plus.style.cursor =
+        "pointer";
+
+    plus.style.filter =
+        "none";
+
+    plus.style.boxShadow = `
+        0 0 10px rgba(22,140,255,.55),
+        0 0 22px rgba(124,58,237,.35)
+    `;
+
+
+    plus.removeAttribute(
+        "aria-disabled"
+    );
+}
+
+
+// ============================================================
+// PREPARE FOOTER +
+// ============================================================
+
+function setupFooterPlus() {
+
+    injectFooterPlusStyles();
+
+    lockFooterPlus();
+
+
+    const plus =
+        getFooterCreatePostButton();
+
+    if (!plus)
+        return;
+
+
+    // Make sure it behaves as a BUTTON
+    if (
+        plus.tagName.toLowerCase() ===
+        "button"
+    ) {
+
+        plus.type =
+            "button";
+    }
+
+
+    // Remove old inline navigation if any
+    plus.removeAttribute("href");
+
+
+    if (
+        plus.dataset.vitalstarCreatePostBound ===
+        "true"
+    ) {
+        return;
+    }
+
+
+    plus.dataset.vitalstarCreatePostBound =
+        "true";
+
+
+    plus.addEventListener(
+        "click",
+        event => {
+
+            event.preventDefault();
+
+            if (
+                plus.classList.contains(
+                    "vitalstar-plus-locked"
+                )
+            ) {
+                return;
+            }
+
+
+            window.location.href =
+                "create-post.html";
+        }
+    );
+}
+
+
+// Run as soon as possible
+setupFooterPlus();
 
 
 // ============================================================
@@ -182,11 +444,14 @@ function injectVitalStarIndicatorStyles() {
         return;
     }
 
+
     const style =
         document.createElement("style");
 
+
     style.id =
         "vitalStarIndicatorStyles";
+
 
     style.textContent = `
 
@@ -205,6 +470,7 @@ function injectVitalStarIndicatorStyles() {
             }
         }
 
+
         @keyframes vitalStarRingSpinReverse {
 
             0% {
@@ -220,6 +486,7 @@ function injectVitalStarIndicatorStyles() {
             }
         }
 
+
         @keyframes vitalStarPulse {
 
             0%,
@@ -233,6 +500,7 @@ function injectVitalStarIndicatorStyles() {
                     0 0 35px #00ff88;
             }
 
+
             50% {
 
                 transform:scale(1.08);
@@ -243,6 +511,7 @@ function injectVitalStarIndicatorStyles() {
                     0 0 50px #00ff88;
             }
         }
+
 
         @keyframes vitalStarGlow {
 
@@ -256,6 +525,7 @@ function injectVitalStarIndicatorStyles() {
                     scale(.96);
             }
 
+
             50% {
 
                 opacity:.9;
@@ -265,6 +535,7 @@ function injectVitalStarIndicatorStyles() {
                     scale(1.04);
             }
         }
+
 
         .vitalstar-fullscreen {
 
@@ -305,6 +576,7 @@ function injectVitalStarIndicatorStyles() {
             overflow:hidden;
         }
 
+
         .vitalstar-fullscreen::before {
 
             content:"";
@@ -328,6 +600,7 @@ function injectVitalStarIndicatorStyles() {
 
             pointer-events:none;
         }
+
 
         .vitalstar-indicator {
 
@@ -364,6 +637,7 @@ function injectVitalStarIndicatorStyles() {
                 inset 0 0 22px
                 rgba(0,255,136,.12);
         }
+
 
         .vitalstar-indicator::before {
 
@@ -405,6 +679,7 @@ function injectVitalStarIndicatorStyles() {
             box-sizing:border-box;
         }
 
+
         .vitalstar-indicator::after {
 
             content:"";
@@ -432,6 +707,7 @@ function injectVitalStarIndicatorStyles() {
             box-sizing:border-box;
         }
 
+
         .vitalstar-vs {
 
             position:relative;
@@ -452,6 +728,7 @@ function injectVitalStarIndicatorStyles() {
                 ease-in-out
                 infinite;
         }
+
 
         .vitalstar-glow {
 
@@ -486,6 +763,7 @@ function injectVitalStarIndicatorStyles() {
             pointer-events:none;
         }
 
+
         .vitalstar-loading-text {
 
             position:relative;
@@ -505,6 +783,7 @@ function injectVitalStarIndicatorStyles() {
                 rgba(0,255,136,.3);
         }
 
+
         .vitalstar-loading-subtext {
 
             position:relative;
@@ -518,6 +797,7 @@ function injectVitalStarIndicatorStyles() {
             font-size:12px;
         }
     `;
+
 
     document.head.appendChild(style);
 }
@@ -536,6 +816,7 @@ function createVitalStarIndicator(
 
     const wrapper =
         document.createElement("div");
+
 
     if (fullscreen) {
 
@@ -604,6 +885,7 @@ function createVitalStarIndicator(
         }
     `;
 
+
     return wrapper;
 }
 
@@ -621,6 +903,7 @@ function showLoadingIndicator(
             "vitalstarFullscreenLoader"
         );
 
+
     if (existing)
         existing.remove();
 
@@ -630,6 +913,7 @@ function showLoadingIndicator(
             text,
             true
         );
+
 
     indicator.id =
         "vitalstarFullscreenLoader";
@@ -651,6 +935,7 @@ function removeLoadingIndicator() {
         document.getElementById(
             "vitalstarFullscreenLoader"
         );
+
 
     if (!indicator)
         return;
@@ -685,19 +970,24 @@ function showPostsLoadingIndicator() {
     if (!gallery)
         return;
 
+
     const existing =
         document.getElementById(
             "postsLoadingIndicator"
         );
 
+
     if (existing)
         existing.remove();
+
 
     const indicator =
         document.createElement("div");
 
+
     indicator.id =
         "postsLoadingIndicator";
+
 
     indicator.style.cssText = `
         width:100%;
@@ -706,11 +996,13 @@ function showPostsLoadingIndicator() {
         text-align:center;
     `;
 
+
     indicator.appendChild(
         createVitalStarIndicator(
             "Loading posts..."
         )
     );
+
 
     gallery.appendChild(
         indicator
@@ -737,6 +1029,7 @@ function hideLoader() {
     loader.style.pointerEvents =
         "none";
 
+
     setTimeout(() => {
 
         loader.style.display =
@@ -754,6 +1047,7 @@ function styleButton(button) {
 
     if (!button)
         return;
+
 
     button.style.color =
         "#ffffff";
@@ -806,6 +1100,7 @@ function createFriendButton() {
             "friendBtn"
         );
 
+
     if (!button) {
 
         button =
@@ -813,14 +1108,18 @@ function createFriendButton() {
                 "button"
             );
 
+
         button.id =
             "friendBtn";
+
 
         button.type =
             "button";
 
+
         button.innerHTML =
             "👥 Add Friend";
+
 
         const actions =
             document.querySelector(
@@ -828,6 +1127,7 @@ function createFriendButton() {
             ) ||
             followButton?.parentElement ||
             messageButton?.parentElement;
+
 
         if (actions) {
 
@@ -837,7 +1137,9 @@ function createFriendButton() {
         }
     }
 
+
     styleButton(button);
+
 
     return button;
 }
@@ -1021,6 +1323,7 @@ async function checkViewerIsAdmin(
     if (!viewerUid)
         return false;
 
+
     if (
         viewerUid ===
         VITALSTAR_OWNER_UID
@@ -1028,6 +1331,7 @@ async function checkViewerIsAdmin(
 
         return true;
     }
+
 
     try {
 
@@ -1040,11 +1344,14 @@ async function checkViewerIsAdmin(
                 )
             );
 
+
         if (!snap.exists())
             return false;
 
+
         const data =
             snap.data();
+
 
         return (
             data.isAdmin === true ||
@@ -1058,6 +1365,7 @@ async function checkViewerIsAdmin(
             "Admin check failed:",
             error
         );
+
 
         return false;
     }
@@ -1094,17 +1402,15 @@ async function checkIfFriends(
     if (!viewerUid || !targetUid)
         return false;
 
+
     if (
         viewerUid === targetUid
     ) {
         return true;
     }
 
-    try {
 
-        // ====================================================
-        // 1. CHECK NORMAL FRIENDSHIP ID
-        // ====================================================
+    try {
 
         const friendshipId =
             friendKey(
@@ -1112,12 +1418,14 @@ async function checkIfFriends(
                 targetUid
             );
 
+
         const friendshipRef =
             doc(
                 db,
                 "friends",
                 friendshipId
             );
+
 
         const friendshipSnap =
             await getDoc(
@@ -1130,6 +1438,7 @@ async function checkIfFriends(
             const data =
                 friendshipSnap.data();
 
+
             if (
                 Array.isArray(data.users) &&
                 data.users.includes(viewerUid) &&
@@ -1140,10 +1449,6 @@ async function checkIfFriends(
             }
         }
 
-
-        // ====================================================
-        // 2. SEARCH FRIENDSHIP COLLECTION
-        // ====================================================
 
         const friendsQuery =
             query(
@@ -1173,6 +1478,7 @@ async function checkIfFriends(
             const data =
                 friendDoc.data();
 
+
             if (
                 Array.isArray(data.users) &&
                 data.users.includes(viewerUid) &&
@@ -1192,6 +1498,7 @@ async function checkIfFriends(
             "Friend check failed:",
             error
         );
+
 
         return false;
     }
@@ -1213,6 +1520,7 @@ async function checkFriendRequestStatus(
     requestReceived =
         false;
 
+
     try {
 
         const sentQuery =
@@ -1228,10 +1536,12 @@ async function checkFriendRequestStatus(
                 )
             );
 
+
         const sentSnapshot =
             await getDocs(
                 sentQuery
             );
+
 
         for (
             const requestDoc
@@ -1240,6 +1550,7 @@ async function checkFriendRequestStatus(
 
             const data =
                 requestDoc.data();
+
 
             if (
                 data.to === targetUid &&
@@ -1267,10 +1578,12 @@ async function checkFriendRequestStatus(
                 )
             );
 
+
         const receivedSnapshot =
             await getDocs(
                 receivedQuery
             );
+
 
         for (
             const requestDoc
@@ -1279,6 +1592,7 @@ async function checkFriendRequestStatus(
 
             const data =
                 requestDoc.data();
+
 
             if (
                 data.from === targetUid &&
@@ -1315,6 +1629,7 @@ async function findSentFriendRequest() {
         return null;
     }
 
+
     try {
 
         const q =
@@ -1330,8 +1645,10 @@ async function findSentFriendRequest() {
                 )
             );
 
+
         const snapshot =
             await getDocs(q);
+
 
         for (
             const requestDoc
@@ -1340,6 +1657,7 @@ async function findSentFriendRequest() {
 
             const data =
                 requestDoc.data();
+
 
             if (
                 data.to === profileUid &&
@@ -1358,6 +1676,7 @@ async function findSentFriendRequest() {
         );
     }
 
+
     return null;
 }
 
@@ -1375,10 +1694,12 @@ async function createFriendNotification(
     if (!currentUser)
         return;
 
+
     try {
 
         const notificationId =
             `${type}_${currentUser.uid}_${targetUid}_${Date.now()}`;
+
 
         await setDoc(
             doc(
@@ -1424,8 +1745,10 @@ async function updateFriendButton() {
     const button =
         createFriendButton();
 
+
     if (!button)
         return;
+
 
     if (
         !currentUser ||
@@ -1448,15 +1771,6 @@ async function updateFriendButton() {
 
     button.style.opacity =
         "1";
-
-    button.style.textAlign =
-        "center";
-
-    button.style.justifyContent =
-        "center";
-
-    button.style.alignItems =
-        "center";
 
 
     isFriend =
@@ -1557,14 +1871,17 @@ async function sendFriendRequest() {
         return;
     }
 
+
     const button =
         createFriendButton();
+
 
     button.disabled =
         true;
 
     button.innerHTML =
         "⏳ Sending...";
+
 
     try {
 
@@ -1581,10 +1898,12 @@ async function sendFriendRequest() {
                 )
             );
 
+
         const existing =
             await getDocs(
                 existingQuery
             );
+
 
         for (
             const requestDoc
@@ -1593,6 +1912,7 @@ async function sendFriendRequest() {
 
             const data =
                 requestDoc.data();
+
 
             if (
                 data.to === profileUid &&
@@ -1659,9 +1979,11 @@ async function sendFriendRequest() {
             error
         );
 
+
         alert(
             "Unable to send friend request."
         );
+
 
         await updateFriendButton();
     }
@@ -1681,8 +2003,10 @@ async function cancelFriendRequest() {
         return;
     }
 
+
     const button =
         createFriendButton();
+
 
     button.disabled =
         true;
@@ -1690,10 +2014,12 @@ async function cancelFriendRequest() {
     button.innerHTML =
         "⏳ Cancelling...";
 
+
     try {
 
         const requestDoc =
             await findSentFriendRequest();
+
 
         if (requestDoc) {
 
@@ -1702,8 +2028,10 @@ async function cancelFriendRequest() {
             );
         }
 
+
         requestSent =
             false;
+
 
         await updateFriendButton();
 
@@ -1714,9 +2042,11 @@ async function cancelFriendRequest() {
             error
         );
 
+
         alert(
             "Unable to cancel friend request."
         );
+
 
         await updateFriendButton();
     }
@@ -1736,6 +2066,7 @@ async function acceptFriendRequest() {
         return;
     }
 
+
     try {
 
         const q =
@@ -1751,11 +2082,14 @@ async function acceptFriendRequest() {
                 )
             );
 
+
         const snapshot =
             await getDocs(q);
 
+
         let requestDoc =
             null;
+
 
         for (
             const item
@@ -1764,6 +2098,7 @@ async function acceptFriendRequest() {
 
             const data =
                 item.data();
+
 
             if (
                 data.from === profileUid &&
@@ -1857,6 +2192,7 @@ async function acceptFriendRequest() {
             error
         );
 
+
         alert(
             "Unable to accept friend request."
         );
@@ -1865,7 +2201,7 @@ async function acceptFriendRequest() {
 
 
 // ============================================================
-// REMOVE FRIEND — FIXED
+// REMOVE FRIEND
 // ============================================================
 
 async function removeFriend() {
@@ -1905,10 +2241,6 @@ async function removeFriend() {
         let removed =
             false;
 
-
-        // ====================================================
-        // 1. CHECK NORMAL FRIENDSHIP DOCUMENT
-        // ====================================================
 
         const friendshipId =
             friendKey(
@@ -1958,10 +2290,6 @@ async function removeFriend() {
             }
         }
 
-
-        // ====================================================
-        // 2. SEARCH ALL FRIENDSHIPS IF NECESSARY
-        // ====================================================
 
         if (!removed) {
 
@@ -2017,43 +2345,25 @@ async function removeFriend() {
         }
 
 
-        // ====================================================
-        // 3. RESET FRIEND STATE
-        // ====================================================
+        isFriend =
+            false;
 
-        if (removed) {
+        requestSent =
+            false;
 
-            isFriend =
-                false;
-
-            requestSent =
-                false;
-
-            requestReceived =
-                false;
+        requestReceived =
+            false;
 
 
-            await updateFriendButton();
-
-        } else {
-
-            console.warn(
-                "Friendship document was not found."
-            );
+        await updateFriendButton();
 
 
-            isFriend =
-                false;
-
-
-            await updateFriendButton();
-
+        if (!removed) {
 
             alert(
                 "The friendship could not be found."
             );
         }
-
 
     } catch (error) {
 
@@ -2086,11 +2396,14 @@ document.addEventListener(
                 "#friendBtn"
             );
 
+
         if (!button)
             return;
 
+
         if (button.disabled)
             return;
+
 
         if (
             !currentUser ||
@@ -2235,6 +2548,7 @@ function getStoredCount(
             const number =
                 Number(value);
 
+
             if (
                 Number.isFinite(number)
             ) {
@@ -2317,6 +2631,7 @@ async function loadFollowersCount(
             error
         );
 
+
         followersCount.textContent =
             "0";
     }
@@ -2383,6 +2698,7 @@ async function loadFollowingCount(
             error
         );
 
+
         followingCount.textContent =
             "0";
     }
@@ -2402,8 +2718,13 @@ async function loadProfile() {
 
         hideLoader();
 
+        unlockFooterPlus();
+
         return;
     }
+
+
+    lockFooterPlus();
 
 
     showLoadingIndicator(
@@ -2445,6 +2766,8 @@ async function loadProfile() {
             }
 
 
+            unlockFooterPlus();
+
             hideLoader();
 
             return;
@@ -2468,6 +2791,8 @@ async function loadProfile() {
             showPrivateProfileMessage();
 
             await updateFriendButton();
+
+            unlockFooterPlus();
 
             hideLoader();
 
@@ -2789,6 +3114,8 @@ async function loadProfile() {
         );
 
 
+        unlockFooterPlus();
+
     } catch (error) {
 
         console.error(
@@ -2809,6 +3136,11 @@ async function loadProfile() {
                 </div>
             `;
         }
+
+
+        // Still unlock the + button after
+        // the profile loading attempt finishes.
+        unlockFooterPlus();
 
     } finally {
 
@@ -2971,12 +3303,7 @@ async function loadProfilePosts(
             );
 
 
-        visiblePostCount =
-            10;
-
-
         renderVisiblePosts();
-
 
     } catch (error) {
 
@@ -3043,10 +3370,11 @@ function renderVisiblePosts() {
     }
 
 
+    // Show only the first 10 posts
     const visiblePosts =
         allProfilePosts.slice(
             0,
-            visiblePostCount
+            10
         );
 
 
@@ -3060,9 +3388,13 @@ function renderVisiblePosts() {
     );
 
 
+    // ========================================================
+    // VIEW MORE BUTTON
+    // Redirects to user-posts.html
+    // ========================================================
+
     if (
-        visiblePostCount <
-        allProfilePosts.length
+        allProfilePosts.length > 10
     ) {
 
         const seeMore =
@@ -3080,7 +3412,7 @@ function renderVisiblePosts() {
 
 
         seeMore.innerHTML =
-            "⬇️ See More Posts";
+            "View More Posts";
 
 
         seeMore.style.cssText = `
@@ -3124,13 +3456,22 @@ function renderVisiblePosts() {
             "click",
             () => {
 
+                if (!profileUid)
+                    return;
+
+
                 seeMore.disabled =
                     true;
 
-                visiblePostCount +=
-                    10;
 
-                renderVisiblePosts();
+                seeMore.innerHTML =
+                    "Opening...";
+
+
+                window.location.href =
+                    `user-posts.html?uid=${encodeURIComponent(
+                        profileUid
+                    )}`;
             }
         );
 
@@ -3425,6 +3766,9 @@ onAuthStateChanged(
             profileUid =
                 user.uid;
         }
+
+
+        setupFooterPlus();
 
 
         if (
