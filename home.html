@@ -98,8 +98,6 @@ header{
     z-index:1000;
 }
 
-/* MENU */
-
 .menu{
     width:42px;
     height:42px;
@@ -121,8 +119,6 @@ header{
 
     margin-right:9px;
 }
-
-/* LOGO */
 
 .logo-area{
     display:flex;
@@ -185,8 +181,6 @@ header{
     letter-spacing:.3px;
 }
 
-/* HEADER ACTIONS */
-
 .icons{
     display:flex;
     align-items:center;
@@ -222,13 +216,9 @@ header{
     transform:translateY(-1px);
 }
 
-/* SEARCH */
-
 .search-trigger{
     font-size:23px;
 }
-
-/* WALLET */
 
 .wallet-trigger{
     height:42px;
@@ -377,8 +367,6 @@ header{
 
     transform:translateX(3px);
 }
-
-/* AI MENU */
 
 .orion-menu,
 .pinky-menu,
@@ -603,6 +591,16 @@ header{
 }
 
 /* =========================================================
+   CREATE POST
+   post.js loads the composer into this container
+   ========================================================= */
+
+#createPost{
+    width:100%;
+    margin:0 0 17px;
+}
+
+/* =========================================================
    COMPOSER
    ========================================================= */
 
@@ -624,7 +622,7 @@ header{
     box-shadow:
         0 8px 30px rgba(0,0,0,.2);
 
-    margin-bottom:17px;
+    margin-bottom:0;
 }
 
 .composer-top{
@@ -673,6 +671,8 @@ header{
     font-size:14px;
 
     cursor:pointer;
+
+    border:1px solid rgba(255,255,255,.09);
 }
 
 .composer-input:hover{
@@ -729,7 +729,7 @@ header{
 }
 
 /* =========================================================
-   HIDDEN COMPATIBILITY ELEMENTS
+   HIDDEN COMPATIBILITY
    ========================================================= */
 
 .compatibility-text{
@@ -869,10 +869,6 @@ header{
     color:#fff;
 }
 
-/* =========================================================
-   POST MEDIA GALLERY SUPPORT
-   ========================================================= */
-
 .post-card img{
     max-width:100%;
 }
@@ -964,8 +960,6 @@ header{
     font-weight:800;
 }
 
-/* ACTIVE */
-
 .bottom-nav a:first-child{
     color:#8f56ff;
 }
@@ -995,8 +989,6 @@ header{
     box-shadow:
         0 0 8px #713cff;
 }
-
-/* CREATE */
 
 .create-btn{
     width:57px !important;
@@ -1039,7 +1031,7 @@ header{
 }
 
 /* =========================================================
-   DARK MODE COMPATIBILITY
+   DARK MODE
    ========================================================= */
 
 body.dark-mode{
@@ -1063,10 +1055,7 @@ body.dark-mode .bottom-nav{
 
     header{
         height:68px;
-
-        padding:
-            0
-            9px;
+        padding:0 9px;
     }
 
     .menu{
@@ -1107,18 +1096,13 @@ body.dark-mode .bottom-nav{
     .wallet-trigger{
         height:38px;
 
-        padding:
-            0
-            8px;
+        padding:0 8px;
 
         font-size:11px;
     }
 
     .container{
-        padding:
-            79px
-            8px
-            18px;
+        padding:79px 8px 18px;
     }
 
     .stories{
@@ -1168,6 +1152,7 @@ body.dark-mode .bottom-nav{
     .create-btn{
         width:53px !important;
         height:53px;
+
         min-width:53px !important;
 
         font-size:27px !important;
@@ -1221,9 +1206,6 @@ body.dark-mode .bottom-nav{
 
 <div class="icons">
 
-
-<!-- SEARCH -->
-
 <a
     href="users.html"
     class="header-circle search-trigger"
@@ -1232,8 +1214,6 @@ body.dark-mode .bottom-nav{
     🔍
 </a>
 
-
-<!-- WALLET -->
 
 <button
     class="wallet-trigger"
@@ -1249,8 +1229,6 @@ body.dark-mode .bottom-nav{
 
 </button>
 
-
-<!-- NOTIFICATIONS -->
 
 <div style="position:relative">
 
@@ -1272,8 +1250,6 @@ body.dark-mode .bottom-nav{
 </div>
 
 
-<!-- MESSAGES -->
-
 <div style="position:relative">
 
 <a
@@ -1292,7 +1268,6 @@ body.dark-mode .bottom-nav{
 </span>
 
 </div>
-
 
 </div>
 
@@ -1443,8 +1418,6 @@ function openMenu(){
 <div class="stories">
 
 
-<!-- YOUR STORY -->
-
 <div class="story-wrap">
 
 <div class="story">
@@ -1467,8 +1440,6 @@ function openMenu(){
 
 </div>
 
-
-<!-- STORY -->
 
 <div class="story-wrap">
 
@@ -1562,75 +1533,14 @@ function openMenu(){
 
 <!-- =========================================================
      CREATE POST
+     post.js loads the complete composer here
      ========================================================= -->
 
-<section class="composer">
-
-
-<div class="composer-top">
-
-<div
-    class="composer-avatar"
-    id="composerAvatar"
->
-    👤
-</div>
-
-
-<div
-    class="composer-input"
-    onclick="window.location.href='create-post.html'"
->
-    What's on your mind?
-</div>
-
-
-</div>
-
-
-<div class="composer-actions">
-
-
-<button
-    class="composer-action photo-action"
-    onclick="window.location.href='create-post.html'"
->
-    🖼️ Photo
-</button>
-
-
-<button
-    class="composer-action video-action"
-    onclick="window.location.href='create-post.html'"
->
-    🎥 Video
-</button>
-
-
-<button
-    class="composer-action live-action"
-    onclick="window.location.href='create-post.html'"
->
-    📡 Live
-</button>
-
-
-<button
-    class="composer-action feeling-action"
-    onclick="window.location.href='create-post.html'"
->
-    ✏️ Feeling
-</button>
-
-
-</div>
-
-</section>
+<div id="createPost"></div>
 
 
 <!-- =========================================================
      COMPATIBILITY
-     Keeps IDs available for existing home.js
      ========================================================= -->
 
 <div class="compatibility-text">
@@ -1662,7 +1572,6 @@ function openMenu(){
 
 <nav class="bottom-nav">
 
-
 <a href="home.html">
 
     🏠
@@ -1686,8 +1595,10 @@ function openMenu(){
 
 
 <a
-    href="create-post.html"
+    href="#"
     class="create-btn"
+    id="bottomCreatePost"
+    aria-label="Create Post"
 >
     +
 </a>
@@ -1713,7 +1624,6 @@ function openMenu(){
     </small>
 
 </a>
-
 
 </nav>
 
@@ -1748,6 +1658,12 @@ function openMenu(){
 
 <script
     type="module"
+    src="post.js"
+></script>
+
+
+<script
+    type="module"
     src="home.js"
 ></script>
 
@@ -1771,6 +1687,35 @@ function openMenu(){
 
 
 <script src="dark-mode.js"></script>
+
+
+<!-- =========================================================
+     BOTTOM CREATE BUTTON
+     ========================================================= -->
+
+<script type="module">
+
+document
+    .getElementById("bottomCreatePost")
+    ?.addEventListener(
+        "click",
+        function(event){
+
+            event.preventDefault();
+
+            if(
+                window.VitalStarPost &&
+                typeof window.VitalStarPost.open === "function"
+            ){
+
+                window.VitalStarPost.open();
+
+            }
+
+        }
+    );
+
+</script>
 
 
 <!-- =========================================================
