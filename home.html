@@ -47,7 +47,6 @@ body::before{
     content:"";
     position:fixed;
     inset:0;
-
     pointer-events:none;
 
     background:
@@ -300,7 +299,7 @@ header{
     height:100vh;
 
     padding:
-        82px
+        25px
         12px
         25px;
 
@@ -322,8 +321,69 @@ header{
     overflow-y:auto;
 }
 
+/* =========================================================
+   SIDEBAR HEADER
+   ========================================================= */
+
+.sidebar-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:18px;
+
+    padding:0 4px;
+}
+
+.sidebar-header strong{
+    font-size:20px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #fff,
+            #00d9ff,
+            #8f4dff
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+
+    color:transparent;
+}
+
+.sidebar-close{
+    width:40px;
+    height:40px;
+
+    border:0;
+    border-radius:50%;
+
+    background:#181d32;
+
+    color:#fff;
+
+    font-size:18px;
+
+    cursor:pointer;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    transition:.2s;
+}
+
+.sidebar-close:hover{
+    background:#ff326d;
+    transform:rotate(90deg);
+}
+
+/* =========================================================
+   SIDEBAR LINKS
+   ========================================================= */
+
 .sidebar a,
-.darkModeBtn,
 #logoutBtn{
     display:flex;
     align-items:center;
@@ -354,7 +414,6 @@ header{
 }
 
 .sidebar a:hover,
-.darkModeBtn:hover,
 #logoutBtn:hover{
     background:
         linear-gradient(
@@ -366,85 +425,6 @@ header{
     color:#fff;
 
     transform:translateX(3px);
-}
-
-.orion-menu,
-.pinky-menu,
-.games-menu{
-    gap:10px;
-}
-
-.orion-icon,
-.pinky-icon,
-.games-icon{
-    width:36px;
-    height:36px;
-
-    min-width:36px;
-
-    border-radius:12px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    color:#fff;
-
-    font-weight:900;
-}
-
-.orion-icon{
-    background:
-        linear-gradient(135deg,#7b2cff,#00aaff);
-
-    box-shadow:
-        0 0 15px rgba(123,44,255,.35);
-}
-
-.pinky-icon{
-    background:
-        linear-gradient(135deg,#ff49ad,#8b36ff);
-
-    box-shadow:
-        0 0 15px rgba(255,45,170,.3);
-}
-
-.games-icon{
-    background:
-        linear-gradient(135deg,#00aaff,#20d98b);
-
-    box-shadow:
-        0 0 15px rgba(0,180,255,.25);
-}
-
-.orion-name,
-.pinky-name,
-.games-name{
-    font-weight:900;
-}
-
-.ai-badge,
-.games-badge{
-    margin-left:auto;
-
-    padding:4px 8px;
-
-    border-radius:8px;
-
-    font-size:9px;
-    font-weight:900;
-}
-
-.ai-badge{
-    background:#7135e8;
-}
-
-.pinky-badge{
-    background:#ed3c9d;
-}
-
-.games-badge{
-    background:#00aeea;
 }
 
 /* =========================================================
@@ -592,7 +572,6 @@ header{
 
 /* =========================================================
    CREATE POST
-   post.js loads the composer into this container
    ========================================================= */
 
 #createPost{
@@ -671,8 +650,6 @@ header{
     font-size:14px;
 
     cursor:pointer;
-
-    border:1px solid rgba(255,255,255,.09);
 }
 
 .composer-input:hover{
@@ -1031,23 +1008,6 @@ header{
 }
 
 /* =========================================================
-   DARK MODE
-   ========================================================= */
-
-body.dark-mode{
-    background:#070914;
-    color:#fff;
-}
-
-body.dark-mode .sidebar{
-    background:rgba(10,13,27,.98);
-}
-
-body.dark-mode .bottom-nav{
-    background:rgba(11,14,28,.94);
-}
-
-/* =========================================================
    MOBILE
    ========================================================= */
 
@@ -1283,76 +1243,45 @@ body.dark-mode .bottom-nav{
     id="sidebar"
 >
 
-<a href="profile.html">
-    👤 &nbsp; Profile
-</a>
+<div class="sidebar-header">
+
+<strong>
+    VitalStar
+</strong>
+
+<button
+    class="sidebar-close"
+    onclick="closeMenu()"
+    aria-label="Close menu"
+>
+    ✕
+</button>
+
+</div>
+
 
 <a href="users.html">
     👥 &nbsp; Friends
 </a>
 
-<a href="messages.html">
+
+<a href="message.html">
     💬 &nbsp; Messages
 </a>
 
 
-<a
-    href="orion.html"
-    class="orion-menu"
->
-
-<span class="orion-icon">
-    ✦
-</span>
-
-<span class="orion-name">
-    Orion Pax
-</span>
-
-<span class="ai-badge">
-    AI
-</span>
-
+<a href="video.html">
+    🎬 &nbsp; Reals
 </a>
 
 
-<a
-    href="pinky-spark.html"
-    class="pinky-menu"
->
-
-<span class="pinky-icon">
-    ✨
-</span>
-
-<span class="pinky-name">
-    Pinky Spark
-</span>
-
-<span class="ai-badge pinky-badge">
-    AI
-</span>
-
+<a href="games.html">
+    🎮 &nbsp; Games
 </a>
 
 
-<a
-    href="games/games.html"
-    class="games-menu"
->
-
-<span class="games-icon">
-    🎮
-</span>
-
-<span class="games-name">
-    Games
-</span>
-
-<span class="games-badge">
-    PLAY
-</span>
-
+<a href="groups.html">
+    👥 &nbsp; Groups
 </a>
 
 
@@ -1361,12 +1290,14 @@ body.dark-mode .bottom-nav{
 </a>
 
 
-<button
-    id="darkModeToggle"
-    class="darkModeBtn"
->
-    🌙 &nbsp; Dark Mode
-</button>
+<a href="saved.html">
+    🔖 &nbsp; Saved Posts
+</a>
+
+
+<a href="chatroom.html">
+    💬 &nbsp; ChatRoom
+</a>
 
 
 <button id="logoutBtn">
@@ -1387,8 +1318,7 @@ function openMenu(){
         sidebar.style.left === "0px"
     ){
 
-        sidebar.style.left =
-            "-285px";
+        closeMenu();
 
     }else{
 
@@ -1396,6 +1326,16 @@ function openMenu(){
             "0px";
 
     }
+
+}
+
+
+function closeMenu(){
+
+    document
+        .getElementById("sidebar")
+        .style.left =
+            "-285px";
 
 }
 
@@ -1423,9 +1363,11 @@ function openMenu(){
 <div class="story">
 
 <div class="story-inner">
-    <div class="story-placeholder">
-        👤
-    </div>
+
+<div class="story-placeholder">
+    👤
+</div>
+
 </div>
 
 <div class="story-add">
@@ -1572,6 +1514,7 @@ function openMenu(){
 
 <nav class="bottom-nav">
 
+
 <a href="home.html">
 
     🏠
@@ -1604,26 +1547,27 @@ function openMenu(){
 </a>
 
 
-<a href="notifications.html">
+<a href="wallet.html">
 
-    🔔
+    💰
 
     <small>
-        Notifications
+        Finance
     </small>
 
 </a>
 
 
-<a href="profile.html">
+<a href="users.html">
 
-    👤
+    👥
 
     <small>
-        Profile
+        Friends
     </small>
 
 </a>
+
 
 </nav>
 
@@ -1684,9 +1628,6 @@ function openMenu(){
     type="module"
     src="logout.js"
 ></script>
-
-
-<script src="dark-mode.js"></script>
 
 
 <!-- =========================================================
