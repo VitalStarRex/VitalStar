@@ -1,7 +1,7 @@
 // ============================================================
 // VITALSTAR — USERS / DISCOVER PAGE
+// Dark Theme + VITALSTAR Green Loading Indicator
 // Profile Pictures + Groups + Search + Friends + Chat
-// Dark + Yellow Theme
 // Firebase v10.12.2
 // ============================================================
 
@@ -22,55 +22,123 @@ import {
     getDocs,
     where,
     addDoc,
-    updateDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-// ============================================================
-// AUTH
-// ============================================================
-
-let currentUser = null;
-
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
-
-    currentUser = user;
-});
-
-
-// ============================================================
-// ELEMENTS
-// ============================================================
-
-const usersList = document.getElementById("usersList");
-const searchInput = document.getElementById("searchInput");
 
 
 // ============================================================
 // STATE
 // ============================================================
 
+let currentUser = null;
 let allUsers = [];
 
 
 // ============================================================
-// DARK + YELLOW PAGE STYLE
+// DARK THEME
+// ============================================================
+
+function applyDarkTheme() {
+
+    document.documentElement.style.background = "#050914";
+
+    document.body.style.margin = "0";
+    document.body.style.minHeight = "100vh";
+    document.body.style.background = `
+        radial-gradient(
+            circle at 50% -10%,
+            #162c35 0%,
+            #0b151c 30%,
+            #050914 65%,
+            #02040a 100%
+        )
+    `;
+    document.body.style.color = "#fff";
+    document.body.style.fontFamily =
+        "Arial, Helvetica, sans-serif";
+    document.body.style.paddingBottom = "82px";
+}
+
+applyDarkTheme();
+
+
+// ============================================================
+// VITALSTAR LOADING INDICATOR
+// Same style as PROFILE page
+// ============================================================
+
+function showVitalStarLoader() {
+
+    if (
+        document.getElementById(
+            "vitalstarFullscreenLoader"
+        )
+    ) {
+        return;
+    }
+
+    const loader =
+        document.createElement("div");
+
+    loader.id =
+        "vitalstarFullscreenLoader";
+
+    loader.innerHTML = `
+        <div class="vitalstar-loader-ring"></div>
+
+        <div class="vitalstar-loader-ring reverse"></div>
+
+        <div class="vitalstar-loader-content">
+            <div class="vitalstar-loader-vs">
+                VS
+            </div>
+
+            <div class="vitalstar-loader-text">
+                Loading...
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(loader);
+}
+
+
+function removeVitalStarLoader() {
+
+    const loader =
+        document.getElementById(
+            "vitalstarFullscreenLoader"
+        );
+
+    if (!loader) return;
+
+    loader.style.opacity = "0";
+
+    setTimeout(() => {
+        loader.remove();
+    }, 300);
+}
+
+
+// ============================================================
+// STYLES
 // ============================================================
 
 function injectStyles() {
 
-    if (document.getElementById("vitalstarUsersStyles")) {
+    if (
+        document.getElementById(
+            "vitalstarUsersStyles"
+        )
+    ) {
         return;
     }
 
-    const style = document.createElement("style");
+    const style =
+        document.createElement("style");
 
-    style.id = "vitalstarUsersStyles";
+    style.id =
+        "vitalstarUsersStyles";
 
     style.textContent = `
 
@@ -80,49 +148,142 @@ function injectStyles() {
 
         html,
         body {
-            margin: 0;
-            padding: 0;
-            min-height: 100%;
+            background: #050914 !important;
+        }
+
+        /* ====================================================
+           VITALSTAR LOADER
+           ==================================================== */
+
+        #vitalstarFullscreenLoader {
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background:
-                radial-gradient(circle at top, #332800 0%, #11100a 35%, #050505 75%);
-            color: #ffffff;
-            font-family: Arial, Helvetica, sans-serif;
+                radial-gradient(
+                    circle at center,
+                    #10251f 0%,
+                    #07120f 35%,
+                    #020606 100%
+                );
+            transition: opacity .3s ease;
         }
 
-        body {
-            min-height: 100vh;
-            padding-bottom: 82px;
+        .vitalstar-loader-ring {
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: #00ff88;
+            border-right-color: #00eaff;
+            border-bottom-color: #7c3cff;
+            border-left-color: #ff2bd6;
+            animation: vitalstarSpin 1.1s linear infinite;
+            box-shadow:
+                0 0 15px rgba(0,255,136,.45),
+                0 0 30px rgba(0,234,255,.2);
         }
 
-        #usersList {
-            width: 100%;
-            max-width: 700px;
-            margin: 0 auto;
-            padding: 12px;
+        .vitalstar-loader-ring.reverse {
+            width: 105px;
+            height: 105px;
+            border: 2px dashed rgba(0,255,136,.7);
+            animation:
+                vitalstarSpinReverse 2s linear infinite;
+            box-shadow:
+                0 0 20px rgba(0,255,136,.2);
         }
+
+        .vitalstar-loader-content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+        }
+
+        .vitalstar-loader-vs {
+            font-size: 34px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 2px;
+            text-shadow:
+                0 0 8px #00ff88,
+                0 0 18px #00ff88,
+                0 0 30px #00eaff;
+            animation: vitalstarPulse 1.2s ease-in-out infinite;
+        }
+
+        .vitalstar-loader-text {
+            margin-top: 13px;
+            color: #8affbd;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes vitalstarSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes vitalstarSpinReverse {
+            to {
+                transform: rotate(-360deg);
+            }
+        }
+
+        @keyframes vitalstarPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: .75;
+            }
+
+            50% {
+                transform: scale(1.12);
+                opacity: 1;
+            }
+        }
+
+
+        /* ====================================================
+           HEADER
+           ==================================================== */
 
         .users-header {
-            padding: 20px 15px 10px;
             max-width: 700px;
-            margin: auto;
+            margin: 0 auto;
+            padding: 22px 15px 8px;
         }
 
         .users-title {
-            font-size: 26px;
-            font-weight: 800;
+            color: #fff;
+            font-size: 27px;
+            font-weight: 900;
+            letter-spacing: .5px;
+        }
+
+        .users-title span {
             color: #ffd400;
-            margin-bottom: 5px;
-            text-shadow: 0 0 12px rgba(255, 212, 0, .35);
         }
 
         .users-subtitle {
-            color: #aaa;
-            font-size: 14px;
+            margin-top: 5px;
+            color: #87929c;
+            font-size: 13px;
         }
+
+
+        /* ====================================================
+           SEARCH
+           ==================================================== */
 
         .users-search {
             max-width: 700px;
-            margin: 12px auto;
+            margin: 10px auto 14px;
             padding: 0 12px;
         }
 
@@ -131,23 +292,36 @@ function injectStyles() {
             height: 48px;
             padding: 0 18px;
             border-radius: 25px;
-            border: 1px solid #ffd400;
+            border: 1px solid #26323b;
             outline: none;
-            background: #101010;
-            color: white;
+            background: #0a1118;
+            color: #fff;
             font-size: 15px;
             box-shadow:
-                0 0 12px rgba(255, 212, 0, .12),
-                inset 0 0 10px rgba(255,255,255,.02);
+                inset 0 0 12px rgba(0,0,0,.5),
+                0 0 12px rgba(0,0,0,.25);
         }
 
         .users-search input:focus {
+            border-color: #ffd400;
             box-shadow:
-                0 0 18px rgba(255, 212, 0, .25);
+                0 0 15px rgba(255,212,0,.15);
         }
 
         .users-search input::placeholder {
-            color: #777;
+            color: #68727b;
+        }
+
+
+        /* ====================================================
+           USERS
+           ==================================================== */
+
+        #usersList {
+            width: 100%;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 12px;
         }
 
         .user-card {
@@ -155,25 +329,30 @@ function injectStyles() {
             display: flex;
             align-items: center;
             gap: 12px;
-            width: 100%;
             margin-bottom: 12px;
-            padding: 14px;
-            border: 1px solid rgba(255, 212, 0, .25);
+            padding: 13px;
+            border: 1px solid #1d2a33;
             border-radius: 18px;
             background:
                 linear-gradient(
                     145deg,
-                    rgba(35, 35, 35, .98),
-                    rgba(10, 10, 10, .98)
+                    #101923,
+                    #080d13
                 );
             box-shadow:
-                0 5px 20px rgba(0,0,0,.35),
-                0 0 10px rgba(255,212,0,.04);
+                0 7px 25px rgba(0,0,0,.4);
+            transition: .2s ease;
         }
 
         .user-card:hover {
-            border-color: #ffd400;
+            border-color: rgba(255,212,0,.55);
+            transform: translateY(-1px);
         }
+
+
+        /* ====================================================
+           PROFILE PICTURE
+           ==================================================== */
 
         .user-avatar-wrap {
             position: relative;
@@ -181,13 +360,13 @@ function injectStyles() {
         }
 
         .user-avatar {
-            width: 58px;
-            height: 58px;
+            width: 59px;
+            height: 59px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #ffd400;
-            background: #171717;
             display: block;
+            border: 2px solid #ffd400;
+            background: #101820;
         }
 
         .initial-avatar {
@@ -196,8 +375,13 @@ function injectStyles() {
             justify-content: center;
             color: #ffd400;
             font-size: 23px;
-            font-weight: 800;
+            font-weight: 900;
         }
+
+
+        /* ====================================================
+           GROUP INDICATOR
+           ==================================================== */
 
         .group-indicator {
             position: absolute;
@@ -206,15 +390,21 @@ function injectStyles() {
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #ffd400;
-            color: #111;
-            border: 2px solid #111;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            box-shadow: 0 0 8px rgba(255,212,0,.6);
+            background: #ffd400;
+            color: #111;
+            border: 2px solid #080d13;
+            font-size: 11px;
+            box-shadow:
+                0 0 10px rgba(255,212,0,.55);
         }
+
+
+        /* ====================================================
+           USER INFO
+           ==================================================== */
 
         .user-info {
             flex: 1;
@@ -230,32 +420,37 @@ function injectStyles() {
 
         .user-name {
             color: #fff;
-            font-weight: 800;
             font-size: 16px;
+            font-weight: 800;
         }
 
         .verified {
             color: #ffd400;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .group-label {
-            padding: 2px 7px;
-            border-radius: 10px;
-            background: rgba(255,212,0,.12);
+            padding: 3px 7px;
+            border-radius: 9px;
+            background: rgba(255,212,0,.1);
             color: #ffd400;
-            font-size: 10px;
-            font-weight: 700;
+            font-size: 9px;
+            font-weight: 800;
         }
 
         .user-username {
-            margin-top: 3px;
-            color: #aaa;
-            font-size: 13px;
-            white-space: nowrap;
+            margin-top: 4px;
+            color: #7e8993;
+            font-size: 12px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
+
+
+        /* ====================================================
+           BUTTONS
+           ==================================================== */
 
         .user-actions {
             display: flex;
@@ -265,71 +460,59 @@ function injectStyles() {
         }
 
         .user-btn {
-            border: 0;
-            border-radius: 13px;
+            border-radius: 12px;
             padding: 8px 10px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             cursor: pointer;
             transition: .2s ease;
         }
 
-        .user-btn:hover {
-            transform: translateY(-1px);
+        .user-btn:active {
+            transform: scale(.95);
         }
 
         .add-friend-btn {
+            border: 1px solid #ffd400;
             background: #ffd400;
             color: #111;
-            box-shadow: 0 0 10px rgba(255,212,0,.25);
+            box-shadow:
+                0 0 10px rgba(255,212,0,.18);
         }
 
         .profile-btn {
-            background: #202020;
-            color: #ffd400;
-            border: 1px solid #ffd400;
+            border: 1px solid #35434d;
+            background: #121b23;
+            color: #fff;
         }
 
         .chat-btn {
-            background: #08264c;
+            border: 1px solid #1265a5;
+            background: #08294c;
             color: #fff;
-            border: 1px solid #1260aa;
         }
 
         .user-btn:disabled {
             opacity: .55;
             cursor: not-allowed;
-            transform: none;
         }
+
+
+        /* ====================================================
+           EMPTY / ERROR
+           ==================================================== */
 
         .empty {
+            padding: 60px 15px;
             text-align: center;
-            padding: 50px 15px;
-            color: #888;
+            color: #77828c;
+            font-size: 14px;
         }
 
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #ffd400;
-        }
 
-        .vitalstar-spinner {
-            width: 35px;
-            height: 35px;
-            margin: 0 auto 12px;
-            border: 3px solid #333;
-            border-top-color: #ffd400;
-            border-right-color: #fff;
-            border-radius: 50%;
-            animation: vsSpin .8s linear infinite;
-        }
-
-        @keyframes vsSpin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+        /* ====================================================
+           FOOTER
+           ==================================================== */
 
         .vitalstar-footer {
             position: fixed;
@@ -339,56 +522,61 @@ function injectStyles() {
             bottom: 0;
             height: 68px;
             display: flex;
-            justify-content: space-around;
             align-items: center;
-            background: rgba(3, 5, 10, .97);
-            border-top: 1px solid #ffd400;
-            box-shadow: 0 -5px 20px rgba(0,0,0,.5);
-            backdrop-filter: blur(10px);
+            justify-content: space-around;
+            background: rgba(3,7,11,.97);
+            border-top: 1px solid #18232b;
+            box-shadow:
+                0 -5px 20px rgba(0,0,0,.55);
+            backdrop-filter: blur(12px);
         }
 
         .footer-btn {
             flex: 1;
             max-width: 100px;
-            height: 54px;
+            height: 58px;
             border: 0;
             background: transparent;
-            color: #aaa;
-            font-size: 11px;
+            color: #69747d;
+            font-size: 10px;
             font-weight: 700;
             cursor: pointer;
         }
 
         .footer-icon {
             display: block;
+            margin-bottom: 3px;
             font-size: 21px;
-            margin-bottom: 2px;
         }
 
         .footer-btn.active {
             color: #ffd400;
-            text-shadow: 0 0 10px rgba(255,212,0,.4);
+            text-shadow:
+                0 0 10px rgba(255,212,0,.35);
         }
+
+
+        /* ====================================================
+           MOBILE
+           ==================================================== */
 
         @media (max-width: 600px) {
 
             .user-card {
-                align-items: flex-start;
-            }
-
-            .user-actions {
-                width: 100%;
-                margin-top: 8px;
-                justify-content: flex-start;
-            }
-
-            .user-card {
                 flex-wrap: wrap;
+                align-items: flex-start;
             }
 
             .user-info {
                 width: calc(100% - 75px);
             }
+
+            .user-actions {
+                width: 100%;
+                padding-left: 71px;
+                justify-content: flex-start;
+            }
+
         }
 
     `;
@@ -400,18 +588,25 @@ injectStyles();
 
 
 // ============================================================
-// LOADING
+// AUTH
 // ============================================================
 
-function showLoading() {
+onAuthStateChanged(auth, (user) => {
 
-    usersList.innerHTML = `
-        <div class="loading">
-            <div class="vitalstar-spinner"></div>
-            Loading users...
-        </div>
-    `;
-}
+    if (!user) {
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+    currentUser = user;
+
+    showVitalStarLoader();
+
+    loadUsers();
+});
 
 
 // ============================================================
@@ -420,9 +615,11 @@ function showLoading() {
 
 function escapeHtml(value) {
 
-    const div = document.createElement("div");
+    const div =
+        document.createElement("div");
 
-    div.textContent = value ?? "";
+    div.textContent =
+        value ?? "";
 
     return div.innerHTML;
 }
@@ -448,49 +645,64 @@ function escapeAttribute(value) {
 
 function friendKey(uid1, uid2) {
 
-    return [uid1, uid2].sort().join("_");
+    return [uid1, uid2]
+        .sort()
+        .join("_");
 }
 
 
 // ============================================================
-// CHECK IF FRIEND
+// CHECK FRIEND
 // ============================================================
 
 async function checkIfFriends(uid1, uid2) {
 
-    if (!uid1 || !uid2) return false;
-
     try {
 
-        const key = friendKey(uid1, uid2);
+        const key =
+            friendKey(uid1, uid2);
 
-        const directFriend = await getDoc(
-            doc(db, "friends", key)
-        );
+        const direct =
+            await getDoc(
+                doc(db, "friends", key)
+            );
 
-        if (directFriend.exists()) {
+        if (direct.exists()) {
             return true;
         }
 
-        const friendsQuery = query(
-            collection(db, "friends"),
-            where("users", "array-contains", uid1)
+        const q =
+            query(
+                collection(db, "friends"),
+                where(
+                    "users",
+                    "array-contains",
+                    uid1
+                )
+            );
+
+        const snapshot =
+            await getDocs(q);
+
+        return snapshot.docs.some(
+            friendDoc => {
+
+                const data =
+                    friendDoc.data();
+
+                return (
+                    Array.isArray(data.users) &&
+                    data.users.includes(uid2)
+                );
+            }
         );
-
-        const snapshot = await getDocs(friendsQuery);
-
-        return snapshot.docs.some((friendDoc) => {
-
-            const data = friendDoc.data();
-
-            return Array.isArray(data.users) &&
-                data.users.includes(uid2);
-
-        });
 
     } catch (error) {
 
-        console.error("Friend check failed:", error);
+        console.error(
+            "Friend check:",
+            error
+        );
 
         return false;
     }
@@ -498,44 +710,52 @@ async function checkIfFriends(uid1, uid2) {
 
 
 // ============================================================
-// CHECK PENDING REQUEST
+// CHECK REQUEST
 // ============================================================
 
-async function checkPendingRequest(from, to) {
+async function checkPendingRequest(
+    from,
+    to
+) {
 
     try {
 
-        const sentQuery = query(
-            collection(db, "friendRequests"),
-            where("from", "==", from),
-            where("to", "==", to),
-            where("status", "==", "pending")
-        );
+        const sentQuery =
+            query(
+                collection(db, "friendRequests"),
+                where("from", "==", from),
+                where("to", "==", to),
+                where("status", "==", "pending")
+            );
 
-        const sentSnapshot = await getDocs(sentQuery);
+        const sent =
+            await getDocs(sentQuery);
 
-        if (!sentSnapshot.empty) {
+        if (!sent.empty) {
+
             return {
                 exists: true,
-                type: "sent",
-                id: sentSnapshot.docs[0].id
+                type: "sent"
             };
         }
 
-        const receivedQuery = query(
-            collection(db, "friendRequests"),
-            where("from", "==", to),
-            where("to", "==", from),
-            where("status", "==", "pending")
-        );
 
-        const receivedSnapshot = await getDocs(receivedQuery);
+        const receivedQuery =
+            query(
+                collection(db, "friendRequests"),
+                where("from", "==", to),
+                where("to", "==", from),
+                where("status", "==", "pending")
+            );
 
-        if (!receivedSnapshot.empty) {
+        const received =
+            await getDocs(receivedQuery);
+
+        if (!received.empty) {
+
             return {
                 exists: true,
-                type: "received",
-                id: receivedSnapshot.docs[0].id
+                type: "received"
             };
         }
 
@@ -545,7 +765,10 @@ async function checkPendingRequest(from, to) {
 
     } catch (error) {
 
-        console.error("Request check failed:", error);
+        console.error(
+            "Request check:",
+            error
+        );
 
         return {
             exists: false
@@ -558,69 +781,83 @@ async function checkPendingRequest(from, to) {
 // ADD FRIEND
 // ============================================================
 
-async function addFriend(uid, button) {
+async function addFriend(
+    uid,
+    button
+) {
 
-    if (!currentUser || !uid) return;
-
-    if (uid === currentUser.uid) {
+    if (
+        !currentUser ||
+        !uid ||
+        uid === currentUser.uid
+    ) {
         return;
     }
 
     button.disabled = true;
-    button.textContent = "Checking...";
+    button.textContent =
+        "Checking...";
 
     try {
 
-        const alreadyFriends = await checkIfFriends(
-            currentUser.uid,
-            uid
-        );
+        const friends =
+            await checkIfFriends(
+                currentUser.uid,
+                uid
+            );
 
-        if (alreadyFriends) {
+        if (friends) {
 
-            button.textContent = "✓ Friends";
+            button.textContent =
+                "✓ Friends";
+
             return;
         }
 
-        const request = await checkPendingRequest(
-            currentUser.uid,
-            uid
-        );
+        const request =
+            await checkPendingRequest(
+                currentUser.uid,
+                uid
+            );
 
         if (request.exists) {
 
-            if (request.type === "sent") {
-
-                button.textContent = "Request Sent";
-
-            } else {
-
-                button.textContent = "Request Received";
-            }
+            button.textContent =
+                request.type === "sent"
+                    ? "Request Sent"
+                    : "Request Received";
 
             return;
         }
 
         await addDoc(
-            collection(db, "friendRequests"),
+            collection(
+                db,
+                "friendRequests"
+            ),
             {
                 from: currentUser.uid,
                 to: uid,
                 status: "pending",
-                createdAt: serverTimestamp()
+                createdAt:
+                    serverTimestamp()
             }
         );
 
-        button.textContent = "Request Sent";
+        button.textContent =
+            "Request Sent";
 
     } catch (error) {
 
-        console.error("Add friend error:", error);
+        console.error(
+            "Add friend:",
+            error
+        );
 
         button.disabled = false;
-        button.textContent = "➕ Add Friend";
 
-        alert("Unable to send friend request.");
+        button.textContent =
+            "➕ Add Friend";
     }
 }
 
@@ -633,36 +870,40 @@ async function updateFriendButtons() {
 
     if (!currentUser) return;
 
-    const buttons = document.querySelectorAll(
-        ".add-friend-btn"
-    );
+    const buttons =
+        document.querySelectorAll(
+            ".add-friend-btn"
+        );
 
-    for (const button of buttons) {
+    for (
+        const button of buttons
+    ) {
 
-        const uid = button.dataset.uid;
-
-        if (!uid || uid === currentUser.uid) {
-            continue;
-        }
+        const uid =
+            button.dataset.uid;
 
         try {
 
-            const friends = await checkIfFriends(
-                currentUser.uid,
-                uid
-            );
+            if (
+                await checkIfFriends(
+                    currentUser.uid,
+                    uid
+                )
+            ) {
 
-            if (friends) {
+                button.textContent =
+                    "✓ Friends";
 
-                button.textContent = "✓ Friends";
                 button.disabled = true;
+
                 continue;
             }
 
-            const request = await checkPendingRequest(
-                currentUser.uid,
-                uid
-            );
+            const request =
+                await checkPendingRequest(
+                    currentUser.uid,
+                    uid
+                );
 
             if (request.exists) {
 
@@ -676,10 +917,7 @@ async function updateFriendButtons() {
 
         } catch (error) {
 
-            console.error(
-                "Unable to update friend button:",
-                error
-            );
+            console.error(error);
         }
     }
 }
@@ -703,215 +941,275 @@ function renderUsers(users) {
         return;
     }
 
-    usersList.innerHTML = users.map((user) => {
+    usersList.innerHTML =
+        users.map(user => {
 
-        const uid = escapeAttribute(user.id);
+            const uid =
+                escapeAttribute(user.id);
 
-        const fullName =
-            user.fullName ||
-            user.name ||
-            "VitalStar User";
+            const name =
+                user.fullName ||
+                user.name ||
+                "VitalStar User";
 
-        const username =
-            user.username
-                ? `@${String(user.username).replace(/^@/, "")}`
-                : "";
+            const username =
+                user.username
+                    ? "@" +
+                      String(user.username)
+                        .replace(/^@/, "")
+                    : "";
 
-        const safeName = escapeHtml(fullName);
-        const safeUsername = escapeHtml(username);
+            const picture =
+                user.profilePicture ||
+                user.photoURL ||
+                user.avatar ||
+                "";
 
-        const firstLetter =
-            String(fullName)
-                .trim()
-                .charAt(0)
-                .toUpperCase() || "V";
+            const isGroup =
+                user.isGroup === true ||
+                user.accountType === "group" ||
+                user.type === "group" ||
+                user.userType === "group";
 
-        const profilePicture =
-            user.profilePicture ||
-            user.photoURL ||
-            user.avatar ||
-            "";
+            const verified =
+                user.verified === true ||
+                user.isVerified === true;
 
-        const isGroup =
-            user.isGroup === true ||
-            user.accountType === "group" ||
-            user.type === "group" ||
-            user.userType === "group";
+            const initial =
+                String(name)
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase() || "V";
 
-        const isVerified =
-            user.verified === true ||
-            user.isVerified === true;
+            let avatar;
 
-        let avatarHTML;
+            if (picture) {
 
-        if (profilePicture) {
+                avatar = `
+                    <img
+                        class="user-avatar"
+                        src="${escapeAttribute(picture)}"
+                        alt="${escapeAttribute(name)}"
+                        loading="lazy"
+                        onerror="
+                            this.style.display='none';
+                            this.nextElementSibling.style.display='flex';
+                        "
+                    >
 
-            avatarHTML = `
-                <img
-                    class="user-avatar"
-                    src="${escapeAttribute(profilePicture)}"
-                    alt="${safeName}"
-                    loading="lazy"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                >
+                    <div
+                        class="user-avatar initial-avatar"
+                        style="display:none;"
+                    >
+                        ${escapeHtml(initial)}
+                    </div>
+                `;
+
+            } else {
+
+                avatar = `
+                    <div class="user-avatar initial-avatar">
+                        ${escapeHtml(initial)}
+                    </div>
+                `;
+            }
+
+            const groupIndicator =
+                isGroup
+                    ? `<span class="group-indicator">👥</span>`
+                    : "";
+
+            const groupLabel =
+                isGroup
+                    ? `<span class="group-label">GROUP</span>`
+                    : "";
+
+            const verifiedIcon =
+                verified
+                    ? `<span class="verified">✓</span>`
+                    : "";
+
+            return `
                 <div
-                    class="user-avatar initial-avatar"
-                    style="display:none;"
+                    class="user-card"
+                    data-uid="${uid}"
                 >
-                    ${escapeHtml(firstLetter)}
-                </div>
-            `;
 
-        } else {
+                    <div class="user-avatar-wrap">
 
-            avatarHTML = `
-                <div class="user-avatar initial-avatar">
-                    ${escapeHtml(firstLetter)}
-                </div>
-            `;
-        }
+                        ${avatar}
 
-        const groupIndicator = isGroup
-            ? `<span class="group-indicator">👥</span>`
-            : "";
-
-        const groupLabel = isGroup
-            ? `<span class="group-label">GROUP</span>`
-            : "";
-
-        const verified = isVerified
-            ? `<span class="verified">✓</span>`
-            : "";
-
-        const isMe =
-            currentUser &&
-            user.id === currentUser.uid;
-
-        return `
-            <div class="user-card" data-uid="${uid}">
-
-                <div class="user-avatar-wrap">
-                    ${avatarHTML}
-                    ${groupIndicator}
-                </div>
-
-                <div class="user-info">
-
-                    <div class="user-name-row">
-
-                        <span class="user-name">
-                            ${safeName}
-                        </span>
-
-                        ${verified}
-                        ${groupLabel}
+                        ${groupIndicator}
 
                     </div>
 
-                    ${
-                        safeUsername
-                            ? `<div class="user-username">${safeUsername}</div>`
-                            : `<div class="user-username">VitalStar member</div>`
-                    }
+
+                    <div class="user-info">
+
+                        <div class="user-name-row">
+
+                            <span class="user-name">
+                                ${escapeHtml(name)}
+                            </span>
+
+                            ${verifiedIcon}
+                            ${groupLabel}
+
+                        </div>
+
+                        <div class="user-username">
+                            ${
+                                username
+                                    ? escapeHtml(username)
+                                    : "VitalStar member"
+                            }
+                        </div>
+
+                    </div>
+
+
+                    <div class="user-actions">
+
+                        <button
+                            class="user-btn add-friend-btn"
+                            data-uid="${uid}"
+                        >
+                            ➕ Add Friend
+                        </button>
+
+                        <button
+                            class="user-btn profile-btn"
+                            data-action="profile"
+                            data-uid="${uid}"
+                        >
+                            👤 Profile
+                        </button>
+
+                        <button
+                            class="user-btn chat-btn"
+                            data-action="chat"
+                            data-uid="${uid}"
+                        >
+                            💬 Chat
+                        </button>
+
+                    </div>
 
                 </div>
+            `;
 
-                <div class="user-actions">
-
-                    ${
-                        !isMe
-                            ? `
-                            <button
-                                class="user-btn add-friend-btn"
-                                data-uid="${uid}"
-                            >
-                                ➕ Add Friend
-                            </button>
-
-                            <button
-                                class="user-btn chat-btn"
-                                data-action="chat"
-                                data-uid="${uid}"
-                            >
-                                💬 Chat
-                            </button>
-                            `
-                            : ""
-                    }
-
-                    <button
-                        class="user-btn profile-btn"
-                        data-action="profile"
-                        data-uid="${uid}"
-                    >
-                        👤 Profile
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-    }).join("");
+        }).join("");
 
     updateFriendButtons();
 }
 
 
 // ============================================================
+// USERS LIST
+// ============================================================
+
+const usersList =
+    document.getElementById(
+        "usersList"
+    );
+
+
+// ============================================================
 // LOAD USERS
 // ============================================================
 
-showLoading();
+function loadUsers() {
 
-const usersQuery = query(
-    collection(db, "users"),
-    orderBy("createdAt", "desc"),
-    limit(50)
-);
-
-onSnapshot(
-    usersQuery,
-
-    (snapshot) => {
-
-        allUsers = snapshot.docs
-            .map((userDoc) => ({
-                id: userDoc.id,
-                ...userDoc.data()
-            }))
-            .filter((user) => {
-
-                // Don't show yourself in Discover.
-                return !currentUser ||
-                    user.id !== currentUser.uid;
-            });
-
-        renderUsers(allUsers);
-    },
-
-    (error) => {
-
-        console.error(
-            "Error loading users:",
-            error
+    const usersQuery =
+        query(
+            collection(db, "users"),
+            orderBy(
+                "createdAt",
+                "desc"
+            ),
+            limit(50)
         );
 
-        usersList.innerHTML = `
-            <div class="empty">
-                ⚠️<br><br>
-                Something went wrong loading users.
-            </div>
-        `;
-    }
-);
+    onSnapshot(
+        usersQuery,
+
+        snapshot => {
+
+            allUsers =
+                snapshot.docs
+                    .map(userDoc => ({
+                        id: userDoc.id,
+                        ...userDoc.data()
+                    }))
+                    .filter(
+                        user =>
+                            !currentUser ||
+                            user.id !== currentUser.uid
+                    );
+
+            renderUsers(allUsers);
+
+            removeVitalStarLoader();
+        },
+
+        error => {
+
+            console.error(
+                "Loading users:",
+                error
+            );
+
+            usersList.innerHTML = `
+                <div class="empty">
+                    ⚠️<br><br>
+                    Something went wrong loading users.
+                </div>
+            `;
+
+            removeVitalStarLoader();
+        }
+    );
+}
 
 
 // ============================================================
 // SEARCH
 // ============================================================
 
-if (searchInput) {
+function setupSearch() {
+
+    let searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    if (!searchInput) {
+
+        const searchBox =
+            document.createElement("div");
+
+        searchBox.className =
+            "users-search";
+
+        searchBox.innerHTML = `
+            <input
+                id="vitalstarSearchInput"
+                type="search"
+                placeholder="🔎 Search people or @username..."
+                autocomplete="off"
+            >
+        `;
+
+        usersList.parentNode.insertBefore(
+            searchBox,
+            usersList
+        );
+
+        searchInput =
+            document.getElementById(
+                "vitalstarSearchInput"
+            );
+    }
 
     searchInput.addEventListener(
         "input",
@@ -920,16 +1218,18 @@ if (searchInput) {
             const term =
                 searchInput.value
                     .trim()
-                    .toLowerCase();
+                    .toLowerCase()
+                    .replace(/^@/, "");
 
             if (!term) {
 
                 renderUsers(allUsers);
+
                 return;
             }
 
             const filtered =
-                allUsers.filter((user) => {
+                allUsers.filter(user => {
 
                     const name =
                         String(
@@ -948,9 +1248,7 @@ if (searchInput) {
 
                     return (
                         name.includes(term) ||
-                        username.includes(
-                            term.replace(/^@/, "")
-                        )
+                        username.includes(term)
                     );
                 });
 
@@ -959,26 +1257,30 @@ if (searchInput) {
     );
 }
 
+setupSearch();
+
 
 // ============================================================
-// BUTTON ACTIONS
+// USER BUTTONS
 // ============================================================
 
 usersList.addEventListener(
     "click",
-    async (event) => {
+    async event => {
 
         const button =
-            event.target.closest("button");
+            event.target.closest(
+                "button"
+            );
 
         if (!button) return;
 
-        const uid = button.dataset.uid;
+        const uid =
+            button.dataset.uid;
 
         if (!uid) return;
 
 
-        // ADD FRIEND
         if (
             button.classList.contains(
                 "add-friend-btn"
@@ -994,7 +1296,6 @@ usersList.addEventListener(
         }
 
 
-        // VIEW PROFILE
         if (
             button.dataset.action ===
             "profile"
@@ -1007,7 +1308,6 @@ usersList.addEventListener(
         }
 
 
-        // CHAT
         if (
             button.dataset.action ===
             "chat"
@@ -1024,24 +1324,55 @@ usersList.addEventListener(
 
 
 // ============================================================
-// VITALSTAR FOOTER
+// HEADER
 // ============================================================
 
-function createFooter() {
+function createHeader() {
 
     if (
         document.getElementById(
-            "vitalstarUsersFooter"
+            "vitalstarUsersHeader"
         )
     ) {
         return;
     }
 
+    const header =
+        document.createElement("div");
+
+    header.id =
+        "vitalstarUsersHeader";
+
+    header.className =
+        "users-header";
+
+    header.innerHTML = `
+        <div class="users-title">
+            Discover <span>People</span>
+        </div>
+
+        <div class="users-subtitle">
+            Find people and groups on VitalStar
+        </div>
+    `;
+
+    usersList.parentNode.insertBefore(
+        header,
+        usersList.parentNode.firstChild
+    );
+}
+
+createHeader();
+
+
+// ============================================================
+// FOOTER
+// ============================================================
+
+function createFooter() {
+
     const footer =
         document.createElement("footer");
-
-    footer.id =
-        "vitalstarUsersFooter";
 
     footer.className =
         "vitalstar-footer";
@@ -1089,12 +1420,14 @@ function createFooter() {
 
     `;
 
-    document.body.appendChild(footer);
+    document.body.appendChild(
+        footer
+    );
 
 
     footer.addEventListener(
         "click",
-        (event) => {
+        event => {
 
             const button =
                 event.target.closest(
@@ -1106,120 +1439,23 @@ function createFooter() {
             const page =
                 button.dataset.page;
 
-            if (page === "profile.html") {
+            if (
+                page === "profile.html" &&
+                currentUser
+            ) {
 
-                if (currentUser) {
-
-                    window.location.href =
-                        `profile.html?uid=${encodeURIComponent(
-                            currentUser.uid
-                        )}`;
-                }
+                window.location.href =
+                    `profile.html?uid=${encodeURIComponent(
+                        currentUser.uid
+                    )}`;
 
                 return;
             }
 
-            window.location.href = page;
+            window.location.href =
+                page;
         }
     );
 }
 
 createFooter();
-
-
-// ============================================================
-// SEARCH INPUT AUTO-CREATION
-// ============================================================
-
-if (!searchInput) {
-
-    const header =
-        document.createElement("div");
-
-    header.className =
-        "users-header";
-
-    header.innerHTML = `
-        <div class="users-title">
-            Discover
-        </div>
-
-        <div class="users-subtitle">
-            Find people and groups on VitalStar
-        </div>
-    `;
-
-    const searchBox =
-        document.createElement("div");
-
-    searchBox.className =
-        "users-search";
-
-    searchBox.innerHTML = `
-        <input
-            id="vitalstarSearchInput"
-            type="search"
-            placeholder="🔎 Search people or @username..."
-            autocomplete="off"
-        >
-    `;
-
-    usersList.parentNode.insertBefore(
-        header,
-        usersList
-    );
-
-    usersList.parentNode.insertBefore(
-        searchBox,
-        usersList
-    );
-
-    const newSearch =
-        document.getElementById(
-            "vitalstarSearchInput"
-        );
-
-    newSearch.addEventListener(
-        "input",
-        () => {
-
-            const term =
-                newSearch.value
-                    .trim()
-                    .toLowerCase()
-                    .replace(/^@/, "");
-
-            if (!term) {
-
-                renderUsers(allUsers);
-                return;
-            }
-
-            const filtered =
-                allUsers.filter((user) => {
-
-                    const name =
-                        String(
-                            user.fullName ||
-                            user.name ||
-                            ""
-                        ).toLowerCase();
-
-                    const username =
-                        String(
-                            user.username ||
-                            ""
-                        )
-                        .replace(/^@/, "")
-                        .toLowerCase();
-
-                    return (
-                        name.includes(term) ||
-                        username.includes(term)
-                    );
-                });
-
-            renderUsers(filtered);
-        }
-    );
-}
