@@ -1,6 +1,7 @@
 /* =========================================================
    VITALSTAR — FRIEND SYSTEM
    Firebase v10.12.2
+   Real-time Friends Count
    ========================================================= */
 
 import {
@@ -14,8 +15,7 @@ import {
     addDoc,
     updateDoc,
     deleteDoc,
-    serverTimestamp,
-    orderBy
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -39,8 +39,6 @@ let incomingRequests = [];
 let outgoingRequests = [];
 let allUsers = [];
 
-let activeTab = "friends";
-
 
 /* =========================================================
    ELEMENTS
@@ -60,6 +58,18 @@ const discoverList =
 
 const searchInput =
     document.getElementById("searchInput");
+
+const friendsCount =
+    document.getElementById("friendsCount");
+
+const requestsCount =
+    document.getElementById("requestsCount");
+
+const sentCount =
+    document.getElementById("sentCount");
+
+const discoverCount =
+    document.getElementById("discoverCount");
 
 
 /* =========================================================
@@ -142,6 +152,38 @@ function showToast(message){
             toast.classList.remove("show");
 
         },2500);
+
+}
+
+
+/* =========================================================
+   FRIENDS COUNT
+   ========================================================= */
+
+function updateFriendsCount(){
+
+    const count =
+        friends.length;
+
+    if(friendsCount){
+
+        friendsCount.textContent =
+            count === 1
+            ? "1 friend"
+            : `${count} friends`;
+
+    }
+
+    /*
+       Also expose the live count globally.
+
+       Other VitalStar pages can later use:
+
+       window.VitalStarFriends.getCount()
+    */
+
+    window.VitalStarFriendsCount =
+        count;
 
 }
 
@@ -242,7 +284,7 @@ async function getUser(uid){
 
 
 /* =========================================================
-   LOAD FRIENDS
+   LISTEN TO FRIENDS
    ========================================================= */
 
 function listenToFriends(){
@@ -250,14 +292,27 @@ function listenToFriends(){
     const q =
         query(
             collection(db,"friends"),
-            where("users","array-contains",currentUser.uid)
+            where(
+                "users",
+                "array-contains",
+                currentUser.uid
+            )
         );
+
 
     onSnapshot(
         q,
         async function(snapshot){
 
             const results = [];
+
+            /*
+               Every document returned here represents
+               ONE accepted friendship.
+
+               Pending requests are stored separately and
+               therefore are NOT counted.
+            */
 
             for(
                 const friendDoc
@@ -267,30 +322,57 @@ function listenToFriends(){
                 const data =
                     friendDoc.data();
 
+                /*
+                   Only accept valid friendship documents.
+                */
+
+                if(
+                    !Array.isArray(data.users) ||
+                    data.users.length !== 2
+                ){
+                    continue;
+                }
+
+
                 const otherUid =
-                    Array.isArray(data.users)
-                    ? data.users.find(
+                    data.users.find(
                         uid =>
                             uid !== currentUser.uid
-                    )
-                    : null;
+                    );
+
 
                 if(!otherUid){
                     continue;
                 }
 
+
                 const user =
                     await getUser(otherUid);
 
-                results.push(user);
+
+                results.push({
+                    ...user,
+                    friendshipId:
+                        friendDoc.id
+                });
 
             }
 
-            friends = results;
+
+            friends =
+                results;
+
+
+            /*
+               THIS is the authoritative count.
+            */
+
+            updateFriendsCount();
+
 
             renderFriends();
 
-            updateCounts();
+            renderDiscover();
 
         },
         function(error){
@@ -301,11 +383,23 @@ function listenToFriends(){
             );
 
             friendsList.innerHTML = `
+
                 <div class="empty">
-                    <div class="empty-icon">⚠️</div>
-                    <strong>Could not load friends</strong>
-                    <p>${escapeHTML(error.message)}</p>
+
+                    <div class="empty-icon">
+                        ⚠️
+                    </div>
+
+                    <strong>
+                        Could not load friends
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(error.message)}
+                    </p>
+
                 </div>
+
             `;
 
         }
@@ -315,7 +409,7 @@ function listenToFriends(){
 
 
 /* =========================================================
-   LOAD INCOMING REQUESTS
+   INCOMING REQUESTS
    ========================================================= */
 
 function listenToIncomingRequests(){
@@ -323,9 +417,18 @@ function listenToIncomingRequests(){
     const q =
         query(
             collection(db,"friendRequests"),
-            where("to","==",currentUser.uid),
-            where("status","==","pending")
+            where(
+                "to",
+                "==",
+                currentUser.uid
+            ),
+            where(
+                "status",
+                "==",
+                "pending"
+            )
         );
+
 
     onSnapshot(
         q,
@@ -352,19 +455,14 @@ function listenToIncomingRequests(){
 
             }
 
-            incomingRequests = results;
+            incomingRequests =
+                results;
 
             renderRequests();
 
-            updateCounts();
+            updateRequestCounts();
 
-        },
-        function(error){
-
-            console.error(
-                "Incoming requests:",
-                error
-            );
+            renderDiscover();
 
         }
     );
@@ -373,7 +471,7 @@ function listenToIncomingRequests(){
 
 
 /* =========================================================
-   LOAD SENT REQUESTS
+   OUTGOING REQUESTS
    ========================================================= */
 
 function listenToOutgoingRequests(){
@@ -381,9 +479,18 @@ function listenToOutgoingRequests(){
     const q =
         query(
             collection(db,"friendRequests"),
-            where("from","==",currentUser.uid),
-            where("status","==","pending")
+            where(
+                "from",
+                "==",
+                currentUser.uid
+            ),
+            where(
+                "status",
+                "==",
+                "pending"
+            )
         );
+
 
     onSnapshot(
         q,
@@ -410,19 +517,14 @@ function listenToOutgoingRequests(){
 
             }
 
-            outgoingRequests = results;
+            outgoingRequests =
+                results;
 
             renderSent();
 
-            updateCounts();
+            updateRequestCounts();
 
-        },
-        function(error){
-
-            console.error(
-                "Outgoing requests:",
-                error
-            );
+            renderDiscover();
 
         }
     );
@@ -431,7 +533,30 @@ function listenToOutgoingRequests(){
 
 
 /* =========================================================
-   LOAD DISCOVER USERS
+   REQUEST COUNTS
+   ========================================================= */
+
+function updateRequestCounts(){
+
+    if(requestsCount){
+
+        requestsCount.textContent =
+            incomingRequests.length;
+
+    }
+
+    if(sentCount){
+
+        sentCount.textContent =
+            outgoingRequests.length;
+
+    }
+
+}
+
+
+/* =========================================================
+   LOAD USERS
    ========================================================= */
 
 async function loadUsers(){
@@ -442,6 +567,7 @@ async function loadUsers(){
             await getDocs(
                 collection(db,"users")
             );
+
 
         allUsers =
             snapshot.docs
@@ -462,6 +588,7 @@ async function loadUsers(){
 
                 });
 
+
         renderDiscover();
 
     }catch(error){
@@ -472,11 +599,23 @@ async function loadUsers(){
         );
 
         discoverList.innerHTML = `
+
             <div class="empty">
-                <div class="empty-icon">⚠️</div>
-                <strong>Could not load users</strong>
-                <p>${escapeHTML(error.message)}</p>
+
+                <div class="empty-icon">
+                    ⚠️
+                </div>
+
+                <strong>
+                    Could not load users
+                </strong>
+
+                <p>
+                    ${escapeHTML(error.message)}
+                </p>
+
             </div>
+
         `;
 
     }
@@ -485,20 +624,22 @@ async function loadUsers(){
 
 
 /* =========================================================
-   GET RELATIONSHIP
+   RELATIONSHIP
    ========================================================= */
 
 function relationship(uid){
 
     if(
         friends.some(
-            user => user.uid === uid
+            user =>
+                user.uid === uid
         )
     ){
 
         return "friend";
 
     }
+
 
     if(
         incomingRequests.some(
@@ -511,6 +652,7 @@ function relationship(uid){
 
     }
 
+
     if(
         outgoingRequests.some(
             request =>
@@ -522,13 +664,14 @@ function relationship(uid){
 
     }
 
+
     return "none";
 
 }
 
 
 /* =========================================================
-   FRIENDS
+   RENDER FRIENDS
    ========================================================= */
 
 function renderFriends(){
@@ -548,8 +691,8 @@ function renderFriends(){
                 </strong>
 
                 <p>
-                    Open Discover to find people and
-                    send your first friend request.
+                    Discover people and send your first
+                    friend request.
                 </p>
 
             </div>
@@ -559,6 +702,7 @@ function renderFriends(){
         return;
 
     }
+
 
     friendsList.innerHTML =
         friends.map(function(user){
@@ -570,21 +714,27 @@ function renderFriends(){
 
                 <button
                     class="action-btn neutral"
-                    onclick="window.VitalStarFriends.profile('${user.uid}')"
+                    onclick="
+                        window.VitalStarFriends.profile('${user.uid}')
+                    "
                 >
                     Profile
                 </button>
 
                 <button
                     class="action-btn primary"
-                    onclick="window.VitalStarFriends.message('${user.uid}')"
+                    onclick="
+                        window.VitalStarFriends.message('${user.uid}')
+                    "
                 >
                     Chat
                 </button>
 
                 <button
                     class="action-btn danger"
-                    onclick="window.VitalStarFriends.remove('${user.uid}')"
+                    onclick="
+                        window.VitalStarFriends.remove('${user.uid}')
+                    "
                 >
                     Remove
                 </button>
@@ -599,7 +749,7 @@ function renderFriends(){
 
 
 /* =========================================================
-   REQUESTS
+   RENDER REQUESTS
    ========================================================= */
 
 function renderRequests(){
@@ -630,11 +780,13 @@ function renderRequests(){
 
     }
 
+
     requestsList.innerHTML =
         incomingRequests.map(function(request){
 
             const user =
                 request.user;
+
 
             return userCard(
                 user,
@@ -643,14 +795,18 @@ function renderRequests(){
 
                 <button
                     class="action-btn success"
-                    onclick="window.VitalStarFriends.accept('${request.id}')"
+                    onclick="
+                        window.VitalStarFriends.accept('${request.id}')
+                    "
                 >
                     Accept
                 </button>
 
                 <button
                     class="action-btn danger"
-                    onclick="window.VitalStarFriends.decline('${request.id}')"
+                    onclick="
+                        window.VitalStarFriends.decline('${request.id}')
+                    "
                 >
                     Decline
                 </button>
@@ -665,7 +821,7 @@ function renderRequests(){
 
 
 /* =========================================================
-   SENT
+   RENDER SENT
    ========================================================= */
 
 function renderSent(){
@@ -685,7 +841,7 @@ function renderSent(){
                 </strong>
 
                 <p>
-                    Friend requests you send will appear here.
+                    Requests you send will appear here.
                 </p>
 
             </div>
@@ -696,11 +852,13 @@ function renderSent(){
 
     }
 
+
     sentList.innerHTML =
         outgoingRequests.map(function(request){
 
             const user =
                 request.user;
+
 
             return userCard(
                 user,
@@ -709,14 +867,18 @@ function renderSent(){
 
                 <button
                     class="action-btn neutral"
-                    onclick="window.VitalStarFriends.profile('${user.uid}')"
+                    onclick="
+                        window.VitalStarFriends.profile('${user.uid}')
+                    "
                 >
                     Profile
                 </button>
 
                 <button
                     class="action-btn danger"
-                    onclick="window.VitalStarFriends.cancel('${request.id}')"
+                    onclick="
+                        window.VitalStarFriends.cancel('${request.id}')
+                    "
                 >
                     Cancel
                 </button>
@@ -731,31 +893,42 @@ function renderSent(){
 
 
 /* =========================================================
-   DISCOVER
+   RENDER DISCOVER
    ========================================================= */
 
 function renderDiscover(){
 
-    const term =
-        searchInput.value
-            .trim()
-            .toLowerCase();
+    if(!discoverList){
+        return;
+    }
 
-    let users =
+
+    const term =
+        searchInput
+            ? searchInput.value
+                .trim()
+                .toLowerCase()
+            : "";
+
+
+    const users =
         allUsers.filter(function(user){
 
             if(!term){
                 return true;
             }
 
+
             const name =
                 getDisplayName(user)
                     .toLowerCase();
+
 
             const username =
                 String(
                     user.username || ""
                 ).toLowerCase();
+
 
             return (
                 name.includes(term) ||
@@ -764,10 +937,13 @@ function renderDiscover(){
 
         });
 
-    document.getElementById(
-        "discoverCount"
-    ).textContent =
-        users.length;
+
+    if(discoverCount){
+
+        discoverCount.textContent =
+            users.length;
+
+    }
 
 
     if(!users.length){
@@ -805,20 +981,27 @@ function renderDiscover(){
 
             let buttons = "";
 
-            if(relation === "friend"){
+
+            if(
+                relation === "friend"
+            ){
 
                 buttons = `
 
                     <button
                         class="action-btn neutral"
-                        onclick="window.VitalStarFriends.profile('${user.uid}')"
+                        onclick="
+                            window.VitalStarFriends.profile('${user.uid}')
+                        "
                     >
                         Profile
                     </button>
 
                     <button
                         class="action-btn primary"
-                        onclick="window.VitalStarFriends.message('${user.uid}')"
+                        onclick="
+                            window.VitalStarFriends.message('${user.uid}')
+                        "
                     >
                         Chat
                     </button>
@@ -833,7 +1016,9 @@ function renderDiscover(){
 
                     <button
                         class="action-btn success"
-                        onclick="window.VitalStarFriends.acceptIncomingByUser('${user.uid}')"
+                        onclick="
+                            window.VitalStarFriends.acceptIncomingByUser('${user.uid}')
+                        "
                     >
                         Accept
                     </button>
@@ -861,14 +1046,18 @@ function renderDiscover(){
 
                     <button
                         class="action-btn neutral"
-                        onclick="window.VitalStarFriends.profile('${user.uid}')"
+                        onclick="
+                            window.VitalStarFriends.profile('${user.uid}')
+                        "
                     >
                         Profile
                     </button>
 
                     <button
                         class="action-btn primary"
-                        onclick="window.VitalStarFriends.add('${user.uid}')"
+                        onclick="
+                            window.VitalStarFriends.add('${user.uid}')
+                        "
                     >
                         + Add
                     </button>
@@ -876,6 +1065,7 @@ function renderDiscover(){
                 `;
 
             }
+
 
             return userCard(
                 user,
@@ -888,40 +1078,7 @@ function renderDiscover(){
 
 
 /* =========================================================
-   UPDATE COUNTS
-   ========================================================= */
-
-function updateCounts(){
-
-    document.getElementById(
-        "friendsCount"
-    ).textContent =
-        friends.length +
-        (
-            friends.length === 1
-            ? " friend"
-            : " friends"
-        );
-
-
-    document.getElementById(
-        "requestsCount"
-    ).textContent =
-        incomingRequests.length;
-
-
-    document.getElementById(
-        "sentCount"
-    ).textContent =
-        outgoingRequests.length;
-
-    renderDiscover();
-
-}
-
-
-/* =========================================================
-   SEND REQUEST
+   SEND FRIEND REQUEST
    ========================================================= */
 
 async function addFriend(uid){
@@ -930,11 +1087,17 @@ async function addFriend(uid){
         return;
     }
 
-    if(uid === currentUser.uid){
+
+    if(
+        uid === currentUser.uid
+    ){
         return;
     }
 
-    if(relationship(uid) !== "none"){
+
+    if(
+        relationship(uid) !== "none"
+    ){
 
         showToast(
             "You already have a connection with this user."
@@ -960,9 +1123,11 @@ async function addFriend(uid){
             }
         );
 
+
         showToast(
             "Friend request sent!"
         );
+
 
     }catch(error){
 
@@ -981,7 +1146,7 @@ async function addFriend(uid){
 
 
 /* =========================================================
-   ACCEPT REQUEST
+   ACCEPT
    ========================================================= */
 
 async function acceptRequest(requestId){
@@ -992,24 +1157,32 @@ async function acceptRequest(requestId){
                 item.id === requestId
         );
 
+
     if(!request){
         return;
     }
 
+
     try{
 
         await addDoc(
-            collection(db,"friends"),
+            collection(
+                db,
+                "friends"
+            ),
             {
                 users:[
                     currentUser.uid,
                     request.from
                 ],
+
                 key:friendKey(
                     currentUser.uid,
                     request.from
                 ),
-                createdAt:serverTimestamp()
+
+                createdAt:
+                    serverTimestamp()
             }
         );
 
@@ -1030,6 +1203,7 @@ async function acceptRequest(requestId){
             "You are now friends!"
         );
 
+
     }catch(error){
 
         console.error(
@@ -1047,7 +1221,7 @@ async function acceptRequest(requestId){
 
 
 /* =========================================================
-   ACCEPT BY USER
+   ACCEPT INCOMING
    ========================================================= */
 
 async function acceptIncomingByUser(uid){
@@ -1057,6 +1231,7 @@ async function acceptIncomingByUser(uid){
             item =>
                 item.from === uid
         );
+
 
     if(request){
 
@@ -1088,9 +1263,11 @@ async function declineRequest(requestId){
             }
         );
 
+
         showToast(
             "Friend request declined."
         );
+
 
     }catch(error){
 
@@ -1109,7 +1286,7 @@ async function declineRequest(requestId){
 
 
 /* =========================================================
-   CANCEL SENT REQUEST
+   CANCEL
    ========================================================= */
 
 async function cancelRequest(requestId){
@@ -1124,9 +1301,11 @@ async function cancelRequest(requestId){
             )
         );
 
+
         showToast(
             "Friend request cancelled."
         );
+
 
     }catch(error){
 
@@ -1155,9 +1334,11 @@ async function removeFriend(uid){
             "Remove this person from your friends?"
         );
 
+
     if(!confirmed){
         return;
     }
+
 
     try{
 
@@ -1171,8 +1352,10 @@ async function removeFriend(uid){
                 )
             );
 
+
         const snapshot =
             await getDocs(q);
+
 
         for(
             const friendDoc
@@ -1181,6 +1364,7 @@ async function removeFriend(uid){
 
             const data =
                 friendDoc.data();
+
 
             if(
                 Array.isArray(data.users) &&
@@ -1201,9 +1385,11 @@ async function removeFriend(uid){
 
         }
 
+
         showToast(
             "Friend removed."
         );
+
 
     }catch(error){
 
@@ -1253,8 +1439,6 @@ function messageUser(uid){
 
 function activateTab(tab){
 
-    activeTab = tab;
-
     document
         .querySelectorAll(".tab")
         .forEach(function(button){
@@ -1299,7 +1483,10 @@ function activateTab(tab){
         : "none";
 
 
-    if(tab === "discover"){
+    if(
+        tab === "discover" &&
+        searchInput
+    ){
 
         searchInput.focus();
 
@@ -1312,15 +1499,23 @@ function activateTab(tab){
    SEARCH
    ========================================================= */
 
-searchInput.addEventListener(
-    "input",
-    function(){
+if(searchInput){
 
-        renderDiscover();
+    searchInput.addEventListener(
+        "input",
+        function(){
 
-    }
-);
+            renderDiscover();
 
+        }
+    );
+
+}
+
+
+/* =========================================================
+   TAB EVENTS
+   ========================================================= */
 
 document
     .querySelectorAll(".tab")
@@ -1360,7 +1555,17 @@ window.VitalStarFriends = {
 
     profile:openProfile,
 
-    message:messageUser
+    message:messageUser,
+
+    /*
+       Returns the current real-time count.
+    */
+
+    getCount:function(){
+
+        return friends.length;
+
+    }
 
 };
 
@@ -1382,9 +1587,18 @@ onAuthStateChanged(
 
         }
 
-        currentUser = user;
+
+        currentUser =
+            user;
+
+
+        /*
+           This listener is the source of truth
+           for the friends count.
+        */
 
         listenToFriends();
+
 
         listenToIncomingRequests();
 
