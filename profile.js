@@ -1,7 +1,7 @@
 // ============================================================
 // VITALSTAR — PROFILE PAGE
 // Dark Theme + Friends + Privacy Protection
-// Loading Indicator + See More Posts + Cancel Request
+// VITALSTAR Loading Indicator + See More Posts
 // Firebase v10.12.2
 // ============================================================
 
@@ -169,7 +169,331 @@ let postsLoading = false;
 
 
 // ============================================================
-// LOADING INDICATOR
+// VITALSTAR INDICATOR
+// ============================================================
+
+function injectVitalStarIndicatorStyles() {
+
+    if (
+        document.getElementById(
+            "vitalStarIndicatorStyles"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement("style");
+
+    style.id =
+        "vitalStarIndicatorStyles";
+
+    style.textContent = `
+
+        @keyframes vitalStarRingSpin {
+
+            0% {
+                transform:
+                    translate(-50%, -50%)
+                    rotate(0deg);
+            }
+
+            100% {
+                transform:
+                    translate(-50%, -50%)
+                    rotate(360deg);
+            }
+        }
+
+        @keyframes vitalStarRingSpinReverse {
+
+            0% {
+                transform:
+                    translate(-50%, -50%)
+                    rotate(360deg);
+            }
+
+            100% {
+                transform:
+                    translate(-50%, -50%)
+                    rotate(0deg);
+            }
+        }
+
+        @keyframes vitalStarPulse {
+
+            0%,
+            100% {
+                transform:scale(1);
+
+                text-shadow:
+                    0 0 8px #00ff88,
+                    0 0 18px #00ff88,
+                    0 0 35px #00ff88;
+            }
+
+            50% {
+                transform:scale(1.08);
+
+                text-shadow:
+                    0 0 12px #00ff88,
+                    0 0 25px #00ff88,
+                    0 0 50px #00ff88;
+            }
+        }
+
+        @keyframes vitalStarGlow {
+
+            0%,
+            100% {
+                opacity:.55;
+                transform:scale(.96);
+            }
+
+            50% {
+                opacity:.9;
+                transform:scale(1.04);
+            }
+        }
+
+        .vitalstar-indicator {
+
+            position:relative;
+
+            width:96px;
+            height:96px;
+
+            margin:0 auto 20px;
+
+            display:flex;
+
+            align-items:center;
+            justify-content:center;
+
+            border-radius:50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,136,.22) 0%,
+                    rgba(0,180,100,.12) 42%,
+                    rgba(0,60,35,.08) 65%,
+                    transparent 72%
+                );
+
+            box-shadow:
+                0 0 18px rgba(0,255,136,.28),
+                0 0 40px rgba(0,255,136,.18),
+                inset 0 0 22px rgba(0,255,136,.12);
+        }
+
+        .vitalstar-indicator::before {
+
+            content:"";
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:78px;
+            height:78px;
+
+            border-radius:50%;
+
+            border:4px solid transparent;
+
+            border-top-color:#00ff88;
+            border-right-color:#00d9ff;
+            border-bottom-color:#a855f7;
+            border-left-color:#ff3cac;
+
+            animation:
+                vitalStarRingSpin
+                .65s
+                linear
+                infinite;
+
+            filter:
+                drop-shadow(
+                    0 0 5px
+                    rgba(0,255,136,.9)
+                )
+                drop-shadow(
+                    0 0 10px
+                    rgba(168,85,247,.65)
+                );
+
+            box-sizing:border-box;
+        }
+
+        .vitalstar-indicator::after {
+
+            content:"";
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:66px;
+            height:66px;
+
+            border-radius:50%;
+
+            border:
+                2px dashed
+                rgba(255,255,255,.28);
+
+            animation:
+                vitalStarRingSpinReverse
+                1.1s
+                linear
+                infinite;
+
+            box-sizing:border-box;
+        }
+
+        .vitalstar-vs {
+
+            position:relative;
+
+            z-index:5;
+
+            font-size:27px;
+
+            font-weight:1000;
+
+            letter-spacing:1px;
+
+            color:#ffffff;
+
+            animation:
+                vitalStarPulse
+                1s
+                ease-in-out
+                infinite;
+        }
+
+        .vitalstar-glow {
+
+            position:absolute;
+
+            left:50%;
+            top:50%;
+
+            width:120px;
+            height:120px;
+
+            transform:
+                translate(-50%, -50%);
+
+            border-radius:50%;
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,255,136,.22),
+                    transparent 68%
+                );
+
+            filter:blur(8px);
+
+            animation:
+                vitalStarGlow
+                1.2s
+                ease-in-out
+                infinite;
+
+            pointer-events:none;
+        }
+
+        .vitalstar-loading-text {
+
+            font-size:15px;
+
+            font-weight:800;
+
+            color:#eafff5;
+
+            letter-spacing:.4px;
+
+            text-shadow:
+                0 0 8px
+                rgba(0,255,136,.3);
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+injectVitalStarIndicatorStyles();
+
+
+// ============================================================
+// CREATE VITALSTAR INDICATOR
+// ============================================================
+
+function createVitalStarIndicator(
+    text = "Loading..."
+) {
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.style.cssText = `
+        width:100%;
+        max-width:500px;
+        margin:30px auto;
+        padding:34px 20px;
+        box-sizing:border-box;
+        text-align:center;
+        border-radius:24px;
+
+        background:
+            radial-gradient(
+                circle at center,
+                rgba(0,255,136,.14) 0%,
+                rgba(3,25,17,.96) 45%,
+                rgba(2,9,7,.98) 100%
+            );
+
+        border:
+            1px solid
+            rgba(0,255,136,.28);
+
+        box-shadow:
+            0 0 22px
+                rgba(0,255,136,.16),
+            inset 0 0 25px
+                rgba(0,255,136,.05);
+
+        color:#ffffff;
+    `;
+
+    wrapper.innerHTML = `
+
+        <div class="vitalstar-indicator">
+
+            <div class="vitalstar-glow"></div>
+
+            <div class="vitalstar-vs">
+                VS
+            </div>
+
+        </div>
+
+        <div class="vitalstar-loading-text">
+            ${escapeHTML(text)}
+        </div>
+    `;
+
+    return wrapper;
+}
+
+
+// ============================================================
+// SHOW LOADING
 // ============================================================
 
 function showLoadingIndicator(
@@ -179,71 +503,30 @@ function showLoadingIndicator(
     if (!gallery)
         return;
 
-    gallery.innerHTML = `
-        <div id="profileLoadingIndicator" style="
-            width:100%;
-            max-width:500px;
-            margin:35px auto;
-            padding:35px 20px;
-            box-sizing:border-box;
-            text-align:center;
-            border-radius:22px;
-            background:
-                linear-gradient(
-                    145deg,
-                    rgba(8,20,45,.98),
-                    rgba(3,8,20,.98)
-                );
-            border:1px solid
-                rgba(40,130,255,.4);
-            box-shadow:
-                0 0 30px
-                rgba(0,100,255,.16);
-            color:white;
-        ">
+    gallery.innerHTML = "";
 
-            <div style="
-                width:48px;
-                height:48px;
-                margin:0 auto 18px;
-                border:4px solid
-                    rgba(255,255,255,.15);
-                border-top-color:#168cff;
-                border-right-color:#a855f7;
-                border-radius:50%;
-                animation:
-                    vitalStarSpin .8s linear infinite;
-            "></div>
-
-            <div style="
-                font-size:16px;
-                font-weight:700;
-                color:#dce9ff;
-            ">
-                ${escapeHTML(text)}
-            </div>
-
-        </div>
-
-        <style>
-            @keyframes vitalStarSpin {
-                from {
-                    transform:rotate(0deg);
-                }
-
-                to {
-                    transform:rotate(360deg);
-                }
-            }
-        </style>
-    `;
+    gallery.appendChild(
+        createVitalStarIndicator(text)
+    );
 }
 
+
+// ============================================================
+// POSTS LOADING
+// ============================================================
 
 function showPostsLoadingIndicator() {
 
     if (!gallery)
         return;
+
+    const existing =
+        document.getElementById(
+            "postsLoadingIndicator"
+        );
+
+    if (existing)
+        existing.remove();
 
     const indicator =
         document.createElement("div");
@@ -253,39 +536,26 @@ function showPostsLoadingIndicator() {
 
     indicator.style.cssText = `
         width:100%;
-        padding:30px 20px;
+        padding:25px 20px 35px;
         box-sizing:border-box;
         text-align:center;
-        color:#9fb4d8;
     `;
 
-    indicator.innerHTML = `
-        <div style="
-            width:32px;
-            height:32px;
-            margin:0 auto 12px;
-            border:3px solid
-                rgba(255,255,255,.12);
-            border-top-color:#168cff;
-            border-right-color:#a855f7;
-            border-radius:50%;
-            animation:
-                vitalStarSpin .8s linear infinite;
-        "></div>
-
-        <div style="
-            font-size:14px;
-            font-weight:600;
-        ">
-            Loading posts...
-        </div>
-    `;
+    indicator.appendChild(
+        createVitalStarIndicator(
+            "Loading posts..."
+        )
+    );
 
     gallery.appendChild(
         indicator
     );
 }
 
+
+// ============================================================
+// HIDE MAIN LOADER
+// ============================================================
 
 function hideLoader() {
 
@@ -300,7 +570,7 @@ function hideLoader() {
         loader.style.display =
             "none";
 
-    }, 400);
+    }, 180);
 }
 
 
@@ -482,7 +752,6 @@ function showPrivateProfileMessage() {
         messageButton.style.display = "none";
 
 
-    // Friend button remains available
     const friendBtn =
         createFriendButton();
 
@@ -513,24 +782,31 @@ function showPrivateProfileMessage() {
                 box-sizing:border-box;
                 text-align:center;
                 border-radius:22px;
+
                 background:
                     linear-gradient(
                         145deg,
                         rgba(8,20,45,.98),
                         rgba(3,8,20,.98)
                     );
-                border:1px solid
+
+                border:
+                    1px solid
                     rgba(40,130,255,.45);
+
                 box-shadow:
                     0 0 30px
                     rgba(0,100,255,.18);
+
                 color:white;
             ">
 
                 <div style="
                     font-size:55px;
                     margin-bottom:15px;
-                ">🔒</div>
+                ">
+                    🔒
+                </div>
 
                 <h2 style="
                     margin:0 0 10px;
@@ -643,9 +919,8 @@ async function checkIfFriends(
     targetUid
 ) {
 
-    if (!viewerUid || !targetUid) {
+    if (!viewerUid || !targetUid)
         return false;
-    }
 
     if (
         viewerUid === targetUid
@@ -655,8 +930,6 @@ async function checkIfFriends(
 
     try {
 
-        // Friendship documents are created
-        // using this exact deterministic ID.
         const friendshipId =
             friendKey(
                 viewerUid,
@@ -675,9 +948,8 @@ async function checkIfFriends(
                 friendshipRef
             );
 
-        if (!friendshipSnap.exists()) {
+        if (!friendshipSnap.exists())
             return false;
-        }
 
         const data =
             friendshipSnap.data();
@@ -715,7 +987,6 @@ async function checkFriendRequestStatus(
     requestReceived =
         false;
 
-
     try {
 
         const sentQuery =
@@ -735,7 +1006,6 @@ async function checkFriendRequestStatus(
             await getDocs(
                 sentQuery
             );
-
 
         for (
             const requestDoc
@@ -776,7 +1046,6 @@ async function checkFriendRequestStatus(
                 receivedQuery
             );
 
-
         for (
             const requestDoc
             of receivedSnapshot.docs
@@ -808,7 +1077,7 @@ async function checkFriendRequestStatus(
 
 
 // ============================================================
-// FIND SENT REQUEST DOCUMENT
+// FIND SENT REQUEST
 // ============================================================
 
 async function findSentFriendRequest() {
@@ -817,7 +1086,6 @@ async function findSentFriendRequest() {
         !currentUser ||
         !profileUid
     ) {
-
         return null;
     }
 
@@ -836,10 +1104,8 @@ async function findSentFriendRequest() {
                 )
             );
 
-
         const snapshot =
             await getDocs(q);
-
 
         for (
             const requestDoc
@@ -935,7 +1201,6 @@ async function updateFriendButton() {
     if (!button)
         return;
 
-
     if (
         !currentUser ||
         !profileUid ||
@@ -947,7 +1212,6 @@ async function updateFriendButton() {
 
         return;
     }
-
 
     button.style.display =
         "inline-flex";
@@ -1066,7 +1330,6 @@ async function sendFriendRequest() {
         return;
     }
 
-
     const button =
         createFriendButton();
 
@@ -1075,10 +1338,6 @@ async function sendFriendRequest() {
 
     button.innerHTML =
         "⏳ Sending...";
-
-    button.style.justifyContent =
-        "center";
-
 
     try {
 
@@ -1099,7 +1358,6 @@ async function sendFriendRequest() {
             await getDocs(
                 existingQuery
             );
-
 
         for (
             const requestDoc
@@ -1196,7 +1454,6 @@ async function cancelFriendRequest() {
         return;
     }
 
-
     const button =
         createFriendButton();
 
@@ -1206,15 +1463,10 @@ async function cancelFriendRequest() {
     button.innerHTML =
         "⏳ Cancelling...";
 
-    button.style.justifyContent =
-        "center";
-
-
     try {
 
         const requestDoc =
             await findSentFriendRequest();
-
 
         if (requestDoc) {
 
@@ -1223,10 +1475,8 @@ async function cancelFriendRequest() {
             );
         }
 
-
         requestSent =
             false;
-
 
         await updateFriendButton();
 
@@ -1259,7 +1509,6 @@ async function acceptFriendRequest() {
         return;
     }
 
-
     try {
 
         const q =
@@ -1275,14 +1524,11 @@ async function acceptFriendRequest() {
                 )
             );
 
-
         const snapshot =
             await getDocs(q);
 
-
         let requestDoc =
             null;
-
 
         for (
             const item
@@ -1405,7 +1651,6 @@ async function removeFriend() {
         return;
     }
 
-
     const confirmed =
         confirm(
             "Remove this person from your friends?"
@@ -1497,7 +1742,6 @@ document.addEventListener(
         if (button.disabled)
             return;
 
-
         if (
             !currentUser ||
             currentUser.uid === profileUid
@@ -1536,7 +1780,18 @@ document.addEventListener(
 
 
 // ============================================================
-// PROFILE PRIVACY
+// NEW PROFILE PRIVACY SYSTEM
+// ============================================================
+//
+// PUBLIC = everyone can view
+// FRIENDS = only friends can view
+//
+// IMPORTANT:
+// - Missing privacy field = PUBLIC
+// - Empty privacy field = PUBLIC
+// - Unknown old value = PUBLIC
+// - Only exact "friends" locks the profile
+// - Owner/admin can always view
 // ============================================================
 
 async function canViewProfile(
@@ -1553,36 +1808,60 @@ async function canViewProfile(
     }
 
 
-    // Owner/admin can view private profiles
+    // Owner/admin bypass
     const isAdmin =
         await checkViewerIsAdmin(
             viewerUid
         );
+
 
     if (isAdmin) {
         return true;
     }
 
 
-    // Normalize privacy value
-    const privacy =
-        String(
-            profileData?.profilePrivacy ||
-            "public"
-        )
-        .trim()
-        .toLowerCase();
+    // --------------------------------------------------------
+    // Read privacy
+    // --------------------------------------------------------
+
+    let privacy =
+        profileData?.profilePrivacy;
 
 
-    // Public
+    // Missing/empty = PUBLIC
+    if (
+        privacy === undefined ||
+        privacy === null ||
+        String(privacy).trim() === ""
+    ) {
+
+        privacy =
+            "public";
+    }
+
+
+    privacy =
+        String(privacy)
+            .trim()
+            .toLowerCase();
+
+
+    // --------------------------------------------------------
+    // PUBLIC
+    // --------------------------------------------------------
+
     if (
         privacy === "public"
     ) {
+
         return true;
     }
 
 
-    // Friends only
+    // --------------------------------------------------------
+    // FRIENDS ONLY
+    // --------------------------------------------------------
+
     if (
         privacy === "friends"
     ) {
@@ -1594,8 +1873,14 @@ async function canViewProfile(
     }
 
 
-    // Unknown value
-    // Keep old profiles public
+    // --------------------------------------------------------
+    // Legacy/unknown value
+    //
+    // IMPORTANT:
+    // Never lock a profile because of an unknown
+    // or old privacy value.
+    // --------------------------------------------------------
+
     return true;
 }
 
@@ -1657,7 +1942,7 @@ function getStoredCount(
 
 
 // ============================================================
-// LOAD FOLLOWER COUNT
+// LOAD FOLLOWERS COUNT
 // ============================================================
 
 async function loadFollowersCount(
@@ -1843,6 +2128,7 @@ async function loadProfile() {
                 `;
             }
 
+
             hideLoader();
 
             return;
@@ -1865,15 +2151,10 @@ async function loadProfile() {
             );
 
 
-        // ====================================================
-        // PRIVATE PROFILE
-        // ====================================================
-
         if (!allowed) {
 
             showPrivateProfileMessage();
 
-            // Keep Add Friend / request button available
             await updateFriendButton();
 
             hideLoader();
@@ -1883,7 +2164,7 @@ async function loadProfile() {
 
 
         // ====================================================
-        // RESTORE PROFILE ELEMENTS
+        // RESTORE PROFILE
         // ====================================================
 
         showProfileElements();
@@ -1959,6 +2240,7 @@ async function loadProfile() {
                 data.dateOfBirth ||
                 "";
 
+
             dob.textContent =
                 birthday
                     ? `🎂 ${birthday}`
@@ -1993,12 +2275,15 @@ async function loadProfile() {
                 data.photo ||
                 "";
 
+
             profileImage.src =
                 imageURL ||
                 "https://via.placeholder.com/300?text=VS";
 
+
             profileImage.style.display =
                 "";
+
 
             profileImage.onerror =
                 () => {
@@ -2025,12 +2310,15 @@ async function loadProfile() {
                 data.coverURL ||
                 "";
 
+
             coverImage.src =
                 coverURL ||
                 "https://via.placeholder.com/1200x350?text=VitalStar";
 
+
             coverImage.style.display =
                 "";
+
 
             coverImage.onerror =
                 () => {
@@ -2081,6 +2369,7 @@ async function loadProfile() {
             const friendBtn =
                 createFriendButton();
 
+
             friendBtn.style.display =
                 "none";
 
@@ -2089,9 +2378,11 @@ async function loadProfile() {
                 editButton.style.display =
                     "";
 
+
             if (followButton)
                 followButton.style.display =
                     "none";
+
 
             if (messageButton)
                 messageButton.style.display =
@@ -2103,9 +2394,11 @@ async function loadProfile() {
                 editButton.style.display =
                     "none";
 
+
             if (followButton)
                 followButton.style.display =
                     "";
+
 
             if (messageButton)
                 messageButton.style.display =
@@ -2308,20 +2601,24 @@ function formatLastSeen(
             diff / 1000
         );
 
+
     const minutes =
         Math.floor(
             seconds / 60
         );
+
 
     const hours =
         Math.floor(
             minutes / 60
         );
 
+
     const days =
         Math.floor(
             hours / 24
         );
+
 
     const weeks =
         Math.floor(
@@ -2332,14 +2629,18 @@ function formatLastSeen(
     if (seconds < 60)
         return "🟢 Last seen just now";
 
+
     if (minutes < 60)
         return `⚪ Last seen ${minutes}m ago`;
+
 
     if (hours < 24)
         return `⚪ Last seen ${hours}h ago`;
 
+
     if (days < 7)
         return `⚪ Last seen ${days}d ago`;
+
 
     return `⚪ Last seen ${weeks}w ago`;
 }
@@ -2406,10 +2707,12 @@ async function loadProfilePosts(
                             a.data().createdAt
                         );
 
+
                     const bTime =
                         getPostTime(
                             b.data().createdAt
                         );
+
 
                     return bTime - aTime;
                 }
@@ -2455,7 +2758,7 @@ async function loadProfilePosts(
 
 
 // ============================================================
-// RENDER VISIBLE POSTS
+// RENDER POSTS
 // ============================================================
 
 function renderVisiblePosts() {
@@ -2519,8 +2822,10 @@ function renderVisiblePosts() {
         seeMore.type =
             "button";
 
+
         seeMore.id =
             "seeMorePostsBtn";
+
 
         seeMore.innerHTML =
             "⬇️ See More Posts";
@@ -2534,25 +2839,32 @@ function renderVisiblePosts() {
             max-width:420px;
             margin:20px auto 30px;
             padding:13px 20px;
-            border:1px solid #168cff;
+
+            border:
+                1px solid #168cff;
+
             border-radius:14px;
+
             background:
                 linear-gradient(
                     135deg,
                     #071a38,
                     #102f66
                 );
+
             color:#ffffff;
+
             font-size:15px;
+
             font-weight:800;
+
             text-align:center;
+
             cursor:pointer;
+
             box-shadow:
                 0 0 16px
                 rgba(22,140,255,.18);
-            transition:
-                transform .2s ease,
-                box-shadow .2s ease;
         `;
 
 
@@ -2563,24 +2875,10 @@ function renderVisiblePosts() {
                 seeMore.disabled =
                     true;
 
-                seeMore.innerHTML =
-                    "⏳ Loading...";
+                visiblePostCount +=
+                    10;
 
-                seeMore.style.opacity =
-                    ".7";
-
-
-                setTimeout(
-                    () => {
-
-                        visiblePostCount +=
-                            10;
-
-                        renderVisiblePosts();
-
-                    },
-                    150
-                );
+                renderVisiblePosts();
             }
         );
 
@@ -2616,18 +2914,22 @@ function renderPostCard(
         padding:16px;
         box-sizing:border-box;
         border-radius:18px;
+
         background:
             linear-gradient(
                 145deg,
                 #09162e,
                 #040914
             );
+
         border:
             1px solid
             rgba(35,115,220,.3);
+
         box-shadow:
             0 0 18px
             rgba(0,70,160,.12);
+
         color:#fff;
     `;
 
@@ -2738,6 +3040,7 @@ function getPostTime(
         const parsed =
             Date.parse(timestamp);
 
+
         return Number.isNaN(parsed)
             ? 0
             : parsed;
@@ -2761,8 +3064,10 @@ function escapeHTML(
             "div"
         );
 
+
     div.textContent =
         value || "";
+
 
     return div.innerHTML;
 }
@@ -2832,6 +3137,7 @@ if (messageButton) {
             if (!profileUid)
                 return;
 
+
             window.location.href =
                 `chat.html?uid=${encodeURIComponent(
                     profileUid
@@ -2878,6 +3184,7 @@ onAuthStateChanged(
                 document.getElementById(
                     "friendBtn"
                 );
+
 
             if (friendBtn) {
 
