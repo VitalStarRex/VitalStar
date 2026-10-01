@@ -1648,12 +1648,6 @@ async function createFriendNotification({
             );
 
 
-        /*
-           Deterministic notification IDs prevent
-           duplicate notifications caused by repeated
-           listeners or button clicks.
-        */
-
         const notificationId =
             requestId
                 ? `${type}_${requestId}`
@@ -1707,13 +1701,6 @@ async function createFriendNotification({
         );
 
     }catch(error){
-
-        /*
-           The notification may not exist yet.
-           Firestore updateDoc() cannot create a document.
-
-           Create it with setDoc below.
-        */
 
         try{
 
@@ -1856,10 +1843,6 @@ async function addFriend(uid){
             );
 
 
-        /*
-           Create notification for recipient.
-        */
-
         const sender =
             await getUser(
                 currentUser.uid
@@ -1928,10 +1911,6 @@ async function acceptRequest(requestId){
 
     try{
 
-        /*
-           Create friendship.
-        */
-
         await addDoc(
             collection(
                 db,
@@ -1957,10 +1936,6 @@ async function acceptRequest(requestId){
         );
 
 
-        /*
-           Mark request as accepted.
-        */
-
         await updateDoc(
             doc(
                 db,
@@ -1975,11 +1950,6 @@ async function acceptRequest(requestId){
             }
         );
 
-
-        /*
-           Notify the person who originally
-           sent the request.
-        */
 
         const sender =
             await getUser(
@@ -2242,13 +2212,13 @@ function openProfile(uid){
 
 
 /* =========================================================
-   MESSAGE
+   CHAT
    ========================================================= */
 
 function messageUser(uid){
 
     window.location.href =
-        "message.html?uid=" +
+        "chat.html?uid=" +
         encodeURIComponent(uid);
 
 }
