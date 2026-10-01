@@ -750,141 +750,6 @@ style.textContent = `
 
 
 /* =========================================================
-   LOADER
-   ========================================================= */
-
-#vitalStarLoader{
-
-    position:fixed;
-
-    inset:0;
-
-    z-index:999999;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    background:
-        radial-gradient(
-            circle at center,
-            #26105d 0%,
-            #0b071b 42%,
-            #03040a 100%
-        );
-
-    transition:
-        opacity .45s ease,
-        visibility .45s ease;
-
-}
-
-
-#vitalStarLoader.hide{
-
-    opacity:0;
-
-    visibility:hidden;
-
-    pointer-events:none;
-
-}
-
-
-.vs-loader-content{
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-}
-
-
-.vs-spinner{
-
-    width:82px;
-    height:82px;
-
-    border-radius:50%;
-
-    border:
-        4px solid
-        rgba(255,255,255,.08);
-
-    border-top-color:#00d9ff;
-
-    border-right-color:#8b42ff;
-
-    border-bottom-color:#ff2ca8;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    animation:
-        vsRotate .8s linear infinite;
-
-    box-shadow:
-        0 0 28px
-        rgba(110,57,255,.28);
-
-}
-
-
-.vs-spinner span{
-
-    color:#fff;
-
-    font-size:22px;
-
-    font-weight:900;
-
-    letter-spacing:2px;
-
-    animation:
-        vsCounterRotate .8s linear infinite;
-
-}
-
-
-.vs-loading-text{
-
-    margin-top:17px;
-
-    color:#bfc7e3;
-
-    font-size:13px;
-
-    font-weight:700;
-
-}
-
-
-@keyframes vsRotate{
-
-    to{
-        transform:rotate(360deg);
-    }
-
-}
-
-
-@keyframes vsCounterRotate{
-
-    to{
-        transform:rotate(-360deg);
-    }
-
-}
-
-
-/* =========================================================
    MOBILE
    ========================================================= */
 
@@ -925,28 +790,230 @@ document.head.appendChild(style);
 
 
 // ============================================================
-// LOADER
+// LOADER (VitalStar indicator from profile.js)
 // ============================================================
+
+const indicatorStyle =
+    document.createElement("style");
+
+indicatorStyle.id =
+    "vitalStarIndicatorStyles";
+
+indicatorStyle.textContent = `
+
+    @keyframes vitalStarRingSpin {
+        0%   { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes vitalStarRingSpinReverse {
+        0%   { transform: translate(-50%, -50%) rotate(360deg); }
+        100% { transform: translate(-50%, -50%) rotate(0deg); }
+    }
+
+    @keyframes vitalStarPulse {
+        0%, 100% {
+            transform:scale(1);
+            text-shadow:
+                0 0 8px #00ff88,
+                0 0 18px #00ff88,
+                0 0 35px #00ff88;
+        }
+        50% {
+            transform:scale(1.08);
+            text-shadow:
+                0 0 12px #00ff88,
+                0 0 25px #00ff88,
+                0 0 50px #00ff88;
+        }
+    }
+
+    @keyframes vitalStarGlow {
+        0%, 100% {
+            opacity:.55;
+            transform: translate(-50%, -50%) scale(.96);
+        }
+        50% {
+            opacity:.9;
+            transform: translate(-50%, -50%) scale(1.04);
+        }
+    }
+
+    .vitalstar-fullscreen {
+        position:fixed;
+        inset:0;
+        width:100vw;
+        height:100vh;
+        min-height:100vh;
+        z-index:999999;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        box-sizing:border-box;
+        padding:20px;
+        background:
+            radial-gradient(
+                circle at center,
+                rgba(0,255,136,.13) 0%,
+                rgba(3,25,17,.97) 32%,
+                #020807 72%,
+                #010304 100%
+            );
+        overflow:hidden;
+    }
+
+    .vitalstar-fullscreen::before {
+        content:"";
+        position:absolute;
+        inset:-30%;
+        background:
+            radial-gradient(
+                circle,
+                rgba(0,255,136,.13),
+                transparent 55%
+            );
+        animation: vitalStarGlow 1.2s ease-in-out infinite;
+        pointer-events:none;
+    }
+
+    .vitalstar-indicator {
+        position:relative;
+        width:96px;
+        height:96px;
+        margin:0 auto 20px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:50%;
+        background:
+            radial-gradient(
+                circle,
+                rgba(0,255,136,.22) 0%,
+                rgba(0,180,100,.12) 42%,
+                rgba(0,60,35,.08) 65%,
+                transparent 72%
+            );
+        box-shadow:
+            0 0 18px rgba(0,255,136,.28),
+            0 0 40px rgba(0,255,136,.18),
+            inset 0 0 22px rgba(0,255,136,.12);
+    }
+
+    .vitalstar-indicator::before {
+        content:"";
+        position:absolute;
+        left:50%;
+        top:50%;
+        width:78px;
+        height:78px;
+        border-radius:50%;
+        border:4px solid transparent;
+        border-top-color:#00ff88;
+        border-right-color:#00d9ff;
+        border-bottom-color:#a855f7;
+        border-left-color:#ff3cac;
+        animation: vitalStarRingSpin .65s linear infinite;
+        filter:
+            drop-shadow(0 0 5px rgba(0,255,136,.9))
+            drop-shadow(0 0 10px rgba(168,85,247,.65));
+        box-sizing:border-box;
+    }
+
+    .vitalstar-indicator::after {
+        content:"";
+        position:absolute;
+        left:50%;
+        top:50%;
+        width:66px;
+        height:66px;
+        border-radius:50%;
+        border:2px dashed rgba(255,255,255,.28);
+        animation: vitalStarRingSpinReverse 1.1s linear infinite;
+        box-sizing:border-box;
+    }
+
+    .vitalstar-vs {
+        position:relative;
+        z-index:5;
+        font-size:27px;
+        font-weight:1000;
+        letter-spacing:1px;
+        color:#ffffff;
+        animation: vitalStarPulse 1s ease-in-out infinite;
+    }
+
+    .vitalstar-glow {
+        position:absolute;
+        left:50%;
+        top:50%;
+        width:120px;
+        height:120px;
+        transform: translate(-50%, -50%);
+        border-radius:50%;
+        background:
+            radial-gradient(
+                circle,
+                rgba(0,255,136,.22),
+                transparent 68%
+            );
+        filter:blur(8px);
+        animation: vitalStarGlow 1.2s ease-in-out infinite;
+        pointer-events:none;
+    }
+
+    .vitalstar-loading-text {
+        position:relative;
+        z-index:5;
+        font-size:15px;
+        font-weight:800;
+        color:#eafff5;
+        letter-spacing:.4px;
+        text-shadow: 0 0 8px rgba(0,255,136,.3);
+    }
+
+    .vitalstar-loading-subtext {
+        position:relative;
+        z-index:5;
+        margin-top:8px;
+        color:#6fae91;
+        font-size:12px;
+    }
+
+`;
+
+document.head.appendChild(indicatorStyle);
+
 
 const loader =
     document.createElement("div");
 
 loader.id =
-    "vitalStarLoader";
+    "vitalstarFullscreenLoader";
+
+loader.className =
+    "vitalstar-fullscreen";
 
 loader.innerHTML = `
 
-<div class="vs-loader-content">
+    <div class="vitalstar-indicator">
 
-    <div class="vs-spinner">
-        <span>VS</span>
+        <div class="vitalstar-glow"></div>
+
+        <div class="vitalstar-vs">
+            VS
+        </div>
+
     </div>
 
-    <div class="vs-loading-text">
+    <div class="vitalstar-loading-text">
         Loading VitalStar...
     </div>
 
-</div>
+    <div class="vitalstar-loading-subtext">
+        Connect, Share & Shine
+    </div>
 
 `;
 
@@ -963,14 +1030,21 @@ function hideVitalStarLoader(){
 
     loaderHidden = true;
 
-    loader.classList.add("hide");
+    loader.style.opacity =
+        "0";
+
+    loader.style.transition =
+        "opacity .15s ease";
 
     setTimeout(() => {
 
-        if(loader)
-            loader.remove();
+        if(loader.parentNode){
 
-    }, 500);
+            loader.parentNode.removeChild(loader);
+
+        }
+
+    }, 150);
 
 }
 
