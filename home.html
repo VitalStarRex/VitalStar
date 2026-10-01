@@ -420,6 +420,46 @@ header{
 }
 
 /* =========================================================
+   FRIEND REQUEST SIDEBAR BADGE
+   ========================================================= */
+
+.sidebar a#friendsMenuLink{
+    position:relative;
+}
+
+.sidebar-badge{
+    margin-left:auto;
+
+    min-width:21px;
+    height:21px;
+
+    padding:0 6px;
+
+    display:none;
+
+    align-items:center;
+    justify-content:center;
+
+    border-radius:20px;
+
+    background:#ff326d;
+
+    color:#fff;
+
+    font-size:11px;
+    font-weight:900;
+
+    border:2px solid #0a0d1b;
+
+    box-shadow:
+        0 0 10px rgba(255,50,109,.45);
+}
+
+.sidebar-badge.show{
+    display:flex;
+}
+
+/* =========================================================
    MAIN
    ========================================================= */
 
@@ -516,21 +556,6 @@ header{
     font-size:27px;
 }
 
-.story-name{
-    display:block;
-
-    margin-top:7px;
-
-    color:#cbd1e8;
-
-    font-size:10px;
-    font-weight:700;
-
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
 .story-add{
     position:absolute;
 
@@ -554,6 +579,21 @@ header{
 
     font-size:17px;
     font-weight:900;
+}
+
+.story-name{
+    display:block;
+
+    margin-top:7px;
+
+    color:#cbd1e8;
+
+    font-size:10px;
+    font-weight:700;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 /* =========================================================
@@ -1214,8 +1254,18 @@ header{
 
 </div>
 
-<a href="myfriends.html">
+<a
+    href="myfriends.html"
+    id="friendsMenuLink"
+>
     👥 &nbsp; Friends
+
+    <span
+        id="friendRequestBadge"
+        class="sidebar-badge"
+    >
+        0
+    </span>
 </a>
 
 <a href="message.html">
@@ -1543,6 +1593,164 @@ function closeMenu(){
     type="module"
     src="logout.js"
 ></script>
+
+<!-- =========================================================
+     FRIEND REQUEST SIDEBAR COUNT
+     ========================================================= -->
+
+<script type="module">
+
+import {
+    auth,
+    db
+} from "./firebase.js";
+
+import {
+    collection,
+    query,
+    where,
+    onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const friendRequestBadge =
+    document.getElementById(
+        "friendRequestBadge"
+    );
+
+
+function updateFriendRequestBadge(
+    count
+){
+
+    if(!friendRequestBadge){
+        return;
+    }
+
+
+    if(count > 0){
+
+        friendRequestBadge.textContent =
+            count > 99
+                ? "99+"
+                : count;
+
+        friendRequestBadge.classList.add(
+            "show"
+        );
+
+    }else{
+
+        friendRequestBadge.textContent =
+            "0";
+
+        friendRequestBadge.classList.remove(
+            "show"
+        );
+
+    }
+
+}
+
+
+auth.onAuthStateChanged(
+    user => {
+
+        if(!user){
+
+            updateFriendRequestBadge(
+                0
+            );
+
+            return;
+        }
+
+
+        const requestsQuery =
+            query(
+
+                collection(
+                    db,
+                    "notifications"
+                ),
+
+                where(
+                    "receiverId",
+                    "==",
+                    user.uid
+                ),
+
+                where(
+                    "type",
+                    "==",
+                    "friend_request"
+                )
+
+            );
+
+
+        onSnapshot(
+
+            requestsQuery,
+
+            snapshot => {
+
+                let count = 0;
+
+
+                snapshot.forEach(
+                    notificationDoc => {
+
+                        const notification =
+                            notificationDoc.data();
+
+
+                        /*
+                         * Count pending requests.
+                         *
+                         * New requests normally have
+                         * no requestStatus yet.
+                         */
+
+                        if(
+                            !notification.requestStatus ||
+                            notification.requestStatus ===
+                                "pending"
+                        ){
+
+                            count++;
+
+                        }
+
+                    }
+                );
+
+
+                updateFriendRequestBadge(
+                    count
+                );
+
+            },
+
+            error => {
+
+                console.error(
+                    "Friend request badge error:",
+                    error
+                );
+
+                updateFriendRequestBadge(
+                    0
+                );
+
+            }
+
+        );
+
+    }
+);
+
+</script>
 
 <!-- =========================================================
      BOTTOM CREATE BUTTON
