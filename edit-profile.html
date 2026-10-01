@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Edit Profile - VitalStar</title>
 
 <style>
+
 *{
     margin:0;
     padding:0;
@@ -13,28 +16,63 @@
     font-family:Arial,sans-serif;
 }
 
+html,
 body{
-    background:#f0f2f5;
+    min-height:100%;
 }
+
+body{
+    background:
+        radial-gradient(circle at top,#15153d 0%,#080817 45%,#03030b 100%);
+    color:#fff;
+    padding-bottom:85px;
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
 
 .container{
     max-width:500px;
-    margin:30px auto;
-    background:#fff;
+    margin:20px auto 30px;
+    background:rgba(13,13,35,.96);
     padding:25px;
-    border-radius:12px;
-    box-shadow:0 3px 12px rgba(0,0,0,.15);
+    border-radius:18px;
+    border:1px solid rgba(75,110,255,.35);
+    box-shadow:
+        0 0 25px rgba(50,80,255,.18),
+        0 10px 35px rgba(0,0,0,.5);
 }
+
+
+/* =========================================================
+   TITLE
+========================================================= */
 
 h1{
     text-align:center;
-    margin-bottom:20px;
-    color:#1877f2;
+    margin-bottom:25px;
+    color:#fff;
+    font-size:28px;
+    text-shadow:
+        0 0 10px rgba(70,120,255,.8),
+        0 0 25px rgba(140,70,255,.45);
 }
+
+
+/* =========================================================
+   PROFILE SECTION
+========================================================= */
 
 .profile-section{
     text-align:center;
     margin-bottom:25px;
+}
+
+.profile-section h3{
+    margin:18px 0 10px;
+    color:#dfe5ff;
 }
 
 .profile-section img{
@@ -42,32 +80,61 @@ h1{
     height:130px;
     border-radius:50%;
     object-fit:cover;
-    border:4px solid #1877f2;
+    border:4px solid #4d7cff;
     margin-bottom:10px;
+
+    box-shadow:
+        0 0 12px rgba(70,120,255,.7),
+        0 0 30px rgba(120,60,255,.35);
 }
 
 #coverPreview{
     width:100%;
     height:180px;
-    border-radius:10px;
+    border-radius:12px;
     object-fit:cover;
-    border:2px solid #ddd;
+    border:2px solid #4d7cff;
     margin-bottom:10px;
+
+    box-shadow:
+        0 0 15px rgba(70,120,255,.25);
 }
 
-.profile-section input{
+.profile-section input[type="file"]{
     display:none;
 }
 
 .profile-section label{
-    background:#1877f2;
+    background:linear-gradient(
+        135deg,
+        #246bff,
+        #7b35ff
+    );
+
     color:#fff;
     padding:10px 18px;
-    border-radius:6px;
+    border-radius:8px;
     cursor:pointer;
     display:inline-block;
     margin-bottom:15px;
+
+    box-shadow:
+        0 0 12px rgba(70,100,255,.35);
+
+    transition:.2s;
 }
+
+.profile-section label:hover{
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 0 20px rgba(100,100,255,.55);
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
 
 .form-group{
     margin-bottom:18px;
@@ -75,17 +142,46 @@ h1{
 
 .form-group label{
     display:block;
-    margin-bottom:6px;
+    margin-bottom:7px;
     font-weight:bold;
+    color:#e8eaff;
 }
 
 .form-group input,
-.form-group textarea{
+.form-group textarea,
+.form-group select{
+
     width:100%;
-    padding:12px;
-    border:1px solid #ccc;
-    border-radius:8px;
+
+    padding:13px;
+
+    background:#080817;
+    color:#fff;
+
+    border:1px solid #34345e;
+    border-radius:9px;
+
     font-size:16px;
+
+    outline:none;
+
+    transition:.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus{
+
+    border-color:#5d7cff;
+
+    box-shadow:
+        0 0 0 2px rgba(80,100,255,.12),
+        0 0 15px rgba(80,100,255,.2);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder{
+    color:#777895;
 }
 
 textarea{
@@ -93,190 +189,667 @@ textarea{
     min-height:90px;
 }
 
-button{
-    width:100%;
-    padding:14px;
-    background:#1877f2;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:17px;
-    cursor:pointer;
+
+/* =========================================================
+   PRIVACY
+========================================================= */
+
+.privacy-box{
+
+    padding:15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(40,50,110,.28),
+            rgba(100,40,140,.18)
+        );
+
+    border:1px solid rgba(90,110,255,.35);
+
+    border-radius:12px;
+
+    margin-bottom:20px;
+
+    box-shadow:
+        0 0 15px rgba(70,70,255,.08);
 }
 
-button:hover{
-    background:#166fe5;
+.privacy-title{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    font-weight:bold;
+
+    margin-bottom:7px;
+
+    color:#fff;
 }
+
+.privacy-description{
+
+    font-size:13px;
+
+    color:#aeb1c9;
+
+    line-height:1.5;
+
+    margin-bottom:12px;
+}
+
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+button[type="submit"]{
+
+    width:100%;
+
+    padding:14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #246bff,
+            #7b35ff
+        );
+
+    color:#fff;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 0 15px rgba(70,90,255,.35);
+
+    transition:.2s;
+
+    position:relative;
+}
+
+button[type="submit"]:hover{
+
+    transform:translateY(-1px);
+
+    box-shadow:
+        0 0 25px rgba(90,100,255,.55);
+}
+
+button[type="submit"]:disabled{
+
+    opacity:.75;
+
+    cursor:not-allowed;
+
+    transform:none;
+}
+
+
+/* =========================================================
+   SUBMITTING STATE
+========================================================= */
+
+button.submitting{
+
+    background:
+        linear-gradient(
+            135deg,
+            #343a73,
+            #50327a
+        );
+
+    box-shadow:
+        0 0 15px rgba(100,90,255,.25);
+}
+
+.save-spinner{
+
+    display:inline-block;
+
+    width:17px;
+    height:17px;
+
+    border:2px solid rgba(255,255,255,.35);
+    border-top-color:#fff;
+
+    border-radius:50%;
+
+    animation:
+        saveSpin .7s linear infinite;
+
+    vertical-align:-3px;
+
+    margin-right:7px;
+}
+
+@keyframes saveSpin{
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   BOTTOM NAVIGATION
+========================================================= */
+
+.bottom-nav{
+
+    position:fixed;
+
+    bottom:0;
+    left:0;
+
+    width:100%;
+
+    height:65px;
+
+    background:
+        rgba(7,7,20,.97);
+
+    border-top:
+        1px solid rgba(80,100,255,.35);
+
+    display:flex;
+
+    justify-content:space-around;
+
+    align-items:center;
+
+    box-shadow:
+        0 -5px 20px rgba(0,0,0,.45),
+        0 0 20px rgba(50,70,255,.1);
+
+    z-index:1000;
+
+    backdrop-filter:blur(12px);
+}
+
+.bottom-nav a{
+
+    text-decoration:none;
+
+    color:#aeb3d6;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:22px;
+
+    min-width:50px;
+
+    transition:.2s;
+}
+
+.bottom-nav a:hover{
+
+    color:#fff;
+
+    transform:translateY(-2px);
+}
+
+.bottom-nav small{
+
+    font-size:11px;
+
+    margin-top:2px;
+}
+
+
+/* =========================================================
+   CREATE POST BUTTON
+========================================================= */
+
+.create-button{
+
+    width:55px;
+    height:55px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #246bff,
+            #8b35ff
+        );
+
+    color:white;
+
+    border-radius:50%;
+
+    display:flex !important;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-decoration:none;
+
+    font-size:30px !important;
+
+    margin-top:-25px;
+
+    box-shadow:
+        0 0 18px rgba(70,100,255,.55);
+
+    border:2px solid rgba(255,255,255,.15);
+}
+
+.create-button:hover{
+
+    transform:
+        translateY(-3px)
+        scale(1.04) !important;
+
+    box-shadow:
+        0 0 28px rgba(90,100,255,.75);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:520px){
+
+    .container{
+
+        margin:
+            10px 10px 25px;
+
+        padding:20px;
+
+        border-radius:15px;
+    }
+
+    h1{
+        font-size:25px;
+    }
+
+}
+
 </style>
 
 </head>
+
 <body>
+
+
+<!-- =======================================================
+     MAIN CONTAINER
+======================================================= -->
 
 <div class="container">
 
-<h1>Edit Profile</h1>
+    <h1>✦ Edit Profile</h1>
 
-<div class="profile-section">
 
-<h3>Profile Picture</h3>
+    <!-- ===================================================
+         PROFILE IMAGES
+    ==================================================== -->
 
-<img id="profilePreview" src="default-avatar.png">
+    <div class="profile-section">
 
-<input type="file" id="profileImage" accept="image/*">
+        <h3>Profile Picture</h3>
 
-<label for="profileImage">
-Change Profile Picture
-</label>
+        <img
+            id="profilePreview"
+            src="default-avatar.png"
+            alt="Profile Picture"
+        >
 
-<h3>Cover Photo</h3>
+        <input
+            type="file"
+            id="profileImage"
+            accept="image/*"
+        >
 
-<img id="coverPreview" src="https://via.placeholder.com/600x220">
+        <label for="profileImage">
+            📷 Change Profile Picture
+        </label>
 
-<input type="file" id="coverImage" accept="image/*">
 
-<label for="coverImage">
-Change Cover Photo
-</label>
+        <h3>Cover Photo</h3>
+
+        <img
+            id="coverPreview"
+            src="https://via.placeholder.com/600x220"
+            alt="Cover Photo"
+        >
+
+        <input
+            type="file"
+            id="coverImage"
+            accept="image/*"
+        >
+
+        <label for="coverImage">
+            🖼️ Change Cover Photo
+        </label>
+
+    </div>
+
+
+    <!-- ===================================================
+         PROFILE FORM
+    ==================================================== -->
+
+    <form id="editProfileForm">
+
+
+        <!-- Nick Name -->
+
+        <div class="form-group">
+
+            <label for="fullName">
+                Nick Name
+            </label>
+
+            <input
+                type="hidden"
+                id="fullName"
+                placeholder="Enter your Nick name"
+            >
+
+        </div>
+
+
+        <!-- Gender -->
+
+        <div class="form-group">
+
+            <label for="gender">
+                Gender
+            </label>
+
+            <input
+                type="text"
+                id="gender"
+                placeholder="Male/female"
+            >
+
+        </div>
+
+
+        <!-- Email -->
+
+        <div class="form-group">
+
+            <label for="email">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Enter email"
+                autocomplete="email"
+            >
+
+        </div>
+
+
+        <!-- Date of Birth -->
+
+        <div class="form-group">
+
+            <label for="dob">
+                Date of Birth
+            </label>
+
+            <input
+                type="date"
+                id="dob"
+            >
+
+        </div>
+
+
+        <!-- Country -->
+
+        <div class="form-group">
+
+            <label for="country">
+                Country
+            </label>
+
+            <input
+                type="text"
+                id="country"
+                placeholder="Enter your country"
+            >
+
+        </div>
+
+
+        <!-- Bio -->
+
+        <div class="form-group">
+
+            <label for="bio">
+                Bio
+            </label>
+
+            <textarea
+                id="bio"
+                placeholder="Tell people about yourself"
+            ></textarea>
+
+        </div>
+
+
+        <!-- =================================================
+             PROFILE PRIVACY
+        ================================================== -->
+
+        <div class="privacy-box">
+
+            <div class="privacy-title">
+                🔒 Profile Privacy
+            </div>
+
+            <div class="privacy-description">
+
+                Choose who can view your profile.
+                Admins can still view profiles marked
+                as friends-only.
+
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+
+                <label for="profilePrivacy">
+                    Who can view your profile?
+                </label>
+
+                <select id="profilePrivacy">
+
+                    <option value="public">
+                        🌎 Everyone can view
+                    </option>
+
+                    <option value="friends">
+                        👥 Only my friends can view
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- New Password -->
+
+        <div class="form-group">
+
+            <label for="password">
+                New Password
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Leave empty if you don't want to change it"
+                autocomplete="new-password"
+            >
+
+        </div>
+
+
+        <!-- Save Button -->
+
+        <button
+            type="submit"
+            id="saveProfileButton"
+        >
+            <span id="saveButtonText">
+                Save Changes
+            </span>
+        </button>
+
+
+    </form>
 
 </div>
 
-<form id="editProfileForm">
 
-<div class="form-group">
-<label>Nick Name</label>
-<input type="hidden" id="fullName" placeholder="Enter your Nick name">
-</div>
+<!-- =======================================================
+     BOTTOM NAVIGATION
+======================================================= -->
 
-<div class="form-group">
-<label>Gender</label>
-<input type="text" id="gender" placeholder="Male/female">
-</div>
+<div class="bottom-nav">
 
-<div class="form-group">
-<label>Email</label>
-<input type="email" id="email" placeholder="Enter email">
-</div>
+    <a href="home.html">
 
-<div class="form-group">
-<label>Date of Birth</label>
-<input type="date" id="dob">
-</div>
-
-<div class="form-group">
-<label>Country</label>
-<input type="text" id="country" placeholder="Enter your country">
-</div>
-
-<div class="form-group">
-<label>Bio</label>
-<textarea id="bio" placeholder="Tell people about yourself"></textarea>
-</div>
-
-<div class="form-group">
-<label>New Password</label>
-<input type="password" id="password" placeholder="Leave empty if you don't want to change it">
-</div>
-
-<button type="submit">
-Save Changes
-</button>
-
-</form>
-
-</div>
-
-<script type="module" src="edit-profile.js"></script>
-
-<script type="module" src="auth-guard.js"></script>
-
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- Bottom Navigation -->
-<div style="
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:65px;
-background:#e5e5e5;
-border-top:1px solid #ccc;
-display:flex;
-justify-content:space-around;
-align-items:center;
-box-shadow:0 -2px 8px rgba(0,0,0,0.1);
-z-index:1000;
-">
-
-    <a href="home.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
         <span>🏠</span>
-        <small style="font-size:12px;">Home</small>
+
+        <small>
+            Home
+        </small>
+
     </a>
 
-    <a href="users.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
+
+    <a href="users.html">
+
         <span>👥</span>
-        <small style="font-size:12px;">Friends</small>
+
+        <small>
+            Friends
+        </small>
+
     </a>
 
-    <a href="create-post.html" style="
-    width:55px;
-    height:55px;
-    background:#1877f2;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-decoration:none;
-    font-size:30px;
-    margin-top:-25px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-    ">
+
+    <a
+        href="create-post.html"
+        class="create-button"
+    >
         ➕
     </a>
 
-    <a href="general-room.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
+
+    <a href="general-room.html">
+
         <span>💬</span>
-        <small style="font-size:12px;">Chat</small>
+
+        <small>
+            Chat
+        </small>
+
     </a>
 
-    <a href="profile.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
+
+    <a href="profile.html">
+
         <span>👤</span>
-        <small style="font-size:12px;">Profile</small>
+
+        <small>
+            Profile
+        </small>
+
     </a>
 
 </div>
+
+
+<!-- =======================================================
+     SCRIPTS
+======================================================= -->
+
+<script
+    type="module"
+    src="edit-profile.js"
+></script>
+
+<script
+    type="module"
+    src="auth-guard.js"
+></script>
+
+
+<!-- =======================================================
+     SUBMIT INDICATOR
+======================================================= -->
+
+<script>
+
+const saveForm =
+    document.getElementById(
+        "editProfileForm"
+    );
+
+const saveButton =
+    document.getElementById(
+        "saveProfileButton"
+    );
+
+const saveButtonText =
+    document.getElementById(
+        "saveButtonText"
+    );
+
+
+if(saveForm && saveButton){
+
+    saveForm.addEventListener(
+        "submit",
+        () => {
+
+            setTimeout(() => {
+
+                if(saveButton.disabled){
+
+                    saveButtonText.innerHTML =
+                        '<span class="save-spinner"></span>Saving...';
+
+                }
+
+            }, 50);
+
+        }
+    );
+
+}
+
+</script>
+
+</body>
+</html>
