@@ -1,5 +1,5 @@
 // ============================================================
-// VITALSTAR — MODERN FEED
+// VITALSTAR — MODERN NEON SOCIAL FEED
 // Firebase v10.12.2
 // ============================================================
 
@@ -64,7 +64,7 @@ function escapeHTML(value = "") {
 
 
 // ============================================================
-// MODERN VITALSTAR STYLES
+// MODERN FEED STYLES
 // ============================================================
 
 const style =
@@ -72,520 +72,541 @@ const style =
 
 style.textContent = `
 
-/* ==========================================================
-   ROOT
-   ========================================================== */
-
-:root {
-
-    --vs-gold: #FFD54F;
-    --vs-purple: #8B5CF6;
-    --vs-blue: #00D9FF;
-    --vs-pink: #FF4FD8;
-
-    --vs-bg: #060711;
-    --vs-card: #ffffff;
-    --vs-card-border: rgba(0,0,0,0.08);
-
-    --vs-text: #333333;
-    --vs-muted: rgba(128,128,128,0.7);
-
-}
-
-
-/* ==========================================================
+/* =========================================================
    FEED
-   ========================================================== */
+   ========================================================= */
 
-#feed {
-
-    width: 100%;
-    max-width: 720px;
-
-    margin:
-        0 auto;
-
-    padding:
-        12px 12px 100px;
-
+#feed{
+    width:100%;
+    max-width:900px;
+    margin:0 auto;
+    padding:0 0 110px;
 }
 
 
-/* ==========================================================
+/* =========================================================
    POST CARD
-   (always dark, regardless of light/dark mode)
-   ========================================================== */
+   ========================================================= */
 
-.post-card {
+.post-card{
 
-    position: relative;
+    position:relative;
 
-    width: 100%;
+    width:100%;
 
     margin:
-        0 auto 15px;
+        0 0 16px;
 
     padding:
-        13px;
+        14px;
+
+    border-radius:
+        20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #11172a 0%,
+            #0d1221 100%
+        );
 
     border:
         1px solid
-        var(--vs-card-border);
+        rgba(255,255,255,.075);
 
-    border-radius:
-        18px;
-
-    background:
-        var(--vs-card);
+    color:#f5f7ff;
 
     box-shadow:
-        0 15px 50px
-        rgba(0,0,0,0.22),
+        0 10px 30px
+        rgba(0,0,0,.30);
 
-        inset 0 1px 0
-        rgba(255,255,255,0.08);
-
-    overflow:
-        hidden;
+    overflow:hidden;
 
     animation:
-        vsPostIn .45s ease both;
+        vsPostIn .35s ease both;
 
     transition:
-        transform .25s ease,
-        border-color .25s ease,
-        box-shadow .25s ease;
-
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
 }
 
-.post-card::before {
 
-    content: "";
+.post-card::before{
 
-    position: absolute;
+    content:"";
 
-    top: 0;
-    left: 20%;
+    position:absolute;
 
-    width: 60%;
-    height: 1px;
+    top:0;
+    left:15%;
+
+    width:70%;
+    height:1px;
 
     background:
         linear-gradient(
             90deg,
             transparent,
-            rgba(255,213,79,.55),
+            rgba(0,217,255,.55),
+            rgba(139,63,255,.65),
             transparent
         );
 
 }
 
-.post-card:hover {
+
+.post-card:hover{
 
     transform:
         translateY(-2px);
 
     border-color:
-        rgba(255,213,79,.22);
+        rgba(116,77,255,.22);
 
     box-shadow:
-        0 20px 60px
-        rgba(0,0,0,.28),
+        0 15px 38px
+        rgba(0,0,0,.38),
 
-        0 0 35px
-        rgba(139,92,246,.06);
+        0 0 25px
+        rgba(104,63,255,.06);
 
 }
 
-@keyframes vsPostIn {
 
-    from {
+@keyframes vsPostIn{
 
-        opacity: 0;
-
+    from{
+        opacity:0;
         transform:
-            translateY(12px)
-            scale(.985);
-
+            translateY(10px);
     }
 
-    to {
-
-        opacity: 1;
-
+    to{
+        opacity:1;
         transform:
-            translateY(0)
-            scale(1);
-
+            translateY(0);
     }
 
 }
 
 
-/* ==========================================================
+/* =========================================================
    USER HEADER
-   ========================================================== */
+   ========================================================= */
 
-.user-info {
+.user-info{
 
-    display:
-        flex;
+    display:flex;
 
-    align-items:
-        center;
+    align-items:center;
 
-    gap:
-        10px;
+    gap:10px;
 
-    margin-bottom:
-        10px;
+    padding:
+        1px 1px 7px;
 
 }
 
-.avatar {
 
-    width:
-        42px;
+.avatar{
 
-    height:
-        42px;
+    width:46px;
+    height:46px;
 
-    flex:
-        0 0 42px;
+    min-width:46px;
 
-    position:
-        relative;
+    border-radius:50%;
 
-}
-
-.avatar img,
-.avatar-fallback {
-
-    width:
-        42px;
-
-    height:
-        42px;
-
-    border-radius:
-        50%;
-
-    object-fit:
-        cover;
-
-}
-
-.avatar img {
-
-    display:
-        block;
-
-    border:
-        2px solid
-        rgba(255,255,255,.15);
-
-    box-shadow:
-        0 5px 18px
-        rgba(0,0,0,.25);
-
-}
-
-.avatar-fallback {
-
-    display:
-        flex;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
+    overflow:hidden;
 
     background:
         linear-gradient(
             135deg,
-            #8B5CF6,
-            #00D9FF
+            #7b35ff,
+            #00cfff,
+            #ff269f
         );
 
-    color:
-        white;
-
-    font-size:
-        20px;
-
-    font-weight:
-        800;
-
-}
-
-.user-details {
-
-    min-width:
-        0;
-
-    flex:
-        1;
-
-}
-
-.user-details h3 {
-
-    margin:
-        0;
-
-    font-size:
-        15px;
-
-    font-weight:
-        750;
-
-    line-height:
-        1.25;
-
-}
-
-.user-details h3 a {
-
-    color:
-        var(--vs-text);
-
-    text-decoration:
-        none;
-
-}
-
-.user-details h3 a:hover {
-
-    color:
-        var(--vs-gold);
-
-}
-
-.post-time {
-
-    display:
-        block;
-
-    margin-top:
-        4px;
-
-    color:
-        var(--vs-muted);
-
-    font-size:
-        11px;
+    padding:2px;
 
 }
 
 
-/* ==========================================================
-   ONLINE DOT
-   ========================================================== */
+.avatar img{
 
-.user-online-dot {
+    width:100%;
+    height:100%;
 
-    width:
-        8px;
+    object-fit:cover;
 
-    height:
-        8px;
+    display:block;
 
-    border-radius:
-        50%;
+    border-radius:50%;
+
+    background:#101528;
+
+}
+
+
+.avatar-fallback{
+
+    width:100%;
+    height:100%;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
 
     background:
-        #22c55e;
+        linear-gradient(
+            135deg,
+            #7639ff,
+            #00cfff
+        );
+
+    color:#fff;
+
+    font-size:18px;
+
+    font-weight:900;
+
+}
+
+
+.user-details{
+
+    min-width:0;
+
+    flex:1;
+
+}
+
+
+.user-details h3{
+
+    margin:0;
+
+    color:#f4f6ff;
+
+    font-size:15px;
+
+    font-weight:850;
+
+    line-height:1.25;
+
+}
+
+
+.user-details h3 a{
+
+    color:#f4f6ff;
+
+    text-decoration:none;
+
+}
+
+
+.user-details h3 a:hover{
+
+    color:#00d9ff;
+
+}
+
+
+.post-meta{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    margin-top:4px;
+
+    color:#8993b2;
+
+    font-size:10px;
+
+}
+
+
+.post-privacy{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:3px;
+
+}
+
+
+.online-dot{
+
+    width:7px;
+    height:7px;
+
+    border-radius:50%;
+
+    background:#32df72;
 
     box-shadow:
-        0 0 10px
-        rgba(34,197,94,.8);
+        0 0 8px
+        rgba(50,223,114,.75);
 
 }
 
 
-/* ==========================================================
-   POST TEXT
-   ========================================================== */
+.post-menu{
 
-.post-text {
+    width:34px;
+    height:34px;
 
-    margin:
-        11px 2px 13px;
+    border:0;
 
-    color:
-        #333333;
+    border-radius:50%;
 
-    font-size:
-        14px;
+    background:transparent;
 
-    line-height:
-        1.6;
+    color:#9ba5c4;
 
-    text-align:
-        left;
+    font-size:19px;
 
-    white-space:
-        pre-wrap;
-
-    overflow-wrap:
-        anywhere;
+    cursor:pointer;
 
 }
 
 
-/* ==========================================================
-   MEDIA
-   ========================================================== */
-
-.post-media {
-
-    position:
-        relative;
-
-    margin:
-        12px auto;
-
-    overflow:
-        hidden;
-
-    border-radius:
-        19px;
+.post-menu:hover{
 
     background:
-        rgba(0,0,0,.25);
+        rgba(255,255,255,.06);
 
-}
-
-.post-photo,
-.post-video {
-
-    width:
-        100% !important;
-
-    max-width:
-        100% !important;
-
-    max-height:
-        560px;
-
-    height:
-        auto !important;
-
-    display:
-        block;
-
-    object-fit:
-        cover;
-
-    border-radius:
-        19px !important;
-
-}
-
-.post-photo {
-
-    transition:
-        transform .4s ease;
-
-}
-
-.post-media:hover .post-photo {
-
-    transform:
-        scale(1.015);
+    color:#fff;
 
 }
 
 
-/* ==========================================================
-   ACTION BAR
-   ========================================================== */
+/* =========================================================
+   POST TEXT
+   ========================================================= */
 
-.post-buttons {
+.post-text{
 
-    display:
-        grid !important;
+    margin:
+        8px 1px 13px;
 
-    grid-template-columns:
-        repeat(4, 1fr);
+    color:#eef1ff;
 
-    gap:
-        5px !important;
+    font-size:15px;
 
-    width:
-        100%;
+    line-height:1.55;
 
-    margin-top:
-        10px !important;
+    white-space:pre-wrap;
 
-    padding-top:
-        8px;
-
-    border-top:
-        1px solid
-        rgba(0,0,0,.08);
+    overflow-wrap:anywhere;
 
 }
 
-.post-buttons button {
 
-    min-width:
-        0;
+.post-text .hashtag{
+
+    color:#728cff;
+
+    font-weight:700;
+
+}
+
+
+/* =========================================================
+   MEDIA
+   ========================================================= */
+
+.post-media{
+
+    width:100%;
+
+    margin:
+        8px 0 12px;
+
+    overflow:hidden;
+
+    border-radius:16px;
+
+    background:#080b16;
 
     border:
         1px solid
-        transparent;
+        rgba(255,255,255,.05);
 
-    border-radius:
-        10px;
+}
+
+
+.post-photo,
+.post-video{
+
+    width:100% !important;
+
+    max-width:100% !important;
+
+    max-height:620px;
+
+    display:block;
+
+    object-fit:cover;
+
+    border-radius:16px !important;
+
+}
+
+
+.post-video{
+
+    background:#000;
+
+}
+
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.post-stats{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
 
     padding:
-        7px 4px;
+        0 3px 9px;
+
+    color:#8f98b6;
+
+    font-size:11px;
+
+}
+
+
+.stat-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:7px;
+
+}
+
+
+.like-dot{
+
+    width:19px;
+    height:19px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
 
     background:
-        rgba(0,0,0,.03);
+        linear-gradient(
+            135deg,
+            #ff3d78,
+            #ff1763
+        );
 
-    color:
-        gray;
+    font-size:10px;
 
-    font:
-        inherit;
+}
 
-    font-size:
-        11px;
 
-    font-weight:
-        650;
+.stat-right{
 
-    cursor:
-        pointer;
+    display:flex;
+
+    gap:10px;
+
+}
+
+
+/* =========================================================
+   ACTION BAR
+   ========================================================= */
+
+.post-buttons{
+
+    display:grid !important;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:4px !important;
+
+    width:100%;
+
+    padding:
+        8px 0 0;
+
+    border-top:
+        1px solid
+        rgba(255,255,255,.07);
+
+}
+
+
+.post-buttons button{
+
+    min-width:0;
+
+    border:0;
+
+    border-radius:11px;
+
+    padding:
+        9px 3px;
+
+    background:transparent;
+
+    color:#aab3d0;
+
+    font-size:12px;
+
+    font-weight:750;
+
+    cursor:pointer;
 
     transition:
-        transform .18s ease,
         background .18s ease,
         color .18s ease,
-        border-color .18s ease;
+        transform .18s ease;
 
 }
 
-.post-buttons button:hover {
 
-    transform:
-        translateY(-2px);
+.post-buttons button:hover{
 
     background:
-        rgba(255,213,79,.10);
+        rgba(255,255,255,.055);
 
-    color:
-        var(--vs-gold);
+    color:#fff;
 
-    border-color:
-        rgba(255,213,79,.16);
+    transform:
+        translateY(-1px);
 
 }
 
-.post-buttons button:active {
+
+.post-buttons button:active{
 
     transform:
         scale(.94);
@@ -593,395 +614,306 @@ style.textContent = `
 }
 
 
-/* ==========================================================
-   LIKE EFFECT
-   ========================================================== */
+.post-buttons button:nth-child(1):hover{
 
-.post-buttons button:first-child:hover {
+    color:#ff4b7c;
 
-    color:
-        #ff5577;
+}
+
+
+.post-buttons button:nth-child(2):hover{
+
+    color:#00d9ff;
+
+}
+
+
+.post-buttons button:nth-child(3):hover{
+
+    color:#9b6aff;
+
+}
+
+
+.post-buttons button:nth-child(4):hover{
+
+    color:#21e6c1;
+
+}
+
+
+/* =========================================================
+   HEART ANIMATION
+   ========================================================= */
+
+@keyframes vsHeart{
+
+    0%{
+        transform:scale(1);
+    }
+
+    35%{
+        transform:scale(1.28);
+    }
+
+    70%{
+        transform:scale(.92);
+    }
+
+    100%{
+        transform:scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   EMPTY FEED
+   ========================================================= */
+
+.vs-empty{
+
+    padding:
+        50px 20px;
+
+    text-align:center;
+
+    border:
+        1px solid
+        rgba(255,255,255,.08);
+
+    border-radius:22px;
 
     background:
-        rgba(255,85,119,.09);
-
-}
-
-@keyframes vsHeart {
-
-    0% {
-        transform:
-            scale(1);
-    }
-
-    35% {
-        transform:
-            scale(1.25);
-    }
-
-    70% {
-        transform:
-            scale(.92);
-    }
-
-    100% {
-        transform:
-            scale(1);
-    }
+        linear-gradient(
+            145deg,
+            #11172a,
+            #0d1221
+        );
 
 }
 
 
-/* ==========================================================
-   LOADING SCREEN
-   ========================================================== */
+.vs-empty-icon{
 
-#vitalStarLoader {
+    font-size:42px;
 
-    position:
-        fixed;
+    margin-bottom:12px;
 
-    inset:
-        0;
+}
 
-    z-index:
-        999999;
 
-    display:
-        flex;
+.vs-empty-title{
 
-    align-items:
-        center;
+    color:#fff;
 
-    justify-content:
-        center;
+    font-size:18px;
+
+    font-weight:850;
+
+    margin-bottom:6px;
+
+}
+
+
+.vs-empty-text{
+
+    color:#8791af;
+
+    font-size:13px;
+
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.vs-error{
+
+    padding:20px;
+
+    text-align:center;
+
+    border-radius:18px;
+
+    color:#ff9292;
+
+    background:
+        rgba(255,50,80,.08);
+
+    border:
+        1px solid
+        rgba(255,50,80,.16);
+
+}
+
+
+/* =========================================================
+   LOADER
+   ========================================================= */
+
+#vitalStarLoader{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:999999;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
 
     background:
         radial-gradient(
             circle at center,
-            #29105f 0%,
-            #0b061c 43%,
-            #03030a 100%
+            #26105d 0%,
+            #0b071b 42%,
+            #03040a 100%
         );
 
     transition:
-        opacity .4s ease,
-        visibility .4s ease;
+        opacity .45s ease,
+        visibility .45s ease;
 
 }
 
-#vitalStarLoader.hide {
 
-    opacity:
-        0;
+#vitalStarLoader.hide{
 
-    visibility:
-        hidden;
+    opacity:0;
 
-    pointer-events:
-        none;
+    visibility:hidden;
+
+    pointer-events:none;
 
 }
 
-.vs-loader-content {
 
-    display:
-        flex;
+.vs-loader-content{
 
-    flex-direction:
-        column;
+    display:flex;
 
-    align-items:
-        center;
+    flex-direction:column;
+
+    align-items:center;
 
 }
 
-.vs-spinner {
 
-    width:
-        82px;
+.vs-spinner{
 
-    height:
-        82px;
+    width:82px;
+    height:82px;
 
-    border-radius:
-        50%;
+    border-radius:50%;
 
     border:
         4px solid
         rgba(255,255,255,.08);
 
-    border-top-color:
-        var(--vs-gold);
+    border-top-color:#00d9ff;
 
-    border-right-color:
-        var(--vs-purple);
+    border-right-color:#8b42ff;
 
-    border-bottom-color:
-        var(--vs-blue);
+    border-bottom-color:#ff2ca8;
 
-    display:
-        flex;
+    display:flex;
 
-    align-items:
-        center;
+    align-items:center;
 
-    justify-content:
-        center;
+    justify-content:center;
 
     animation:
-        vsRotate .85s linear infinite;
+        vsRotate .8s linear infinite;
 
     box-shadow:
-        0 0 30px
-        rgba(139,92,246,.25);
+        0 0 28px
+        rgba(110,57,255,.28);
 
 }
 
-.vs-spinner span {
 
-    font-size:
-        23px;
+.vs-spinner span{
 
-    font-weight:
-        900;
+    color:#fff;
 
-    color:
-        var(--vs-gold);
+    font-size:22px;
 
-    letter-spacing:
-        2px;
+    font-weight:900;
+
+    letter-spacing:2px;
 
     animation:
-        vsCounterRotate .85s linear infinite;
+        vsCounterRotate .8s linear infinite;
 
 }
 
-.vs-loading-text {
 
-    margin-top:
-        17px;
+.vs-loading-text{
 
-    color:
-        rgba(255,255,255,.8);
+    margin-top:17px;
 
-    font-size:
-        13px;
+    color:#bfc7e3;
 
-    font-weight:
-        600;
+    font-size:13px;
+
+    font-weight:700;
 
 }
 
-@keyframes vsRotate {
 
-    to {
+@keyframes vsRotate{
 
-        transform:
-            rotate(360deg);
-
-    }
-
-}
-
-@keyframes vsCounterRotate {
-
-    to {
-
-        transform:
-            rotate(-360deg);
-
+    to{
+        transform:rotate(360deg);
     }
 
 }
 
 
-/* ==========================================================
-   EMPTY FEED
-   ========================================================== */
+@keyframes vsCounterRotate{
 
-.vs-empty {
-
-    padding:
-        45px 20px;
-
-    text-align:
-        center;
-
-    border:
-        1px solid
-        rgba(255,255,255,.08);
-
-    border-radius:
-        22px;
-
-    background:
-        var(--vs-card);
-
-}
-
-.vs-empty-icon {
-
-    font-size:
-        38px;
-
-    margin-bottom:
-        10px;
-
-}
-
-.vs-empty-title {
-
-    margin:
-        0 0 5px;
-
-    font-size:
-        17px;
-
-    font-weight:
-        750;
-
-    color:
-        var(--vs-text);
-
-}
-
-.vs-empty-text {
-
-    margin:
-        0;
-
-    color:
-        var(--vs-muted);
-
-    font-size:
-        13px;
+    to{
+        transform:rotate(-360deg);
+    }
 
 }
 
 
-/* ==========================================================
-   ERROR
-   ========================================================== */
-
-.vs-error {
-
-    margin:
-        20px 0;
-
-    padding:
-        18px;
-
-    text-align:
-        center;
-
-    border-radius:
-        18px;
-
-    background:
-        rgba(239,68,68,.08);
-
-    border:
-        1px solid
-        rgba(239,68,68,.18);
-
-    color:
-        #ff8d8d;
-
-}
-
-
-/* ==========================================================
-   NOTIFICATION BADGE
-   ========================================================== */
-
-#notificationBadge {
-
-    min-width:
-        18px;
-
-    height:
-        18px;
-
-    padding:
-        0 5px;
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    border-radius:
-        999px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #ff416c,
-            #ff4b2b
-        );
-
-    color:
-        white;
-
-    font-size:
-        10px;
-
-    font-weight:
-        800;
-
-    box-shadow:
-        0 4px 12px
-        rgba(255,65,108,.35);
-
-}
-
-
-/* ==========================================================
+/* =========================================================
    MOBILE
-   ========================================================== */
+   ========================================================= */
 
-@media (max-width: 600px) {
+@media(max-width:600px){
 
-    #feed {
-
-        padding:
-            8px 8px 90px;
-
-    }
-
-    .post-card {
+    #feed{
 
         padding:
-            11px;
-
-        border-radius:
-            16px;
+            0 0 95px;
 
     }
 
-    .post-buttons {
+    .post-card{
 
-        gap:
-            5px !important;
+        padding:12px;
 
-    }
-
-    .post-buttons button {
-
-        font-size:
-            11px;
-
-        padding:
-            10px 2px;
+        border-radius:18px;
 
     }
 
-    .post-text {
+    .post-text{
 
-        font-size:
-            14px;
+        font-size:14px;
+
+    }
+
+    .post-buttons button{
+
+        font-size:11px;
 
     }
 
@@ -993,7 +925,7 @@ document.head.appendChild(style);
 
 
 // ============================================================
-// LOADING SCREEN
+// LOADER
 // ============================================================
 
 const loader =
@@ -1004,19 +936,17 @@ loader.id =
 
 loader.innerHTML = `
 
-    <div class="vs-loader-content">
+<div class="vs-loader-content">
 
-        <div class="vs-spinner">
-
-            <span>VS</span>
-
-        </div>
-
-        <div class="vs-loading-text">
-            Loading VitalStar...
-        </div>
-
+    <div class="vs-spinner">
+        <span>VS</span>
     </div>
+
+    <div class="vs-loading-text">
+        Loading VitalStar...
+    </div>
+
+</div>
 
 `;
 
@@ -1026,9 +956,10 @@ document.body.appendChild(loader);
 let loaderHidden = false;
 
 
-function hideVitalStarLoader() {
+function hideVitalStarLoader(){
 
-    if (loaderHidden) return;
+    if(loaderHidden)
+        return;
 
     loaderHidden = true;
 
@@ -1036,26 +967,24 @@ function hideVitalStarLoader() {
 
     setTimeout(() => {
 
-        loader.remove();
+        if(loader)
+            loader.remove();
 
-    }, 450);
+    }, 500);
 
 }
 
 
 // ============================================================
-// FORMAT DATE
+// DATE
 // ============================================================
 
-function formatPostDate(timestamp) {
+function formatPostDate(timestamp){
 
-    if (!timestamp) {
-
+    if(!timestamp)
         return "Just now";
 
-    }
-
-    try {
+    try{
 
         const date =
             timestamp.toDate();
@@ -1068,64 +997,65 @@ function formatPostDate(timestamp) {
                 (now - date) / 1000
             );
 
-        if (seconds < 60) {
 
+        if(seconds < 60)
             return "Just now";
 
-        }
 
         const minutes =
-            Math.floor(
-                seconds / 60
-            );
+            Math.floor(seconds / 60);
 
-        if (minutes < 60) {
 
+        if(minutes < 60)
             return `${minutes}m ago`;
 
-        }
 
         const hours =
-            Math.floor(
-                minutes / 60
-            );
+            Math.floor(minutes / 60);
 
-        if (hours < 24) {
 
+        if(hours < 24)
             return `${hours}h ago`;
 
-        }
 
         const days =
-            Math.floor(
-                hours / 24
-            );
+            Math.floor(hours / 24);
 
-        if (days < 7) {
 
+        if(days < 7)
             return `${days}d ago`;
 
-        }
 
         return date.toLocaleDateString(
             undefined,
             {
-                day:
-                    "numeric",
-
-                month:
-                    "short",
-
-                year:
-                    "numeric"
+                day:"numeric",
+                month:"short"
             }
         );
 
-    } catch {
+    }catch{
 
         return "Just now";
 
     }
+
+}
+
+
+// ============================================================
+// TEXT WITH HASHTAGS
+// ============================================================
+
+function formatPostText(text){
+
+    const escaped =
+        escapeHTML(text);
+
+    return escaped.replace(
+        /(^|\s)(#[a-zA-Z0-9_]+)/g,
+        '$1<span class="hashtag">$2</span>'
+    );
 
 }
 
@@ -1137,12 +1067,20 @@ function formatPostDate(timestamp) {
 function createAvatar(
     profilePicture,
     fullName
-) {
+){
 
     const safeName =
         escapeHTML(fullName);
 
-    if (profilePicture) {
+    const firstLetter =
+        escapeHTML(
+            (fullName || "V")
+                .charAt(0)
+                .toUpperCase()
+        );
+
+
+    if(profilePicture){
 
         return `
 
@@ -1160,19 +1098,18 @@ function createAvatar(
                 class="avatar-fallback"
                 style="display:none;"
             >
-                ${safeName.charAt(0).toUpperCase() || "V"}
+                ${firstLetter}
             </div>
 
         `;
 
     }
 
+
     return `
 
         <div class="avatar-fallback">
-
-            ${safeName.charAt(0).toUpperCase() || "V"}
-
+            ${firstLetter}
         </div>
 
     `;
@@ -1181,12 +1118,100 @@ function createAvatar(
 
 
 // ============================================================
-// LOAD POSTS
+// POST VISIBILITY
+// ============================================================
+
+function getPrivacy(post){
+
+    const value =
+        String(
+            post.privacy ||
+            post.visibility ||
+            "Public"
+        ).toLowerCase();
+
+
+    if(value === "friends")
+        return "👥 Friends";
+
+    if(value === "private")
+        return "🔒 Only me";
+
+    return "🌐 Public";
+
+}
+
+
+// ============================================================
+// MEDIA
+// ============================================================
+
+function createMedia(post){
+
+    let html = "";
+
+
+    if(post.image){
+
+        html += `
+
+            <div class="post-media">
+
+                <img
+                    class="post-photo"
+                    src="${escapeHTML(post.image)}"
+                    alt="Post image"
+                    loading="lazy"
+                >
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(post.video){
+
+        html += `
+
+            <div class="post-media">
+
+                <video
+                    class="post-video"
+                    controls
+                    preload="metadata"
+                    playsinline
+                >
+
+                    <source
+                        src="${escapeHTML(post.video)}"
+                        type="video/mp4"
+                    >
+
+                    Your browser does not support video.
+
+                </video>
+
+            </div>
+
+        `;
+
+    }
+
+
+    return html;
+
+}
+
+
+// ============================================================
+// FEED QUERY
 // ============================================================
 
 const postsQuery =
     query(
-        collection(db, "posts"),
+        collection(db,"posts"),
 
         orderBy(
             "createdAt",
@@ -1197,13 +1222,17 @@ const postsQuery =
     );
 
 
+// ============================================================
+// LOAD FEED
+// ============================================================
+
 onSnapshot(
 
     postsQuery,
 
-    async (snapshot) => {
+    async snapshot => {
 
-        if (!feed) {
+        if(!feed){
 
             hideVitalStarLoader();
 
@@ -1211,7 +1240,8 @@ onSnapshot(
 
         }
 
-        if (snapshot.empty) {
+
+        if(snapshot.empty){
 
             feed.innerHTML = `
 
@@ -1221,13 +1251,13 @@ onSnapshot(
                         ⭐
                     </div>
 
-                    <p class="vs-empty-title">
-                        No posts yet
-                    </p>
+                    <div class="vs-empty-title">
+                        Your feed is waiting
+                    </div>
 
-                    <p class="vs-empty-text">
-                        Be the first person to share something.
-                    </p>
+                    <div class="vs-empty-text">
+                        Be the first to share something with VitalStar.
+                    </div>
 
                 </div>
 
@@ -1240,7 +1270,7 @@ onSnapshot(
         }
 
 
-        try {
+        try{
 
             const profileResults =
                 await Promise.all(
@@ -1253,14 +1283,21 @@ onSnapshot(
 
                             let fullName =
                                 post.fullName ||
+                                post.username ||
                                 "VitalStar User";
 
-                            let profilePicture =
+                            let username =
+                                post.username ||
                                 "";
 
-                            try {
+                            let profilePicture =
+                                post.profilePicture ||
+                                "";
 
-                                if (post.uid) {
+
+                            try{
+
+                                if(post.uid){
 
                                     const userSnap =
                                         await getDoc(
@@ -1271,27 +1308,35 @@ onSnapshot(
                                             )
                                         );
 
-                                    if (
+
+                                    if(
                                         userSnap.exists()
-                                    ) {
+                                    ){
 
                                         const userData =
                                             userSnap.data();
+
 
                                         fullName =
                                             userData.fullName ||
                                             userData.username ||
                                             fullName;
 
+
+                                        username =
+                                            userData.username ||
+                                            username;
+
+
                                         profilePicture =
                                             userData.profilePicture ||
-                                            "";
+                                            profilePicture;
 
                                     }
 
                                 }
 
-                            } catch (error) {
+                            }catch(error){
 
                                 console.error(
                                     "Profile loading error:",
@@ -1299,6 +1344,7 @@ onSnapshot(
                                 );
 
                             }
+
 
                             return {
 
@@ -1308,6 +1354,8 @@ onSnapshot(
                                     postDoc.id,
 
                                 fullName,
+
+                                username,
 
                                 profilePicture
 
@@ -1322,21 +1370,23 @@ onSnapshot(
             let html = "";
 
 
-            for (
+            for(
                 const item
                 of profileResults
-            ) {
+            ){
 
                 const {
                     post,
                     postId,
                     fullName,
+                    username,
                     profilePicture
                 } = item;
 
 
                 const safeName =
                     escapeHTML(fullName);
+
 
                 const safeUid =
                     escapeHTML(
@@ -1346,7 +1396,7 @@ onSnapshot(
 
                 const text =
                     post.text
-                        ? escapeHTML(post.text)
+                        ? formatPostText(post.text)
                         : "";
 
 
@@ -1356,6 +1406,10 @@ onSnapshot(
                     );
 
 
+                const privacy =
+                    getPrivacy(post);
+
+
                 const avatar =
                     createAvatar(
                         profilePicture,
@@ -1363,182 +1417,186 @@ onSnapshot(
                     );
 
 
-                const imageHTML =
-                    post.image
-                        ? `
-
-                            <div class="post-media">
-
-                                <img
-                                    class="post-photo"
-                                    src="${escapeHTML(post.image)}"
-                                    alt="Post image"
-                                    loading="lazy"
-                                >
-
-                            </div>
-
-                        `
-                        : "";
+                const media =
+                    createMedia(post);
 
 
-                const videoHTML =
-                    post.video
-                        ? `
+                const likes =
+                    Number(post.likes) || 0;
 
-                            <div class="post-media">
 
-                                <video
-                                    class="post-video"
-                                    controls
-                                    preload="metadata"
-                                    playsinline
-                                >
+                const comments =
+                    Number(post.comments) || 0;
 
-                                    <source
-                                        src="${escapeHTML(post.video)}"
-                                        type="video/mp4"
-                                    >
 
-                                    Your browser does not
-                                    support video.
+                const reposts =
+                    Number(post.reposts) || 0;
 
-                                </video>
 
-                            </div>
-
-                        `
-                        : "";
+                const shares =
+                    Number(post.shares) || 0;
 
 
                 html += `
 
-                    <article
-                        class="post-card"
-                        data-post-id="${escapeHTML(postId)}"
-                    >
+<article
+    class="post-card"
+    data-post-id="${escapeHTML(postId)}"
+>
 
-                        <div class="user-info">
+    <!-- USER -->
 
-                            <div class="avatar">
+    <div class="user-info">
 
-                                ${avatar}
+        <div class="avatar">
 
-                            </div>
+            ${avatar}
 
-
-                            <div class="user-details">
-
-                                <h3>
-
-                                    <a
-                                        href="profile.html?uid=${encodeURIComponent(safeUid)}"
-                                    >
-
-                                        ${safeName}
-
-                                    </a>
-
-                                </h3>
+        </div>
 
 
-                                <small class="post-time">
+        <div class="user-details">
 
-                                    ${escapeHTML(date)}
+            <h3>
 
-                                </small>
+                <a
+                    href="profile.html?uid=${encodeURIComponent(safeUid)}"
+                >
+                    ${safeName}
+                </a>
 
-                            </div>
-
-                        </div>
-
-
-                        ${
-                            text
-                                ? `
-
-                                    <div class="post-text">
-
-                                        ${text}
-
-                                    </div>
-
-                                `
-                                : ""
-                        }
+            </h3>
 
 
-                        ${imageHTML}
+            <div class="post-meta">
 
-                        ${videoHTML}
+                <span>
+                    ${escapeHTML(date)}
+                </span>
 
+                <span>•</span>
 
-                        <div class="post-buttons">
+                <span class="post-privacy">
+                    ${escapeHTML(privacy)}
+                </span>
 
-                            <button
-                                type="button"
-                                onclick="likePost('${escapeHTML(postId)}')"
-                                aria-label="Like post"
-                            >
+            </div>
 
-                                ❤️
-
-                                <span>
-                                    ${Number(post.likes) || 0}
-                                </span>
-
-                            </button>
+        </div>
 
 
-                            <button
-                                type="button"
-                                onclick="openComments('${escapeHTML(postId)}')"
-                                aria-label="Comments"
-                            >
+        <button
+            class="post-menu"
+            type="button"
+            aria-label="Post options"
+            onclick="postOptions('${escapeHTML(postId)}')"
+        >
+            •••
+        </button>
 
-                                💬
-
-                                <span>
-                                    ${Number(post.comments) || 0}
-                                </span>
-
-                            </button>
+    </div>
 
 
-                            <button
-                                type="button"
-                                onclick="repostPost('${escapeHTML(postId)}')"
-                                aria-label="Repost"
-                            >
+    <!-- TEXT -->
 
-                                🔁
-
-                                <span>
-                                    ${Number(post.reposts) || 0}
-                                </span>
-
-                            </button>
+    ${
+        text
+            ? `
+                <div class="post-text">
+                    ${text}
+                </div>
+            `
+            : ""
+    }
 
 
-                            <button
-                                type="button"
-                                onclick="sharePost('${escapeHTML(postId)}')"
-                                aria-label="Share post"
-                            >
+    <!-- MEDIA -->
 
-                                🔗
+    ${media}
 
-                                <span>
-                                    ${Number(post.shares) || 0}
-                                </span>
 
-                            </button>
+    <!-- STATS -->
 
-                        </div>
+    <div class="post-stats">
 
-                    </article>
+        <div class="stat-left">
 
-                `;
+            ${
+                likes > 0
+                    ? `
+                        <span class="like-dot">
+                            ♥
+                        </span>
+
+                        <span>
+                            ${likes}
+                        </span>
+                    `
+                    : ""
+            }
+
+        </div>
+
+
+        <div class="stat-right">
+
+            ${
+                comments > 0
+                    ? `<span>${comments} comments</span>`
+                    : ""
+            }
+
+            ${
+                reposts > 0
+                    ? `<span>${reposts} reposts</span>`
+                    : ""
+            }
+
+        </div>
+
+    </div>
+
+
+    <!-- ACTIONS -->
+
+    <div class="post-buttons">
+
+        <button
+            type="button"
+            onclick="likePost('${escapeHTML(postId)}')"
+        >
+            ❤️ ${likes}
+        </button>
+
+
+        <button
+            type="button"
+            onclick="openComments('${escapeHTML(postId)}')"
+        >
+            💬 ${comments}
+        </button>
+
+
+        <button
+            type="button"
+            onclick="repostPost('${escapeHTML(postId)}')"
+        >
+            🔄 ${reposts}
+        </button>
+
+
+        <button
+            type="button"
+            onclick="sharePost('${escapeHTML(postId)}')"
+        >
+            ↗️ Share
+        </button>
+
+    </div>
+
+</article>
+
+`;
 
             }
 
@@ -1546,15 +1604,43 @@ onSnapshot(
             feed.innerHTML =
                 html;
 
+
             hideVitalStarLoader();
 
 
-        } catch (error) {
+        }catch(error){
 
             console.error(
                 "Feed rendering error:",
                 error
             );
+
+
+            feed.innerHTML = `
+
+                <div class="vs-error">
+                    Unable to load your feed right now.
+                </div>
+
+            `;
+
+
+            hideVitalStarLoader();
+
+        }
+
+    },
+
+
+    error => {
+
+        console.error(
+            "Post loading error:",
+            error
+        );
+
+
+        if(feed){
 
             feed.innerHTML = `
 
@@ -1564,30 +1650,8 @@ onSnapshot(
 
             `;
 
-            hideVitalStarLoader();
-
         }
 
-    },
-
-    error => {
-
-        console.error(
-            "Post loading error:",
-            error
-        );
-
-        if (feed) {
-
-            feed.innerHTML = `
-
-                <div class="vs-error">
-                    Unable to load posts.
-                </div>
-
-            `;
-
-        }
 
         hideVitalStarLoader();
 
@@ -1597,17 +1661,125 @@ onSnapshot(
 
 
 // ============================================================
+// POST OPTIONS
+// ============================================================
+
+window.postOptions =
+    function(postId){
+
+        const choice =
+            confirm(
+                "Post options\n\nOK = Delete (only if it is your post)\nCancel = Close"
+            );
+
+
+        if(!choice)
+            return;
+
+
+        deletePost(postId);
+
+    };
+
+
+// ============================================================
+// DELETE POST
+// ============================================================
+
+async function deletePost(postId){
+
+    const user =
+        auth.currentUser;
+
+
+    if(!user){
+
+        alert("Please login first.");
+
+        return;
+
+    }
+
+
+    try{
+
+        const postRef =
+            doc(
+                db,
+                "posts",
+                postId
+            );
+
+
+        const postSnap =
+            await getDoc(postRef);
+
+
+        if(!postSnap.exists()){
+
+            alert("Post not found.");
+
+            return;
+
+        }
+
+
+        const post =
+            postSnap.data();
+
+
+        if(post.uid !== user.uid){
+
+            alert(
+                "You can only delete your own posts."
+            );
+
+            return;
+
+        }
+
+
+        const confirmed =
+            confirm(
+                "Delete this post?"
+            );
+
+
+        if(!confirmed)
+            return;
+
+
+        await deleteDoc(postRef);
+
+
+    }catch(error){
+
+        console.error(
+            "Delete post error:",
+            error
+        );
+
+        alert(
+            "Unable to delete post."
+        );
+
+    }
+
+}
+
+
+// ============================================================
 // LIKE
 // ============================================================
 
 window.likePost =
-    async function(postId) {
+    async function(postId){
 
         const user =
             auth.currentUser;
 
 
-        if (!user) {
+        if(!user){
 
             alert(
                 "Please login first."
@@ -1624,22 +1796,22 @@ window.likePost =
             );
 
 
-        if (button) {
+        if(button){
 
             button.style.animation =
                 "vsHeart .35s ease";
 
-            setTimeout(() => {
-
-                button.style.animation =
-                    "";
-
-            }, 400);
+            setTimeout(
+                () => {
+                    button.style.animation = "";
+                },
+                400
+            );
 
         }
 
 
-        try {
+        try{
 
             const likeId =
                 `${postId}_${user.uid}`;
@@ -1667,11 +1839,12 @@ window.likePost =
                 );
 
 
-            if (likeSnap.exists()) {
+            if(likeSnap.exists()){
 
                 await deleteDoc(
                     likeRef
                 );
+
 
                 await updateDoc(
                     postRef,
@@ -1680,6 +1853,7 @@ window.likePost =
                             increment(-1)
                     }
                 );
+
 
                 return;
 
@@ -1719,7 +1893,7 @@ window.likePost =
                 );
 
 
-            if (!postSnap.exists())
+            if(!postSnap.exists())
                 return;
 
 
@@ -1727,10 +1901,10 @@ window.likePost =
                 postSnap.data();
 
 
-            if (
+            if(
                 postData.uid ===
                 user.uid
-            ) {
+            ){
 
                 return;
 
@@ -1747,7 +1921,7 @@ window.likePost =
                 );
 
 
-            if (!userSnap.exists())
+            if(!userSnap.exists())
                 return;
 
 
@@ -1785,8 +1959,7 @@ window.likePost =
 
                     postId,
 
-                    read:
-                        false,
+                    read:false,
 
                     createdAt:
                         serverTimestamp()
@@ -1795,7 +1968,7 @@ window.likePost =
             );
 
 
-        } catch (error) {
+        }catch(error){
 
             console.error(
                 "Like error:",
@@ -1812,7 +1985,7 @@ window.likePost =
 // ============================================================
 
 window.openComments =
-    function(postId) {
+    function(postId){
 
         window.location.href =
             `comments.html?postId=${encodeURIComponent(postId)}`;
@@ -1825,13 +1998,13 @@ window.openComments =
 // ============================================================
 
 window.repostPost =
-    async function(postId) {
+    async function(postId){
 
         const user =
             auth.currentUser;
 
 
-        if (!user) {
+        if(!user){
 
             alert(
                 "Please login first."
@@ -1842,7 +2015,7 @@ window.repostPost =
         }
 
 
-        try {
+        try{
 
             const postRef =
                 doc(
@@ -1858,7 +2031,7 @@ window.repostPost =
                 );
 
 
-            if (!postSnap.exists()) {
+            if(!postSnap.exists()){
 
                 alert(
                     "Post not found."
@@ -1880,12 +2053,7 @@ window.repostPost =
             );
 
 
-            alert(
-                "Post reposted 🔁"
-            );
-
-
-        } catch (error) {
+        }catch(error){
 
             console.error(
                 "Repost error:",
@@ -1902,9 +2070,9 @@ window.repostPost =
 // ============================================================
 
 window.sharePost =
-    async function(postId) {
+    async function(postId){
 
-        try {
+        try{
 
             const postRef =
                 doc(
@@ -1920,7 +2088,7 @@ window.sharePost =
                 );
 
 
-            if (!postSnap.exists()) {
+            if(!postSnap.exists()){
 
                 alert(
                     "Post not found."
@@ -1939,9 +2107,9 @@ window.sharePost =
                 `${window.location.origin}/comments.html?postId=${encodeURIComponent(postId)}`;
 
 
-            if (
+            if(
                 navigator.share
-            ) {
+            ){
 
                 await navigator.share({
 
@@ -1957,9 +2125,9 @@ window.sharePost =
 
                 });
 
-            } else if (
+            }else if(
                 navigator.clipboard
-            ) {
+            ){
 
                 await navigator.clipboard.writeText(
                     shareUrl
@@ -1983,12 +2151,12 @@ window.sharePost =
             );
 
 
-        } catch (error) {
+        }catch(error){
 
-            if (
+            if(
                 error.name !==
                 "AbortError"
-            ) {
+            ){
 
                 console.error(
                     "Share error:",
@@ -2003,13 +2171,14 @@ window.sharePost =
 
 
 // ============================================================
-// WELCOME + ONLINE USERS
+// AUTH / WELCOME / ONLINE COUNT
 // ============================================================
 
-auth.onAuthStateChanged(
+onAuthStateChanged(
+    auth,
     async user => {
 
-        if (!user)
+        if(!user)
             return;
 
 
@@ -2019,50 +2188,56 @@ auth.onAuthStateChanged(
             );
 
 
-        onValue(
-            ref(
-                rtdb,
-                "status"
-            ),
-            snapshot => {
+        /* ONLINE USERS */
 
-                let count = 0;
+        if(rtdb){
 
+            onValue(
+                ref(
+                    rtdb,
+                    "status"
+                ),
+                snapshot => {
 
-                snapshot.forEach(
-                    child => {
-
-                        const status =
-                            child.val();
+                    let count = 0;
 
 
-                        if (
-                            status &&
-                            status.online === true
-                        ) {
+                    snapshot.forEach(
+                        child => {
 
-                            count++;
+                            const status =
+                                child.val();
+
+
+                            if(
+                                status &&
+                                status.online === true
+                            ){
+
+                                count++;
+
+                            }
 
                         }
+                    );
+
+
+                    if(onlineUsersCount){
+
+                        onlineUsersCount.textContent =
+                            `🟢 ${count} online`;
 
                     }
-                );
-
-
-                if (
-                    onlineUsersCount
-                ) {
-
-                    onlineUsersCount.textContent =
-                        `🟢 ${count} online`;
 
                 }
+            );
 
-            }
-        );
+        }
 
 
-        try {
+        /* USER PROFILE */
+
+        try{
 
             const userSnap =
                 await getDoc(
@@ -2074,7 +2249,7 @@ auth.onAuthStateChanged(
                 );
 
 
-            if (!userSnap.exists())
+            if(!userSnap.exists())
                 return;
 
 
@@ -2088,6 +2263,35 @@ auth.onAuthStateChanged(
                 "User";
 
 
+            const composerAvatar =
+                document.getElementById(
+                    "composerAvatar"
+                );
+
+
+            if(
+                composerAvatar &&
+                userData.profilePicture
+            ){
+
+                composerAvatar.innerHTML = `
+
+                    <img
+                        src="${escapeHTML(userData.profilePicture)}"
+                        alt="Your profile"
+                        style="
+                            width:100%;
+                            height:100%;
+                            object-fit:cover;
+                            border-radius:50%;
+                        "
+                    >
+
+                `;
+
+            }
+
+
             const hour =
                 new Date().getHours();
 
@@ -2096,12 +2300,12 @@ auth.onAuthStateChanged(
                 "Good Evening";
 
 
-            if (hour < 12) {
+            if(hour < 12){
 
                 greeting =
                     "Good Morning";
 
-            } else if (hour < 17) {
+            }else if(hour < 17){
 
                 greeting =
                     "Good Afternoon";
@@ -2115,31 +2319,15 @@ auth.onAuthStateChanged(
                 );
 
 
-            if (welcome) {
+            if(welcome){
 
-                welcome.innerHTML = `
-
-                    ${escapeHTML(greeting)},
-
-                    <span
-                        style="
-                            color:#FFD54F;
-                            font-weight:800;
-                        "
-                    >
-
-                        ${escapeHTML(fullName)}
-
-                    </span>
-
-                    👋
-
-                `;
+                welcome.innerHTML =
+                    `${escapeHTML(greeting)}, ${escapeHTML(fullName)} 👋`;
 
             }
 
 
-        } catch (error) {
+        }catch(error){
 
             console.error(
                 "Welcome error:",
@@ -2156,7 +2344,7 @@ auth.onAuthStateChanged(
 // NOTIFICATION BADGE
 // ============================================================
 
-if (notificationBadge) {
+if(notificationBadge){
 
     notificationBadge.textContent =
         "0";
@@ -2171,9 +2359,9 @@ onAuthStateChanged(
     auth,
     user => {
 
-        if (!user) {
+        if(!user){
 
-            if (notificationBadge) {
+            if(notificationBadge){
 
                 notificationBadge.textContent =
                     "0";
@@ -2217,9 +2405,9 @@ onAuthStateChanged(
                             notificationDoc.data();
 
 
-                        if (
+                        if(
                             data.read === false
-                        ) {
+                        ){
 
                             unread++;
 
@@ -2229,9 +2417,7 @@ onAuthStateChanged(
                 );
 
 
-                if (
-                    notificationBadge
-                ) {
+                if(notificationBadge){
 
                     notificationBadge.textContent =
                         unread > 99
