@@ -18,8 +18,7 @@ import {
     collection,
     query,
     where,
-    getDocs,
-    orderBy
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -161,7 +160,10 @@ const params =
         window.location.search
     );
 
-const profileUid =
+// The UID can come from ?uid= or ?id=.
+// If neither exists, the logged-in user's UID
+// will be used after authentication.
+let profileUid =
     params.get("uid") ||
     params.get("id");
 
@@ -341,7 +343,6 @@ function showPrivateProfileMessage() {
             "none";
 
 
-    // Keep Add Friend available
     const friendBtn =
         createFriendButton();
 
@@ -556,6 +557,10 @@ async function checkFriendRequestStatus(
 
     try {
 
+        // ----------------------------------------------------
+        // SENT REQUESTS
+        // ----------------------------------------------------
+
         const sentQuery =
             query(
                 collection(
@@ -593,6 +598,10 @@ async function checkFriendRequestStatus(
             }
         }
 
+
+        // ----------------------------------------------------
+        // RECEIVED REQUESTS
+        // ----------------------------------------------------
 
         const receivedQuery =
             query(
@@ -669,6 +678,9 @@ async function createFriendNotification(
     extra = {}
 ) {
 
+    if (!currentUser)
+        return;
+
     try {
 
         const notificationId =
@@ -681,14 +693,16 @@ async function createFriendNotification(
                 notificationId
             ),
             {
-                uid: targetUid,
+                uid:
+                    targetUid,
 
                 fromUid:
                     currentUser.uid,
 
                 type,
 
-                read: false,
+                read:
+                    false,
 
                 createdAt:
                     Date.now(),
@@ -721,6 +735,7 @@ async function updateFriendButton() {
 
     if (
         !currentUser ||
+        !profileUid ||
         currentUser.uid === profileUid
     ) {
 
@@ -1059,7 +1074,6 @@ async function acceptFriendRequest() {
         await updateFriendButton();
 
 
-        // Reload profile after becoming friends
         await loadProfile();
 
     } catch (error) {
@@ -1392,7 +1406,7 @@ async function loadProfile() {
 
 
         // ----------------------------------------------------
-        // IMPORTANT: RESTORE ELEMENTS
+        // RESTORE ELEMENTS
         // ----------------------------------------------------
 
         showProfileElements();
@@ -1419,8 +1433,7 @@ async function loadProfile() {
 
             username.textContent =
                 data.username
-                    ? "@" +
-                      data.username
+                    ? "@" + data.username
                     : "";
         }
 
@@ -1473,6 +1486,12 @@ async function loadProfile() {
                 data.profilePicture ||
                 data.photoURL ||
                 "https://via.placeholder.com/300?text=VS";
+
+            profileImage.onerror = () => {
+
+                profileImage.src =
+                    "https://via.placeholder.com/300?text=VS";
+            };
         }
 
 
@@ -1672,6 +1691,9 @@ async function loadProfile() {
 
                         lastSeen.textContent =
                             "Offline";
+
+                        lastSeen.style.color =
+                            "#8ea4c8";
                     }
                 }
             );
@@ -1730,9 +1752,8 @@ function formatLastSeen(
 
 
     if (
-        typeof timestamp ===
-            "object" &&
-        timestamp.toMillis
+        typeof timestamp === "object" &&
+        typeof timestamp.toMillis === "function"
     ) {
 
         time =
@@ -1801,6 +1822,12 @@ async function loadProfilePosts(
 
     try {
 
+        // ----------------------------------------------------
+        // Query only by UID.
+        // Sorting is done in JavaScript so a Firestore
+        // composite index is not required.
+        // ----------------------------------------------------
+
         const postsQuery =
             query(
                 collection(
@@ -1811,10 +1838,6 @@ async function loadProfilePosts(
                     "uid",
                     "==",
                     uid
-                ),
-                orderBy(
-                    "createdAt",
-                    "desc"
                 )
             );
 
@@ -1824,6 +1847,41 @@ async function loadProfilePosts(
                 postsQuery
             );
 
+
+        // ----------------------------------------------------
+        // SORT POSTS NEWEST FIRST
+        // ----------------------------------------------------
+
+        const postDocs =
+            snapshot.docs.sort(
+                (a, b) => {
+
+                    const aData =
+                        a.data();
+
+                    const bData =
+                        b.data();
+
+
+                    const aTime =
+                        getPostTime(
+                            aData.createdAt
+                        );
+
+                    const bTime =
+                        getPostTime(
+                            bData.createdAt
+                        );
+
+
+                    return bTime - aTime;
+                }
+            );
+
+
+        // ----------------------------------------------------
+        // POST COUNT
+        // ----------------------------------------------------
 
         if (postsCount) {
 
@@ -1836,7 +1894,14 @@ async function loadProfilePosts(
             "";
 
 
-        if (snapshot.empty) {
+        // ----------------------------------------------------
+        // NO POSTS
+        // ----------------------------------------------------
+
+        if (
+            postDocs.length ===
+            0
+        ) {
 
             gallery.innerHTML = `
                 <div style="
@@ -1853,8 +1918,12 @@ async function loadProfilePosts(
         }
 
 
+        // ----------------------------------------------------
+        // SHOW FIRST 10
+        // ----------------------------------------------------
+
         const posts =
-            snapshot.docs.slice(
+            postDocs.slice(
                 0,
                 10
             );
@@ -1905,34 +1974,49 @@ async function loadProfilePosts(
                     "";
 
 
+                // ------------------------------------------------
+                // IMAGE
+                // ------------------------------------------------
+
                 if (post.image) {
 
                     mediaHTML += `
                         <img
-                            src="${post.image}"
+                            src="${escapeAttribute(
+                                post.image
+                            )}"
+                            alt="Post image"
                             style="
                                 width:100%;
                                 max-height:450px;
                                 object-fit:cover;
                                 border-radius:14px;
                                 margin-top:12px;
+                                display:block;
                             "
                         >
                     `;
                 }
 
 
+                // ------------------------------------------------
+                // VIDEO
+                // ------------------------------------------------
+
                 if (post.video) {
 
                     mediaHTML += `
                         <video
-                            src="${post.video}"
+                            src="${escapeAttribute(
+                                post.video
+                            )}"
                             controls
                             style="
                                 width:100%;
                                 max-height:450px;
                                 border-radius:14px;
                                 margin-top:12px;
+                                display:block;
                             "
                         ></video>
                     `;
@@ -1980,6 +2064,52 @@ async function loadProfilePosts(
 
 
 // ============================================================
+// POST TIME
+// ============================================================
+
+function getPostTime(
+    timestamp
+) {
+
+    if (!timestamp)
+        return 0;
+
+
+    if (
+        typeof timestamp === "object" &&
+        typeof timestamp.toMillis === "function"
+    ) {
+
+        return timestamp.toMillis();
+    }
+
+
+    if (
+        typeof timestamp === "number"
+    ) {
+
+        return timestamp;
+    }
+
+
+    if (
+        typeof timestamp === "string"
+    ) {
+
+        const parsed =
+            Date.parse(timestamp);
+
+        return Number.isNaN(parsed)
+            ? 0
+            : parsed;
+    }
+
+
+    return 0;
+}
+
+
+// ============================================================
 // HTML ESCAPE
 // ============================================================
 
@@ -1996,6 +2126,40 @@ function escapeHTML(
         value || "";
 
     return div.innerHTML;
+}
+
+
+// ============================================================
+// ATTRIBUTE ESCAPE
+// ============================================================
+
+function escapeAttribute(
+    value
+) {
+
+    return String(
+        value || ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        );
 }
 
 
@@ -2040,6 +2204,19 @@ onAuthStateChanged(
 
         currentUser =
             user;
+
+
+        // ----------------------------------------------------
+        // IMPORTANT:
+        // If profile.html has no ?uid= or ?id=,
+        // automatically show the logged-in user's profile.
+        // ----------------------------------------------------
+
+        if (!profileUid) {
+
+            profileUid =
+                user.uid;
+        }
 
 
         await loadProfile();
