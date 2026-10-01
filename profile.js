@@ -32,41 +32,69 @@ import {
 // OWNER
 // ============================================================
 
-const VITALSTAR_OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
+const VITALSTAR_OWNER_UID =
+    "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
 
 
 // ============================================================
 // DARK THEME
 // ============================================================
 
-document.documentElement.style.background = "#050914";
+function applyDarkTheme() {
 
-document.body.style.background = `
-    radial-gradient(
-        circle at top,
-        #101d3d 0%,
-        #050914 45%,
-        #02040a 100%
-    )
-`;
+    document.documentElement.style.background =
+        "#050914";
 
-document.body.style.color = "#ffffff";
+    if (document.body) {
+
+        document.body.style.background = `
+            radial-gradient(
+                circle at top,
+                #101d3d 0%,
+                #050914 45%,
+                #02040a 100%
+            )
+        `;
+
+        document.body.style.color =
+            "#ffffff";
+    }
+}
+
+if (document.readyState === "loading") {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        applyDarkTheme,
+        { once: true }
+    );
+
+} else {
+
+    applyDarkTheme();
+}
 
 
 // ============================================================
 // LOADER
 // ============================================================
 
-const loader = document.getElementById("loader");
+const loader =
+    document.getElementById("loader");
 
 function hideLoader() {
 
-    if (!loader) return;
+    if (!loader)
+        return;
 
-    loader.style.opacity = "0";
+    loader.style.opacity =
+        "0";
 
     setTimeout(() => {
-        loader.style.display = "none";
+
+        loader.style.display =
+            "none";
+
     }, 400);
 }
 
@@ -129,14 +157,17 @@ const messageButton =
 // ============================================================
 
 const params =
-    new URLSearchParams(window.location.search);
+    new URLSearchParams(
+        window.location.search
+    );
 
 const profileUid =
-    params.get("uid") || params.get("id");
+    params.get("uid") ||
+    params.get("id");
 
 
 // ============================================================
-// CURRENT STATE
+// STATE
 // ============================================================
 
 let currentUser = null;
@@ -149,12 +180,13 @@ let requestReceived = false;
 
 
 // ============================================================
-// DARK BUTTON STYLE
+// DARK BUTTON
 // ============================================================
 
 function styleButton(button) {
 
-    if (!button) return;
+    if (!button)
+        return;
 
     button.style.background =
         "linear-gradient(135deg,#071a38,#102f66)";
@@ -180,18 +212,22 @@ function styleButton(button) {
 
 
 // ============================================================
-// CREATE FRIEND BUTTON
+// FRIEND BUTTON
 // ============================================================
 
 function createFriendButton() {
 
     let button =
-        document.getElementById("friendBtn");
+        document.getElementById(
+            "friendBtn"
+        );
 
     if (!button) {
 
         button =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
 
         button.id =
             "friendBtn";
@@ -203,18 +239,26 @@ function createFriendButton() {
             "👥 Add Friend";
 
         const actions =
-            document.querySelector(".profile-actions") ||
-            document.querySelector(".actions") ||
+            document.querySelector(
+                ".profile-actions"
+            ) ||
+            document.querySelector(
+                ".actions"
+            ) ||
             followButton?.parentElement ||
             messageButton?.parentElement;
 
         if (actions) {
 
-            actions.appendChild(button);
+            actions.appendChild(
+                button
+            );
 
-        } else {
+        } else if (document.body) {
 
-            document.body.appendChild(button);
+            document.body.appendChild(
+                button
+            );
         }
     }
 
@@ -225,37 +269,79 @@ function createFriendButton() {
 
 
 // ============================================================
-// PRIVATE PROFILE SCREEN
+// SHOW PROFILE ELEMENTS
+// ============================================================
+
+function showProfileElements() {
+
+    if (profileName)
+        profileName.style.display = "";
+
+    if (username)
+        username.style.display = "";
+
+    if (bio)
+        bio.style.display = "";
+
+    if (country)
+        country.style.display = "";
+
+    if (gender)
+        gender.style.display = "";
+
+    if (rank)
+        rank.style.display = "";
+
+    if (lastSeen)
+        lastSeen.style.display = "";
+}
+
+
+// ============================================================
+// PRIVATE PROFILE
 // ============================================================
 
 function showPrivateProfileMessage() {
 
     if (profileName)
-        profileName.style.display = "none";
+        profileName.style.display =
+            "none";
 
     if (username)
-        username.style.display = "none";
+        username.style.display =
+            "none";
 
     if (bio)
-        bio.style.display = "none";
+        bio.style.display =
+            "none";
 
     if (country)
-        country.style.display = "none";
+        country.style.display =
+            "none";
 
     if (gender)
-        gender.style.display = "none";
+        gender.style.display =
+            "none";
 
     if (rank)
-        rank.style.display = "none";
+        rank.style.display =
+            "none";
 
     if (lastSeen)
-        lastSeen.style.display = "none";
+        lastSeen.style.display =
+            "none";
 
 
-    // --------------------------------------------------------
-    // KEEP FRIEND BUTTON AVAILABLE
-    // --------------------------------------------------------
+    if (followButton)
+        followButton.style.display =
+            "none";
 
+    if (messageButton)
+        messageButton.style.display =
+            "none";
+
+
+    // Keep Add Friend available
     const friendBtn =
         createFriendButton();
 
@@ -269,17 +355,6 @@ function showPrivateProfileMessage() {
             "inline-flex";
     }
 
-
-    if (followButton)
-        followButton.style.display = "none";
-
-    if (messageButton)
-        messageButton.style.display = "none";
-
-
-    // --------------------------------------------------------
-    // PRIVATE MESSAGE
-    // --------------------------------------------------------
 
     if (gallery) {
 
@@ -298,9 +373,11 @@ function showPrivateProfileMessage() {
                         rgba(8,20,45,.98),
                         rgba(3,8,20,.98)
                     );
-                border:1px solid rgba(40,130,255,.45);
+                border:1px solid
+                    rgba(40,130,255,.45);
                 box-shadow:
-                    0 0 30px rgba(0,100,255,.18);
+                    0 0 30px
+                    rgba(0,100,255,.18);
                 color:white;
             ">
 
@@ -321,7 +398,8 @@ function showPrivateProfileMessage() {
                     color:#9fb4d8;
                     line-height:1.6;
                 ">
-                    This profile is visible only to friends.
+                    This profile is visible only
+                    to friends.
                 </p>
 
                 <p style="
@@ -339,22 +417,33 @@ function showPrivateProfileMessage() {
 
 
 // ============================================================
-// CHECK ADMIN
+// ADMIN CHECK
 // ============================================================
 
-async function checkViewerIsAdmin(viewerUid) {
+async function checkViewerIsAdmin(
+    viewerUid
+) {
 
     if (!viewerUid)
         return false;
 
-    if (viewerUid === VITALSTAR_OWNER_UID)
+    if (
+        viewerUid ===
+        VITALSTAR_OWNER_UID
+    ) {
+
         return true;
+    }
 
     try {
 
         const userSnap =
             await getDoc(
-                doc(db, "users", viewerUid)
+                doc(
+                    db,
+                    "users",
+                    viewerUid
+                )
             );
 
         if (!userSnap.exists())
@@ -382,7 +471,7 @@ async function checkViewerIsAdmin(viewerUid) {
 
 
 // ============================================================
-// CHECK FRIENDSHIP
+// FRIEND CHECK
 // ============================================================
 
 async function checkIfFriends(
@@ -393,14 +482,22 @@ async function checkIfFriends(
     if (!viewerUid || !targetUid)
         return false;
 
-    if (viewerUid === targetUid)
+    if (
+        viewerUid ===
+        targetUid
+    ) {
+
         return true;
+    }
 
     try {
 
         const q =
             query(
-                collection(db, "friends"),
+                collection(
+                    db,
+                    "friends"
+                ),
                 where(
                     "users",
                     "array-contains",
@@ -420,8 +517,12 @@ async function checkIfFriends(
                 friendDoc.data();
 
             if (
-                Array.isArray(data.users) &&
-                data.users.includes(targetUid)
+                Array.isArray(
+                    data.users
+                ) &&
+                data.users.includes(
+                    targetUid
+                )
             ) {
 
                 return true;
@@ -441,7 +542,7 @@ async function checkIfFriends(
 
 
 // ============================================================
-// CHECK FRIEND REQUEST STATUS
+// FRIEND REQUEST STATUS
 // ============================================================
 
 async function checkFriendRequestStatus(
@@ -455,13 +556,12 @@ async function checkFriendRequestStatus(
 
     try {
 
-        // ----------------------------------------------------
-        // REQUESTS SENT BY CURRENT USER
-        // ----------------------------------------------------
-
         const sentQuery =
             query(
-                collection(db, "friendRequests"),
+                collection(
+                    db,
+                    "friendRequests"
+                ),
                 where(
                     "from",
                     "==",
@@ -470,7 +570,9 @@ async function checkFriendRequestStatus(
             );
 
         const sentSnapshot =
-            await getDocs(sentQuery);
+            await getDocs(
+                sentQuery
+            );
 
         for (
             const requestDoc
@@ -492,13 +594,12 @@ async function checkFriendRequestStatus(
         }
 
 
-        // ----------------------------------------------------
-        // REQUESTS RECEIVED FROM TARGET
-        // ----------------------------------------------------
-
         const receivedQuery =
             query(
-                collection(db, "friendRequests"),
+                collection(
+                    db,
+                    "friendRequests"
+                ),
                 where(
                     "to",
                     "==",
@@ -507,7 +608,9 @@ async function checkFriendRequestStatus(
             );
 
         const receivedSnapshot =
-            await getDocs(receivedQuery);
+            await getDocs(
+                receivedQuery
+            );
 
         for (
             const requestDoc
@@ -542,16 +645,22 @@ async function checkFriendRequestStatus(
 // FRIEND KEY
 // ============================================================
 
-function friendKey(uid1, uid2) {
+function friendKey(
+    uid1,
+    uid2
+) {
 
-    return [uid1, uid2]
+    return [
+        uid1,
+        uid2
+    ]
         .sort()
         .join("_");
 }
 
 
 // ============================================================
-// CREATE FRIEND NOTIFICATION
+// NOTIFICATION
 // ============================================================
 
 async function createFriendNotification(
@@ -574,13 +683,15 @@ async function createFriendNotification(
             {
                 uid: targetUid,
 
-                fromUid: currentUser.uid,
+                fromUid:
+                    currentUser.uid,
 
                 type,
 
                 read: false,
 
-                createdAt: Date.now(),
+                createdAt:
+                    Date.now(),
 
                 ...extra
             }
@@ -608,8 +719,6 @@ async function updateFriendButton() {
     if (!button)
         return;
 
-
-    // Own profile
     if (
         !currentUser ||
         currentUser.uid === profileUid
@@ -620,7 +729,6 @@ async function updateFriendButton() {
 
         return;
     }
-
 
     button.style.display =
         "inline-flex";
@@ -645,10 +753,6 @@ async function updateFriendButton() {
     }
 
 
-    // --------------------------------------------------------
-    // FRIENDS
-    // --------------------------------------------------------
-
     if (isFriend) {
 
         button.innerHTML =
@@ -663,10 +767,6 @@ async function updateFriendButton() {
         return;
     }
 
-
-    // --------------------------------------------------------
-    // REQUEST SENT
-    // --------------------------------------------------------
 
     if (requestSent) {
 
@@ -683,10 +783,6 @@ async function updateFriendButton() {
     }
 
 
-    // --------------------------------------------------------
-    // REQUEST RECEIVED
-    // --------------------------------------------------------
-
     if (requestReceived) {
 
         button.innerHTML =
@@ -701,10 +797,6 @@ async function updateFriendButton() {
         return;
     }
 
-
-    // --------------------------------------------------------
-    // ADD FRIEND
-    // --------------------------------------------------------
 
     button.innerHTML =
         "👥 Add Friend";
@@ -723,11 +815,14 @@ async function updateFriendButton() {
 
 async function sendFriendRequest() {
 
-    if (!currentUser || !profileUid)
-        return;
+    if (
+        !currentUser ||
+        !profileUid ||
+        currentUser.uid === profileUid
+    ) {
 
-    if (currentUser.uid === profileUid)
         return;
+    }
 
     const button =
         createFriendButton();
@@ -740,13 +835,12 @@ async function sendFriendRequest() {
 
     try {
 
-        // ----------------------------------------------------
-        // CHECK EXISTING REQUESTS
-        // ----------------------------------------------------
-
         const existingQuery =
             query(
-                collection(db, "friendRequests"),
+                collection(
+                    db,
+                    "friendRequests"
+                ),
                 where(
                     "from",
                     "==",
@@ -755,7 +849,9 @@ async function sendFriendRequest() {
             );
 
         const existing =
-            await getDocs(existingQuery);
+            await getDocs(
+                existingQuery
+            );
 
         for (
             const requestDoc
@@ -777,10 +873,6 @@ async function sendFriendRequest() {
         }
 
 
-        // ----------------------------------------------------
-        // CREATE REQUEST
-        // ----------------------------------------------------
-
         const requestRef =
             doc(
                 collection(
@@ -789,23 +881,24 @@ async function sendFriendRequest() {
                 )
             );
 
+
         await setDoc(
             requestRef,
             {
-                from: currentUser.uid,
+                from:
+                    currentUser.uid,
 
-                to: profileUid,
+                to:
+                    profileUid,
 
-                status: "pending",
+                status:
+                    "pending",
 
-                createdAt: Date.now()
+                createdAt:
+                    Date.now()
             }
         );
 
-
-        // ----------------------------------------------------
-        // NOTIFICATION
-        // ----------------------------------------------------
 
         await createFriendNotification(
             profileUid,
@@ -845,14 +938,22 @@ async function sendFriendRequest() {
 
 async function acceptFriendRequest() {
 
-    if (!currentUser || !profileUid)
+    if (
+        !currentUser ||
+        !profileUid
+    ) {
+
         return;
+    }
 
     try {
 
         const q =
             query(
-                collection(db, "friendRequests"),
+                collection(
+                    db,
+                    "friendRequests"
+                ),
                 where(
                     "to",
                     "==",
@@ -895,15 +996,12 @@ async function acceptFriendRequest() {
         }
 
 
-        // ----------------------------------------------------
-        // CREATE FRIENDSHIP
-        // ----------------------------------------------------
-
         const friendshipId =
             friendKey(
                 currentUser.uid,
                 profileUid
             );
+
 
         await setDoc(
             doc(
@@ -926,10 +1024,6 @@ async function acceptFriendRequest() {
         );
 
 
-        // ----------------------------------------------------
-        // UPDATE REQUEST
-        // ----------------------------------------------------
-
         await setDoc(
             requestDoc.ref,
             {
@@ -944,10 +1038,6 @@ async function acceptFriendRequest() {
             }
         );
 
-
-        // ----------------------------------------------------
-        // NOTIFICATION
-        // ----------------------------------------------------
 
         await createFriendNotification(
             profileUid,
@@ -965,9 +1055,11 @@ async function acceptFriendRequest() {
         requestReceived =
             false;
 
+
         await updateFriendButton();
 
-        // Reload the profile so private content becomes visible
+
+        // Reload profile after becoming friends
         await loadProfile();
 
     } catch (error) {
@@ -990,8 +1082,13 @@ async function acceptFriendRequest() {
 
 async function removeFriend() {
 
-    if (!currentUser || !profileUid)
+    if (
+        !currentUser ||
+        !profileUid
+    ) {
+
         return;
+    }
 
     const confirmed =
         confirm(
@@ -1000,6 +1097,7 @@ async function removeFriend() {
 
     if (!confirmed)
         return;
+
 
     const button =
         createFriendButton();
@@ -1010,11 +1108,15 @@ async function removeFriend() {
     button.innerHTML =
         "⏳ Removing...";
 
+
     try {
 
         const q =
             query(
-                collection(db, "friends"),
+                collection(
+                    db,
+                    "friends"
+                ),
                 where(
                     "users",
                     "array-contains",
@@ -1025,6 +1127,7 @@ async function removeFriend() {
         const snapshot =
             await getDocs(q);
 
+
         for (
             const friendDoc
             of snapshot.docs
@@ -1034,8 +1137,12 @@ async function removeFriend() {
                 friendDoc.data();
 
             if (
-                Array.isArray(data.users) &&
-                data.users.includes(profileUid)
+                Array.isArray(
+                    data.users
+                ) &&
+                data.users.includes(
+                    profileUid
+                )
             ) {
 
                 await deleteDoc(
@@ -1054,11 +1161,15 @@ async function removeFriend() {
         await updateFriendButton();
 
 
-        // Re-check privacy after removing friend
         const profileSnap =
             await getDoc(
-                doc(db, "users", profileUid)
+                doc(
+                    db,
+                    "users",
+                    profileUid
+                )
             );
+
 
         if (profileSnap.exists()) {
 
@@ -1151,12 +1262,15 @@ async function canViewProfile(
     profileData
 ) {
 
-    // Own profile
-    if (viewerUid === targetUid)
+    if (
+        viewerUid ===
+        targetUid
+    ) {
+
         return true;
+    }
 
 
-    // Owner/admin
     const isAdmin =
         await checkViewerIsAdmin(
             viewerUid
@@ -1166,18 +1280,22 @@ async function canViewProfile(
         return true;
 
 
-    // Public by default
     const privacy =
         profileData.profilePrivacy ||
         "public";
 
 
-    if (privacy === "public")
+    if (
+        privacy === "public"
+    ) {
+
         return true;
+    }
 
 
-    // Friends only
-    if (privacy === "friends") {
+    if (
+        privacy === "friends"
+    ) {
 
         return await checkIfFriends(
             viewerUid,
@@ -1186,7 +1304,6 @@ async function canViewProfile(
     }
 
 
-    // Unknown value = public
     return true;
 }
 
@@ -1197,7 +1314,10 @@ async function canViewProfile(
 
 async function loadProfile() {
 
-    if (!currentUser || !profileUid) {
+    if (
+        !currentUser ||
+        !profileUid
+    ) {
 
         hideLoader();
 
@@ -1215,12 +1335,12 @@ async function loadProfile() {
             );
 
         const profileSnap =
-            await getDoc(profileRef);
+            await getDoc(
+                profileRef
+            );
 
 
         if (!profileSnap.exists()) {
-
-            hideLoader();
 
             if (gallery) {
 
@@ -1237,6 +1357,8 @@ async function loadProfile() {
                 `;
             }
 
+            hideLoader();
+
             return;
         }
 
@@ -1244,10 +1366,6 @@ async function loadProfile() {
         const data =
             profileSnap.data();
 
-
-        // ----------------------------------------------------
-        // PRIVACY CHECK
-        // ----------------------------------------------------
 
         const allowed =
             await canViewProfile(
@@ -1258,21 +1376,26 @@ async function loadProfile() {
 
 
         // ----------------------------------------------------
-        // PRIVATE PROFILE
+        // PRIVATE
         // ----------------------------------------------------
 
         if (!allowed) {
 
             showPrivateProfileMessage();
 
-            // IMPORTANT:
-            // The Add Friend button remains visible.
             await updateFriendButton();
 
             hideLoader();
 
             return;
         }
+
+
+        // ----------------------------------------------------
+        // IMPORTANT: RESTORE ELEMENTS
+        // ----------------------------------------------------
+
+        showProfileElements();
 
 
         // ----------------------------------------------------
@@ -1296,7 +1419,8 @@ async function loadProfile() {
 
             username.textContent =
                 data.username
-                    ? "@" + data.username
+                    ? "@" +
+                      data.username
                     : "";
         }
 
@@ -1308,7 +1432,8 @@ async function loadProfile() {
         if (bio) {
 
             bio.textContent =
-                data.bio || "";
+                data.bio ||
+                "";
         }
 
 
@@ -1407,13 +1532,16 @@ async function loadProfile() {
         if (followersCount) {
 
             followersCount.textContent =
-                data.followersCount || 0;
+                data.followersCount ||
+                0;
         }
+
 
         if (followingCount) {
 
             followingCount.textContent =
-                data.followingCount || 0;
+                data.followingCount ||
+                0;
         }
 
 
@@ -1427,7 +1555,8 @@ async function loadProfile() {
         ) {
 
             if (editButton)
-                editButton.style.display = "";
+                editButton.style.display =
+                    "";
 
             if (followButton)
                 followButton.style.display =
@@ -1452,7 +1581,6 @@ async function loadProfile() {
                     "";
 
 
-            // Friend button
             await updateFriendButton();
 
 
@@ -1475,6 +1603,7 @@ async function loadProfile() {
                     await getDoc(
                         followingRef
                     );
+
 
                 if (followButton) {
 
@@ -1506,12 +1635,14 @@ async function loadProfile() {
                     `status/${profileUid}`
                 );
 
+
             onValue(
                 statusRef,
                 snapshot => {
 
                     const status =
                         snapshot.val();
+
 
                     if (
                         status &&
@@ -1548,7 +1679,7 @@ async function loadProfile() {
 
 
         // ----------------------------------------------------
-        // LOAD POSTS
+        // POSTS
         // ----------------------------------------------------
 
         await loadProfilePosts(
@@ -1563,6 +1694,19 @@ async function loadProfile() {
             error
         );
 
+        if (gallery) {
+
+            gallery.innerHTML = `
+                <div style="
+                    text-align:center;
+                    padding:40px 20px;
+                    color:#9fb4d8;
+                ">
+                    Unable to load profile.
+                </div>
+            `;
+        }
+
     } finally {
 
         hideLoader();
@@ -1574,7 +1718,9 @@ async function loadProfile() {
 // LAST SEEN
 // ============================================================
 
-function formatLastSeen(timestamp) {
+function formatLastSeen(
+    timestamp
+) {
 
     if (!timestamp)
         return "Offline";
@@ -1582,8 +1728,10 @@ function formatLastSeen(timestamp) {
     let time =
         timestamp;
 
+
     if (
-        typeof timestamp === "object" &&
+        typeof timestamp ===
+            "object" &&
         timestamp.toMillis
     ) {
 
@@ -1591,8 +1739,11 @@ function formatLastSeen(timestamp) {
             timestamp.toMillis();
     }
 
+
     const diff =
-        Date.now() - time;
+        Date.now() -
+        time;
+
 
     const seconds =
         Math.floor(
@@ -1637,19 +1788,25 @@ function formatLastSeen(timestamp) {
 
 
 // ============================================================
-// LOAD PROFILE POSTS
+// LOAD POSTS
 // ============================================================
 
-async function loadProfilePosts(uid) {
+async function loadProfilePosts(
+    uid
+) {
 
     if (!gallery)
         return;
+
 
     try {
 
         const postsQuery =
             query(
-                collection(db, "posts"),
+                collection(
+                    db,
+                    "posts"
+                ),
                 where(
                     "uid",
                     "==",
@@ -1660,6 +1817,7 @@ async function loadProfilePosts(uid) {
                     "desc"
                 )
             );
+
 
         const snapshot =
             await getDocs(
@@ -1708,10 +1866,12 @@ async function loadProfilePosts(uid) {
                 const post =
                     postDoc.data();
 
+
                 const card =
                     document.createElement(
                         "div"
                     );
+
 
                 card.style.cssText = `
                     width:100%;
@@ -1823,7 +1983,9 @@ async function loadProfilePosts(uid) {
 // HTML ESCAPE
 // ============================================================
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     const div =
         document.createElement(
@@ -1875,8 +2037,10 @@ onAuthStateChanged(
             return;
         }
 
+
         currentUser =
             user;
+
 
         await loadProfile();
     }
