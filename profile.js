@@ -42,7 +42,12 @@ const VITALSTAR_OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
 document.documentElement.style.background = "#050914";
 
 document.body.style.background = `
-    radial-gradient(circle at top, #101d3d 0%, #050914 45%, #02040a 100%)
+    radial-gradient(
+        circle at top,
+        #101d3d 0%,
+        #050914 45%,
+        #02040a 100%
+    )
 `;
 
 document.body.style.color = "#ffffff";
@@ -55,6 +60,7 @@ document.body.style.color = "#ffffff";
 const loader = document.getElementById("loader");
 
 function hideLoader() {
+
     if (!loader) return;
 
     loader.style.opacity = "0";
@@ -122,24 +128,28 @@ const messageButton =
 // GET PROFILE UID
 // ============================================================
 
-const params = new URLSearchParams(window.location.search);
+const params =
+    new URLSearchParams(window.location.search);
 
 const profileUid =
     params.get("uid") || params.get("id");
 
 
 // ============================================================
-// CURRENT FRIEND STATE
+// CURRENT STATE
 // ============================================================
 
 let currentUser = null;
+
 let isFriend = false;
+
 let requestSent = false;
+
 let requestReceived = false;
 
 
 // ============================================================
-// DARK UI HELPERS
+// DARK BUTTON STYLE
 // ============================================================
 
 function styleButton(button) {
@@ -149,7 +159,8 @@ function styleButton(button) {
     button.style.background =
         "linear-gradient(135deg,#071a38,#102f66)";
 
-    button.style.color = "#ffffff";
+    button.style.color =
+        "#ffffff";
 
     button.style.border =
         "1px solid #168cff";
@@ -157,14 +168,20 @@ function styleButton(button) {
     button.style.boxShadow =
         "0 0 12px rgba(22,140,255,.35)";
 
-    button.style.borderRadius = "12px";
+    button.style.borderRadius =
+        "12px";
 
-    button.style.cursor = "pointer";
+    button.style.cursor =
+        "pointer";
 
     button.style.transition =
         "all .2s ease";
 }
 
+
+// ============================================================
+// CREATE FRIEND BUTTON
+// ============================================================
 
 function createFriendButton() {
 
@@ -173,13 +190,17 @@ function createFriendButton() {
 
     if (!button) {
 
-        button = document.createElement("button");
+        button =
+            document.createElement("button");
 
-        button.id = "friendBtn";
+        button.id =
+            "friendBtn";
 
-        button.type = "button";
+        button.type =
+            "button";
 
-        button.innerHTML = "👥 Add Friend";
+        button.innerHTML =
+            "👥 Add Friend";
 
         const actions =
             document.querySelector(".profile-actions") ||
@@ -188,8 +209,11 @@ function createFriendButton() {
             messageButton?.parentElement;
 
         if (actions) {
+
             actions.appendChild(button);
+
         } else {
+
             document.body.appendChild(button);
         }
     }
@@ -226,6 +250,36 @@ function showPrivateProfileMessage() {
 
     if (lastSeen)
         lastSeen.style.display = "none";
+
+
+    // --------------------------------------------------------
+    // KEEP FRIEND BUTTON AVAILABLE
+    // --------------------------------------------------------
+
+    const friendBtn =
+        createFriendButton();
+
+    if (
+        friendBtn &&
+        currentUser &&
+        currentUser.uid !== profileUid
+    ) {
+
+        friendBtn.style.display =
+            "inline-flex";
+    }
+
+
+    if (followButton)
+        followButton.style.display = "none";
+
+    if (messageButton)
+        messageButton.style.display = "none";
+
+
+    // --------------------------------------------------------
+    // PRIVATE MESSAGE
+    // --------------------------------------------------------
 
     if (gallery) {
 
@@ -270,21 +324,17 @@ function showPrivateProfileMessage() {
                     This profile is visible only to friends.
                 </p>
 
+                <p style="
+                    margin:12px 0 0;
+                    color:#6f8fbd;
+                    font-size:13px;
+                ">
+                    Send a friend request to connect.
+                </p>
+
             </div>
         `;
     }
-
-    if (followButton)
-        followButton.style.display = "none";
-
-    if (messageButton)
-        messageButton.style.display = "none";
-
-    const friendBtn =
-        document.getElementById("friendBtn");
-
-    if (friendBtn)
-        friendBtn.style.display = "none";
 }
 
 
@@ -294,7 +344,8 @@ function showPrivateProfileMessage() {
 
 async function checkViewerIsAdmin(viewerUid) {
 
-    if (!viewerUid) return false;
+    if (!viewerUid)
+        return false;
 
     if (viewerUid === VITALSTAR_OWNER_UID)
         return true;
@@ -302,12 +353,15 @@ async function checkViewerIsAdmin(viewerUid) {
     try {
 
         const userSnap =
-            await getDoc(doc(db, "users", viewerUid));
+            await getDoc(
+                doc(db, "users", viewerUid)
+            );
 
         if (!userSnap.exists())
             return false;
 
-        const data = userSnap.data();
+        const data =
+            userSnap.data();
 
         return (
             data.isAdmin === true ||
@@ -331,7 +385,10 @@ async function checkViewerIsAdmin(viewerUid) {
 // CHECK FRIENDSHIP
 // ============================================================
 
-async function checkIfFriends(viewerUid, targetUid) {
+async function checkIfFriends(
+    viewerUid,
+    targetUid
+) {
 
     if (!viewerUid || !targetUid)
         return false;
@@ -341,19 +398,23 @@ async function checkIfFriends(viewerUid, targetUid) {
 
     try {
 
-        const q = query(
-            collection(db, "friends"),
-            where(
-                "users",
-                "array-contains",
-                viewerUid
-            )
-        );
+        const q =
+            query(
+                collection(db, "friends"),
+                where(
+                    "users",
+                    "array-contains",
+                    viewerUid
+                )
+            );
 
         const snapshot =
             await getDocs(q);
 
-        for (const friendDoc of snapshot.docs) {
+        for (
+            const friendDoc
+            of snapshot.docs
+        ) {
 
             const data =
                 friendDoc.data();
@@ -362,6 +423,7 @@ async function checkIfFriends(viewerUid, targetUid) {
                 Array.isArray(data.users) &&
                 data.users.includes(targetUid)
             ) {
+
                 return true;
             }
         }
@@ -379,7 +441,7 @@ async function checkIfFriends(viewerUid, targetUid) {
 
 
 // ============================================================
-// FRIEND REQUEST STATUS
+// CHECK FRIEND REQUEST STATUS
 // ============================================================
 
 async function checkFriendRequestStatus(
@@ -388,36 +450,83 @@ async function checkFriendRequestStatus(
 ) {
 
     requestSent = false;
+
     requestReceived = false;
 
     try {
 
-        const sentQuery = query(
-            collection(db, "friendRequests"),
-            where("from", "==", viewerUid),
-            where("to", "==", targetUid),
-            where("status", "==", "pending")
-        );
+        // ----------------------------------------------------
+        // REQUESTS SENT BY CURRENT USER
+        // ----------------------------------------------------
+
+        const sentQuery =
+            query(
+                collection(db, "friendRequests"),
+                where(
+                    "from",
+                    "==",
+                    viewerUid
+                )
+            );
 
         const sentSnapshot =
             await getDocs(sentQuery);
 
-        requestSent =
-            !sentSnapshot.empty;
+        for (
+            const requestDoc
+            of sentSnapshot.docs
+        ) {
+
+            const data =
+                requestDoc.data();
+
+            if (
+                data.to === targetUid &&
+                data.status === "pending"
+            ) {
+
+                requestSent = true;
+
+                break;
+            }
+        }
 
 
-        const receivedQuery = query(
-            collection(db, "friendRequests"),
-            where("from", "==", targetUid),
-            where("to", "==", viewerUid),
-            where("status", "==", "pending")
-        );
+        // ----------------------------------------------------
+        // REQUESTS RECEIVED FROM TARGET
+        // ----------------------------------------------------
+
+        const receivedQuery =
+            query(
+                collection(db, "friendRequests"),
+                where(
+                    "to",
+                    "==",
+                    viewerUid
+                )
+            );
 
         const receivedSnapshot =
             await getDocs(receivedQuery);
 
-        requestReceived =
-            !receivedSnapshot.empty;
+        for (
+            const requestDoc
+            of receivedSnapshot.docs
+        ) {
+
+            const data =
+                requestDoc.data();
+
+            if (
+                data.from === targetUid &&
+                data.status === "pending"
+            ) {
+
+                requestReceived = true;
+
+                break;
+            }
+        }
 
     } catch (error) {
 
@@ -442,7 +551,7 @@ function friendKey(uid1, uid2) {
 
 
 // ============================================================
-// CREATE NOTIFICATION
+// CREATE FRIEND NOTIFICATION
 // ============================================================
 
 async function createFriendNotification(
@@ -499,22 +608,33 @@ async function updateFriendButton() {
     if (!button)
         return;
 
-    if (!currentUser || currentUser.uid === profileUid) {
 
-        button.style.display = "none";
+    // Own profile
+    if (
+        !currentUser ||
+        currentUser.uid === profileUid
+    ) {
+
+        button.style.display =
+            "none";
 
         return;
     }
 
-    button.style.display = "inline-flex";
 
-    button.disabled = false;
+    button.style.display =
+        "inline-flex";
+
+    button.disabled =
+        false;
+
 
     isFriend =
         await checkIfFriends(
             currentUser.uid,
             profileUid
         );
+
 
     if (!isFriend) {
 
@@ -526,7 +646,7 @@ async function updateFriendButton() {
 
 
     // --------------------------------------------------------
-    // ALREADY FRIENDS
+    // FRIENDS
     // --------------------------------------------------------
 
     if (isFriend) {
@@ -598,7 +718,7 @@ async function updateFriendButton() {
 
 
 // ============================================================
-// ADD FRIEND
+// SEND FRIEND REQUEST
 // ============================================================
 
 async function sendFriendRequest() {
@@ -612,33 +732,62 @@ async function sendFriendRequest() {
     const button =
         createFriendButton();
 
-    button.disabled = true;
+    button.disabled =
+        true;
 
     button.innerHTML =
         "⏳ Sending...";
 
     try {
 
-        const existingQuery = query(
-            collection(db, "friendRequests"),
-            where("from", "==", currentUser.uid),
-            where("to", "==", profileUid),
-            where("status", "==", "pending")
-        );
+        // ----------------------------------------------------
+        // CHECK EXISTING REQUESTS
+        // ----------------------------------------------------
+
+        const existingQuery =
+            query(
+                collection(db, "friendRequests"),
+                where(
+                    "from",
+                    "==",
+                    currentUser.uid
+                )
+            );
 
         const existing =
             await getDocs(existingQuery);
 
-        if (!existing.empty) {
+        for (
+            const requestDoc
+            of existing.docs
+        ) {
 
-            await updateFriendButton();
+            const data =
+                requestDoc.data();
 
-            return;
+            if (
+                data.to === profileUid &&
+                data.status === "pending"
+            ) {
+
+                await updateFriendButton();
+
+                return;
+            }
         }
 
 
+        // ----------------------------------------------------
+        // CREATE REQUEST
+        // ----------------------------------------------------
+
         const requestRef =
-            doc(collection(db, "friendRequests"));
+            doc(
+                collection(
+                    db,
+                    "friendRequests"
+                )
+            );
 
         await setDoc(
             requestRef,
@@ -654,16 +803,23 @@ async function sendFriendRequest() {
         );
 
 
+        // ----------------------------------------------------
+        // NOTIFICATION
+        // ----------------------------------------------------
+
         await createFriendNotification(
             profileUid,
             "friend_request",
             {
-                requestId: requestRef.id
+                requestId:
+                    requestRef.id
             }
         );
 
 
-        requestSent = true;
+        requestSent =
+            true;
+
 
         await updateFriendButton();
 
@@ -694,31 +850,55 @@ async function acceptFriendRequest() {
 
     try {
 
-        const q = query(
-            collection(db, "friendRequests"),
-            where("from", "==", profileUid),
-            where("to", "==", currentUser.uid),
-            where("status", "==", "pending")
-        );
+        const q =
+            query(
+                collection(db, "friendRequests"),
+                where(
+                    "to",
+                    "==",
+                    currentUser.uid
+                )
+            );
 
         const snapshot =
             await getDocs(q);
 
-        if (snapshot.empty) {
+        let requestDoc =
+            null;
+
+        for (
+            const item
+            of snapshot.docs
+        ) {
+
+            const data =
+                item.data();
+
+            if (
+                data.from === profileUid &&
+                data.status === "pending"
+            ) {
+
+                requestDoc =
+                    item;
+
+                break;
+            }
+        }
+
+
+        if (!requestDoc) {
 
             await updateFriendButton();
 
             return;
         }
 
-        const requestDoc =
-            snapshot.docs[0];
 
-        const requestData =
-            requestDoc.data();
+        // ----------------------------------------------------
+        // CREATE FRIENDSHIP
+        // ----------------------------------------------------
 
-
-        // Create friendship
         const friendshipId =
             friendKey(
                 currentUser.uid,
@@ -737,38 +917,58 @@ async function acceptFriendRequest() {
                     profileUid
                 ],
 
-                key: friendshipId,
+                key:
+                    friendshipId,
 
-                createdAt: Date.now()
+                createdAt:
+                    Date.now()
             }
         );
 
 
-        // Update request
+        // ----------------------------------------------------
+        // UPDATE REQUEST
+        // ----------------------------------------------------
+
         await setDoc(
             requestDoc.ref,
             {
-                status: "accepted",
-                acceptedAt: Date.now()
+                status:
+                    "accepted",
+
+                acceptedAt:
+                    Date.now()
             },
-            { merge: true }
+            {
+                merge: true
+            }
         );
 
+
+        // ----------------------------------------------------
+        // NOTIFICATION
+        // ----------------------------------------------------
 
         await createFriendNotification(
             profileUid,
             "friend_accepted",
             {
-                friendId: currentUser.uid
+                friendId:
+                    currentUser.uid
             }
         );
 
 
-        isFriend = true;
+        isFriend =
+            true;
 
-        requestReceived = false;
+        requestReceived =
+            false;
 
         await updateFriendButton();
+
+        // Reload the profile so private content becomes visible
+        await loadProfile();
 
     } catch (error) {
 
@@ -804,26 +1004,31 @@ async function removeFriend() {
     const button =
         createFriendButton();
 
-    button.disabled = true;
+    button.disabled =
+        true;
 
     button.innerHTML =
         "⏳ Removing...";
 
     try {
 
-        const q = query(
-            collection(db, "friends"),
-            where(
-                "users",
-                "array-contains",
-                currentUser.uid
-            )
-        );
+        const q =
+            query(
+                collection(db, "friends"),
+                where(
+                    "users",
+                    "array-contains",
+                    currentUser.uid
+                )
+            );
 
         const snapshot =
             await getDocs(q);
 
-        for (const friendDoc of snapshot.docs) {
+        for (
+            const friendDoc
+            of snapshot.docs
+        ) {
 
             const data =
                 friendDoc.data();
@@ -841,9 +1046,37 @@ async function removeFriend() {
             }
         }
 
-        isFriend = false;
+
+        isFriend =
+            false;
+
 
         await updateFriendButton();
+
+
+        // Re-check privacy after removing friend
+        const profileSnap =
+            await getDoc(
+                doc(db, "users", profileUid)
+            );
+
+        if (profileSnap.exists()) {
+
+            const profileData =
+                profileSnap.data();
+
+            const allowed =
+                await canViewProfile(
+                    currentUser.uid,
+                    profileUid,
+                    profileData
+                );
+
+            if (!allowed) {
+
+                showPrivateProfileMessage();
+            }
+        }
 
     } catch (error) {
 
@@ -870,7 +1103,9 @@ document.addEventListener(
     async event => {
 
         const button =
-            event.target.closest("#friendBtn");
+            event.target.closest(
+                "#friendBtn"
+            );
 
         if (!button)
             return;
@@ -923,7 +1158,9 @@ async function canViewProfile(
 
     // Owner/admin
     const isAdmin =
-        await checkViewerIsAdmin(viewerUid);
+        await checkViewerIsAdmin(
+            viewerUid
+        );
 
     if (isAdmin)
         return true;
@@ -931,14 +1168,15 @@ async function canViewProfile(
 
     // Public by default
     const privacy =
-        profileData.profilePrivacy || "public";
+        profileData.profilePrivacy ||
+        "public";
 
 
     if (privacy === "public")
         return true;
 
 
-    // Friends-only
+    // Friends only
     if (privacy === "friends") {
 
         return await checkIfFriends(
@@ -948,7 +1186,7 @@ async function canViewProfile(
     }
 
 
-    // Unknown setting = public
+    // Unknown value = public
     return true;
 }
 
@@ -970,7 +1208,11 @@ async function loadProfile() {
     try {
 
         const profileRef =
-            doc(db, "users", profileUid);
+            doc(
+                db,
+                "users",
+                profileUid
+            );
 
         const profileSnap =
             await getDoc(profileRef);
@@ -988,7 +1230,9 @@ async function loadProfile() {
                         padding:50px 20px;
                         color:#9fb4d8;
                     ">
-                        <h2>Profile Not Found</h2>
+                        <h2>
+                            Profile Not Found
+                        </h2>
                     </div>
                 `;
             }
@@ -1013,9 +1257,17 @@ async function loadProfile() {
             );
 
 
+        // ----------------------------------------------------
+        // PRIVATE PROFILE
+        // ----------------------------------------------------
+
         if (!allowed) {
 
             showPrivateProfileMessage();
+
+            // IMPORTANT:
+            // The Add Friend button remains visible.
+            await updateFriendButton();
 
             hideLoader();
 
@@ -1114,6 +1366,9 @@ async function loadProfile() {
                     data.coverPicture ||
                     data.coverPhoto;
 
+                coverImage.style.display =
+                    "";
+
             } else {
 
                 coverImage.style.display =
@@ -1129,7 +1384,8 @@ async function loadProfile() {
         if (rank) {
 
             if (
-                profileUid === VITALSTAR_OWNER_UID
+                profileUid ===
+                VITALSTAR_OWNER_UID
             ) {
 
                 rank.textContent =
@@ -1138,7 +1394,8 @@ async function loadProfile() {
             } else {
 
                 rank.textContent =
-                    data.rank || "Member";
+                    data.rank ||
+                    "Member";
             }
         }
 
@@ -1165,30 +1422,37 @@ async function loadProfile() {
         // ----------------------------------------------------
 
         if (
-            currentUser.uid === profileUid
+            currentUser.uid ===
+            profileUid
         ) {
 
             if (editButton)
                 editButton.style.display = "";
 
             if (followButton)
-                followButton.style.display = "none";
+                followButton.style.display =
+                    "none";
 
             if (messageButton)
-                messageButton.style.display = "none";
+                messageButton.style.display =
+                    "none";
 
         } else {
 
             if (editButton)
-                editButton.style.display = "none";
+                editButton.style.display =
+                    "none";
 
             if (followButton)
-                followButton.style.display = "";
+                followButton.style.display =
+                    "";
 
             if (messageButton)
-                messageButton.style.display = "";
+                messageButton.style.display =
+                    "";
 
 
+            // Friend button
             await updateFriendButton();
 
 
@@ -1208,7 +1472,9 @@ async function loadProfile() {
                     );
 
                 const followingSnap =
-                    await getDoc(followingRef);
+                    await getDoc(
+                        followingRef
+                    );
 
                 if (followButton) {
 
@@ -1263,11 +1529,10 @@ async function loadProfile() {
                         status.lastSeen
                     ) {
 
-                        const time =
-                            status.lastSeen;
-
                         lastSeen.textContent =
-                            formatLastSeen(time);
+                            formatLastSeen(
+                                status.lastSeen
+                            );
 
                         lastSeen.style.color =
                             "#8ea4c8";
@@ -1314,32 +1579,45 @@ function formatLastSeen(timestamp) {
     if (!timestamp)
         return "Offline";
 
-    let time = timestamp;
+    let time =
+        timestamp;
 
     if (
         typeof timestamp === "object" &&
         timestamp.toMillis
     ) {
-        time = timestamp.toMillis();
+
+        time =
+            timestamp.toMillis();
     }
 
     const diff =
         Date.now() - time;
 
     const seconds =
-        Math.floor(diff / 1000);
+        Math.floor(
+            diff / 1000
+        );
 
     const minutes =
-        Math.floor(seconds / 60);
+        Math.floor(
+            seconds / 60
+        );
 
     const hours =
-        Math.floor(minutes / 60);
+        Math.floor(
+            minutes / 60
+        );
 
     const days =
-        Math.floor(hours / 24);
+        Math.floor(
+            hours / 24
+        );
 
     const weeks =
-        Math.floor(days / 7);
+        Math.floor(
+            days / 7
+        );
 
 
     if (seconds < 60)
@@ -1372,12 +1650,21 @@ async function loadProfilePosts(uid) {
         const postsQuery =
             query(
                 collection(db, "posts"),
-                where("uid", "==", uid),
-                orderBy("createdAt", "desc")
+                where(
+                    "uid",
+                    "==",
+                    uid
+                ),
+                orderBy(
+                    "createdAt",
+                    "desc"
+                )
             );
 
         const snapshot =
-            await getDocs(postsQuery);
+            await getDocs(
+                postsQuery
+            );
 
 
         if (postsCount) {
@@ -1387,7 +1674,8 @@ async function loadProfilePosts(uid) {
         }
 
 
-        gallery.innerHTML = "";
+        gallery.innerHTML =
+            "";
 
 
         if (snapshot.empty) {
@@ -1408,97 +1696,107 @@ async function loadProfilePosts(uid) {
 
 
         const posts =
-            snapshot.docs.slice(0, 10);
+            snapshot.docs.slice(
+                0,
+                10
+            );
 
 
-        posts.forEach(postDoc => {
+        posts.forEach(
+            postDoc => {
 
-            const post =
-                postDoc.data();
+                const post =
+                    postDoc.data();
 
-            const postId =
-                postDoc.id;
-
-            const card =
-                document.createElement("div");
-
-            card.style.cssText = `
-                width:100%;
-                margin-bottom:15px;
-                padding:16px;
-                box-sizing:border-box;
-                border-radius:18px;
-                background:
-                    linear-gradient(
-                        145deg,
-                        #09162e,
-                        #040914
+                const card =
+                    document.createElement(
+                        "div"
                     );
-                border:1px solid rgba(35,115,220,.3);
-                box-shadow:
-                    0 0 18px rgba(0,70,160,.12);
-                color:#fff;
-            `;
 
-
-            let text =
-                post.text ||
-                post.content ||
-                "";
-
-
-            let mediaHTML = "";
-
-
-            if (post.image) {
-
-                mediaHTML += `
-                    <img
-                        src="${post.image}"
-                        style="
-                            width:100%;
-                            max-height:450px;
-                            object-fit:cover;
-                            border-radius:14px;
-                            margin-top:12px;
-                        "
-                    >
+                card.style.cssText = `
+                    width:100%;
+                    margin-bottom:15px;
+                    padding:16px;
+                    box-sizing:border-box;
+                    border-radius:18px;
+                    background:
+                        linear-gradient(
+                            145deg,
+                            #09162e,
+                            #040914
+                        );
+                    border:
+                        1px solid
+                        rgba(35,115,220,.3);
+                    box-shadow:
+                        0 0 18px
+                        rgba(0,70,160,.12);
+                    color:#fff;
                 `;
-            }
 
 
-            if (post.video) {
+                const text =
+                    post.text ||
+                    post.content ||
+                    "";
 
-                mediaHTML += `
-                    <video
-                        src="${post.video}"
-                        controls
-                        style="
-                            width:100%;
-                            max-height:450px;
-                            border-radius:14px;
-                            margin-top:12px;
-                        "
-                    ></video>
+
+                let mediaHTML =
+                    "";
+
+
+                if (post.image) {
+
+                    mediaHTML += `
+                        <img
+                            src="${post.image}"
+                            style="
+                                width:100%;
+                                max-height:450px;
+                                object-fit:cover;
+                                border-radius:14px;
+                                margin-top:12px;
+                            "
+                        >
+                    `;
+                }
+
+
+                if (post.video) {
+
+                    mediaHTML += `
+                        <video
+                            src="${post.video}"
+                            controls
+                            style="
+                                width:100%;
+                                max-height:450px;
+                                border-radius:14px;
+                                margin-top:12px;
+                            "
+                        ></video>
+                    `;
+                }
+
+
+                card.innerHTML = `
+                    <div style="
+                        color:#ffffff;
+                        line-height:1.6;
+                        word-break:break-word;
+                    ">
+                        ${escapeHTML(text)}
+                    </div>
+
+                    ${mediaHTML}
                 `;
+
+
+                gallery.appendChild(
+                    card
+                );
             }
-
-
-            card.innerHTML = `
-                <div style="
-                    color:#ffffff;
-                    line-height:1.6;
-                    word-break:break-word;
-                ">
-                    ${escapeHTML(text)}
-                </div>
-
-                ${mediaHTML}
-            `;
-
-
-            gallery.appendChild(card);
-        });
+        );
 
 
     } catch (error) {
@@ -1528,7 +1826,9 @@ async function loadProfilePosts(uid) {
 function escapeHTML(value) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     div.textContent =
         value || "";
@@ -1551,7 +1851,9 @@ if (messageButton) {
                 return;
 
             window.location.href =
-                `chat.html?uid=${encodeURIComponent(profileUid)}`;
+                `chat.html?uid=${encodeURIComponent(
+                    profileUid
+                )}`;
         }
     );
 }
@@ -1573,7 +1875,8 @@ onAuthStateChanged(
             return;
         }
 
-        currentUser = user;
+        currentUser =
+            user;
 
         await loadProfile();
     }
