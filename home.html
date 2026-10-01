@@ -116,9 +116,7 @@ header{
 .logo-area{
     display:flex;
     align-items:center;
-
     gap:9px;
-
     flex:1;
 }
 
@@ -147,7 +145,6 @@ header{
 .logo{
     font-size:23px;
     font-weight:900;
-
     letter-spacing:-.8px;
 
     background:
@@ -166,11 +163,8 @@ header{
 
 .logo-sub{
     margin-top:4px;
-
     color:#8991ae;
-
     font-size:11px;
-
     letter-spacing:.3px;
 }
 
@@ -496,33 +490,80 @@ header{
     text-align:center;
 }
 
+/*
+   The story itself is a clickable profile button.
+*/
+
+.story-link{
+    display:block;
+
+    width:68px;
+    height:68px;
+
+    text-decoration:none;
+
+    color:inherit;
+}
+
 .story{
     position:relative;
 
     width:68px;
     height:68px;
 
-    padding:3px;
-
     border-radius:50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #00e5ff,
-            #8a35ff,
-            #ff239e
-        );
-
-    box-shadow:
-        0 0 13px rgba(119,52,255,.35);
 
     cursor:pointer;
 }
 
+/* =========================================================
+   ROTATING VITALSTAR PROFILE RING
+   ========================================================= */
+
+.story::before{
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:50%;
+
+    background:
+        conic-gradient(
+            #ffd400,
+            #00e5ff,
+            #7c35ff,
+            #ff239e,
+            #ffd400
+        );
+
+    animation:
+        storyRingSpin 2.5s linear infinite;
+
+    box-shadow:
+        0 0 8px rgba(255,212,0,.45),
+        0 0 15px rgba(0,229,255,.25);
+}
+
+@keyframes storyRingSpin{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
 .story-inner{
-    width:100%;
-    height:100%;
+    position:absolute;
+
+    inset:4px;
+
+    z-index:2;
 
     border-radius:50%;
 
@@ -535,6 +576,14 @@ header{
     justify-content:center;
 
     color:#fff;
+
+    border:2px solid #070914;
+
+    transition:.2s;
+}
+
+.story:hover .story-inner{
+    transform:scale(.94);
 }
 
 .story-inner img{
@@ -542,6 +591,8 @@ header{
     height:100%;
 
     object-fit:cover;
+
+    display:block;
 }
 
 .story-placeholder{
@@ -554,6 +605,8 @@ header{
     right:-2px;
     bottom:0;
 
+    z-index:5;
+
     width:23px;
     height:23px;
 
@@ -563,14 +616,22 @@ header{
     align-items:center;
     justify-content:center;
 
-    background:#08bfff;
+    background:
+        linear-gradient(
+            135deg,
+            #ffd400,
+            #00cfff
+        );
 
     border:2px solid #090b17;
 
-    color:white;
+    color:#080914;
 
     font-size:17px;
     font-weight:900;
+
+    box-shadow:
+        0 0 10px rgba(255,212,0,.45);
 }
 
 .story-name{
@@ -584,7 +645,9 @@ header{
     font-weight:700;
 
     white-space:nowrap;
+
     overflow:hidden;
+
     text-overflow:ellipsis;
 }
 
@@ -1066,6 +1129,7 @@ header{
         width:65px;
     }
 
+    .story-link,
     .story{
         width:63px;
         height:63px;
@@ -1330,115 +1394,16 @@ function closeMenu(){
 
 <main class="container">
 
+<!-- =========================================================
+     DYNAMIC STORIES
+     ========================================================= -->
+
 <section class="stories-section">
 
-<div class="stories">
-
-<div class="story-wrap">
-
-<div class="story">
-
-<div class="story-inner">
-
-<div class="story-placeholder">
-    👤
-</div>
-
-</div>
-
-<div class="story-add">
-    +
-</div>
-
-</div>
-
-<span class="story-name">
-    Your story
-</span>
-
-</div>
-
-<div class="story-wrap">
-
-<div class="story">
-
-<div class="story-inner">
-    🌅
-</div>
-
-</div>
-
-<span class="story-name">
-    Kingsley
-</span>
-
-</div>
-
-<div class="story-wrap">
-
-<div class="story">
-
-<div class="story-inner">
-    👩🏽
-</div>
-
-</div>
-
-<span class="story-name">
-    Zara
-</span>
-
-</div>
-
-<div class="story-wrap">
-
-<div class="story">
-
-<div class="story-inner">
-    🌃
-</div>
-
-</div>
-
-<span class="story-name">
-    Bright
-</span>
-
-</div>
-
-<div class="story-wrap">
-
-<div class="story">
-
-<div class="story-inner">
-    🧑🏿
-</div>
-
-</div>
-
-<span class="story-name">
-    TeeJay
-</span>
-
-</div>
-
-<div class="story-wrap">
-
-<div class="story">
-
-<div class="story-inner">
-    🌴
-</div>
-
-</div>
-
-<span class="story-name">
-    Lola
-</span>
-
-</div>
-
-</div>
+    <div
+        class="stories"
+        id="stories"
+    ></div>
 
 </section>
 
@@ -1638,16 +1603,6 @@ auth.onAuthStateChanged(
         }
 
 
-        /*
-         * IMPORTANT:
-         * Friend requests are stored in
-         * "friendRequests", NOT "notifications".
-         *
-         * We only query by "to" here and
-         * check "status" below. This avoids
-         * needing a Firestore composite index.
-         */
-
         const requestsQuery =
             query(
 
@@ -1698,12 +1653,6 @@ auth.onAuthStateChanged(
                     count
                 );
 
-
-                console.log(
-                    "Pending friend requests:",
-                    count
-                );
-
             },
 
             error => {
@@ -1727,6 +1676,747 @@ auth.onAuthStateChanged(
 </script>
 
 <!-- =========================================================
+     DYNAMIC STORIES LOADER
+     ========================================================= -->
+
+<script type="module">
+
+import {
+    auth,
+    db,
+    rtdb
+} from "./firebase.js";
+
+import {
+    doc,
+    getDoc,
+    collection,
+    query,
+    where,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+    ref,
+    get
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+const storiesContainer =
+    document.getElementById("stories");
+
+
+/* =========================================================
+   DEFAULT PROFILE IMAGE
+   ========================================================= */
+
+const DEFAULT_AVATAR =
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="200"
+             height="200"
+             viewBox="0 0 200 200">
+
+            <rect
+                width="200"
+                height="200"
+                rx="100"
+                fill="#151a2d"
+            />
+
+            <circle
+                cx="100"
+                cy="78"
+                r="38"
+                fill="#7c35ff"
+            />
+
+            <path
+                d="M35 180
+                   C42 130 70 112 100 112
+                   C130 112 158 130 165 180Z"
+                fill="#00cfff"
+            />
+
+        </svg>
+    `);
+
+
+/* =========================================================
+   LOAD PROFILE
+   ========================================================= */
+
+async function loadProfile(uid){
+
+    try{
+
+        const snapshot =
+            await getDoc(
+                doc(
+                    db,
+                    "users",
+                    uid
+                )
+            );
+
+
+        if(!snapshot.exists()){
+
+            return {
+
+                uid:uid,
+
+                name:"User",
+
+                profilePicture:""
+
+            };
+
+        }
+
+
+        const data =
+            snapshot.data();
+
+
+        return {
+
+            uid:uid,
+
+            name:
+                data.fullName ||
+                data.username ||
+                "User",
+
+            profilePicture:
+                data.profilePicture ||
+                data.photoURL ||
+                ""
+
+        };
+
+    }catch(error){
+
+        console.error(
+            "Could not load profile:",
+            uid,
+            error
+        );
+
+
+        return {
+
+            uid:uid,
+
+            name:"User",
+
+            profilePicture:""
+
+        };
+
+    }
+
+}
+
+
+/* =========================================================
+   LAST ACTIVE
+   ========================================================= */
+
+async function getLastActive(uid){
+
+    try{
+
+        const snapshot =
+            await get(
+                ref(
+                    rtdb,
+                    `status/${uid}`
+                )
+            );
+
+
+        if(snapshot.exists()){
+
+            const status =
+                snapshot.val();
+
+
+            if(status){
+
+                if(
+                    status.lastSeen !==
+                    undefined &&
+                    status.lastSeen !==
+                    null
+                ){
+
+                    return Number(
+                        status.lastSeen
+                    );
+
+                }
+
+
+                /*
+                 * Some presence systems may
+                 * store lastActive instead.
+                 */
+
+                if(
+                    status.lastActive !==
+                    undefined &&
+                    status.lastActive !==
+                    null
+                ){
+
+                    return Number(
+                        status.lastActive
+                    );
+
+                }
+
+            }
+
+        }
+
+    }catch(error){
+
+        console.warn(
+            "Presence unavailable:",
+            uid
+        );
+
+    }
+
+
+    return 0;
+
+}
+
+
+/* =========================================================
+   GET FRIENDS
+   ========================================================= */
+
+async function getAcceptedFriends(uid){
+
+    const friendIds =
+        new Set();
+
+
+    /*
+     * Requests SENT by current user.
+     */
+
+    try{
+
+        const sentQuery =
+            query(
+
+                collection(
+                    db,
+                    "friendRequests"
+                ),
+
+                where(
+                    "from",
+                    "==",
+                    uid
+                ),
+
+                where(
+                    "status",
+                    "==",
+                    "accepted"
+                )
+
+            );
+
+
+        const sentSnapshot =
+            await getDocs(
+                sentQuery
+            );
+
+
+        sentSnapshot.forEach(
+            requestDoc => {
+
+                const data =
+                    requestDoc.data();
+
+
+                if(data.to){
+
+                    friendIds.add(
+                        data.to
+                    );
+
+                }
+
+            }
+        );
+
+    }catch(error){
+
+        console.warn(
+            "Sent friends query failed:",
+            error
+        );
+
+    }
+
+
+    /*
+     * Requests RECEIVED by current user.
+     */
+
+    try{
+
+        const receivedQuery =
+            query(
+
+                collection(
+                    db,
+                    "friendRequests"
+                ),
+
+                where(
+                    "to",
+                    "==",
+                    uid
+                ),
+
+                where(
+                    "status",
+                    "==",
+                    "accepted"
+                )
+
+            );
+
+
+        const receivedSnapshot =
+            await getDocs(
+                receivedQuery
+            );
+
+
+        receivedSnapshot.forEach(
+            requestDoc => {
+
+                const data =
+                    requestDoc.data();
+
+
+                if(data.from){
+
+                    friendIds.add(
+                        data.from
+                    );
+
+                }
+
+            }
+        );
+
+    }catch(error){
+
+        console.warn(
+            "Received friends query failed:",
+            error
+        );
+
+    }
+
+
+    return [
+        ...friendIds
+    ];
+
+}
+
+
+/* =========================================================
+   CREATE STORY
+   ========================================================= */
+
+function createStory(
+    profile,
+    ownStory = false
+){
+
+    const wrap =
+        document.createElement(
+            "div"
+        );
+
+    wrap.className =
+        "story-wrap";
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+    link.className =
+        "story-link";
+
+
+    link.href =
+        `profile.html?uid=${encodeURIComponent(
+            profile.uid
+        )}`;
+
+
+    link.title =
+        `View ${profile.name}'s profile`;
+
+
+    const story =
+        document.createElement(
+            "div"
+        );
+
+    story.className =
+        "story";
+
+
+    const inner =
+        document.createElement(
+            "div"
+        );
+
+    inner.className =
+        "story-inner";
+
+
+    const image =
+        document.createElement(
+            "img"
+        );
+
+
+    image.src =
+        profile.profilePicture ||
+        DEFAULT_AVATAR;
+
+
+    image.alt =
+        profile.name;
+
+
+    image.onerror =
+        function(){
+
+            this.onerror = null;
+
+            this.src =
+                DEFAULT_AVATAR;
+
+        };
+
+
+    inner.appendChild(
+        image
+    );
+
+
+    story.appendChild(
+        inner
+    );
+
+
+    link.appendChild(
+        story
+    );
+
+
+    /*
+     * Plus button belongs only
+     * to the current user's story.
+     */
+
+    if(ownStory){
+
+        const add =
+            document.createElement(
+                "button"
+            );
+
+        add.type =
+            "button";
+
+        add.className =
+            "story-add";
+
+        add.textContent =
+            "+";
+
+        add.title =
+            "Create a story";
+
+
+        add.addEventListener(
+            "click",
+            function(event){
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                /*
+                 * Open a story creator if one
+                 * exists in the application.
+                 */
+
+                if(
+                    window.VitalStarStory &&
+                    typeof
+                    window.VitalStarStory.open ===
+                    "function"
+                ){
+
+                    window.VitalStarStory.open();
+
+                    return;
+
+                }
+
+
+                /*
+                 * Otherwise open the normal
+                 * post creator.
+                 */
+
+                if(
+                    window.VitalStarPost &&
+                    typeof
+                    window.VitalStarPost.open ===
+                    "function"
+                ){
+
+                    window.VitalStarPost.open();
+
+                }
+
+            }
+        );
+
+
+        story.appendChild(
+            add
+        );
+
+    }
+
+
+    const name =
+        document.createElement(
+            "span"
+        );
+
+    name.className =
+        "story-name";
+
+    name.textContent =
+        profile.name ||
+        "User";
+
+
+    wrap.appendChild(
+        link
+    );
+
+    wrap.appendChild(
+        name
+    );
+
+
+    return wrap;
+
+}
+
+
+/* =========================================================
+   RENDER STORIES
+   ========================================================= */
+
+async function loadStories(user){
+
+    if(!storiesContainer){
+
+        return;
+
+    }
+
+
+    /*
+     * Clear old hardcoded stories.
+     */
+
+    storiesContainer.innerHTML = "";
+
+
+    /*
+     * CURRENT USER — ALWAYS FIRST
+     */
+
+    const currentProfile =
+        await loadProfile(
+            user.uid
+        );
+
+
+    storiesContainer.appendChild(
+
+        createStory(
+            currentProfile,
+            true
+        )
+
+    );
+
+
+    /*
+     * GET ALL ACCEPTED FRIENDS
+     */
+
+    const friendIds =
+        await getAcceptedFriends(
+            user.uid
+        );
+
+
+    if(!friendIds.length){
+
+        return;
+
+    }
+
+
+    /*
+     * Get profiles and activity times.
+     */
+
+    const friends =
+        await Promise.all(
+
+            friendIds.map(
+                async friendUid => {
+
+                    const profile =
+                        await loadProfile(
+                            friendUid
+                        );
+
+
+                    const lastActive =
+                        await getLastActive(
+                            friendUid
+                        );
+
+
+                    return {
+
+                        ...profile,
+
+                        lastActive
+
+                    };
+
+                }
+            )
+
+        );
+
+
+    /*
+     * Most recently active first.
+     */
+
+    friends.sort(
+        (a,b) =>
+            b.lastActive -
+            a.lastActive
+    );
+
+
+    /*
+     * Only the first five friends.
+     */
+
+    const recentFriends =
+        friends.slice(
+            0,
+            5
+        );
+
+
+    recentFriends.forEach(
+        friend => {
+
+            storiesContainer.appendChild(
+
+                createStory(
+                    friend,
+                    false
+                )
+
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+
+auth.onAuthStateChanged(
+    async user => {
+
+        if(!user){
+
+            if(storiesContainer){
+
+                storiesContainer.innerHTML =
+                    "";
+
+            }
+
+            return;
+
+        }
+
+
+        try{
+
+            await loadStories(
+                user
+            );
+
+        }catch(error){
+
+            console.error(
+                "Stories error:",
+                error
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+<!-- =========================================================
      BOTTOM CREATE BUTTON
      ========================================================= -->
 
@@ -1742,7 +2432,9 @@ document
 
             if(
                 window.VitalStarPost &&
-                typeof window.VitalStarPost.open === "function"
+                typeof
+                window.VitalStarPost.open ===
+                "function"
             ){
 
                 window.VitalStarPost.open();
