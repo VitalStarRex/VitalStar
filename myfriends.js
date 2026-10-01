@@ -1,7 +1,14 @@
 /* =========================================================
    VITALSTAR — FRIEND SYSTEM
    Firebase v10.12.2
-   Real-time Friends Count
+
+   Features:
+   - Friends
+   - Friend count
+   - Online indicators
+   - Last seen
+   - Friend requests
+   - Friend notifications
    ========================================================= */
 
 import {
@@ -23,8 +30,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
+    onValue,
+    ref
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+import {
     auth,
-    db
+    db,
+    rtdb
 } from "./firebase.js";
 
 
@@ -38,6 +51,12 @@ let friends = [];
 let incomingRequests = [];
 let outgoingRequests = [];
 let allUsers = [];
+
+const presenceCache =
+    new Map();
+
+const presenceListeners =
+    new Map();
 
 
 /* =========================================================
@@ -119,7 +138,9 @@ function getAvatar(user){
         user.profilePicture ||
         user.photoURL ||
         "https://ui-avatars.com/api/?name=" +
-        encodeURIComponent(getDisplayName(user)) +
+        encodeURIComponent(
+            getDisplayName(user)
+        ) +
         "&background=171d32&color=ffffff"
     );
 
@@ -128,9 +149,12 @@ function getAvatar(user){
 
 function friendKey(uid1,uid2){
 
-    return [uid1,uid2]
-        .sort()
-        .join("_");
+    return [
+        uid1,
+        uid2
+    ]
+    .sort()
+    .join("_");
 
 }
 
@@ -140,24 +164,36 @@ function showToast(message){
     const toast =
         document.getElementById("toast");
 
-    toast.textContent = message;
+    if(!toast){
+        return;
+    }
+
+    toast.textContent =
+        message;
 
     toast.classList.add("show");
 
-    clearTimeout(window.__toastTimer);
+    clearTimeout(
+        window.__toastTimer
+    );
 
     window.__toastTimer =
-        setTimeout(function(){
+        setTimeout(
+            function(){
 
-            toast.classList.remove("show");
+                toast.classList.remove(
+                    "show"
+                );
 
-        },2500);
+            },
+            2500
+        );
 
 }
 
 
 /* =========================================================
-   FRIENDS COUNT
+   FRIEND COUNT
    ========================================================= */
 
 function updateFriendsCount(){
@@ -165,22 +201,16 @@ function updateFriendsCount(){
     const count =
         friends.length;
 
+
     if(friendsCount){
 
         friendsCount.textContent =
             count === 1
-            ? "1 friend"
-            : `${count} friends`;
+                ? "1 friend"
+                : `${count} friends`;
 
     }
 
-    /*
-       Also expose the live count globally.
-
-       Other VitalStar pages can later use:
-
-       window.VitalStarFriends.getCount()
-    */
 
     window.VitalStarFriendsCount =
         count;
@@ -189,13 +219,385 @@ function updateFriendsCount(){
 
 
 /* =========================================================
+   PRESENCE
+   ========================================================= */
+
+function getPresence(uid){
+
+    return (
+        presenceCache.get(uid) || {
+            online:false,
+            lastSeen:null
+        }
+    );
+
+}
+
+
+function formatLastSeen(timestamp){
+
+    if(!timestamp){
+
+        return "Offline";
+
+    }
+
+
+    let time =
+        timestamp;
+
+
+    if(
+        typeof time === "object" &&
+        time !== null
+    ){
+
+        if(
+            typeof time.toMillis ===
+            "function"
+        ){
+
+            time =
+                time.toMillis();
+
+        }else if(
+            typeof time.seconds ===
+            "number"
+        ){
+
+            time =
+                time.seconds * 1000;
+
+        }
+
+    }
+
+
+    time =
+        Number(time);
+
+
+    if(
+        !Number.isFinite(time)
+    ){
+
+        return "Offline";
+
+    }
+
+
+    const difference =
+        Math.max(
+            0,
+            Date.now() - time
+        );
+
+
+    const seconds =
+        Math.floor(
+            difference / 1000
+        );
+
+
+    if(seconds < 60){
+
+        return "last seen just now";
+
+    }
+
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    if(minutes < 60){
+
+        return (
+            "last seen " +
+            minutes +
+            (
+                minutes === 1
+                    ? " minute ago"
+                    : " minutes ago"
+            )
+        );
+
+    }
+
+
+    const hours =
+        Math.floor(
+            minutes / 60
+        );
+
+
+    if(hours < 24){
+
+        return (
+            "last seen " +
+            hours +
+            (
+                hours === 1
+                    ? " hour ago"
+                    : " hours ago"
+            )
+        );
+
+    }
+
+
+    const days =
+        Math.floor(
+            hours / 24
+        );
+
+
+    if(days < 7){
+
+        return (
+            "last seen " +
+            days +
+            (
+                days === 1
+                    ? " day ago"
+                    : " days ago"
+            )
+        );
+
+    }
+
+
+    const weeks =
+        Math.floor(
+            days / 7
+        );
+
+
+    if(weeks < 5){
+
+        return (
+            "last seen " +
+            weeks +
+            (
+                weeks === 1
+                    ? " week ago"
+                    : " weeks ago"
+            )
+        );
+
+    }
+
+
+    return "Offline";
+
+}
+
+
+/* =========================================================
+   START PRESENCE LISTENER
+   ========================================================= */
+
+function listenToPresence(uid){
+
+    if(!uid){
+        return;
+    }
+
+
+    if(
+        presenceListeners.has(uid)
+    ){
+
+        return;
+
+    }
+
+
+    const presenceRef =
+        ref(
+            rtdb,
+            "status/" + uid
+        );
+
+
+    const unsubscribe =
+        onValue(
+            presenceRef,
+            snapshot => {
+
+                const data =
+                    snapshot.val();
+
+
+                if(!data){
+
+                    presenceCache.set(
+                        uid,
+                        {
+                            online:false,
+                            lastSeen:null
+                        }
+                    );
+
+                }else{
+
+                    presenceCache.set(
+                        uid,
+                        {
+                            online:
+                                data.online === true,
+
+                            lastSeen:
+                                data.lastSeen ||
+                                null
+                        }
+                    );
+
+                }
+
+
+                renderFriends();
+
+                renderRequests();
+
+                renderSent();
+
+                renderDiscover();
+
+            },
+            error => {
+
+                console.error(
+                    "Presence error:",
+                    error
+                );
+
+            }
+        );
+
+
+    presenceListeners.set(
+        uid,
+        unsubscribe
+    );
+
+}
+
+
+/* =========================================================
+   SYNC PRESENCE
+   ========================================================= */
+
+function syncPresenceListeners(){
+
+    const ids =
+        new Set();
+
+
+    friends.forEach(
+        user => ids.add(
+            user.uid
+        )
+    );
+
+
+    incomingRequests.forEach(
+        request => ids.add(
+            request.from
+        )
+    );
+
+
+    outgoingRequests.forEach(
+        request => ids.add(
+            request.to
+        )
+    );
+
+
+    allUsers.forEach(
+        user => ids.add(
+            user.uid
+        )
+    );
+
+
+    ids.forEach(
+        uid => {
+
+            listenToPresence(uid);
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   PRESENCE HTML
+   ========================================================= */
+
+function getPresenceHTML(uid){
+
+    const presence =
+        getPresence(uid);
+
+
+    if(presence.online){
+
+        return `
+
+            <div class="presence-status online">
+
+                <span class="presence-dot"></span>
+
+                <span>
+                    Online
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
+
+    return `
+
+        <div class="presence-status offline">
+
+            <span class="presence-dot"></span>
+
+            <span>
+                ${escapeHTML(
+                    formatLastSeen(
+                        presence.lastSeen
+                    )
+                )}
+            </span>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
    USER CARD
    ========================================================= */
 
-function userCard(user,actionHTML){
+function userCard(
+    user,
+    actionHTML
+){
 
     const uid =
-        user.uid || user.id;
+        user.uid ||
+        user.id;
+
 
     return `
 
@@ -208,7 +610,9 @@ function userCard(user,actionHTML){
 
                 <img
                     class="avatar"
-                    src="${escapeHTML(getAvatar(user))}"
+                    src="${escapeHTML(
+                        getAvatar(user)
+                    )}"
                     alt=""
                     loading="lazy"
                 >
@@ -219,12 +623,24 @@ function userCard(user,actionHTML){
             <div class="user-details">
 
                 <div class="user-name">
-                    ${escapeHTML(getDisplayName(user))}
+
+                    ${escapeHTML(
+                        getDisplayName(user)
+                    )}
+
                 </div>
 
+
                 <div class="username">
-                    ${escapeHTML(getUsername(user))}
+
+                    ${escapeHTML(
+                        getUsername(user)
+                    )}
+
                 </div>
+
+
+                ${getPresenceHTML(uid)}
 
             </div>
 
@@ -252,8 +668,13 @@ async function getUser(uid){
 
         const snapshot =
             await getDoc(
-                doc(db,"users",uid)
+                doc(
+                    db,
+                    "users",
+                    uid
+                )
             );
+
 
         if(snapshot.exists()){
 
@@ -273,25 +694,36 @@ async function getUser(uid){
 
     }
 
+
     return {
+
         uid,
-        fullName:"VitalStar User",
+
+        fullName:
+            "VitalStar User",
+
         username:"",
+
         profilePicture:""
+
     };
 
 }
 
 
 /* =========================================================
-   LISTEN TO FRIENDS
+   FRIENDS LISTENER
    ========================================================= */
 
 function listenToFriends(){
 
     const q =
         query(
-            collection(db,"friends"),
+            collection(
+                db,
+                "friends"
+            ),
+
             where(
                 "users",
                 "array-contains",
@@ -302,17 +734,10 @@ function listenToFriends(){
 
     onSnapshot(
         q,
-        async function(snapshot){
+        async snapshot => {
 
             const results = [];
 
-            /*
-               Every document returned here represents
-               ONE accepted friendship.
-
-               Pending requests are stored separately and
-               therefore are NOT counted.
-            */
 
             for(
                 const friendDoc
@@ -322,22 +747,24 @@ function listenToFriends(){
                 const data =
                     friendDoc.data();
 
-                /*
-                   Only accept valid friendship documents.
-                */
 
                 if(
-                    !Array.isArray(data.users) ||
+                    !Array.isArray(
+                        data.users
+                    ) ||
                     data.users.length !== 2
                 ){
+
                     continue;
+
                 }
 
 
                 const otherUid =
                     data.users.find(
                         uid =>
-                            uid !== currentUser.uid
+                            uid !==
+                            currentUser.uid
                     );
 
 
@@ -347,13 +774,18 @@ function listenToFriends(){
 
 
                 const user =
-                    await getUser(otherUid);
+                    await getUser(
+                        otherUid
+                    );
 
 
                 results.push({
+
                     ...user,
+
                     friendshipId:
                         friendDoc.id
+
                 });
 
             }
@@ -363,44 +795,49 @@ function listenToFriends(){
                 results;
 
 
-            /*
-               THIS is the authoritative count.
-            */
-
             updateFriendsCount();
 
+            syncPresenceListeners();
 
             renderFriends();
 
             renderDiscover();
 
         },
-        function(error){
+
+        error => {
 
             console.error(
                 "Friends listener:",
                 error
             );
 
-            friendsList.innerHTML = `
 
-                <div class="empty">
+            if(friendsList){
 
-                    <div class="empty-icon">
-                        ⚠️
+                friendsList.innerHTML = `
+
+                    <div class="empty">
+
+                        <div class="empty-icon">
+                            ⚠️
+                        </div>
+
+                        <strong>
+                            Could not load friends
+                        </strong>
+
+                        <p>
+                            ${escapeHTML(
+                                error.message
+                            )}
+                        </p>
+
                     </div>
 
-                    <strong>
-                        Could not load friends
-                    </strong>
+                `;
 
-                    <p>
-                        ${escapeHTML(error.message)}
-                    </p>
-
-                </div>
-
-            `;
+            }
 
         }
     );
@@ -416,12 +853,17 @@ function listenToIncomingRequests(){
 
     const q =
         query(
-            collection(db,"friendRequests"),
+            collection(
+                db,
+                "friendRequests"
+            ),
+
             where(
                 "to",
                 "==",
                 currentUser.uid
             ),
+
             where(
                 "status",
                 "==",
@@ -432,9 +874,10 @@ function listenToIncomingRequests(){
 
     onSnapshot(
         q,
-        async function(snapshot){
+        async snapshot => {
 
             const results = [];
+
 
             for(
                 const requestDoc
@@ -444,25 +887,47 @@ function listenToIncomingRequests(){
                 const data =
                     requestDoc.data();
 
+
                 const user =
-                    await getUser(data.from);
+                    await getUser(
+                        data.from
+                    );
+
 
                 results.push({
-                    id:requestDoc.id,
+
+                    id:
+                        requestDoc.id,
+
                     ...data,
+
                     user
+
                 });
 
             }
 
+
             incomingRequests =
                 results;
 
-            renderRequests();
 
             updateRequestCounts();
 
+            syncPresenceListeners();
+
+            renderRequests();
+
             renderDiscover();
+
+        },
+
+        error => {
+
+            console.error(
+                "Incoming requests:",
+                error
+            );
 
         }
     );
@@ -478,12 +943,17 @@ function listenToOutgoingRequests(){
 
     const q =
         query(
-            collection(db,"friendRequests"),
+            collection(
+                db,
+                "friendRequests"
+            ),
+
             where(
                 "from",
                 "==",
                 currentUser.uid
             ),
+
             where(
                 "status",
                 "==",
@@ -494,9 +964,10 @@ function listenToOutgoingRequests(){
 
     onSnapshot(
         q,
-        async function(snapshot){
+        async snapshot => {
 
             const results = [];
+
 
             for(
                 const requestDoc
@@ -506,25 +977,47 @@ function listenToOutgoingRequests(){
                 const data =
                     requestDoc.data();
 
+
                 const user =
-                    await getUser(data.to);
+                    await getUser(
+                        data.to
+                    );
+
 
                 results.push({
-                    id:requestDoc.id,
+
+                    id:
+                        requestDoc.id,
+
                     ...data,
+
                     user
+
                 });
 
             }
 
+
             outgoingRequests =
                 results;
 
-            renderSent();
 
             updateRequestCounts();
 
+            syncPresenceListeners();
+
+            renderSent();
+
             renderDiscover();
+
+        },
+
+        error => {
+
+            console.error(
+                "Outgoing requests:",
+                error
+            );
 
         }
     );
@@ -544,6 +1037,7 @@ function updateRequestCounts(){
             incomingRequests.length;
 
     }
+
 
     if(sentCount){
 
@@ -565,29 +1059,31 @@ async function loadUsers(){
 
         const snapshot =
             await getDocs(
-                collection(db,"users")
+                collection(
+                    db,
+                    "users"
+                )
             );
 
 
         allUsers =
             snapshot.docs
-                .map(function(item){
+                .map(item => ({
 
-                    return {
-                        uid:item.id,
-                        ...item.data()
-                    };
+                    uid:
+                        item.id,
 
-                })
-                .filter(function(user){
+                    ...item.data()
 
-                    return (
+                }))
+                .filter(
+                    user =>
                         user.uid !==
                         currentUser.uid
-                    );
+                );
 
-                });
 
+        syncPresenceListeners();
 
         renderDiscover();
 
@@ -598,25 +1094,32 @@ async function loadUsers(){
             error
         );
 
-        discoverList.innerHTML = `
 
-            <div class="empty">
+        if(discoverList){
 
-                <div class="empty-icon">
-                    ⚠️
+            discoverList.innerHTML = `
+
+                <div class="empty">
+
+                    <div class="empty-icon">
+                        ⚠️
+                    </div>
+
+                    <strong>
+                        Could not load users
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(
+                            error.message
+                        )}
+                    </p>
+
                 </div>
 
-                <strong>
-                    Could not load users
-                </strong>
+            `;
 
-                <p>
-                    ${escapeHTML(error.message)}
-                </p>
-
-            </div>
-
-        `;
+        }
 
     }
 
@@ -676,6 +1179,11 @@ function relationship(uid){
 
 function renderFriends(){
 
+    if(!friendsList){
+        return;
+    }
+
+
     if(!friends.length){
 
         friendsList.innerHTML = `
@@ -705,7 +1213,7 @@ function renderFriends(){
 
 
     friendsList.innerHTML =
-        friends.map(function(user){
+        friends.map(user => {
 
             return userCard(
                 user,
@@ -754,6 +1262,11 @@ function renderFriends(){
 
 function renderRequests(){
 
+    if(!requestsList){
+        return;
+    }
+
+
     if(!incomingRequests.length){
 
         requestsList.innerHTML = `
@@ -782,40 +1295,42 @@ function renderRequests(){
 
 
     requestsList.innerHTML =
-        incomingRequests.map(function(request){
+        incomingRequests.map(
+            request => {
 
-            const user =
-                request.user;
+                const user =
+                    request.user;
 
 
-            return userCard(
-                user,
+                return userCard(
+                    user,
 
-                `
+                    `
 
-                <button
-                    class="action-btn success"
-                    onclick="
-                        window.VitalStarFriends.accept('${request.id}')
-                    "
-                >
-                    Accept
-                </button>
+                    <button
+                        class="action-btn success"
+                        onclick="
+                            window.VitalStarFriends.accept('${request.id}')
+                        "
+                    >
+                        Accept
+                    </button>
 
-                <button
-                    class="action-btn danger"
-                    onclick="
-                        window.VitalStarFriends.decline('${request.id}')
-                    "
-                >
-                    Decline
-                </button>
+                    <button
+                        class="action-btn danger"
+                        onclick="
+                            window.VitalStarFriends.decline('${request.id}')
+                        "
+                    >
+                        Decline
+                    </button>
 
-                `
+                    `
 
-            );
+                );
 
-        }).join("");
+            }
+        ).join("");
 
 }
 
@@ -825,6 +1340,11 @@ function renderRequests(){
    ========================================================= */
 
 function renderSent(){
+
+    if(!sentList){
+        return;
+    }
+
 
     if(!outgoingRequests.length){
 
@@ -854,40 +1374,42 @@ function renderSent(){
 
 
     sentList.innerHTML =
-        outgoingRequests.map(function(request){
+        outgoingRequests.map(
+            request => {
 
-            const user =
-                request.user;
+                const user =
+                    request.user;
 
 
-            return userCard(
-                user,
+                return userCard(
+                    user,
 
-                `
+                    `
 
-                <button
-                    class="action-btn neutral"
-                    onclick="
-                        window.VitalStarFriends.profile('${user.uid}')
-                    "
-                >
-                    Profile
-                </button>
+                    <button
+                        class="action-btn neutral"
+                        onclick="
+                            window.VitalStarFriends.profile('${user.uid}')
+                        "
+                    >
+                        Profile
+                    </button>
 
-                <button
-                    class="action-btn danger"
-                    onclick="
-                        window.VitalStarFriends.cancel('${request.id}')
-                    "
-                >
-                    Cancel
-                </button>
+                    <button
+                        class="action-btn danger"
+                        onclick="
+                            window.VitalStarFriends.cancel('${request.id}')
+                        "
+                    >
+                        Cancel
+                    </button>
 
-                `
+                    `
 
-            );
+                );
 
-        }).join("");
+            }
+        ).join("");
 
 }
 
@@ -912,30 +1434,34 @@ function renderDiscover(){
 
 
     const users =
-        allUsers.filter(function(user){
+        allUsers.filter(
+            user => {
 
-            if(!term){
-                return true;
+                if(!term){
+                    return true;
+                }
+
+
+                const name =
+                    getDisplayName(
+                        user
+                    ).toLowerCase();
+
+
+                const username =
+                    String(
+                        user.username ||
+                        ""
+                    ).toLowerCase();
+
+
+                return (
+                    name.includes(term) ||
+                    username.includes(term)
+                );
+
             }
-
-
-            const name =
-                getDisplayName(user)
-                    .toLowerCase();
-
-
-            const username =
-                String(
-                    user.username || ""
-                ).toLowerCase();
-
-
-            return (
-                name.includes(term) ||
-                username.includes(term)
-            );
-
-        });
+        );
 
 
     if(discoverCount){
@@ -974,10 +1500,13 @@ function renderDiscover(){
 
 
     discoverList.innerHTML =
-        users.map(function(user){
+        users.map(user => {
 
             const relation =
-                relationship(user.uid);
+                relationship(
+                    user.uid
+                );
+
 
             let buttons = "";
 
@@ -1078,6 +1607,197 @@ function renderDiscover(){
 
 
 /* =========================================================
+   CREATE FRIEND NOTIFICATION
+   ========================================================= */
+
+async function createFriendNotification({
+
+    receiverId,
+    senderId,
+    type,
+    text,
+    requestId
+
+}){
+
+    if(
+        !receiverId ||
+        !senderId ||
+        !type
+    ){
+
+        return;
+
+    }
+
+
+    if(
+        receiverId === senderId
+    ){
+
+        return;
+
+    }
+
+
+    try{
+
+        const sender =
+            await getUser(
+                senderId
+            );
+
+
+        /*
+           Deterministic notification IDs prevent
+           duplicate notifications caused by repeated
+           listeners or button clicks.
+        */
+
+        const notificationId =
+            requestId
+                ? `${type}_${requestId}`
+                : `${type}_${senderId}_${receiverId}`;
+
+
+        await updateDoc(
+            doc(
+                db,
+                "notifications",
+                notificationId
+            ),
+            {
+                receiverId,
+                recipientId:
+                    receiverId,
+
+                senderId,
+
+                senderName:
+                    getDisplayName(
+                        sender
+                    ),
+
+                senderPhoto:
+                    sender.profilePicture ||
+                    sender.photoURL ||
+                    "",
+
+                senderPhotoURL:
+                    sender.profilePicture ||
+                    sender.photoURL ||
+                    "",
+
+                type,
+
+                text,
+
+                message:
+                    text,
+
+                read:false,
+
+                createdAt:
+                    serverTimestamp(),
+
+                ...(requestId
+                    ? { requestId }
+                    : {})
+            }
+        );
+
+    }catch(error){
+
+        /*
+           The notification may not exist yet.
+           Firestore updateDoc() cannot create a document.
+
+           Create it with setDoc below.
+        */
+
+        try{
+
+            const sender =
+                await getUser(
+                    senderId
+                );
+
+
+            const notificationRef =
+                doc(
+                    db,
+                    "notifications",
+                    notificationId
+                );
+
+
+            const {
+                setDoc
+            } = await import(
+                "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+            );
+
+
+            await setDoc(
+                notificationRef,
+                {
+
+                    receiverId,
+
+                    recipientId:
+                        receiverId,
+
+                    senderId,
+
+                    senderName:
+                        getDisplayName(
+                            sender
+                        ),
+
+                    senderPhoto:
+                        sender.profilePicture ||
+                        sender.photoURL ||
+                        "",
+
+                    senderPhotoURL:
+                        sender.profilePicture ||
+                        sender.photoURL ||
+                        "",
+
+                    type,
+
+                    text,
+
+                    message:
+                        text,
+
+                    read:false,
+
+                    createdAt:
+                        serverTimestamp(),
+
+                    ...(requestId
+                        ? { requestId }
+                        : {})
+
+                }
+            );
+
+        }catch(notificationError){
+
+            console.error(
+                "Could not create friend notification:",
+                notificationError
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
    SEND FRIEND REQUEST
    ========================================================= */
 
@@ -1091,7 +1811,9 @@ async function addFriend(uid){
     if(
         uid === currentUser.uid
     ){
+
         return;
+
     }
 
 
@@ -1110,18 +1832,58 @@ async function addFriend(uid){
 
     try{
 
-        await addDoc(
-            collection(
-                db,
-                "friendRequests"
-            ),
-            {
-                from:currentUser.uid,
-                to:uid,
-                status:"pending",
-                createdAt:serverTimestamp()
-            }
-        );
+        const requestRef =
+            await addDoc(
+                collection(
+                    db,
+                    "friendRequests"
+                ),
+                {
+
+                    from:
+                        currentUser.uid,
+
+                    to:
+                        uid,
+
+                    status:
+                        "pending",
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+        /*
+           Create notification for recipient.
+        */
+
+        const sender =
+            await getUser(
+                currentUser.uid
+            );
+
+
+        await createFriendNotification({
+
+            receiverId:
+                uid,
+
+            senderId:
+                currentUser.uid,
+
+            type:
+                "friend_request",
+
+            text:
+                `${getDisplayName(sender)} sent you a friend request.`,
+
+            requestId:
+                requestRef.id
+
+        });
 
 
         showToast(
@@ -1136,6 +1898,7 @@ async function addFriend(uid){
             error
         );
 
+
         showToast(
             "Could not send request."
         );
@@ -1146,7 +1909,7 @@ async function addFriend(uid){
 
 
 /* =========================================================
-   ACCEPT
+   ACCEPT REQUEST
    ========================================================= */
 
 async function acceptRequest(requestId){
@@ -1165,27 +1928,38 @@ async function acceptRequest(requestId){
 
     try{
 
+        /*
+           Create friendship.
+        */
+
         await addDoc(
             collection(
                 db,
                 "friends"
             ),
             {
+
                 users:[
                     currentUser.uid,
                     request.from
                 ],
 
-                key:friendKey(
-                    currentUser.uid,
-                    request.from
-                ),
+                key:
+                    friendKey(
+                        currentUser.uid,
+                        request.from
+                    ),
 
                 createdAt:
                     serverTimestamp()
+
             }
         );
 
+
+        /*
+           Mark request as accepted.
+        */
 
         await updateDoc(
             doc(
@@ -1194,9 +1968,43 @@ async function acceptRequest(requestId){
                 requestId
             ),
             {
-                status:"accepted"
+
+                status:
+                    "accepted"
+
             }
         );
+
+
+        /*
+           Notify the person who originally
+           sent the request.
+        */
+
+        const sender =
+            await getUser(
+                currentUser.uid
+            );
+
+
+        await createFriendNotification({
+
+            receiverId:
+                request.from,
+
+            senderId:
+                currentUser.uid,
+
+            type:
+                "friend_accepted",
+
+            text:
+                `${getDisplayName(sender)} accepted your friend request.`,
+
+            requestId:
+                requestId
+
+        });
 
 
         showToast(
@@ -1210,6 +2018,7 @@ async function acceptRequest(requestId){
             "Accept request:",
             error
         );
+
 
         showToast(
             "Could not accept request."
@@ -1259,7 +2068,10 @@ async function declineRequest(requestId){
                 requestId
             ),
             {
-                status:"declined"
+
+                status:
+                    "declined"
+
             }
         );
 
@@ -1275,6 +2087,7 @@ async function declineRequest(requestId){
             "Decline:",
             error
         );
+
 
         showToast(
             "Could not decline request."
@@ -1314,6 +2127,7 @@ async function cancelRequest(requestId){
             error
         );
 
+
         showToast(
             "Could not cancel request."
         );
@@ -1344,7 +2158,11 @@ async function removeFriend(uid){
 
         const q =
             query(
-                collection(db,"friends"),
+                collection(
+                    db,
+                    "friends"
+                ),
+
                 where(
                     "users",
                     "array-contains",
@@ -1367,7 +2185,9 @@ async function removeFriend(uid){
 
 
             if(
-                Array.isArray(data.users) &&
+                Array.isArray(
+                    data.users
+                ) &&
                 data.users.includes(uid)
             ){
 
@@ -1397,6 +2217,7 @@ async function removeFriend(uid){
             "Remove friend:",
             error
         );
+
 
         showToast(
             "Could not remove friend."
@@ -1441,46 +2262,78 @@ function activateTab(tab){
 
     document
         .querySelectorAll(".tab")
-        .forEach(function(button){
+        .forEach(
+            button => {
 
-            button.classList.toggle(
-                "active",
-                button.dataset.tab === tab
-            );
+                button.classList.toggle(
+                    "active",
+                    button.dataset.tab ===
+                    tab
+                );
 
-        });
-
-
-    document.getElementById(
-        "friendsSection"
-    ).style.display =
-        tab === "friends"
-        ? "block"
-        : "none";
+            }
+        );
 
 
-    document.getElementById(
-        "requestsSection"
-    ).style.display =
-        tab === "requests"
-        ? "block"
-        : "none";
+    const friendsSection =
+        document.getElementById(
+            "friendsSection"
+        );
+
+    const requestsSection =
+        document.getElementById(
+            "requestsSection"
+        );
+
+    const sentSection =
+        document.getElementById(
+            "sentSection"
+        );
+
+    const discoverSection =
+        document.getElementById(
+            "discoverSection"
+        );
 
 
-    document.getElementById(
-        "sentSection"
-    ).style.display =
-        tab === "sent"
-        ? "block"
-        : "none";
+    if(friendsSection){
+
+        friendsSection.style.display =
+            tab === "friends"
+                ? "block"
+                : "none";
+
+    }
 
 
-    document.getElementById(
-        "discoverSection"
-    ).style.display =
-        tab === "discover"
-        ? "block"
-        : "none";
+    if(requestsSection){
+
+        requestsSection.style.display =
+            tab === "requests"
+                ? "block"
+                : "none";
+
+    }
+
+
+    if(sentSection){
+
+        sentSection.style.display =
+            tab === "sent"
+                ? "block"
+                : "none";
+
+    }
+
+
+    if(discoverSection){
+
+        discoverSection.style.display =
+            tab === "discover"
+                ? "block"
+                : "none";
+
+    }
 
 
     if(
@@ -1519,20 +2372,22 @@ if(searchInput){
 
 document
     .querySelectorAll(".tab")
-    .forEach(function(button){
+    .forEach(
+        button => {
 
-        button.addEventListener(
-            "click",
-            function(){
+            button.addEventListener(
+                "click",
+                function(){
 
-                activateTab(
-                    button.dataset.tab
-                );
+                    activateTab(
+                        button.dataset.tab
+                    );
 
-            }
-        );
+                }
+            );
 
-    });
+        }
+    );
 
 
 /* =========================================================
@@ -1541,31 +2396,35 @@ document
 
 window.VitalStarFriends = {
 
-    add:addFriend,
+    add:
+        addFriend,
 
-    accept:acceptRequest,
+    accept:
+        acceptRequest,
 
     acceptIncomingByUser,
 
-    decline:declineRequest,
+    decline:
+        declineRequest,
 
-    cancel:cancelRequest,
+    cancel:
+        cancelRequest,
 
-    remove:removeFriend,
+    remove:
+        removeFriend,
 
-    profile:openProfile,
+    profile:
+        openProfile,
 
-    message:messageUser,
+    message:
+        messageUser,
 
-    /*
-       Returns the current real-time count.
-    */
+    getCount:
+        function(){
 
-    getCount:function(){
+            return friends.length;
 
-        return friends.length;
-
-    }
+        }
 
 };
 
@@ -1576,7 +2435,7 @@ window.VitalStarFriends = {
 
 onAuthStateChanged(
     auth,
-    async function(user){
+    async user => {
 
         if(!user){
 
@@ -1592,13 +2451,7 @@ onAuthStateChanged(
             user;
 
 
-        /*
-           This listener is the source of truth
-           for the friends count.
-        */
-
         listenToFriends();
-
 
         listenToIncomingRequests();
 
