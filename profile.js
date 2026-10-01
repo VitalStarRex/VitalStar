@@ -60,6 +60,7 @@ function applyDarkTheme() {
     }
 }
 
+
 if (document.readyState === "loading") {
 
     document.addEventListener(
@@ -75,50 +76,33 @@ if (document.readyState === "loading") {
 
 
 // ============================================================
-// LOADER
+// ELEMENTS
+// IMPORTANT: These IDs now MATCH profile.html
 // ============================================================
 
 const loader =
     document.getElementById("loader");
 
-function hideLoader() {
-
-    if (!loader)
-        return;
-
-    loader.style.opacity =
-        "0";
-
-    setTimeout(() => {
-
-        loader.style.display =
-            "none";
-
-    }, 400);
-}
-
-
-// ============================================================
-// ELEMENTS
-// ============================================================
-
 const profileName =
-    document.getElementById("profileName");
+    document.getElementById("fullName");
 
 const username =
     document.getElementById("username");
 
 const profileImage =
-    document.getElementById("profileImage");
+    document.getElementById("profilePicture");
 
 const coverImage =
-    document.getElementById("coverImage");
+    document.getElementById("coverPhoto");
 
 const bio =
     document.getElementById("bio");
 
 const country =
     document.getElementById("country");
+
+const dob =
+    document.getElementById("dob");
 
 const gender =
     document.getElementById("gender");
@@ -130,19 +114,19 @@ const lastSeen =
     document.getElementById("lastSeen");
 
 const followersCount =
-    document.getElementById("followersCount");
+    document.getElementById("followers");
 
 const followingCount =
-    document.getElementById("followingCount");
+    document.getElementById("following");
 
 const postsCount =
-    document.getElementById("postsCount");
+    document.getElementById("posts");
 
 const gallery =
     document.getElementById("gallery");
 
 const editButton =
-    document.getElementById("editProfile");
+    document.getElementById("editProfileBtn");
 
 const followButton =
     document.getElementById("followBtn");
@@ -152,7 +136,7 @@ const messageButton =
 
 
 // ============================================================
-// GET PROFILE UID
+// PROFILE UID
 // ============================================================
 
 const params =
@@ -160,9 +144,6 @@ const params =
         window.location.search
     );
 
-// The UID can come from ?uid= or ?id=.
-// If neither exists, the logged-in user's UID
-// will be used after authentication.
 let profileUid =
     params.get("uid") ||
     params.get("id");
@@ -182,7 +163,26 @@ let requestReceived = false;
 
 
 // ============================================================
-// DARK BUTTON
+// LOADER
+// ============================================================
+
+function hideLoader() {
+
+    if (!loader)
+        return;
+
+    loader.style.opacity = "0";
+
+    setTimeout(() => {
+
+        loader.style.display = "none";
+
+    }, 400);
+}
+
+
+// ============================================================
+// BUTTON STYLE
 // ============================================================
 
 function styleButton(button) {
@@ -190,17 +190,11 @@ function styleButton(button) {
     if (!button)
         return;
 
-    button.style.background =
-        "linear-gradient(135deg,#071a38,#102f66)";
-
     button.style.color =
         "#ffffff";
 
     button.style.border =
         "1px solid #168cff";
-
-    button.style.boxShadow =
-        "0 0 12px rgba(22,140,255,.35)";
 
     button.style.borderRadius =
         "12px";
@@ -242,10 +236,7 @@ function createFriendButton() {
 
         const actions =
             document.querySelector(
-                ".profile-actions"
-            ) ||
-            document.querySelector(
-                ".actions"
+                ".buttons"
             ) ||
             followButton?.parentElement ||
             messageButton?.parentElement;
@@ -253,12 +244,6 @@ function createFriendButton() {
         if (actions) {
 
             actions.appendChild(
-                button
-            );
-
-        } else if (document.body) {
-
-            document.body.appendChild(
                 button
             );
         }
@@ -288,6 +273,9 @@ function showProfileElements() {
     if (country)
         country.style.display = "";
 
+    if (dob)
+        dob.style.display = "";
+
     if (gender)
         gender.style.display = "";
 
@@ -296,6 +284,12 @@ function showProfileElements() {
 
     if (lastSeen)
         lastSeen.style.display = "";
+
+    if (profileImage)
+        profileImage.style.display = "";
+
+    if (coverImage)
+        coverImage.style.display = "";
 }
 
 
@@ -306,51 +300,57 @@ function showProfileElements() {
 function showPrivateProfileMessage() {
 
     if (profileName)
-        profileName.style.display =
-            "none";
+        profileName.style.display = "none";
 
     if (username)
-        username.style.display =
-            "none";
+        username.style.display = "none";
 
     if (bio)
-        bio.style.display =
-            "none";
+        bio.style.display = "none";
 
     if (country)
-        country.style.display =
-            "none";
+        country.style.display = "none";
+
+    if (dob)
+        dob.style.display = "none";
 
     if (gender)
-        gender.style.display =
-            "none";
+        gender.style.display = "none";
 
     if (rank)
-        rank.style.display =
-            "none";
+        rank.style.display = "none";
 
     if (lastSeen)
-        lastSeen.style.display =
-            "none";
+        lastSeen.style.display = "none";
+
+
+    if (profileImage)
+        profileImage.style.display = "none";
+
+    if (coverImage)
+        coverImage.style.display = "none";
 
 
     if (followButton)
-        followButton.style.display =
-            "none";
+        followButton.style.display = "none";
 
     if (messageButton)
-        messageButton.style.display =
-            "none";
+        messageButton.style.display = "none";
 
 
     const friendBtn =
         createFriendButton();
 
+
+    // Own profile should NEVER show Add Friend
     if (
-        friendBtn &&
-        currentUser &&
-        currentUser.uid !== profileUid
+        !currentUser ||
+        currentUser.uid === profileUid
     ) {
+
+        friendBtn.style.display = "none";
+
+    } else {
 
         friendBtn.style.display =
             "inline-flex";
@@ -438,7 +438,7 @@ async function checkViewerIsAdmin(
 
     try {
 
-        const userSnap =
+        const snap =
             await getDoc(
                 doc(
                     db,
@@ -447,11 +447,11 @@ async function checkViewerIsAdmin(
                 )
             );
 
-        if (!userSnap.exists())
+        if (!snap.exists())
             return false;
 
         const data =
-            userSnap.data();
+            snap.data();
 
         return (
             data.isAdmin === true ||
@@ -555,11 +555,8 @@ async function checkFriendRequestStatus(
 
     requestReceived = false;
 
-    try {
 
-        // ----------------------------------------------------
-        // SENT REQUESTS
-        // ----------------------------------------------------
+    try {
 
         const sentQuery =
             query(
@@ -578,6 +575,7 @@ async function checkFriendRequestStatus(
             await getDocs(
                 sentQuery
             );
+
 
         for (
             const requestDoc
@@ -599,10 +597,6 @@ async function checkFriendRequestStatus(
         }
 
 
-        // ----------------------------------------------------
-        // RECEIVED REQUESTS
-        // ----------------------------------------------------
-
         const receivedQuery =
             query(
                 collection(
@@ -620,6 +614,7 @@ async function checkFriendRequestStatus(
             await getDocs(
                 receivedQuery
             );
+
 
         for (
             const requestDoc
@@ -733,6 +728,9 @@ async function updateFriendButton() {
     if (!button)
         return;
 
+
+    // IMPORTANT:
+    // Never show Add Friend on your own profile.
     if (
         !currentUser ||
         !profileUid ||
@@ -744,6 +742,7 @@ async function updateFriendButton() {
 
         return;
     }
+
 
     button.style.display =
         "inline-flex";
@@ -791,9 +790,6 @@ async function updateFriendButton() {
         button.style.borderColor =
             "#ffc107";
 
-        button.style.boxShadow =
-            "0 0 12px rgba(255,193,7,.25)";
-
         return;
     }
 
@@ -806,9 +802,6 @@ async function updateFriendButton() {
         button.style.borderColor =
             "#00ff88";
 
-        button.style.boxShadow =
-            "0 0 12px rgba(0,255,136,.3)";
-
         return;
     }
 
@@ -819,8 +812,8 @@ async function updateFriendButton() {
     button.style.borderColor =
         "#168cff";
 
-    button.style.boxShadow =
-        "0 0 12px rgba(22,140,255,.35)";
+    button.style.background =
+        "linear-gradient(135deg,#071a38,#102f66)";
 }
 
 
@@ -839,6 +832,7 @@ async function sendFriendRequest() {
         return;
     }
 
+
     const button =
         createFriendButton();
 
@@ -847,6 +841,7 @@ async function sendFriendRequest() {
 
     button.innerHTML =
         "⏳ Sending...";
+
 
     try {
 
@@ -867,6 +862,7 @@ async function sendFriendRequest() {
             await getDocs(
                 existingQuery
             );
+
 
         for (
             const requestDoc
@@ -961,6 +957,7 @@ async function acceptFriendRequest() {
         return;
     }
 
+
     try {
 
         const q =
@@ -976,11 +973,14 @@ async function acceptFriendRequest() {
                 )
             );
 
+
         const snapshot =
             await getDocs(q);
 
+
         let requestDoc =
             null;
+
 
         for (
             const item
@@ -1098,11 +1098,13 @@ async function removeFriend() {
 
     if (
         !currentUser ||
-        !profileUid
+        !profileUid ||
+        currentUser.uid === profileUid
     ) {
 
         return;
     }
+
 
     const confirmed =
         confirm(
@@ -1138,6 +1140,7 @@ async function removeFriend() {
                 )
             );
 
+
         const snapshot =
             await getDocs(q);
 
@@ -1149,6 +1152,7 @@ async function removeFriend() {
 
             const data =
                 friendDoc.data();
+
 
             if (
                 Array.isArray(
@@ -1173,35 +1177,6 @@ async function removeFriend() {
 
 
         await updateFriendButton();
-
-
-        const profileSnap =
-            await getDoc(
-                doc(
-                    db,
-                    "users",
-                    profileUid
-                )
-            );
-
-
-        if (profileSnap.exists()) {
-
-            const profileData =
-                profileSnap.data();
-
-            const allowed =
-                await canViewProfile(
-                    currentUser.uid,
-                    profileUid,
-                    profileData
-                );
-
-            if (!allowed) {
-
-                showPrivateProfileMessage();
-            }
-        }
 
     } catch (error) {
 
@@ -1237,6 +1212,15 @@ document.addEventListener(
 
         if (button.disabled)
             return;
+
+
+        if (
+            !currentUser ||
+            currentUser.uid === profileUid
+        ) {
+
+            return;
+        }
 
 
         if (isFriend) {
@@ -1323,6 +1307,194 @@ async function canViewProfile(
 
 
 // ============================================================
+// GET NUMERIC COUNT
+// ============================================================
+
+function getStoredCount(
+    data,
+    possibleNames
+) {
+
+    for (
+        const name
+        of possibleNames
+    ) {
+
+        const value =
+            data[name];
+
+
+        if (
+            typeof value === "number"
+        ) {
+
+            return value;
+        }
+
+
+        if (
+            typeof value === "string" &&
+            value.trim() !== ""
+        ) {
+
+            const number =
+                Number(value);
+
+            if (
+                Number.isFinite(number)
+            ) {
+
+                return number;
+            }
+        }
+
+
+        if (
+            Array.isArray(value)
+        ) {
+
+            return value.length;
+        }
+    }
+
+
+    return null;
+}
+
+
+// ============================================================
+// LOAD FOLLOWER COUNT
+// ============================================================
+
+async function loadFollowersCount(
+    uid,
+    profileData
+) {
+
+    if (!followersCount)
+        return;
+
+
+    const stored =
+        getStoredCount(
+            profileData,
+            [
+                "followersCount",
+                "followerCount",
+                "followers"
+            ]
+        );
+
+
+    if (stored !== null) {
+
+        followersCount.textContent =
+            stored;
+
+        return;
+    }
+
+
+    try {
+
+        const followersRef =
+            collection(
+                db,
+                "users",
+                uid,
+                "followers"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                followersRef
+            );
+
+
+        followersCount.textContent =
+            snapshot.size;
+
+    } catch (error) {
+
+        console.error(
+            "Followers count error:",
+            error
+        );
+
+        followersCount.textContent =
+            "0";
+    }
+}
+
+
+// ============================================================
+// LOAD FOLLOWING COUNT
+// ============================================================
+
+async function loadFollowingCount(
+    uid,
+    profileData
+) {
+
+    if (!followingCount)
+        return;
+
+
+    const stored =
+        getStoredCount(
+            profileData,
+            [
+                "followingCount",
+                "followingsCount",
+                "following"
+            ]
+        );
+
+
+    if (stored !== null) {
+
+        followingCount.textContent =
+            stored;
+
+        return;
+    }
+
+
+    try {
+
+        const followingRef =
+            collection(
+                db,
+                "users",
+                uid,
+                "following"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                followingRef
+            );
+
+
+        followingCount.textContent =
+            snapshot.size;
+
+    } catch (error) {
+
+        console.error(
+            "Following count error:",
+            error
+        );
+
+        followingCount.textContent =
+            "0";
+    }
+}
+
+
+// ============================================================
 // LOAD PROFILE
 // ============================================================
 
@@ -1347,6 +1519,7 @@ async function loadProfile() {
                 "users",
                 profileUid
             );
+
 
         const profileSnap =
             await getDoc(
@@ -1389,9 +1562,9 @@ async function loadProfile() {
             );
 
 
-        // ----------------------------------------------------
-        // PRIVATE
-        // ----------------------------------------------------
+        // ====================================================
+        // PRIVATE PROFILE
+        // ====================================================
 
         if (!allowed) {
 
@@ -1405,16 +1578,16 @@ async function loadProfile() {
         }
 
 
-        // ----------------------------------------------------
-        // RESTORE ELEMENTS
-        // ----------------------------------------------------
+        // ====================================================
+        // RESTORE
+        // ====================================================
 
         showProfileElements();
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // NAME
-        // ----------------------------------------------------
+        // ====================================================
 
         if (profileName) {
 
@@ -1425,105 +1598,171 @@ async function loadProfile() {
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // USERNAME
-        // ----------------------------------------------------
+        // ====================================================
 
         if (username) {
 
-            username.textContent =
-                data.username
-                    ? "@" + data.username
-                    : "";
+            if (data.username) {
+
+                username.textContent =
+                    data.username.startsWith("@")
+                        ? data.username
+                        : "@" + data.username;
+
+            } else {
+
+                username.textContent =
+                    "@username";
+            }
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // BIO
-        // ----------------------------------------------------
+        // ====================================================
 
         if (bio) {
 
             bio.textContent =
                 data.bio ||
-                "";
+                "No bio yet.";
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // COUNTRY
-        // ----------------------------------------------------
+        // ====================================================
 
         if (country) {
 
             country.textContent =
                 data.country
                     ? `🌍 ${data.country}`
-                    : "";
+                    : "🌍 Country";
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
+        // DATE OF BIRTH
+        // ====================================================
+
+        if (dob) {
+
+            dob.textContent =
+                data.dob ||
+                data.dateOfBirth
+                    ? `🎂 ${data.dob || data.dateOfBirth}`
+                    : "🎂 Birthday";
+        }
+
+
+        // ====================================================
         // GENDER
-        // ----------------------------------------------------
+        // ====================================================
 
         if (gender) {
 
             gender.textContent =
                 data.gender
-                    ? `⚧ ${data.gender}`
-                    : "";
+                    ? `🚻 ${data.gender}`
+                    : "🚻 Gender";
         }
 
 
-        // ----------------------------------------------------
-        // PROFILE IMAGE
-        // ----------------------------------------------------
+        // ====================================================
+        // PROFILE PICTURE
+        // ====================================================
 
         if (profileImage) {
 
-            profileImage.src =
+            const imageURL =
                 data.profilePicture ||
                 data.photoURL ||
-                "https://via.placeholder.com/300?text=VS";
+                data.profileImage ||
+                data.avatar ||
+                data.photo ||
+                "";
 
-            profileImage.onerror = () => {
+
+            if (imageURL) {
+
+                profileImage.src =
+                    imageURL;
+
+                profileImage.style.display =
+                    "";
+
+            } else {
 
                 profileImage.src =
                     "https://via.placeholder.com/300?text=VS";
-            };
+
+                profileImage.style.display =
+                    "";
+            }
+
+
+            profileImage.onerror =
+                () => {
+
+                    profileImage.onerror =
+                        null;
+
+                    profileImage.src =
+                        "https://via.placeholder.com/300?text=VS";
+                };
         }
 
 
-        // ----------------------------------------------------
-        // COVER
-        // ----------------------------------------------------
+        // ====================================================
+        // COVER PHOTO
+        // ====================================================
 
         if (coverImage) {
 
-            if (
+            const coverURL =
                 data.coverPicture ||
-                data.coverPhoto
-            ) {
+                data.coverPhoto ||
+                data.coverImage ||
+                data.coverURL ||
+                "";
+
+
+            if (coverURL) {
 
                 coverImage.src =
-                    data.coverPicture ||
-                    data.coverPhoto;
+                    coverURL;
 
                 coverImage.style.display =
                     "";
 
             } else {
 
+                coverImage.src =
+                    "https://via.placeholder.com/1200x350?text=VitalStar";
+
                 coverImage.style.display =
-                    "none";
+                    "";
             }
+
+
+            coverImage.onerror =
+                () => {
+
+                    coverImage.onerror =
+                        null;
+
+                    coverImage.src =
+                        "https://via.placeholder.com/1200x350?text=VitalStar";
+                };
         }
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // RANK
-        // ----------------------------------------------------
+        // ====================================================
 
         if (rank) {
 
@@ -1538,40 +1777,30 @@ async function loadProfile() {
             } else {
 
                 rank.textContent =
-                    data.rank ||
-                    "Member";
+                    data.rank
+                        ? `🏅 ${data.rank}`
+                        : "🏅 Member";
             }
         }
 
 
-        // ----------------------------------------------------
-        // COUNTS
-        // ----------------------------------------------------
-
-        if (followersCount) {
-
-            followersCount.textContent =
-                data.followersCount ||
-                0;
-        }
-
-
-        if (followingCount) {
-
-            followingCount.textContent =
-                data.followingCount ||
-                0;
-        }
-
-
-        // ----------------------------------------------------
+        // ====================================================
         // OWN PROFILE
-        // ----------------------------------------------------
+        // ====================================================
 
-        if (
-            currentUser.uid ===
-            profileUid
-        ) {
+        const viewingOwnProfile =
+            currentUser.uid === profileUid;
+
+
+        if (viewingOwnProfile) {
+
+            // NEVER show friend button
+            const friendBtn =
+                createFriendButton();
+
+            friendBtn.style.display =
+                "none";
+
 
             if (editButton)
                 editButton.style.display =
@@ -1601,11 +1830,17 @@ async function loadProfile() {
 
 
             await updateFriendButton();
+        }
 
 
-            // ------------------------------------------------
-            // FOLLOW STATUS
-            // ------------------------------------------------
+        // ====================================================
+        // FOLLOW STATUS
+        // ====================================================
+
+        if (
+            !viewingOwnProfile &&
+            followButton
+        ) {
 
             try {
 
@@ -1618,19 +1853,17 @@ async function loadProfile() {
                         profileUid
                     );
 
+
                 const followingSnap =
                     await getDoc(
                         followingRef
                     );
 
 
-                if (followButton) {
-
-                    followButton.textContent =
-                        followingSnap.exists()
-                            ? "Following"
-                            : "Follow";
-                }
+                followButton.textContent =
+                    followingSnap.exists()
+                        ? "Following"
+                        : "Follow";
 
             } catch (error) {
 
@@ -1642,9 +1875,28 @@ async function loadProfile() {
         }
 
 
-        // ----------------------------------------------------
-        // REALTIME ONLINE STATUS
-        // ----------------------------------------------------
+        // ====================================================
+        // COUNTS
+        // ====================================================
+
+        await Promise.allSettled([
+
+            loadFollowersCount(
+                profileUid,
+                data
+            ),
+
+            loadFollowingCount(
+                profileUid,
+                data
+            )
+
+        ]);
+
+
+        // ====================================================
+        // REALTIME STATUS
+        // ====================================================
 
         if (lastSeen) {
 
@@ -1690,7 +1942,7 @@ async function loadProfile() {
                     } else {
 
                         lastSeen.textContent =
-                            "Offline";
+                            "⚪ Offline";
 
                         lastSeen.style.color =
                             "#8ea4c8";
@@ -1700,9 +1952,9 @@ async function loadProfile() {
         }
 
 
-        // ----------------------------------------------------
-        // POSTS
-        // ----------------------------------------------------
+        // ====================================================
+        // POSTS + POST COUNT
+        // ====================================================
 
         await loadProfilePosts(
             profileUid
@@ -1715,6 +1967,7 @@ async function loadProfile() {
             "Profile loading error:",
             error
         );
+
 
         if (gallery) {
 
@@ -1745,7 +1998,8 @@ function formatLastSeen(
 ) {
 
     if (!timestamp)
-        return "Offline";
+        return "⚪ Offline";
+
 
     let time =
         timestamp;
@@ -1793,18 +2047,18 @@ function formatLastSeen(
 
 
     if (seconds < 60)
-        return "Last seen just now";
+        return "🟢 Last seen just now";
 
     if (minutes < 60)
-        return `Last seen ${minutes}m ago`;
+        return `⚪ Last seen ${minutes}m ago`;
 
     if (hours < 24)
-        return `Last seen ${hours}h ago`;
+        return `⚪ Last seen ${hours}h ago`;
 
     if (days < 7)
-        return `Last seen ${days}d ago`;
+        return `⚪ Last seen ${days}d ago`;
 
-    return `Last seen ${weeks}w ago`;
+    return `⚪ Last seen ${weeks}w ago`;
 }
 
 
@@ -1821,12 +2075,6 @@ async function loadProfilePosts(
 
 
     try {
-
-        // ----------------------------------------------------
-        // Query only by UID.
-        // Sorting is done in JavaScript so a Firestore
-        // composite index is not required.
-        // ----------------------------------------------------
 
         const postsQuery =
             query(
@@ -1848,40 +2096,9 @@ async function loadProfilePosts(
             );
 
 
-        // ----------------------------------------------------
-        // SORT POSTS NEWEST FIRST
-        // ----------------------------------------------------
-
-        const postDocs =
-            snapshot.docs.sort(
-                (a, b) => {
-
-                    const aData =
-                        a.data();
-
-                    const bData =
-                        b.data();
-
-
-                    const aTime =
-                        getPostTime(
-                            aData.createdAt
-                        );
-
-                    const bTime =
-                        getPostTime(
-                            bData.createdAt
-                        );
-
-
-                    return bTime - aTime;
-                }
-            );
-
-
-        // ----------------------------------------------------
+        // ====================================================
         // POST COUNT
-        // ----------------------------------------------------
+        // ====================================================
 
         if (postsCount) {
 
@@ -1890,13 +2107,32 @@ async function loadProfilePosts(
         }
 
 
+        // ====================================================
+        // SORT NEWEST FIRST
+        // ====================================================
+
+        const postDocs =
+            snapshot.docs.sort(
+                (a, b) => {
+
+                    const aTime =
+                        getPostTime(
+                            a.data().createdAt
+                        );
+
+                    const bTime =
+                        getPostTime(
+                            b.data().createdAt
+                        );
+
+                    return bTime - aTime;
+                }
+            );
+
+
         gallery.innerHTML =
             "";
 
-
-        // ----------------------------------------------------
-        // NO POSTS
-        // ----------------------------------------------------
 
         if (
             postDocs.length ===
@@ -1917,10 +2153,6 @@ async function loadProfilePosts(
             return;
         }
 
-
-        // ----------------------------------------------------
-        // SHOW FIRST 10
-        // ----------------------------------------------------
 
         const posts =
             postDocs.slice(
@@ -1974,10 +2206,6 @@ async function loadProfilePosts(
                     "";
 
 
-                // ------------------------------------------------
-                // IMAGE
-                // ------------------------------------------------
-
                 if (post.image) {
 
                     mediaHTML += `
@@ -1998,10 +2226,6 @@ async function loadProfilePosts(
                     `;
                 }
 
-
-                // ------------------------------------------------
-                // VIDEO
-                // ------------------------------------------------
 
                 if (post.video) {
 
@@ -2049,6 +2273,11 @@ async function loadProfilePosts(
             "Posts loading error:",
             error
         );
+
+
+        if (postsCount)
+            postsCount.textContent = "0";
+
 
         gallery.innerHTML = `
             <div style="
@@ -2164,7 +2393,24 @@ function escapeAttribute(
 
 
 // ============================================================
-// MESSAGE BUTTON
+// EDIT PROFILE
+// ============================================================
+
+if (editButton) {
+
+    editButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "edit-profile.html";
+        }
+    );
+}
+
+
+// ============================================================
+// MESSAGE
 // ============================================================
 
 if (messageButton) {
@@ -2206,16 +2452,37 @@ onAuthStateChanged(
             user;
 
 
-        // ----------------------------------------------------
-        // IMPORTANT:
-        // If profile.html has no ?uid= or ?id=,
-        // automatically show the logged-in user's profile.
-        // ----------------------------------------------------
+        // ====================================================
+        // OWN PROFILE
+        // If profile.html is opened without ?uid=,
+        // use the logged-in user's UID.
+        // ====================================================
 
         if (!profileUid) {
 
             profileUid =
                 user.uid;
+        }
+
+
+        // Extra protection against accidental
+        // "Add Friend" on own profile.
+
+        if (
+            currentUser.uid ===
+            profileUid
+        ) {
+
+            const friendBtn =
+                document.getElementById(
+                    "friendBtn"
+                );
+
+            if (friendBtn) {
+
+                friendBtn.style.display =
+                    "none";
+            }
         }
 
 
