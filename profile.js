@@ -1,6 +1,7 @@
 // ============================================================
 // VITALSTAR — PROFILE PAGE
 // Dark Theme + Friends + Privacy Protection
+// Loading Indicator + See More Posts + Cancel Request
 // Firebase v10.12.2
 // ============================================================
 
@@ -77,7 +78,6 @@ if (document.readyState === "loading") {
 
 // ============================================================
 // ELEMENTS
-// IMPORTANT: These IDs now MATCH profile.html
 // ============================================================
 
 const loader =
@@ -161,21 +161,144 @@ let requestSent = false;
 
 let requestReceived = false;
 
+let allProfilePosts = [];
+
+let visiblePostCount = 10;
+
+let postsLoading = false;
+
 
 // ============================================================
-// LOADER
+// LOADING INDICATOR
 // ============================================================
+
+function showLoadingIndicator(
+    text = "Loading..."
+) {
+
+    if (!gallery)
+        return;
+
+    gallery.innerHTML = `
+        <div id="profileLoadingIndicator" style="
+            width:100%;
+            max-width:500px;
+            margin:35px auto;
+            padding:35px 20px;
+            box-sizing:border-box;
+            text-align:center;
+            border-radius:22px;
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(8,20,45,.98),
+                    rgba(3,8,20,.98)
+                );
+            border:1px solid
+                rgba(40,130,255,.4);
+            box-shadow:
+                0 0 30px
+                rgba(0,100,255,.16);
+            color:white;
+        ">
+
+            <div style="
+                width:48px;
+                height:48px;
+                margin:0 auto 18px;
+                border:4px solid
+                    rgba(255,255,255,.15);
+                border-top-color:#168cff;
+                border-right-color:#a855f7;
+                border-radius:50%;
+                animation:
+                    vitalStarSpin .8s linear infinite;
+            "></div>
+
+            <div style="
+                font-size:16px;
+                font-weight:700;
+                color:#dce9ff;
+            ">
+                ${escapeHTML(text)}
+            </div>
+
+        </div>
+
+        <style>
+            @keyframes vitalStarSpin {
+                from {
+                    transform:rotate(0deg);
+                }
+
+                to {
+                    transform:rotate(360deg);
+                }
+            }
+        </style>
+    `;
+}
+
+
+function showPostsLoadingIndicator() {
+
+    if (!gallery)
+        return;
+
+    const indicator =
+        document.createElement("div");
+
+    indicator.id =
+        "postsLoadingIndicator";
+
+    indicator.style.cssText = `
+        width:100%;
+        padding:30px 20px;
+        box-sizing:border-box;
+        text-align:center;
+        color:#9fb4d8;
+    `;
+
+    indicator.innerHTML = `
+        <div style="
+            width:32px;
+            height:32px;
+            margin:0 auto 12px;
+            border:3px solid
+                rgba(255,255,255,.12);
+            border-top-color:#168cff;
+            border-right-color:#a855f7;
+            border-radius:50%;
+            animation:
+                vitalStarSpin .8s linear infinite;
+        "></div>
+
+        <div style="
+            font-size:14px;
+            font-weight:600;
+        ">
+            Loading posts...
+        </div>
+    `;
+
+    gallery.appendChild(
+        indicator
+    );
+}
+
 
 function hideLoader() {
 
     if (!loader)
         return;
 
-    loader.style.opacity = "0";
+    loader.style.opacity =
+        "0";
 
     setTimeout(() => {
 
-        loader.style.display = "none";
+        loader.style.display =
+            "none";
 
     }, 400);
 }
@@ -204,6 +327,29 @@ function styleButton(button) {
 
     button.style.transition =
         "all .2s ease";
+
+    button.style.textAlign =
+        "center";
+
+    button.style.justifyContent =
+        "center";
+
+    button.style.alignItems =
+        "center";
+
+    button.style.display =
+        button.style.display === "none"
+            ? "none"
+            : "inline-flex";
+
+    button.style.minHeight =
+        "42px";
+
+    button.style.padding =
+        "10px 18px";
+
+    button.style.fontWeight =
+        "700";
 }
 
 
@@ -323,7 +469,6 @@ function showPrivateProfileMessage() {
     if (lastSeen)
         lastSeen.style.display = "none";
 
-
     if (profileImage)
         profileImage.style.display = "none";
 
@@ -338,22 +483,27 @@ function showPrivateProfileMessage() {
         messageButton.style.display = "none";
 
 
+    // ========================================================
+    // IMPORTANT:
+    // FRIEND BUTTON REMAINS PUBLIC ON PRIVATE PROFILES
+    // ========================================================
+
     const friendBtn =
         createFriendButton();
 
 
-    // Own profile should NEVER show Add Friend
     if (
-        !currentUser ||
-        currentUser.uid === profileUid
+        currentUser &&
+        currentUser.uid !== profileUid
     ) {
 
-        friendBtn.style.display = "none";
+        friendBtn.style.display =
+            "inline-flex";
 
     } else {
 
         friendBtn.style.display =
-            "inline-flex";
+            "none";
     }
 
 
@@ -551,9 +701,11 @@ async function checkFriendRequestStatus(
     targetUid
 ) {
 
-    requestSent = false;
+    requestSent =
+        false;
 
-    requestReceived = false;
+    requestReceived =
+        false;
 
 
     try {
@@ -590,7 +742,8 @@ async function checkFriendRequestStatus(
                 data.status === "pending"
             ) {
 
-                requestSent = true;
+                requestSent =
+                    true;
 
                 break;
             }
@@ -629,7 +782,8 @@ async function checkFriendRequestStatus(
                 data.status === "pending"
             ) {
 
-                requestReceived = true;
+                requestReceived =
+                    true;
 
                 break;
             }
@@ -642,6 +796,69 @@ async function checkFriendRequestStatus(
             error
         );
     }
+}
+
+
+// ============================================================
+// FIND SENT REQUEST DOCUMENT
+// ============================================================
+
+async function findSentFriendRequest() {
+
+    if (
+        !currentUser ||
+        !profileUid
+    ) {
+
+        return null;
+    }
+
+    try {
+
+        const q =
+            query(
+                collection(
+                    db,
+                    "friendRequests"
+                ),
+                where(
+                    "from",
+                    "==",
+                    currentUser.uid
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(q);
+
+
+        for (
+            const requestDoc
+            of snapshot.docs
+        ) {
+
+            const data =
+                requestDoc.data();
+
+            if (
+                data.to === profileUid &&
+                data.status === "pending"
+            ) {
+
+                return requestDoc;
+            }
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Find request error:",
+            error
+        );
+    }
+
+    return null;
 }
 
 
@@ -729,8 +946,10 @@ async function updateFriendButton() {
         return;
 
 
-    // IMPORTANT:
-    // Never show Add Friend on your own profile.
+    // ========================================================
+    // NEVER SHOW FRIEND BUTTON ON OWN PROFILE
+    // ========================================================
+
     if (
         !currentUser ||
         !profileUid ||
@@ -750,6 +969,18 @@ async function updateFriendButton() {
     button.disabled =
         false;
 
+    button.style.opacity =
+        "1";
+
+    button.style.textAlign =
+        "center";
+
+    button.style.justifyContent =
+        "center";
+
+    button.style.alignItems =
+        "center";
+
 
     isFriend =
         await checkIfFriends(
@@ -767,6 +998,10 @@ async function updateFriendButton() {
     }
 
 
+    // ========================================================
+    // FRIEND
+    // ========================================================
+
     if (isFriend) {
 
         button.innerHTML =
@@ -775,6 +1010,9 @@ async function updateFriendButton() {
         button.style.borderColor =
             "#ff4d6d";
 
+        button.style.background =
+            "linear-gradient(135deg,#3b0b19,#66152b)";
+
         button.style.boxShadow =
             "0 0 12px rgba(255,77,109,.3)";
 
@@ -782,17 +1020,31 @@ async function updateFriendButton() {
     }
 
 
+    // ========================================================
+    // REQUEST SENT
+    // ========================================================
+
     if (requestSent) {
 
         button.innerHTML =
-            "⏳ Request Sent";
+            "⏳ Cancel Request";
 
         button.style.borderColor =
             "#ffc107";
 
+        button.style.background =
+            "linear-gradient(135deg,#3d2a00,#664800)";
+
+        button.style.boxShadow =
+            "0 0 12px rgba(255,193,7,.25)";
+
         return;
     }
 
+
+    // ========================================================
+    // REQUEST RECEIVED
+    // ========================================================
 
     if (requestReceived) {
 
@@ -802,9 +1054,19 @@ async function updateFriendButton() {
         button.style.borderColor =
             "#00ff88";
 
+        button.style.background =
+            "linear-gradient(135deg,#063d25,#087044)";
+
+        button.style.boxShadow =
+            "0 0 12px rgba(0,255,136,.25)";
+
         return;
     }
 
+
+    // ========================================================
+    // ADD FRIEND
+    // ========================================================
 
     button.innerHTML =
         "👥 Add Friend";
@@ -814,6 +1076,9 @@ async function updateFriendButton() {
 
     button.style.background =
         "linear-gradient(135deg,#071a38,#102f66)";
+
+    button.style.boxShadow =
+        "0 0 12px rgba(22,140,255,.18)";
 }
 
 
@@ -841,6 +1106,9 @@ async function sendFriendRequest() {
 
     button.innerHTML =
         "⏳ Sending...";
+
+    button.style.justifyContent =
+        "center";
 
 
     try {
@@ -876,6 +1144,9 @@ async function sendFriendRequest() {
                 data.to === profileUid &&
                 data.status === "pending"
             ) {
+
+                requestSent =
+                    true;
 
                 await updateFriendButton();
 
@@ -936,6 +1207,70 @@ async function sendFriendRequest() {
 
         alert(
             "Unable to send friend request."
+        );
+
+        await updateFriendButton();
+    }
+}
+
+
+// ============================================================
+// CANCEL FRIEND REQUEST
+// ============================================================
+
+async function cancelFriendRequest() {
+
+    if (
+        !currentUser ||
+        !profileUid
+    ) {
+
+        return;
+    }
+
+
+    const button =
+        createFriendButton();
+
+    button.disabled =
+        true;
+
+    button.innerHTML =
+        "⏳ Cancelling...";
+
+    button.style.justifyContent =
+        "center";
+
+
+    try {
+
+        const requestDoc =
+            await findSentFriendRequest();
+
+
+        if (requestDoc) {
+
+            await deleteDoc(
+                requestDoc.ref
+            );
+        }
+
+
+        requestSent =
+            false;
+
+
+        await updateFriendButton();
+
+    } catch (error) {
+
+        console.error(
+            "Cancel friend request error:",
+            error
+        );
+
+        alert(
+            "Unable to cancel friend request."
         );
 
         await updateFriendButton();
@@ -1072,7 +1407,6 @@ async function acceptFriendRequest() {
 
 
         await updateFriendButton();
-
 
         await loadProfile();
 
@@ -1240,6 +1574,8 @@ document.addEventListener(
 
 
         if (requestSent) {
+
+            await cancelFriendRequest();
 
             return;
         }
@@ -1511,6 +1847,11 @@ async function loadProfile() {
     }
 
 
+    showLoadingIndicator(
+        "Loading profile..."
+    );
+
+
     try {
 
         const profileRef =
@@ -1570,6 +1911,7 @@ async function loadProfile() {
 
             showPrivateProfileMessage();
 
+            // FRIEND BUTTON IS STILL AVAILABLE
             await updateFriendButton();
 
             hideLoader();
@@ -1650,10 +1992,14 @@ async function loadProfile() {
 
         if (dob) {
 
-            dob.textContent =
+            const birthday =
                 data.dob ||
-                data.dateOfBirth
-                    ? `🎂 ${data.dob || data.dateOfBirth}`
+                data.dateOfBirth ||
+                "";
+
+            dob.textContent =
+                birthday
+                    ? `🎂 ${birthday}`
                     : "🎂 Birthday";
         }
 
@@ -1686,22 +2032,12 @@ async function loadProfile() {
                 "";
 
 
-            if (imageURL) {
+            profileImage.src =
+                imageURL ||
+                "https://via.placeholder.com/300?text=VS";
 
-                profileImage.src =
-                    imageURL;
-
-                profileImage.style.display =
-                    "";
-
-            } else {
-
-                profileImage.src =
-                    "https://via.placeholder.com/300?text=VS";
-
-                profileImage.style.display =
-                    "";
-            }
+            profileImage.style.display =
+                "";
 
 
             profileImage.onerror =
@@ -1730,22 +2066,12 @@ async function loadProfile() {
                 "";
 
 
-            if (coverURL) {
+            coverImage.src =
+                coverURL ||
+                "https://via.placeholder.com/1200x350?text=VitalStar";
 
-                coverImage.src =
-                    coverURL;
-
-                coverImage.style.display =
-                    "";
-
-            } else {
-
-                coverImage.src =
-                    "https://via.placeholder.com/1200x350?text=VitalStar";
-
-                coverImage.style.display =
-                    "";
-            }
+            coverImage.style.display =
+                "";
 
 
             coverImage.onerror =
@@ -1794,7 +2120,6 @@ async function loadProfile() {
 
         if (viewingOwnProfile) {
 
-            // NEVER show friend button
             const friendBtn =
                 createFriendButton();
 
@@ -1953,7 +2278,7 @@ async function loadProfile() {
 
 
         // ====================================================
-        // POSTS + POST COUNT
+        // POSTS
         // ====================================================
 
         await loadProfilePosts(
@@ -2074,7 +2399,18 @@ async function loadProfilePosts(
         return;
 
 
+    if (postsLoading)
+        return;
+
+
+    postsLoading =
+        true;
+
+
     try {
+
+        showPostsLoadingIndicator();
+
 
         const postsQuery =
             query(
@@ -2111,7 +2447,7 @@ async function loadProfilePosts(
         // SORT NEWEST FIRST
         // ====================================================
 
-        const postDocs =
+        allProfilePosts =
             snapshot.docs.sort(
                 (a, b) => {
 
@@ -2130,141 +2466,11 @@ async function loadProfilePosts(
             );
 
 
-        gallery.innerHTML =
-            "";
+        visiblePostCount =
+            10;
 
 
-        if (
-            postDocs.length ===
-            0
-        ) {
-
-            gallery.innerHTML = `
-                <div style="
-                    width:100%;
-                    text-align:center;
-                    padding:40px 20px;
-                    color:#8ea4c8;
-                ">
-                    No posts yet.
-                </div>
-            `;
-
-            return;
-        }
-
-
-        const posts =
-            postDocs.slice(
-                0,
-                10
-            );
-
-
-        posts.forEach(
-            postDoc => {
-
-                const post =
-                    postDoc.data();
-
-
-                const card =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                card.style.cssText = `
-                    width:100%;
-                    margin-bottom:15px;
-                    padding:16px;
-                    box-sizing:border-box;
-                    border-radius:18px;
-                    background:
-                        linear-gradient(
-                            145deg,
-                            #09162e,
-                            #040914
-                        );
-                    border:
-                        1px solid
-                        rgba(35,115,220,.3);
-                    box-shadow:
-                        0 0 18px
-                        rgba(0,70,160,.12);
-                    color:#fff;
-                `;
-
-
-                const text =
-                    post.text ||
-                    post.content ||
-                    "";
-
-
-                let mediaHTML =
-                    "";
-
-
-                if (post.image) {
-
-                    mediaHTML += `
-                        <img
-                            src="${escapeAttribute(
-                                post.image
-                            )}"
-                            alt="Post image"
-                            style="
-                                width:100%;
-                                max-height:450px;
-                                object-fit:cover;
-                                border-radius:14px;
-                                margin-top:12px;
-                                display:block;
-                            "
-                        >
-                    `;
-                }
-
-
-                if (post.video) {
-
-                    mediaHTML += `
-                        <video
-                            src="${escapeAttribute(
-                                post.video
-                            )}"
-                            controls
-                            style="
-                                width:100%;
-                                max-height:450px;
-                                border-radius:14px;
-                                margin-top:12px;
-                                display:block;
-                            "
-                        ></video>
-                    `;
-                }
-
-
-                card.innerHTML = `
-                    <div style="
-                        color:#ffffff;
-                        line-height:1.6;
-                        word-break:break-word;
-                    ">
-                        ${escapeHTML(text)}
-                    </div>
-
-                    ${mediaHTML}
-                `;
-
-
-                gallery.appendChild(
-                    card
-                );
-            }
-        );
+        renderVisiblePosts();
 
 
     } catch (error) {
@@ -2276,7 +2482,8 @@ async function loadProfilePosts(
 
 
         if (postsCount)
-            postsCount.textContent = "0";
+            postsCount.textContent =
+                "0";
 
 
         gallery.innerHTML = `
@@ -2288,7 +2495,264 @@ async function loadProfilePosts(
                 Unable to load posts.
             </div>
         `;
+
+    } finally {
+
+        postsLoading =
+            false;
     }
+}
+
+
+// ============================================================
+// RENDER VISIBLE POSTS
+// ============================================================
+
+function renderVisiblePosts() {
+
+    if (!gallery)
+        return;
+
+
+    gallery.innerHTML =
+        "";
+
+
+    if (
+        allProfilePosts.length ===
+        0
+    ) {
+
+        gallery.innerHTML = `
+            <div style="
+                width:100%;
+                text-align:center;
+                padding:40px 20px;
+                color:#8ea4c8;
+            ">
+                No posts yet.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const visiblePosts =
+        allProfilePosts.slice(
+            0,
+            visiblePostCount
+        );
+
+
+    visiblePosts.forEach(
+        postDoc => {
+
+            renderPostCard(
+                postDoc
+            );
+        }
+    );
+
+
+    // ========================================================
+    // SEE MORE
+    // ========================================================
+
+    if (
+        visiblePostCount <
+        allProfilePosts.length
+    ) {
+
+        const seeMore =
+            document.createElement(
+                "button"
+            );
+
+
+        seeMore.type =
+            "button";
+
+        seeMore.id =
+            "seeMorePostsBtn";
+
+        seeMore.innerHTML =
+            "⬇️ See More Posts";
+
+
+        seeMore.style.cssText = `
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            width:calc(100% - 30px);
+            max-width:420px;
+            margin:20px auto 30px;
+            padding:13px 20px;
+            border:1px solid #168cff;
+            border-radius:14px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #071a38,
+                    #102f66
+                );
+            color:#ffffff;
+            font-size:15px;
+            font-weight:800;
+            text-align:center;
+            cursor:pointer;
+            box-shadow:
+                0 0 16px
+                rgba(22,140,255,.18);
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+        `;
+
+
+        seeMore.addEventListener(
+            "click",
+            () => {
+
+                seeMore.disabled =
+                    true;
+
+                seeMore.innerHTML =
+                    "⏳ Loading...";
+
+                seeMore.style.opacity =
+                    ".7";
+
+
+                setTimeout(
+                    () => {
+
+                        visiblePostCount +=
+                            10;
+
+                        renderVisiblePosts();
+
+                    },
+                    150
+                );
+            }
+        );
+
+
+        gallery.appendChild(
+            seeMore
+        );
+    }
+}
+
+
+// ============================================================
+// RENDER SINGLE POST
+// ============================================================
+
+function renderPostCard(
+    postDoc
+) {
+
+    const post =
+        postDoc.data();
+
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.style.cssText = `
+        width:100%;
+        margin-bottom:15px;
+        padding:16px;
+        box-sizing:border-box;
+        border-radius:18px;
+        background:
+            linear-gradient(
+                145deg,
+                #09162e,
+                #040914
+            );
+        border:
+            1px solid
+            rgba(35,115,220,.3);
+        box-shadow:
+            0 0 18px
+            rgba(0,70,160,.12);
+        color:#fff;
+    `;
+
+
+    const text =
+        post.text ||
+        post.content ||
+        "";
+
+
+    let mediaHTML =
+        "";
+
+
+    if (post.image) {
+
+        mediaHTML += `
+            <img
+                src="${escapeAttribute(
+                    post.image
+                )}"
+                alt="Post image"
+                style="
+                    width:100%;
+                    max-height:450px;
+                    object-fit:cover;
+                    border-radius:14px;
+                    margin-top:12px;
+                    display:block;
+                "
+            >
+        `;
+    }
+
+
+    if (post.video) {
+
+        mediaHTML += `
+            <video
+                src="${escapeAttribute(
+                    post.video
+                )}"
+                controls
+                style="
+                    width:100%;
+                    max-height:450px;
+                    border-radius:14px;
+                    margin-top:12px;
+                    display:block;
+                "
+            ></video>
+        `;
+    }
+
+
+    card.innerHTML = `
+        <div style="
+            color:#ffffff;
+            line-height:1.6;
+            word-break:break-word;
+        ">
+            ${escapeHTML(text)}
+        </div>
+
+        ${mediaHTML}
+    `;
+
+
+    gallery.appendChild(
+        card
+    );
 }
 
 
@@ -2454,8 +2918,6 @@ onAuthStateChanged(
 
         // ====================================================
         // OWN PROFILE
-        // If profile.html is opened without ?uid=,
-        // use the logged-in user's UID.
         // ====================================================
 
         if (!profileUid) {
@@ -2465,8 +2927,10 @@ onAuthStateChanged(
         }
 
 
-        // Extra protection against accidental
-        // "Add Friend" on own profile.
+        // ====================================================
+        // EXTRA PROTECTION
+        // NEVER SHOW FRIEND BUTTON ON OWN PROFILE
+        // ====================================================
 
         if (
             currentUser.uid ===
