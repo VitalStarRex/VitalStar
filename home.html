@@ -39,10 +39,6 @@ body{
     padding-bottom:88px;
 }
 
-/* =========================================================
-   BACKGROUND
-   ========================================================= */
-
 body::before{
     content:"";
     position:fixed;
@@ -312,10 +308,6 @@ header{
 
     overflow-y:auto;
 }
-
-/* =========================================================
-   SIDEBAR HEADER
-   ========================================================= */
 
 .sidebar-header{
     display:flex;
@@ -605,10 +597,6 @@ header{
     margin:0 0 17px;
 }
 
-/* =========================================================
-   COMPOSER
-   ========================================================= */
-
 .composer{
     background:
         linear-gradient(
@@ -693,6 +681,7 @@ header{
     flex:1;
 
     border:0;
+
     background:none;
 
     color:#bbc4e2;
@@ -1341,10 +1330,6 @@ function closeMenu(){
 
 <main class="container">
 
-<!-- =========================================================
-     STORIES
-     ========================================================= -->
-
 <section class="stories-section">
 
 <div class="stories">
@@ -1457,16 +1442,7 @@ function closeMenu(){
 
 </section>
 
-<!-- =========================================================
-     CREATE POST
-     post.js loads the complete composer here
-     ========================================================= -->
-
 <div id="createPost"></div>
-
-<!-- =========================================================
-     COMPATIBILITY
-     ========================================================= -->
 
 <div class="compatibility-text">
 
@@ -1479,10 +1455,6 @@ function closeMenu(){
 </p>
 
 </div>
-
-<!-- =========================================================
-     FEED
-     ========================================================= -->
 
 <div id="feed"></div>
 
@@ -1666,24 +1638,28 @@ auth.onAuthStateChanged(
         }
 
 
+        /*
+         * IMPORTANT:
+         * Friend requests are stored in
+         * "friendRequests", NOT "notifications".
+         *
+         * We only query by "to" here and
+         * check "status" below. This avoids
+         * needing a Firestore composite index.
+         */
+
         const requestsQuery =
             query(
 
                 collection(
                     db,
-                    "notifications"
+                    "friendRequests"
                 ),
 
                 where(
-                    "receiverId",
+                    "to",
                     "==",
                     user.uid
-                ),
-
-                where(
-                    "type",
-                    "==",
-                    "friend_request"
                 )
 
             );
@@ -1699,23 +1675,15 @@ auth.onAuthStateChanged(
 
 
                 snapshot.forEach(
-                    notificationDoc => {
+                    requestDoc => {
 
-                        const notification =
-                            notificationDoc.data();
+                        const request =
+                            requestDoc.data();
 
-
-                        /*
-                         * Count pending requests.
-                         *
-                         * New requests normally have
-                         * no requestStatus yet.
-                         */
 
                         if(
-                            !notification.requestStatus ||
-                            notification.requestStatus ===
-                                "pending"
+                            request.status ===
+                            "pending"
                         ){
 
                             count++;
@@ -1727,6 +1695,12 @@ auth.onAuthStateChanged(
 
 
                 updateFriendRequestBadge(
+                    count
+                );
+
+
+                console.log(
+                    "Pending friend requests:",
                     count
                 );
 
