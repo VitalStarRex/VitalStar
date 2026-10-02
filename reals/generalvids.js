@@ -1,26 +1,11 @@
 // ============================================================
 // VITALSTAR — GENERAL REELS
 // ============================================================
-// General Reals contains:
-//
-// 1. Public videos from normal VitalStar posts
-// 2. Video posts from all VitalStar groups
-//
-// GROUP VIDEO:
-//    → Shows GROUP name
-//    → Shows GROUP profile picture
-//    → Tap group name/photo → opens group
-//
-// NORMAL VIDEO:
-//    → Shows USER name
-//    → Shows USER profile picture
-//    → Tap user name/photo → opens profile
-//
-// No Follow button.
+// PUBLIC NORMAL POST VIDEOS + GROUP VIDEOS
 // Firebase v10.12.2
 // ============================================================
 
-import { auth, db } from "../firebase.js";
+import { db } from "../firebase.js";
 
 import {
     collection,
@@ -55,13 +40,16 @@ let groupUnsubscribe = null;
 
 let observer = null;
 
-let normalLoaded = false;
-let groupLoaded = false;
-
 let normalPosts = [];
 let groupPosts = [];
 
 let currentVideos = [];
+
+let normalLoaded = false;
+let groupLoaded = false;
+
+let normalError = null;
+let groupError = null;
 
 let initialized = false;
 
@@ -90,7 +78,7 @@ function getSettings() {
 
 
 // ============================================================
-// HTML ESCAPE
+// HELPERS
 // ============================================================
 
 function escapeHTML(value) {
@@ -104,15 +92,9 @@ function escapeHTML(value) {
 }
 
 
-// ============================================================
-// TIMESTAMP
-// ============================================================
-
 function getTimestamp(value) {
 
-    if (!value) {
-        return 0;
-    }
+    if (!value) return 0;
 
     if (
         typeof value.toMillis === "function"
@@ -137,10 +119,6 @@ function getTimestamp(value) {
     return 0;
 }
 
-
-// ============================================================
-// COUNT FORMAT
-// ============================================================
 
 function formatCount(value) {
 
@@ -169,29 +147,21 @@ function formatCount(value) {
 }
 
 
-// ============================================================
-// VIDEO URL
-// ============================================================
-
 function getPlayableVideoUrl(url) {
 
-    if (!url) {
-        return "";
-    }
+    if (!url) return "";
 
     return String(url).trim();
 }
 
 
 // ============================================================
-// NORMAL POST VIDEO CHECK
+// NORMAL POST VIDEO
 // ============================================================
 
 function isPublicNormalVideo(data) {
 
-    if (!data) {
-        return false;
-    }
+    if (!data) return false;
 
     const video =
         data.video ||
@@ -199,9 +169,7 @@ function isPublicNormalVideo(data) {
         data.videoURL ||
         "";
 
-    if (!video) {
-        return false;
-    }
+    if (!video) return false;
 
     const privacy =
         String(
@@ -212,7 +180,6 @@ function isPublicNormalVideo(data) {
             .trim()
             .toLowerCase();
 
-    // Only public videos belong in General Reals.
     if (
         privacy === "friends" ||
         privacy === "friend" ||
@@ -228,21 +195,12 @@ function isPublicNormalVideo(data) {
 
 
 // ============================================================
-// GROUP VIDEO CHECK
+// GROUP VIDEO
 // ============================================================
 
 function isGroupVideo(data) {
 
-    if (!data) {
-        return false;
-    }
-
-    const mediaType =
-        String(
-            data.mediaType || ""
-        )
-            .trim()
-            .toLowerCase();
+    if (!data) return false;
 
     const mediaURL =
         data.mediaURL ||
@@ -255,129 +213,17 @@ function isGroupVideo(data) {
         return false;
     }
 
+    const mediaType =
+        String(
+            data.mediaType || ""
+        )
+            .trim()
+            .toLowerCase();
+
     return (
         mediaType === "video" ||
         mediaType.startsWith("video/")
     );
-}
-
-
-// ============================================================
-// LOADING SCREEN
-// ============================================================
-
-function showLoading() {
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = `
-
-        <div class="reals-loading">
-
-            <div class="vs-loader">
-
-                <div class="vs-ring"></div>
-
-                <div class="vs-logo">
-                    VS
-                </div>
-
-            </div>
-
-            <div class="vs-loading-text">
-                Loading VitalStar...
-            </div>
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// EMPTY
-// ============================================================
-
-function showEmpty() {
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = `
-
-        <div class="reals-empty">
-
-            <div class="empty-icon">
-                🎬
-            </div>
-
-            <h3>
-                No public videos yet
-            </h3>
-
-            <p>
-                Videos from VitalStar posts and groups
-                will appear here.
-            </p>
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// ERROR
-// ============================================================
-
-function showError(message) {
-
-    if (!container) {
-        return;
-    }
-
-    container.innerHTML = `
-
-        <div class="reals-empty">
-
-            <div class="empty-icon">
-                ⚠️
-            </div>
-
-            <h3>
-                Couldn't load Reals
-            </h3>
-
-            <p>
-                ${escapeHTML(
-                    message ||
-                    "Please try again."
-                )}
-            </p>
-
-            <button
-                class="reals-retry"
-                id="realsRetry"
-                type="button"
-            >
-                Retry
-            </button>
-
-        </div>
-    `;
-
-    document
-        .getElementById("realsRetry")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                destroyGeneralVids();
-
-                init(container);
-            }
-        );
 }
 
 
@@ -405,7 +251,8 @@ function normalizeNormalPost(docSnap) {
     return {
 
         id:
-            `post_${docSnap.id}`,
+            "post_" +
+            docSnap.id,
 
         type:
             "post",
@@ -414,9 +261,7 @@ function normalizeNormalPost(docSnap) {
             docSnap.id,
 
         video:
-            getPlayableVideoUrl(
-                video
-            ),
+            getPlayableVideoUrl(video),
 
         text:
             data.text || "",
@@ -475,13 +320,14 @@ function normalizeNormalPost(docSnap) {
 
 
 // ============================================================
-// EXTRACT GROUP ID
+// GROUP ID
 // ============================================================
 
-function getGroupIdFromPost(docSnap) {
+function getGroupId(docSnap) {
 
     try {
 
+        // Expected:
         // groups/{groupId}/posts/{postId}
 
         const parent =
@@ -489,53 +335,42 @@ function getGroupIdFromPost(docSnap) {
 
         if (
             parent &&
-            parent.parent
+            parent.parent &&
+            parent.parent.id
         ) {
 
-            const groupDocument =
-                parent.parent;
-
-            if (
-                groupDocument.id
-            ) {
-
-                return groupDocument.id;
-            }
+            return parent.parent.id;
         }
 
     } catch (error) {
 
         console.warn(
-            "Group ID parent lookup failed:",
+            "Group parent lookup failed:",
             error
         );
     }
 
 
-    // Fallback path method.
-
     try {
 
-        const path =
+        const parts =
             docSnap.ref.path.split("/");
 
-        const groupIndex =
-            path.indexOf("groups");
+        const index =
+            parts.indexOf("groups");
 
         if (
-            groupIndex !== -1 &&
-            path[groupIndex + 1]
+            index !== -1 &&
+            parts[index + 1]
         ) {
 
-            return path[
-                groupIndex + 1
-            ];
+            return parts[index + 1];
         }
 
     } catch (error) {
 
         console.warn(
-            "Group ID path lookup failed:",
+            "Group path lookup failed:",
             error
         );
     }
@@ -561,14 +396,12 @@ function normalizeGroupPost(docSnap) {
     }
 
     const groupId =
-        getGroupIdFromPost(
-            docSnap
-        );
+        getGroupId(docSnap);
 
     if (!groupId) {
 
         console.warn(
-            "Group video has no group ID:",
+            "Skipped group video because group ID was missing:",
             docSnap.ref.path
         );
 
@@ -579,7 +412,10 @@ function normalizeGroupPost(docSnap) {
     return {
 
         id:
-            `group_${groupId}_${docSnap.id}`,
+            "group_" +
+            groupId +
+            "_" +
+            docSnap.id,
 
         type:
             "group",
@@ -601,27 +437,17 @@ function normalizeGroupPost(docSnap) {
         text:
             data.text || "",
 
-        // Kept internally only.
-        // The UI does NOT display this user
-        // as the creator of a group video.
+        // Original poster information is kept
+        // internally but is NOT shown as the source.
         creatorId:
             data.authorId || "",
 
         creatorName:
-            data.authorName ||
-            "VitalStar User",
+            data.authorName || "",
 
         creatorPhoto:
-            data.authorPhotoURL ||
-            data.profilePicture ||
-            data.photoURL ||
-            "",
+            data.authorPhotoURL || "",
 
-        authorRole:
-            data.authorRole ||
-            "",
-
-        // These are filled from the group document.
         groupName:
             "VitalStar Group",
 
@@ -657,18 +483,17 @@ function normalizeGroupPost(docSnap) {
 
 
 // ============================================================
-// LOAD GROUP INFORMATION
+// LOAD GROUP INFO
 // ============================================================
 
-async function loadGroupDetails(video) {
+async function loadGroupInfo(video) {
 
     if (
         !video ||
         video.type !== "group" ||
         !video.groupId
     ) {
-
-        return video;
+        return;
     }
 
 
@@ -681,79 +506,62 @@ async function loadGroupDetails(video) {
                 video.groupId
             );
 
-        const groupSnap =
+
+        const snap =
             await getDoc(
                 groupRef
             );
 
 
-        if (
-            !groupSnap.exists()
-        ) {
+        if (!snap.exists()) {
 
             console.warn(
-                "Group document not found:",
+                "Group not found:",
                 video.groupId
             );
 
-            return video;
+            return;
         }
 
 
-        const group =
-            groupSnap.data() || {};
+        const data =
+            snap.data() || {};
 
-
-        // ----------------------------------------------------
-        // GROUP NAME
-        // ----------------------------------------------------
 
         video.groupName =
-            group.name ||
-            group.groupName ||
-            group.title ||
-            group.displayName ||
+            data.name ||
+            data.groupName ||
+            data.title ||
+            data.displayName ||
             "VitalStar Group";
 
 
-        // ----------------------------------------------------
-        // GROUP PROFILE IMAGE
-        // ----------------------------------------------------
-
         video.groupPhoto =
-            group.profilePicture ||
-            group.profilePhoto ||
-            group.photoURL ||
-            group.avatar ||
-            group.groupImage ||
-            group.image ||
+            data.profilePicture ||
+            data.profilePhoto ||
+            data.photoURL ||
+            data.avatar ||
+            data.groupImage ||
+            data.image ||
             "";
 
 
     } catch (error) {
 
-        console.error(
-            "Error loading group:",
+        console.warn(
+            "Could not load group information:",
             video.groupId,
             error
         );
     }
-
-
-    return video;
 }
 
 
 // ============================================================
-// LOAD ALL GROUP DETAILS
+// LOAD GROUP INFORMATION AFTER RENDER
 // ============================================================
 
-async function loadAllGroupDetails() {
-
-    if (!currentVideos.length) {
-        return;
-    }
-
+async function updateGroupInformation() {
 
     const groups =
         new Map();
@@ -789,30 +597,14 @@ async function loadAllGroupDetails() {
 
 
     await Promise.all(
-
         Array.from(
             groups.values()
         ).map(
             video =>
-                loadGroupDetails(
-                    video
-                )
+                loadGroupInfo(video)
         )
     );
 
-
-    // Update only the group
-    // information in existing cards.
-
-    updateGroupInformation();
-}
-
-
-// ============================================================
-// UPDATE GROUP UI
-// ============================================================
-
-function updateGroupInformation() {
 
     if (!container) {
         return;
@@ -840,34 +632,34 @@ function updateGroupInformation() {
             }
 
 
-            const nameButton =
+            const name =
                 card.querySelector(
                     ".reals-name-button"
                 );
 
 
-            if (nameButton) {
+            if (name) {
 
-                nameButton.textContent =
+                name.textContent =
                     video.groupName ||
                     "VitalStar Group";
             }
 
 
-            const profileButton =
+            const avatar =
                 card.querySelector(
                     ".reals-profile-button"
                 );
 
 
-            if (!profileButton) {
+            if (!avatar) {
                 return;
             }
 
 
             if (video.groupPhoto) {
 
-                profileButton.innerHTML = `
+                avatar.innerHTML = `
 
                     <img
                         src="${escapeHTML(
@@ -875,14 +667,13 @@ function updateGroupInformation() {
                         )}"
                         alt=""
                         class="reals-avatar"
-                        loading="lazy"
                     >
 
                 `;
 
             } else {
 
-                profileButton.innerHTML = `
+                avatar.innerHTML = `
 
                     <div class="reals-avatar-fallback">
                         👥
@@ -897,61 +688,7 @@ function updateGroupInformation() {
 
 
 // ============================================================
-// MERGE BOTH FEEDS
-// ============================================================
-
-function getMergedFeed() {
-
-    const merged = [
-
-        ...normalPosts,
-
-        ...groupPosts
-
-    ];
-
-
-    const unique =
-        new Map();
-
-
-    merged.forEach(
-        video => {
-
-            if (
-                !video ||
-                !video.video
-            ) {
-                return;
-            }
-
-            unique.set(
-                video.id,
-                video
-            );
-        }
-    );
-
-
-    const result =
-        Array.from(
-            unique.values()
-        );
-
-
-    result.sort(
-        (a, b) =>
-            b.createdAt -
-            a.createdAt
-    );
-
-
-    return result;
-}
-
-
-// ============================================================
-// REBUILD FEED
+// BUILD FEED
 // ============================================================
 
 function rebuildFeed() {
@@ -961,9 +698,63 @@ function rebuildFeed() {
     }
 
 
+    currentVideos = [
+        ...normalPosts,
+        ...groupPosts
+    ];
+
+
+    // Remove duplicates.
+
+    const unique =
+        new Map();
+
+
+    currentVideos.forEach(
+        video => {
+
+            if (
+                video &&
+                video.video
+            ) {
+
+                unique.set(
+                    video.id,
+                    video
+                );
+            }
+        }
+    );
+
+
+    currentVideos =
+        Array.from(
+            unique.values()
+        );
+
+
+    // Newest first.
+
+    currentVideos.sort(
+        (a, b) =>
+            b.createdAt -
+            a.createdAt
+    );
+
+
+    // ========================================================
+    // IMPORTANT:
+    // Render whenever at least one source has loaded.
+    // A group Firebase problem must NEVER block normal posts.
+    // ========================================================
+
+    const somethingLoaded =
+        normalLoaded ||
+        groupLoaded;
+
+
     if (
-        !normalLoaded ||
-        !groupLoaded
+        !somethingLoaded
     ) {
 
         showLoading();
@@ -972,54 +763,177 @@ function rebuildFeed() {
     }
 
 
-    try {
+    if (
+        currentVideos.length === 0
+    ) {
 
-        currentVideos =
-            getMergedFeed();
-
+        // Only show the empty state after both
+        // listeners have actually finished.
 
         if (
-            !currentVideos.length
+            normalLoaded &&
+            groupLoaded
         ) {
 
             showEmpty();
 
-            return;
+        } else {
+
+            showLoading();
         }
 
-
-        // Render immediately.
-        renderFeed();
-
-
-        // Load group information
-        // AFTER videos appear.
-        loadAllGroupDetails();
-
-
-    } catch (error) {
-
-        console.error(
-            "Reals rebuild error:",
-            error
-        );
-
-        showError(
-            getFirebaseErrorMessage(
-                error
-            )
-        );
+        return;
     }
+
+
+    renderFeed();
+
+
+    // Load group names/photos after videos
+    // are already visible.
+
+    updateGroupInformation();
 }
 
 
 // ============================================================
-// RENDER FEED
+// LOADING
+// ============================================================
+
+function showLoading() {
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="reals-loading">
+
+            <div class="vs-loader">
+
+                <div class="vs-ring"></div>
+
+                <div class="vs-logo">
+                    VS
+                </div>
+
+            </div>
+
+            <div class="vs-loading-text">
+                Loading VitalStar...
+            </div>
+
+        </div>
+    `;
+}
+
+
+// ============================================================
+// EMPTY
+// ============================================================
+
+function showEmpty() {
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="reals-empty">
+
+            <div class="empty-icon">
+                🎬
+            </div>
+
+            <h3>
+                No public videos yet
+            </h3>
+
+            <p>
+                Videos from VitalStar posts and groups
+                will appear here.
+            </p>
+
+        </div>
+    `;
+}
+
+
+// ============================================================
+// ERROR
+// ============================================================
+
+function showError(message) {
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="reals-empty">
+
+            <div class="empty-icon">
+                ⚠️
+            </div>
+
+            <h3>
+                Couldn't load Reals
+            </h3>
+
+            <p>
+                ${escapeHTML(
+                    message ||
+                    "Please try again."
+                )}
+            </p>
+
+            <button
+                id="realsRetry"
+                class="reals-retry"
+                type="button"
+            >
+                Retry
+            </button>
+
+        </div>
+    `;
+
+
+    document
+        .getElementById(
+            "realsRetry"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                destroyGeneralVids();
+
+                init(container);
+            }
+        );
+}
+
+
+// ============================================================
+// RENDER
 // ============================================================
 
 function renderFeed() {
 
     if (!container) {
+        return;
+    }
+
+
+    if (!currentVideos.length) {
+        showEmpty();
         return;
     }
 
@@ -1030,15 +944,11 @@ function renderFeed() {
     currentVideos.forEach(
         (video, index) => {
 
-            const card =
+            container.appendChild(
                 createVideoCard(
                     video,
                     index
-                );
-
-
-            container.appendChild(
-                card
+                )
             );
         }
     );
@@ -1085,11 +995,11 @@ function createVideoCard(
         video.type === "group";
 
 
-    // --------------------------------------------------------
-    // GROUP VIDEO
-    // --------------------------------------------------------
+    // ========================================================
+    // SOURCE IDENTITY
+    // ========================================================
 
-    const displayName =
+    const name =
         isGroup
 
             ? (
@@ -1103,30 +1013,18 @@ function createVideoCard(
             );
 
 
-    const displayPhoto =
+    const photo =
         isGroup
-
             ? video.groupPhoto
-
             : video.creatorPhoto;
 
 
     const safeName =
-        escapeHTML(
-            displayName
-        );
+        escapeHTML(name);
 
 
     const safePhoto =
-        escapeHTML(
-            displayPhoto || ""
-        );
-
-
-    const fallback =
-        isGroup
-            ? "👥"
-            : "VS";
+        escapeHTML(photo || "");
 
 
     const avatar =
@@ -1141,15 +1039,19 @@ function createVideoCard(
                     loading="lazy"
                 >
 
-              `
+            `
 
             : `
 
                 <div class="reals-avatar-fallback">
-                    ${fallback}
+                    ${
+                        isGroup
+                            ? "👥"
+                            : "VS"
+                    }
                 </div>
 
-              `;
+            `;
 
 
     const sourceAction =
@@ -1166,13 +1068,17 @@ function createVideoCard(
                 video.video
             )}"
             playsinline
+            loop
             preload="${
                 settings.dataSaver
                     ? "metadata"
                     : "auto"
             }"
-            ${settings.muted ? "muted" : ""}
-            loop
+            ${
+                settings.muted
+                    ? "muted"
+                    : ""
+            }
         ></video>
 
 
@@ -1190,25 +1096,18 @@ function createVideoCard(
         </button>
 
 
-        <!-- ==================================================
-             SOURCE
-             GROUP = GROUP
-             POST = USER
-             ================================================== -->
-
         <div class="reals-video-info">
 
             <div class="reals-source">
 
-
                 <button
                     class="reals-profile-button"
-                    type="button"
                     data-action="${sourceAction}"
+                    type="button"
                     aria-label="${
                         isGroup
                             ? "Open group"
-                            : "Open profile"
+                            : "Open user profile"
                     }"
                 >
 
@@ -1219,14 +1118,13 @@ function createVideoCard(
 
                 <button
                     class="reals-name-button"
-                    type="button"
                     data-action="${sourceAction}"
+                    type="button"
                 >
 
                     ${safeName}
 
                 </button>
-
 
             </div>
 
@@ -1237,14 +1135,12 @@ function createVideoCard(
                     ? `
 
                         <div class="reals-caption">
-
                             ${escapeHTML(
                                 video.text
                             )}
-
                         </div>
 
-                      `
+                    `
 
                     : ""
             }
@@ -1252,19 +1148,13 @@ function createVideoCard(
         </div>
 
 
-        <!-- ==================================================
-             ACTIONS
-             ================================================== -->
-
         <div class="reals-actions">
-
 
             <button
                 class="reals-action"
                 data-action="like"
                 type="button"
             >
-
                 <span class="action-icon">
                     ♡
                 </span>
@@ -1274,7 +1164,6 @@ function createVideoCard(
                         video.likes
                     )}
                 </span>
-
             </button>
 
 
@@ -1283,7 +1172,6 @@ function createVideoCard(
                 data-action="comment"
                 type="button"
             >
-
                 <span class="action-icon">
                     💬
                 </span>
@@ -1293,7 +1181,6 @@ function createVideoCard(
                         video.comments
                     )}
                 </span>
-
             </button>
 
 
@@ -1302,7 +1189,6 @@ function createVideoCard(
                 data-action="repost"
                 type="button"
             >
-
                 <span class="action-icon">
                     ↻
                 </span>
@@ -1312,7 +1198,6 @@ function createVideoCard(
                         video.reposts
                     )}
                 </span>
-
             </button>
 
 
@@ -1321,7 +1206,6 @@ function createVideoCard(
                 data-action="share"
                 type="button"
             >
-
                 <span class="action-icon">
                     ↗
                 </span>
@@ -1331,7 +1215,6 @@ function createVideoCard(
                         video.shares
                     )}
                 </span>
-
             </button>
 
 
@@ -1340,7 +1223,6 @@ function createVideoCard(
                 data-action="mute"
                 type="button"
             >
-
                 <span class="action-icon">
                     ${
                         settings.muted
@@ -1348,7 +1230,6 @@ function createVideoCard(
                             : "🔊"
                     }
                 </span>
-
             </button>
 
 
@@ -1357,32 +1238,27 @@ function createVideoCard(
                 data-action="more"
                 type="button"
             >
-
                 <span class="action-icon">
                     •••
                 </span>
-
             </button>
-
 
         </div>
 
 
         <div class="reals-source-badge">
-
             ${
                 isGroup
                     ? "GROUP"
                     : "POST"
             }
-
         </div>
 
     `;
 
 
     // ========================================================
-    // PROFILE BUTTON
+    // GROUP CLICK
     // ========================================================
 
     if (isGroup) {
@@ -1408,7 +1284,14 @@ function createVideoCard(
                 }
             );
 
-    } else {
+    }
+
+
+    // ========================================================
+    // USER CLICK
+    // ========================================================
+
+    else {
 
         card
             .querySelectorAll(
@@ -1438,7 +1321,7 @@ function createVideoCard(
 
 
 // ============================================================
-// VIDEO EVENTS
+// VIDEO BEHAVIOR
 // ============================================================
 
 function setupVideoBehavior() {
@@ -1447,10 +1330,6 @@ function setupVideoBehavior() {
         return;
     }
 
-
-    // --------------------------------------------------------
-    // TAP VIDEO
-    // --------------------------------------------------------
 
     container
         .querySelectorAll(
@@ -1490,10 +1369,12 @@ function setupVideoBehavior() {
                                 ".reals-video-card"
                             );
 
+
                         const button =
                             card?.querySelector(
                                 ".reals-play-button"
                             );
+
 
                         if (button) {
                             button.textContent =
@@ -1512,10 +1393,12 @@ function setupVideoBehavior() {
                                 ".reals-video-card"
                             );
 
+
                         const button =
                             card?.querySelector(
                                 ".reals-play-button"
                             );
+
 
                         if (button) {
                             button.textContent =
@@ -1523,14 +1406,9 @@ function setupVideoBehavior() {
                         }
                     }
                 );
-
             }
         );
 
-
-    // --------------------------------------------------------
-    // PLAY BUTTON
-    // --------------------------------------------------------
 
     container
         .querySelectorAll(
@@ -1577,17 +1455,11 @@ function setupVideoBehavior() {
 
                             video.pause();
                         }
-
                     }
                 );
-
             }
         );
 
-
-    // --------------------------------------------------------
-    // ACTION BUTTONS
-    // --------------------------------------------------------
 
     container
         .querySelectorAll(
@@ -1601,10 +1473,6 @@ function setupVideoBehavior() {
                     event => {
 
                         event.stopPropagation();
-
-
-                        const action =
-                            button.dataset.action;
 
 
                         const card =
@@ -1624,28 +1492,20 @@ function setupVideoBehavior() {
                             );
 
 
-                        const video =
-                            currentVideos[
-                                index
-                            ];
-
-
                         handleAction(
-                            action,
-                            video,
+                            button.dataset.action,
+                            currentVideos[index],
                             card
                         );
-
                     }
                 );
-
             }
         );
 }
 
 
 // ============================================================
-// INTERSECTION OBSERVER
+// AUTOPLAY OBSERVER
 // ============================================================
 
 function setupObserver() {
@@ -1662,7 +1522,6 @@ function setupObserver() {
 
     observer =
         new IntersectionObserver(
-
             entries => {
 
                 entries.forEach(
@@ -1671,12 +1530,6 @@ function setupObserver() {
                         const video =
                             entry.target.querySelector(
                                 ".reals-video"
-                            );
-
-
-                        const playButton =
-                            entry.target.querySelector(
-                                ".reals-play-button"
                             );
 
 
@@ -1704,21 +1557,10 @@ function setupObserver() {
                         } else {
 
                             video.pause();
-
-                            if (
-                                playButton
-                            ) {
-
-                                playButton.textContent =
-                                    "▶";
-                            }
                         }
-
                     }
                 );
-
             },
-
             {
                 threshold: [
                     0.25,
@@ -1745,7 +1587,7 @@ function setupObserver() {
 
 
 // ============================================================
-// ACTION HANDLER
+// ACTIONS
 // ============================================================
 
 function handleAction(
@@ -1762,102 +1604,41 @@ function handleAction(
     switch (action) {
 
         case "like":
-
-            handleLike(
-                video,
-                card
+            showToast(
+                "Like coming next."
             );
-
             break;
-
 
         case "comment":
-
-            handleComment(
-                video
+            showToast(
+                "Comments coming next."
             );
-
             break;
-
 
         case "repost":
-
-            handleRepost(
-                video
+            showToast(
+                "Repost coming next."
             );
-
             break;
 
-
         case "share":
-
             handleShare(
                 video
             );
-
             break;
 
-
         case "mute":
-
             toggleMute(
                 card
             );
-
             break;
 
-
         case "more":
-
             showMoreMenu(
                 video
             );
-
             break;
     }
-}
-
-
-// ============================================================
-// LIKE
-// ============================================================
-
-function handleLike(
-    video,
-    card
-) {
-
-    showToast(
-        "Like coming next."
-    );
-}
-
-
-// ============================================================
-// COMMENT
-// ============================================================
-
-function handleComment(
-    video
-) {
-
-    showToast(
-        "Comments coming next."
-    );
-}
-
-
-// ============================================================
-// REPOST
-// ============================================================
-
-function handleRepost(
-    video
-) {
-
-    showToast(
-        "Repost coming next."
-    );
 }
 
 
@@ -1900,8 +1681,7 @@ async function handleShare(
         }
 
     } catch (error) {
-
-        // User cancelled sharing.
+        // Sharing cancelled.
     }
 }
 
@@ -1939,19 +1719,19 @@ function toggleMute(card) {
     );
 
 
-    card
-        .querySelectorAll(
+    const icon =
+        card.querySelector(
             '[data-action="mute"] .action-icon'
-        )
-        .forEach(
-            icon => {
-
-                icon.textContent =
-                    settings.muted
-                        ? "🔇"
-                        : "🔊";
-            }
         );
+
+
+    if (icon) {
+
+        icon.textContent =
+            settings.muted
+                ? "🔇"
+                : "🔊";
+    }
 }
 
 
@@ -1974,9 +1754,8 @@ function openProfile(
 
 
     window.location.href =
-        `../profile.html?uid=${encodeURIComponent(
-            uid
-        )}`;
+        "../profile.html?uid=" +
+        encodeURIComponent(uid);
 }
 
 
@@ -1998,20 +1777,14 @@ function openGroup(
     }
 
 
-    // Group page.
-    //
-    // If your existing group page uses another filename,
-    // only this URL needs to be changed.
-
     window.location.href =
-        `../group.html?id=${encodeURIComponent(
-            groupId
-        )}`;
+        "../group.html?id=" +
+        encodeURIComponent(groupId);
 }
 
 
 // ============================================================
-// MORE MENU
+// MORE
 // ============================================================
 
 function showMoreMenu(
@@ -2020,9 +1793,7 @@ function showMoreMenu(
 
     showToast(
         video.type === "group"
-
             ? "Group video options coming next."
-
             : "Post video options coming next."
     );
 }
@@ -2093,321 +1864,7 @@ function showToast(
 
 
 // ============================================================
-// FIREBASE ERROR
-// ============================================================
-
-function getFirebaseErrorMessage(
-    error
-) {
-
-    if (!error) {
-        return "Please try again.";
-    }
-
-
-    if (
-        error.code ===
-        "permission-denied"
-    ) {
-
-        return (
-            "Firebase permissions are preventing Reals from loading."
-        );
-    }
-
-
-    if (
-        error.code ===
-        "failed-precondition"
-    ) {
-
-        return (
-            "Firebase reported a query problem."
-        );
-    }
-
-
-    if (
-        error.code ===
-        "unavailable"
-    ) {
-
-        return (
-            "Firebase is temporarily unavailable."
-        );
-    }
-
-
-    return (
-        error.message ||
-        "Please try again."
-    );
-}
-
-
-// ============================================================
-// INITIALIZE
-// ============================================================
-
-export function init(
-    target
-) {
-
-    // Prevent duplicate listeners.
-    if (initialized) {
-        return;
-    }
-
-
-    initialized = true;
-
-
-    getSettings();
-
-
-    container =
-        typeof target === "string"
-
-            ? document.querySelector(
-                target
-            )
-
-            : target;
-
-
-    if (!container) {
-
-        console.error(
-            "VitalStar Reals container not found."
-        );
-
-        initialized = false;
-
-        return;
-    }
-
-
-    normalLoaded = false;
-    groupLoaded = false;
-
-    normalPosts = [];
-    groupPosts = [];
-    currentVideos = [];
-
-
-    showLoading();
-
-
-    // ========================================================
-    // NORMAL POSTS
-    // ========================================================
-
-    const normalQuery =
-        query(
-            collection(
-                db,
-                "posts"
-            ),
-            limit(500)
-        );
-
-
-    normalUnsubscribe =
-        onSnapshot(
-
-            normalQuery,
-
-            snapshot => {
-
-                normalPosts = [];
-
-
-                snapshot.forEach(
-                    docSnap => {
-
-                        const video =
-                            normalizeNormalPost(
-                                docSnap
-                            );
-
-
-                        if (video) {
-
-                            normalPosts.push(
-                                video
-                            );
-                        }
-
-                    }
-                );
-
-
-                normalPosts.sort(
-                    (a, b) =>
-                        b.createdAt -
-                        a.createdAt
-                );
-
-
-                normalLoaded = true;
-
-
-                rebuildFeed();
-
-            },
-
-            error => {
-
-                console.error(
-                    "Normal Reals error:",
-                    error
-                );
-
-
-                normalLoaded = true;
-
-
-                if (
-                    groupLoaded
-                ) {
-
-                    showError(
-                        getFirebaseErrorMessage(
-                            error
-                        )
-                    );
-                }
-            }
-        );
-
-
-    // ========================================================
-    // ALL GROUP POSTS
-    // ========================================================
-    //
-    // IMPORTANT:
-    //
-    // We intentionally do NOT use:
-    //
-    // where("mediaType", "==", "video")
-    //
-    // because the goal is to make General Reals robust
-    // against existing group posts and different media
-    // values.
-    //
-    // We load group posts and filter videos locally.
-    //
-    // This also fixes the previous problem where only the
-    // first 100 group posts were checked.
-    //
-    // ========================================================
-
-    const groupQuery =
-        query(
-            collectionGroup(
-                db,
-                "posts"
-            ),
-            limit(1000)
-        );
-
-
-    groupUnsubscribe =
-        onSnapshot(
-
-            groupQuery,
-
-            snapshot => {
-
-                groupPosts = [];
-
-
-                snapshot.forEach(
-                    docSnap => {
-
-                        const video =
-                            normalizeGroupPost(
-                                docSnap
-                            );
-
-
-                        if (video) {
-
-                            groupPosts.push(
-                                video
-                            );
-                        }
-
-                    }
-                );
-
-
-                groupPosts.sort(
-                    (a, b) =>
-                        b.createdAt -
-                        a.createdAt
-                );
-
-
-                groupLoaded = true;
-
-
-                rebuildFeed();
-
-            },
-
-            error => {
-
-                console.error(
-                    "Group Reals error:",
-                    error
-                );
-
-
-                groupLoaded = true;
-
-
-                // If normal posts loaded successfully,
-                // still show them even if the group query
-                // has a Firebase permissions problem.
-
-                if (
-                    normalLoaded
-                ) {
-
-                    rebuildFeed();
-                }
-            }
-        );
-}
-
-
-// ============================================================
-// ALIASES
-// ============================================================
-
-export function initGeneralVids(
-    target
-) {
-
-    return init(
-        target
-    );
-}
-
-
-export function initializeFeed(
-    target
-) {
-
-    return init(
-        target
-    );
-}
-
-
-// ============================================================
-// SETTINGS CHANGE
+// SETTINGS
 // ============================================================
 
 export function onSettingChange(
@@ -2460,14 +1917,292 @@ export function onSettingChange(
 
 
 // ============================================================
+// ERROR MESSAGE
+// ============================================================
+
+function getFirebaseErrorMessage(
+    error
+) {
+
+    if (!error) {
+        return "Please try again.";
+    }
+
+
+    if (
+        error.code ===
+        "permission-denied"
+    ) {
+
+        return (
+            "Firebase permissions are blocking this feed."
+        );
+    }
+
+
+    if (
+        error.code ===
+        "unavailable"
+    ) {
+
+        return (
+            "Firebase is temporarily unavailable."
+        );
+    }
+
+
+    return (
+        error.message ||
+        "Please try again."
+    );
+}
+
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+
+export function init(
+    target
+) {
+
+    if (initialized) {
+        return;
+    }
+
+
+    initialized = true;
+
+
+    getSettings();
+
+
+    container =
+        typeof target === "string"
+
+            ? document.querySelector(
+                target
+            )
+
+            : target;
+
+
+    if (!container) {
+
+        console.error(
+            "VitalStar Reals container not found."
+        );
+
+        initialized = false;
+
+        return;
+    }
+
+
+    normalLoaded = false;
+    groupLoaded = false;
+
+    normalError = null;
+    groupError = null;
+
+    normalPosts = [];
+    groupPosts = [];
+    currentVideos = [];
+
+
+    showLoading();
+
+
+    // ========================================================
+    // NORMAL POSTS
+    // ========================================================
+
+    const normalQuery =
+        query(
+            collection(
+                db,
+                "posts"
+            ),
+            limit(500)
+        );
+
+
+    normalUnsubscribe =
+        onSnapshot(
+
+            normalQuery,
+
+            snapshot => {
+
+                normalPosts = [];
+
+
+                snapshot.forEach(
+                    docSnap => {
+
+                        const video =
+                            normalizeNormalPost(
+                                docSnap
+                            );
+
+
+                        if (video) {
+
+                            normalPosts.push(
+                                video
+                            );
+                        }
+                    }
+                );
+
+
+                normalPosts.sort(
+                    (a, b) =>
+                        b.createdAt -
+                        a.createdAt
+                );
+
+
+                normalLoaded = true;
+
+                normalError = null;
+
+
+                // NORMAL VIDEOS CAN NOW SHOW.
+                rebuildFeed();
+            },
+
+
+            error => {
+
+                console.error(
+                    "VitalStar normal posts error:",
+                    error
+                );
+
+
+                normalLoaded = true;
+
+                normalError =
+                    error;
+
+
+                // Do NOT block the group feed.
+                rebuildFeed();
+            }
+        );
+
+
+    // ========================================================
+    // GROUP POSTS
+    // ========================================================
+
+    const groupQuery =
+        query(
+            collectionGroup(
+                db,
+                "posts"
+            ),
+            limit(1000)
+        );
+
+
+    groupUnsubscribe =
+        onSnapshot(
+
+            groupQuery,
+
+            snapshot => {
+
+                groupPosts = [];
+
+
+                snapshot.forEach(
+                    docSnap => {
+
+                        const video =
+                            normalizeGroupPost(
+                                docSnap
+                            );
+
+
+                        if (video) {
+
+                            groupPosts.push(
+                                video
+                            );
+                        }
+                    }
+                );
+
+
+                groupPosts.sort(
+                    (a, b) =>
+                        b.createdAt -
+                        a.createdAt
+                );
+
+
+                groupLoaded = true;
+
+                groupError = null;
+
+
+                // Add group videos to whatever
+                // is already visible.
+                rebuildFeed();
+            },
+
+
+            error => {
+
+                console.error(
+                    "VitalStar group posts error:",
+                    error
+                );
+
+
+                groupLoaded = true;
+
+                groupError =
+                    error;
+
+
+                // IMPORTANT:
+                // A group query failure must NOT
+                // stop normal posts from appearing.
+
+                rebuildFeed();
+            }
+        );
+}
+
+
+// ============================================================
+// ALIASES USED BY reals.html
+// ============================================================
+
+export function initGeneralVids(
+    target
+) {
+    return init(target);
+}
+
+
+export function initializeFeed(
+    target
+) {
+    return init(target);
+}
+
+
+// ============================================================
 // CLEANUP
 // ============================================================
 
 export function cleanupListeners() {
 
-    if (
-        normalUnsubscribe
-    ) {
+    if (normalUnsubscribe) {
 
         normalUnsubscribe();
 
@@ -2476,9 +2211,7 @@ export function cleanupListeners() {
     }
 
 
-    if (
-        groupUnsubscribe
-    ) {
+    if (groupUnsubscribe) {
 
         groupUnsubscribe();
 
@@ -2487,10 +2220,6 @@ export function cleanupListeners() {
     }
 }
 
-
-// ============================================================
-// DISCONNECT OBSERVER
-// ============================================================
 
 export function disconnectObserver() {
 
@@ -2503,10 +2232,6 @@ export function disconnectObserver() {
     }
 }
 
-
-// ============================================================
-// DESTROY
-// ============================================================
 
 export function destroyGeneralVids() {
 
@@ -2524,8 +2249,11 @@ export function destroyGeneralVids() {
     groupLoaded = false;
 
 
-    container = null;
+    normalError = null;
+    groupError = null;
 
+
+    container = null;
 
     initialized = false;
 }
@@ -2542,7 +2270,6 @@ function addStyles() {
             "vitalstar-general-reals-styles"
         )
     ) {
-
         return;
     }
 
@@ -2560,546 +2287,305 @@ function addStyles() {
     style.textContent = `
 
         .reals-video-card{
-
             position:relative;
-
             height:94dvh;
-
             min-height:0;
-
-            margin:2dvh 0;
-
+            margin:1dvh 0;
             overflow:hidden;
-
-            border-radius:14px;
-
+            border-radius:13px;
             background:#050914;
-
             scroll-snap-align:center;
         }
 
 
         .reals-video{
-
             width:100%;
-
             height:100%;
-
             object-fit:cover;
-
             display:block;
-
             background:#050914;
         }
 
 
         .reals-top-gradient{
-
             position:absolute;
-
             inset:0 0 auto 0;
-
             height:18%;
-
             pointer-events:none;
-
             background:
                 linear-gradient(
                     to bottom,
-                    rgba(0,0,0,.38),
+                    rgba(0,0,0,.4),
                     transparent
                 );
         }
 
 
         .reals-bottom-gradient{
-
             position:absolute;
-
             inset:auto 0 0 0;
-
-            height:42%;
-
+            height:43%;
             pointer-events:none;
-
             background:
                 linear-gradient(
                     to top,
-                    rgba(0,0,0,.82),
+                    rgba(0,0,0,.84),
                     transparent
                 );
         }
 
 
         .reals-video-info{
-
             position:absolute;
-
-            left:12px;
-
-            right:72px;
-
-            bottom:20px;
-
+            left:11px;
+            right:68px;
+            bottom:18px;
             z-index:5;
         }
 
 
         .reals-source{
-
             display:flex;
-
             align-items:center;
-
             gap:8px;
         }
 
 
         .reals-profile-button{
-
-            width:38px;
-
-            height:38px;
-
+            width:37px;
+            height:37px;
             padding:0;
-
             border:0;
-
             border-radius:50%;
-
             overflow:hidden;
-
             background:#10182c;
-
             flex-shrink:0;
-
             cursor:pointer;
         }
 
 
         .reals-avatar{
-
             width:100%;
-
             height:100%;
-
             object-fit:cover;
-
             display:block;
         }
 
 
         .reals-avatar-fallback{
-
             width:100%;
-
             height:100%;
-
             display:flex;
-
             align-items:center;
-
             justify-content:center;
-
             font-size:15px;
-
             background:#10182c;
-
             color:#fff;
         }
 
 
         .reals-name-button{
-
             border:0;
-
             padding:0;
-
             background:none;
-
             color:#fff;
-
             font-size:13px;
-
             font-weight:600;
-
             cursor:pointer;
-
             text-align:left;
-
             max-width:220px;
-
             overflow:hidden;
-
             text-overflow:ellipsis;
-
             white-space:nowrap;
         }
 
 
         .reals-caption{
-
-            margin-top:7px;
-
+            margin-top:6px;
             color:#fff;
-
-            font-size:12.5px;
-
+            font-size:12px;
             line-height:1.4;
-
-            max-width:100%;
         }
 
 
         .reals-actions{
-
             position:absolute;
-
-            right:7px;
-
-            bottom:72px;
-
+            right:6px;
+            bottom:68px;
             z-index:8;
-
             display:flex;
-
             flex-direction:column;
-
-            gap:9px;
+            gap:7px;
         }
 
 
         .reals-action{
-
-            width:40px;
-
-            min-height:40px;
-
+            width:39px;
+            min-height:39px;
             padding:3px;
-
             border:0;
-
-            background:rgba(0,0,0,.25);
-
+            background:rgba(0,0,0,.28);
             color:#fff;
-
-            border-radius:12px;
-
+            border-radius:10px;
             display:flex;
-
             flex-direction:column;
-
             align-items:center;
-
             justify-content:center;
-
             cursor:pointer;
         }
 
 
         .action-icon{
-
-            font-size:20px;
-
+            font-size:19px;
             line-height:1;
         }
 
 
         .action-count{
-
             margin-top:2px;
-
             font-size:9px;
         }
 
 
         .reals-play-button{
-
             position:absolute;
-
             left:50%;
-
             top:50%;
-
             transform:
                 translate(-50%,-50%);
-
-            width:54px;
-
-            height:54px;
-
+            width:52px;
+            height:52px;
             border:0;
-
             border-radius:50%;
-
-            background:
-                rgba(0,0,0,.45);
-
+            background:rgba(0,0,0,.45);
             color:#fff;
-
-            font-size:21px;
-
+            font-size:20px;
             z-index:7;
-
             cursor:pointer;
         }
 
 
         .reals-source-badge{
-
             position:absolute;
-
-            top:12px;
-
-            left:12px;
-
+            top:11px;
+            left:11px;
             z-index:6;
-
-            padding:4px 8px;
-
-            border-radius:8px;
-
-            background:
-                rgba(0,0,0,.45);
-
+            padding:4px 7px;
+            border-radius:7px;
+            background:rgba(0,0,0,.42);
             color:#fff;
-
-            font-size:9px;
-
+            font-size:8px;
             font-weight:700;
-
-            letter-spacing:.6px;
+            letter-spacing:.5px;
         }
 
 
         .reals-loading,
         .reals-empty{
-
             min-height:100dvh;
-
             display:flex;
-
             flex-direction:column;
-
             align-items:center;
-
             justify-content:center;
-
             text-align:center;
-
             padding:25px;
-
             color:#fff;
         }
 
 
         .vs-loader{
-
             position:relative;
-
-            width:62px;
-
-            height:62px;
-
+            width:60px;
+            height:60px;
             display:flex;
-
             align-items:center;
-
             justify-content:center;
         }
 
 
         .vs-ring{
-
             position:absolute;
-
             inset:0;
-
             border:3px solid
                 rgba(40,110,255,.2);
-
-            border-top-color:
-                #2870ff;
-
+            border-top-color:#2870ff;
             border-radius:50%;
-
             animation:
                 vsSpin 1s linear infinite;
         }
 
 
         .vs-logo{
-
             font-weight:800;
-
-            font-size:18px;
-
+            font-size:17px;
             color:#fff;
         }
 
 
         .vs-loading-text{
-
-            margin-top:14px;
-
+            margin-top:13px;
             font-size:13px;
         }
 
 
         .empty-icon{
-
-            font-size:38px;
-
-            margin-bottom:12px;
+            font-size:36px;
+            margin-bottom:11px;
         }
 
 
         .reals-empty h3{
-
-            margin:
-                0 0 7px;
-
-            font-size:18px;
+            margin:0 0 7px;
+            font-size:17px;
         }
 
 
         .reals-empty p{
-
             margin:0;
-
             color:#9ca8c5;
-
-            font-size:13px;
+            font-size:12px;
         }
 
 
         .reals-retry{
-
-            margin-top:16px;
-
-            padding:9px 16px;
-
+            margin-top:15px;
+            padding:9px 15px;
             border:0;
-
             border-radius:9px;
-
             background:#286fff;
-
             color:#fff;
-
             cursor:pointer;
         }
 
 
         .reals-toast{
-
             position:fixed;
-
             left:50%;
-
             bottom:85px;
-
             transform:
                 translate(-50%,20px);
-
             opacity:0;
-
             pointer-events:none;
-
             z-index:99999;
-
-            padding:9px 14px;
-
+            padding:9px 13px;
             border-radius:9px;
-
             background:#10182c;
-
             color:#fff;
-
             font-size:12px;
-
             transition:.2s ease;
         }
 
 
         .reals-toast.show{
-
             opacity:1;
-
             transform:
                 translate(-50%,0);
         }
 
 
         @keyframes vsSpin{
-
             to{
-                transform:
-                    rotate(360deg);
-            }
-        }
-
-
-        @media (max-width:600px){
-
-            .reals-video-card{
-
-                height:94dvh;
-
-                margin:
-                    1dvh 0;
-
-                border-radius:12px;
-            }
-
-
-            .reals-video-info{
-
-                left:10px;
-
-                right:65px;
-
-                bottom:17px;
-            }
-
-
-            .reals-actions{
-
-                right:5px;
-
-                bottom:68px;
-
-                gap:7px;
-            }
-
-
-            .reals-action{
-
-                width:38px;
-
-                min-height:38px;
-
-                border-radius:10px;
-            }
-
-
-            .reals-profile-button{
-
-                width:36px;
-
-                height:36px;
-            }
-
-
-            .reals-name-button{
-
-                font-size:12.5px;
-            }
-
-
-            .reals-caption{
-
-                font-size:12px;
+                transform:rotate(360deg);
             }
         }
 
@@ -3113,7 +2599,7 @@ function addStyles() {
 
 
 // ============================================================
-// ADD STYLES
+// INITIAL STYLES
 // ============================================================
 
 addStyles();
