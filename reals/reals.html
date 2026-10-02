@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -394,83 +393,6 @@
         }
 
         /* =========================================================
-           VS LOADER
-           ========================================================= */
-
-        #realsLoader {
-            position: absolute;
-
-            inset: 0;
-
-            z-index: 2000;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            flex-direction: column;
-
-            gap: 12px;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(0, 90, 255, 0.15),
-                    #050914 65%
-                );
-        }
-
-        .vs-ring {
-            width: 68px;
-            height: 68px;
-
-            border-radius: 50%;
-
-            border: 3px solid rgba(255, 255, 255, 0.10);
-
-            border-top-color: #00aaff;
-            border-right-color: #7b2cff;
-
-            animation: vsSpin 1s linear infinite;
-
-            box-shadow:
-                0 0 20px rgba(0, 150, 255, 0.35);
-        }
-
-        .vs-logo {
-            position: absolute;
-
-            font-size: 19px;
-            font-weight: 900;
-
-            letter-spacing: 1px;
-
-            color: #ffffff;
-
-            text-shadow:
-                0 0 10px #008cff;
-        }
-
-        .loader-text {
-            font-size: 13px;
-
-            color: rgba(255, 255, 255, 0.72);
-        }
-
-        @keyframes vsSpin {
-
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-
-        }
-
-        /* =========================================================
            EMPTY STATE
            ========================================================= */
 
@@ -629,59 +551,17 @@
 
         <!-- =====================================================
              REALS CONTENT
+
              JavaScript files will render their feeds here.
+
+             generalvids.js
+             groupvids.js
+             postvids.js
              ===================================================== -->
 
         <main id="realsContent"></main>
 
-
-        <!-- =====================================================
-             VS LOADING SCREEN
-             ===================================================== -->
-
-        <div id="realsLoader">
-
-            <div style="position:relative; width:68px; height:68px;">
-
-                <div class="vs-ring"></div>
-
-                <div
-                    class="vs-logo"
-                    style="
-                        inset:0;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                    "
-                >
-                    VS
-                </div>
-
-            </div>
-
-            <div class="loader-text">
-                Loading VitalStar Reals...
-            </div>
-
-        </div>
-
     </div>
-
-
-    <!--
-        IMPORTANT:
-
-        Firebase/video logic will be added later.
-
-        We will NOT create reals-core.js.
-
-        The three files will be:
-
-        generalvids.js
-        groupvids.js
-        postvids.js
-    -->
-
 
 </body>
 
