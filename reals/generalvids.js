@@ -1095,14 +1095,19 @@ function createVideoCard(
             : "";
 
 
+    // ========================================================
+    // REAL PROFILE PICTURE
+    // ========================================================
+
     const avatar =
         photo
 
             ? `
                 <img
                     src="${photo}"
-                    alt=""
+                    alt="${creatorName}"
                     loading="lazy"
+                    referrerpolicy="no-referrer"
                 >
             `
 
@@ -1282,8 +1287,7 @@ function createVideoCard(
 
         <div class="video-info">
 
-            <!-- SOURCE IS NOW HERE -->
-            <!-- DIRECTLY ABOVE CREATOR -->
+            <!-- SOURCE -->
 
             <div class="video-source-label">
                 ${sourceLabel}
@@ -1301,6 +1305,7 @@ function createVideoCard(
                     data-user-id="${escapeHTML(
                         video.creatorId
                     )}"
+                    aria-label="Open profile"
                 >
                     ${avatar}
                 </button>
@@ -1325,15 +1330,6 @@ function createVideoCard(
                     }
 
                 </div>
-
-
-                <button
-                    class="follow-button"
-                    type="button"
-                    data-action="follow"
-                >
-                    Follow
-                </button>
 
             </div>
 
@@ -1712,10 +1708,6 @@ function handleAction(
             );
             break;
 
-        case "follow":
-            handleFollow(video);
-            break;
-
         case "profile":
             openProfile(video);
             break;
@@ -2000,32 +1992,6 @@ function toggleMute(
                     settings.muted;
             }
         );
-}
-
-
-// ============================================================
-// FOLLOW
-// ============================================================
-
-function handleFollow(
-    video
-) {
-
-    if (
-        !video.creatorId
-    ) {
-
-        showToast(
-            "Creator profile unavailable"
-        );
-
-        return;
-    }
-
-
-    showToast(
-        "Follow selected"
-    );
 }
 
 
@@ -2320,6 +2286,9 @@ function addStyles() {
                 #050914;
 
             scrollbar-width: none;
+
+            padding:
+                2dvh 0;
         }
 
 
@@ -2333,15 +2302,25 @@ function addStyles() {
             position: relative;
 
             width: 100%;
-            height: 100dvh;
-            min-height: 100vh;
+
+            /*
+             * Slightly smaller than the full screen
+             * so the interface feels lighter.
+             */
+
+            height: 94dvh;
+            min-height: 0;
+
+            margin-bottom: 2dvh;
 
             overflow: hidden;
 
             background:
                 #050914;
 
-            scroll-snap-align: start;
+            border-radius: 10px;
+
+            scroll-snap-align: center;
             scroll-snap-stop: always;
         }
 
@@ -2370,14 +2349,14 @@ function addStyles() {
             left: 0;
             right: 0;
 
-            height: 20%;
+            height: 16%;
 
             pointer-events: none;
 
             background:
                 linear-gradient(
                     to bottom,
-                    rgba(0,0,0,.55),
+                    rgba(0,0,0,.48),
                     transparent
                 );
         }
@@ -2391,15 +2370,15 @@ function addStyles() {
             right: 0;
             bottom: 0;
 
-            height: 48%;
+            height: 42%;
 
             pointer-events: none;
 
             background:
                 linear-gradient(
                     to top,
-                    rgba(0,0,0,.82),
-                    rgba(0,0,0,.38),
+                    rgba(0,0,0,.78),
+                    rgba(0,0,0,.28),
                     transparent
                 );
         }
@@ -2422,8 +2401,8 @@ function addStyles() {
                     -50%
                 );
 
-            width: 64px;
-            height: 64px;
+            width: 54px;
+            height: 54px;
 
             border: 0;
             border-radius: 50%;
@@ -2433,12 +2412,12 @@ function addStyles() {
                     5,
                     9,
                     20,
-                    .68
+                    .64
                 );
 
             color: white;
 
-            font-size: 25px;
+            font-size: 21px;
 
             display: flex;
             align-items: center;
@@ -2456,7 +2435,7 @@ function addStyles() {
         .reals-video-card:not(.is-playing)
         .video-play-indicator {
 
-            opacity: .85;
+            opacity: .82;
         }
 
 
@@ -2468,9 +2447,9 @@ function addStyles() {
 
             position: absolute;
 
-            left: 16px;
-            right: 85px;
-            bottom: 28px;
+            left: 13px;
+            right: 72px;
+            bottom: 20px;
 
             z-index: 5;
         }
@@ -2478,8 +2457,6 @@ function addStyles() {
 
         /* =====================================================
            SOURCE
-           NOW BELOW VIDEO
-           AND ABOVE CREATOR
            ===================================================== */
 
         .video-source-label {
@@ -2491,19 +2468,19 @@ function addStyles() {
 
             width: fit-content;
 
-            margin-bottom: 9px;
+            margin-bottom: 7px;
 
             padding:
-                5px 10px;
+                4px 8px;
 
-            border-radius: 15px;
+            border-radius: 13px;
 
             background:
                 rgba(
                     8,
                     15,
                     35,
-                    .82
+                    .78
                 );
 
             border:
@@ -2512,17 +2489,17 @@ function addStyles() {
                     100,
                     150,
                     255,
-                    .28
+                    .22
                 );
 
             color:
                 #e9efff;
 
-            font-size: 11px;
+            font-size: 9px;
 
-            font-weight: 700;
+            font-weight: 650;
 
-            letter-spacing: .25px;
+            letter-spacing: .2px;
         }
 
 
@@ -2536,14 +2513,14 @@ function addStyles() {
 
             align-items: center;
 
-            gap: 10px;
+            gap: 8px;
         }
 
 
         .creator-avatar {
 
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
 
             padding: 0;
 
@@ -2553,7 +2530,7 @@ function addStyles() {
                     255,
                     255,
                     255,
-                    .30
+                    .28
                 );
 
             border-radius: 50%;
@@ -2564,6 +2541,8 @@ function addStyles() {
                 #101a35;
 
             flex-shrink: 0;
+
+            cursor: pointer;
         }
 
 
@@ -2573,6 +2552,8 @@ function addStyles() {
             height: 100%;
 
             object-fit: cover;
+
+            display: block;
         }
 
 
@@ -2596,7 +2577,7 @@ function addStyles() {
 
             font-weight: 800;
 
-            font-size: 14px;
+            font-size: 12px;
         }
 
 
@@ -2612,9 +2593,9 @@ function addStyles() {
 
             color: white;
 
-            font-size: 15px;
+            font-size: 13px;
 
-            font-weight: 700;
+            font-weight: 650;
 
             white-space: nowrap;
 
@@ -2626,49 +2607,17 @@ function addStyles() {
 
         .creator-username {
 
-            margin-top: 2px;
+            margin-top: 1px;
 
             color:
                 rgba(
                     255,
                     255,
                     255,
-                    .70
+                    .68
                 );
 
-            font-size: 12px;
-        }
-
-
-        .follow-button {
-
-            border:
-                1px solid
-                rgba(
-                    255,
-                    255,
-                    255,
-                    .35
-                );
-
-            border-radius: 20px;
-
-            padding:
-                7px 13px;
-
-            background:
-                rgba(
-                    10,
-                    18,
-                    40,
-                    .76
-                );
-
-            color: white;
-
-            font-size: 12px;
-
-            font-weight: 700;
+            font-size: 10px;
         }
 
 
@@ -2678,19 +2627,19 @@ function addStyles() {
 
         .video-caption {
 
-            margin-top: 10px;
+            margin-top: 7px;
 
             color:
                 rgba(
                     255,
                     255,
                     255,
-                    .94
+                    .91
                 );
 
-            font-size: 14px;
+            font-size: 12.5px;
 
-            line-height: 1.45;
+            line-height: 1.38;
 
             max-width: 100%;
 
@@ -2706,8 +2655,8 @@ function addStyles() {
 
             position: absolute;
 
-            right: 12px;
-            bottom: 90px;
+            right: 7px;
+            bottom: 74px;
 
             z-index: 10;
 
@@ -2717,16 +2666,16 @@ function addStyles() {
 
             align-items: center;
 
-            gap: 14px;
+            gap: 9px;
         }
 
 
         .reals-action {
 
-            width: 48px;
-            min-height: 46px;
+            width: 40px;
+            min-height: 40px;
 
-            padding: 3px;
+            padding: 2px;
 
             border: 0;
 
@@ -2749,7 +2698,7 @@ function addStyles() {
 
         .action-icon {
 
-            font-size: 24px;
+            font-size: 20px;
 
             line-height: 1;
 
@@ -2771,12 +2720,12 @@ function addStyles() {
                     255,
                     255,
                     255,
-                    .88
+                    .84
                 );
 
-            font-size: 10px;
+            font-size: 9px;
 
-            font-weight: 700;
+            font-weight: 650;
         }
 
 
@@ -2819,8 +2768,8 @@ function addStyles() {
 
             position: relative;
 
-            width: 78px;
-            height: 78px;
+            width: 68px;
+            height: 68px;
 
             display: flex;
 
@@ -2861,8 +2810,8 @@ function addStyles() {
 
         .vs-logo {
 
-            width: 48px;
-            height: 48px;
+            width: 42px;
+            height: 42px;
 
             border-radius: 50%;
 
@@ -2881,7 +2830,7 @@ function addStyles() {
 
             color: white;
 
-            font-size: 15px;
+            font-size: 13px;
 
             font-weight: 900;
         }
@@ -2889,11 +2838,11 @@ function addStyles() {
 
         .vs-loading-title {
 
-            margin-top: 22px;
+            margin-top: 18px;
 
-            font-size: 17px;
+            font-size: 15px;
 
-            font-weight: 700;
+            font-weight: 650;
 
             color: white;
         }
@@ -2901,17 +2850,17 @@ function addStyles() {
 
         .vs-loading-text {
 
-            margin-top: 7px;
+            margin-top: 6px;
 
             color:
                 rgba(
                     255,
                     255,
                     255,
-                    .55
+                    .52
                 );
 
-            font-size: 12px;
+            font-size: 11px;
         }
 
 
@@ -2928,7 +2877,7 @@ function addStyles() {
 
             min-height: 100vh;
 
-            padding: 25px;
+            padding: 20px;
 
             display: flex;
 
@@ -2950,8 +2899,8 @@ function addStyles() {
         .empty-icon,
         .error-icon {
 
-            width: 64px;
-            height: 64px;
+            width: 56px;
+            height: 56px;
 
             border-radius: 50%;
 
@@ -2970,12 +2919,12 @@ function addStyles() {
                     100,
                     150,
                     255,
-                    .25
+                    .22
                 );
 
-            font-size: 24px;
+            font-size: 21px;
 
-            font-weight: 800;
+            font-weight: 750;
         }
 
 
@@ -2989,45 +2938,45 @@ function addStyles() {
         .empty-title,
         .error-title {
 
-            margin-top: 18px;
+            margin-top: 15px;
 
-            font-size: 19px;
+            font-size: 17px;
 
-            font-weight: 800;
+            font-weight: 750;
         }
 
 
         .empty-text,
         .error-message {
 
-            margin-top: 8px;
+            margin-top: 7px;
 
-            max-width: 320px;
+            max-width: 300px;
 
             color:
                 rgba(
                     255,
                     255,
                     255,
-                    .58
+                    .56
                 );
 
-            font-size: 13px;
+            font-size: 12px;
 
-            line-height: 1.5;
+            line-height: 1.45;
         }
 
 
         .retry-button {
 
-            margin-top: 20px;
+            margin-top: 17px;
 
             padding:
-                10px 20px;
+                9px 18px;
 
             border: 0;
 
-            border-radius: 22px;
+            border-radius: 20px;
 
             background:
                 linear-gradient(
@@ -3038,7 +2987,9 @@ function addStyles() {
 
             color: white;
 
-            font-weight: 700;
+            font-size: 12px;
+
+            font-weight: 650;
         }
 
 
@@ -3052,7 +3003,7 @@ function addStyles() {
 
             left: 50%;
 
-            bottom: 28px;
+            bottom: 24px;
 
             transform:
                 translate(
@@ -3063,9 +3014,9 @@ function addStyles() {
             z-index: 99999;
 
             padding:
-                10px 16px;
+                9px 14px;
 
-            border-radius: 22px;
+            border-radius: 20px;
 
             background:
                 rgba(
@@ -3081,12 +3032,12 @@ function addStyles() {
                     100,
                     150,
                     255,
-                    .25
+                    .22
                 );
 
             color: white;
 
-            font-size: 13px;
+            font-size: 12px;
 
             opacity: 0;
 
@@ -3132,46 +3083,111 @@ function addStyles() {
             max-width: 480px
         ) {
 
+            .general-reals-feed {
+
+                padding:
+                    1.5dvh 0;
+            }
+
+
+            .reals-video-card {
+
+                height: 94dvh;
+
+                margin-bottom:
+                    1.5dvh;
+
+                border-radius:
+                    8px;
+            }
+
+
             .video-info {
 
-                bottom: 24px;
+                bottom: 18px;
 
-                left: 13px;
+                left: 11px;
 
-                right: 75px;
+                right: 68px;
             }
 
 
             .video-actions {
 
-                right: 7px;
+                right: 5px;
 
-                bottom: 82px;
+                bottom: 70px;
 
-                gap: 11px;
+                gap: 7px;
             }
 
 
             .reals-action {
 
-                width: 44px;
+                width: 38px;
+
+                min-height: 38px;
             }
 
 
             .action-icon {
 
-                font-size: 22px;
+                font-size: 19px;
+            }
+
+
+            .action-count {
+
+                font-size: 8px;
             }
 
 
             .video-source-label {
 
-                margin-bottom: 8px;
+                margin-bottom: 6px;
 
-                font-size: 10px;
+                font-size: 9px;
 
                 padding:
-                    5px 9px;
+                    4px 8px;
+            }
+
+
+            .creator-avatar {
+
+                width: 36px;
+                height: 36px;
+            }
+
+
+            .creator-name {
+
+                font-size: 12.5px;
+            }
+
+
+            .creator-username {
+
+                font-size: 9.5px;
+            }
+
+
+            .video-caption {
+
+                margin-top: 6px;
+
+                font-size: 12px;
+
+                line-height: 1.35;
+            }
+
+
+            .video-play-indicator {
+
+                width: 50px;
+                height: 50px;
+
+                font-size: 19px;
             }
 
         }
