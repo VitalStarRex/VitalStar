@@ -4,11 +4,8 @@
 <head>
 
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#070914">
 
 <title>VitalStar</title>
 
@@ -17,8 +14,29 @@
 <style>
 
 /* =========================================================
-   VITALSTAR — MODERN SOCIAL HOME
+   VITALSTAR — DEEP-SPACE SOCIAL HOME
+
+   COLOUR TOKENS (change a colour once, it changes everywhere)
+   midnight  = page background
+   electric  = electric blue
+   violet    = violet
+   gold      = gold (wallet, create button, highlights)
    ========================================================= */
+
+:root{
+    --midnight:#070914;
+    --navy:#0d1226;
+    --card:#111729;
+    --card-2:#0c1020;
+    --electric:#00cfff;
+    --violet:#8f4dff;
+    --gold:#ffd24a;
+    --pink:#ff3d9a;
+    --text:#f3f5ff;
+    --muted:#8d96b6;
+    --line:rgba(255,255,255,.08);
+    --brand-gradient:linear-gradient(90deg,#fff,#00d9ff,#8f4dff);
+}
 
 *{
     margin:0;
@@ -32,37 +50,69 @@ html{
 }
 
 body{
-    background:#070914;
-    color:#fff;
+    background:var(--midnight);
+    color:var(--text);
     min-height:100vh;
     overflow-x:hidden;
-    padding-bottom:88px;
+    padding-bottom:96px;
 }
+
+/* Keyboard focus ring (accessibility) */
+:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+}
+
+/* Text for screen readers only */
+.sr-only{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+}
+
+/* =========================================================
+   BACKGROUND — nebula glow + slow drifting stars
+   ========================================================= */
 
 body::before{
     content:"";
     position:fixed;
     inset:0;
     pointer-events:none;
+    z-index:-2;
 
     background:
-        radial-gradient(
-            circle at 15% 10%,
-            rgba(0,183,255,.10),
-            transparent 25%
-        ),
-        radial-gradient(
-            circle at 90% 20%,
-            rgba(168,59,255,.12),
-            transparent 25%
-        ),
-        radial-gradient(
-            circle at 50% 100%,
-            rgba(255,0,153,.07),
-            transparent 30%
-        );
+        radial-gradient(circle at 12% 8%, rgba(0,207,255,.14), transparent 28%),
+        radial-gradient(circle at 92% 18%, rgba(143,77,255,.16), transparent 28%),
+        radial-gradient(circle at 50% 105%, rgba(255,61,154,.08), transparent 32%);
+}
 
+/* Tiny stars made only with CSS (no images, no extra scripts) */
+body::after{
+    content:"";
+    position:fixed;
+    inset:-100px 0 0 0;
+    pointer-events:none;
     z-index:-1;
+    opacity:.55;
+
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, #fff, transparent),
+        radial-gradient(1px 1px at 90px 120px, #9fe9ff, transparent),
+        radial-gradient(1.5px 1.5px at 160px 60px, #ffe48a, transparent),
+        radial-gradient(1px 1px at 230px 170px, #fff, transparent),
+        radial-gradient(1px 1px at 300px 90px, #c9a8ff, transparent);
+    background-size:320px 220px;
+
+    animation:starsDrift 120s linear infinite;
+}
+
+@keyframes starsDrift{
+    from{ transform:translateY(0); }
+    to{ transform:translateY(220px); }
 }
 
 /* =========================================================
@@ -81,19 +131,38 @@ header{
 
     padding:0 14px;
 
-    background:rgba(7,9,20,.92);
+    background:rgba(7,9,20,.88);
     backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
 
-    border-bottom:1px solid rgba(255,255,255,.08);
+    border-bottom:1px solid var(--line);
 
     z-index:1000;
+}
+
+/* Thin electric-to-violet line under the header */
+header::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:-1px;
+    width:100%;
+    height:1px;
+
+    background:linear-gradient(
+        90deg,
+        transparent,
+        rgba(0,207,255,.7),
+        rgba(143,77,255,.7),
+        transparent
+    );
 }
 
 .menu{
     width:42px;
     height:42px;
 
-    border:0;
+    border:1px solid var(--line);
     border-radius:50%;
 
     background:#151a2d;
@@ -107,6 +176,11 @@ header{
     justify-content:center;
 
     margin-right:9px;
+    transition:.2s;
+}
+
+.menu:hover{
+    background:#202743;
 }
 
 .logo-area{
@@ -114,9 +188,13 @@ header{
     align-items:center;
     gap:9px;
     flex:1;
+    min-width:0;
 }
 
+/* Star with a slowly pulsing glow and a faint orbit ring */
 .logo-star{
+    position:relative;
+
     width:42px;
     height:42px;
 
@@ -124,17 +202,36 @@ header{
     align-items:center;
     justify-content:center;
 
-    font-size:35px;
+    font-size:34px;
     color:#fff;
 
     text-shadow:
-        0 0 7px #00cfff,
-        0 0 16px #7b2cff,
-        0 0 28px #ff19a8;
+        0 0 7px var(--electric),
+        0 0 16px var(--violet),
+        0 0 28px var(--pink);
+
+    animation:starGlow 4s ease-in-out infinite;
+}
+
+.logo-star::after{
+    content:"";
+    position:absolute;
+    inset:2px -2px;
+
+    border:1px solid rgba(0,207,255,.35);
+    border-radius:50%;
+
+    transform:rotate(-24deg);
+}
+
+@keyframes starGlow{
+    0%,100%{ filter:brightness(1); }
+    50%{ filter:brightness(1.35); }
 }
 
 .logo-text{
     line-height:1;
+    min-width:0;
 }
 
 .logo{
@@ -142,14 +239,7 @@ header{
     font-weight:900;
     letter-spacing:-.8px;
 
-    background:
-        linear-gradient(
-            90deg,
-            #fff,
-            #00d9ff,
-            #8f4dff
-        );
-
+    background:var(--brand-gradient);
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
@@ -157,9 +247,10 @@ header{
 
 .logo-sub{
     margin-top:4px;
-    color:#8991ae;
+    color:var(--muted);
     font-size:11px;
     letter-spacing:.3px;
+    white-space:nowrap;
 }
 
 .icons{
@@ -172,7 +263,7 @@ header{
     width:42px;
     height:42px;
 
-    border:0;
+    border:1px solid var(--line);
     border-radius:50%;
 
     background:#151a2d;
@@ -195,25 +286,24 @@ header{
 }
 
 .search-trigger{
-    font-size:23px;
+    font-size:21px;
 }
 
 .wallet-trigger{
     height:42px;
 
-    border:1px solid rgba(255,204,0,.45);
+    border:1px solid rgba(255,210,74,.5);
     border-radius:22px;
 
-    padding:0 11px;
+    padding:0 12px;
 
-    background:
-        linear-gradient(
-            135deg,
-            rgba(255,211,0,.18),
-            rgba(255,120,0,.14)
-        );
+    background:linear-gradient(
+        135deg,
+        rgba(255,210,74,.2),
+        rgba(255,120,0,.14)
+    );
 
-    color:#ffd84a;
+    color:var(--gold);
 
     display:flex;
     align-items:center;
@@ -224,8 +314,12 @@ header{
 
     cursor:pointer;
 
-    box-shadow:
-        0 0 15px rgba(255,180,0,.10);
+    box-shadow:0 0 16px rgba(255,190,0,.12);
+    transition:.2s;
+}
+
+.wallet-trigger:hover{
+    box-shadow:0 0 22px rgba(255,190,0,.28);
 }
 
 #walletBalance{
@@ -233,7 +327,7 @@ header{
 }
 
 /* =========================================================
-   BADGES
+   BADGES (hidden automatically when the count is 0)
    ========================================================= */
 
 .badge{
@@ -253,13 +347,19 @@ header{
     align-items:center;
     justify-content:center;
 
-    background:#ff326d;
+    background:linear-gradient(135deg,#ff326d,#ff3d9a);
     color:#fff;
 
     font-size:10px;
     font-weight:900;
 
-    border:2px solid #080a15;
+    border:2px solid var(--midnight);
+
+    box-shadow:0 0 10px rgba(255,50,109,.5);
+}
+
+.badge.is-empty{
+    display:none;
 }
 
 /* =========================================================
@@ -275,14 +375,14 @@ header{
     width:275px;
     height:100vh;
 
-    padding:25px 12px 25px;
+    padding:25px 12px;
 
     background:rgba(10,13,27,.98);
     backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
 
-    border-right:1px solid rgba(255,255,255,.08);
-
-    box-shadow:10px 0 40px rgba(0,0,0,.4);
+    border-right:1px solid var(--line);
+    box-shadow:10px 0 40px rgba(0,0,0,.45);
 
     transition:.3s;
 
@@ -303,17 +403,9 @@ header{
 .sidebar-header strong{
     font-size:20px;
 
-    background:
-        linear-gradient(
-            90deg,
-            #fff,
-            #00d9ff,
-            #8f4dff
-        );
-
+    background:var(--brand-gradient);
     -webkit-background-clip:text;
     background-clip:text;
-
     color:transparent;
 }
 
@@ -356,7 +448,6 @@ header{
     border-radius:14px;
 
     background:transparent;
-
     color:#d9def4;
 
     text-decoration:none;
@@ -371,20 +462,15 @@ header{
 
 .sidebar a:hover,
 #logoutBtn:hover{
-    background:
-        linear-gradient(
-            90deg,
-            rgba(0,190,255,.12),
-            rgba(140,55,255,.14)
-        );
+    background:linear-gradient(
+        90deg,
+        rgba(0,190,255,.12),
+        rgba(140,55,255,.16)
+    );
 
     color:#fff;
     transform:translateX(3px);
 }
-
-/* =========================================================
-   FRIEND REQUEST SIDEBAR BADGE
-   ========================================================= */
 
 .sidebar a#friendsMenuLink{
     position:relative;
@@ -413,12 +499,31 @@ header{
 
     border:2px solid #0a0d1b;
 
-    box-shadow:
-        0 0 10px rgba(255,50,109,.45);
+    box-shadow:0 0 10px rgba(255,50,109,.45);
 }
 
 .sidebar-badge.show{
     display:flex;
+}
+
+/* Dark overlay behind the open sidebar */
+.sidebar-overlay{
+    position:fixed;
+    inset:0;
+
+    background:rgba(3,4,10,.6);
+
+    opacity:0;
+    pointer-events:none;
+
+    transition:opacity .3s;
+
+    z-index:1400;
+}
+
+.sidebar-overlay.show{
+    opacity:1;
+    pointer-events:auto;
 }
 
 /* =========================================================
@@ -472,6 +577,7 @@ header{
 
     text-decoration:none;
     color:inherit;
+    border-radius:50%;
 }
 
 .story{
@@ -484,10 +590,7 @@ header{
     cursor:pointer;
 }
 
-/* =========================================================
-   ROTATING VITALSTAR PROFILE RING
-   ========================================================= */
-
+/* Rotating gold → blue → violet → pink ring */
 .story::before{
     content:"";
 
@@ -496,33 +599,24 @@ header{
 
     border-radius:50%;
 
-    background:
-        conic-gradient(
-            #ffd400,
-            #00e5ff,
-            #7c35ff,
-            #ff239e,
-            #ffd400
-        );
+    background:conic-gradient(
+        #ffd400,
+        #00e5ff,
+        #7c35ff,
+        #ff239e,
+        #ffd400
+    );
 
-    animation:
-        storyRingSpin 2.5s linear infinite;
+    animation:storyRingSpin 3s linear infinite;
 
     box-shadow:
-        0 0 8px rgba(255,212,0,.45),
-        0 0 15px rgba(0,229,255,.25);
+        0 0 8px rgba(255,212,0,.4),
+        0 0 16px rgba(0,229,255,.25);
 }
 
 @keyframes storyRingSpin{
-
-    from{
-        transform:rotate(0deg);
-    }
-
-    to{
-        transform:rotate(360deg);
-    }
-
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
 }
 
 .story-inner{
@@ -543,7 +637,7 @@ header{
 
     color:#fff;
 
-    border:2px solid #070914;
+    border:2px solid var(--midnight);
 
     transition:.2s;
 }
@@ -581,12 +675,7 @@ header{
     align-items:center;
     justify-content:center;
 
-    background:
-        linear-gradient(
-            135deg,
-            #ffd400,
-            #00cfff
-        );
+    background:linear-gradient(135deg,var(--gold),var(--electric));
 
     border:2px solid #090b17;
 
@@ -595,8 +684,9 @@ header{
     font-size:17px;
     font-weight:900;
 
-    box-shadow:
-        0 0 10px rgba(255,212,0,.45);
+    cursor:pointer;
+
+    box-shadow:0 0 10px rgba(255,212,0,.45);
 }
 
 .story-name{
@@ -615,7 +705,7 @@ header{
 }
 
 /* =========================================================
-   CREATE POST
+   CREATE POST (composer)
    ========================================================= */
 
 #createPost{
@@ -624,21 +714,35 @@ header{
 }
 
 .composer{
-    background:
-        linear-gradient(
-            145deg,
-            rgba(20,25,45,.96),
-            rgba(12,15,29,.96)
-        );
+    position:relative;
 
-    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(
+        145deg,
+        rgba(22,28,52,.96),
+        rgba(12,15,29,.96)
+    );
+
+    border:1px solid var(--line);
     border-radius:22px;
 
     padding:13px;
 
-    box-shadow:0 8px 30px rgba(0,0,0,.2);
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
 
-    margin-bottom:0;
+    overflow:hidden;
+}
+
+/* Gold-to-blue accent line on top of the composer */
+.composer::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:18px;
+    right:18px;
+    height:2px;
+
+    background:linear-gradient(90deg,var(--gold),var(--electric),var(--violet));
+    opacity:.8;
 }
 
 .composer-top{
@@ -654,12 +758,7 @@ header{
     border-radius:50%;
     object-fit:cover;
 
-    background:
-        linear-gradient(
-            135deg,
-            #7c3cff,
-            #00d5ff
-        );
+    background:linear-gradient(135deg,#7c3cff,#00d5ff);
 
     border:2px solid #713cff;
 }
@@ -669,7 +768,7 @@ header{
 
     height:44px;
 
-    border:1px solid rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.1);
     border-radius:24px;
 
     background:#171c31;
@@ -682,10 +781,13 @@ header{
 
     font-size:14px;
     cursor:pointer;
+
+    transition:.2s;
 }
 
 .composer-input:hover{
     background:#1d233b;
+    border-color:rgba(0,207,255,.35);
 }
 
 .composer-actions{
@@ -708,31 +810,22 @@ header{
     font-size:12px;
     font-weight:800;
 
-    padding:7px;
+    padding:8px 7px;
 
     cursor:pointer;
     border-radius:10px;
+
+    transition:.2s;
 }
 
 .composer-action:hover{
-    background:rgba(255,255,255,.05);
+    background:rgba(255,255,255,.06);
 }
 
-.photo-action{
-    color:#c348ff;
-}
-
-.video-action{
-    color:#00caff;
-}
-
-.live-action{
-    color:#ff39c7;
-}
-
-.feeling-action{
-    color:#00e6d0;
-}
+.photo-action{ color:#c348ff; }
+.video-action{ color:var(--electric); }
+.live-action{ color:#ff39c7; }
+.feeling-action{ color:var(--gold); }
 
 /* =========================================================
    HIDDEN COMPATIBILITY
@@ -753,23 +846,26 @@ header{
 .post-card{
     position:relative;
 
-    background:
-        linear-gradient(
-            145deg,
-            #111627,
-            #0d1120
-        );
+    background:linear-gradient(145deg,var(--card),var(--card-2));
 
-    color:#f3f5ff;
+    color:var(--text);
 
-    border:1px solid rgba(255,255,255,.075);
-
+    border:1px solid var(--line);
     border-radius:21px;
     overflow:hidden;
 
     margin-top:15px;
 
-    box-shadow:0 9px 28px rgba(0,0,0,.28);
+    box-shadow:0 9px 28px rgba(0,0,0,.3);
+
+    transition:border-color .25s, box-shadow .25s;
+}
+
+.post-card:hover{
+    border-color:rgba(0,207,255,.22);
+    box-shadow:
+        0 9px 28px rgba(0,0,0,.3),
+        0 0 22px rgba(143,77,255,.1);
 }
 
 .user-info{
@@ -790,14 +886,9 @@ header{
 
     object-fit:cover;
 
-    background:
-        linear-gradient(
-            135deg,
-            #7b2cff,
-            #00cfff
-        );
+    background:linear-gradient(135deg,#7b2cff,#00cfff);
 
-    border:2px solid rgba(120,75,255,.7);
+    border:2px solid rgba(143,77,255,.75);
 }
 
 .post-card p{
@@ -806,7 +897,9 @@ header{
     color:#edf0ff;
 
     font-size:15px;
-    line-height:1.48;
+    line-height:1.5;
+
+    overflow-wrap:anywhere;
 }
 
 .post-photo{
@@ -828,7 +921,7 @@ header{
     align-items:center;
     justify-content:space-around;
 
-    padding:10px 6px;
+    padding:8px 6px;
 
     border-top:1px solid rgba(255,255,255,.07);
 }
@@ -844,7 +937,7 @@ header{
     font-size:13px;
     font-weight:800;
 
-    padding:8px 4px;
+    padding:10px 4px;
 
     cursor:pointer;
     border-radius:10px;
@@ -853,8 +946,12 @@ header{
 }
 
 .post-buttons button:hover{
-    background:rgba(255,255,255,.05);
+    background:rgba(0,207,255,.08);
     color:#fff;
+}
+
+.post-buttons button:active{
+    transform:scale(.94);
 }
 
 .post-card img{
@@ -889,7 +986,6 @@ header{
     transform:translateX(-50%);
 
     width:min(96%,620px);
-
     height:68px;
 
     padding:5px 8px;
@@ -898,12 +994,11 @@ header{
     align-items:center;
     justify-content:space-around;
 
-    background:rgba(11,14,28,.94);
-
+    background:rgba(11,14,28,.92);
     backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
 
-    border:1px solid rgba(255,255,255,.10);
-
+    border:1px solid rgba(255,255,255,.1);
     border-radius:23px;
 
     box-shadow:0 12px 40px rgba(0,0,0,.55);
@@ -923,6 +1018,7 @@ header{
 
     font-size:21px;
     padding:5px;
+    border-radius:14px;
 
     transition:.2s;
 }
@@ -936,15 +1032,16 @@ header{
 
     margin-top:3px;
 
-    font-size:9px;
+    font-size:10px;
     font-weight:800;
 }
 
-.bottom-nav a:first-child{
-    color:#8f56ff;
+/* Current page (Home) is highlighted */
+.bottom-nav a[aria-current="page"]{
+    color:var(--violet);
 }
 
-.bottom-nav a:first-child::after{
+.bottom-nav a[aria-current="page"]::after{
     content:"";
 
     position:absolute;
@@ -959,16 +1056,12 @@ header{
 
     border-radius:10px;
 
-    background:
-        linear-gradient(
-            90deg,
-            #8b42ff,
-            #00d9ff
-        );
+    background:linear-gradient(90deg,var(--violet),var(--electric));
 
-    box-shadow:0 0 8px #713cff;
+    box-shadow:0 0 8px var(--violet);
 }
 
+/* Centre "+" button: gold ring, blue-violet core */
 .create-btn{
     width:57px !important;
     height:57px;
@@ -983,27 +1076,28 @@ header{
     align-items:center;
     justify-content:center;
 
-    background:
-        linear-gradient(
-            135deg,
-            #7639ff,
-            #00cfff,
-            #ff28a8
-        );
+    background:linear-gradient(135deg,#7639ff,var(--electric));
 
     color:#fff !important;
 
     font-size:30px !important;
 
-    border:4px solid #080b16;
+    border:4px solid var(--midnight);
 
-    box-shadow:0 0 20px rgba(106,54,255,.55);
+    box-shadow:
+        0 0 0 2px rgba(255,210,74,.7),
+        0 0 22px rgba(106,54,255,.6);
 
     text-shadow:0 2px 5px rgba(0,0,0,.3);
+
+    transition:transform .2s, box-shadow .2s;
 }
 
-.create-btn small{
-    display:none;
+.create-btn:hover{
+    transform:translateY(-2px) scale(1.04);
+    box-shadow:
+        0 0 0 2px var(--gold),
+        0 0 28px rgba(0,207,255,.55);
 }
 
 /* =========================================================
@@ -1020,17 +1114,14 @@ header{
     .menu{
         width:38px;
         height:38px;
-
         font-size:19px;
-
         margin-right:4px;
     }
 
     .logo-star{
         width:34px;
         height:34px;
-
-        font-size:29px;
+        font-size:28px;
     }
 
     .logo{
@@ -1048,15 +1139,12 @@ header{
     .header-circle{
         width:38px;
         height:38px;
-
         font-size:18px;
     }
 
     .wallet-trigger{
         height:38px;
-
         padding:0 8px;
-
         font-size:11px;
     }
 
@@ -1112,10 +1200,31 @@ header{
     .create-btn{
         width:53px !important;
         height:53px;
-
         min-width:53px !important;
-
         font-size:27px !important;
+    }
+
+}
+
+/* Very small phones: hide the tagline so icons never get squeezed */
+@media(max-width:380px){
+    .logo-sub{
+        display:none;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION — respects people who turn animations off
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce){
+
+    *,
+    *::before,
+    *::after{
+        animation:none !important;
+        transition:none !important;
+        scroll-behavior:auto !important;
     }
 
 }
@@ -1130,15 +1239,18 @@ header{
 
 <button
     class="menu"
+    id="menuButton"
     onclick="openMenu()"
     aria-label="Open menu"
+    aria-controls="sidebar"
+    aria-expanded="false"
 >
     ☰
 </button>
 
 <div class="logo-area">
 
-<div class="logo-star">
+<div class="logo-star" aria-hidden="true">
     ☆
 </div>
 
@@ -1161,18 +1273,19 @@ header{
 <a
     href="users.html"
     class="header-circle search-trigger"
-    aria-label="Search"
+    aria-label="Search people"
 >
-    🔍
+    <span aria-hidden="true">🔍</span>
 </a>
 
 <button
     class="wallet-trigger"
     id="walletButton"
     type="button"
+    aria-label="Open wallet"
 >
 
-<span>💰</span>
+<span aria-hidden="true">💰</span>
 
 <span id="walletBalance">
     ₦0
@@ -1187,12 +1300,13 @@ header{
     class="header-circle"
     aria-label="Notifications"
 >
-    🔔
+    <span aria-hidden="true">🔔</span>
 </a>
 
 <span
     id="notificationBadge"
     class="badge"
+    aria-live="polite"
 >
     0
 </span>
@@ -1206,12 +1320,13 @@ header{
     class="header-circle"
     aria-label="Messages"
 >
-    💬
+    <span aria-hidden="true">💬</span>
 </a>
 
 <span
     id="messageBadge"
     class="badge"
+    aria-live="polite"
 >
     0
 </span>
@@ -1223,8 +1338,15 @@ header{
 </header>
 
 <div
+    class="sidebar-overlay"
+    id="sidebarOverlay"
+    onclick="closeMenu()"
+></div>
+
+<aside
     class="sidebar"
     id="sidebar"
+    aria-label="Main menu"
 >
 
 <div class="sidebar-header">
@@ -1247,7 +1369,7 @@ header{
     href="myfriends.html"
     id="friendsMenuLink"
 >
-    👥 &nbsp; Friends
+    <span aria-hidden="true">👥</span> &nbsp; Friends
 
     <span
         id="friendRequestBadge"
@@ -1258,38 +1380,38 @@ header{
 </a>
 
 <a href="message.html">
-    💬 &nbsp; Messages
+    <span aria-hidden="true">💬</span> &nbsp; Messages
 </a>
 
 <a href="reals/reals.html">
-    🎬 &nbsp; Reals
+    <span aria-hidden="true">🎬</span> &nbsp; Reals
 </a>
 
 <a href="games/games.html">
-    🎮 &nbsp; Games
+    <span aria-hidden="true">🎮</span> &nbsp; Games
 </a>
 
 <a href="groups.html">
-    👥 &nbsp; Groups
+    <span aria-hidden="true">👥</span> &nbsp; Groups
 </a>
 
 <a href="edit-profile.html">
-    ⚙️ &nbsp; Settings
+    <span aria-hidden="true">⚙️</span> &nbsp; Settings
 </a>
 
 <a href="saved.html">
-    🔖 &nbsp; Saved Posts
+    <span aria-hidden="true">🔖</span> &nbsp; Saved Posts
 </a>
 
 <a href="chatroom.html">
-    💬 &nbsp; ChatRoom
+    <span aria-hidden="true">💬</span> &nbsp; ChatRoom
 </a>
 
 <button id="logoutBtn">
-    🚪 &nbsp; Logout
+    <span aria-hidden="true">🚪</span> &nbsp; Logout
 </button>
 
-</div>
+</aside>
 
 <script>
 
@@ -1298,18 +1420,22 @@ function openMenu(){
     const sidebar =
         document.getElementById("sidebar");
 
-    if(
-        sidebar.style.left === "0px"
-    ){
+    if(sidebar.style.left === "0px"){
 
         closeMenu();
-
-    }else{
-
-        sidebar.style.left =
-            "0px";
+        return;
 
     }
+
+    sidebar.style.left = "0px";
+
+    document
+        .getElementById("sidebarOverlay")
+        .classList.add("show");
+
+    document
+        .getElementById("menuButton")
+        .setAttribute("aria-expanded","true");
 
 }
 
@@ -1317,16 +1443,35 @@ function closeMenu(){
 
     document
         .getElementById("sidebar")
-        .style.left =
-            "-285px";
+        .style.left = "-285px";
+
+    document
+        .getElementById("sidebarOverlay")
+        .classList.remove("show");
+
+    document
+        .getElementById("menuButton")
+        .setAttribute("aria-expanded","false");
 
 }
+
+/* Press Escape to close the menu */
+document.addEventListener("keydown", function(event){
+
+    if(event.key === "Escape"){
+        closeMenu();
+    }
+
+});
 
 </script>
 
 <main class="container">
 
-<section class="stories-section">
+<section
+    class="stories-section"
+    aria-label="Friends"
+>
 
     <div
         class="stories"
@@ -1349,15 +1494,24 @@ function closeMenu(){
 
 </div>
 
-<div id="feed"></div>
+<div
+    id="feed"
+    aria-label="Posts"
+></div>
 
 </main>
 
-<nav class="bottom-nav">
+<nav
+    class="bottom-nav"
+    aria-label="Primary"
+>
 
-<a href="home.html">
+<a
+    href="home.html"
+    aria-current="page"
+>
 
-    🏠
+    <span aria-hidden="true">🏠</span>
 
     <small>
         Home
@@ -1367,7 +1521,7 @@ function closeMenu(){
 
 <a href="users.html">
 
-    🔎
+    <span aria-hidden="true">🔎</span>
 
     <small>
         Explore
@@ -1379,14 +1533,14 @@ function closeMenu(){
     href="#"
     class="create-btn"
     id="bottomCreatePost"
-    aria-label="Create Post"
+    aria-label="Create post"
 >
     +
 </a>
 
 <a href="wallet.html">
 
-    💰
+    <span aria-hidden="true">💰</span>
 
     <small>
         Finance
@@ -1396,7 +1550,7 @@ function closeMenu(){
 
 <a href="profile.html">
 
-    👤
+    <span aria-hidden="true">👤</span>
 
     <small>
         Profile
@@ -1406,50 +1560,58 @@ function closeMenu(){
 
 </nav>
 
-<script
-    type="module"
-    src="auth-guard.js"
-></script>
+<script type="module" src="auth-guard.js"></script>
+<script type="module" src="presence.js"></script>
+<script type="module" src="message-badge.js"></script>
+<script type="module" src="wallet.js"></script>
+<script type="module" src="post.js"></script>
+<script type="module" src="home.js"></script>
+<script type="module" src="online-count.js"></script>
+<script type="module" src="notifications.js"></script>
+<script type="module" src="logout.js"></script>
 
-<script
-    type="module"
-    src="presence.js"
-></script>
+<!-- HIDE BADGES WHEN THE COUNT IS 0 -->
 
-<script
-    type="module"
-    src="message-badge.js"
-></script>
+<script>
 
-<script
-    type="module"
-    src="wallet.js"
-></script>
+(function(){
 
-<script
-    type="module"
-    src="post.js"
-></script>
+    function syncBadge(badge){
 
-<script
-    type="module"
-    src="home.js"
-></script>
+        const text =
+            badge.textContent.trim();
 
-<script
-    type="module"
-    src="online-count.js"
-></script>
+        badge.classList.toggle(
+            "is-empty",
+            text === "" || text === "0"
+        );
 
-<script
-    type="module"
-    src="notifications.js"
-></script>
+    }
 
-<script
-    type="module"
-    src="logout.js"
-></script>
+    ["notificationBadge","messageBadge"].forEach(function(id){
+
+        const badge =
+            document.getElementById(id);
+
+        if(!badge){
+            return;
+        }
+
+        syncBadge(badge);
+
+        new MutationObserver(function(){
+            syncBadge(badge);
+        }).observe(badge,{
+            childList:true,
+            characterData:true,
+            subtree:true
+        });
+
+    });
+
+})();
+
+</script>
 
 <!-- FRIEND REQUEST SIDEBAR COUNT -->
 
@@ -1469,14 +1631,10 @@ import {
 
 
 const friendRequestBadge =
-    document.getElementById(
-        "friendRequestBadge"
-    );
+    document.getElementById("friendRequestBadge");
 
 
-function updateFriendRequestBadge(
-    count
-){
+function updateFriendRequestBadge(count){
 
     if(!friendRequestBadge){
         return;
@@ -1485,110 +1643,74 @@ function updateFriendRequestBadge(
     if(count > 0){
 
         friendRequestBadge.textContent =
-            count > 99
-                ? "99+"
-                : count;
+            count > 99 ? "99+" : count;
 
-        friendRequestBadge.classList.add(
-            "show"
-        );
+        friendRequestBadge.classList.add("show");
 
     }else{
 
-        friendRequestBadge.textContent =
-            "0";
+        friendRequestBadge.textContent = "0";
 
-        friendRequestBadge.classList.remove(
-            "show"
-        );
+        friendRequestBadge.classList.remove("show");
 
     }
 
 }
 
 
-auth.onAuthStateChanged(
-    user => {
+auth.onAuthStateChanged(user => {
 
-        if(!user){
+    if(!user){
 
-            updateFriendRequestBadge(
-                0
-            );
+        updateFriendRequestBadge(0);
 
-            return;
-        }
+        return;
+    }
 
 
-        const requestsQuery =
-            query(
-
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-
-                where(
-                    "to",
-                    "==",
-                    user.uid
-                )
-
-            );
-
-
-        onSnapshot(
-
-            requestsQuery,
-
-            snapshot => {
-
-                let count = 0;
-
-
-                snapshot.forEach(
-                    requestDoc => {
-
-                        const request =
-                            requestDoc.data();
-
-
-                        if(
-                            request.status ===
-                            "pending"
-                        ){
-
-                            count++;
-
-                        }
-
-                    }
-                );
-
-
-                updateFriendRequestBadge(
-                    count
-                );
-
-            },
-
-            error => {
-
-                console.error(
-                    "Friend request badge error:",
-                    error
-                );
-
-                updateFriendRequestBadge(
-                    0
-                );
-
-            }
-
+    const requestsQuery =
+        query(
+            collection(db, "friendRequests"),
+            where("to", "==", user.uid)
         );
 
-    }
-);
+
+    onSnapshot(
+
+        requestsQuery,
+
+        snapshot => {
+
+            let count = 0;
+
+            snapshot.forEach(requestDoc => {
+
+                const request = requestDoc.data();
+
+                if(request.status === "pending"){
+                    count++;
+                }
+
+            });
+
+            updateFriendRequestBadge(count);
+
+        },
+
+        error => {
+
+            console.error(
+                "Friend request badge error:",
+                error
+            );
+
+            updateFriendRequestBadge(0);
+
+        }
+
+    );
+
+});
 
 </script>
 
@@ -1621,97 +1743,49 @@ const storiesContainer =
     document.getElementById("stories");
 
 
-/* =========================================================
-   DEFAULT PROFILE IMAGE
-   ========================================================= */
+/* DEFAULT PROFILE IMAGE */
 
 const DEFAULT_AVATAR =
     "data:image/svg+xml;charset=UTF-8," +
     encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg"
-             width="200"
-             height="200"
-             viewBox="0 0 200 200">
-
-            <rect
-                width="200"
-                height="200"
-                rx="100"
-                fill="#151a2d"
-            />
-
-            <circle
-                cx="100"
-                cy="78"
-                r="38"
-                fill="#7c35ff"
-            />
-
-            <path
-                d="M35 180
-                   C42 130 70 112 100 112
-                   C130 112 158 130 165 180Z"
-                fill="#00cfff"
-            />
-
+             width="200" height="200" viewBox="0 0 200 200">
+            <rect width="200" height="200" rx="100" fill="#151a2d"/>
+            <circle cx="100" cy="78" r="38" fill="#7c35ff"/>
+            <path d="M35 180 C42 130 70 112 100 112 C130 112 158 130 165 180Z"
+                  fill="#00cfff"/>
         </svg>
     `);
 
 
-/* =========================================================
-   LOAD PROFILE — FULL NAME
-   ========================================================= */
+/* LOAD PROFILE — FULL NAME */
 
 async function loadProfile(uid){
 
     try{
 
         const snapshot =
-            await getDoc(
-                doc(
-                    db,
-                    "users",
-                    uid
-                )
-            );
-
+            await getDoc(doc(db, "users", uid));
 
         if(!snapshot.exists()){
 
             return {
-
                 uid: uid,
-
                 name: "",
-
                 profilePicture: ""
-
             };
 
         }
 
-
-        const data =
-            snapshot.data();
-
+        const data = snapshot.data();
 
         return {
-
             uid: uid,
-
-            /*
-             * FULL NAME ONLY
-             */
-
-            name:
-                data.fullName ||
-                "",
-
+            name: data.fullName || "",
             profilePicture:
                 data.profilePicture ||
                 data.photoURL ||
                 ""
-
         };
 
     }catch(error){
@@ -1722,15 +1796,10 @@ async function loadProfile(uid){
             error
         );
 
-
         return {
-
             uid: uid,
-
             name: "",
-
             profilePicture: ""
-
         };
 
     }
@@ -1738,55 +1807,33 @@ async function loadProfile(uid){
 }
 
 
-/* =========================================================
-   LAST ACTIVE
-   ========================================================= */
+/* LAST ACTIVE */
 
 async function getLastActive(uid){
 
     try{
 
         const snapshot =
-            await get(
-                ref(
-                    rtdb,
-                    `status/${uid}`
-                )
-            );
-
+            await get(ref(rtdb, `status/${uid}`));
 
         if(snapshot.exists()){
 
-            const status =
-                snapshot.val();
-
+            const status = snapshot.val();
 
             if(status){
 
                 if(
-                    status.lastSeen !==
-                    undefined &&
-                    status.lastSeen !==
-                    null
+                    status.lastSeen !== undefined &&
+                    status.lastSeen !== null
                 ){
-
-                    return Number(
-                        status.lastSeen
-                    );
-
+                    return Number(status.lastSeen);
                 }
 
                 if(
-                    status.lastActive !==
-                    undefined &&
-                    status.lastActive !==
-                    null
+                    status.lastActive !== undefined &&
+                    status.lastActive !== null
                 ){
-
-                    return Number(
-                        status.lastActive
-                    );
-
+                    return Number(status.lastActive);
                 }
 
             }
@@ -1795,346 +1842,188 @@ async function getLastActive(uid){
 
     }catch(error){
 
-        console.warn(
-            "Presence unavailable:",
-            uid
-        );
+        console.warn("Presence unavailable:", uid);
 
     }
-
 
     return 0;
 
 }
 
 
-/* =========================================================
-   GET ACCEPTED FRIENDS
-   ========================================================= */
+/* GET ACCEPTED FRIENDS */
 
 async function getAcceptedFriends(uid){
 
-    const friendIds =
-        new Set();
-
+    const friendIds = new Set();
 
     try{
 
         const sentQuery =
             query(
-
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-
-                where(
-                    "from",
-                    "==",
-                    uid
-                ),
-
-                where(
-                    "status",
-                    "==",
-                    "accepted"
-                )
-
+                collection(db, "friendRequests"),
+                where("from", "==", uid),
+                where("status", "==", "accepted")
             );
-
 
         const sentSnapshot =
-            await getDocs(
-                sentQuery
-            );
+            await getDocs(sentQuery);
 
+        sentSnapshot.forEach(requestDoc => {
 
-        sentSnapshot.forEach(
-            requestDoc => {
+            const data = requestDoc.data();
 
-                const data =
-                    requestDoc.data();
-
-
-                if(data.to){
-
-                    friendIds.add(
-                        data.to
-                    );
-
-                }
-
+            if(data.to){
+                friendIds.add(data.to);
             }
-        );
+
+        });
 
     }catch(error){
 
-        console.warn(
-            "Sent friends query failed:",
-            error
-        );
+        console.warn("Sent friends query failed:", error);
 
     }
-
 
     try{
 
         const receivedQuery =
             query(
-
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-
-                where(
-                    "to",
-                    "==",
-                    uid
-                ),
-
-                where(
-                    "status",
-                    "==",
-                    "accepted"
-                )
-
+                collection(db, "friendRequests"),
+                where("to", "==", uid),
+                where("status", "==", "accepted")
             );
-
 
         const receivedSnapshot =
-            await getDocs(
-                receivedQuery
-            );
+            await getDocs(receivedQuery);
 
+        receivedSnapshot.forEach(requestDoc => {
 
-        receivedSnapshot.forEach(
-            requestDoc => {
+            const data = requestDoc.data();
 
-                const data =
-                    requestDoc.data();
-
-
-                if(data.from){
-
-                    friendIds.add(
-                        data.from
-                    );
-
-                }
-
+            if(data.from){
+                friendIds.add(data.from);
             }
-        );
+
+        });
 
     }catch(error){
 
-        console.warn(
-            "Received friends query failed:",
-            error
-        );
+        console.warn("Received friends query failed:", error);
 
     }
 
-
-    return [
-        ...friendIds
-    ];
+    return [...friendIds];
 
 }
 
 
-/* =========================================================
-   CREATE STORY
-   ========================================================= */
+/* CREATE STORY */
 
-function createStory(
-    profile,
-    ownStory = false
-){
+function createStory(profile, ownStory = false){
 
-    const wrap =
-        document.createElement(
-            "div"
-        );
+    const wrap = document.createElement("div");
+    wrap.className = "story-wrap";
 
-    wrap.className =
-        "story-wrap";
-
-
-    const link =
-        document.createElement(
-            "a"
-        );
-
-    link.className =
-        "story-link";
+    const link = document.createElement("a");
+    link.className = "story-link";
 
     link.href =
-        `profile.html?uid=${encodeURIComponent(
-            profile.uid
-        )}`;
+        `profile.html?uid=${encodeURIComponent(profile.uid)}`;
 
     link.title =
         profile.name
             ? `View ${profile.name}'s profile`
             : "View profile";
 
+    link.setAttribute(
+        "aria-label",
+        profile.name
+            ? `View ${profile.name}'s profile`
+            : "View profile"
+    );
 
-    const story =
-        document.createElement(
-            "div"
-        );
+    const story = document.createElement("div");
+    story.className = "story";
 
-    story.className =
-        "story";
+    const inner = document.createElement("div");
+    inner.className = "story-inner";
 
-
-    const inner =
-        document.createElement(
-            "div"
-        );
-
-    inner.className =
-        "story-inner";
-
-
-    const image =
-        document.createElement(
-            "img"
-        );
+    const image = document.createElement("img");
 
     image.src =
-        profile.profilePicture ||
-        DEFAULT_AVATAR;
+        profile.profilePicture || DEFAULT_AVATAR;
 
     image.alt =
-        profile.name ||
-        "Profile";
+        profile.name || "Profile";
 
+    image.onerror = function(){
 
-    image.onerror =
-        function(){
+        this.onerror = null;
+        this.src = DEFAULT_AVATAR;
 
-            this.onerror = null;
+    };
 
-            this.src =
-                DEFAULT_AVATAR;
-
-        };
-
-
-    inner.appendChild(
-        image
-    );
-
-    story.appendChild(
-        inner
-    );
-
-    link.appendChild(
-        story
-    );
+    inner.appendChild(image);
+    story.appendChild(inner);
+    link.appendChild(story);
 
 
     /* PLUS BUTTON FOR CURRENT USER */
 
     if(ownStory){
 
-        const add =
-            document.createElement(
-                "button"
-            );
+        const add = document.createElement("button");
 
-        add.type =
-            "button";
+        add.type = "button";
+        add.className = "story-add";
+        add.textContent = "+";
+        add.title = "Create a story";
+        add.setAttribute("aria-label", "Create a story");
 
-        add.className =
-            "story-add";
+        add.addEventListener("click", function(event){
 
-        add.textContent =
-            "+";
+            event.preventDefault();
+            event.stopPropagation();
 
-        add.title =
-            "Create a story";
+            if(
+                window.VitalStarStory &&
+                typeof window.VitalStarStory.open === "function"
+            ){
 
-
-        add.addEventListener(
-            "click",
-            function(event){
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                if(
-                    window.VitalStarStory &&
-                    typeof
-                    window.VitalStarStory.open ===
-                    "function"
-                ){
-
-                    window.VitalStarStory.open();
-
-                    return;
-
-                }
-
-
-                if(
-                    window.VitalStarPost &&
-                    typeof
-                    window.VitalStarPost.open ===
-                    "function"
-                ){
-
-                    window.VitalStarPost.open();
-
-                }
+                window.VitalStarStory.open();
+                return;
 
             }
-        );
 
+            if(
+                window.VitalStarPost &&
+                typeof window.VitalStarPost.open === "function"
+            ){
 
-        story.appendChild(
-            add
-        );
+                window.VitalStarPost.open();
+
+            }
+
+        });
+
+        story.appendChild(add);
 
     }
 
+    const name = document.createElement("span");
+    name.className = "story-name";
+    name.textContent = profile.name;
 
-    const name =
-        document.createElement(
-            "span"
-        );
-
-    name.className =
-        "story-name";
-
-    /*
-     * FULL NAME ONLY
-     */
-
-    name.textContent =
-        profile.name;
-
-
-    wrap.appendChild(
-        link
-    );
-
-    wrap.appendChild(
-        name
-    );
-
+    wrap.appendChild(link);
+    wrap.appendChild(name);
 
     return wrap;
 
 }
 
 
-/* =========================================================
-   RENDER STORIES
-   ========================================================= */
+/* RENDER STORIES */
 
 async function loadStories(user){
 
@@ -2142,150 +2031,90 @@ async function loadStories(user){
         return;
     }
 
-
-    storiesContainer.innerHTML =
-        "";
-
+    storiesContainer.innerHTML = "";
 
     /* CURRENT USER FIRST */
 
     const currentProfile =
-        await loadProfile(
-            user.uid
-        );
-
+        await loadProfile(user.uid);
 
     storiesContainer.appendChild(
-
-        createStory(
-            currentProfile,
-            true
-        )
-
+        createStory(currentProfile, true)
     );
-
 
     /* GET ACCEPTED FRIENDS */
 
     const friendIds =
-        await getAcceptedFriends(
-            user.uid
-        );
-
+        await getAcceptedFriends(user.uid);
 
     if(!friendIds.length){
         return;
     }
-
 
     /* LOAD FRIEND PROFILES + LAST ACTIVE */
 
     const friends =
         await Promise.all(
 
-            friendIds.map(
-                async friendUid => {
+            friendIds.map(async friendUid => {
 
-                    const profile =
-                        await loadProfile(
-                            friendUid
-                        );
+                const profile =
+                    await loadProfile(friendUid);
 
+                const lastActive =
+                    await getLastActive(friendUid);
 
-                    const lastActive =
-                        await getLastActive(
-                            friendUid
-                        );
+                return {
+                    ...profile,
+                    lastActive
+                };
 
-
-                    return {
-
-                        ...profile,
-
-                        lastActive
-
-                    };
-
-                }
-            )
+            })
 
         );
-
 
     /* MOST RECENTLY ACTIVE FIRST */
 
-    friends.sort(
-        (a,b) =>
-            b.lastActive -
-            a.lastActive
-    );
-
+    friends.sort((a, b) => b.lastActive - a.lastActive);
 
     /* MAXIMUM 5 FRIENDS */
 
-    const recentFriends =
-        friends.slice(
-            0,
-            5
+    friends.slice(0, 5).forEach(friend => {
+
+        storiesContainer.appendChild(
+            createStory(friend, false)
         );
 
-
-    recentFriends.forEach(
-        friend => {
-
-            storiesContainer.appendChild(
-
-                createStory(
-                    friend,
-                    false
-                )
-
-            );
-
-        }
-    );
+    });
 
 }
 
 
-/* =========================================================
-   AUTH
-   ========================================================= */
+/* AUTH */
 
-auth.onAuthStateChanged(
-    async user => {
+auth.onAuthStateChanged(async user => {
 
-        if(!user){
+    if(!user){
 
-            if(storiesContainer){
-
-                storiesContainer.innerHTML =
-                    "";
-
-            }
-
-            return;
-
+        if(storiesContainer){
+            storiesContainer.innerHTML = "";
         }
 
-
-        try{
-
-            await loadStories(
-                user
-            );
-
-        }catch(error){
-
-            console.error(
-                "Stories error:",
-                error
-            );
-
-        }
+        return;
 
     }
-);
+
+    try{
+
+        await loadStories(user);
+
+    }catch(error){
+
+        console.error("Stories error:", error);
+
+    }
+
+});
 
 </script>
 
@@ -2295,25 +2124,20 @@ auth.onAuthStateChanged(
 
 document
     .getElementById("bottomCreatePost")
-    ?.addEventListener(
-        "click",
-        function(event){
+    ?.addEventListener("click", function(event){
 
-            event.preventDefault();
+        event.preventDefault();
 
-            if(
-                window.VitalStarPost &&
-                typeof
-                window.VitalStarPost.open ===
-                "function"
-            ){
+        if(
+            window.VitalStarPost &&
+            typeof window.VitalStarPost.open === "function"
+        ){
 
-                window.VitalStarPost.open();
-
-            }
+            window.VitalStarPost.open();
 
         }
-    );
+
+    });
 
 </script>
 
@@ -2321,31 +2145,28 @@ document
 
 <script>
 
-if(
-    "serviceWorker" in navigator
-){
+if("serviceWorker" in navigator){
 
-    navigator.serviceWorker.register(
-        "./firebase-messaging-sw.js"
-    )
+    navigator.serviceWorker
+        .register("./firebase-messaging-sw.js")
 
-    .then(function(registration){
+        .then(function(registration){
 
-        console.log(
-            "Service Worker registered:",
-            registration
-        );
+            console.log(
+                "Service Worker registered:",
+                registration
+            );
 
-    })
+        })
 
-    .catch(function(error){
+        .catch(function(error){
 
-        console.error(
-            "Service Worker Error:",
-            error
-        );
+            console.error(
+                "Service Worker Error:",
+                error
+            );
 
-    });
+        });
 
 }
 
