@@ -2,7 +2,7 @@
 // VITALSTAR MESSAGES
 // message.js
 //
-// Handles:
+// Features:
 // - Conversations
 // - Search
 // - Profile pictures
@@ -11,11 +11,11 @@
 // - Live message updates
 // - Delete conversations
 // - Full-screen VS loading indicator
+// - Dark VitalStar theme
+// - Home-style bottom navigation
 // ============================================================
 
-
 import { auth, db } from "./firebase.js";
-
 
 import {
     collection,
@@ -29,14 +29,684 @@ import {
     writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 
 // ============================================================
-// VITALSTAR — FULL SCREEN LOADING INDICATOR
+// VITALSTAR DARK THEME + HOME FOOTER
+// ============================================================
+
+const vitalStarThemeStyle = document.createElement("style");
+
+vitalStarThemeStyle.textContent = `
+
+/* ==========================================================
+   VITALSTAR DARK THEME
+   ========================================================== */
+
+:root {
+    --vs-bg: #030712;
+    --vs-bg-2: #07101f;
+    --vs-card: #091426;
+    --vs-card-2: #0d1a2d;
+    --vs-border: rgba(255, 215, 0, .15);
+    --vs-yellow: #ffd700;
+    --vs-blue: #1683ff;
+    --vs-blue-2: #0066ff;
+    --vs-green: #00ff88;
+    --vs-text: #ffffff;
+    --vs-muted: #8fa4bd;
+    --vs-nav: #050914;
+}
+
+/* BODY */
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background:
+        radial-gradient(
+            circle at top,
+            rgba(0, 105, 255, .10),
+            transparent 35%
+        ),
+        linear-gradient(
+            180deg,
+            #02050c 0%,
+            #030712 55%,
+            #050914 100%
+        ) !important;
+
+    color: var(--vs-text);
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    color-scheme: dark;
+}
+
+/* MAIN MESSAGE AREA */
+
+body {
+    padding-bottom: 90px !important;
+}
+
+.message-page,
+.messages-page,
+.messages-container,
+main {
+    color: var(--vs-text);
+}
+
+/* SEARCH */
+
+#searchInput,
+.search-input,
+input[type="search"] {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(12, 27, 48, .96),
+            rgba(5, 14, 27, .96)
+        ) !important;
+
+    color: #ffffff !important;
+
+    border: 1px solid
+        rgba(255, 215, 0, .22) !important;
+
+    box-shadow:
+        0 0 15px rgba(0, 102, 255, .08),
+        inset 0 0 12px rgba(0, 0, 0, .25);
+
+    outline: none;
+}
+
+#searchInput::placeholder,
+.search-input::placeholder {
+    color: #71849d !important;
+}
+
+#searchInput:focus,
+.search-input:focus {
+    border-color: rgba(255, 215, 0, .65) !important;
+
+    box-shadow:
+        0 0 0 2px rgba(255, 215, 0, .08),
+        0 0 20px rgba(0, 102, 255, .16);
+}
+
+/* MESSAGE CARDS */
+
+.message-card {
+    position: relative;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(10, 25, 45, .98),
+            rgba(4, 12, 25, .98)
+        ) !important;
+
+    border: 1px solid
+        rgba(255, 215, 0, .12) !important;
+
+    border-radius: 18px !important;
+
+    color: #ffffff !important;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, .28),
+        inset 0 1px 0 rgba(255, 255, 255, .025);
+
+    transition:
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+
+    overflow: hidden;
+}
+
+.message-card:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        rgba(255, 215, 0, .32) !important;
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, .35),
+        0 0 18px rgba(0, 102, 255, .08);
+}
+
+.message-card:active {
+    transform: scale(.985);
+}
+
+/* UNREAD */
+
+.message-card.unread-card {
+    border-color:
+        rgba(0, 255, 136, .35) !important;
+
+    box-shadow:
+        0 0 18px rgba(0, 255, 136, .07),
+        0 8px 25px rgba(0, 0, 0, .3);
+}
+
+.message-card .name {
+    color: #ffffff !important;
+    font-weight: 800;
+}
+
+.message-card .last-message {
+    color: #91a4bc !important;
+}
+
+.message-card .time-text {
+    color: #6f849e !important;
+}
+
+/* AVATARS */
+
+.avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-picture,
+.profile-letter {
+    width: 54px !important;
+    height: 54px !important;
+
+    border-radius: 50% !important;
+
+    object-fit: cover;
+
+    border: 2px solid
+        rgba(255, 215, 0, .42);
+
+    box-shadow:
+        0 0 12px rgba(0, 102, 255, .18);
+}
+
+.profile-letter {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #061a35,
+            #092c54
+        ) !important;
+
+    color: #ffffff !important;
+
+    font-size: 21px;
+    font-weight: 900;
+}
+
+/* ONLINE DOT */
+
+.online-dot {
+    position: absolute;
+
+    width: 12px;
+    height: 12px;
+
+    right: 1px;
+    bottom: 1px;
+
+    border-radius: 50%;
+
+    background: #00ff88;
+
+    border: 2px solid #07101f;
+
+    box-shadow:
+        0 0 7px #00ff88,
+        0 0 14px rgba(0, 255, 136, .8);
+}
+
+/* UNREAD BADGE */
+
+.unread-badge {
+    min-width: 22px;
+    height: 22px;
+
+    padding: 0 7px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #00ff88,
+            #00c96b
+        ) !important;
+
+    color: #001b10 !important;
+
+    font-size: 11px;
+    font-weight: 1000;
+
+    box-shadow:
+        0 0 9px rgba(0, 255, 136, .5);
+}
+
+/* DELETE BUTTON */
+
+.delete-chat-btn {
+    color: #ff6575 !important;
+
+    background:
+        rgba(255, 70, 90, .07) !important;
+
+    border: 1px solid
+        rgba(255, 70, 90, .12) !important;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    transition:
+        .2s ease;
+}
+
+.delete-chat-btn:hover {
+    background:
+        rgba(255, 70, 90, .15) !important;
+
+    box-shadow:
+        0 0 12px rgba(255, 70, 90, .15);
+}
+
+/* EMPTY STATE */
+
+.empty-state {
+    color: #ffffff !important;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(0, 102, 255, .08),
+            transparent 65%
+        );
+}
+
+.empty-state h2 {
+    color: #ffffff !important;
+}
+
+.empty-state p {
+    color: #7f94ad !important;
+}
+
+.empty-icon {
+    filter:
+        drop-shadow(
+            0 0 12px rgba(0, 102, 255, .25)
+        );
+}
+
+
+/* ==========================================================
+   HOME.HTML STYLE BOTTOM NAVIGATION
+   ========================================================== */
+
+.vitalstar-bottom-nav {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    width: 100%;
+
+    height: 70px;
+
+    z-index: 99990;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-around;
+
+    background:
+        rgba(5, 9, 20, .98);
+
+    border-top:
+        1px solid rgba(0, 102, 255, .32);
+
+    box-shadow:
+        0 -5px 25px rgba(0, 0, 0, .45),
+        0 -1px 12px rgba(0, 102, 255, .08);
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    padding:
+        0 8px;
+
+    box-sizing: border-box;
+}
+
+.vitalstar-bottom-nav a {
+    position: relative;
+
+    width: 20%;
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 3px;
+
+    text-decoration: none;
+
+    color: #b8c7dc;
+
+    font-size: 12px;
+
+    transition:
+        color .2s ease,
+        transform .2s ease;
+}
+
+.vitalstar-bottom-nav a:hover {
+    color: #ffffff;
+}
+
+.vitalstar-bottom-nav a.active {
+    color: #ffffff;
+}
+
+.vitalstar-bottom-nav a.active::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+
+    width: 32px;
+    height: 3px;
+
+    border-radius: 0 0 6px 6px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #1683ff,
+            #ffd700
+        );
+
+    box-shadow:
+        0 0 10px rgba(0, 102, 255, .7);
+}
+
+.vitalstar-bottom-nav .nav-icon {
+    font-size: 21px;
+
+    line-height: 1;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.vitalstar-bottom-nav small {
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: .15px;
+}
+
+/* CREATE BUTTON */
+
+.vitalstar-bottom-nav .create-btn {
+    width: 58px;
+    height: 58px;
+
+    margin-top: -28px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1683ff,
+            #6b35ff
+        );
+
+    color: #ffffff;
+
+    border:
+        3px solid #050914;
+
+    box-shadow:
+        0 0 18px rgba(0, 102, 255, .55),
+        0 7px 22px rgba(0, 0, 0, .4);
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 28px;
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+}
+
+.vitalstar-bottom-nav .create-btn:hover {
+    transform:
+        translateY(-3px)
+        scale(1.04);
+
+    box-shadow:
+        0 0 24px rgba(0, 102, 255, .7),
+        0 9px 25px rgba(0, 0, 0, .5);
+}
+
+.vitalstar-bottom-nav .create-btn small {
+    display: none;
+}
+
+
+/* ==========================================================
+   MOBILE FOOTER
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+    body {
+        padding-bottom: 78px !important;
+    }
+
+    .vitalstar-bottom-nav {
+        height: 65px;
+        padding: 0 4px;
+    }
+
+    .vitalstar-bottom-nav .create-btn {
+        width: 56px;
+        height: 56px;
+        margin-top: -26px;
+    }
+
+    .vitalstar-bottom-nav .nav-icon {
+        font-size: 20px;
+    }
+
+    .vitalstar-bottom-nav small {
+        font-size: 9px;
+    }
+
+}
+
+
+/* ==========================================================
+   SCROLLBAR
+   ========================================================== */
+
+* {
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        #17385e
+        #030712;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #030712;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #17385e;
+
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #245989;
+}
+
+`;
+
+document.head.appendChild(
+    vitalStarThemeStyle
+);
+
+
+// ============================================================
+// CREATE HOME FOOTER
+// ============================================================
+
+function createHomeFooter() {
+
+    // Remove an old footer if message.html already has one.
+    const oldFooter =
+        document.querySelector(
+            ".bottom-nav"
+        );
+
+    if (oldFooter) {
+        oldFooter.remove();
+    }
+
+    const oldVitalFooter =
+        document.querySelector(
+            ".vitalstar-bottom-nav"
+        );
+
+    if (oldVitalFooter) {
+        oldVitalFooter.remove();
+    }
+
+
+    const footer =
+        document.createElement("nav");
+
+    footer.className =
+        "vitalstar-bottom-nav";
+
+
+    footer.setAttribute(
+        "aria-label",
+        "VitalStar navigation"
+    );
+
+
+    footer.innerHTML = `
+
+        <a
+            href="home.html"
+            class="home-nav"
+            aria-label="Home"
+        >
+            <span class="nav-icon">🏠</span>
+            <small>Home</small>
+        </a>
+
+
+        <a
+            href="users.html"
+            class="explore-nav"
+            aria-label="Explore"
+        >
+            <span class="nav-icon">👥</span>
+            <small>Explore</small>
+        </a>
+
+
+        <a
+            href="create-post.html"
+            class="create-btn"
+            aria-label="Create post"
+        >
+            <span class="nav-icon">+</span>
+        </a>
+
+
+        <a
+            href="wallet.html"
+            class="finance-nav"
+            aria-label="Finance"
+        >
+            <span class="nav-icon">💰</span>
+            <small>Finance</small>
+        </a>
+
+
+        <a
+            href="profile.html"
+            class="profile-nav"
+            aria-label="Profile"
+        >
+            <span class="nav-icon">👤</span>
+            <small>Profile</small>
+        </a>
+
+    `;
+
+
+    document.body.appendChild(
+        footer
+    );
+}
+
+createHomeFooter();
+
+
+// ============================================================
+// FULL SCREEN VITALSTAR LOADING INDICATOR
 // ============================================================
 
 const vitalStarLoader =
@@ -45,21 +715,28 @@ const vitalStarLoader =
 vitalStarLoader.id =
     "vitalStarLoader";
 
+vitalStarLoader.className =
+    "vitalstar-fullscreen";
+
 
 vitalStarLoader.innerHTML = `
 
-    <div class="vs-loader-content">
+    <div class="vitalstar-indicator">
 
-        <div class="vs-loader-spinner">
+        <div class="vitalstar-glow"></div>
 
-            <span>VS</span>
-
+        <div class="vitalstar-vs">
+            VS
         </div>
 
-        <div class="vs-loader-text">
-            Loading Messages...
-        </div>
+    </div>
 
+    <div class="vitalstar-loading-text">
+        Loading Messages...
+    </div>
+
+    <div class="vitalstar-loading-subtext">
+        Connect, Share & Shine
     </div>
 
 `;
@@ -71,186 +748,365 @@ const vitalStarLoaderStyle =
 
 vitalStarLoaderStyle.textContent = `
 
-    #vitalStarLoader {
+    @keyframes vitalStarRingSpin {
+        0% {
+            transform:
+                translate(-50%, -50%)
+                rotate(0deg);
+        }
 
-        position: fixed;
+        100% {
+            transform:
+                translate(-50%, -50%)
+                rotate(360deg);
+        }
+    }
 
-        inset: 0;
 
-        width: 100%;
+    @keyframes vitalStarRingSpinReverse {
+        0% {
+            transform:
+                translate(-50%, -50%)
+                rotate(360deg);
+        }
 
-        height: 100%;
+        100% {
+            transform:
+                translate(-50%, -50%)
+                rotate(0deg);
+        }
+    }
 
-        z-index: 999999;
+
+    @keyframes vitalStarPulse {
+
+        0%, 100% {
+            transform:scale(1);
+
+            text-shadow:
+                0 0 8px #00ff88,
+                0 0 18px #00ff88,
+                0 0 35px #00ff88;
+        }
+
+        50% {
+            transform:scale(1.08);
+
+            text-shadow:
+                0 0 12px #00ff88,
+                0 0 25px #00ff88,
+                0 0 50px #00ff88;
+        }
+
+    }
+
+
+    @keyframes vitalStarGlow {
+
+        0%, 100% {
+            opacity:.55;
+
+            transform:
+                translate(-50%, -50%)
+                scale(.96);
+        }
+
+        50% {
+            opacity:.9;
+
+            transform:
+                translate(-50%, -50%)
+                scale(1.04);
+        }
+
+    }
+
+
+    .vitalstar-fullscreen {
+
+        position:fixed;
+
+        inset:0;
+
+        width:100vw;
+        height:100vh;
+
+        min-height:100vh;
+
+        z-index:999999;
+
+        display:flex;
+
+        flex-direction:column;
+
+        align-items:center;
+        justify-content:center;
+
+        text-align:center;
+
+        box-sizing:border-box;
+
+        padding:20px;
 
         background:
             radial-gradient(
                 circle at center,
-                #12082f 0%,
-                #070512 45%,
-                #000000 100%
+                rgba(0,255,136,.13) 0%,
+                rgba(3,25,17,.80) 32%,
+                rgba(2,8,7,.78) 72%,
+                rgba(1,3,4,.78) 100%
             );
 
-        display: flex;
+        overflow:hidden;
 
-        align-items: center;
+        opacity:1;
 
-        justify-content: center;
+        visibility:visible;
 
-        opacity: 1;
-
-        visibility: visible;
-
-        pointer-events: all;
+        pointer-events:all;
 
         transition:
-            opacity 0.55s ease,
-            visibility 0.55s ease;
+            opacity .3s ease,
+            visibility .3s ease;
+    }
+
+
+    .vitalstar-fullscreen.hide {
+
+        opacity:0;
+
+        visibility:hidden;
+
+        pointer-events:none;
 
     }
 
 
-    #vitalStarLoader.hide {
+    .vitalstar-fullscreen::before {
 
-        opacity: 0;
+        content:"";
 
-        visibility: hidden;
+        position:absolute;
 
-        pointer-events: none;
+        inset:-30%;
 
-    }
-
-
-    .vs-loader-content {
-
-        display: flex;
-
-        flex-direction: column;
-
-        align-items: center;
-
-        justify-content: center;
-
-    }
-
-
-    .vs-loader-spinner {
-
-        width: 90px;
-
-        height: 90px;
-
-        border-radius: 50%;
-
-        border:
-            5px solid
-            rgba(255,255,255,0.10);
-
-        border-top-color:
-            #FFD54F;
-
-        border-right-color:
-            #9C4DFF;
-
-        border-bottom-color:
-            #7C4DFF;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
+        background:
+            radial-gradient(
+                circle,
+                rgba(0,255,136,.13),
+                transparent 55%
+            );
 
         animation:
-            vitalStarMessageSpin
-            1s linear infinite;
+            vitalStarGlow
+            1.2s
+            ease-in-out
+            infinite;
+
+        pointer-events:none;
+
+    }
+
+
+    .vitalstar-indicator {
+
+        position:relative;
+
+        width:96px;
+        height:96px;
+
+        margin:
+            0 auto 20px;
+
+        display:flex;
+
+        align-items:center;
+        justify-content:center;
+
+        border-radius:50%;
+
+        background:
+            radial-gradient(
+                circle,
+                rgba(0,255,136,.22) 0%,
+                rgba(0,180,100,.12) 42%,
+                rgba(0,60,35,.08) 65%,
+                transparent 72%
+            );
 
         box-shadow:
-            0 0 18px
-            rgba(255,213,79,0.25),
-
-            0 0 35px
-            rgba(124,77,255,0.20);
+            0 0 18px rgba(0,255,136,.28),
+            0 0 40px rgba(0,255,136,.18),
+            inset 0 0 22px rgba(0,255,136,.12);
 
     }
 
 
-    .vs-loader-spinner span {
+    .vitalstar-indicator::before {
 
-        color: #FFD54F;
+        content:"";
 
-        font-size: 25px;
+        position:absolute;
 
-        font-weight: 900;
+        left:50%;
+        top:50%;
 
-        letter-spacing: 2px;
+        width:78px;
+        height:78px;
 
-        text-shadow:
-            0 0 12px
-            rgba(255,213,79,0.5);
+        border-radius:50%;
+
+        border:4px solid transparent;
+
+        border-top-color:#00ff88;
+        border-right-color:#00d9ff;
+        border-bottom-color:#a855f7;
+        border-left-color:#ff3cac;
 
         animation:
-            vitalStarMessageSpinReverse
-            1s linear infinite;
+            vitalStarRingSpin
+            .65s
+            linear
+            infinite;
+
+        filter:
+            drop-shadow(
+                0 0 5px
+                rgba(0,255,136,.9)
+            )
+            drop-shadow(
+                0 0 10px
+                rgba(168,85,247,.65)
+            );
+
+        box-sizing:border-box;
 
     }
 
 
-    .vs-loader-text {
+    .vitalstar-indicator::after {
 
-        margin-top: 18px;
+        content:"";
 
-        color:
-            rgba(255,255,255,0.88);
+        position:absolute;
 
-        font-size: 14px;
+        left:50%;
+        top:50%;
 
-        font-weight: 600;
+        width:66px;
+        height:66px;
 
-        letter-spacing: 0.5px;
+        border-radius:50%;
 
-    }
+        border:
+            2px dashed
+            rgba(255,255,255,.28);
 
+        animation:
+            vitalStarRingSpinReverse
+            1.1s
+            linear
+            infinite;
 
-    @keyframes vitalStarMessageSpin {
-
-        from {
-
-            transform:
-                rotate(0deg);
-
-        }
-
-        to {
-
-            transform:
-                rotate(360deg);
-
-        }
+        box-sizing:border-box;
 
     }
 
 
-    @keyframes vitalStarMessageSpinReverse {
+    .vitalstar-vs {
 
-        from {
+        position:relative;
 
-            transform:
-                rotate(0deg);
+        z-index:5;
 
-        }
+        font-size:27px;
 
-        to {
+        font-weight:1000;
 
-            transform:
-                rotate(-360deg);
+        letter-spacing:1px;
 
-        }
+        color:#ffffff;
+
+        animation:
+            vitalStarPulse
+            1s
+            ease-in-out
+            infinite;
+
+    }
+
+
+    .vitalstar-glow {
+
+        position:absolute;
+
+        left:50%;
+        top:50%;
+
+        width:120px;
+        height:120px;
+
+        transform:
+            translate(-50%, -50%);
+
+        border-radius:50%;
+
+        background:
+            radial-gradient(
+                circle,
+                rgba(0,255,136,.22),
+                transparent 68%
+            );
+
+        filter:blur(8px);
+
+        animation:
+            vitalStarGlow
+            1.2s
+            ease-in-out
+            infinite;
+
+        pointer-events:none;
+
+    }
+
+
+    .vitalstar-loading-text {
+
+        position:relative;
+
+        z-index:5;
+
+        font-size:15px;
+
+        font-weight:800;
+
+        color:#eafff5;
+
+        letter-spacing:.4px;
+
+        text-shadow:
+            0 0 8px
+            rgba(0,255,136,.3);
+
+    }
+
+
+    .vitalstar-loading-subtext {
+
+        position:relative;
+
+        z-index:5;
+
+        margin-top:8px;
+
+        color:#6fae91;
+
+        font-size:12px;
 
     }
 
 `;
-
 
 document.head.appendChild(
     vitalStarLoaderStyle
@@ -266,8 +1122,7 @@ document.body.appendChild(
 // HIDE LOADING INDICATOR
 // ============================================================
 
-let vitalStarLoaderHidden =
-    false;
+let vitalStarLoaderHidden = false;
 
 
 function hideVitalStarLoader() {
@@ -277,8 +1132,7 @@ function hideVitalStarLoader() {
     }
 
 
-    vitalStarLoaderHidden =
-        true;
+    vitalStarLoaderHidden = true;
 
 
     const loader =
@@ -301,7 +1155,7 @@ function hideVitalStarLoader() {
 
         loader.remove();
 
-    }, 600);
+    }, 400);
 
 }
 
@@ -322,17 +1176,12 @@ const searchInput =
     );
 
 
-let currentUser =
-    null;
+let currentUser = null;
 
-
-let allChats =
-    [];
-
+let allChats = [];
 
 const chatListeners =
     new Map();
-
 
 const unreadCounts =
     new Map();
@@ -348,9 +1197,7 @@ function escapeHtml(text) {
         text === null ||
         text === undefined
     ) {
-
         return "";
-
     }
 
 
@@ -388,9 +1235,7 @@ function escapeHtml(text) {
 // GET TIMESTAMP
 // ============================================================
 
-function getTimestampValue(
-    timestamp
-) {
+function getTimestampValue(timestamp) {
 
     if (!timestamp) {
         return 0;
@@ -401,23 +1246,17 @@ function getTimestampValue(
         typeof timestamp.toMillis ===
         "function"
     ) {
-
         return timestamp.toMillis();
-
     }
 
 
     if (timestamp.seconds) {
-
         return timestamp.seconds * 1000;
-
     }
 
 
     if (timestamp instanceof Date) {
-
         return timestamp.getTime();
-
     }
 
 
@@ -425,9 +1264,7 @@ function getTimestampValue(
         typeof timestamp ===
         "number"
     ) {
-
         return timestamp;
-
     }
 
 
@@ -440,9 +1277,7 @@ function getTimestampValue(
 // FORMAT TIME
 // ============================================================
 
-function formatTime(
-    timestamp
-) {
+function formatTime(timestamp) {
 
     const time =
         getTimestampValue(
@@ -457,7 +1292,6 @@ function formatTime(
 
     const date =
         new Date(time);
-
 
     const now =
         new Date();
@@ -480,11 +1314,8 @@ function formatTime(
         return date.toLocaleTimeString(
             [],
             {
-                hour:
-                    "numeric",
-
-                minute:
-                    "2-digit"
+                hour: "numeric",
+                minute: "2-digit"
             }
         );
 
@@ -513,20 +1344,15 @@ function formatTime(
 
 
     if (isYesterday) {
-
         return "Yesterday";
-
     }
 
 
     return date.toLocaleDateString(
         [],
         {
-            day:
-                "numeric",
-
-            month:
-                "short"
+            day: "numeric",
+            month: "short"
         }
     );
 
@@ -537,9 +1363,7 @@ function formatTime(
 // LAST MESSAGE
 // ============================================================
 
-function getLastMessageHtml(
-    chat
-) {
+function getLastMessageHtml(chat) {
 
     if (chat.lastMessage) {
 
@@ -551,23 +1375,17 @@ function getLastMessageHtml(
 
 
     if (chat.lastImage) {
-
         return "🖼️ Photo";
-
     }
 
 
     if (chat.lastVideo) {
-
         return "🎥 Video";
-
     }
 
 
     if (chat.lastAudio) {
-
         return "🎤 Voice message";
-
     }
 
 
@@ -580,9 +1398,7 @@ function getLastMessageHtml(
 // GET PROFILE PICTURE
 // ============================================================
 
-function getProfilePicture(
-    userData
-) {
+function getProfilePicture(userData) {
 
     if (!userData) {
         return "";
@@ -592,23 +1408,17 @@ function getProfilePicture(
     const pictures = [
 
         userData.profilePic,
-
         userData.profilePicture,
-
         userData.photoURL,
-
         userData.photoUrl,
-
         userData.profileImage,
-
         userData.imageUrl
 
     ];
 
 
     for (
-        const picture
-        of pictures
+        const picture of pictures
     ) {
 
         if (
@@ -636,9 +1446,7 @@ function getProfilePicture(
 // GET FIRST LETTER
 // ============================================================
 
-function getFirstLetter(
-    name
-) {
+function getFirstLetter(name) {
 
     const cleanName =
         String(
@@ -662,9 +1470,7 @@ function getFirstLetter(
 // CREATE AVATAR
 // ============================================================
 
-function createAvatar(
-    chat
-) {
+function createAvatar(chat) {
 
     const letter =
         getFirstLetter(
@@ -722,9 +1528,7 @@ function createAvatar(
 // CREATE CHAT CARD
 // ============================================================
 
-function createChatCard(
-    chat
-) {
+function createChatCard(chat) {
 
     const unreadCount =
         unreadCounts.get(
@@ -741,10 +1545,6 @@ function createChatCard(
     card.className =
         "message-card";
 
-
-    // Important:
-    // Add chat ID so the badge updater
-    // can find the correct card.
 
     card.dataset.chatId =
         chat.id;
@@ -783,54 +1583,37 @@ function createChatCard(
 
         ${createAvatar(chat)}
 
-
         <div class="message-info">
-
 
             <div class="top-row">
 
-
                 <div class="name">
-
                     ${escapeHtml(
                         chat.fullName
                     )}
-
                 </div>
 
-
                 <div class="time-text">
-
                     ${formatTime(
                         chat.lastTimestamp
                     )}
-
                 </div>
 
-
             </div>
-
 
             <div class="bottom-row">
 
-
                 <div class="last-message">
-
                     ${getLastMessageHtml(
                         chat
                     )}
-
                 </div>
-
 
                 ${unreadBadge}
 
-
             </div>
 
-
         </div>
-
 
         <button
             class="delete-chat-btn"
@@ -886,7 +1669,6 @@ function createChatCard(
                         )}
 
                     </div>
-
 
                     <span class="online-dot"></span>
 
@@ -975,10 +1757,6 @@ function renderChats() {
         [...allChats];
 
 
-    // ========================================================
-    // SEARCH
-    // ========================================================
-
     if (search) {
 
         chats =
@@ -1017,10 +1795,6 @@ function renderChats() {
     }
 
 
-    // ========================================================
-    // SORT NEWEST FIRST
-    // ========================================================
-
     chats.sort(
         (a, b) =>
 
@@ -1035,10 +1809,6 @@ function renderChats() {
             )
     );
 
-
-    // ========================================================
-    // EMPTY
-    // ========================================================
 
     if (!chats.length) {
 
@@ -1056,7 +1826,6 @@ function renderChats() {
 
                 </div>
 
-
                 <h2>
 
                     ${
@@ -1067,16 +1836,12 @@ function renderChats() {
 
                 </h2>
 
-
                 <p>
 
                     ${
                         search
-
                             ? "No conversations match your search."
-
                             : "Start chatting with your friends."
-
                     }
 
                 </p>
@@ -1085,37 +1850,27 @@ function renderChats() {
 
         `;
 
-
         return;
 
     }
 
-
-    // ========================================================
-    // FAST RENDER
-    // ========================================================
 
     const fragment =
         document.createDocumentFragment();
 
 
     for (
-        const chat
-        of chats
+        const chat of chats
     ) {
 
         fragment.appendChild(
-            createChatCard(
-                chat
-            )
+            createChatCard(chat)
         );
 
     }
 
 
-    messageList.innerHTML =
-        "";
-
+    messageList.innerHTML = "";
 
     messageList.appendChild(
         fragment
@@ -1128,9 +1883,7 @@ function renderChats() {
 // UPDATE UNREAD BADGE
 // ============================================================
 
-function updateUnreadBadge(
-    chatId
-) {
+function updateUnreadBadge(chatId) {
 
     const count =
         unreadCounts.get(
@@ -1151,7 +1904,7 @@ function updateUnreadBadge(
 
 
     const card =
-        messageList.querySelector(
+        messageList?.querySelector(
             `[data-chat-id="${CSS.escape(
                 chatId
             )}"]`
@@ -1185,9 +1938,7 @@ function updateUnreadBadge(
 
 
     if (oldBadge) {
-
         oldBadge.remove();
-
     }
 
 
@@ -1233,9 +1984,7 @@ function updateUnreadBadge(
 // LOAD UNREAD COUNT
 // ============================================================
 
-async function loadUnreadCount(
-    chatId
-) {
+async function loadUnreadCount(chatId) {
 
     if (!currentUser) {
         return;
@@ -1313,18 +2062,14 @@ async function loadUnreadCount(
 // LIVE MESSAGE LISTENER
 // ============================================================
 
-function listenToChat(
-    chatId
-) {
+function listenToChat(chatId) {
 
     if (
         chatListeners.has(
             chatId
         )
     ) {
-
         return;
-
     }
 
 
@@ -1421,12 +2166,9 @@ async function deleteChat(
 
     try {
 
-        card.style.opacity =
-            "0.45";
+        card.style.opacity = "0.45";
 
-
-        card.style.pointerEvents =
-            "none";
+        card.style.pointerEvents = "none";
 
 
         const messagesRef =
@@ -1446,7 +2188,6 @@ async function deleteChat(
 
         let batch =
             writeBatch(db);
-
 
         let count = 0;
 
@@ -1468,10 +2209,8 @@ async function deleteChat(
 
                 await batch.commit();
 
-
                 batch =
                     writeBatch(db);
-
 
                 count = 0;
 
@@ -1496,10 +2235,6 @@ async function deleteChat(
         );
 
 
-        // ====================================================
-        // STOP LISTENER
-        // ====================================================
-
         if (
             chatListeners.has(
                 chatId
@@ -1508,7 +2243,6 @@ async function deleteChat(
 
             chatListeners
                 .get(chatId)();
-
 
             chatListeners.delete(
                 chatId
@@ -1540,12 +2274,9 @@ async function deleteChat(
         );
 
 
-        card.style.opacity =
-            "1";
+        card.style.opacity = "1";
 
-
-        card.style.pointerEvents =
-            "auto";
+        card.style.pointerEvents = "auto";
 
 
         alert(
@@ -1565,10 +2296,6 @@ onAuthStateChanged(
     auth,
     async user => {
 
-        // ====================================================
-        // NOT LOGGED IN
-        // ====================================================
-
         if (!user) {
 
             window.location.href =
@@ -1582,10 +2309,6 @@ onAuthStateChanged(
         currentUser =
             user;
 
-
-        // ====================================================
-        // CHAT QUERY
-        // ====================================================
 
         const chatsQuery =
             query(
@@ -1602,25 +2325,19 @@ onAuthStateChanged(
             );
 
 
-        // ====================================================
-        // LIVE CHAT LISTENER
-        // ====================================================
-
         onSnapshot(
             chatsQuery,
 
             async snapshot => {
 
-                const chats =
-                    [];
-
+                const chats = [];
 
                 const activeChatIds =
                     new Set();
 
 
                 // ============================================
-                // GET CHAT DATA FIRST
+                // GET CHAT DATA
                 // ============================================
 
                 for (
@@ -1637,9 +2354,7 @@ onAuthStateChanged(
                             data.participants
                         )
                     ) {
-
                         continue;
-
                     }
 
 
@@ -1682,12 +2397,11 @@ onAuthStateChanged(
 
 
                 // ============================================
-                // SHOW CONVERSATIONS IMMEDIATELY
+                // SHOW CHATS
                 // ============================================
 
                 allChats =
                     chats;
-
 
                 renderChats();
 
@@ -1726,8 +2440,7 @@ onAuthStateChanged(
                 // ============================================
 
                 for (
-                    const chat
-                    of chats
+                    const chat of chats
                 ) {
 
                     try {
@@ -1792,8 +2505,7 @@ onAuthStateChanged(
                 // ============================================
 
                 for (
-                    const chat
-                    of chats
+                    const chat of chats
                 ) {
 
                     listenToChat(
@@ -1827,9 +2539,6 @@ onAuthStateChanged(
                 );
 
 
-                // Don't leave the user
-                // stuck behind the loader.
-
                 hideVitalStarLoader();
 
             }
@@ -1861,27 +2570,15 @@ function showEmptyState(
         <div class="empty-state">
 
             <div class="empty-icon">
-
                 ${icon}
-
             </div>
 
-
             <h2>
-
-                ${escapeHtml(
-                    title
-                )}
-
+                ${escapeHtml(title)}
             </h2>
 
-
             <p>
-
-                ${escapeHtml(
-                    text
-                )}
-
+                ${escapeHtml(text)}
             </p>
 
         </div>
