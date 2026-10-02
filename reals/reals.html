@@ -17,7 +17,7 @@
     <style>
 
         /* =========================================================
-           VITALSTAR REALS — BRIGHT NEON EDITION
+           VITALSTAR REALS
            ========================================================= */
 
         * {
@@ -45,33 +45,6 @@
 
         button {
             font-family: inherit;
-        }
-
-        /* =========================================================
-           GLOBAL BRIGHT TEXT GLOW
-           ========================================================= */
-
-        body,
-        button,
-        .reals-title,
-        .reals-tab,
-        .real-name,
-        .real-username,
-        .real-caption,
-        .real-action,
-        .real-action-count,
-        .reals-empty,
-        .reals-empty-title,
-        .reals-empty-text,
-        .settings-title,
-        .settings-subtitle,
-        .settings-label,
-        .settings-description,
-        .settings-close {
-            text-shadow:
-                0 0 4px rgba(255, 255, 255, 0.95),
-                0 0 9px rgba(0, 153, 255, 0.85),
-                0 0 18px rgba(0, 102, 255, 0.65);
         }
 
         /* =========================================================
@@ -145,11 +118,6 @@
 
             backdrop-filter: blur(10px);
 
-            text-shadow:
-                0 0 5px #ffffff,
-                0 0 12px #00aaff,
-                0 0 22px #0066ff;
-
             box-shadow:
                 0 0 8px rgba(0, 140, 255, 0.25);
 
@@ -175,10 +143,7 @@
             color: #ffffff;
 
             text-shadow:
-                0 0 4px #ffffff,
-                0 0 9px #00aaff,
-                0 0 18px #0077ff,
-                0 0 30px rgba(0, 110, 255, 0.8);
+                0 0 5px rgba(0, 153, 255, 0.55);
         }
 
         /* =========================================================
@@ -229,11 +194,6 @@
             font-size: 10px;
             font-weight: 800;
 
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 9px #00aaff,
-                0 0 16px #006eff;
-
             transition: 0.2s ease;
         }
 
@@ -244,10 +204,6 @@
 
             font-size: 18px;
             line-height: 19px;
-
-            filter:
-                drop-shadow(0 0 4px #ffffff)
-                drop-shadow(0 0 8px #008cff);
         }
 
         .reals-tab.active {
@@ -260,14 +216,9 @@
                     #702cff
                 );
 
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 10px #ffffff,
-                0 0 20px #00b7ff;
-
             box-shadow:
                 0 0 12px rgba(0, 100, 255, 0.65),
-                0 0 25px rgba(90, 40, 255, 0.45);
+                0 0 25px rgba(90, 40, 255, 0.35);
         }
 
         .reals-tab:not(.active):hover {
@@ -396,8 +347,7 @@
             background: #101827;
 
             box-shadow:
-                0 0 7px #ffffff,
-                0 0 14px #008cff;
+                0 0 7px rgba(0, 140, 255, 0.65);
         }
 
         .real-name {
@@ -405,22 +355,12 @@
             font-weight: 900;
 
             color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 9px #00aaff,
-                0 0 18px #006eff;
         }
 
         .real-username {
             font-size: 12px;
 
-            color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 8px #008cff,
-                0 0 15px #005cff;
+            color: rgba(255, 255, 255, 0.88);
         }
 
         .real-caption {
@@ -429,11 +369,6 @@
             line-height: 1.4;
 
             color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 8px #00aaff,
-                0 0 17px #006eff;
         }
 
         /* =========================================================
@@ -467,11 +402,6 @@
             cursor: pointer;
 
             text-align: center;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 10px #00aaff,
-                0 0 18px #006eff;
         }
 
         .real-action-icon {
@@ -491,10 +421,6 @@
             backdrop-filter: blur(8px);
 
             font-size: 22px;
-
-            filter:
-                drop-shadow(0 0 5px #ffffff)
-                drop-shadow(0 0 12px #008cff);
         }
 
         .real-action-count {
@@ -505,11 +431,6 @@
             font-size: 10px;
 
             color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 9px #00aaff,
-                0 0 16px #006eff;
         }
 
         /* =========================================================
@@ -534,19 +455,10 @@
             padding: 30px;
 
             color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 9px #00aaff,
-                0 0 18px #006eff;
         }
 
         .reals-empty-icon {
             font-size: 45px;
-
-            filter:
-                drop-shadow(0 0 5px #ffffff)
-                drop-shadow(0 0 14px #008cff);
         }
 
         .reals-empty-title {
@@ -555,11 +467,6 @@
             font-size: 18px;
 
             font-weight: 900;
-
-            text-shadow:
-                0 0 5px #ffffff,
-                0 0 10px #00aaff,
-                0 0 22px #006eff;
         }
 
         .reals-empty-text {
@@ -567,12 +474,7 @@
 
             line-height: 1.5;
 
-            color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 8px #008cff,
-                0 0 15px #006eff;
+            color: rgba(255, 255, 255, 0.82);
         }
 
         /* =========================================================
@@ -622,22 +524,7 @@
             border-top: 1px solid rgba(0, 140, 255, 0.35);
 
             box-shadow:
-                0 -10px 40px rgba(0, 0, 0, 0.5),
-                0 -5px 25px rgba(0, 100, 255, 0.15);
-
-            animation: settingsUp 0.22s ease;
-        }
-
-        @keyframes settingsUp {
-
-            from {
-                transform: translateY(100%);
-            }
-
-            to {
-                transform: translateY(0);
-            }
-
+                0 -10px 40px rgba(0, 0, 0, 0.5);
         }
 
         .settings-handle {
@@ -648,11 +535,7 @@
 
             border-radius: 20px;
 
-            background: #ffffff;
-
-            box-shadow:
-                0 0 6px #ffffff,
-                0 0 13px #008cff;
+            background: rgba(255, 255, 255, 0.8);
         }
 
         .settings-title {
@@ -662,24 +545,14 @@
             margin-bottom: 5px;
 
             color: #ffffff;
-
-            text-shadow:
-                0 0 5px #ffffff,
-                0 0 10px #00aaff,
-                0 0 20px #006eff;
         }
 
         .settings-subtitle {
             font-size: 12px;
 
-            color: #ffffff;
+            color: rgba(255, 255, 255, 0.72);
 
             margin-bottom: 20px;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 8px #008cff,
-                0 0 15px #006eff;
         }
 
         .settings-row {
@@ -704,11 +577,6 @@
             font-weight: 800;
 
             color: #ffffff;
-
-            text-shadow:
-                0 0 4px #ffffff,
-                0 0 9px #00aaff,
-                0 0 17px #006eff;
         }
 
         .settings-description {
@@ -716,14 +584,7 @@
 
             font-size: 11px;
 
-            color: #ffffff;
-
-            opacity: 0.9;
-
-            text-shadow:
-                0 0 3px #ffffff,
-                0 0 7px #008cff,
-                0 0 13px #005cff;
+            color: rgba(255, 255, 255, 0.65);
         }
 
         .settings-close {
@@ -751,14 +612,8 @@
 
             cursor: pointer;
 
-            text-shadow:
-                0 0 5px #ffffff,
-                0 0 10px #00aaff,
-                0 0 18px #006eff;
-
             box-shadow:
-                0 0 12px rgba(0, 100, 255, 0.55),
-                0 0 25px rgba(100, 40, 255, 0.35);
+                0 0 12px rgba(0, 100, 255, 0.35);
         }
 
         /* =========================================================
@@ -799,10 +654,6 @@
 
             background: #ffffff;
 
-            box-shadow:
-                0 0 5px #ffffff,
-                0 0 10px #008cff;
-
             transition: 0.2s ease;
         }
 
@@ -810,8 +661,7 @@
             background: #075eff;
 
             box-shadow:
-                0 0 10px rgba(0, 100, 255, 0.7),
-                0 0 20px rgba(0, 100, 255, 0.35);
+                0 0 10px rgba(0, 100, 255, 0.5);
         }
 
         .toggle.on::after {
@@ -852,9 +702,7 @@
 
     <div id="realsApp">
 
-        <!-- =====================================================
-             HEADER
-             ===================================================== -->
+        <!-- HEADER -->
 
         <header class="reals-header">
 
@@ -883,9 +731,7 @@
         </header>
 
 
-        <!-- =====================================================
-             FOUR REALS TABS
-             ===================================================== -->
+        <!-- TABS -->
 
         <nav
             class="reals-tabs"
@@ -903,7 +749,6 @@
                 General
             </button>
 
-
             <button
                 type="button"
                 class="reals-tab"
@@ -914,7 +759,6 @@
                 Groups
             </button>
 
-
             <button
                 type="button"
                 class="reals-tab"
@@ -924,7 +768,6 @@
                 <span class="icon">📹</span>
                 Posts
             </button>
-
 
             <button
                 type="button"
@@ -939,16 +782,12 @@
         </nav>
 
 
-        <!-- =====================================================
-             REALS CONTENT
-             ===================================================== -->
+        <!-- REALS CONTENT -->
 
         <main id="realsContent"></main>
 
 
-        <!-- =====================================================
-             SETTINGS
-             ===================================================== -->
+        <!-- SETTINGS -->
 
         <div
             id="realsSettings"
@@ -975,10 +814,10 @@
                     Customize your VitalStar Reals experience.
                 </p>
 
-
                 <div class="settings-row">
 
                     <div>
+
                         <div class="settings-label">
                             Autoplay videos
                         </div>
@@ -986,6 +825,7 @@
                         <div class="settings-description">
                             Automatically play the visible Real.
                         </div>
+
                     </div>
 
                     <button
@@ -1001,6 +841,7 @@
                 <div class="settings-row">
 
                     <div>
+
                         <div class="settings-label">
                             Start muted
                         </div>
@@ -1008,6 +849,7 @@
                         <div class="settings-description">
                             Start videos muted when opening Reals.
                         </div>
+
                     </div>
 
                     <button
@@ -1023,6 +865,7 @@
                 <div class="settings-row">
 
                     <div>
+
                         <div class="settings-label">
                             Data saver
                         </div>
@@ -1030,6 +873,7 @@
                         <div class="settings-description">
                             Reduce automatic video loading.
                         </div>
+
                     </div>
 
                     <button
@@ -1060,13 +904,16 @@
     <script>
 
         /* =========================================================
-           VITALSTAR REALS — PAGE CONTROLLER
+           VITALSTAR REALS — CONTROLLER + FEED CONNECTION
            ========================================================= */
 
         document.addEventListener("DOMContentLoaded", () => {
 
             const tabs =
                 document.querySelectorAll(".reals-tab");
+
+            const content =
+                document.getElementById("realsContent");
 
             const settingsButton =
                 document.getElementById("realsSettingsBtn");
@@ -1082,36 +929,338 @@
 
 
             /* =====================================================
+               CURRENT FEED
+               ===================================================== */
+
+            let currentCleanup = null;
+            let currentModule = null;
+            let currentSection = null;
+
+
+            /* =====================================================
+               FEED MODULES
+               ===================================================== */
+
+            const feedModules = {
+
+                general: "./generalvids.js",
+
+                groups: "./groupvids.js",
+
+                posts: "./postvids.js"
+
+            };
+
+
+            /* =====================================================
+               SETTINGS
+               ===================================================== */
+
+            const realsSettings = {
+
+                autoplay:
+                    localStorage.getItem(
+                        "vitalstar_reals_autoplay"
+                    ) !== "false",
+
+                muted:
+                    localStorage.getItem(
+                        "vitalstar_reals_muted"
+                    ) !== "false",
+
+                dataSaver:
+                    localStorage.getItem(
+                        "vitalstar_reals_dataSaver"
+                    ) === "true"
+
+            };
+
+
+            function getSettings() {
+
+                return {
+                    autoplay: realsSettings.autoplay,
+                    muted: realsSettings.muted,
+                    dataSaver: realsSettings.dataSaver
+                };
+
+            }
+
+
+            /* =====================================================
+               SHOW EMPTY / RESERVED SECTION
+               ===================================================== */
+
+            function showMessage(
+                icon,
+                title,
+                message
+            ) {
+
+                content.innerHTML = `
+
+                    <div class="reals-empty">
+
+                        <div class="reals-empty-icon">
+                            ${icon}
+                        </div>
+
+                        <div class="reals-empty-title">
+                            ${title}
+                        </div>
+
+                        <div class="reals-empty-text">
+                            ${message}
+                        </div>
+
+                    </div>
+
+                `;
+
+            }
+
+
+            /* =====================================================
+               CLEAN CURRENT FEED
+               ===================================================== */
+
+            function cleanupCurrentFeed() {
+
+                if (
+                    typeof currentCleanup ===
+                    "function"
+                ) {
+
+                    try {
+                        currentCleanup();
+                    } catch (error) {
+                        console.warn(
+                            "VitalStar Reals cleanup error:",
+                            error
+                        );
+                    }
+
+                }
+
+                currentCleanup = null;
+                currentModule = null;
+
+                content.innerHTML = "";
+
+            }
+
+
+            /* =====================================================
+               LOAD REALS SECTION
+               ===================================================== */
+
+            async function loadSection(section) {
+
+                if (
+                    section === currentSection &&
+                    currentModule
+                ) {
+                    return;
+                }
+
+                currentSection = section;
+
+                cleanupCurrentFeed();
+
+
+                /* ================================================
+                   MORE TAB
+                   ================================================ */
+
+                if (section === "fourth") {
+
+                    showMessage(
+                        "✨",
+                        "More Reals",
+                        "More VitalStar Reals features will appear here."
+                    );
+
+                    return;
+                }
+
+
+                const modulePath =
+                    feedModules[section];
+
+
+                if (!modulePath) {
+
+                    showMessage(
+                        "📹",
+                        "Reals",
+                        "This Reals section is not available yet."
+                    );
+
+                    return;
+                }
+
+
+                try {
+
+                    const module =
+                        await import(modulePath);
+
+
+                    currentModule = module;
+
+
+                    /* ============================================
+                       SUPPORTED INITIALIZERS
+                       ============================================ */
+
+                    let initializer =
+                        module.init;
+
+
+                    if (!initializer) {
+
+                        if (
+                            section === "general"
+                        ) {
+                            initializer =
+                                module.initGeneralVids;
+                        }
+
+                        if (
+                            section === "groups"
+                        ) {
+                            initializer =
+                                module.initGroupVids;
+                        }
+
+                        if (
+                            section === "posts"
+                        ) {
+                            initializer =
+                                module.initPostVids;
+                        }
+
+                    }
+
+
+                    if (
+                        typeof initializer !==
+                        "function"
+                    ) {
+
+                        throw new Error(
+                            `${modulePath} does not export an initializer function.`
+                        );
+
+                    }
+
+
+                    const cleanup =
+                        await initializer({
+
+                            container: content,
+
+                            settings:
+                                getSettings(),
+
+                            section: section
+
+                        });
+
+
+                    if (
+                        typeof cleanup ===
+                        "function"
+                    ) {
+
+                        currentCleanup =
+                            cleanup;
+
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "VitalStar Reals feed error:",
+                        error
+                    );
+
+
+                    showMessage(
+                        "⚠️",
+                        "Unable to load Reals",
+                        "There was a problem loading this Reals section."
+                    );
+
+                }
+
+            }
+
+
+            /* =====================================================
                TAB SWITCHING
                ===================================================== */
 
             tabs.forEach((tab) => {
 
-                tab.addEventListener("click", () => {
+                tab.addEventListener(
+                    "click",
+                    () => {
 
-                    tabs.forEach((item) => {
-                        item.classList.remove("active");
-                    });
+                        tabs.forEach((item) => {
 
-                    tab.classList.add("active");
+                            item.classList.remove(
+                                "active"
+                            );
 
-                    const section =
-                        tab.dataset.section;
+                        });
 
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            "reals:sectionchange",
-                            {
-                                detail: {
-                                    section: section
+
+                        tab.classList.add("active");
+
+
+                        const section =
+                            tab.dataset.section;
+
+
+                        window.dispatchEvent(
+                            new CustomEvent(
+                                "reals:sectionchange",
+                                {
+                                    detail: {
+                                        section:
+                                            section
+                                    }
                                 }
-                            }
-                        )
-                    );
+                            )
+                        );
 
-                });
+                    }
+                );
 
             });
+
+
+            /* =====================================================
+               SECTION CHANGE LISTENER
+               ===================================================== */
+
+            window.addEventListener(
+                "reals:sectionchange",
+                (event) => {
+
+                    const section =
+                        event.detail &&
+                        event.detail.section;
+
+                    if (!section) {
+                        return;
+                    }
+
+                    loadSection(section);
+
+                }
+            );
 
 
             /* =====================================================
@@ -1122,7 +1271,9 @@
                 "click",
                 () => {
 
-                    settingsOverlay.classList.add("show");
+                    settingsOverlay.classList.add(
+                        "show"
+                    );
 
                     settingsOverlay.setAttribute(
                         "aria-hidden",
@@ -1139,7 +1290,9 @@
 
             function hideSettings() {
 
-                settingsOverlay.classList.remove("show");
+                settingsOverlay.classList.remove(
+                    "show"
+                );
 
                 settingsOverlay.setAttribute(
                     "aria-hidden",
@@ -1156,7 +1309,7 @@
 
 
             /* =====================================================
-               CLOSE SETTINGS BY TAPPING OUTSIDE
+               CLOSE SETTINGS OUTSIDE
                ===================================================== */
 
             settingsOverlay.addEventListener(
@@ -1164,9 +1317,12 @@
                 (event) => {
 
                     if (
-                        event.target === settingsOverlay
+                        event.target ===
+                        settingsOverlay
                     ) {
+
                         hideSettings();
+
                     }
 
                 }
@@ -1181,30 +1337,74 @@
                 .querySelectorAll(".toggle")
                 .forEach((toggle) => {
 
+                    const setting =
+                        toggle.dataset.setting;
+
+
+                    const saved =
+                        localStorage.getItem(
+                            `vitalstar_reals_${setting}`
+                        );
+
+
+                    if (saved === "true") {
+
+                        toggle.classList.add(
+                            "on"
+                        );
+
+                    }
+
+
+                    if (saved === "false") {
+
+                        toggle.classList.remove(
+                            "on"
+                        );
+
+                    }
+
+
                     toggle.addEventListener(
                         "click",
                         () => {
 
-                            toggle.classList.toggle("on");
+                            toggle.classList.toggle(
+                                "on"
+                            );
 
-                            const setting =
-                                toggle.dataset.setting;
 
                             const enabled =
-                                toggle.classList.contains("on");
+                                toggle.classList.contains(
+                                    "on"
+                                );
+
+
+                            realsSettings[
+                                setting
+                            ] = enabled;
+
 
                             localStorage.setItem(
                                 `vitalstar_reals_${setting}`,
-                                enabled ? "true" : "false"
+                                enabled
+                                    ? "true"
+                                    : "false"
                             );
+
 
                             window.dispatchEvent(
                                 new CustomEvent(
                                     "reals:settingchange",
                                     {
                                         detail: {
-                                            setting: setting,
-                                            enabled: enabled
+
+                                            setting:
+                                                setting,
+
+                                            enabled:
+                                                enabled
+
                                         }
                                     }
                                 )
@@ -1217,30 +1417,66 @@
 
 
             /* =====================================================
-               LOAD SAVED SETTINGS
+               SETTINGS CHANGE
                ===================================================== */
 
-            document
-                .querySelectorAll(".toggle")
-                .forEach((toggle) => {
+            window.addEventListener(
+                "reals:settingchange",
+                (event) => {
+
+                    if (
+                        !event.detail ||
+                        !event.detail.setting
+                    ) {
+                        return;
+                    }
+
 
                     const setting =
-                        toggle.dataset.setting;
+                        event.detail.setting;
 
-                    const saved =
-                        localStorage.getItem(
-                            `vitalstar_reals_${setting}`
-                        );
 
-                    if (saved === "true") {
-                        toggle.classList.add("on");
+                    const enabled =
+                        event.detail.enabled;
+
+
+                    realsSettings[
+                        setting
+                    ] = enabled;
+
+
+                    /*
+                     * Tell the currently loaded feed
+                     * about the setting change.
+                     */
+
+                    if (
+                        currentModule &&
+                        typeof currentModule
+                            .onSettingChange ===
+                            "function"
+                    ) {
+
+                        try {
+
+                            currentModule.onSettingChange(
+                                setting,
+                                enabled
+                            );
+
+                        } catch (error) {
+
+                            console.warn(
+                                "Reals setting update error:",
+                                error
+                            );
+
+                        }
+
                     }
 
-                    if (saved === "false") {
-                        toggle.classList.remove("on");
-                    }
-
-                });
+                }
+            );
 
 
             /* =====================================================
@@ -1251,7 +1487,9 @@
                 "click",
                 () => {
 
-                    if (window.history.length > 1) {
+                    if (
+                        window.history.length > 1
+                    ) {
 
                         window.history.back();
 
@@ -1267,19 +1505,24 @@
 
 
             /* =====================================================
-               INITIAL SECTION
+               CLEANUP WHEN LEAVING PAGE
                ===================================================== */
 
-            window.dispatchEvent(
-                new CustomEvent(
-                    "reals:sectionchange",
-                    {
-                        detail: {
-                            section: "general"
-                        }
-                    }
-                )
+            window.addEventListener(
+                "pagehide",
+                () => {
+
+                    cleanupCurrentFeed();
+
+                }
             );
+
+
+            /* =====================================================
+               START GENERAL REALS
+               ===================================================== */
+
+            loadSection("general");
 
         });
 
