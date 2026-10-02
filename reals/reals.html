@@ -41,6 +41,10 @@
             position: relative;
         }
 
+        button {
+            font-family: inherit;
+        }
+
         /* =========================================================
            APP
            ========================================================= */
@@ -54,7 +58,7 @@
         }
 
         /* =========================================================
-           TOP BAR
+           HEADER
            ========================================================= */
 
         .reals-header {
@@ -76,7 +80,7 @@
             background:
                 linear-gradient(
                     to bottom,
-                    rgba(5, 9, 20, 0.95),
+                    rgba(5, 9, 20, 0.97),
                     rgba(5, 9, 20, 0)
                 );
         }
@@ -101,10 +105,16 @@
             cursor: pointer;
 
             backdrop-filter: blur(10px);
+
+            transition: 0.2s ease;
+        }
+
+        .header-button:hover {
+            background: rgba(255, 255, 255, 0.16);
         }
 
         .header-button:active {
-            transform: scale(0.92);
+            transform: scale(0.90);
         }
 
         .reals-title {
@@ -118,7 +128,7 @@
         }
 
         /* =========================================================
-           FOUR REALS BUTTONS
+           TABS
            ========================================================= */
 
         .reals-tabs {
@@ -139,7 +149,7 @@
 
             border-radius: 18px;
 
-            background: rgba(5, 9, 20, 0.80);
+            background: rgba(5, 9, 20, 0.82);
 
             border: 1px solid rgba(255, 255, 255, 0.08);
 
@@ -187,6 +197,10 @@
                 0 0 15px rgba(0, 100, 255, 0.45);
         }
 
+        .reals-tab:not(.active):hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
         .reals-tab:active {
             transform: scale(0.95);
         }
@@ -207,7 +221,7 @@
         }
 
         /* =========================================================
-           VIDEO FEED CONTAINER
+           VIDEO FEED
            ========================================================= */
 
         .reals-feed {
@@ -227,10 +241,6 @@
         .reals-feed::-webkit-scrollbar {
             display: none;
         }
-
-        /* =========================================================
-           REAL ITEM
-           ========================================================= */
 
         .real-item {
             position: relative;
@@ -435,6 +445,202 @@
         }
 
         /* =========================================================
+           SETTINGS OVERLAY
+           ========================================================= */
+
+        #realsSettings {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 3000;
+
+            display: none;
+
+            align-items: flex-end;
+            justify-content: center;
+
+            background: rgba(0, 0, 0, 0.62);
+
+            backdrop-filter: blur(5px);
+        }
+
+        #realsSettings.show {
+            display: flex;
+        }
+
+        .settings-panel {
+            width: 100%;
+            max-width: 600px;
+
+            max-height: 80dvh;
+
+            overflow-y: auto;
+
+            padding: 20px 18px 28px;
+
+            border-radius: 25px 25px 0 0;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #071226,
+                    #050914
+                );
+
+            border-top: 1px solid rgba(0, 140, 255, 0.35);
+
+            box-shadow:
+                0 -10px 40px rgba(0, 0, 0, 0.5);
+
+            animation: settingsUp 0.22s ease;
+        }
+
+        @keyframes settingsUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .settings-handle {
+            width: 45px;
+            height: 5px;
+
+            margin: 0 auto 18px;
+
+            border-radius: 20px;
+
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .settings-title {
+            font-size: 21px;
+            font-weight: 800;
+
+            margin-bottom: 5px;
+        }
+
+        .settings-subtitle {
+            font-size: 12px;
+
+            color: rgba(255, 255, 255, 0.55);
+
+            margin-bottom: 20px;
+        }
+
+        .settings-row {
+            width: 100%;
+
+            min-height: 58px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+
+            padding: 12px 0;
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .settings-label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .settings-description {
+            margin-top: 3px;
+
+            font-size: 11px;
+
+            color: rgba(255, 255, 255, 0.48);
+        }
+
+        .settings-close {
+            width: 100%;
+
+            margin-top: 20px;
+
+            padding: 13px;
+
+            border: 0;
+
+            border-radius: 13px;
+
+            color: #ffffff;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #075eff,
+                    #702cff
+                );
+
+            font-size: 14px;
+            font-weight: 800;
+
+            cursor: pointer;
+        }
+
+        /* =========================================================
+           TOGGLE
+           ========================================================= */
+
+        .toggle {
+            position: relative;
+
+            width: 48px;
+            height: 27px;
+
+            flex-shrink: 0;
+
+            border: 0;
+
+            border-radius: 30px;
+
+            background: #273247;
+
+            cursor: pointer;
+
+            transition: 0.2s ease;
+        }
+
+        .toggle::after {
+            content: "";
+
+            position: absolute;
+
+            top: 4px;
+            left: 4px;
+
+            width: 19px;
+            height: 19px;
+
+            border-radius: 50%;
+
+            background: #ffffff;
+
+            transition: 0.2s ease;
+        }
+
+        .toggle.on {
+            background: #075eff;
+
+            box-shadow:
+                0 0 10px rgba(0, 100, 255, 0.4);
+        }
+
+        .toggle.on::after {
+            transform: translateX(21px);
+        }
+
+        /* =========================================================
            RESPONSIVE
            ========================================================= */
 
@@ -475,6 +681,7 @@
         <header class="reals-header">
 
             <button
+                type="button"
                 class="header-button"
                 id="realsBackBtn"
                 aria-label="Back"
@@ -487,6 +694,7 @@
             </div>
 
             <button
+                type="button"
                 class="header-button"
                 id="realsSettingsBtn"
                 aria-label="Reals settings"
@@ -508,6 +716,7 @@
         >
 
             <button
+                type="button"
                 class="reals-tab active"
                 data-section="general"
                 id="generalTab"
@@ -518,6 +727,7 @@
 
 
             <button
+                type="button"
                 class="reals-tab"
                 data-section="groups"
                 id="groupsTab"
@@ -528,6 +738,7 @@
 
 
             <button
+                type="button"
                 class="reals-tab"
                 data-section="posts"
                 id="postsTab"
@@ -538,6 +749,7 @@
 
 
             <button
+                type="button"
                 class="reals-tab"
                 data-section="fourth"
                 id="fourthTab"
@@ -551,17 +763,358 @@
 
         <!-- =====================================================
              REALS CONTENT
-
-             JavaScript files will render their feeds here.
-
-             generalvids.js
-             groupvids.js
-             postvids.js
              ===================================================== -->
 
         <main id="realsContent"></main>
 
+
+        <!-- =====================================================
+             SETTINGS
+             ===================================================== -->
+
+        <div
+            id="realsSettings"
+            aria-hidden="true"
+        >
+
+            <section
+                class="settings-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="settingsTitle"
+            >
+
+                <div class="settings-handle"></div>
+
+                <h2
+                    class="settings-title"
+                    id="settingsTitle"
+                >
+                    Reals Settings
+                </h2>
+
+                <p class="settings-subtitle">
+                    Customize your VitalStar Reals experience.
+                </p>
+
+
+                <div class="settings-row">
+
+                    <div>
+                        <div class="settings-label">
+                            Autoplay videos
+                        </div>
+
+                        <div class="settings-description">
+                            Automatically play the visible Real.
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="toggle on"
+                        data-setting="autoplay"
+                        aria-label="Toggle autoplay"
+                    ></button>
+
+                </div>
+
+
+                <div class="settings-row">
+
+                    <div>
+                        <div class="settings-label">
+                            Start muted
+                        </div>
+
+                        <div class="settings-description">
+                            Start videos muted when opening Reals.
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="toggle on"
+                        data-setting="muted"
+                        aria-label="Toggle muted"
+                    ></button>
+
+                </div>
+
+
+                <div class="settings-row">
+
+                    <div>
+                        <div class="settings-label">
+                            Data saver
+                        </div>
+
+                        <div class="settings-description">
+                            Reduce automatic video loading.
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="toggle"
+                        data-setting="dataSaver"
+                        aria-label="Toggle data saver"
+                    ></button>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="settings-close"
+                    id="closeSettings"
+                >
+                    Done
+                </button>
+
+            </section>
+
+        </div>
+
     </div>
+
+
+    <script>
+
+        /* =========================================================
+           VITALSTAR REALS — PAGE CONTROLLER
+           ========================================================= */
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const tabs =
+                document.querySelectorAll(".reals-tab");
+
+            const settingsButton =
+                document.getElementById("realsSettingsBtn");
+
+            const settingsOverlay =
+                document.getElementById("realsSettings");
+
+            const closeSettings =
+                document.getElementById("closeSettings");
+
+            const backButton =
+                document.getElementById("realsBackBtn");
+
+
+            /* =====================================================
+               TAB SWITCHING
+               ===================================================== */
+
+            tabs.forEach((tab) => {
+
+                tab.addEventListener("click", () => {
+
+                    tabs.forEach((item) => {
+                        item.classList.remove("active");
+                    });
+
+                    tab.classList.add("active");
+
+                    const section =
+                        tab.dataset.section;
+
+                    /*
+                     * These events are what the future JS files
+                     * can listen for.
+                     *
+                     * generalvids.js
+                     * groupvids.js
+                     * postvids.js
+                     */
+
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            "reals:sectionchange",
+                            {
+                                detail: {
+                                    section: section
+                                }
+                            }
+                        )
+                    );
+
+                });
+
+            });
+
+
+            /* =====================================================
+               SETTINGS OPEN
+               ===================================================== */
+
+            settingsButton.addEventListener(
+                "click",
+                () => {
+
+                    settingsOverlay.classList.add("show");
+
+                    settingsOverlay.setAttribute(
+                        "aria-hidden",
+                        "false"
+                    );
+
+                }
+            );
+
+
+            /* =====================================================
+               SETTINGS CLOSE
+               ===================================================== */
+
+            function hideSettings() {
+
+                settingsOverlay.classList.remove("show");
+
+                settingsOverlay.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+
+            }
+
+
+            closeSettings.addEventListener(
+                "click",
+                hideSettings
+            );
+
+
+            /* =====================================================
+               CLOSE SETTINGS BY TAPPING OUTSIDE
+               ===================================================== */
+
+            settingsOverlay.addEventListener(
+                "click",
+                (event) => {
+
+                    if (
+                        event.target === settingsOverlay
+                    ) {
+                        hideSettings();
+                    }
+
+                }
+            );
+
+
+            /* =====================================================
+               SETTINGS TOGGLES
+               ===================================================== */
+
+            document
+                .querySelectorAll(".toggle")
+                .forEach((toggle) => {
+
+                    toggle.addEventListener(
+                        "click",
+                        () => {
+
+                            toggle.classList.toggle("on");
+
+                            const setting =
+                                toggle.dataset.setting;
+
+                            const enabled =
+                                toggle.classList.contains("on");
+
+                            localStorage.setItem(
+                                `vitalstar_reals_${setting}`,
+                                enabled ? "true" : "false"
+                            );
+
+                            window.dispatchEvent(
+                                new CustomEvent(
+                                    "reals:settingchange",
+                                    {
+                                        detail: {
+                                            setting: setting,
+                                            enabled: enabled
+                                        }
+                                    }
+                                )
+                            );
+
+                        }
+                    );
+
+                });
+
+
+            /* =====================================================
+               LOAD SAVED SETTINGS
+               ===================================================== */
+
+            document
+                .querySelectorAll(".toggle")
+                .forEach((toggle) => {
+
+                    const setting =
+                        toggle.dataset.setting;
+
+                    const saved =
+                        localStorage.getItem(
+                            `vitalstar_reals_${setting}`
+                        );
+
+                    if (saved === "true") {
+                        toggle.classList.add("on");
+                    }
+
+                    if (saved === "false") {
+                        toggle.classList.remove("on");
+                    }
+
+                });
+
+
+            /* =====================================================
+               BACK BUTTON
+               ===================================================== */
+
+            backButton.addEventListener(
+                "click",
+                () => {
+
+                    if (window.history.length > 1) {
+
+                        window.history.back();
+
+                    } else {
+
+                        window.location.href =
+                            "../home.html";
+
+                    }
+
+                }
+            );
+
+
+            /* =====================================================
+               INITIAL SECTION
+               ===================================================== */
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "reals:sectionchange",
+                    {
+                        detail: {
+                            section: "general"
+                        }
+                    }
+                )
+            );
+
+        });
+
+    </script>
 
 </body>
 
