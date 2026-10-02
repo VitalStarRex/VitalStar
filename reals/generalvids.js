@@ -182,6 +182,18 @@ function isGroupVideo(data) {
 
     if (!data) return false;
 
+    const mediaURL =
+        data.mediaURL ||
+        data.video ||
+        data.videoUrl ||
+        data.videoURL ||
+        data.videoUrl ||
+        "";
+
+    if (!mediaURL) {
+        return false;
+    }
+
     const mediaType =
         String(
             data.mediaType || ""
@@ -189,16 +201,38 @@ function isGroupVideo(data) {
             .trim()
             .toLowerCase();
 
-    const mediaURL =
-        data.mediaURL ||
-        data.video ||
-        data.videoUrl ||
-        data.videoURL ||
-        "";
+    /*
+     * Primary group-post format:
+     *
+     * mediaType: "video"
+     * mediaURL:  "..."
+     *
+     * We also accept video-like URLs when
+     * mediaType was not saved correctly.
+     */
+
+    if (
+        mediaType === "video"
+    ) {
+        return true;
+    }
+
+    if (
+        mediaType === "video/mp4" ||
+        mediaType.startsWith("video/")
+    ) {
+        return true;
+    }
+
+    const url =
+        String(mediaURL)
+            .toLowerCase();
 
     return (
-        mediaType === "video" &&
-        !!mediaURL
+        url.includes(".mp4") ||
+        url.includes(".webm") ||
+        url.includes(".mov") ||
+        url.includes("video/upload")
     );
 }
 
@@ -483,22 +517,31 @@ function normalizeGroupPost(
 
         text:
             data.text ||
+            data.caption ||
             "",
 
         creatorId:
             data.authorId ||
+            data.uid ||
+            data.userId ||
             "",
 
         creatorName:
             data.authorName ||
+            data.fullName ||
+            data.name ||
+            data.username ||
             "VitalStar User",
 
         username:
             data.username ||
+            data.authorUsername ||
             "",
 
         creatorPhoto:
             data.authorPhotoURL ||
+            data.profilePicture ||
+            data.photoURL ||
             "",
 
         authorRole:
@@ -512,22 +555,30 @@ function normalizeGroupPost(
 
         likes:
             Number(
-                data.likesCount || 0
+                data.likesCount ??
+                data.likes ??
+                0
             ),
 
         comments:
             Number(
-                data.commentsCount || 0
+                data.commentsCount ??
+                data.comments ??
+                0
             ),
 
         reposts:
             Number(
-                data.repostsCount || 0
+                data.repostsCount ??
+                data.reposts ??
+                0
             ),
 
         shares:
             Number(
-                data.sharesCount || 0
+                data.sharesCount ??
+                data.shares ??
+                0
             )
     };
 }
@@ -724,18 +775,6 @@ function initializeFeed() {
                     normalLoaded = true;
 
                     rebuildFeed();
-
-                    if (
-                        !groupsLoaded &&
-                        !normalPosts.length
-                    ) {
-
-                        showError(
-                            getFirebaseErrorMessage(
-                                error
-                            )
-                        );
-                    }
                 }
             );
 
@@ -753,7 +792,16 @@ function initializeFeed() {
 
 
     // ========================================================
-    // ALL GROUP VIDEOS
+    // ALL GROUP POSTS
+    //
+    // IMPORTANT:
+    // We intentionally DO NOT use orderBy("createdAt")
+    // here.
+    //
+    // Some group posts may not contain createdAt or may
+    // have different timestamp formats. Loading the documents
+    // first and sorting in JavaScript prevents those videos
+    // from disappearing.
     // ========================================================
 
     try {
@@ -765,12 +813,7 @@ function initializeFeed() {
                     "posts"
                 ),
 
-                orderBy(
-                    "createdAt",
-                    "desc"
-                ),
-
-                limit(100)
+                limit(500)
             );
 
 
@@ -782,11 +825,17 @@ function initializeFeed() {
 
                     groupPosts = [];
 
+
                     snapshot.forEach(
                         docSnap => {
 
                             const data =
                                 docSnap.data();
+
+
+                            // --------------------------------
+                            // ONLY VIDEO GROUP POSTS
+                            // --------------------------------
 
                             if (
                                 !isGroupVideo(
@@ -796,6 +845,14 @@ function initializeFeed() {
                                 return;
                             }
 
+
+                            // --------------------------------
+                            // FIND GROUP ID
+                            //
+                            // Expected path:
+                            //
+                            // groups/{groupId}/posts/{postId}
+                            // --------------------------------
 
                             const path =
                                 docSnap.ref.path
@@ -813,32 +870,60 @@ function initializeFeed() {
 
 
                             if (
-                                groupIndex !== -1 &&
-                                path[
-                                    groupIndex + 1
-                                ]
+                                groupIndex !== -1
                             ) {
 
                                 groupId =
                                     path[
                                         groupIndex + 1
-                                    ];
+                                    ] || "";
                             }
 
 
                             if (!groupId) {
+
+                                console.warn(
+                                    "VitalStar Reals: group ID not found for:",
+                                    docSnap.ref.path
+                                );
+
                                 return;
                             }
 
 
-                            groupPosts.push(
+                            const groupVideo =
                                 normalizeGroupPost(
                                     docSnap.id,
                                     data,
                                     groupId
-                                )
-                            );
+                                );
+
+
+                            if (
+                                groupVideo.video
+                            ) {
+
+                                groupPosts.push(
+                                    groupVideo
+                                );
+                            }
                         }
+                    );
+
+
+                    // --------------------------------
+                    // SORT GROUP VIDEOS NEWEST FIRST
+                    // --------------------------------
+
+                    groupPosts.sort(
+                        (a, b) =>
+                            b.createdAt -
+                            a.createdAt
+                    );
+
+
+                    console.log(
+                        `VitalStar Reals: ${groupPosts.length} group video(s) loaded.`
                     );
 
 
@@ -1118,10 +1203,6 @@ function createVideoCard(
             `;
 
 
-    // ========================================================
-    // SOURCE
-    // ========================================================
-
     const sourceLabel =
         video.type === "group"
             ? "Group"
@@ -1148,8 +1229,6 @@ function createVideoCard(
 
     card.innerHTML = `
 
-        <!-- VIDEO -->
-
         <video
             class="reals-video"
             src="${escapeHTML(
@@ -1168,8 +1247,6 @@ function createVideoCard(
         <div class="video-bottom-gradient"></div>
 
 
-        <!-- PLAY / PAUSE -->
-
         <button
             class="video-play-indicator"
             type="button"
@@ -1179,7 +1256,7 @@ function createVideoCard(
         </button>
 
 
-        <!-- RIGHT SIDE ACTIONS -->
+        <!-- RIGHT ACTIONS -->
 
         <div class="video-actions">
 
@@ -1283,18 +1360,14 @@ function createVideoCard(
         </div>
 
 
-        <!-- BOTTOM INFORMATION -->
+        <!-- CREATOR INFORMATION -->
 
         <div class="video-info">
-
-            <!-- SOURCE -->
 
             <div class="video-source-label">
                 ${sourceLabel}
             </div>
 
-
-            <!-- CREATOR -->
 
             <div class="creator-row">
 
@@ -1319,13 +1392,11 @@ function createVideoCard(
 
                     ${
                         username
-
                             ? `
                                 <div class="creator-username">
                                     ${username}
                                 </div>
                             `
-
                             : ""
                     }
 
@@ -1334,17 +1405,13 @@ function createVideoCard(
             </div>
 
 
-            <!-- CAPTION -->
-
             ${
                 caption
-
                     ? `
                         <div class="video-caption">
                             ${caption}
                         </div>
                     `
-
                     : ""
             }
 
@@ -1352,10 +1419,6 @@ function createVideoCard(
 
     `;
 
-
-    // ========================================================
-    // ACTION LISTENER
-    // ========================================================
 
     card.addEventListener(
         "click",
@@ -2303,11 +2366,6 @@ function addStyles() {
 
             width: 100%;
 
-            /*
-             * Slightly smaller than the full screen
-             * so the interface feels lighter.
-             */
-
             height: 94dvh;
             min-height: 0;
 
@@ -2454,10 +2512,6 @@ function addStyles() {
             z-index: 5;
         }
 
-
-        /* =====================================================
-           SOURCE
-           ===================================================== */
 
         .video-source-label {
 
@@ -3060,10 +3114,6 @@ function addStyles() {
                 );
         }
 
-
-        /* =====================================================
-           ANIMATION
-           ===================================================== */
 
         @keyframes vitalstarSpin {
 
