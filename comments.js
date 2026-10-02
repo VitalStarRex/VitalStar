@@ -1,6 +1,8 @@
 // ============================================================
-// VITALSTAR — comments.js
-// Post / Comments / Likes / Replies / Shares / Notifications
+// VITALSTAR — COMMENTS.JS
+// Navy + Glowing Blue Theme
+// Posts / Comments / Likes / Replies / Shares / Notifications
+// Firebase v10.12.2
 // ============================================================
 
 import { auth, db } from "./firebase.js";
@@ -24,6 +26,376 @@ import {
     deleteDoc,
     setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+// ============================================================
+// VITALSTAR NAVY / BLUE THEME
+// ============================================================
+
+const VS_THEME = `
+<style>
+
+:root {
+    --vs-navy: #020817;
+    --vs-navy-2: #06152b;
+    --vs-blue: #1683ff;
+    --vs-blue-light: #42adff;
+    --vs-glow: rgba(20, 130, 255, .55);
+    --vs-border: rgba(40, 150, 255, .28);
+    --vs-text: #f3f8ff;
+    --vs-muted: #91a8c5;
+}
+
+body {
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            rgba(0, 115, 255, .22),
+            transparent 42%
+        ),
+        linear-gradient(
+            145deg,
+            #010611,
+            #031126 48%,
+            #020817
+        ) !important;
+
+    color: var(--vs-text) !important;
+    min-height: 100vh;
+}
+
+#postContainer,
+#commentList {
+    width: min(700px, 94%);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.comment,
+.post-preview {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(7, 25, 49, .97),
+            rgba(2, 12, 28, .99)
+        ) !important;
+
+    color: var(--vs-text) !important;
+
+    border: 1px solid var(--vs-border) !important;
+
+    border-radius: 18px !important;
+
+    box-shadow:
+        0 0 18px rgba(0, 100, 255, .12),
+        inset 0 0 20px rgba(0, 120, 255, .025) !important;
+
+    transition:
+        border-color .25s ease,
+        box-shadow .25s ease,
+        transform .25s ease;
+}
+
+.comment:hover {
+    border-color: rgba(45, 155, 255, .5) !important;
+
+    box-shadow:
+        0 0 25px rgba(20, 125, 255, .20),
+        inset 0 0 25px rgba(20, 125, 255, .035) !important;
+}
+
+.comment-header,
+.comment-header b {
+    color: #fff !important;
+}
+
+.comment-header small {
+    color: var(--vs-muted) !important;
+}
+
+.comment-avatar {
+    background:
+        linear-gradient(
+            135deg,
+            #061a35,
+            #0b5ec4
+        ) !important;
+
+    border: 2px solid rgba(35, 150, 255, .55);
+
+    box-shadow:
+        0 0 12px rgba(20, 130, 255, .35);
+
+    color: #70c4ff !important;
+}
+
+.comment a {
+    color: #fff !important;
+}
+
+.comment a:hover {
+    color: var(--vs-blue-light) !important;
+}
+
+.comment-text {
+    color: #e7f1ff !important;
+    line-height: 1.55;
+}
+
+.comment-photo {
+    border-radius: 14px !important;
+
+    border: 1px solid rgba(50, 155, 255, .25);
+
+    box-shadow:
+        0 0 18px rgba(20, 110, 255, .12);
+
+    max-width: 100%;
+}
+
+.comment-actions,
+.post-actions {
+    border-top: 1px solid rgba(50, 145, 255, .12);
+
+    margin-top: 12px;
+
+    padding-top: 8px;
+}
+
+.comment-actions button,
+.post-actions button {
+    color: #9ecbff !important;
+
+    border-radius: 12px !important;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        box-shadow .2s ease,
+        transform .2s ease;
+}
+
+.comment-actions button:hover,
+.post-actions button:hover {
+    color: #fff !important;
+
+    background:
+        rgba(20, 125, 255, .13) !important;
+
+    box-shadow:
+        0 0 14px rgba(20, 130, 255, .25);
+
+    transform: translateY(-1px);
+}
+
+.comment-like-btn,
+.post-like-btn {
+    color: #72bdff !important;
+}
+
+.comment-like-btn:hover,
+.post-like-btn:hover {
+    color: #fff !important;
+
+    text-shadow:
+        0 0 10px #1683ff;
+}
+
+.comment-reply-btn,
+.post-share-btn {
+    color: #72bdff !important;
+}
+
+.reply {
+    margin-left: 35px;
+
+    margin-top: 8px;
+
+    padding: 10px;
+
+    border-left:
+        3px solid #168cff !important;
+
+    border-radius: 0 12px 12px 0;
+
+    background:
+        rgba(4, 20, 42, .72) !important;
+
+    box-shadow:
+        -5px 0 15px rgba(20, 130, 255, .08);
+}
+
+.reply b {
+    color: #fff !important;
+}
+
+.reply small {
+    color: #7894b3 !important;
+}
+
+.reply p {
+    color: #dceaff !important;
+}
+
+[id^="replyBox-"] {
+    margin-top: 8px;
+}
+
+[id^="replyBox-"] input {
+    background:
+        rgba(2, 15, 34, .96) !important;
+
+    color: #fff !important;
+
+    border:
+        1px solid rgba(35, 145, 255, .35) !important;
+
+    border-radius: 20px !important;
+
+    box-shadow:
+        inset 0 0 10px rgba(0, 100, 255, .08);
+
+    outline: none;
+}
+
+[id^="replyBox-"] input::placeholder {
+    color: #7892af !important;
+}
+
+[id^="replyBox-"] input:focus {
+    border-color: #1683ff !important;
+
+    box-shadow:
+        0 0 12px rgba(20, 130, 255, .35),
+        inset 0 0 10px rgba(0, 100, 255, .08);
+}
+
+[id^="replyBox-"] button {
+    background:
+        linear-gradient(
+            135deg,
+            #075bc7,
+            #168cff
+        ) !important;
+
+    color: #fff !important;
+
+    border:
+        1px solid rgba(90, 190, 255, .5) !important;
+
+    box-shadow:
+        0 0 12px rgba(20, 130, 255, .35);
+}
+
+[id^="replyBox-"] button:hover {
+    box-shadow:
+        0 0 20px rgba(20, 140, 255, .65);
+}
+
+#commentText {
+    background:
+        rgba(2, 15, 34, .96) !important;
+
+    color: #fff !important;
+
+    border:
+        1px solid rgba(40, 150, 255, .35) !important;
+
+    border-radius: 18px !important;
+
+    box-shadow:
+        inset 0 0 15px rgba(0, 100, 255, .07);
+}
+
+#commentText::placeholder {
+    color: #7189a6 !important;
+}
+
+#commentText:focus {
+    border-color: #168cff !important;
+
+    box-shadow:
+        0 0 15px rgba(20, 130, 255, .35),
+        inset 0 0 15px rgba(0, 100, 255, .08);
+}
+
+#sendCommentBtn {
+    background:
+        linear-gradient(
+            135deg,
+            #075bc7,
+            #168cff
+        ) !important;
+
+    color: #fff !important;
+
+    border:
+        1px solid rgba(80, 185, 255, .55) !important;
+
+    box-shadow:
+        0 0 14px rgba(20, 130, 255, .4);
+
+    border-radius: 14px !important;
+}
+
+#sendCommentBtn:hover {
+    box-shadow:
+        0 0 24px rgba(20, 140, 255, .7);
+}
+
+#commentingIndicator {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(2, 20, 45, .98),
+            rgba(4, 45, 85, .98)
+        ) !important;
+
+    color: #75c5ff !important;
+
+    border:
+        1px solid rgba(40, 155, 255, .45);
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 0 20px rgba(20, 130, 255, .3);
+
+    text-align: center;
+
+    padding: 10px 14px;
+}
+
+.comment video {
+    background: #010712;
+
+    border-radius: 14px;
+
+    border:
+        1px solid rgba(40, 150, 255, .25);
+}
+
+@media (max-width: 600px) {
+
+    #postContainer,
+    #commentList {
+        width: 94%;
+    }
+
+    .comment,
+    .post-preview {
+        border-radius: 16px !important;
+    }
+
+}
+
+</style>
+`;
+
+document.head.insertAdjacentHTML(
+    "beforeend",
+    VS_THEME
+);
 
 
 // ============================================================
@@ -68,6 +440,8 @@ onAuthStateChanged(auth, (user) => {
 
     }
 
+    updatePostLikeState();
+
 });
 
 
@@ -107,7 +481,6 @@ async function getCurrentUserData() {
 
     if (!user) return null;
 
-
     const userSnap =
         await getDoc(
             doc(
@@ -117,36 +490,28 @@ async function getCurrentUserData() {
             )
         );
 
-
     if (!userSnap.exists()) {
 
         return {
 
-            uid:
-                user.uid,
+            uid: user.uid,
 
-            username:
-                "username",
+            username: "username",
 
-            fullName:
-                "VitalStar User",
+            fullName: "VitalStar User",
 
-            profilePicture:
-                ""
+            profilePicture: ""
 
         };
 
     }
 
-
     const data =
         userSnap.data();
 
-
     return {
 
-        uid:
-            user.uid,
+        uid: user.uid,
 
         username:
             data.username ||
@@ -170,40 +535,21 @@ async function getCurrentUserData() {
 // ============================================================
 
 async function createNotification({
-
     receiverId,
-
     sender,
-
     type,
-
     postId,
-
     commentId = null,
-
     text
-
 }) {
 
-    if (!receiverId) return;
+    if (!receiverId || !sender) return;
 
-    if (!sender) return;
-
-    // Never notify yourself
-    if (
-        receiverId ===
-        sender.uid
-    ) {
-
-        return;
-
-    }
-
+    if (receiverId === sender.uid) return;
 
     const notification = {
 
-        receiverId:
-            receiverId,
+        receiverId,
 
         senderId:
             sender.uid,
@@ -214,23 +560,18 @@ async function createNotification({
         senderPhoto:
             sender.profilePicture,
 
-        type:
-            type,
+        type,
 
-        postId:
-            postId,
+        postId,
 
-        text:
-            text,
+        text,
 
-        read:
-            false,
+        read: false,
 
         createdAt:
             serverTimestamp()
 
     };
-
 
     if (commentId) {
 
@@ -238,7 +579,6 @@ async function createNotification({
             commentId;
 
     }
-
 
     await addDoc(
         collection(
@@ -268,20 +608,21 @@ async function loadPost() {
                 )
             );
 
-
         if (!postSnap.exists()) {
 
             if (postContainer) {
 
                 postContainer.innerHTML = `
 
-                    <p style="
-                        text-align:center;
-                        padding:30px;
-                        color:gray;
-                    ">
+                    <div
+                        style="
+                            text-align:center;
+                            padding:30px;
+                            color:#7894b3;
+                        "
+                    >
                         Post not found.
-                    </p>
+                    </div>
 
                 `;
 
@@ -291,14 +632,11 @@ async function loadPost() {
 
         }
 
-
         const post =
             postSnap.data();
 
-
         let date =
             "Just now";
-
 
         if (post.createdAt) {
 
@@ -313,9 +651,7 @@ async function loadPost() {
 
         }
 
-
         if (!postContainer) return;
-
 
         postContainer.innerHTML = `
 
@@ -347,7 +683,6 @@ async function loadPost() {
 
                     </div>
 
-
                     <div>
 
                         <b>
@@ -358,7 +693,6 @@ async function loadPost() {
                                 )}"
                                 style="
                                     text-decoration:none;
-                                    color:black;
                                 "
                             >
                                 ${escapeHTML(
@@ -379,21 +713,17 @@ async function loadPost() {
 
                 </div>
 
-
                 ${
                     post.text
                     ?
                     `
                     <p class="comment-text">
-                        ${escapeHTML(
-                            post.text
-                        )}
+                        ${escapeHTML(post.text)}
                     </p>
                     `
                     :
                     ""
                 }
-
 
                 ${
                     post.image
@@ -401,15 +731,12 @@ async function loadPost() {
                     `
                     <img
                         class="comment-photo"
-                        src="${escapeHTML(
-                            post.image
-                        )}"
+                        src="${escapeHTML(post.image)}"
                     >
                     `
                     :
                     ""
                 }
-
 
                 ${
                     post.video
@@ -419,20 +746,15 @@ async function loadPost() {
                         class="comment-photo"
                         controls
                     >
-
                         <source
-                            src="${escapeHTML(
-                                post.video
-                            )}"
+                            src="${escapeHTML(post.video)}"
                             type="video/mp4"
                         >
-
                     </video>
                     `
                     :
                     ""
                 }
-
 
                 <div
                     class="comment-actions post-actions"
@@ -443,47 +765,23 @@ async function loadPost() {
                     "
                 >
 
-                    <!-- POST LIKE -->
-
                     <button
                         type="button"
                         id="postLikeBtn"
                         class="post-like-btn"
                         aria-label="Like post"
                         title="Like post"
-                        style="
-                            border:none;
-                            background:transparent;
-                            cursor:pointer;
-                            padding:7px 10px;
-                            font-size:15px;
-                            position:relative;
-                            z-index:20;
-                            pointer-events:auto;
-                        "
                     >
-
                         ❤️
-
                         <span id="postLikeCount">
                             ${post.likes || 0}
                         </span>
-
                     </button>
 
-
-                    <!-- COMMENT COUNT -->
-
                     <span>
-
                         💬
-
                         ${post.comments || 0}
-
                     </span>
-
-
-                    <!-- ICON ONLY SHARE -->
 
                     <button
                         type="button"
@@ -491,24 +789,11 @@ async function loadPost() {
                         class="post-share-btn"
                         aria-label="Share post"
                         title="Share post"
-                        style="
-                            border:none;
-                            background:transparent;
-                            cursor:pointer;
-                            padding:7px 10px;
-                            font-size:15px;
-                            position:relative;
-                            z-index:20;
-                            pointer-events:auto;
-                        "
                     >
-
                         🔗
-
                         <span id="shareCount">
                             ${post.shares || 0}
                         </span>
-
                     </button>
 
                 </div>
@@ -517,22 +802,16 @@ async function loadPost() {
 
         `;
 
-
-        // ====================================================
-        // POST LIKE BUTTON
-        // ====================================================
-
         const likeButton =
             document.getElementById(
                 "postLikeBtn"
             );
 
-
         if (likeButton) {
 
             likeButton.addEventListener(
                 "click",
-                function(event) {
+                (event) => {
 
                     event.preventDefault();
 
@@ -545,22 +824,16 @@ async function loadPost() {
 
         }
 
-
-        // ====================================================
-        // SHARE BUTTON
-        // ====================================================
-
         const shareButton =
             document.getElementById(
                 "postShareBtn"
             );
 
-
         if (shareButton) {
 
             shareButton.addEventListener(
                 "click",
-                function(event) {
+                (event) => {
 
                     event.preventDefault();
 
@@ -573,8 +846,6 @@ async function loadPost() {
 
         }
 
-
-        // Update post like button state
         await updatePostLikeState();
 
     } catch (error) {
@@ -588,7 +859,6 @@ async function loadPost() {
 
 }
 
-
 loadPost();
 
 
@@ -601,13 +871,10 @@ async function updatePostLikeState() {
     const user =
         auth.currentUser;
 
-
     if (!user) return;
-
 
     const likeId =
         `${postId}_${user.uid}`;
-
 
     const likeSnap =
         await getDoc(
@@ -618,34 +885,19 @@ async function updatePostLikeState() {
             )
         );
 
-
     const button =
         document.getElementById(
             "postLikeBtn"
         );
 
-
     if (!button) return;
 
-
-    if (likeSnap.exists()) {
-
-        button.style.opacity =
-            "1";
-
-        button.setAttribute(
-            "aria-pressed",
-            "true"
-        );
-
-    } else {
-
-        button.setAttribute(
-            "aria-pressed",
-            "false"
-        );
-
-    }
+    button.setAttribute(
+        "aria-pressed",
+        likeSnap.exists()
+            ? "true"
+            : "false"
+    );
 
 }
 
@@ -662,7 +914,6 @@ async function() {
         const user =
             auth.currentUser;
 
-
         if (!user) {
 
             window.location.href =
@@ -672,7 +923,6 @@ async function() {
 
         }
 
-
         const postRef =
             doc(
                 db,
@@ -680,10 +930,8 @@ async function() {
                 postId
             );
 
-
         const likeId =
             `${postId}_${user.uid}`;
-
 
         const likeRef =
             doc(
@@ -691,7 +939,6 @@ async function() {
                 "postLikes",
                 likeId
             );
-
 
         const [
             likeSnap,
@@ -704,153 +951,69 @@ async function() {
 
         ]);
 
-
-        if (!postSnap.exists()) {
-
-            return;
-
-        }
-
+        if (!postSnap.exists()) return;
 
         const post =
             postSnap.data();
 
-
         const userData =
             await getCurrentUserData();
-
 
         const count =
             document.getElementById(
                 "postLikeCount"
             );
 
-
-        // ====================================================
-        // UNLIKE
-        // ====================================================
-
         if (likeSnap.exists()) {
 
-            await deleteDoc(
-                likeRef
-            );
-
+            await deleteDoc(likeRef);
 
             await updateDoc(
                 postRef,
                 {
-
                     likes:
                         increment(-1)
-
                 }
             );
 
-
             if (count) {
-
-                const current =
-                    Number(
-                        count.textContent
-                    ) || 0;
-
 
                 count.textContent =
                     Math.max(
                         0,
-                        current - 1
+                        Number(count.textContent) - 1
                     );
 
             }
-
-
-            const button =
-                document.getElementById(
-                    "postLikeBtn"
-                );
-
-
-            if (button) {
-
-                button.setAttribute(
-                    "aria-pressed",
-                    "false"
-                );
-
-            }
-
 
             return;
 
         }
 
-
-        // ====================================================
-        // LIKE
-        // ====================================================
-
         await setDoc(
             likeRef,
             {
-
-                postId:
-                    postId,
-
-                uid:
-                    user.uid,
-
+                postId,
+                uid: user.uid,
                 createdAt:
                     serverTimestamp()
-
             }
         );
-
 
         await updateDoc(
             postRef,
             {
-
                 likes:
                     increment(1)
-
             }
         );
 
-
         if (count) {
 
-            const current =
-                Number(
-                    count.textContent
-                ) || 0;
-
-
             count.textContent =
-                current + 1;
+                Number(count.textContent) + 1;
 
         }
-
-
-        const button =
-            document.getElementById(
-                "postLikeBtn"
-            );
-
-
-        if (button) {
-
-            button.setAttribute(
-                "aria-pressed",
-                "true"
-            );
-
-        }
-
-
-        // ====================================================
-        // NOTIFICATION
-        // ====================================================
 
         await createNotification({
 
@@ -863,14 +1026,12 @@ async function() {
             type:
                 "post_like",
 
-            postId:
-                postId,
+            postId,
 
             text:
                 "liked your post."
 
         });
-
 
     } catch (error) {
 
@@ -909,7 +1070,6 @@ const commentsQuery =
 
     );
 
-
 onSnapshot(
 
     commentsQuery,
@@ -918,28 +1078,27 @@ onSnapshot(
 
         if (!commentList) return;
 
-
         commentList.innerHTML = "";
-
 
         if (snapshot.empty) {
 
             commentList.innerHTML = `
 
-                <p style="
-                    text-align:center;
-                    padding:20px;
-                    color:gray;
-                ">
+                <div
+                    style="
+                        text-align:center;
+                        padding:25px;
+                        color:#7894b3;
+                    "
+                >
                     No comments yet.
-                </p>
+                </div>
 
             `;
 
             return;
 
         }
-
 
         snapshot.forEach(
             (commentSnap) => {
@@ -977,10 +1136,8 @@ function renderComment(
 
     if (!commentList) return;
 
-
     let date =
         "Just now";
-
 
     if (comment.createdAt) {
 
@@ -995,16 +1152,13 @@ function renderComment(
 
     }
 
-
     const element =
         document.createElement(
             "div"
         );
 
-
     element.className =
         "comment";
-
 
     element.innerHTML = `
 
@@ -1034,7 +1188,6 @@ function renderComment(
 
             </div>
 
-
             <div>
 
                 <b>
@@ -1045,7 +1198,6 @@ function renderComment(
                         )}"
                         style="
                             text-decoration:none;
-                            color:black;
                         "
                     >
                         ${escapeHTML(
@@ -1060,7 +1212,7 @@ function renderComment(
 
                 <span
                     style="
-                        color:#1877f2;
+                        color:#43a9ff;
                         font-size:13px;
                     "
                 >
@@ -1072,7 +1224,7 @@ function renderComment(
 
                 <br>
 
-                <small style="color:gray;">
+                <small>
                     ${escapeHTML(date)}
                 </small>
 
@@ -1080,21 +1232,17 @@ function renderComment(
 
         </div>
 
-
         ${
             comment.text
             ?
             `
             <p class="comment-text">
-                ${escapeHTML(
-                    comment.text
-                )}
+                ${escapeHTML(comment.text)}
             </p>
             `
             :
             ""
         }
-
 
         ${
             comment.image
@@ -1102,15 +1250,12 @@ function renderComment(
             `
             <img
                 class="comment-photo"
-                src="${escapeHTML(
-                    comment.image
-                )}"
+                src="${escapeHTML(comment.image)}"
             >
             `
             :
             ""
         }
-
 
         <div
             class="comment-actions"
@@ -1121,92 +1266,47 @@ function renderComment(
             "
         >
 
-            <!-- COMMENT LIKE -->
-
             <button
                 type="button"
                 class="comment-like-btn"
                 data-comment-like="${commentId}"
                 aria-label="Like comment"
                 title="Like comment"
-                style="
-                    border:none;
-                    background:transparent;
-                    cursor:pointer;
-                    padding:7px 10px;
-                    font-size:15px;
-                    position:relative;
-                    z-index:20;
-                    pointer-events:auto;
-                "
             >
-
                 ❤️
-
                 <span>
                     ${comment.likes || 0}
                 </span>
-
             </button>
-
-
-            <!-- REPLY -->
 
             <button
                 type="button"
                 class="comment-reply-btn"
                 data-comment-reply="${commentId}"
-                style="
-                    border:none;
-                    background:transparent;
-                    cursor:pointer;
-                    padding:7px 10px;
-                    font-size:15px;
-                    position:relative;
-                    z-index:20;
-                    pointer-events:auto;
-                "
             >
-
                 💬 Reply
-
             </button>
 
         </div>
 
+        <div id="replyBox-${commentId}"></div>
 
-        <div
-            id="replyBox-${commentId}"
-        ></div>
-
-
-        <div
-            id="replies-${commentId}"
-        ></div>
+        <div id="replies-${commentId}"></div>
 
     `;
 
-
-    commentList.appendChild(
-        element
-    );
-
-
-    // ========================================================
-    // COMMENT LIKE
-    // ========================================================
+    commentList.appendChild(element);
 
     const likeButton =
         element.querySelector(
             "[data-comment-like]"
         );
 
-
     if (likeButton) {
 
         likeButton.addEventListener(
             "click",
-            function(event) {
+            (event) => {
 
                 event.preventDefault();
 
@@ -1221,22 +1321,16 @@ function renderComment(
 
     }
 
-
-    // ========================================================
-    // REPLY
-    // ========================================================
-
     const replyButton =
         element.querySelector(
             "[data-comment-reply]"
         );
 
-
     if (replyButton) {
 
         replyButton.addEventListener(
             "click",
-            function(event) {
+            (event) => {
 
                 event.preventDefault();
 
@@ -1251,10 +1345,7 @@ function renderComment(
 
     }
 
-
-    loadReplies(
-        commentId
-    );
+    loadReplies(commentId);
 
 }
 
@@ -1263,28 +1354,22 @@ function renderComment(
 // COMMENTING INDICATOR
 // ============================================================
 
-function showCommentingIndicator(
-    text
-) {
+function showCommentingIndicator(text) {
 
     const indicator =
         document.getElementById(
             "commentingIndicator"
         );
 
-
     if (!indicator) return;
-
 
     indicator.textContent =
         text;
-
 
     indicator.style.display =
         "block";
 
 }
-
 
 function hideCommentingIndicator() {
 
@@ -1293,9 +1378,7 @@ function hideCommentingIndicator() {
             "commentingIndicator"
         );
 
-
     if (!indicator) return;
-
 
     indicator.style.display =
         "none";
@@ -1310,17 +1393,10 @@ function hideCommentingIndicator() {
 window.sendComment =
 async function() {
 
-    const indicator =
-        document.getElementById(
-            "commentingIndicator"
-        );
-
-
     const sendButton =
         document.getElementById(
             "sendCommentBtn"
         );
-
 
     try {
 
@@ -1329,41 +1405,27 @@ async function() {
                 "commentText"
             );
 
-
         const imageElement =
             document.getElementById(
                 "commentImage"
             );
 
-
         const text =
             textElement
-            ?
-            textElement.value.trim()
-            :
-            "";
-
+                ? textElement.value.trim()
+                : "";
 
         const imageFile =
             imageElement &&
             imageElement.files &&
             imageElement.files[0]
-            ?
-            imageElement.files[0]
-            :
-            null;
+                ? imageElement.files[0]
+                : null;
 
-
-        if (!text && !imageFile) {
-
-            return;
-
-        }
-
+        if (!text && !imageFile) return;
 
         const user =
             auth.currentUser;
-
 
         if (!user) {
 
@@ -1374,30 +1436,23 @@ async function() {
 
         }
 
-
         showCommentingIndicator(
             "💬 Posting comment..."
         );
 
-
         if (sendButton) {
 
-            sendButton.disabled =
-                true;
+            sendButton.disabled = true;
 
             sendButton.style.opacity =
-                "0.6";
+                ".6";
 
         }
-
 
         const userData =
             await getCurrentUserData();
 
-
-        let imageUrl =
-            "";
-
+        let imageUrl = "";
 
         if (imageFile) {
 
@@ -1405,22 +1460,18 @@ async function() {
                 "📤 Uploading image..."
             );
 
-
             const formData =
                 new FormData();
-
 
             formData.append(
                 "file",
                 imageFile
             );
 
-
             formData.append(
                 "upload_preset",
                 "vitalstar_upload"
             );
-
 
             const response =
                 await fetch(
@@ -1431,10 +1482,8 @@ async function() {
                     }
                 );
 
-
             const data =
                 await response.json();
-
 
             if (!data.secure_url) {
 
@@ -1444,17 +1493,14 @@ async function() {
 
             }
 
-
             imageUrl =
                 data.secure_url;
 
         }
 
-
         showCommentingIndicator(
             "💬 Posting comment..."
         );
-
 
         await addDoc(
             collection(
@@ -1463,8 +1509,7 @@ async function() {
             ),
             {
 
-                postId:
-                    postId,
+                postId,
 
                 uid:
                     user.uid,
@@ -1478,24 +1523,20 @@ async function() {
                 profilePicture:
                     userData.profilePicture,
 
-                text:
-                    text,
+                text,
 
                 image:
                     imageUrl,
 
-                likes:
-                    0,
+                likes: 0,
 
-                replies:
-                    0,
+                replies: 0,
 
                 createdAt:
                     serverTimestamp()
 
             }
         );
-
 
         await updateDoc(
             doc(
@@ -1504,13 +1545,10 @@ async function() {
                 postId
             ),
             {
-
                 comments:
                     increment(1)
-
             }
         );
-
 
         const postSnap =
             await getDoc(
@@ -1521,12 +1559,10 @@ async function() {
                 )
             );
 
-
         if (postSnap.exists()) {
 
             const post =
                 postSnap.data();
-
 
             await createNotification({
 
@@ -1539,8 +1575,7 @@ async function() {
                 type:
                     "comment",
 
-                postId:
-                    postId,
+                postId,
 
                 text:
                     "commented on your post."
@@ -1549,14 +1584,12 @@ async function() {
 
         }
 
-
         if (textElement) {
 
             textElement.value =
                 "";
 
         }
-
 
         if (imageElement) {
 
@@ -1565,17 +1598,14 @@ async function() {
 
         }
 
-
         showCommentingIndicator(
             "✓ Comment posted"
         );
-
 
         setTimeout(
             hideCommentingIndicator,
             1200
         );
-
 
     } catch (error) {
 
@@ -1584,17 +1614,14 @@ async function() {
             error
         );
 
-
         showCommentingIndicator(
             "⚠️ Failed to post comment"
         );
-
 
         setTimeout(
             hideCommentingIndicator,
             2000
         );
-
 
     } finally {
 
@@ -1625,7 +1652,6 @@ async function(commentId) {
         const user =
             auth.currentUser;
 
-
         if (!user) {
 
             window.location.href =
@@ -1635,10 +1661,8 @@ async function(commentId) {
 
         }
 
-
         const likeId =
             `${commentId}_${user.uid}`;
-
 
         const likeRef =
             doc(
@@ -1647,14 +1671,12 @@ async function(commentId) {
                 likeId
             );
 
-
         const commentRef =
             doc(
                 db,
                 "comments",
                 commentId
             );
-
 
         const [
             likeSnap,
@@ -1667,51 +1689,35 @@ async function(commentId) {
 
         ]);
 
-
-        if (!commentSnap.exists()) {
-
-            return;
-
-        }
-
+        if (!commentSnap.exists()) return;
 
         const comment =
             commentSnap.data();
 
-
         const userData =
             await getCurrentUserData();
 
-
         if (likeSnap.exists()) {
 
-            await deleteDoc(
-                likeRef
-            );
-
+            await deleteDoc(likeRef);
 
             await updateDoc(
                 commentRef,
                 {
-
                     likes:
                         increment(-1)
-
                 }
             );
-
 
             return;
 
         }
-
 
         await setDoc(
             likeRef,
             {
 
-                commentId:
-                    commentId,
+                commentId,
 
                 uid:
                     user.uid,
@@ -1722,17 +1728,13 @@ async function(commentId) {
             }
         );
 
-
         await updateDoc(
             commentRef,
             {
-
                 likes:
                     increment(1)
-
             }
         );
-
 
         await createNotification({
 
@@ -1745,17 +1747,14 @@ async function(commentId) {
             type:
                 "comment_like",
 
-            postId:
-                postId,
+            postId,
 
-            commentId:
-                commentId,
+            commentId,
 
             text:
                 "liked your comment."
 
         });
-
 
     } catch (error) {
 
@@ -1781,21 +1780,15 @@ function(commentId) {
             `replyBox-${commentId}`
         );
 
-
     if (!box) return;
 
+    if (box.innerHTML.trim()) {
 
-    if (
-        box.innerHTML.trim()
-    ) {
-
-        box.innerHTML =
-            "";
+        box.innerHTML = "";
 
         return;
 
     }
-
 
     box.innerHTML = `
 
@@ -1811,27 +1804,11 @@ function(commentId) {
                 id="replyInput-${commentId}"
                 type="text"
                 placeholder="Write a reply..."
-                style="
-                    flex:1;
-                    padding:10px;
-                    border:1px solid #ddd;
-                    border-radius:20px;
-                    outline:none;
-                "
             >
-
 
             <button
                 type="button"
                 id="replySend-${commentId}"
-                style="
-                    border:none;
-                    border-radius:20px;
-                    padding:8px 14px;
-                    background:#1877f2;
-                    color:white;
-                    cursor:pointer;
-                "
             >
                 Send
             </button>
@@ -1840,31 +1817,47 @@ function(commentId) {
 
     `;
 
-
     const input =
         document.getElementById(
             `replyInput-${commentId}`
         );
-
 
     const send =
         document.getElementById(
             `replySend-${commentId}`
         );
 
-
     if (input) {
 
         input.focus();
 
-    }
+        input.addEventListener(
+            "keydown",
+            (event) => {
 
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    sendReply(
+                        commentId
+                    );
+
+                }
+
+            }
+        );
+
+    }
 
     if (send) {
 
         send.addEventListener(
             "click",
-            function(event) {
+            (event) => {
 
                 event.preventDefault();
 
@@ -1884,15 +1877,12 @@ function(commentId) {
 // SEND REPLY
 // ============================================================
 
-async function sendReply(
-    commentId
-) {
+async function sendReply(commentId) {
 
     try {
 
         const user =
             auth.currentUser;
-
 
         if (!user) {
 
@@ -1903,26 +1893,20 @@ async function sendReply(
 
         }
 
-
         const input =
             document.getElementById(
                 `replyInput-${commentId}`
             );
 
-
         if (!input) return;
-
 
         const text =
             input.value.trim();
 
-
         if (!text) return;
-
 
         const userData =
             await getCurrentUserData();
-
 
         const commentSnap =
             await getDoc(
@@ -1933,17 +1917,10 @@ async function sendReply(
                 )
             );
 
-
-        if (!commentSnap.exists()) {
-
-            return;
-
-        }
-
+        if (!commentSnap.exists()) return;
 
         const comment =
             commentSnap.data();
-
 
         await addDoc(
             collection(
@@ -1966,15 +1943,13 @@ async function sendReply(
                 profilePicture:
                     userData.profilePicture,
 
-                text:
-                    text,
+                text,
 
                 createdAt:
                     serverTimestamp()
 
             }
         );
-
 
         await updateDoc(
             doc(
@@ -1983,13 +1958,10 @@ async function sendReply(
                 commentId
             ),
             {
-
                 replies:
                     increment(1)
-
             }
         );
-
 
         await createNotification({
 
@@ -2002,32 +1974,25 @@ async function sendReply(
             type:
                 "comment_reply",
 
-            postId:
-                postId,
+            postId,
 
-            commentId:
-                commentId,
+            commentId,
 
             text:
                 "replied to your comment."
 
         });
 
-
-        input.value =
-            "";
-
+        input.value = "";
 
         const box =
             document.getElementById(
                 `replyBox-${commentId}`
             );
 
-
         if (box) {
 
-            box.innerHTML =
-                "";
+            box.innerHTML = "";
 
         }
 
@@ -2047,18 +2012,14 @@ async function sendReply(
 // LOAD REPLIES
 // ============================================================
 
-function loadReplies(
-    commentId
-) {
+function loadReplies(commentId) {
 
     const container =
         document.getElementById(
             `replies-${commentId}`
         );
 
-
     if (!container) return;
-
 
     const repliesQuery =
         query(
@@ -2077,15 +2038,12 @@ function loadReplies(
 
         );
 
-
     onSnapshot(
         repliesQuery,
 
         (snapshot) => {
 
-            container.innerHTML =
-                "";
-
+            container.innerHTML = "";
 
             snapshot.forEach(
                 (replySnap) => {
@@ -2093,10 +2051,8 @@ function loadReplies(
                     const reply =
                         replySnap.data();
 
-
                     let date =
                         "Just now";
-
 
                     if (
                         reply.createdAt
@@ -2113,18 +2069,9 @@ function loadReplies(
 
                     }
 
-
                     container.innerHTML += `
 
-                        <div
-                            class="reply"
-                            style="
-                                margin-left:35px;
-                                margin-top:8px;
-                                padding:10px;
-                                border-left:3px solid #1877f2;
-                            "
-                        >
+                        <div class="reply">
 
                             <div
                                 style="
@@ -2158,18 +2105,13 @@ function loadReplies(
 
                                     <br>
 
-                                    <small
-                                        style="color:gray;"
-                                    >
-                                        ${escapeHTML(
-                                            date
-                                        )}
+                                    <small>
+                                        ${escapeHTML(date)}
                                     </small>
 
                                 </div>
 
                             </div>
-
 
                             <p
                                 style="
@@ -2177,8 +2119,7 @@ function loadReplies(
                                 "
                             >
                                 ${escapeHTML(
-                                    reply.text ||
-                                    ""
+                                    reply.text || ""
                                 )}
                             </p>
 
@@ -2217,7 +2158,6 @@ async function() {
         const user =
             auth.currentUser;
 
-
         if (!user) {
 
             window.location.href =
@@ -2227,7 +2167,6 @@ async function() {
 
         }
 
-
         const postRef =
             doc(
                 db,
@@ -2235,33 +2174,23 @@ async function() {
                 postId
             );
 
-
         const postSnap =
             await getDoc(
                 postRef
             );
 
-
-        if (!postSnap.exists()) {
-
-            return;
-
-        }
-
+        if (!postSnap.exists()) return;
 
         const post =
             postSnap.data();
 
-
         const userData =
             await getCurrentUserData();
-
 
         const shareUrl =
             `${window.location.origin}${window.location.pathname}?postId=${encodeURIComponent(
                 postId
             )}`;
-
 
         const shareData = {
 
@@ -2270,27 +2199,17 @@ async function() {
 
             text:
                 post.text
-                ?
-                post.text.substring(
-                    0,
-                    120
-                )
-                :
-                "Check out this post on VitalStar.",
+                    ? post.text.substring(0, 120)
+                    : "Check out this post on VitalStar.",
 
             url:
                 shareUrl
 
         };
 
+        let shared = false;
 
-        let shared =
-            false;
-
-
-        if (
-            navigator.share
-        ) {
+        if (navigator.share) {
 
             try {
 
@@ -2298,8 +2217,7 @@ async function() {
                     shareData
                 );
 
-                shared =
-                    true;
+                shared = true;
 
             } catch (error) {
 
@@ -2313,7 +2231,7 @@ async function() {
                 }
 
                 console.error(
-                    "Share cancelled/error:",
+                    "Share error:",
                     error
                 );
 
@@ -2329,8 +2247,7 @@ async function() {
                     shareUrl
                 );
 
-                shared =
-                    true;
+                shared = true;
 
             } catch (error) {
 
@@ -2345,26 +2262,20 @@ async function() {
 
         }
 
-
         if (!shared) return;
-
 
         await updateDoc(
             postRef,
             {
-
                 shares:
                     increment(1)
-
             }
         );
-
 
         const shareCount =
             document.getElementById(
                 "shareCount"
             );
-
 
         if (shareCount) {
 
@@ -2374,7 +2285,6 @@ async function() {
                 ) + 1;
 
         }
-
 
         await createNotification({
 
@@ -2387,14 +2297,12 @@ async function() {
             type:
                 "share",
 
-            postId:
-                postId,
+            postId,
 
             text:
                 "shared your post."
 
         });
-
 
     } catch (error) {
 
