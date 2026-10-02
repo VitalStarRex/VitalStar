@@ -1,48 +1,2212 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VITALSTAR — Home Preview</title>
-<style>
-:root{--bg:#030712;--panel:rgba(8,17,36,.78);--panel2:rgba(12,24,48,.9);--line:rgba(255,255,255,.09);--text:#f7fbff;--muted:#8fa4c4;--blue:#3b82f6;--cyan:#22d3ee;--gold:#facc15;--pink:#ec4899;--green:#39ff88;--shadow:0 18px 60px rgba(0,0,0,.45)}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(circle at 15% 5%,rgba(59,130,246,.18),transparent 28%),radial-gradient(circle at 90% 10%,rgba(236,72,153,.12),transparent 25%),radial-gradient(circle at 50% 100%,rgba(34,211,238,.09),transparent 30%),var(--bg);color:var(--text)}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}
-button{font:inherit;color:inherit;border:0;cursor:pointer}.app{min-height:100vh;padding-bottom:94px}.topbar{position:sticky;top:0;z-index:20;height:72px;padding:10px 18px;display:flex;align-items:center;gap:14px;background:rgba(3,7,18,.78);backdrop-filter:blur(22px);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.08em;font-size:20px}.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:conic-gradient(from 210deg,var(--blue),var(--cyan),var(--gold),var(--pink),var(--blue));box-shadow:0 0 26px rgba(59,130,246,.45);position:relative}.logo:after{content:"VS";position:absolute;inset:2px;border-radius:12px;background:#061023;display:grid;place-items:center;font-size:13px;font-weight:1000}.search{flex:1;max-width:520px;margin:auto;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:18px;padding:12px 16px;color:var(--muted)}.wallet{padding:11px 15px;border:1px solid rgba(250,204,21,.25);background:rgba(250,204,21,.07);border-radius:15px;color:#ffe66d;font-weight:800}.layout{width:min(1240px,100%);margin:auto;display:grid;grid-template-columns:245px minmax(0,680px) 245px;gap:18px;padding:22px 18px}.side{position:sticky;top:94px;height:max-content}.card{background:linear-gradient(145deg,rgba(12,24,48,.9),rgba(5,12,27,.82));border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}.navcard{padding:12px}.navitem{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:15px;color:#b8c7df;font-weight:750;margin:3px 0}.navitem.active{background:linear-gradient(90deg,rgba(59,130,246,.2),rgba(34,211,238,.08));color:#fff;border:1px solid rgba(59,130,246,.2)}.navicon{width:32px;text-align:center;font-size:20px}.mini-profile{padding:20px;display:flex;align-items:center;gap:12px}.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#263b70,#0c1731);border:2px solid rgba(57,255,136,.7);box-shadow:0 0 18px rgba(57,255,136,.22);font-weight:900}.name{font-weight:850}.handle{font-size:12px;color:var(--muted);margin-top:3px}.hero{padding:25px;position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:180px;height:180px;right:-65px;top:-70px;background:radial-gradient(circle,rgba(59,130,246,.28),transparent 65%)}.eyebrow{color:#7dd3fc;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.02;margin:9px 0}.hero h1 span{background:linear-gradient(90deg,#fff,var(--cyan),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{color:var(--muted);line-height:1.55;margin:0;max-width:570px}.hero-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}.primary{background:linear-gradient(135deg,#2563eb,#06b6d4);padding:12px 18px;border-radius:15px;font-weight:900;box-shadow:0 10px 28px rgba(37,99,235,.28)}.secondary{background:rgba(255,255,255,.06);border:1px solid var(--line);padding:12px 18px;border-radius:15px;font-weight:800}.section-title{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 12px}.section-title h2{font-size:16px;margin:0}.section-title span{font-size:12px;color:var(--muted)}.stories{display:flex;gap:11px;overflow:auto;padding-bottom:3px;scrollbar-width:none}.stories::-webkit-scrollbar{display:none}.story{min-width:102px;height:158px;border-radius:20px;position:relative;overflow:hidden;border:1px solid var(--line);background:linear-gradient(160deg,#152a55,#081020);box-shadow:0 10px 30px rgba(0,0,0,.3)}.story:first-child{background:linear-gradient(160deg,#0b2a38,#09152d)}.story-ring{width:48px;height:48px;border-radius:50%;padding:3px;background:conic-gradient(var(--cyan),var(--gold),var(--pink),var(--blue),var(--cyan));position:absolute;top:11px;left:11px}.story-ring div{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;background:#101d38;font-weight:900}.story-label{position:absolute;bottom:11px;left:11px;right:8px;font-size:12px;font-weight:850}.plus{font-size:24px}.composer{padding:16px}.composer-top{display:flex;gap:11px;align-items:center}.compose-input{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.045);border-radius:17px;padding:13px 15px;color:#9fb1ca}.compose-actions{display:flex;gap:8px;margin-top:13px}.compose-actions button{flex:1;background:rgba(255,255,255,.045);border:1px solid var(--line);padding:10px;border-radius:13px;color:#b9c9df;font-size:13px}.post{padding:18px;margin-top:14px}.post-head{display:flex;align-items:center;gap:10px}.post-meta{flex:1}.post-time{font-size:11px;color:var(--muted);margin-top:2px}.more{background:rgba(255,255,255,.05);width:34px;height:34px;border-radius:12px}.post-text{line-height:1.55;color:#dce7f8;margin:15px 0}.post-image{height:300px;border-radius:19px;background:radial-gradient(circle at 30% 25%,rgba(34,211,238,.45),transparent 20%),radial-gradient(circle at 75% 70%,rgba(236,72,153,.35),transparent 25%),linear-gradient(135deg,#07142e,#172b5b 48%,#09172c);border:1px solid var(--line);display:grid;place-items:center;font-size:46px}.post-actions{display:flex;gap:7px;margin-top:13px}.post-actions button{flex:1;padding:10px;border-radius:13px;background:rgba(255,255,255,.035);color:#9eb2cf}.rightbox{padding:18px}.trend{padding:12px 0;border-bottom:1px solid var(--line)}.trend:last-child{border-bottom:0}.trend small{color:var(--muted)}.trend strong{display:block;margin:4px 0}.online{display:flex;align-items:center;gap:9px;margin-top:10px}.dot{width:9px;height:9px;background:var(--green);border-radius:50%;box-shadow:0 0 12px var(--green)}.bottom{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:30;width:min(680px,calc(100% - 24px));padding:8px;display:flex;justify-content:space-around;background:rgba(5,13,29,.88);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.11);border-radius:22px;box-shadow:0 18px 60px rgba(0,0,0,.55)}.bottom button{background:transparent;padding:9px 15px;border-radius:15px;color:#8298b8;font-size:19px}.bottom button.active{color:#fff;background:rgba(59,130,246,.17);box-shadow:inset 0 0 20px rgba(34,211,238,.07)}.bottom span{display:block;font-size:9px;margin-top:3px;font-weight:800}.badge{position:relative}.badge i{position:absolute;right:4px;top:4px;width:7px;height:7px;border-radius:50%;background:#ff4f81;box-shadow:0 0 10px #ff4f81}.footer-note{text-align:center;color:#607391;font-size:11px;margin:20px}.loader{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.1);border-top-color:var(--green);box-shadow:0 0 20px rgba(57,255,136,.2);animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:980px){.layout{grid-template-columns:minmax(0,680px);justify-content:center}.left,.right{display:none}.topbar{padding-inline:12px}.search{max-width:none}.wallet{display:none}}@media(max-width:620px){.topbar{height:64px}.brand{font-size:16px}.logo{width:38px;height:38px}.layout{padding:13px 10px}.hero{padding:20px}.hero h1{font-size:32px}.story{min-width:94px;height:146px}.post-image{height:240px}.bottom{bottom:9px}.bottom button{padding:8px 11px}}
-</style>
-</head>
-<body>
-<div class="app">
-<header class="topbar">
-  <div class="brand"><div class="logo"></div><span>VITALSTAR</span></div>
-  <div class="search">🔎 &nbsp; Search people, posts and communities</div>
-  <button class="wallet">💰 ₦0</button>
-</header>
-<main class="layout">
-<aside class="side left">
-  <div class="card mini-profile"><div class="avatar">VS</div><div><div class="name">VitalStar User</div><div class="handle">@vitalstar</div></div></div>
-  <div class="card navcard" style="margin-top:14px">
-    <div class="navitem active"><div class="navicon">⌂</div>Home</div><div class="navitem"><div class="navicon">👥</div>Friends</div><div class="navitem"><div class="navicon">💬</div>Messages</div><div class="navitem"><div class="navicon">🔔</div>Notifications</div><div class="navitem"><div class="navicon">🤖</div>Orion Pax</div><div class="navitem"><div class="navicon">✨</div>Pinky Spark</div><div class="navitem"><div class="navicon">🎮</div>Games</div>
-  </div>
-</aside>
-<section>
-  <div class="card hero"><div class="eyebrow">Connect • Share • Grow</div><h1>Your world.<br><span>One VITALSTAR.</span></h1><p>A premium social space for conversations, communities, stories and the people who matter to you.</p><div class="hero-actions"><button class="primary">✦ Explore VITALSTAR</button><button class="secondary">👥 Find people</button></div></div>
-  <div class="section-title"><h2>Stories</h2><span>See all →</span></div>
-  <div class="stories"><div class="story"><div class="story-ring"><div class="plus">＋</div></div><div class="story-label">Your story</div></div><div class="story"><div class="story-ring"><div>OP</div></div><div class="story-label">Orion Pax</div></div><div class="story"><div class="story-ring"><div>PS</div></div><div class="story-label">Pinky Spark</div></div><div class="story"><div class="story-ring"><div>AJ</div></div><div class="story-label">Alex James</div></div><div class="story"><div class="story-ring"><div>MS</div></div><div class="story-label">Mia Star</div></div></div>
-  <div class="section-title"><h2>Create</h2><span>Share something</span></div>
-  <div class="card composer"><div class="composer-top"><div class="avatar">VS</div><div class="compose-input">What’s on your mind?</div></div><div class="compose-actions"><button>📷 Photo</button><button>🎥 Video</button><button>😊 Feeling</button></div></div>
-  <article class="card post"><div class="post-head"><div class="avatar">VS</div><div class="post-meta"><b>VitalStar Community</b><div class="post-time">Just now · 🌎 Public</div></div><button class="more">•••</button></div><div class="post-text">Welcome to a new kind of connection. <b>#VITALSTAR</b> is built around people, creativity and communities. ✨</div><div class="post-image">✦ VITALSTAR ✦</div><div class="post-actions"><button>♡ 128</button><button>💬 24</button><button>↻ 17</button><button>↗ Share</button></div></article>
-  <article class="card post"><div class="post-head"><div class="avatar">OP</div><div class="post-meta"><b>Orion Pax</b><div class="post-time">12 min · 🌎 Public</div></div><button class="more">•••</button></div><div class="post-text">Build. Connect. Discover. Your next conversation could start right here. 🚀</div><div class="post-actions"><button>♡ 84</button><button>💬 12</button><button>↻ 8</button><button>↗ Share</button></div></article>
-  <div class="footer-note">VITALSTAR · Connect • Share • Grow</div>
-</section>
-<aside class="side right">
-  <div class="card rightbox"><div class="section-title" style="margin-top:0"><h2>Trending</h2><span>Today</span></div><div class="trend"><small>Trending on VITALSTAR</small><strong>#VITALSTAR</strong><small>12.8K posts</small></div><div class="trend"><small>Community</small><strong>#Gaming</strong><small>8.4K posts</small></div><div class="trend"><small>Music</small><strong>#NewMusic</strong><small>5.9K posts</small></div></div>
-  <div class="card rightbox" style="margin-top:14px"><b>People online</b><div class="online"><span class="dot"></span><span>Alex James</span></div><div class="online"><span class="dot"></span><span>Mia Star</span></div><div class="online"><span class="dot"></span><span>Orion Pax</span></div></div>
-</aside>
-</main>
-<nav class="bottom"><button class="active">⌂<span>Home</span></button><button>🔎<span>Search</span></button><button>＋<span>Create</span></button><button class="badge">💬<i></i><span>Chat</span></button><button>☻<span>Profile</span></button></nav>
-</div>
-</body>
-</html>
+<!DOCTYPE html>  <html lang="en">  <head>  <meta charset="UTF-8">  <meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+
+> 
+
+<title>VitalStar</title>  <link rel="manifest" href="manifest.json">  <style>  
+  
+/* =========================================================  
+   VITALSTAR — MODERN SOCIAL HOME  
+   ========================================================= */  
+  
+*{  
+    margin:0;  
+    padding:0;  
+    box-sizing:border-box;  
+    font-family:Arial,Helvetica,sans-serif;  
+}  
+  
+html{  
+    scroll-behavior:smooth;  
+}  
+  
+body{  
+    background:#070914;  
+    color:#fff;  
+    min-height:100vh;  
+    overflow-x:hidden;  
+    padding-bottom:88px;  
+}  
+  
+body::before{  
+    content:"";  
+    position:fixed;  
+    inset:0;  
+    pointer-events:none;  
+  
+    background:  
+        radial-gradient(  
+            circle at 15% 10%,  
+            rgba(0,183,255,.10),  
+            transparent 25%  
+        ),  
+        radial-gradient(  
+            circle at 90% 20%,  
+            rgba(168,59,255,.12),  
+            transparent 25%  
+        ),  
+        radial-gradient(  
+            circle at 50% 100%,  
+            rgba(255,0,153,.07),  
+            transparent 30%  
+        );  
+  
+    z-index:-1;  
+}  
+  
+/* =========================================================  
+   HEADER  
+   ========================================================= */  
+  
+header{  
+    position:fixed;  
+    top:0;  
+    left:0;  
+    width:100%;  
+    height:72px;  
+  
+    display:flex;  
+    align-items:center;  
+  
+    padding:0 14px;  
+  
+    background:rgba(7,9,20,.92);  
+    backdrop-filter:blur(18px);  
+  
+    border-bottom:1px solid rgba(255,255,255,.08);  
+  
+    z-index:1000;  
+}  
+  
+.menu{  
+    width:42px;  
+    height:42px;  
+  
+    border:0;  
+    border-radius:50%;  
+  
+    background:#151a2d;  
+    color:#fff;  
+  
+    font-size:21px;  
+    cursor:pointer;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    margin-right:9px;  
+}  
+  
+.logo-area{  
+    display:flex;  
+    align-items:center;  
+    gap:9px;  
+    flex:1;  
+}  
+  
+.logo-star{  
+    width:42px;  
+    height:42px;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    font-size:35px;  
+    color:#fff;  
+  
+    text-shadow:  
+        0 0 7px #00cfff,  
+        0 0 16px #7b2cff,  
+        0 0 28px #ff19a8;  
+}  
+  
+.logo-text{  
+    line-height:1;  
+}  
+  
+.logo{  
+    font-size:23px;  
+    font-weight:900;  
+    letter-spacing:-.8px;  
+  
+    background:  
+        linear-gradient(  
+            90deg,  
+            #fff,  
+            #00d9ff,  
+            #8f4dff  
+        );  
+  
+    -webkit-background-clip:text;  
+    background-clip:text;  
+    color:transparent;  
+}  
+  
+.logo-sub{  
+    margin-top:4px;  
+    color:#8991ae;  
+    font-size:11px;  
+    letter-spacing:.3px;  
+}  
+  
+.icons{  
+    display:flex;  
+    align-items:center;  
+    gap:8px;  
+}  
+  
+.header-circle{  
+    width:42px;  
+    height:42px;  
+  
+    border:0;  
+    border-radius:50%;  
+  
+    background:#151a2d;  
+    color:#dce4ff;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    text-decoration:none;  
+    font-size:20px;  
+  
+    position:relative;  
+    transition:.2s;  
+}  
+  
+.header-circle:hover{  
+    background:#202743;  
+    transform:translateY(-1px);  
+}  
+  
+.search-trigger{  
+    font-size:23px;  
+}  
+  
+.wallet-trigger{  
+    height:42px;  
+  
+    border:1px solid rgba(255,204,0,.45);  
+    border-radius:22px;  
+  
+    padding:0 11px;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            rgba(255,211,0,.18),  
+            rgba(255,120,0,.14)  
+        );  
+  
+    color:#ffd84a;  
+  
+    display:flex;  
+    align-items:center;  
+    gap:4px;  
+  
+    font-size:12px;  
+    font-weight:900;  
+  
+    cursor:pointer;  
+  
+    box-shadow:  
+        0 0 15px rgba(255,180,0,.10);  
+}  
+  
+#walletBalance{  
+    white-space:nowrap;  
+}  
+  
+/* =========================================================  
+   BADGES  
+   ========================================================= */  
+  
+.badge{  
+    position:absolute;  
+  
+    top:-4px;  
+    right:-3px;  
+  
+    min-width:18px;  
+    height:18px;  
+  
+    padding:0 5px;  
+  
+    border-radius:20px;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    background:#ff326d;  
+    color:#fff;  
+  
+    font-size:10px;  
+    font-weight:900;  
+  
+    border:2px solid #080a15;  
+}  
+  
+/* =========================================================  
+   SIDEBAR  
+   ========================================================= */  
+  
+.sidebar{  
+    position:fixed;  
+  
+    top:0;  
+    left:-285px;  
+  
+    width:275px;  
+    height:100vh;  
+  
+    padding:25px 12px 25px;  
+  
+    background:rgba(10,13,27,.98);  
+    backdrop-filter:blur(20px);  
+  
+    border-right:1px solid rgba(255,255,255,.08);  
+  
+    box-shadow:10px 0 40px rgba(0,0,0,.4);  
+  
+    transition:.3s;  
+  
+    z-index:1500;  
+  
+    overflow-y:auto;  
+}  
+  
+.sidebar-header{  
+    display:flex;  
+    align-items:center;  
+    justify-content:space-between;  
+  
+    margin-bottom:18px;  
+    padding:0 4px;  
+}  
+  
+.sidebar-header strong{  
+    font-size:20px;  
+  
+    background:  
+        linear-gradient(  
+            90deg,  
+            #fff,  
+            #00d9ff,  
+            #8f4dff  
+        );  
+  
+    -webkit-background-clip:text;  
+    background-clip:text;  
+  
+    color:transparent;  
+}  
+  
+.sidebar-close{  
+    width:40px;  
+    height:40px;  
+  
+    border:0;  
+    border-radius:50%;  
+  
+    background:#181d32;  
+    color:#fff;  
+  
+    font-size:18px;  
+    cursor:pointer;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    transition:.2s;  
+}  
+  
+.sidebar-close:hover{  
+    background:#ff326d;  
+    transform:rotate(90deg);  
+}  
+  
+.sidebar a,  
+#logoutBtn{  
+    display:flex;  
+    align-items:center;  
+  
+    width:100%;  
+  
+    margin:5px 0;  
+    padding:14px;  
+  
+    border:0;  
+    border-radius:14px;  
+  
+    background:transparent;  
+  
+    color:#d9def4;  
+  
+    text-decoration:none;  
+    text-align:left;  
+  
+    font-size:15px;  
+    font-weight:700;  
+  
+    cursor:pointer;  
+    transition:.2s;  
+}  
+  
+.sidebar a:hover,  
+#logoutBtn:hover{  
+    background:  
+        linear-gradient(  
+            90deg,  
+            rgba(0,190,255,.12),  
+            rgba(140,55,255,.14)  
+        );  
+  
+    color:#fff;  
+    transform:translateX(3px);  
+}  
+  
+/* =========================================================  
+   FRIEND REQUEST SIDEBAR BADGE  
+   ========================================================= */  
+  
+.sidebar a#friendsMenuLink{  
+    position:relative;  
+}  
+  
+.sidebar-badge{  
+    margin-left:auto;  
+  
+    min-width:21px;  
+    height:21px;  
+  
+    padding:0 6px;  
+  
+    display:none;  
+  
+    align-items:center;  
+    justify-content:center;  
+  
+    border-radius:20px;  
+  
+    background:#ff326d;  
+    color:#fff;  
+  
+    font-size:11px;  
+    font-weight:900;  
+  
+    border:2px solid #0a0d1b;  
+  
+    box-shadow:  
+        0 0 10px rgba(255,50,109,.45);  
+}  
+  
+.sidebar-badge.show{  
+    display:flex;  
+}  
+  
+/* =========================================================  
+   MAIN  
+   ========================================================= */  
+  
+.container{  
+    width:100%;  
+    max-width:900px;  
+  
+    margin:auto;  
+  
+    padding:86px 10px 20px;  
+}  
+  
+/* =========================================================  
+   STORIES  
+   ========================================================= */  
+  
+.stories-section{  
+    margin-bottom:12px;  
+}  
+  
+.stories{  
+    display:flex;  
+  
+    gap:13px;  
+  
+    overflow-x:auto;  
+  
+    padding:5px 3px 13px;  
+  
+    scrollbar-width:none;  
+}  
+  
+.stories::-webkit-scrollbar{  
+    display:none;  
+}  
+  
+.story-wrap{  
+    flex:0 0 70px;  
+    width:70px;  
+    text-align:center;  
+}  
+  
+.story-link{  
+    display:block;  
+  
+    width:68px;  
+    height:68px;  
+  
+    text-decoration:none;  
+    color:inherit;  
+}  
+  
+.story{  
+    position:relative;  
+  
+    width:68px;  
+    height:68px;  
+  
+    border-radius:50%;  
+    cursor:pointer;  
+}  
+  
+/* =========================================================  
+   ROTATING VITALSTAR PROFILE RING  
+   ========================================================= */  
+  
+.story::before{  
+    content:"";  
+  
+    position:absolute;  
+    inset:0;  
+  
+    border-radius:50%;  
+  
+    background:  
+        conic-gradient(  
+            #ffd400,  
+            #00e5ff,  
+            #7c35ff,  
+            #ff239e,  
+            #ffd400  
+        );  
+  
+    animation:  
+        storyRingSpin 2.5s linear infinite;  
+  
+    box-shadow:  
+        0 0 8px rgba(255,212,0,.45),  
+        0 0 15px rgba(0,229,255,.25);  
+}  
+  
+@keyframes storyRingSpin{  
+  
+    from{  
+        transform:rotate(0deg);  
+    }  
+  
+    to{  
+        transform:rotate(360deg);  
+    }  
+  
+}  
+  
+.story-inner{  
+    position:absolute;  
+  
+    inset:4px;  
+  
+    z-index:2;  
+  
+    border-radius:50%;  
+    overflow:hidden;  
+  
+    background:#14182b;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    color:#fff;  
+  
+    border:2px solid #070914;  
+  
+    transition:.2s;  
+}  
+  
+.story:hover .story-inner{  
+    transform:scale(.94);  
+}  
+  
+.story-inner img{  
+    width:100%;  
+    height:100%;  
+  
+    object-fit:cover;  
+    display:block;  
+}  
+  
+.story-placeholder{  
+    font-size:27px;  
+}  
+  
+.story-add{  
+    position:absolute;  
+  
+    right:-2px;  
+    bottom:0;  
+  
+    z-index:5;  
+  
+    width:23px;  
+    height:23px;  
+  
+    border-radius:50%;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #ffd400,  
+            #00cfff  
+        );  
+  
+    border:2px solid #090b17;  
+  
+    color:#080914;  
+  
+    font-size:17px;  
+    font-weight:900;  
+  
+    box-shadow:  
+        0 0 10px rgba(255,212,0,.45);  
+}  
+  
+.story-name{  
+    display:block;  
+  
+    margin-top:7px;  
+  
+    color:#cbd1e8;  
+  
+    font-size:10px;  
+    font-weight:700;  
+  
+    white-space:nowrap;  
+    overflow:hidden;  
+    text-overflow:ellipsis;  
+}  
+  
+/* =========================================================  
+   CREATE POST  
+   ========================================================= */  
+  
+#createPost{  
+    width:100%;  
+    margin:0 0 17px;  
+}  
+  
+.composer{  
+    background:  
+        linear-gradient(  
+            145deg,  
+            rgba(20,25,45,.96),  
+            rgba(12,15,29,.96)  
+        );  
+  
+    border:1px solid rgba(255,255,255,.08);  
+    border-radius:22px;  
+  
+    padding:13px;  
+  
+    box-shadow:0 8px 30px rgba(0,0,0,.2);  
+  
+    margin-bottom:0;  
+}  
+  
+.composer-top{  
+    display:flex;  
+    align-items:center;  
+    gap:10px;  
+}  
+  
+.composer-avatar{  
+    width:44px;  
+    height:44px;  
+  
+    border-radius:50%;  
+    object-fit:cover;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #7c3cff,  
+            #00d5ff  
+        );  
+  
+    border:2px solid #713cff;  
+}  
+  
+.composer-input{  
+    flex:1;  
+  
+    height:44px;  
+  
+    border:1px solid rgba(255,255,255,.09);  
+    border-radius:24px;  
+  
+    background:#171c31;  
+    color:#dce2f8;  
+  
+    padding:0 17px;  
+  
+    display:flex;  
+    align-items:center;  
+  
+    font-size:14px;  
+    cursor:pointer;  
+}  
+  
+.composer-input:hover{  
+    background:#1d233b;  
+}  
+  
+.composer-actions{  
+    display:flex;  
+  
+    margin-top:12px;  
+    padding-top:10px;  
+  
+    border-top:1px solid rgba(255,255,255,.06);  
+}  
+  
+.composer-action{  
+    flex:1;  
+  
+    border:0;  
+    background:none;  
+  
+    color:#bbc4e2;  
+  
+    font-size:12px;  
+    font-weight:800;  
+  
+    padding:7px;  
+  
+    cursor:pointer;  
+    border-radius:10px;  
+}  
+  
+.composer-action:hover{  
+    background:rgba(255,255,255,.05);  
+}  
+  
+.photo-action{  
+    color:#c348ff;  
+}  
+  
+.video-action{  
+    color:#00caff;  
+}  
+  
+.live-action{  
+    color:#ff39c7;  
+}  
+  
+.feeling-action{  
+    color:#00e6d0;  
+}  
+  
+/* =========================================================  
+   HIDDEN COMPATIBILITY  
+   ========================================================= */  
+  
+.compatibility-text{  
+    display:none;  
+}  
+  
+/* =========================================================  
+   FEED  
+   ========================================================= */  
+  
+#feed{  
+    width:100%;  
+}  
+  
+.post-card{  
+    position:relative;  
+  
+    background:  
+        linear-gradient(  
+            145deg,  
+            #111627,  
+            #0d1120  
+        );  
+  
+    color:#f3f5ff;  
+  
+    border:1px solid rgba(255,255,255,.075);  
+  
+    border-radius:21px;  
+    overflow:hidden;  
+  
+    margin-top:15px;  
+  
+    box-shadow:0 9px 28px rgba(0,0,0,.28);  
+}  
+  
+.user-info{  
+    display:flex;  
+    align-items:center;  
+  
+    padding:14px 14px 9px;  
+}  
+  
+.avatar{  
+    width:45px;  
+    height:45px;  
+  
+    min-width:45px;  
+  
+    border-radius:50%;  
+    margin-right:10px;  
+  
+    object-fit:cover;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #7b2cff,  
+            #00cfff  
+        );  
+  
+    border:2px solid rgba(120,75,255,.7);  
+}  
+  
+.post-card p{  
+    padding:5px 14px 13px;  
+  
+    color:#edf0ff;  
+  
+    font-size:15px;  
+    line-height:1.48;  
+}  
+  
+.post-photo{  
+    display:block;  
+  
+    width:calc(100% - 18px);  
+    margin:0 9px;  
+  
+    max-height:600px;  
+  
+    border-radius:15px;  
+  
+    object-fit:cover;  
+    background:#080b16;  
+}  
+  
+.post-buttons{  
+    display:flex;  
+    align-items:center;  
+    justify-content:space-around;  
+  
+    padding:10px 6px;  
+  
+    border-top:1px solid rgba(255,255,255,.07);  
+}  
+  
+.post-buttons button{  
+    flex:1;  
+  
+    border:none;  
+    background:none;  
+  
+    color:#aeb7d5;  
+  
+    font-size:13px;  
+    font-weight:800;  
+  
+    padding:8px 4px;  
+  
+    cursor:pointer;  
+    border-radius:10px;  
+  
+    transition:.2s;  
+}  
+  
+.post-buttons button:hover{  
+    background:rgba(255,255,255,.05);  
+    color:#fff;  
+}  
+  
+.post-card img{  
+    max-width:100%;  
+}  
+  
+.post-card video{  
+    width:100%;  
+    max-height:600px;  
+  
+    object-fit:cover;  
+}  
+  
+/* =========================================================  
+   FOOTER  
+   ========================================================= */  
+  
+.vital-footer{  
+    display:none;  
+}  
+  
+/* =========================================================  
+   BOTTOM NAV  
+   ========================================================= */  
+  
+.bottom-nav{  
+    position:fixed;  
+  
+    left:50%;  
+    bottom:10px;  
+  
+    transform:translateX(-50%);  
+  
+    width:min(96%,620px);  
+  
+    height:68px;  
+  
+    padding:5px 8px;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:space-around;  
+  
+    background:rgba(11,14,28,.94);  
+  
+    backdrop-filter:blur(20px);  
+  
+    border:1px solid rgba(255,255,255,.10);  
+  
+    border-radius:23px;  
+  
+    box-shadow:0 12px 40px rgba(0,0,0,.55);  
+  
+    z-index:1000;  
+}  
+  
+.bottom-nav a{  
+    position:relative;  
+  
+    min-width:54px;  
+  
+    color:#8e96b4;  
+  
+    text-decoration:none;  
+    text-align:center;  
+  
+    font-size:21px;  
+    padding:5px;  
+  
+    transition:.2s;  
+}  
+  
+.bottom-nav a:hover{  
+    color:#fff;  
+}  
+  
+.bottom-nav small{  
+    display:block;  
+  
+    margin-top:3px;  
+  
+    font-size:9px;  
+    font-weight:800;  
+}  
+  
+.bottom-nav a:first-child{  
+    color:#8f56ff;  
+}  
+  
+.bottom-nav a:first-child::after{  
+    content:"";  
+  
+    position:absolute;  
+  
+    bottom:-5px;  
+    left:50%;  
+  
+    transform:translateX(-50%);  
+  
+    width:28px;  
+    height:3px;  
+  
+    border-radius:10px;  
+  
+    background:  
+        linear-gradient(  
+            90deg,  
+            #8b42ff,  
+            #00d9ff  
+        );  
+  
+    box-shadow:0 0 8px #713cff;  
+}  
+  
+.create-btn{  
+    width:57px !important;  
+    height:57px;  
+  
+    min-width:57px !important;  
+  
+    margin-top:-25px;  
+  
+    border-radius:50% !important;  
+  
+    display:flex !important;  
+    align-items:center;  
+    justify-content:center;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #7639ff,  
+            #00cfff,  
+            #ff28a8  
+        );  
+  
+    color:#fff !important;  
+  
+    font-size:30px !important;  
+  
+    border:4px solid #080b16;  
+  
+    box-shadow:0 0 20px rgba(106,54,255,.55);  
+  
+    text-shadow:0 2px 5px rgba(0,0,0,.3);  
+}  
+  
+.create-btn small{  
+    display:none;  
+}  
+  
+/* =========================================================  
+   MOBILE  
+   ========================================================= */  
+  
+@media(max-width:600px){  
+  
+    header{  
+        height:68px;  
+        padding:0 9px;  
+    }  
+  
+    .menu{  
+        width:38px;  
+        height:38px;  
+  
+        font-size:19px;  
+  
+        margin-right:4px;  
+    }  
+  
+    .logo-star{  
+        width:34px;  
+        height:34px;  
+  
+        font-size:29px;  
+    }  
+  
+    .logo{  
+        font-size:20px;  
+    }  
+  
+    .logo-sub{  
+        font-size:9px;  
+    }  
+  
+    .icons{  
+        gap:5px;  
+    }  
+  
+    .header-circle{  
+        width:38px;  
+        height:38px;  
+  
+        font-size:18px;  
+    }  
+  
+    .wallet-trigger{  
+        height:38px;  
+  
+        padding:0 8px;  
+  
+        font-size:11px;  
+    }  
+  
+    .container{  
+        padding:79px 8px 18px;  
+    }  
+  
+    .stories{  
+        gap:11px;  
+    }  
+  
+    .story-wrap{  
+        flex-basis:65px;  
+        width:65px;  
+    }  
+  
+    .story-link,  
+    .story{  
+        width:63px;  
+        height:63px;  
+    }  
+  
+    .story-name{  
+        font-size:9px;  
+    }  
+  
+    .composer{  
+        border-radius:19px;  
+    }  
+  
+    .composer-action{  
+        font-size:10px;  
+    }  
+  
+    .post-card{  
+        border-radius:18px;  
+    }  
+  
+    .post-card p{  
+        font-size:14px;  
+    }  
+  
+    .post-buttons button{  
+        font-size:12px;  
+    }  
+  
+    .bottom-nav{  
+        bottom:7px;  
+        height:64px;  
+        border-radius:21px;  
+    }  
+  
+    .create-btn{  
+        width:53px !important;  
+        height:53px;  
+  
+        min-width:53px !important;  
+  
+        font-size:27px !important;  
+    }  
+  
+}  
+  
+</style>  </head>  <body>  <header>  <button
+class="menu"
+onclick="openMenu()"
+aria-label="Open menu"
+
+> 
+
+☰
+
+</button>  <div class="logo-area">  <div class="logo-star">  
+    ☆  
+</div>  <div class="logo-text">  <div class="logo">  
+    VitalStar  
+</div>  <div class="logo-sub">  
+    Connect • Share • Grow  
+</div>  </div>  </div>  <div class="icons">  <a
+href="users.html"
+class="header-circle search-trigger"
+aria-label="Search"
+
+> 
+
+🔍
+
+</a>  <button
+class="wallet-trigger"
+id="walletButton"
+type="button"
+
+> 
+
+<span>💰</span>
+
+<span id="walletBalance">  
+    ₦0  
+</span>  </button>  <div style="position:relative">  <a
+href="notifications.html"
+class="header-circle"
+aria-label="Notifications"
+
+> 
+
+🔔
+
+</a>  <span
+id="notificationBadge"
+class="badge"
+
+> 
+
+0
+
+</span>  </div>  <div style="position:relative">  <a
+href="message.html"
+class="header-circle"
+aria-label="Messages"
+
+> 
+
+💬
+
+</a>  <span
+id="messageBadge"
+class="badge"
+
+> 
+
+0
+
+</span>  </div>  </div>  </header>  <div  
+    class="sidebar"  
+    id="sidebar"  
+>  <div class="sidebar-header">  <strong>  
+    VitalStar  
+</strong>  <button
+class="sidebar-close"
+onclick="closeMenu()"
+aria-label="Close menu"
+
+> 
+
+✕
+
+</button>  </div>  <a
+href="myfriends.html"
+id="friendsMenuLink"
+
+> 
+
+👥 &nbsp; Friends  
+
+<span  
+    id="friendRequestBadge"  
+    class="sidebar-badge"  
+>  
+    0  
+</span>
+
+</a>  <a href="message.html">  
+    💬 &nbsp; Messages  
+</a>  <a href="reals/reals.html">  
+    🎬 &nbsp; Reals  
+</a>  <a href="games/games.html">  
+    🎮 &nbsp; Games  
+</a>  <a href="groups.html">  
+    👥 &nbsp; Groups  
+</a>  <a href="edit-profile.html">  
+    ⚙️ &nbsp; Settings  
+</a>  <a href="saved.html">  
+    🔖 &nbsp; Saved Posts  
+</a>  <a href="chatroom.html">  
+    💬 &nbsp; ChatRoom  
+</a>  <button id="logoutBtn">  
+    🚪 &nbsp; Logout  
+</button>  </div>  <script>  
+  
+function openMenu(){  
+  
+    const sidebar =  
+        document.getElementById("sidebar");  
+  
+    if(  
+        sidebar.style.left === "0px"  
+    ){  
+  
+        closeMenu();  
+  
+    }else{  
+  
+        sidebar.style.left =  
+            "0px";  
+  
+    }  
+  
+}  
+  
+function closeMenu(){  
+  
+    document  
+        .getElementById("sidebar")  
+        .style.left =  
+            "-285px";  
+  
+}  
+  
+</script>  <main class="container">  <section class="stories-section">  <div  
+    class="stories"  
+    id="stories"  
+></div>
+
+</section>  <div id="createPost"></div>  <div class="compatibility-text">  <h2 id="welcomeText">  
+    Good Day...  
+</h2>  <p id="welcomeSub">  
+    Welcome back to VitalStar  
+</p>  </div>  <div id="feed"></div>  </main>  <nav class="bottom-nav">  <a href="home.html">  🏠  
+
+<small>  
+    Home  
+</small>
+
+</a>  <a href="users.html">  🔎  
+
+<small>  
+    Explore  
+</small>
+
+</a>  <a
+href="#"
+class="create-btn"
+id="bottomCreatePost"
+aria-label="Create Post"
+
+> 
+
++
+
+</a>  <a href="wallet.html">  💰  
+
+<small>  
+    Finance  
+</small>
+
+</a>  <a href="profile.html">  👤  
+
+<small>  
+    Profile  
+</small>
+
+</a>  </nav>  <script  
+    type="module"  
+    src="auth-guard.js"  
+></script>  <script  
+    type="module"  
+    src="presence.js"  
+></script>  <script  
+    type="module"  
+    src="message-badge.js"  
+></script>  <script  
+    type="module"  
+    src="wallet.js"  
+></script>  <script  
+    type="module"  
+    src="post.js"  
+></script>  <script  
+    type="module"  
+    src="home.js"  
+></script>  <script  
+    type="module"  
+    src="online-count.js"  
+></script>  <script  
+    type="module"  
+    src="notifications.js"  
+></script>  <script  
+    type="module"  
+    src="logout.js"  
+></script>  <!-- FRIEND REQUEST SIDEBAR COUNT -->  <script type="module">  
+  
+import {  
+    auth,  
+    db  
+} from "./firebase.js";  
+  
+import {  
+    collection,  
+    query,  
+    where,  
+    onSnapshot  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
+  
+  
+const friendRequestBadge =  
+    document.getElementById(  
+        "friendRequestBadge"  
+    );  
+  
+  
+function updateFriendRequestBadge(  
+    count  
+){  
+  
+    if(!friendRequestBadge){  
+        return;  
+    }  
+  
+    if(count > 0){  
+  
+        friendRequestBadge.textContent =  
+            count > 99  
+                ? "99+"  
+                : count;  
+  
+        friendRequestBadge.classList.add(  
+            "show"  
+        );  
+  
+    }else{  
+  
+        friendRequestBadge.textContent =  
+            "0";  
+  
+        friendRequestBadge.classList.remove(  
+            "show"  
+        );  
+  
+    }  
+  
+}  
+  
+  
+auth.onAuthStateChanged(  
+    user => {  
+  
+        if(!user){  
+  
+            updateFriendRequestBadge(  
+                0  
+            );  
+  
+            return;  
+        }  
+  
+  
+        const requestsQuery =  
+            query(  
+  
+                collection(  
+                    db,  
+                    "friendRequests"  
+                ),  
+  
+                where(  
+                    "to",  
+                    "==",  
+                    user.uid  
+                )  
+  
+            );  
+  
+  
+        onSnapshot(  
+  
+            requestsQuery,  
+  
+            snapshot => {  
+  
+                let count = 0;  
+  
+  
+                snapshot.forEach(  
+                    requestDoc => {  
+  
+                        const request =  
+                            requestDoc.data();  
+  
+  
+                        if(  
+                            request.status ===  
+                            "pending"  
+                        ){  
+  
+                            count++;  
+  
+                        }  
+  
+                    }  
+                );  
+  
+  
+                updateFriendRequestBadge(  
+                    count  
+                );  
+  
+            },  
+  
+            error => {  
+  
+                console.error(  
+                    "Friend request badge error:",  
+                    error  
+                );  
+  
+                updateFriendRequestBadge(  
+                    0  
+                );  
+  
+            }  
+  
+        );  
+  
+    }  
+);  
+  
+</script>  <!-- DYNAMIC STORIES LOADER -->  <script type="module">  
+  
+import {  
+    auth,  
+    db,  
+    rtdb  
+} from "./firebase.js";  
+  
+import {  
+    doc,  
+    getDoc,  
+    collection,  
+    query,  
+    where,  
+    getDocs  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
+  
+import {  
+    ref,  
+    get  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";  
+  
+  
+const storiesContainer =  
+    document.getElementById("stories");  
+  
+  
+/* =========================================================  
+   DEFAULT PROFILE IMAGE  
+   ========================================================= */  
+  
+const DEFAULT_AVATAR =  
+    "data:image/svg+xml;charset=UTF-8," +  
+    encodeURIComponent(`  
+        <svg xmlns="http://www.w3.org/2000/svg"  
+             width="200"  
+             height="200"  
+             viewBox="0 0 200 200">  
+  
+            <rect  
+                width="200"  
+                height="200"  
+                rx="100"  
+                fill="#151a2d"  
+            />  
+  
+            <circle  
+                cx="100"  
+                cy="78"  
+                r="38"  
+                fill="#7c35ff"  
+            />  
+  
+            <path  
+                d="M35 180  
+                   C42 130 70 112 100 112  
+                   C130 112 158 130 165 180Z"  
+                fill="#00cfff"  
+            />  
+  
+        </svg>  
+    `);  
+  
+  
+/* =========================================================  
+   LOAD PROFILE — FULL NAME  
+   ========================================================= */  
+  
+async function loadProfile(uid){  
+  
+    try{  
+  
+        const snapshot =  
+            await getDoc(  
+                doc(  
+                    db,  
+                    "users",  
+                    uid  
+                )  
+            );  
+  
+  
+        if(!snapshot.exists()){  
+  
+            return {  
+  
+                uid: uid,  
+  
+                name: "",  
+  
+                profilePicture: ""  
+  
+            };  
+  
+        }  
+  
+  
+        const data =  
+            snapshot.data();  
+  
+  
+        return {  
+  
+            uid: uid,  
+  
+            /*  
+             * FULL NAME ONLY  
+             */  
+  
+            name:  
+                data.fullName ||  
+                "",  
+  
+            profilePicture:  
+                data.profilePicture ||  
+                data.photoURL ||  
+                ""  
+  
+        };  
+  
+    }catch(error){  
+  
+        console.error(  
+            "Could not load profile:",  
+            uid,  
+            error  
+        );  
+  
+  
+        return {  
+  
+            uid: uid,  
+  
+            name: "",  
+  
+            profilePicture: ""  
+  
+        };  
+  
+    }  
+  
+}  
+  
+  
+/* =========================================================  
+   LAST ACTIVE  
+   ========================================================= */  
+  
+async function getLastActive(uid){  
+  
+    try{  
+  
+        const snapshot =  
+            await get(  
+                ref(  
+                    rtdb,  
+                    `status/${uid}`  
+                )  
+            );  
+  
+  
+        if(snapshot.exists()){  
+  
+            const status =  
+                snapshot.val();  
+  
+  
+            if(status){  
+  
+                if(  
+                    status.lastSeen !==  
+                    undefined &&  
+                    status.lastSeen !==  
+                    null  
+                ){  
+  
+                    return Number(  
+                        status.lastSeen  
+                    );  
+  
+                }  
+  
+                if(  
+                    status.lastActive !==  
+                    undefined &&  
+                    status.lastActive !==  
+                    null  
+                ){  
+  
+                    return Number(  
+                        status.lastActive  
+                    );  
+  
+                }  
+  
+            }  
+  
+        }  
+  
+    }catch(error){  
+  
+        console.warn(  
+            "Presence unavailable:",  
+            uid  
+        );  
+  
+    }  
+  
+  
+    return 0;  
+  
+}  
+  
+  
+/* =========================================================  
+   GET ACCEPTED FRIENDS  
+   ========================================================= */  
+  
+async function getAcceptedFriends(uid){  
+  
+    const friendIds =  
+        new Set();  
+  
+  
+    try{  
+  
+        const sentQuery =  
+            query(  
+  
+                collection(  
+                    db,  
+                    "friendRequests"  
+                ),  
+  
+                where(  
+                    "from",  
+                    "==",  
+                    uid  
+                ),  
+  
+                where(  
+                    "status",  
+                    "==",  
+                    "accepted"  
+                )  
+  
+            );  
+  
+  
+        const sentSnapshot =  
+            await getDocs(  
+                sentQuery  
+            );  
+  
+  
+        sentSnapshot.forEach(  
+            requestDoc => {  
+  
+                const data =  
+                    requestDoc.data();  
+  
+  
+                if(data.to){  
+  
+                    friendIds.add(  
+                        data.to  
+                    );  
+  
+                }  
+  
+            }  
+        );  
+  
+    }catch(error){  
+  
+        console.warn(  
+            "Sent friends query failed:",  
+            error  
+        );  
+  
+    }  
+  
+  
+    try{  
+  
+        const receivedQuery =  
+            query(  
+  
+                collection(  
+                    db,  
+                    "friendRequests"  
+                ),  
+  
+                where(  
+                    "to",  
+                    "==",  
+                    uid  
+                ),  
+  
+                where(  
+                    "status",  
+                    "==",  
+                    "accepted"  
+                )  
+  
+            );  
+  
+  
+        const receivedSnapshot =  
+            await getDocs(  
+                receivedQuery  
+            );  
+  
+  
+        receivedSnapshot.forEach(  
+            requestDoc => {  
+  
+                const data =  
+                    requestDoc.data();  
+  
+  
+                if(data.from){  
+  
+                    friendIds.add(  
+                        data.from  
+                    );  
+  
+                }  
+  
+            }  
+        );  
+  
+    }catch(error){  
+  
+        console.warn(  
+            "Received friends query failed:",  
+            error  
+        );  
+  
+    }  
+  
+  
+    return [  
+        ...friendIds  
+    ];  
+  
+}  
+  
+  
+/* =========================================================  
+   CREATE STORY  
+   ========================================================= */  
+  
+function createStory(  
+    profile,  
+    ownStory = false  
+){  
+  
+    const wrap =  
+        document.createElement(  
+            "div"  
+        );  
+  
+    wrap.className =  
+        "story-wrap";  
+  
+  
+    const link =  
+        document.createElement(  
+            "a"  
+        );  
+  
+    link.className =  
+        "story-link";  
+  
+    link.href =  
+        `profile.html?uid=${encodeURIComponent(  
+            profile.uid  
+        )}`;  
+  
+    link.title =  
+        profile.name  
+            ? `View ${profile.name}'s profile`  
+            : "View profile";  
+  
+  
+    const story =  
+        document.createElement(  
+            "div"  
+        );  
+  
+    story.className =  
+        "story";  
+  
+  
+    const inner =  
+        document.createElement(  
+            "div"  
+        );  
+  
+    inner.className =  
+        "story-inner";  
+  
+  
+    const image =  
+        document.createElement(  
+            "img"  
+        );  
+  
+    image.src =  
+        profile.profilePicture ||  
+        DEFAULT_AVATAR;  
+  
+    image.alt =  
+        profile.name ||  
+        "Profile";  
+  
+  
+    image.onerror =  
+        function(){  
+  
+            this.onerror = null;  
+  
+            this.src =  
+                DEFAULT_AVATAR;  
+  
+        };  
+  
+  
+    inner.appendChild(  
+        image  
+    );  
+  
+    story.appendChild(  
+        inner  
+    );  
+  
+    link.appendChild(  
+        story  
+    );  
+  
+  
+    /* PLUS BUTTON FOR CURRENT USER */  
+  
+    if(ownStory){  
+  
+        const add =  
+            document.createElement(  
+                "button"  
+            );  
+  
+        add.type =  
+            "button";  
+  
+        add.className =  
+            "story-add";  
+  
+        add.textContent =  
+            "+";  
+  
+        add.title =  
+            "Create a story";  
+  
+  
+        add.addEventListener(  
+            "click",  
+            function(event){  
+  
+                event.preventDefault();  
+                event.stopPropagation();  
+  
+  
+                if(  
+                    window.VitalStarStory &&  
+                    typeof  
+                    window.VitalStarStory.open ===  
+                    "function"  
+                ){  
+  
+                    window.VitalStarStory.open();  
+  
+                    return;  
+  
+                }  
+  
+  
+                if(  
+                    window.VitalStarPost &&  
+                    typeof  
+                    window.VitalStarPost.open ===  
+                    "function"  
+                ){  
+  
+                    window.VitalStarPost.open();  
+  
+                }  
+  
+            }  
+        );  
+  
+  
+        story.appendChild(  
+            add  
+        );  
+  
+    }  
+  
+  
+    const name =  
+        document.createElement(  
+            "span"  
+        );  
+  
+    name.className =  
+        "story-name";  
+  
+    /*  
+     * FULL NAME ONLY  
+     */  
+  
+    name.textContent =  
+        profile.name;  
+  
+  
+    wrap.appendChild(  
+        link  
+    );  
+  
+    wrap.appendChild(  
+        name  
+    );  
+  
+  
+    return wrap;  
+  
+}  
+  
+  
+/* =========================================================  
+   RENDER STORIES  
+   ========================================================= */  
+  
+async function loadStories(user){  
+  
+    if(!storiesContainer){  
+        return;  
+    }  
+  
+  
+    storiesContainer.innerHTML =  
+        "";  
+  
+  
+    /* CURRENT USER FIRST */  
+  
+    const currentProfile =  
+        await loadProfile(  
+            user.uid  
+        );  
+  
+  
+    storiesContainer.appendChild(  
+  
+        createStory(  
+            currentProfile,  
+            true  
+        )  
+  
+    );  
+  
+  
+    /* GET ACCEPTED FRIENDS */  
+  
+    const friendIds =  
+        await getAcceptedFriends(  
+            user.uid  
+        );  
+  
+  
+    if(!friendIds.length){  
+        return;  
+    }  
+  
+  
+    /* LOAD FRIEND PROFILES + LAST ACTIVE */  
+  
+    const friends =  
+        await Promise.all(  
+  
+            friendIds.map(  
+                async friendUid => {  
+  
+                    const profile =  
+                        await loadProfile(  
+                            friendUid  
+                        );  
+  
+  
+                    const lastActive =  
+                        await getLastActive(  
+                            friendUid  
+                        );  
+  
+  
+                    return {  
+  
+                        ...profile,  
+  
+                        lastActive  
+  
+                    };  
+  
+                }  
+            )  
+  
+        );  
+  
+  
+    /* MOST RECENTLY ACTIVE FIRST */  
+  
+    friends.sort(  
+        (a,b) =>  
+            b.lastActive -  
+            a.lastActive  
+    );  
+  
+  
+    /* MAXIMUM 5 FRIENDS */  
+  
+    const recentFriends =  
+        friends.slice(  
+            0,  
+            5  
+        );  
+  
+  
+    recentFriends.forEach(  
+        friend => {  
+  
+            storiesContainer.appendChild(  
+  
+                createStory(  
+                    friend,  
+                    false  
+                )  
+  
+            );  
+  
+        }  
+    );  
+  
+}  
+  
+  
+/* =========================================================  
+   AUTH  
+   ========================================================= */  
+  
+auth.onAuthStateChanged(  
+    async user => {  
+  
+        if(!user){  
+  
+            if(storiesContainer){  
+  
+                storiesContainer.innerHTML =  
+                    "";  
+  
+            }  
+  
+            return;  
+  
+        }  
+  
+  
+        try{  
+  
+            await loadStories(  
+                user  
+            );  
+  
+        }catch(error){  
+  
+            console.error(  
+                "Stories error:",  
+                error  
+            );  
+  
+        }  
+  
+    }  
+);  
+  
+</script>  <!-- BOTTOM CREATE BUTTON -->  <script type="module">  
+  
+document  
+    .getElementById("bottomCreatePost")  
+    ?.addEventListener(  
+        "click",  
+        function(event){  
+  
+            event.preventDefault();  
+  
+            if(  
+                window.VitalStarPost &&  
+                typeof  
+                window.VitalStarPost.open ===  
+                "function"  
+            ){  
+  
+                window.VitalStarPost.open();  
+  
+            }  
+  
+        }  
+    );  
+  
+</script>  <!-- SERVICE WORKER -->  <script>  
+  
+if(  
+    "serviceWorker" in navigator  
+){  
+  
+    navigator.serviceWorker.register(  
+        "./firebase-messaging-sw.js"  
+    )  
+  
+    .then(function(registration){  
+  
+        console.log(  
+            "Service Worker registered:",  
+            registration  
+        );  
+  
+    })  
+  
+    .catch(function(error){  
+  
+        console.error(  
+            "Service Worker Error:",  
+            error  
+        );  
+  
+    });  
+  
+}  
+  
+</script>  </body>  </html>
