@@ -1197,26 +1197,28 @@ function createVideoCard(
         </button>
 
 
-        <!-- BACK / FORWARD -->
+        <!-- VIDEO SEEK CONTROLS -->
 
-        <div class="video-navigation">
+        <div class="video-seek-controls">
 
             <button
-                class="video-nav-button"
+                class="video-seek-button"
                 type="button"
-                data-navigation="previous"
-                aria-label="Previous video"
+                data-seek="-10"
+                aria-label="Go back 10 seconds"
+                title="Back 10 seconds"
             >
-                ‹
+                ⏪
             </button>
 
             <button
-                class="video-nav-button"
+                class="video-seek-button"
                 type="button"
-                data-navigation="next"
-                aria-label="Next video"
+                data-seek="10"
+                aria-label="Go forward 10 seconds"
+                title="Forward 10 seconds"
             >
-                ›
+                ⏩
             </button>
 
         </div>
@@ -1400,22 +1402,33 @@ function createVideoCard(
         "click",
         event => {
 
-            const navigation =
+            const seekButton =
                 event.target.closest(
-                    "[data-navigation]"
+                    "[data-seek]"
                 );
 
-            if (navigation) {
+            if (seekButton) {
 
                 event.preventDefault();
                 event.stopPropagation();
 
-                const direction =
-                    navigation.dataset.navigation;
+                const videoElement =
+                    card.querySelector(
+                        ".reals-video"
+                    );
 
-                navigateVideo(
-                    video,
-                    direction
+                if (!videoElement) {
+                    return;
+                }
+
+                const seconds =
+                    Number(
+                        seekButton.dataset.seek
+                    );
+
+                seekVideo(
+                    videoElement,
+                    seconds
                 );
 
                 return;
@@ -1487,100 +1500,75 @@ function createVideoCard(
 
 
 // ============================================================
-// BACK / FORWARD NAVIGATION
+// SEEK VIDEO
 // ============================================================
 
-function navigateVideo(
-    currentVideo,
-    direction
+function seekVideo(
+    video,
+    seconds
 ) {
 
-    if (!currentVideos.length) {
+    if (!video) {
         return;
     }
-
-
-    const currentIndex =
-        currentVideos.findIndex(
-            video =>
-                video.id ===
-                currentVideo.id
-        );
-
-
-    if (currentIndex === -1) {
-        return;
-    }
-
-
-    let nextIndex;
 
 
     if (
-        direction === "previous"
+        !Number.isFinite(
+            seconds
+        )
     ) {
+        return;
+    }
 
-        nextIndex =
-            currentIndex - 1;
 
-        if (nextIndex < 0) {
+    const currentTime =
+        Number(
+            video.currentTime || 0
+        );
 
-            nextIndex =
-                currentVideos.length - 1;
-        }
+
+    const duration =
+        Number(
+            video.duration || 0
+        );
+
+
+    let newTime =
+        currentTime + seconds;
+
+
+    if (duration > 0) {
+
+        newTime =
+            Math.min(
+                Math.max(
+                    newTime,
+                    0
+                ),
+                duration
+            );
 
     } else {
 
-        nextIndex =
-            currentIndex + 1;
-
-        if (
-            nextIndex >=
-            currentVideos.length
-        ) {
-
-            nextIndex = 0;
-        }
+        newTime =
+            Math.max(
+                newTime,
+                0
+            );
     }
 
 
-    const target =
-        container?.querySelector(
-            `[data-index="${nextIndex}"]`
-        );
+    try {
 
+        video.currentTime =
+            newTime;
 
-    if (!target) {
-        return;
-    }
+    } catch (error) {
 
-
-    target.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-    });
-
-
-    const targetVideo =
-        target.querySelector(
-            ".reals-video"
-        );
-
-
-    if (
-        targetVideo &&
-        settings.autoplay
-    ) {
-
-        setTimeout(
-            () => {
-
-                playVideo(
-                    targetVideo
-                );
-
-            },
-            350
+        console.warn(
+            "VitalStar Reals seek error:",
+            error
         );
     }
 }
@@ -1730,12 +1718,6 @@ function showGroupOnlyMessage() {
 // ============================================================
 // LIKE
 // ============================================================
-// IMPORTANT:
-// This updates ONLY the current video card.
-// It does NOT call renderFeed().
-// It does NOT rebuild the feed.
-// It does NOT reload the page.
-// ============================================================
 
 async function handleLike(
     video,
@@ -1841,10 +1823,6 @@ async function handleLike(
 
         if (likeSnap.exists()) {
 
-            // ==========================================
-            // UNLIKE
-            // ==========================================
-
             await deleteDoc(
                 likeRef
             );
@@ -1878,8 +1856,6 @@ async function handleLike(
                 next;
 
 
-            // UPDATE ONLY THIS CARD
-
             if (button) {
 
                 button.classList.remove(
@@ -1906,10 +1882,6 @@ async function handleLike(
 
 
         } else {
-
-            // ==========================================
-            // LIKE
-            // ==========================================
 
             await setDoc(
                 likeRef,
@@ -1950,8 +1922,6 @@ async function handleLike(
                 next;
 
 
-            // UPDATE ONLY THIS CARD
-
             if (button) {
 
                 button.classList.add(
@@ -1976,10 +1946,6 @@ async function handleLike(
                     formatCount(next);
             }
 
-
-            // ==========================================
-            // NOTIFICATION
-            // ==========================================
 
             const receiverId =
                 post.uid ||
@@ -3557,31 +3523,37 @@ function addStyles() {
 
 
         /* ====================================================
-           BACK / FORWARD BUTTONS
+           VIDEO SEEK CONTROLS
            ==================================================== */
 
-        .video-navigation {
+        .video-seek-controls {
+
             position:absolute;
 
-            top:50%;
-            left:12px;
+            left:50%;
+            bottom:50%;
 
             transform:
-                translateY(-50%);
+                translateX(-50%);
 
-            z-index:15;
+            z-index:11;
 
             display:flex;
 
-            flex-direction:column;
+            align-items:center;
 
-            gap:12px;
+            gap:70px;
+
+            pointer-events:none;
         }
 
 
-        .video-nav-button {
-            width:44px;
-            height:44px;
+        .video-seek-button {
+
+            width:48px;
+            height:48px;
+
+            padding:0;
 
             border:1px solid
                 rgba(255,255,255,.24);
@@ -3594,15 +3566,15 @@ function addStyles() {
             color:white;
 
             display:flex;
+
             align-items:center;
             justify-content:center;
 
-            font-size:34px;
-            font-weight:300;
-
-            line-height:1;
+            font-size:22px;
 
             cursor:pointer;
+
+            pointer-events:auto;
 
             backdrop-filter:blur(6px);
 
@@ -3616,14 +3588,14 @@ function addStyles() {
         }
 
 
-        .video-nav-button:active {
+        .video-seek-button:active {
 
             transform:
                 scale(.86);
         }
 
 
-        .video-nav-button:hover {
+        .video-seek-button:hover {
 
             background:
                 rgba(37,99,235,.68);
@@ -4230,21 +4202,19 @@ function addStyles() {
             }
 
 
-            .video-navigation {
+            .video-seek-controls {
 
-                left:9px;
-
-                gap:9px;
+                gap:45px;
             }
 
 
-            .video-nav-button {
+            .video-seek-button {
 
-                width:40px;
+                width:44px;
 
-                height:40px;
+                height:44px;
 
-                font-size:30px;
+                font-size:20px;
             }
         }
     `;
