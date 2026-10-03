@@ -1197,29 +1197,24 @@ function createVideoCard(
         </button>
 
 
-        <!-- VIDEO SEEK CONTROLS -->
+        <!-- TIKTOK-STYLE DRAGGABLE PROGRESS BAR -->
 
-        <div class="video-seek-controls">
+        <div
+            class="video-progress-container"
+            aria-label="Video progress"
+        >
 
-            <button
-                class="video-seek-button"
-                type="button"
-                data-seek="-10"
-                aria-label="Go back 10 seconds"
-                title="Back 10 seconds"
-            >
-                ⏪
-            </button>
+            <div class="video-progress-track">
 
-            <button
-                class="video-seek-button"
-                type="button"
-                data-seek="10"
-                aria-label="Go forward 10 seconds"
-                title="Forward 10 seconds"
-            >
-                ⏩
-            </button>
+                <div
+                    class="video-progress-fill"
+                ></div>
+
+                <div
+                    class="video-progress-thumb"
+                ></div>
+
+            </div>
 
         </div>
 
@@ -1395,6 +1390,227 @@ function createVideoCard(
 
 
     // ========================================================
+    // VIDEO PROGRESS / SEEK
+    // ========================================================
+
+    const videoElement =
+        card.querySelector(
+            ".reals-video"
+        );
+
+    const progressContainer =
+        card.querySelector(
+            ".video-progress-container"
+        );
+
+    const progressTrack =
+        card.querySelector(
+            ".video-progress-track"
+        );
+
+    const progressFill =
+        card.querySelector(
+            ".video-progress-fill"
+        );
+
+    const progressThumb =
+        card.querySelector(
+            ".video-progress-thumb"
+        );
+
+
+    let draggingProgress = false;
+
+
+    function updateProgress() {
+
+        if (!videoElement) {
+            return;
+        }
+
+        const duration =
+            Number(videoElement.duration);
+
+
+        if (
+            !Number.isFinite(duration) ||
+            duration <= 0
+        ) {
+            return;
+        }
+
+
+        const percent =
+            Math.min(
+                100,
+                Math.max(
+                    0,
+                    (
+                        videoElement.currentTime /
+                        duration
+                    ) * 100
+                )
+            );
+
+
+        if (progressFill) {
+
+            progressFill.style.width =
+                `${percent}%`;
+        }
+
+
+        if (progressThumb) {
+
+            progressThumb.style.left =
+                `${percent}%`;
+        }
+    }
+
+
+    function seekFromPointer(event) {
+
+        if (!videoElement || !progressTrack) {
+            return;
+        }
+
+
+        const duration =
+            Number(videoElement.duration);
+
+
+        if (
+            !Number.isFinite(duration) ||
+            duration <= 0
+        ) {
+            return;
+        }
+
+
+        const rect =
+            progressTrack.getBoundingClientRect();
+
+
+        if (!rect.width) {
+            return;
+        }
+
+
+        let position =
+            (
+                event.clientX -
+                rect.left
+            ) / rect.width;
+
+
+        position =
+            Math.min(
+                1,
+                Math.max(
+                    0,
+                    position
+                )
+            );
+
+
+        videoElement.currentTime =
+            duration * position;
+
+
+        updateProgress();
+    }
+
+
+    videoElement?.addEventListener(
+        "timeupdate",
+        updateProgress
+    );
+
+
+    videoElement?.addEventListener(
+        "loadedmetadata",
+        updateProgress
+    );
+
+
+    videoElement?.addEventListener(
+        "durationchange",
+        updateProgress
+    );
+
+
+    progressContainer?.addEventListener(
+        "pointerdown",
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            draggingProgress = true;
+
+            progressContainer.setPointerCapture?.(
+                event.pointerId
+            );
+
+            seekFromPointer(event);
+        }
+    );
+
+
+    progressContainer?.addEventListener(
+        "pointermove",
+        event => {
+
+            if (!draggingProgress) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            seekFromPointer(event);
+        }
+    );
+
+
+    progressContainer?.addEventListener(
+        "pointerup",
+        event => {
+
+            if (!draggingProgress) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            draggingProgress = false;
+
+            try {
+                progressContainer.releasePointerCapture?.(
+                    event.pointerId
+                );
+            } catch {}
+        }
+    );
+
+
+    progressContainer?.addEventListener(
+        "pointercancel",
+        event => {
+
+            draggingProgress = false;
+
+            try {
+                progressContainer.releasePointerCapture?.(
+                    event.pointerId
+                );
+            } catch {}
+        }
+    );
+
+
+    // ========================================================
     // CARD ACTIONS
     // ========================================================
 
@@ -1402,35 +1618,11 @@ function createVideoCard(
         "click",
         event => {
 
-            const seekButton =
+            if (
                 event.target.closest(
-                    "[data-seek]"
-                );
-
-            if (seekButton) {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                const videoElement =
-                    card.querySelector(
-                        ".reals-video"
-                    );
-
-                if (!videoElement) {
-                    return;
-                }
-
-                const seconds =
-                    Number(
-                        seekButton.dataset.seek
-                    );
-
-                seekVideo(
-                    videoElement,
-                    seconds
-                );
-
+                    ".video-progress-container"
+                )
+            ) {
                 return;
             }
 
@@ -1473,11 +1665,6 @@ function createVideoCard(
             event.preventDefault();
             event.stopPropagation();
 
-            const videoElement =
-                card.querySelector(
-                    ".reals-video"
-                );
-
             if (!videoElement) return;
 
 
@@ -1496,81 +1683,6 @@ function createVideoCard(
 
 
     return card;
-}
-
-
-// ============================================================
-// SEEK VIDEO
-// ============================================================
-
-function seekVideo(
-    video,
-    seconds
-) {
-
-    if (!video) {
-        return;
-    }
-
-
-    if (
-        !Number.isFinite(
-            seconds
-        )
-    ) {
-        return;
-    }
-
-
-    const currentTime =
-        Number(
-            video.currentTime || 0
-        );
-
-
-    const duration =
-        Number(
-            video.duration || 0
-        );
-
-
-    let newTime =
-        currentTime + seconds;
-
-
-    if (duration > 0) {
-
-        newTime =
-            Math.min(
-                Math.max(
-                    newTime,
-                    0
-                ),
-                duration
-            );
-
-    } else {
-
-        newTime =
-            Math.max(
-                newTime,
-                0
-            );
-    }
-
-
-    try {
-
-        video.currentTime =
-            newTime;
-
-    } catch (error) {
-
-        console.warn(
-            "VitalStar Reals seek error:",
-            error
-        );
-    }
 }
 
 
@@ -3523,82 +3635,105 @@ function addStyles() {
 
 
         /* ====================================================
-           VIDEO SEEK CONTROLS
+           TIKTOK-STYLE DRAGGABLE PROGRESS BAR
            ==================================================== */
 
-        .video-seek-controls {
+        .video-progress-container {
 
             position:absolute;
 
-            left:50%;
-            bottom:50%;
+            left:0;
+            right:0;
+            bottom:0;
 
-            transform:
-                translateX(-50%);
+            height:24px;
 
-            z-index:11;
-
-            display:flex;
-
-            align-items:center;
-
-            gap:70px;
-
-            pointer-events:none;
-        }
-
-
-        .video-seek-button {
-
-            width:48px;
-            height:48px;
-
-            padding:0;
-
-            border:1px solid
-                rgba(255,255,255,.24);
-
-            border-radius:50%;
-
-            background:
-                rgba(5,9,20,.58);
-
-            color:white;
+            z-index:15;
 
             display:flex;
 
-            align-items:center;
-            justify-content:center;
+            align-items:flex-end;
 
-            font-size:22px;
+            padding:0 0 5px;
 
             cursor:pointer;
 
+            touch-action:none;
+
             pointer-events:auto;
-
-            backdrop-filter:blur(6px);
-
-            box-shadow:
-                0 4px 16px
-                rgba(0,0,0,.25);
-
-            transition:
-                transform .15s ease,
-                background .15s ease;
         }
 
 
-        .video-seek-button:active {
+        .video-progress-track {
 
-            transform:
-                scale(.86);
-        }
+            position:relative;
 
+            width:100%;
 
-        .video-seek-button:hover {
+            height:3px;
 
             background:
-                rgba(37,99,235,.68);
+                rgba(255,255,255,.42);
+
+            overflow:visible;
+        }
+
+
+        .video-progress-fill {
+
+            position:absolute;
+
+            left:0;
+            top:0;
+
+            width:0%;
+            height:100%;
+
+            background:#ffffff;
+        }
+
+
+        .video-progress-thumb {
+
+            position:absolute;
+
+            top:50%;
+
+            left:0%;
+
+            width:9px;
+            height:9px;
+
+            border-radius:50%;
+
+            background:#ffffff;
+
+            transform:
+                translate(-50%,-50%);
+
+            box-shadow:
+                0 1px 5px
+                rgba(0,0,0,.35);
+
+            transition:
+                width .12s ease,
+                height .12s ease;
+        }
+
+
+        .video-progress-container:hover
+        .video-progress-thumb {
+
+            width:13px;
+            height:13px;
+        }
+
+
+        .video-progress-container:active
+        .video-progress-thumb {
+
+            width:15px;
+            height:15px;
         }
 
 
@@ -4199,22 +4334,6 @@ function addStyles() {
                 height:82px;
 
                 font-size:39px;
-            }
-
-
-            .video-seek-controls {
-
-                gap:45px;
-            }
-
-
-            .video-seek-button {
-
-                width:44px;
-
-                height:44px;
-
-                font-size:20px;
             }
         }
     `;
