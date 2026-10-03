@@ -6,6 +6,14 @@
 // 1. Normal VitalStar posts
 // 2. All VitalStar group posts
 //
+// GROUP VIDEOS SHOW:
+// - Group name
+// - Group profile picture
+//
+// NORMAL VIDEOS SHOW:
+// - User name
+// - User profile picture
+//
 // EXCLUDES:
 // - Private / Only Me videos
 // - Friends-only normal posts
@@ -23,7 +31,9 @@ import {
     query,
     orderBy,
     limit,
-    onSnapshot
+    onSnapshot,
+    getDoc,
+    doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -187,7 +197,6 @@ function isGroupVideo(data) {
         data.video ||
         data.videoUrl ||
         data.videoURL ||
-        data.videoUrl ||
         "";
 
     if (!mediaURL) {
@@ -200,16 +209,6 @@ function isGroupVideo(data) {
         )
             .trim()
             .toLowerCase();
-
-    /*
-     * Primary group-post format:
-     *
-     * mediaType: "video"
-     * mediaURL:  "..."
-     *
-     * We also accept video-like URLs when
-     * mediaType was not saved correctly.
-     */
 
     if (
         mediaType === "video"
@@ -433,6 +432,7 @@ function normalizeNormalPost(
             data.uid ||
             data.userId ||
             data.authorId ||
+            data.createdBy ||
             "",
 
         creatorName:
@@ -450,6 +450,7 @@ function normalizeNormalPost(
             data.profilePicture ||
             data.authorPhotoURL ||
             data.photoURL ||
+            data.avatar ||
             "",
 
         createdAt:
@@ -520,6 +521,12 @@ function normalizeGroupPost(
             data.caption ||
             "",
 
+        // ----------------------------------------------------
+        // These are the author details.
+        // They remain available for group post actions,
+        // but the visible creator identity will be the GROUP.
+        // ----------------------------------------------------
+
         creatorId:
             data.authorId ||
             data.uid ||
@@ -542,6 +549,23 @@ function normalizeGroupPost(
             data.authorPhotoURL ||
             data.profilePicture ||
             data.photoURL ||
+            "",
+
+        // ----------------------------------------------------
+        // GROUP IDENTITY
+        // ----------------------------------------------------
+
+        groupName:
+            data.groupName ||
+            data.groupTitle ||
+            data.groupDisplayName ||
+            "",
+
+        groupPhoto:
+            data.groupPhotoURL ||
+            data.groupProfilePicture ||
+            data.groupPhoto ||
+            data.groupImage ||
             "",
 
         authorRole:
@@ -581,6 +605,226 @@ function normalizeGroupPost(
                 0
             )
     };
+}
+
+
+// ============================================================
+// LOAD GROUP INFORMATION
+// ============================================================
+
+async function loadGroupInformation(
+    video
+) {
+
+    if (
+        !video ||
+        video.type !== "group" ||
+        !video.groupId
+    ) {
+        return;
+    }
+
+    try {
+
+        const groupRef =
+            doc(
+                db,
+                "groups",
+                video.groupId
+            );
+
+        const groupSnap =
+            await getDoc(
+                groupRef
+            );
+
+        if (
+            !groupSnap.exists()
+        ) {
+            return;
+        }
+
+        const data =
+            groupSnap.data() || {};
+
+        // ----------------------------------------------------
+        // GROUP NAME
+        // ----------------------------------------------------
+
+        const groupName =
+            data.name ||
+            data.groupName ||
+            data.title ||
+            data.displayName ||
+            data.groupTitle ||
+            "";
+
+        if (groupName) {
+
+            video.groupName =
+                groupName;
+        }
+
+        // ----------------------------------------------------
+        // GROUP PROFILE PICTURE
+        // ----------------------------------------------------
+
+        const groupPhoto =
+            data.profilePicture ||
+            data.profilePhoto ||
+            data.profilePictureURL ||
+            data.photoURL ||
+            data.avatar ||
+            data.groupImage ||
+            data.image ||
+            data.coverPhoto ||
+            "";
+
+        if (groupPhoto) {
+
+            video.groupPhoto =
+                groupPhoto;
+        }
+
+        // ----------------------------------------------------
+        // UPDATE ONLY THE EXISTING CARD
+        // ----------------------------------------------------
+
+        if (
+            !destroyed &&
+            container
+        ) {
+
+            const card =
+                container.querySelector(
+                    `[data-id="${CSS.escape(video.id)}"]`
+                );
+
+            if (card) {
+
+                updateGroupIdentity(
+                    card,
+                    video
+                );
+            }
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "VitalStar Reals: unable to load group information:",
+            video.groupId,
+            error
+        );
+    }
+}
+
+
+// ============================================================
+// UPDATE GROUP IDENTITY
+// ============================================================
+
+function updateGroupIdentity(
+    card,
+    video
+) {
+
+    if (
+        !card ||
+        !video ||
+        video.type !== "group"
+    ) {
+        return;
+    }
+
+    const nameElement =
+        card.querySelector(
+            ".creator-name"
+        );
+
+    const usernameElement =
+        card.querySelector(
+            ".creator-username"
+        );
+
+    const avatarElement =
+        card.querySelector(
+            ".creator-avatar"
+        );
+
+    if (nameElement) {
+
+        nameElement.textContent =
+            video.groupName ||
+            "VitalStar Group";
+    }
+
+    if (usernameElement) {
+
+        usernameElement.textContent =
+            "Group";
+
+        usernameElement.style.display =
+            "block";
+    }
+
+    if (avatarElement) {
+
+        if (video.groupPhoto) {
+
+            avatarElement.innerHTML = `
+
+                <img
+                    src="${escapeHTML(
+                        video.groupPhoto
+                    )}"
+                    alt="${escapeHTML(
+                        video.groupName ||
+                        "VitalStar Group"
+                    )}"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                >
+
+            `;
+
+        } else {
+
+            avatarElement.innerHTML = `
+
+                <div class="default-avatar">
+                    VS
+                </div>
+
+            `;
+        }
+    }
+}
+
+
+// ============================================================
+// LOAD ALL GROUP INFORMATION
+// ============================================================
+
+async function loadAllGroupInformation() {
+
+    if (
+        !groupPosts.length
+    ) {
+        return;
+    }
+
+    const videos =
+        [...groupPosts];
+
+    await Promise.allSettled(
+        videos.map(
+            video =>
+                loadGroupInformation(
+                    video
+                )
+        )
+    );
 }
 
 
@@ -794,14 +1038,10 @@ function initializeFeed() {
     // ========================================================
     // ALL GROUP POSTS
     //
-    // IMPORTANT:
-    // We intentionally DO NOT use orderBy("createdAt")
-    // here.
+    // groups/{groupId}/posts/{postId}
     //
-    // Some group posts may not contain createdAt or may
-    // have different timestamp formats. Loading the documents
-    // first and sorting in JavaScript prevents those videos
-    // from disappearing.
+    // We intentionally do not require createdAt in Firestore.
+    // Everything is loaded and sorted locally.
     // ========================================================
 
     try {
@@ -821,7 +1061,7 @@ function initializeFeed() {
             onSnapshot(
                 groupsQuery,
 
-                snapshot => {
+                async snapshot => {
 
                     groupPosts = [];
 
@@ -849,7 +1089,7 @@ function initializeFeed() {
                             // --------------------------------
                             // FIND GROUP ID
                             //
-                            // Expected path:
+                            // Expected:
                             //
                             // groups/{groupId}/posts/{postId}
                             // --------------------------------
@@ -883,7 +1123,7 @@ function initializeFeed() {
                             if (!groupId) {
 
                                 console.warn(
-                                    "VitalStar Reals: group ID not found for:",
+                                    "VitalStar Reals: group ID not found:",
                                     docSnap.ref.path
                                 );
 
@@ -912,7 +1152,7 @@ function initializeFeed() {
 
 
                     // --------------------------------
-                    // SORT GROUP VIDEOS NEWEST FIRST
+                    // SORT NEWEST FIRST
                     // --------------------------------
 
                     groupPosts.sort(
@@ -930,6 +1170,15 @@ function initializeFeed() {
                     groupsLoaded = true;
 
                     rebuildFeed();
+
+
+                    // --------------------------------
+                    // LOAD GROUP NAME + PHOTO
+                    // AFTER THE VIDEOS ARE RENDERED
+                    // --------------------------------
+
+                    await loadAllGroupInformation();
+
                 },
 
                 error => {
@@ -1151,19 +1400,40 @@ function createVideoCard(
         video.id;
 
 
+    // ========================================================
+    // IDENTITY
+    // ========================================================
+
+    const isGroup =
+        video.type === "group";
+
+
     const creatorName =
         escapeHTML(
-            video.creatorName ||
-            "VitalStar User"
+            isGroup
+                ? (
+                    video.groupName ||
+                    "VitalStar Group"
+                )
+                : (
+                    video.creatorName ||
+                    "VitalStar User"
+                )
         );
 
 
     const username =
-        video.username
-            ? `@${escapeHTML(
+        isGroup
+
+            ? "Group"
+
+            : (
                 video.username
-            )}`
-            : "";
+                    ? `@${escapeHTML(
+                        video.username
+                    )}`
+                    : ""
+            );
 
 
     const caption =
@@ -1173,15 +1443,19 @@ function createVideoCard(
 
 
     const photo =
-        video.creatorPhoto
-            ? escapeHTML(
-                video.creatorPhoto
+        isGroup
+            ? (
+                video.groupPhoto ||
+                ""
             )
-            : "";
+            : (
+                video.creatorPhoto ||
+                ""
+            );
 
 
     // ========================================================
-    // REAL PROFILE PICTURE
+    // PROFILE / GROUP AVATAR
     // ========================================================
 
     const avatar =
@@ -1189,7 +1463,9 @@ function createVideoCard(
 
             ? `
                 <img
-                    src="${photo}"
+                    src="${escapeHTML(
+                        photo
+                    )}"
                     alt="${creatorName}"
                     loading="lazy"
                     referrerpolicy="no-referrer"
@@ -1204,7 +1480,7 @@ function createVideoCard(
 
 
     const sourceLabel =
-        video.type === "group"
+        isGroup
             ? "Group"
             : "Post";
 
@@ -1360,7 +1636,7 @@ function createVideoCard(
         </div>
 
 
-        <!-- CREATOR INFORMATION -->
+        <!-- CREATOR / GROUP INFORMATION -->
 
         <div class="video-info">
 
@@ -1374,11 +1650,16 @@ function createVideoCard(
                 <button
                     class="creator-avatar"
                     type="button"
-                    data-action="profile"
-                    data-user-id="${escapeHTML(
-                        video.creatorId
-                    )}"
-                    aria-label="Open profile"
+                    data-action="${
+                        isGroup
+                            ? "group"
+                            : "profile"
+                    }"
+                    aria-label="${
+                        isGroup
+                            ? "Open group"
+                            : "Open profile"
+                    }"
                 >
                     ${avatar}
                 </button>
@@ -1386,9 +1667,27 @@ function createVideoCard(
 
                 <div class="creator-details">
 
-                    <div class="creator-name">
-                        ${creatorName}
-                    </div>
+                    <button
+                        class="creator-name-button"
+                        type="button"
+                        data-action="${
+                            isGroup
+                                ? "group"
+                                : "profile"
+                        }"
+                        aria-label="${
+                            isGroup
+                                ? "Open group"
+                                : "Open profile"
+                        }"
+                    >
+
+                        <span class="creator-name">
+                            ${creatorName}
+                        </span>
+
+                    </button>
+
 
                     ${
                         username
@@ -1775,6 +2074,10 @@ function handleAction(
             openProfile(video);
             break;
 
+        case "group":
+            openGroup(video);
+            break;
+
         case "more":
             showMoreMenu(video);
             break;
@@ -2083,6 +2386,32 @@ function openProfile(
 
 
 // ============================================================
+// GROUP
+// ============================================================
+
+function openGroup(
+    video
+) {
+
+    if (
+        !video ||
+        video.type !== "group" ||
+        !video.groupId
+    ) {
+        return;
+    }
+
+
+    window.location.href =
+        `../group.html?id=${
+            encodeURIComponent(
+                video.groupId
+            )
+        }`;
+}
+
+
+// ============================================================
 // MORE
 // ============================================================
 
@@ -2092,12 +2421,30 @@ function showMoreMenu(
 
     const choice =
         window.confirm(
-            "Open this creator's profile?"
+            video.type === "group"
+                ? "Open this group?"
+                : "Open this creator's profile?"
         );
 
 
+    if (!choice) {
+        return;
+    }
+
+
     if (
-        choice &&
+        video.type === "group"
+    ) {
+
+        openGroup(
+            video
+        );
+
+        return;
+    }
+
+
+    if (
         video.creatorId
     ) {
 
@@ -2442,10 +2789,6 @@ function addStyles() {
         }
 
 
-        /* =====================================================
-           PLAY BUTTON
-           ===================================================== */
-
         .video-play-indicator {
 
             position: absolute;
@@ -2496,10 +2839,6 @@ function addStyles() {
             opacity: .82;
         }
 
-
-        /* =====================================================
-           BOTTOM INFORMATION
-           ===================================================== */
 
         .video-info {
 
@@ -2556,10 +2895,6 @@ function addStyles() {
             letter-spacing: .2px;
         }
 
-
-        /* =====================================================
-           CREATOR
-           ===================================================== */
 
         .creator-row {
 
@@ -2643,6 +2978,30 @@ function addStyles() {
         }
 
 
+        .creator-name-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            max-width: 100%;
+
+            padding: 0;
+
+            margin: 0;
+
+            border: 0;
+
+            background: transparent;
+
+            color: white;
+
+            cursor: pointer;
+
+            text-align: left;
+        }
+
+
         .creator-name {
 
             color: white;
@@ -2675,10 +3034,6 @@ function addStyles() {
         }
 
 
-        /* =====================================================
-           CAPTION
-           ===================================================== */
-
         .video-caption {
 
             margin-top: 7px;
@@ -2700,10 +3055,6 @@ function addStyles() {
             word-break: break-word;
         }
 
-
-        /* =====================================================
-           RIGHT ACTIONS
-           ===================================================== */
 
         .video-actions {
 
@@ -2790,10 +3141,6 @@ function addStyles() {
                 #ff4f7b;
         }
 
-
-        /* =====================================================
-           LOADING
-           ===================================================== */
 
         .general-loading {
 
@@ -2917,10 +3264,6 @@ function addStyles() {
             font-size: 11px;
         }
 
-
-        /* =====================================================
-           EMPTY / ERROR
-           ===================================================== */
 
         .general-empty,
         .general-error {
@@ -3047,10 +3390,6 @@ function addStyles() {
         }
 
 
-        /* =====================================================
-           TOAST
-           ===================================================== */
-
         .vitalstar-reals-toast {
 
             position: fixed;
@@ -3124,10 +3463,6 @@ function addStyles() {
             }
         }
 
-
-        /* =====================================================
-           MOBILE
-           ===================================================== */
 
         @media (
             max-width: 480px
