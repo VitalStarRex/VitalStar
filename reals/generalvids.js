@@ -8,14 +8,23 @@
 //
 // REACTION RULE:
 // - Normal post videos:
-//   Real Firebase like/unlike inside Reals
+//   Real Firebase like/unlike/repost
 //
 // - Group videos:
-//   NEVER react directly inside Reals
-//   User must enter the group to react
+//   Like / Comment / Repost / Share / More
+//   open the group
 //
 // NOTIFICATIONS:
-// - Normal post likes create VitalStar notifications
+// - Normal post likes notify the post creator
+// - Normal post reposts notify the post creator
+//
+// COMMENTS:
+// - Normal post videos open comment.html
+// - Group videos open the group
+//
+// SHARES:
+// - Normal post videos share comment.html?postId=...
+// - Group videos open the group
 //
 // EXCLUDES:
 // - Private / Only Me videos
@@ -530,10 +539,6 @@ function normalizeGroupPost(
             data.caption ||
             "",
 
-        // ----------------------------------------------------
-        // AUTHOR DETAILS
-        // ----------------------------------------------------
-
         creatorId:
             data.authorId ||
             data.uid ||
@@ -557,10 +562,6 @@ function normalizeGroupPost(
             data.profilePicture ||
             data.photoURL ||
             "",
-
-        // ----------------------------------------------------
-        // GROUP IDENTITY
-        // ----------------------------------------------------
 
         groupName:
             data.groupName ||
@@ -1350,7 +1351,6 @@ function renderFeed() {
     );
 
 
-    // Restore real Firebase reaction state
     currentVideos.forEach(
         video => {
 
@@ -1359,6 +1359,10 @@ function renderFeed() {
             ) {
 
                 updateRealsLikeState(
+                    video
+                );
+
+                updateRealsRepostState(
                     video
                 );
             }
@@ -1526,7 +1530,7 @@ function createVideoCard(
                 data-action="like"
                 aria-label="${
                     isGroup
-                        ? "Enter group to react"
+                        ? "Open group"
                         : "Like"
                 }"
             >
@@ -1548,7 +1552,11 @@ function createVideoCard(
                 class="reals-action"
                 type="button"
                 data-action="comment"
-                aria-label="Comments"
+                aria-label="${
+                    isGroup
+                        ? "Open group"
+                        : "Comments"
+                }"
             >
 
                 <span class="action-icon">
@@ -1565,10 +1573,14 @@ function createVideoCard(
 
 
             <button
-                class="reals-action"
+                class="reals-action repost-action"
                 type="button"
                 data-action="repost"
-                aria-label="Repost"
+                aria-label="${
+                    isGroup
+                        ? "Open group"
+                        : "Repost"
+                }"
             >
 
                 <span class="action-icon">
@@ -1588,7 +1600,11 @@ function createVideoCard(
                 class="reals-action"
                 type="button"
                 data-action="share"
-                aria-label="Share"
+                aria-label="${
+                    isGroup
+                        ? "Open group"
+                        : "Share"
+                }"
             >
 
                 <span class="action-icon">
@@ -1624,7 +1640,11 @@ function createVideoCard(
                 class="reals-action"
                 type="button"
                 data-action="more"
-                aria-label="More"
+                aria-label="${
+                    isGroup
+                        ? "Open group"
+                        : "More"
+                }"
             >
 
                 <span class="action-icon">
@@ -2045,44 +2065,111 @@ function handleAction(
     card
 ) {
 
+    // ========================================================
+    // GROUP VIDEOS
+    // Like / Comment / Repost / Share / More
+    // all open the group.
+    // ========================================================
+
+    if (
+        video.type === "group"
+    ) {
+
+        switch (action) {
+
+            case "like":
+            case "comment":
+            case "repost":
+            case "share":
+            case "more":
+
+                openGroup(
+                    video
+                );
+
+                return;
+        }
+    }
+
+
+    // ========================================================
+    // NORMAL POST VIDEOS
+    // ========================================================
+
     switch (action) {
 
         case "like":
+
             handleLike(
                 video,
                 card
             );
+
             break;
+
 
         case "comment":
-            handleComment(video);
+
+            handleComment(
+                video
+            );
+
             break;
+
 
         case "repost":
-            handleRepost(video);
+
+            handleRepost(
+                video,
+                card
+            );
+
             break;
+
 
         case "share":
-            handleShare(video);
+
+            handleShare(
+                video
+            );
+
             break;
 
+
         case "mute":
+
             toggleMute(
                 video,
                 card
             );
+
             break;
+
 
         case "profile":
-            openProfile(video);
+
+            openProfile(
+                video
+            );
+
             break;
+
 
         case "group":
-            openGroup(video);
+
+            openGroup(
+                video
+            );
+
             break;
 
+
         case "more":
-            showMoreMenu(video);
+
+            showMoreMenu(
+                video
+            );
+
             break;
     }
 }
@@ -2094,9 +2181,8 @@ function handleAction(
 // NORMAL POST:
 // Real Firebase reaction.
 //
-// GROUP VIDEO:
-// Never reacts in Reals.
-// User must enter the group.
+// GROUP:
+// Open group.
 // ============================================================
 
 async function handleLike(
@@ -2104,25 +2190,17 @@ async function handleLike(
     card
 ) {
 
-    // ========================================================
-    // GROUP VIDEO
-    // ========================================================
-
     if (
         video.type === "group"
     ) {
 
-        showGroupReactionPrompt(
+        openGroup(
             video
         );
 
         return;
     }
 
-
-    // ========================================================
-    // NORMAL POST
-    // ========================================================
 
     if (
         video.type !== "post"
@@ -2161,20 +2239,16 @@ async function handleLike(
         );
 
 
-    const likeId =
-        `${postId}_${user.uid}`;
-
-
     const likeRef =
         doc(
             db,
             "postLikes",
-            likeId
+            `${postId}_${user.uid}`
         );
 
 
     const button =
-        card.querySelector(
+        card?.querySelector(
             ".like-action"
         );
 
@@ -2194,9 +2268,7 @@ async function handleLike(
     try {
 
         if (button) {
-
-            button.disabled =
-                true;
+            button.disabled = true;
         }
 
 
@@ -2229,7 +2301,7 @@ async function handleLike(
 
 
         const post =
-            postSnap.data();
+            postSnap.data() || {};
 
 
         // ====================================================
@@ -2254,42 +2326,38 @@ async function handleLike(
             );
 
 
-            if (button) {
+            button?.classList.remove(
+                "liked"
+            );
 
-                button.classList.remove(
-                    "liked"
-                );
 
-                button.setAttribute(
-                    "aria-pressed",
-                    "false"
-                );
-            }
+            button?.setAttribute(
+                "aria-pressed",
+                "false"
+            );
 
 
             if (icon) {
-
-                icon.textContent =
-                    "♡";
+                icon.textContent = "♡";
             }
 
 
+            const current =
+                Number(
+                    count?.dataset.value ??
+                    video.likes ??
+                    0
+                );
+
+
+            const next =
+                Math.max(
+                    0,
+                    current - 1
+                );
+
+
             if (count) {
-
-                const current =
-                    Number(
-                        count.dataset.value ??
-                        video.likes ??
-                        0
-                    );
-
-
-                const next =
-                    Math.max(
-                        0,
-                        current - 1
-                    );
-
 
                 count.dataset.value =
                     String(next);
@@ -2302,12 +2370,7 @@ async function handleLike(
 
 
             video.likes =
-                Math.max(
-                    0,
-                    Number(
-                        video.likes || 0
-                    ) - 1
-                );
+                next;
 
 
             return;
@@ -2341,39 +2404,35 @@ async function handleLike(
         );
 
 
-        if (button) {
+        button?.classList.add(
+            "liked"
+        );
 
-            button.classList.add(
-                "liked"
-            );
 
-            button.setAttribute(
-                "aria-pressed",
-                "true"
-            );
-        }
+        button?.setAttribute(
+            "aria-pressed",
+            "true"
+        );
 
 
         if (icon) {
-
-            icon.textContent =
-                "♥";
+            icon.textContent = "♥";
         }
 
 
+        const current =
+            Number(
+                count?.dataset.value ??
+                video.likes ??
+                0
+            );
+
+
+        const next =
+            current + 1;
+
+
         if (count) {
-
-            const current =
-                Number(
-                    count.dataset.value ??
-                    video.likes ??
-                    0
-                );
-
-
-            const next =
-                current + 1;
-
 
             count.dataset.value =
                 String(next);
@@ -2386,33 +2445,35 @@ async function handleLike(
 
 
         video.likes =
-            Number(
-                video.likes || 0
-            ) + 1;
+            next;
 
 
         // ====================================================
         // NOTIFICATION
-        // Uses existing VitalStar notification structure
-        // from comments.js
         // ====================================================
 
+        const receiverId =
+            post.uid ||
+            post.userId ||
+            post.authorId ||
+            post.createdBy ||
+            "";
+
+
         if (
-            post.uid &&
-            post.uid !== user.uid
+            receiverId &&
+            receiverId !== user.uid
         ) {
 
-            const userData =
+            const sender =
                 await getCurrentUserData();
 
 
             await createNotification({
 
-                receiverId:
-                    post.uid,
+                receiverId,
 
-                sender:
-                    userData,
+                sender,
 
                 type:
                     "post_like",
@@ -2421,9 +2482,9 @@ async function handleLike(
 
                 text:
                     "liked your post."
-
             });
         }
+
 
     } catch (error) {
 
@@ -2440,9 +2501,7 @@ async function handleLike(
     } finally {
 
         if (button) {
-
-            button.disabled =
-                false;
+            button.disabled = false;
         }
     }
 }
@@ -2492,7 +2551,6 @@ async function getCurrentUserData() {
 
                 profilePicture:
                     ""
-
             };
         }
 
@@ -2517,7 +2575,6 @@ async function getCurrentUserData() {
             profilePicture:
                 data.profilePicture ||
                 ""
-
         };
 
     } catch (error) {
@@ -2541,7 +2598,6 @@ async function getCurrentUserData() {
 
             profilePicture:
                 ""
-
         };
     }
 }
@@ -2549,8 +2605,6 @@ async function getCurrentUserData() {
 
 // ============================================================
 // CREATE NOTIFICATION
-//
-// Same top-level notification collection used by comments.js
 // ============================================================
 
 async function createNotification({
@@ -2596,11 +2650,11 @@ async function createNotification({
 
         text,
 
-        read: false,
+        read:
+            false,
 
         createdAt:
             serverTimestamp()
-
     };
 
 
@@ -2623,9 +2677,6 @@ async function createNotification({
 
 // ============================================================
 // UPDATE REALS LIKE STATE
-//
-// Uses the same postLikes/{postId}_{uid}
-// structure as comments.js
 // ============================================================
 
 async function updateRealsLikeState(
@@ -2714,9 +2765,7 @@ async function updateRealsLikeState(
 
 
             if (icon) {
-
-                icon.textContent =
-                    "♥";
+                icon.textContent = "♥";
             }
 
         } else {
@@ -2732,9 +2781,7 @@ async function updateRealsLikeState(
 
 
             if (icon) {
-
-                icon.textContent =
-                    "♡";
+                icon.textContent = "♡";
             }
         }
 
@@ -2760,57 +2807,146 @@ async function updateRealsLikeState(
 
 
 // ============================================================
-// GROUP REACTION PROMPT
+// UPDATE REALS REPOST STATE
 // ============================================================
 
-function showGroupReactionPrompt(
+async function updateRealsRepostState(
     video
 ) {
 
     if (
         !video ||
-        video.type !== "group"
+        video.type !== "post"
     ) {
         return;
     }
 
 
-    const groupName =
-        video.groupName ||
-        "this group";
+    const user =
+        auth.currentUser;
 
 
-    showToast(
-        "Enter the group to react to this video."
-    );
+    if (!user) {
+        return;
+    }
 
 
-    setTimeout(
-        () => {
-
-            const shouldEnter =
-                window.confirm(
-                    `Enter ${groupName} to react to this video?`
-                );
+    const postId =
+        video.originalId;
 
 
-            if (
-                shouldEnter
-            ) {
+    if (!postId) {
+        return;
+    }
 
-                openGroup(
-                    video
-                );
+
+    const card =
+        container?.querySelector(
+            `[data-id="${CSS.escape(video.id)}"]`
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    const button =
+        card.querySelector(
+            ".repost-action"
+        );
+
+
+    const icon =
+        button?.querySelector(
+            ".action-icon"
+        );
+
+
+    const count =
+        button?.querySelector(
+            ".action-count"
+        );
+
+
+    try {
+
+        const repostSnap =
+            await getDoc(
+                doc(
+                    db,
+                    "postReposts",
+                    `${postId}_${user.uid}`
+                )
+            );
+
+
+        if (
+            repostSnap.exists()
+        ) {
+
+            button?.classList.add(
+                "reposted"
+            );
+
+
+            button?.setAttribute(
+                "aria-pressed",
+                "true"
+            );
+
+
+            if (icon) {
+                icon.textContent = "⟳";
             }
 
-        },
-        150
-    );
+        } else {
+
+            button?.classList.remove(
+                "reposted"
+            );
+
+
+            button?.setAttribute(
+                "aria-pressed",
+                "false"
+            );
+
+
+            if (icon) {
+                icon.textContent = "↻";
+            }
+        }
+
+
+        if (count) {
+
+            count.dataset.value =
+                String(
+                    Number(
+                        video.reposts || 0
+                    )
+                );
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "VitalStar Reals: unable to check repost state:",
+            error
+        );
+    }
 }
 
 
 // ============================================================
 // COMMENTS
+//
+// GROUP:
+// Open group.
+//
+// NORMAL POST:
+// Open comment.html?postId=...
 // ============================================================
 
 function handleComment(
@@ -2821,23 +2957,24 @@ function handleComment(
         video.type === "group"
     ) {
 
-        window.location.href =
-            `../group.html?id=${
-                encodeURIComponent(
-                    video.groupId
-                )
-            }&post=${
-                encodeURIComponent(
-                    video.originalId
-                )
-            }`;
+        openGroup(
+            video
+        );
 
         return;
     }
 
 
+    if (
+        video.type !== "post" ||
+        !video.originalId
+    ) {
+        return;
+    }
+
+
     window.location.href =
-        `../post.html?id=${
+        `../comment.html?postId=${
             encodeURIComponent(
                 video.originalId
             )
@@ -2847,54 +2984,410 @@ function handleComment(
 
 // ============================================================
 // REPOST
+//
+// GROUP:
+// Open group.
+//
+// NORMAL POST:
+// Real Firebase repost.
 // ============================================================
 
-function handleRepost(
-    video
+async function handleRepost(
+    video,
+    card
 ) {
 
-    showToast(
-        "Repost selected"
-    );
+    if (
+        video.type === "group"
+    ) {
+
+        openGroup(
+            video
+        );
+
+        return;
+    }
+
+
+    if (
+        video.type !== "post"
+    ) {
+        return;
+    }
+
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        window.location.href =
+            "../login.html";
+
+        return;
+    }
+
+
+    const postId =
+        video.originalId;
+
+
+    if (!postId) {
+        return;
+    }
+
+
+    const postRef =
+        doc(
+            db,
+            "posts",
+            postId
+        );
+
+
+    const repostRef =
+        doc(
+            db,
+            "postReposts",
+            `${postId}_${user.uid}`
+        );
+
+
+    const button =
+        card?.querySelector(
+            ".repost-action"
+        );
+
+
+    const count =
+        button?.querySelector(
+            ".action-count"
+        );
+
+
+    const icon =
+        button?.querySelector(
+            ".action-icon"
+        );
+
+
+    try {
+
+        if (button) {
+            button.disabled = true;
+        }
+
+
+        const [
+            repostSnap,
+            postSnap
+        ] = await Promise.all([
+
+            getDoc(
+                repostRef
+            ),
+
+            getDoc(
+                postRef
+            )
+
+        ]);
+
+
+        if (
+            !postSnap.exists()
+        ) {
+
+            showToast(
+                "This post is no longer available."
+            );
+
+            return;
+        }
+
+
+        // ====================================================
+        // REMOVE REPOST
+        // ====================================================
+
+        if (
+            repostSnap.exists()
+        ) {
+
+            await deleteDoc(
+                repostRef
+            );
+
+
+            await updateDoc(
+                postRef,
+                {
+                    reposts:
+                        increment(-1)
+                }
+            );
+
+
+            const current =
+                Number(
+                    count?.dataset.value ??
+                    video.reposts ??
+                    0
+                );
+
+
+            const next =
+                Math.max(
+                    0,
+                    current - 1
+                );
+
+
+            if (count) {
+
+                count.dataset.value =
+                    String(next);
+
+                count.textContent =
+                    formatCount(
+                        next
+                    );
+            }
+
+
+            video.reposts =
+                next;
+
+
+            if (icon) {
+                icon.textContent = "↻";
+            }
+
+
+            button?.classList.remove(
+                "reposted"
+            );
+
+
+            button?.setAttribute(
+                "aria-pressed",
+                "false"
+            );
+
+
+            showToast(
+                "Repost removed"
+            );
+
+
+            return;
+        }
+
+
+        // ====================================================
+        // CREATE REPOST
+        // ====================================================
+
+        await setDoc(
+            repostRef,
+            {
+                postId,
+
+                uid:
+                    user.uid,
+
+                createdAt:
+                    serverTimestamp()
+            }
+        );
+
+
+        await updateDoc(
+            postRef,
+            {
+                reposts:
+                    increment(1)
+            }
+        );
+
+
+        const current =
+            Number(
+                count?.dataset.value ??
+                video.reposts ??
+                0
+            );
+
+
+        const next =
+            current + 1;
+
+
+        if (count) {
+
+            count.dataset.value =
+                String(next);
+
+            count.textContent =
+                formatCount(
+                    next
+                );
+        }
+
+
+        video.reposts =
+            next;
+
+
+        button?.classList.add(
+            "reposted"
+        );
+
+
+        button?.setAttribute(
+            "aria-pressed",
+            "true"
+        );
+
+
+        if (icon) {
+            icon.textContent = "⟳";
+        }
+
+
+        showToast(
+            "Post reposted"
+        );
+
+
+        // ====================================================
+        // NOTIFICATION
+        // ====================================================
+
+        const post =
+            postSnap.data() || {};
+
+
+        const receiverId =
+            post.uid ||
+            post.userId ||
+            post.authorId ||
+            post.createdBy ||
+            "";
+
+
+        if (
+            receiverId &&
+            receiverId !== user.uid
+        ) {
+
+            const sender =
+                await getCurrentUserData();
+
+
+            await createNotification({
+
+                receiverId,
+
+                sender,
+
+                type:
+                    "post_repost",
+
+                postId,
+
+                text:
+                    "reposted your post."
+            });
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "VitalStar Reals repost error:",
+            error
+        );
+
+
+        showToast(
+            "Unable to repost this post."
+        );
+
+    } finally {
+
+        if (button) {
+            button.disabled = false;
+        }
+    }
 }
 
 
 // ============================================================
 // SHARE
+//
+// GROUP:
+// Open group.
+//
+// NORMAL POST:
+// Share direct comment.html URL.
 // ============================================================
 
 async function handleShare(
     video
 ) {
 
-    const url =
+    if (
+        video.type === "group"
+    ) {
+
+        openGroup(
+            video
+        );
+
+        return;
+    }
+
+
+    if (
+        video.type !== "post" ||
+        !video.originalId
+    ) {
+        return;
+    }
+
+
+    const postUrl =
         new URL(
+            "../comment.html",
             window.location.href
         );
 
 
-    url.searchParams.set(
-        "video",
+    postUrl.searchParams.set(
+        "postId",
         video.originalId
     );
+
+
+    const url =
+        postUrl.toString();
 
 
     const shareData = {
 
         title:
-            "VitalStar Reals",
+            "VitalStar",
 
         text:
             video.text ||
-            `Watch ${
-                video.type === "group"
-                    ? video.groupName ||
-                      "this group"
-                    : video.creatorName
-            }'s video on VitalStar.`,
+            `Check out this post from ${
+                video.creatorName ||
+                "VitalStar"
+            } on VitalStar.`,
 
-        url:
-            url.toString()
+        url
     };
 
 
@@ -2908,25 +3401,59 @@ async function handleShare(
                 shareData
             );
 
-            return;
-        }
-
-
-        if (
+        } else if (
             navigator.clipboard
         ) {
 
             await navigator.clipboard.writeText(
-                url.toString()
+                url
             );
 
 
             showToast(
-                "Video link copied"
+                "Post link copied"
             );
 
-            return;
+        } else {
+
+            showToast(
+                "Share link ready"
+            );
         }
+
+
+        // ====================================================
+        // SHARE COUNT
+        // ====================================================
+
+        try {
+
+            await updateDoc(
+                doc(
+                    db,
+                    "posts",
+                    video.originalId
+                ),
+                {
+                    shares:
+                        increment(1)
+                }
+            );
+
+
+            video.shares =
+                Number(
+                    video.shares || 0
+                ) + 1;
+
+        } catch (countError) {
+
+            console.warn(
+                "VitalStar share count update failed:",
+                countError
+            );
+        }
+
 
     } catch (error) {
 
@@ -2936,7 +3463,7 @@ async function handleShare(
         ) {
 
             console.warn(
-                "Share failed:",
+                "VitalStar share failed:",
                 error
             );
         }
@@ -3048,12 +3575,32 @@ function openGroup(
     }
 
 
+    const url =
+        new URL(
+            "../group.html",
+            window.location.href
+        );
+
+
+    url.searchParams.set(
+        "id",
+        video.groupId
+    );
+
+
+    if (
+        video.originalId
+    ) {
+
+        url.searchParams.set(
+            "post",
+            video.originalId
+        );
+    }
+
+
     window.location.href =
-        `../group.html?id=${
-            encodeURIComponent(
-                video.groupId
-            )
-        }`;
+        url.toString();
 }
 
 
@@ -3064,19 +3611,6 @@ function openGroup(
 function showMoreMenu(
     video
 ) {
-
-    const choice =
-        window.confirm(
-            video.type === "group"
-                ? "Open this group?"
-                : "Open this creator's profile?"
-        );
-
-
-    if (!choice) {
-        return;
-    }
-
 
     if (
         video.type === "group"
@@ -3091,6 +3625,7 @@ function showMoreMenu(
 
 
     if (
+        video.type === "post" &&
         video.creatorId
     ) {
 
@@ -3799,6 +4334,21 @@ function addStyles() {
 
 
         .like-action.liked {
+
+            transform:
+                scale(1.04);
+        }
+
+
+        .repost-action.reposted
+        .action-icon {
+
+            color:
+                #60a5fa;
+        }
+
+
+        .repost-action.reposted {
 
             transform:
                 scale(1.04);
