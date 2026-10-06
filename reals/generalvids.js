@@ -231,15 +231,26 @@ function getPlayableVideoUrl(url) {
 
     if (
         result.includes("res.cloudinary.com") &&
-        result.includes("/video/upload/") &&
-        !result.includes("/f_mp4/")
+        result.includes("/video/upload/")
     ) {
 
-        result =
-            result.replace(
-                "/video/upload/",
-                "/video/upload/f_mp4/"
-            );
+        const marker =
+            "/video/upload/";
+
+        const index =
+            result.indexOf(marker);
+
+        if (
+            index !== -1 &&
+            !result.includes("/f_mp4/")
+        ) {
+
+            result =
+                result.replace(
+                    marker,
+                    "/video/upload/f_mp4,q_auto/"
+                );
+        }
     }
 
     return result;
@@ -618,6 +629,7 @@ async function loadGroupInformation(video) {
                 );
 
             if (card) {
+
                 updateGroupIdentity(
                     card,
                     video
@@ -829,7 +841,7 @@ function initializeFeed() {
                     "createdAt",
                     "desc"
                 ),
-                limit(100)
+                limit(50)
             );
 
         normalUnsubscribe =
@@ -903,7 +915,7 @@ function initializeFeed() {
                     db,
                     "posts"
                 ),
-                limit(500)
+                limit(100)
             );
 
         groupsUnsubscribe =
@@ -912,6 +924,9 @@ function initializeFeed() {
                 async snapshot => {
 
                     groupPosts = [];
+
+                    const seenGroupVideos =
+                        new Set();
 
                     snapshot.forEach(
                         snap => {
@@ -945,6 +960,27 @@ function initializeFeed() {
                             if (!groupId) {
                                 return;
                             }
+
+
+                            // Prevent duplicate
+                            // group video entries
+                            const uniqueKey =
+                                `${groupId}_${snap.id}`;
+
+
+                            if (
+                                seenGroupVideos.has(
+                                    uniqueKey
+                                )
+                            ) {
+                                return;
+                            }
+
+
+                            seenGroupVideos.add(
+                                uniqueKey
+                            );
+
 
                             groupPosts.push(
                                 normalizeGroupPost(
@@ -1174,11 +1210,7 @@ function createVideoCard(
             webkit-playsinline
             ${settings.autoplay ? "autoplay" : ""}
             ${settings.muted ? "muted" : ""}
-            preload="${
-                settings.dataSaver
-                    ? "metadata"
-                    : "auto"
-            }"
+            preload="metadata"
         ></video>
 
 
@@ -1219,14 +1251,20 @@ function createVideoCard(
         </div>
 
 
+        <!-- =================================================
+             TIKTOK-STYLE ACTIONS
+             ================================================= -->
+
         <div class="video-actions">
 
             <button
                 class="reals-action like-action"
                 type="button"
                 data-action="like"
+                aria-label="Like"
             >
-                <span class="action-icon">
+
+                <span class="action-icon tiktok-heart-icon">
                     ♡
                 </span>
 
@@ -1236,16 +1274,19 @@ function createVideoCard(
                 >
                     ${formatCount(video.likes)}
                 </span>
+
             </button>
 
 
             <button
-                class="reals-action"
+                class="reals-action comment-action"
                 type="button"
                 data-action="comment"
+                aria-label="Comments"
             >
-                <span class="action-icon">
-                    💬
+
+                <span class="action-icon tiktok-comment-icon">
+                    <span></span>
                 </span>
 
                 <span
@@ -1254,6 +1295,7 @@ function createVideoCard(
                 >
                     ${formatCount(video.comments)}
                 </span>
+
             </button>
 
 
@@ -1261,9 +1303,11 @@ function createVideoCard(
                 class="reals-action repost-action"
                 type="button"
                 data-action="repost"
+                aria-label="Repost"
             >
-                <span class="action-icon">
-                    ↻
+
+                <span class="action-icon tiktok-repost-icon">
+                    ⟳
                 </span>
 
                 <span
@@ -1272,15 +1316,18 @@ function createVideoCard(
                 >
                     ${formatCount(video.reposts)}
                 </span>
+
             </button>
 
 
             <button
-                class="reals-action"
+                class="reals-action share-action"
                 type="button"
                 data-action="share"
+                aria-label="Share"
             >
-                <span class="action-icon">
+
+                <span class="action-icon tiktok-share-icon">
                     ↗
                 </span>
 
@@ -1290,28 +1337,35 @@ function createVideoCard(
                 >
                     ${formatCount(video.shares)}
                 </span>
+
             </button>
 
 
             <button
-                class="reals-action"
+                class="reals-action mute-action"
                 type="button"
                 data-action="mute"
+                aria-label="Mute or unmute"
             >
+
                 <span class="action-icon mute-icon">
                     ${settings.muted ? "🔇" : "🔊"}
                 </span>
+
             </button>
 
 
             <button
-                class="reals-action"
+                class="reals-action more-action"
                 type="button"
                 data-action="more"
+                aria-label="More options"
             >
-                <span class="action-icon">
-                    •••
+
+                <span class="action-icon tiktok-more-icon">
+                    ⋯
                 </span>
+
             </button>
 
         </div>
@@ -1829,11 +1883,12 @@ function showGroupOnlyMessage() {
 
 // ============================================================
 // LIKE
+// Reals heart does NOT like directly.
+// User must enter comments section.
 // ============================================================
 
-async function handleLike(
-    video,
-    card
+function handleLike(
+    video
 ) {
 
     if (
@@ -1846,270 +1901,9 @@ async function handleLike(
     }
 
 
-    const user =
-        auth.currentUser;
-
-
-    if (!user) {
-
-        window.location.href =
-            "../login.html";
-
-        return;
-    }
-
-
-    const postId =
-        video.originalId;
-
-
-    if (!postId) return;
-
-
-    const postRef =
-        doc(
-            db,
-            "posts",
-            postId
-        );
-
-
-    const likeRef =
-        doc(
-            db,
-            "postLikes",
-            `${postId}_${user.uid}`
-        );
-
-
-    const button =
-        card?.querySelector(
-            ".like-action"
-        );
-
-
-    const icon =
-        button?.querySelector(
-            ".action-icon"
-        );
-
-
-    const count =
-        button?.querySelector(
-            ".action-count"
-        );
-
-
-    try {
-
-        if (button) {
-            button.disabled = true;
-        }
-
-
-        const likeSnap =
-            await getDoc(
-                likeRef
-            );
-
-
-        const postSnap =
-            await getDoc(
-                postRef
-            );
-
-
-        if (!postSnap.exists()) {
-
-            showToast(
-                "This post is no longer available."
-            );
-
-            return;
-        }
-
-
-        const post =
-            postSnap.data() || {};
-
-
-        if (likeSnap.exists()) {
-
-            await deleteDoc(
-                likeRef
-            );
-
-
-            await updateDoc(
-                postRef,
-                {
-                    likes:
-                        increment(-1)
-                }
-            );
-
-
-            const current =
-                Number(
-                    count?.dataset.value ??
-                    video.likes ??
-                    0
-                );
-
-
-            const next =
-                Math.max(
-                    0,
-                    current - 1
-                );
-
-
-            video.likes =
-                next;
-
-
-            if (button) {
-
-                button.classList.remove(
-                    "liked"
-                );
-            }
-
-
-            if (icon) {
-
-                icon.textContent =
-                    "♡";
-            }
-
-
-            if (count) {
-
-                count.dataset.value =
-                    String(next);
-
-                count.textContent =
-                    formatCount(next);
-            }
-
-
-        } else {
-
-            await setDoc(
-                likeRef,
-                {
-                    postId,
-
-                    uid:
-                        user.uid,
-
-                    createdAt:
-                        serverTimestamp()
-                }
-            );
-
-
-            await updateDoc(
-                postRef,
-                {
-                    likes:
-                        increment(1)
-                }
-            );
-
-
-            const current =
-                Number(
-                    count?.dataset.value ??
-                    video.likes ??
-                    0
-                );
-
-
-            const next =
-                current + 1;
-
-
-            video.likes =
-                next;
-
-
-            if (button) {
-
-                button.classList.add(
-                    "liked"
-                );
-            }
-
-
-            if (icon) {
-
-                icon.textContent =
-                    "♥";
-            }
-
-
-            if (count) {
-
-                count.dataset.value =
-                    String(next);
-
-                count.textContent =
-                    formatCount(next);
-            }
-
-
-            const receiverId =
-                post.uid ||
-                post.userId ||
-                post.authorId ||
-                post.createdBy ||
-                "";
-
-
-            if (
-                receiverId &&
-                receiverId !== user.uid
-            ) {
-
-                const sender =
-                    await getCurrentUserData();
-
-
-                await createNotification({
-
-                    receiverId,
-
-                    sender,
-
-                    type:
-                        "post_like",
-
-                    postId,
-
-                    text:
-                        "liked your post."
-                });
-            }
-        }
-
-    } catch (error) {
-
-        console.error(
-            "VitalStar Reals like error:",
-            error
-        );
-
-        showToast(
-            "Unable to update reaction."
-        );
-
-    } finally {
-
-        if (button) {
-            button.disabled = false;
-        }
-    }
+    showToast(
+        "Enter comment section to like this post."
+    );
 }
 
 
@@ -3102,11 +2896,99 @@ export function onSettingChange(
                     settings.muted;
 
                 video.preload =
-                    settings.dataSaver
-                        ? "metadata"
-                        : "auto";
+                    "metadata";
             }
         );
+}
+
+
+// ============================================================
+// PRELOAD NEXT VIDEO
+// ============================================================
+
+function preloadNextVideo(
+    currentVideo,
+    videos
+) {
+
+    if (
+        !currentVideo ||
+        !videos ||
+        !videos.length
+    ) {
+        return;
+    }
+
+
+    const cards =
+        Array.from(
+            document.querySelectorAll(
+                ".reals-video-card"
+            )
+        );
+
+
+    const currentCard =
+        currentVideo.closest(
+            ".reals-video-card"
+        );
+
+
+    if (!currentCard) {
+        return;
+    }
+
+
+    const currentIndex =
+        Number(
+            currentCard.dataset.index
+        );
+
+
+    const nextIndex =
+        currentIndex + 1;
+
+
+    if (
+        nextIndex >= cards.length
+    ) {
+        return;
+    }
+
+
+    const nextVideo =
+        cards[nextIndex]?.querySelector(
+            ".reals-video"
+        );
+
+
+    if (!nextVideo) {
+        return;
+    }
+
+
+    if (
+        nextVideo.dataset.preloaded === "true"
+    ) {
+        return;
+    }
+
+
+    nextVideo.preload =
+        settings.dataSaver
+            ? "metadata"
+            : "auto";
+
+
+    nextVideo.dataset.preloaded =
+        "true";
+
+
+    try {
+
+        nextVideo.load();
+
+    } catch {}
 }
 
 
@@ -3250,7 +3132,13 @@ function setupObserver(feed) {
             first &&
             settings.autoplay
         ) {
+
             playVideo(first);
+
+            preloadNextVideo(
+                first,
+                currentVideos
+            );
         }
 
         return;
@@ -3280,17 +3168,70 @@ function setupObserver(feed) {
                                 playVideo(
                                     video
                                 );
+
+                                preloadNextVideo(
+                                    video,
+                                    currentVideos
+                                );
                             }
 
                         } else {
 
                             video.pause();
+
+                            /*
+                             * Keep the currently nearby
+                             * videos ready, but release
+                             * far-away videos.
+                             */
+
+                            const card =
+                                video.closest(
+                                    ".reals-video-card"
+                                );
+
+                            const index =
+                                Number(
+                                    card?.dataset.index
+                                );
+
+                            const activeCard =
+                                document.querySelector(
+                                    ".reals-video-card.is-playing"
+                                );
+
+                            const activeIndex =
+                                Number(
+                                    activeCard?.dataset.index
+                                );
+
+                            if (
+                                Number.isFinite(index) &&
+                                Number.isFinite(activeIndex) &&
+                                Math.abs(
+                                    index -
+                                    activeIndex
+                                ) > 2
+                            ) {
+
+                                video.preload =
+                                    "metadata";
+
+                                video.removeAttribute(
+                                    "data-preloaded"
+                                );
+                            }
                         }
                     }
                 );
             },
             {
-                threshold: [
+                root:null,
+
+                rootMargin:
+                    "100px 0px 100px 0px",
+
+                threshold:[
                     0,
                     .65,
                     .9
@@ -3635,7 +3576,7 @@ function addStyles() {
 
 
         /* ====================================================
-           TIKTOK-STYLE DRAGGABLE PROGRESS BAR
+           TIKTOK-STYLE PROGRESS
            ==================================================== */
 
         .video-progress-container {
@@ -3738,29 +3679,32 @@ function addStyles() {
 
 
         /* ====================================================
-           ACTIONS
+           TIKTOK-STYLE ACTION BUTTONS
            ==================================================== */
 
         .video-actions {
+
             position:absolute;
 
             right:7px;
             bottom:74px;
 
-            z-index:10;
+            z-index:20;
 
             display:flex;
 
             flex-direction:column;
+
             align-items:center;
 
-            gap:9px;
+            gap:10px;
         }
 
 
         .reals-action {
-            width:40px;
-            min-height:40px;
+
+            width:44px;
+            min-height:44px;
 
             padding:2px;
 
@@ -3775,11 +3719,24 @@ function addStyles() {
             flex-direction:column;
 
             align-items:center;
+
             justify-content:center;
 
-            gap:2px;
+            gap:3px;
 
             cursor:pointer;
+
+            -webkit-tap-highlight-color:transparent;
+
+            transition:
+                transform .12s ease;
+        }
+
+
+        .reals-action:active {
+
+            transform:
+                scale(.86);
         }
 
 
@@ -3793,34 +3750,192 @@ function addStyles() {
 
         .action-icon {
 
-            font-size:20px;
+            width:32px;
+            height:32px;
+
+            display:flex;
+
+            align-items:center;
+            justify-content:center;
+
+            color:#ffffff;
+
+            font-size:29px;
 
             line-height:1;
+
+            font-weight:600;
+
+            text-shadow:
+                0 2px 7px
+                rgba(0,0,0,.65);
+
+            filter:
+                drop-shadow(
+                    0 2px 4px
+                    rgba(0,0,0,.45)
+                );
         }
 
 
         .action-count {
 
-            color:
-                rgba(255,255,255,.84);
+            color:#ffffff;
 
             font-size:9px;
 
-            font-weight:650;
+            font-weight:700;
+
+            line-height:1;
+
+            text-shadow:
+                0 1px 5px
+                rgba(0,0,0,.75);
+        }
+
+
+        /* HEART */
+
+        .tiktok-heart-icon {
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            font-size:34px;
+
+            font-weight:400;
+
+            transform:
+                translateY(-1px);
         }
 
 
         .like-action.liked
-        .action-icon {
+        .tiktok-heart-icon {
 
-            color:#ff4f7b;
+            color:#ff315f;
+
+            transform:
+                scale(1.08);
+        }
+
+
+        /* COMMENT BUBBLE */
+
+        .tiktok-comment-icon {
+
+            position:relative;
+
+            width:28px;
+            height:24px;
+
+            border:2.5px solid #ffffff;
+
+            border-radius:
+                50%;
+
+            box-sizing:border-box;
+        }
+
+
+        .tiktok-comment-icon::after {
+
+            content:"";
+
+            position:absolute;
+
+            left:3px;
+            bottom:-6px;
+
+            width:8px;
+            height:8px;
+
+            border-left:2.5px solid #ffffff;
+            border-bottom:2.5px solid #ffffff;
+
+            transform:
+                skew(-25deg)
+                rotate(-10deg);
+
+            background:transparent;
+        }
+
+
+        .tiktok-comment-icon span {
+
+            width:4px;
+            height:4px;
+
+            border-radius:50%;
+
+            background:#ffffff;
+
+            box-shadow:
+                7px 0 0 #ffffff,
+                14px 0 0 #ffffff;
+        }
+
+
+        /* REPOST */
+
+        .tiktok-repost-icon {
+
+            font-size:34px;
+
+            font-weight:400;
+
+            transform:
+                rotate(0deg);
         }
 
 
         .repost-action.reposted
-        .action-icon {
+        .tiktok-repost-icon {
 
             color:#60a5fa;
+
+            transform:
+                scale(1.08);
+        }
+
+
+        /* SHARE */
+
+        .tiktok-share-icon {
+
+            font-size:34px;
+
+            font-weight:500;
+
+            transform:
+                translate(1px,-1px);
+        }
+
+
+        /* MORE */
+
+        .tiktok-more-icon {
+
+            font-size:29px;
+
+            letter-spacing:1px;
+
+            font-weight:900;
+        }
+
+
+        /* MUTE */
+
+        .mute-icon {
+
+            font-size:21px;
+
+            filter:
+                drop-shadow(
+                    0 2px 4px
+                    rgba(0,0,0,.55)
+                );
         }
 
 
@@ -3915,6 +4030,7 @@ function addStyles() {
             display:flex;
 
             align-items:center;
+
             justify-content:center;
 
             background:
@@ -4289,15 +4405,31 @@ function addStyles() {
 
             .reals-action {
 
-                width:38px;
+                width:40px;
 
-                min-height:38px;
+                min-height:40px;
             }
 
 
             .action-icon {
 
-                font-size:19px;
+                width:30px;
+                height:30px;
+
+                font-size:27px;
+            }
+
+
+            .tiktok-heart-icon {
+
+                font-size:32px;
+            }
+
+
+            .tiktok-comment-icon {
+
+                width:27px;
+                height:23px;
             }
 
 
