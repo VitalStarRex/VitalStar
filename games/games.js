@@ -18,26 +18,32 @@ const games=[
 
 // ================= FREE GAMES =================
 
-{
-    id:"hoop-master",
-    name:"Hoop Master",
-    icon:"🏀",
-    description:"Compete for the highest score.",
-    category:"sports",
-    multiplayer:true,
-    premium:false,
-    url:"./hoop-master.html"
-},
+
+
+
+
+
 
 {
-    id:"quick-tap",
-    name:"Quick Tap",
-    icon:"⚡",
-    description:"Challenge another player in a tapping battle.",
+    id:"volcano-jump",
+    name:"Volcano Jump",
+    icon:"🌋",
+    description:"Jump over obstacles and survive the volcanic challenge.",
     category:"arcade",
     multiplayer:true,
     premium:false,
-    url:"./quick-tap.html"
+    url:"./volcano-jump.html"
+},
+
+{
+    id:"crusty-road",
+    name:"Crusty Road",
+    icon:"🛣️",
+    description:"Race through the road, avoid obstacles and beat your best score.",
+    category:"arcade",
+    multiplayer:true,
+    premium:false,
+    url:"./crusty-road.html"
 },
 
 {
