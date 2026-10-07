@@ -109,6 +109,16 @@ function setFeedHeight() {
     container.style.minHeight = `${availableHeight}px`;
     container.style.maxHeight = `${availableHeight}px`;
 
+    /* Like groupvids.js: the container never scrolls itself,
+       the inner feed div does. */
+    container.style.overflow = "hidden";
+
+    const feedEl = container.querySelector(".post-reals-feed");
+
+    if (feedEl) {
+        feedEl.style.height = `${availableHeight}px`;
+    }
+
     /* FIX: give every card a real pixel height.
        height:100% can silently fail. */
     container
@@ -452,8 +462,6 @@ function renderFeed() {
 
     container.innerHTML = "";
 
-    container.className = "reals-feed post-reals-feed";
-
     if (!postVideos.length) {
 
         showEmpty();
@@ -463,7 +471,9 @@ function renderFeed() {
         return;
     }
 
-    const fragment = document.createDocumentFragment();
+    const feed = document.createElement("div");
+
+    feed.className = "post-reals-feed";
 
     currentVideos = [];
 
@@ -471,7 +481,7 @@ function renderFeed() {
 
         const card = createVideoCard(video, index);
 
-        fragment.appendChild(card);
+        feed.appendChild(card);
 
         currentVideos.push({
             data: video,
@@ -479,7 +489,7 @@ function renderFeed() {
         });
     });
 
-    container.appendChild(fragment);
+    container.appendChild(feed);
 
     /* Set height AFTER the feed is inserted into the DOM. */
 
@@ -497,14 +507,20 @@ function renderFeed() {
                 return;
             }
 
-            const cs = getComputedStyle(container);
+            const f = container.querySelector(".post-reals-feed");
+
+            if (!f) {
+                return;
+            }
+
+            const cs = getComputedStyle(f);
 
             alert(
-                "clientHeight: " + container.clientHeight +
-                "\nscrollHeight: " + container.scrollHeight +
+                "clientHeight: " + f.clientHeight +
+                "\nscrollHeight: " + f.scrollHeight +
                 "\ndisplay: " + cs.display +
                 "\noverflowY: " + cs.overflowY +
-                "\ncards: " + container.children.length
+                "\ncards: " + f.children.length
             );
 
         }, 1000);
@@ -971,7 +987,7 @@ function setupObserver() {
                 });
             },
             {
-                root: container,
+                root: container.querySelector(".post-reals-feed"),
 
                 threshold: [0.1, 0.5, 0.65, 0.9]
             }
@@ -1309,8 +1325,6 @@ function showLoader() {
         return;
     }
 
-    container.className = "reals-feed post-reals-feed";
-
     container.innerHTML = `
 
         <div class="reals-loader">
@@ -1515,6 +1529,8 @@ export function destroyPostVids() {
         container.style.minHeight = "";
 
         container.style.maxHeight = "";
+
+        container.style.overflow = "";
     }
 
     container = null;
@@ -1619,6 +1635,7 @@ function injectStyles() {
     position:relative !important;
     display:block !important;
     width:100%;
+    height:100%;
     min-width:0;
     min-height:0;
     margin:0;
