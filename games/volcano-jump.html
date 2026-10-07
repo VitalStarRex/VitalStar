@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
+
+<meta name="theme-color" content="#090018">
+
+<title>Volcano Jump — VitalStar Games</title>
+
+<style>
+
+/* ============================================================
+   VITALSTAR — VOLCANO JUMP
+   Multiplayer Lava Road Game
+   ============================================================ */
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+    width:100%;
+    min-height:100%;
+    background:#05000d;
+    color:#fff;
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    overflow-x:hidden;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(255,65,0,.20),
+            transparent 35%
+        ),
+        linear-gradient(
+            180deg,
+            #12001e 0%,
+            #080015 45%,
+            #030008 100%
+        );
+}
+
+/* ============================================================
+   APP
+   ============================================================ */
+
+#volcanoApp{
+    width:100%;
+    max-width:520px;
+    min-height:100vh;
+    margin:0 auto;
+    position:relative;
+    overflow:hidden;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(20,0,35,.92),
+            rgba(4,0,15,.98)
+        );
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.topBar{
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+
+    position:sticky;
+    top:0;
+    z-index:100;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(8,0,20,.98),
+            rgba(8,0,20,.85)
+        );
+
+    border-bottom:1px solid rgba(255,120,30,.25);
+
+    box-shadow:
+        0 8px 30px rgba(0,0,0,.4);
+}
+
+.backButton,
+.soundButton{
+    width:44px;
+    height:44px;
+
+    border:1px solid rgba(255,140,50,.35);
+    border-radius:14px;
+
+    background:rgba(255,255,255,.06);
+    color:#fff;
+
+    font-size:20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    cursor:pointer;
+}
+
+.backButton:active,
+.soundButton:active{
+    transform:scale(.94);
+}
+
+.gameTitle{
+    text-align:center;
+    flex:1;
+    padding:0 10px;
+}
+
+.gameTitle strong{
+    display:block;
+
+    font-size:17px;
+    font-weight:900;
+
+    letter-spacing:.5px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ffcf4a,
+            #ff6b22,
+            #ff2f55
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+
+.gameTitle span{
+    display:block;
+    margin-top:2px;
+
+    font-size:9px;
+    color:#aaa1bd;
+    letter-spacing:2px;
+    text-transform:uppercase;
+}
+
+/* ============================================================
+   LOBBY
+   ============================================================ */
+
+#lobby{
+    padding:18px 14px 30px;
+}
+
+.hero{
+    position:relative;
+
+    min-height:210px;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+
+    padding:20px;
+
+    overflow:hidden;
+
+    border-radius:25px;
+
+    border:1px solid rgba(255,106,28,.35);
+
+    background:
+        radial-gradient(
+            circle at 50% 20%,
+            rgba(255,95,20,.25),
+            transparent 38%
+        ),
+        linear-gradient(
+            160deg,
+            #28002e,
+            #100019 60%,
+            #05000d
+        );
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.55);
+}
+
+.hero::before{
+    content:"🌋";
+
+    position:absolute;
+
+    right:8px;
+    top:8px;
+
+    font-size:130px;
+
+    opacity:.28;
+
+    filter:
+        drop-shadow(0 0 30px #ff4b00);
+}
+
+.heroBadge{
+    position:relative;
+    z-index:2;
+
+    display:inline-flex;
+    width:max-content;
+
+    padding:6px 10px;
+
+    border-radius:999px;
+
+    background:rgba(255,90,20,.14);
+    border:1px solid rgba(255,120,40,.28);
+
+    color:#ffb347;
+
+    font-size:10px;
+    font-weight:800;
+
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+}
+
+.hero h1{
+    position:relative;
+    z-index:2;
+
+    margin-top:10px;
+
+    font-size:42px;
+    line-height:.95;
+
+    font-weight:1000;
+
+    letter-spacing:-2px;
+
+    color:#fff;
+
+    text-shadow:
+        0 4px 0 #7c1700,
+        0 8px 25px rgba(255,72,0,.45);
+}
+
+.hero p{
+    position:relative;
+    z-index:2;
+
+    margin-top:10px;
+
+    max-width:310px;
+
+    color:#d0c7dc;
+    font-size:13px;
+    line-height:1.5;
+}
+
+/* ============================================================
+   PANELS
+   ============================================================ */
+
+.panel{
+    margin-top:14px;
+
+    padding:16px;
+
+    border-radius:20px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(31,12,50,.92),
+            rgba(12,5,26,.94)
+        );
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.35);
+}
+
+.panelTitle{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:12px;
+}
+
+.panelTitle strong{
+    font-size:15px;
+}
+
+.panelTitle span{
+    color:#9187a2;
+    font-size:11px;
+}
+
+/* ============================================================
+   ROOM
+   ============================================================ */
+
+.roomInfo{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:14px;
+
+    padding:12px;
+
+    border-radius:14px;
+
+    background:rgba(0,0,0,.22);
+
+    border:1px solid rgba(255,255,255,.06);
+}
+
+.roomCode{
+    color:#ffb83d;
+    font-weight:900;
+    letter-spacing:2px;
+}
+
+.playerCount{
+    color:#bdb3ce;
+    font-size:12px;
+}
+
+/* ============================================================
+   PLAYER LIST
+   ============================================================ */
+
+#playersList{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.playerRow{
+    min-height:54px;
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:8px 10px;
+
+    border-radius:15px;
+
+    background:
+        rgba(255,255,255,.045);
+
+    border:1px solid rgba(255,255,255,.06);
+}
+
+.playerAvatar{
+    width:36px;
+    height:36px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #273a75,
+            #121832
+        );
+
+    border:2px solid rgba(255,255,255,.14);
+
+    font-size:18px;
+}
+
+.playerDetails{
+    min-width:0;
+    flex:1;
+}
+
+.playerName{
+    font-size:13px;
+    font-weight:800;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.playerUsername{
+    margin-top:2px;
+
+    font-size:10px;
+    color:#82788e;
+}
+
+.readyBadge{
+    min-width:82px;
+
+    padding:7px 9px;
+
+    border-radius:10px;
+
+    text-align:center;
+
+    font-size:9px;
+    font-weight:900;
+
+    letter-spacing:.5px;
+}
+
+.readyBadge.ready{
+    color:#05140a;
+    background:#22e879;
+
+    box-shadow:
+        0 0 15px rgba(34,232,121,.25);
+}
+
+.readyBadge.notReady{
+    color:#d2c8dc;
+    background:#36315a;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.mainButton{
+    width:100%;
+    min-height:54px;
+
+    border:0;
+    border-radius:16px;
+
+    margin-top:12px;
+
+    font-size:15px;
+    font-weight:950;
+
+    letter-spacing:.4px;
+
+    cursor:pointer;
+
+    color:#fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff8a00,
+            #ff3d19
+        );
+
+    box-shadow:
+        0 10px 30px rgba(255,68,15,.25);
+}
+
+.mainButton:active{
+    transform:scale(.98);
+}
+
+.mainButton.readyOn{
+    background:
+        linear-gradient(
+            135deg,
+            #15e879,
+            #00a95b
+        );
+
+    box-shadow:
+        0 10px 30px rgba(0,220,110,.22);
+}
+
+.mainButton:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    transform:none;
+}
+
+.secondaryButton{
+    width:100%;
+    min-height:48px;
+
+    border-radius:14px;
+
+    border:1px solid rgba(255,255,255,.1);
+
+    background:rgba(255,255,255,.05);
+    color:#fff;
+
+    font-weight:800;
+
+    cursor:pointer;
+}
+
+.secondaryButton:active{
+    transform:scale(.98);
+}
+
+.dangerButton{
+    background:rgba(255,40,60,.1);
+    border-color:rgba(255,60,70,.25);
+    color:#ff7180;
+}
+
+/* ============================================================
+   JOIN ROOM
+   ============================================================ */
+
+.joinBox{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+}
+
+.joinBox input{
+    min-width:0;
+    flex:1;
+
+    height:48px;
+
+    padding:0 14px;
+
+    border-radius:14px;
+
+    border:1px solid rgba(255,255,255,.1);
+
+    outline:none;
+
+    background:rgba(0,0,0,.28);
+    color:#fff;
+
+    font-size:14px;
+    font-weight:700;
+
+    text-transform:uppercase;
+}
+
+.joinBox input:focus{
+    border-color:#ff7b27;
+}
+
+.joinBox button{
+    width:90px;
+
+    border:0;
+    border-radius:14px;
+
+    background:#5428b9;
+    color:#fff;
+
+    font-weight:900;
+}
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+#lobbyStatus{
+    min-height:22px;
+
+    margin-top:12px;
+
+    text-align:center;
+
+    color:#a9a0b7;
+
+    font-size:11px;
+    line-height:1.4;
+}
+
+/* ============================================================
+   GAME AREA
+   ============================================================ */
+
+#gameArea{
+    display:none;
+
+    padding-bottom:20px;
+}
+
+.gameHeader{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:10px 14px;
+}
+
+.hudItem{
+    min-width:72px;
+
+    padding:8px 10px;
+
+    border-radius:13px;
+
+    background:rgba(13,4,27,.85);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    text-align:center;
+}
+
+.hudItem small{
+    display:block;
+
+    color:#82788f;
+
+    font-size:8px;
+    text-transform:uppercase;
+    letter-spacing:.8px;
+}
+
+.hudItem strong{
+    display:block;
+
+    margin-top:2px;
+
+    font-size:14px;
+}
+
+#gameCanvasWrap{
+    position:relative;
+
+    width:100%;
+
+    padding:0 10px;
+}
+
+#gameCanvas{
+    display:block;
+
+    width:100%;
+    height:auto;
+
+    aspect-ratio:390 / 700;
+
+    border-radius:24px;
+
+    background:#170016;
+
+    border:1px solid rgba(255,110,25,.3);
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.6);
+
+    touch-action:none;
+}
+
+/* ============================================================
+   COUNTDOWN
+   ============================================================ */
+
+#countdownOverlay{
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    pointer-events:none;
+
+    text-align:center;
+}
+
+#countdownMessage{
+    font-size:15px;
+    font-weight:900;
+
+    letter-spacing:1px;
+
+    text-shadow:
+        0 3px 15px rgba(0,0,0,.8);
+}
+
+#countdownNumber{
+    margin-top:8px;
+
+    font-size:90px;
+    line-height:1;
+
+    font-weight:1000;
+
+    color:#ffca46;
+
+    text-shadow:
+        0 0 25px rgba(255,100,0,.9),
+        0 6px 0 #9b2500;
+}
+
+/* ============================================================
+   GAME MESSAGE
+   ============================================================ */
+
+#gameMessage{
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    width:calc(100% - 50px);
+
+    padding:20px;
+
+    border-radius:22px;
+
+    text-align:center;
+
+    background:
+        rgba(7,0,20,.92);
+
+    border:1px solid rgba(255,130,30,.3);
+
+    box-shadow:
+        0 20px 70px rgba(0,0,0,.65);
+
+    display:none;
+}
+
+#gameMessage .messageIcon{
+    font-size:42px;
+}
+
+#gameMessage h2{
+    margin-top:8px;
+
+    font-size:25px;
+}
+
+#gameMessage p{
+    margin-top:7px;
+
+    color:#b9afc7;
+
+    font-size:12px;
+    line-height:1.5;
+}
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+
+.controls{
+    display:grid;
+
+    grid-template-columns:1fr 1fr 1.25fr;
+
+    gap:10px;
+
+    padding:14px 14px 0;
+}
+
+.controlButton{
+    min-height:64px;
+
+    border-radius:19px;
+
+    border:1px solid rgba(255,255,255,.12);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.09),
+            rgba(255,255,255,.035)
+        );
+
+    color:#fff;
+
+    font-size:26px;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    touch-action:none;
+}
+
+.controlButton:active{
+    transform:scale(.94);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,120,30,.25),
+            rgba(255,255,255,.06)
+        );
+}
+
+.jumpButton{
+    background:
+        linear-gradient(
+            135deg,
+            #7435e7,
+            #4320aa
+        );
+
+    border-color:rgba(153,105,255,.5);
+
+    box-shadow:
+        0 8px 25px rgba(95,45,220,.22);
+}
+
+/* ============================================================
+   MATCH INFO
+   ============================================================ */
+
+.matchInfo{
+    margin:12px 14px 0;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    gap:10px;
+
+    padding:10px 12px;
+
+    border-radius:14px;
+
+    background:rgba(255,255,255,.04);
+
+    color:#9d94a9;
+
+    font-size:10px;
+}
+
+.matchInfo strong{
+    color:#fff;
+}
+
+/* ============================================================
+   LEADERBOARD
+   ============================================================ */
+
+#liveLeaderboard{
+    margin:12px 14px 0;
+
+    padding:12px;
+
+    border-radius:18px;
+
+    background:rgba(255,255,255,.035);
+
+    border:1px solid rgba(255,255,255,.06);
+}
+
+.leaderboardTitle{
+    margin-bottom:8px;
+
+    color:#ffca5b;
+
+    font-size:11px;
+    font-weight:900;
+
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.leaderRow{
+    display:flex;
+    align-items:center;
+
+    gap:8px;
+
+    padding:7px 0;
+
+    border-bottom:1px solid rgba(255,255,255,.05);
+
+    font-size:11px;
+}
+
+.leaderRow:last-child{
+    border-bottom:0;
+}
+
+.rank{
+    width:20px;
+
+    color:#8e8598;
+
+    font-weight:900;
+}
+
+.leaderName{
+    flex:1;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.leaderScore{
+    color:#ffbd43;
+    font-weight:900;
+}
+
+/* ============================================================
+   WINNER SCREEN
+   ============================================================ */
+
+#winnerOverlay{
+    position:fixed;
+
+    inset:0;
+
+    z-index:500;
+
+    display:none;
+
+    align-items:center;
+    justify-content:center;
+
+    padding:20px;
+
+    background:
+        rgba(3,0,10,.88);
+
+    backdrop-filter:blur(12px);
+}
+
+.winnerCard{
+    width:100%;
+    max-width:390px;
+
+    padding:24px 18px;
+
+    border-radius:28px;
+
+    text-align:center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #26103e,
+            #0d0620
+        );
+
+    border:1px solid rgba(255,180,55,.4);
+
+    box-shadow:
+        0 30px 100px rgba(0,0,0,.7);
+}
+
+.crown{
+    font-size:60px;
+
+    filter:
+        drop-shadow(
+            0 0 20px rgba(255,190,50,.6)
+        );
+}
+
+.winnerCard h2{
+    margin-top:5px;
+
+    font-size:28px;
+
+    color:#ffcf55;
+}
+
+.winnerName{
+    margin-top:7px;
+
+    font-size:20px;
+    font-weight:950;
+}
+
+.winnerScore{
+    margin-top:5px;
+
+    color:#aaa0b4;
+
+    font-size:12px;
+}
+
+/* ============================================================
+   RESULT TABLE
+   ============================================================ */
+
+#resultLeaderboard{
+    margin-top:18px;
+
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.resultRow{
+    display:flex;
+    align-items:center;
+
+    padding:9px 11px;
+
+    border-radius:12px;
+
+    background:rgba(255,255,255,.045);
+
+    font-size:11px;
+}
+
+.resultRank{
+    width:28px;
+
+    font-weight:900;
+
+    color:#ffbd40;
+}
+
+.resultPlayer{
+    flex:1;
+
+    text-align:left;
+}
+
+.resultScore{
+    font-weight:900;
+}
+
+/* ============================================================
+   WAITING OVERLAY
+   ============================================================ */
+
+#waitingOverlay{
+    position:absolute;
+
+    inset:0;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    pointer-events:none;
+}
+
+.waitingCard{
+    padding:17px 22px;
+
+    border-radius:18px;
+
+    background:
+        rgba(8,0,20,.86);
+
+    border:1px solid rgba(255,255,255,.1);
+
+    text-align:center;
+
+    box-shadow:
+        0 15px 50px rgba(0,0,0,.55);
+}
+
+.waitingCard strong{
+    display:block;
+
+    font-size:16px;
+}
+
+.waitingCard span{
+    display:block;
+
+    margin-top:5px;
+
+    color:#a39aaa;
+
+    font-size:11px;
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+.hidden{
+    display:none !important;
+}
+
+.noSelect{
+    user-select:none;
+    -webkit-user-select:none;
+}
+
+@media (max-width:380px){
+
+    .hero h1{
+        font-size:35px;
+    }
+
+    .hudItem{
+        min-width:62px;
+    }
+
+    .controls{
+        gap:7px;
+    }
+
+}
+
+@media (prefers-reduced-motion:reduce){
+
+    *,
+    *::before,
+    *::after{
+        scroll-behavior:auto !important;
+        animation:none !important;
+        transition:none !important;
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div id="volcanoApp">
+
+    <!-- ======================================================
+         TOP BAR
+         ====================================================== -->
+
+    <header class="topBar">
+
+        <button
+            type="button"
+            class="backButton"
+            id="backButton"
+            aria-label="Back to Games"
+        >
+            ←
+        </button>
+
+        <div class="gameTitle">
+            <strong>🌋 VOLCANO JUMP</strong>
+            <span>VitalStar Multiplayer</span>
+        </div>
+
+        <button
+            type="button"
+            class="soundButton"
+            id="soundButton"
+            aria-label="Toggle sound"
+        >
+            🔇
+        </button>
+
+    </header>
+
+
+    <!-- ======================================================
+         LOBBY
+         ====================================================== -->
+
+    <section id="lobby">
+
+        <div class="hero">
+
+            <span class="heroBadge">
+                LAST PLAYER STANDING
+            </span>
+
+            <h1>
+                VOLCANO<br>
+                JUMP
+            </h1>
+
+            <p>
+                Run across the volcanic road, dodge the lava
+                and survive longer than everyone else.
+            </p>
+
+        </div>
+
+
+        <!-- ROOM PANEL -->
+
+        <div class="panel">
+
+            <div class="panelTitle">
+
+                <strong>
+                    👥 Multiplayer Room
+                </strong>
+
+                <span>
+                    Minimum 2 players
+                </span>
+
+            </div>
+
+
+            <div class="roomInfo">
+
+                <div>
+                    Room:
+                    <span
+                        class="roomCode"
+                        id="roomCode"
+                    >
+                        ------
+                    </span>
+                </div>
+
+                <div
+                    class="playerCount"
+                    id="playerCount"
+                >
+                    Players: 0/4
+                </div>
+
+            </div>
+
+
+            <div id="playersList">
+
+                <div class="playerRow">
+
+                    <div class="playerAvatar">
+                        ?
+                    </div>
+
+                    <div class="playerDetails">
+
+                        <div class="playerName">
+                            Waiting for players...
+                        </div>
+
+                        <div class="playerUsername">
+                            Join the room to play
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="readyButton"
+                class="mainButton"
+                disabled
+            >
+                🔥 READY
+            </button>
+
+
+            <div id="lobbyStatus">
+                Create or join a room to begin.
+            </div>
+
+        </div>
+
+
+        <!-- CREATE / QUICK MATCH -->
+
+        <div class="panel">
+
+            <div class="panelTitle">
+
+                <strong>
+                    🎮 Find a Match
+                </strong>
+
+                <span>
+                    2–4 Players
+                </span>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="quickMatchButton"
+                class="mainButton"
+            >
+                ⚡ QUICK MATCH
+            </button>
+
+
+            <button
+                type="button"
+                id="createRoomButton"
+                class="secondaryButton"
+            >
+                ➕ CREATE PRIVATE ROOM
+            </button>
+
+
+            <div class="joinBox">
+
+                <input
+                    type="text"
+                    id="roomInput"
+                    maxlength="6"
+                    placeholder="ROOM CODE"
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    id="joinRoomButton"
+                >
+                    JOIN
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ======================================================
+         GAME AREA
+         ====================================================== -->
+
+    <section id="gameArea">
+
+
+        <!-- HUD -->
+
+        <div class="gameHeader">
+
+            <div class="hudItem">
+
+                <small>
+                    Score
+                </small>
+
+                <strong id="scoreValue">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="hudItem">
+
+                <small>
+                    Alive
+                </small>
+
+                <strong id="aliveValue">
+                    0
+                </strong>
+
+            </div>
+
+
+            <div class="hudItem">
+
+                <small>
+                    Time
+                </small>
+
+                <strong id="timeValue">
+                    00:00
+                </strong>
+
+            </div>
+
+
+            <div class="hudItem">
+
+                <small>
+                    Lives
+                </small>
+
+                <strong id="livesValue">
+                    ❤️❤️❤️
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- CANVAS -->
+
+        <div id="gameCanvasWrap">
+
+            <canvas
+                id="gameCanvas"
+                width="390"
+                height="700"
+            ></canvas>
+
+
+            <!-- COUNTDOWN -->
+
+            <div
+                id="countdownOverlay"
+                class="hidden"
+            >
+
+                <div id="countdownMessage">
+                    ALL PLAYERS READY!
+                </div>
+
+                <div id="countdownNumber">
+                    3
+                </div>
+
+            </div>
+
+
+            <!-- WAITING -->
+
+            <div id="waitingOverlay">
+
+                <div class="waitingCard">
+
+                    <strong id="waitingTitle">
+                        Waiting for players
+                    </strong>
+
+                    <span id="waitingText">
+                        Minimum 2 players required
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- GAME MESSAGE -->
+
+            <div id="gameMessage">
+
+                <div
+                    class="messageIcon"
+                    id="messageIcon"
+                >
+                    🌋
+                </div>
+
+                <h2 id="messageTitle">
+                    ELIMINATED!
+                </h2>
+
+                <p id="messageText">
+                    You entered the lava.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTROLS -->
+
+        <div class="controls noSelect">
+
+            <button
+                type="button"
+                class="controlButton"
+                id="leftButton"
+                aria-label="Move left"
+            >
+                ◀
+            </button>
+
+            <button
+                type="button"
+                class="controlButton"
+                id="rightButton"
+                aria-label="Move right"
+            >
+                ▶
+            </button>
+
+            <button
+                type="button"
+                class="controlButton jumpButton"
+                id="jumpButton"
+                aria-label="Jump"
+            >
+                ⬆
+            </button>
+
+        </div>
+
+
+        <!-- MATCH INFO -->
+
+        <div class="matchInfo">
+
+            <span>
+                Room:
+                <strong id="gameRoomCode">
+                    ------
+                </strong>
+            </span>
+
+            <span>
+                Last player standing wins
+            </span>
+
+        </div>
+
+
+        <!-- LIVE LEADERBOARD -->
+
+        <div id="liveLeaderboard">
+
+            <div class="leaderboardTitle">
+                🏆 Live Players
+            </div>
+
+            <div id="leaderboardRows">
+                Waiting...
+            </div>
+
+        </div>
+
+
+        <!-- LEAVE -->
+
+        <div style="padding:12px 14px 0;">
+
+            <button
+                type="button"
+                class="secondaryButton dangerButton"
+                id="leaveButton"
+            >
+                🚪 LEAVE MATCH
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ======================================================
+         WINNER OVERLAY
+         ====================================================== -->
+
+    <div id="winnerOverlay">
+
+        <div class="winnerCard">
+
+            <div class="crown">
+                👑
+            </div>
+
+            <h2 id="winnerTitle">
+                LAST PLAYER STANDING!
+            </h2>
+
+            <div
+                class="winnerName"
+                id="winnerName"
+            >
+                Winner
+            </div>
+
+            <div
+                class="winnerScore"
+                id="winnerScore"
+            >
+                Score: 0
+            </div>
+
+
+            <div id="resultLeaderboard"></div>
+
+
+            <button
+                type="button"
+                class="mainButton"
+                id="returnLobbyButton"
+            >
+                🔄 RETURN TO LOBBY
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         BACKGROUND MUSIC
+         ====================================================== -->
+
+    <audio
+        id="gamesBackgroundSound"
+        src="./games-bg.mp3"
+        loop
+        preload="auto"
+    ></audio>
+
+</div>
+
+
+<!-- ==========================================================
+     VOLCANO JUMP JAVASCRIPT
+     ========================================================== -->
+
+<script type="module" src="./volcano-jump.js"></script>
+
+
+<script>
+
+/* ============================================================
+   BASIC PAGE CONTROLS
+   ============================================================ */
+
+const soundButton =
+    document.getElementById("soundButton");
+
+const music =
+    document.getElementById("gamesBackgroundSound");
+
+const backButton =
+    document.getElementById("backButton");
+
+let musicPlaying = false;
+
+
+/* ============================================================
+   SOUND
+   ============================================================ */
+
+async function startGameMusic(){
+
+    try{
+
+        music.volume = 0.18;
+
+        await music.play();
+
+        musicPlaying = true;
+
+        soundButton.textContent = "🔊";
+
+    }catch(error){
+
+        musicPlaying = false;
+
+        soundButton.textContent = "🔇";
+
+    }
+
+}
+
+
+soundButton.addEventListener("click", async ()=>{
+
+    if(musicPlaying){
+
+        music.pause();
+
+        musicPlaying = false;
+
+        soundButton.textContent = "🔇";
+
+    }else{
+
+        await startGameMusic();
+
+    }
+
+});
+
+
+/* ============================================================
+   FIRST USER INTERACTION
+   ============================================================ */
+
+document.addEventListener(
+    "pointerdown",
+    ()=>{
+        if(!musicPlaying){
+            startGameMusic();
+        }
+    },
+    {
+        once:true,
+        passive:true
+    }
+);
+
+
+/* ============================================================
+   BACK
+   ============================================================ */
+
+backButton.addEventListener(
+    "click",
+    ()=>{
+        window.location.href = "../games.html";
+    }
+);
+
+</script>
+
+</body>
+</html>
