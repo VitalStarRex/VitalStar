@@ -2,6 +2,8 @@
 // VITALSTAR — VOLCANO JUMP
 // Multiplayer Last-Player-Standing Road Survival
 //
+// LAVA ONLY
+//
 // Firebase v10.12.2
 // ============================================================
 
@@ -55,9 +57,16 @@ const GRAVITY = 1350;
 
 const STATE_SEND_INTERVAL = 250;
 
-const LAVA_WARNING_TIME = 1.5;
+// Lava warning shown before the wave reaches the road.
+const LAVA_WARNING_TIME = 1.0;
 
 const LAVA_HEIGHT = 42;
+
+// Lava travels from the front of the road,
+// across the player position,
+// and then behind the player.
+const LAVA_START_Y = 300;
+const LAVA_END_Y = 705;
 
 const COLORS = [
     "#54d8ff",
@@ -370,10 +379,11 @@ let lastScoreUpdate = 0;
 
 let roadScroll = 0;
 
-let obstacleSeed = 1;
+// Room seed is used only for deterministic visual variation.
+let roomSeed = 1;
 
-let obstacles = [];
-
+// LAVA ONLY.
+// There is deliberately NO obstacles array.
 let lavaEvents = [];
 
 let particles = [];
@@ -428,14 +438,6 @@ async function getFullName(user){
 
     try{
 
-        const userRef =
-            doc(
-                db,
-                "users",
-                user.uid
-            );
-
-
         const snapshot =
             await getDocs(
                 query(
@@ -476,13 +478,6 @@ async function getFullName(user){
 
     }
 
-
-    /*
-     * Firebase Auth displayName is the
-     * secondary fallback.
-     *
-     * Email is intentionally NOT used.
-     */
 
     if(
         user.displayName &&
@@ -537,7 +532,6 @@ function getUserName(user){
 // ============================================================
 // USERNAME
 // Used internally only.
-// Never displayed above the player.
 // ============================================================
 
 function getUsername(user){
@@ -1086,7 +1080,24 @@ async function joinExistingRoom(
         );
 
 
-    if(existingPlayers.size >= MAX_PLAYERS){
+    /*
+     * If this user is already in the room,
+     * don't count their existing document
+     * as an additional player.
+     */
+
+    const alreadyJoined =
+        existingPlayers.docs.some(
+            p =>
+                p.id ===
+                currentUser.uid
+        );
+
+
+    if(
+        existingPlayers.size >= MAX_PLAYERS &&
+        !alreadyJoined
+    ){
 
         setLobbyStatus(
             "This room is full."
@@ -1106,10 +1117,6 @@ async function joinExistingRoom(
             currentUser
         );
 
-
-    /*
-     * Store the full name locally.
-     */
 
     currentUser.fullName =
         fullName;
@@ -1147,24 +1154,11 @@ async function joinExistingRoom(
             uid:
                 currentUser.uid,
 
-            /*
-             * FULL NAME
-             *
-             * This is what is displayed
-             * above the player.
-             */
-
             displayName:
                 fullName,
 
             fullName:
                 fullName,
-
-            /*
-             * Username is kept only for
-             * compatibility with existing
-             * lobby data.
-             */
 
             username:
                 getUsername(
@@ -1371,11 +1365,6 @@ function subscribeToPlayers(){
                                     playerDoc.id,
 
                                 ...data,
-
-                                /*
-                                 * Always prefer
-                                 * fullName.
-                                 */
 
                                 displayName:
                                     data.fullName ||
@@ -1814,15 +1803,26 @@ function beginGame(){
     player.invulnerable = 1.5;
 
 
-    obstacleSeed =
+    /*
+     * Shared room seed.
+     *
+     * Used only for deterministic background
+     * visuals and lava wave variation.
+     */
+    roomSeed =
         Number(
             roomData?.seed ||
             1
         );
 
 
-    generateObstacles();
-
+    /*
+     * LAVA ONLY.
+     *
+     * No rocks.
+     * No meteors.
+     * No obstacle generation.
+     */
     generateLavaEvents();
 
 
@@ -1914,83 +1914,187 @@ function seededRandom(seed){
 
 
 // ============================================================
-// NORMAL OBSTACLES
+// LAVA DIFFICULTY
+// ============================================================
+//
+// The difficulty is determined ONLY by shared
+// gameElapsed.
+//
+// Therefore every player in the same room
+// gets exactly the same progression.
+//
+// 0–30 sec   = 1.00x / ~3.0 sec
+// 30–60 sec  = 1.25x / ~2.5 sec
+// 60–90 sec  = 1.50x / ~2.1 sec
+// 90–120 sec = 1.80x / ~1.7 sec
+// 120+ sec   = 2.10x+ / ~1.4 sec
 // ============================================================
 
-function generateObstacles(){
+function getLavaDifficulty(time){
 
-    obstacles = [];
-
-    const random =
-        seededRandom(
-            obstacleSeed + 900
+    const t =
+        Math.max(
+            0,
+            Number(time) || 0
         );
 
 
-    let time = 5;
+    if(t < 30){
 
+        return {
 
-    while(
-        time <
-        GAME_DURATION - 3
-    ){
+            speedMultiplier: 1.0,
 
-        time +=
-            3.5 +
-            random() * 3;
+            spawnGap: 3.0
 
-
-        const lane =
-            Math.floor(
-                random() * 3
-            );
-
-
-        obstacles.push({
-
-            id:
-                `obstacle-${obstacles.length}`,
-
-            type:
-                random() < .6
-                    ? "rock"
-                    : "meteor",
-
-            time,
-
-            lane,
-
-            x:
-                82 +
-                lane * 113,
-
-            y:
-                535,
-
-            width:
-                42,
-
-            height:
-                36,
-
-            speed:
-                190 +
-                random() * 100,
-
-            direction:
-                random() > .5
-                    ? 1
-                    : -1
-
-        });
+        };
 
     }
+
+
+    if(t < 60){
+
+        return {
+
+            speedMultiplier: 1.25,
+
+            spawnGap: 2.5
+
+        };
+
+    }
+
+
+    if(t < 90){
+
+        return {
+
+            speedMultiplier: 1.5,
+
+            spawnGap: 2.1
+
+        };
+
+    }
+
+
+    if(t < 120){
+
+        return {
+
+            speedMultiplier: 1.8,
+
+            spawnGap: 1.7
+
+        };
+
+    }
+
+
+    /*
+     * 120+ seconds.
+     *
+     * Speed continues increasing slightly
+     * after the 120 second milestone.
+     *
+     * At 120 sec = 2.10x
+     * At 150 sec = 2.17x
+     * At 180 sec = 2.24x
+     *
+     * Spawn gap stays around 1.4 sec.
+     */
+
+    const extraTime =
+        Math.max(
+            0,
+            t - 120
+        );
+
+
+    const extraMultiplier =
+        Math.min(
+            0.24,
+            extraTime * 0.002
+        );
+
+
+    return {
+
+        speedMultiplier:
+            2.1 +
+            extraMultiplier,
+
+        spawnGap:
+            1.4
+
+    };
 
 }
 
 
 // ============================================================
-// FULL ROAD LAVA EVENTS
+// LAVA MOVEMENT SPEED
+// ============================================================
+//
+// Base speed is deliberately chosen so the lava
+// crosses the entire road in a little under
+// three seconds at 1.0x.
+//
+// Increasing the difficulty multiplier
+// makes the same lava wave move faster.
+// ============================================================
+
+function getLavaSpeed(time){
+
+    const difficulty =
+        getLavaDifficulty(
+            time
+        );
+
+
+    const baseSpeed =
+        (
+            LAVA_END_Y -
+            LAVA_START_Y
+        ) /
+        2.8;
+
+
+    return (
+        baseSpeed *
+        difficulty.speedMultiplier
+    );
+
+}
+
+
+// ============================================================
+// LAVA SPAWN GAP
+// ============================================================
+
+function getLavaSpawnGap(time){
+
+    return getLavaDifficulty(
+        time
+    ).spawnGap;
+
+}
+
+
+// ============================================================
+// GENERATE LAVA EVENTS
+// ============================================================
+//
+// Lava waves are pre-generated from the same
+// room seed and the same timeline.
+//
+// Most importantly:
+//
+// The spawn schedule is based on GAME TIME,
+// not on an individual player's survival time.
+//
+// Every player therefore sees the same lava
+// progression in the room.
 // ============================================================
 
 function generateLavaEvents(){
@@ -2000,59 +2104,103 @@ function generateLavaEvents(){
 
     const random =
         seededRandom(
-            obstacleSeed + 5000
+            roomSeed + 5000
         );
 
 
-    let time = 7;
+    let time = 3.0;
+
+    let eventIndex = 0;
 
 
     while(
         time <
-        GAME_DURATION - 3
+        GAME_DURATION
     ){
 
-        time +=
-            5 +
-            random() * 4;
+        const difficulty =
+            getLavaDifficulty(
+                time
+            );
+
+
+        /*
+         * Tiny deterministic variation keeps
+         * the waves from feeling perfectly robotic,
+         * while remaining identical for every
+         * player because the same room seed
+         * is used.
+         *
+         * The variation is kept small so the
+         * requested spawn gaps remain intact.
+         */
+
+        const variation =
+            (
+                random() -
+                0.5
+            ) * 0.12;
+
+
+        const gap =
+            Math.max(
+                1.25,
+                difficulty.spawnGap +
+                variation
+            );
+
+
+        const speed =
+            getLavaSpeed(
+                time
+            );
+
+
+        const distance =
+            LAVA_END_Y -
+            LAVA_START_Y;
+
+
+        const duration =
+            distance /
+            speed;
 
 
         lavaEvents.push({
 
+            id:
+                `lava-${eventIndex}`,
+
             time,
 
-            /*
-             * The lava starts at the far
-             * end of the road.
-             */
+            startY:
+                LAVA_START_Y,
 
-            startY: 300,
+            endY:
+                LAVA_END_Y,
 
-            /*
-             * The player stands at
-             * approximately Y = 528.
-             */
-
-            playerY: 528,
-
-            /*
-             * It continues past the player
-             * and goes behind them.
-             */
-
-            endY: 705,
-
-            duration:
-                2.2 +
-                random() * .35,
+            duration,
 
             warning:
                 LAVA_WARNING_TIME,
 
             height:
-                LAVA_HEIGHT
+                LAVA_HEIGHT,
+
+            speed,
+
+            speedMultiplier:
+                difficulty.speedMultiplier,
+
+            spawnGap:
+                difficulty.spawnGap
 
         });
+
+
+        eventIndex++;
+
+        time += gap;
 
     }
 
@@ -2074,29 +2222,46 @@ function getRoadBoundsAtY(y){
             0,
             Math.min(
                 1,
-                (y - topY) /
-                (bottomY - topY)
+                (
+                    y -
+                    topY
+                ) /
+                (
+                    bottomY -
+                    topY
+                )
             )
         );
 
 
     const left =
         125 +
-        (38 - 125) *
+        (
+            38 -
+            125
+        ) *
         progress;
 
 
     const right =
         265 +
-        (352 - 265) *
+        (
+            352 -
+            265
+        ) *
         progress;
 
 
     return {
+
         left,
+
         right,
+
         width:
-            right - left
+            right -
+            left
+
     };
 
 }
@@ -2125,10 +2290,9 @@ function getLavaPosition(event){
 
 
     /*
-     * The lava moves down the road:
-     *
-     * 300 = far in front
-     * 528 = player
+     * 300 = front/far end
+     * 528 = player area
+     * 570 = player ground
      * 705 = behind player
      */
 
@@ -2142,7 +2306,9 @@ function getLavaPosition(event){
 
 
     const road =
-        getRoadBoundsAtY(y);
+        getRoadBoundsAtY(
+            y
+        );
 
 
     return {
@@ -2202,6 +2368,13 @@ function gameLoop(now){
 
     }
 
+
+    /*
+     * IMPORTANT:
+     *
+     * All difficulty calculations use
+     * this shared room start time.
+     */
 
     gameElapsed =
         Math.max(
@@ -2332,8 +2505,9 @@ function updatePlayer(delta){
     }
 
 
-    checkObstacles();
-
+    /*
+     * ONLY LAVA COLLISION.
+     */
     checkLava();
 
 }
@@ -2529,87 +2703,16 @@ window.addEventListener(
 
 
 // ============================================================
-// NORMAL OBSTACLE COLLISION
-// ============================================================
-
-function checkObstacles(){
-
-    if(player.invulnerable > 0)
-        return;
-
-
-    for(
-        const obstacle
-        of obstacles
-    ){
-
-        const age =
-            gameElapsed -
-            obstacle.time;
-
-
-        if(
-            age < 0 ||
-            age > 4
-        )
-            continue;
-
-
-        let x =
-            obstacle.x;
-
-        let y =
-            obstacle.y;
-
-
-        if(
-            obstacle.type ===
-            "rock"
-        ){
-
-            x +=
-                Math.sin(
-                    age * 2
-                ) * 115;
-
-        }else{
-
-            y =
-                -70 +
-                obstacle.speed *
-                age;
-
-        }
-
-
-        if(
-            rectanglesOverlap(
-                player.x,
-                player.y,
-                player.width,
-                player.height,
-                x,
-                y,
-                obstacle.width,
-                obstacle.height
-            )
-        ){
-
-            hitPlayer(
-                "You hit an obstacle."
-            );
-
-            return;
-
-        }
-
-    }
-
-}
-
-
-// ============================================================
 // FULL ROAD LAVA COLLISION
+// ============================================================
+//
+// Lava is the ONLY obstacle.
+//
+// The player can avoid it by jumping above
+// the lava's top edge.
+//
+// Once the lava travels beyond the player's
+// ground position it cannot hit anymore.
 // ============================================================
 
 function checkLava(){
@@ -2629,19 +2732,15 @@ function checkLava(){
 
 
         /*
-         * Not spawned yet.
+         * Not active yet.
          */
-
         if(elapsed < 0)
             continue;
 
 
         /*
-         * Once the lava has travelled
-         * behind the player, it can NEVER
-         * hit the player anymore.
+         * Already behind the player.
          */
-
         if(
             elapsed >
             event.duration
@@ -2655,17 +2754,9 @@ function checkLava(){
             );
 
 
-        /*
-         * Lava bottom.
-         */
-
         const lavaBottom =
             lava.y;
 
-
-        /*
-         * Lava top.
-         */
 
         const lavaTop =
             lava.y -
@@ -2693,12 +2784,9 @@ function checkLava(){
 
 
         /*
-         * If the player is above the
-         * lava, the jump succeeds.
-         *
-         * If the lava has already gone
-         * below the player, collision
-         * stops automatically.
+         * Jumping works naturally because
+         * the player's bottom will be above
+         * the lava's top.
          */
 
         if(
@@ -2797,8 +2885,8 @@ async function hitPlayer(reason){
 
 
     showGameMessage(
-        "⚠️",
-        "HIT!",
+        "🔥",
+        "LAVA HIT!",
         `${reason} ${player.lives} life${
             player.lives === 1
                 ? ""
@@ -3112,10 +3200,6 @@ async function updateGameStateNetwork(){
                     Math.floor(
                         player.score
                     ),
-
-                /*
-                 * Keep full name synchronized.
-                 */
 
                 displayName:
                     player.fullName,
@@ -4837,6 +4921,10 @@ function leaveRoomLocal(){
 
     players.clear();
 
+    lavaEvents = [];
+
+    particles = [];
+
 
     player.ready = false;
 
@@ -4938,15 +5026,13 @@ function drawScene(){
     drawRoad();
 
     /*
-     * Lava is drawn before players.
-     * When it passes the player it
-     * continues downward, visually
-     * going behind them.
+     * LAVA ONLY.
+     *
+     * There is deliberately no
+     * drawObstacles() call.
      */
 
     drawLavaEvents();
-
-    drawObstacles();
 
     drawOtherPlayers();
 
@@ -5011,7 +5097,7 @@ function drawSky(){
         const x =
             (
                 i * 83 +
-                obstacleSeed * 13
+                roomSeed * 13
             ) %
             ROAD_WIDTH;
 
@@ -5019,7 +5105,7 @@ function drawSky(){
         const y =
             (
                 i * 47 +
-                obstacleSeed * 7
+                roomSeed * 7
             ) %
             260;
 
@@ -5391,7 +5477,7 @@ function drawRoad(){
 
 
 // ============================================================
-// FULL ROAD LAVA DRAWING
+// LAVA DRAWING
 // ============================================================
 
 function drawLavaEvents(){
@@ -5407,9 +5493,8 @@ function drawLavaEvents(){
 
 
         /*
-         * Before warning.
+         * Not visible yet.
          */
-
         if(
             age <
             -event.warning
@@ -5421,10 +5506,8 @@ function drawLavaEvents(){
 
 
         /*
-         * Remove visually after
-         * passing behind the player.
+         * Already behind the player.
          */
-
         if(
             age >
             event.duration
@@ -5492,12 +5575,6 @@ function drawLavaEvents(){
             lava.y -
             event.height;
 
-
-        /*
-         * Once the lava is below
-         * the player it is physically
-         * behind the player.
-         */
 
         const behindPlayer =
             lava.y >
@@ -5610,9 +5687,8 @@ function drawLavaEvents(){
 
 
         /*
-         * When behind the player,
-         * make it visually lower and
-         * slightly faded.
+         * Fade the lava slightly once
+         * it has moved behind the player.
          */
 
         if(behindPlayer){
@@ -5704,122 +5780,6 @@ function drawLavaEvents(){
             ctx.fill();
 
         }
-
-    }
-
-}
-
-
-// ============================================================
-// NORMAL OBSTACLES
-// ============================================================
-
-function drawObstacles(){
-
-    for(
-        const obstacle
-        of obstacles
-    ){
-
-        const age =
-            gameElapsed -
-            obstacle.time;
-
-
-        if(
-            age < 0 ||
-            age > 4
-        )
-            continue;
-
-
-        let x =
-            obstacle.x;
-
-        let y =
-            obstacle.y;
-
-
-        if(
-            obstacle.type ===
-            "rock"
-        ){
-
-            x +=
-                Math.sin(
-                    age * 2
-                ) * 115;
-
-        }else{
-
-            y =
-                -70 +
-                obstacle.speed *
-                age;
-
-        }
-
-
-        ctx.fillStyle =
-            "rgba(0,0,0,.3)";
-
-
-        ctx.beginPath();
-
-        ctx.ellipse(
-            x +
-            obstacle.width / 2,
-
-            y +
-            obstacle.height +
-            8,
-
-            obstacle.width,
-
-            7,
-
-            0,
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.fillStyle =
-            obstacle.type ===
-            "meteor"
-                ? "#6f2719"
-                : "#34303a";
-
-
-        ctx.beginPath();
-
-        ctx.arc(
-            x +
-            obstacle.width / 2,
-
-            y +
-            obstacle.height / 2,
-
-            obstacle.width / 2,
-
-            0,
-            Math.PI * 2
-        );
-
-        ctx.fill();
-
-
-        ctx.strokeStyle =
-            obstacle.type ===
-            "meteor"
-                ? "#ff4b16"
-                : "#67616d";
-
-        ctx.lineWidth = 3;
-
-        ctx.stroke();
 
     }
 
@@ -5957,14 +5917,6 @@ function drawRunner(
     ctx.fill();
 
 
-    /*
-     * FULL NAME PLATE
-     *
-     * No email.
-     * No username.
-     * No truncation.
-     */
-
     ctx.font =
         local
             ? "bold 10px system-ui"
@@ -6021,10 +5973,6 @@ function drawRunner(
         "#ffffff";
 
 
-    /*
-     * Full name is rendered.
-     */
-
     ctx.fillText(
         safeName,
         x +
@@ -6032,10 +5980,6 @@ function drawRunner(
         y - 10
     );
 
-
-    /*
-     * BODY
-     */
 
     ctx.fillStyle =
         color;
@@ -6054,10 +5998,6 @@ function drawRunner(
     ctx.fill();
 
 
-    /*
-     * HELMET
-     */
-
     ctx.fillStyle =
         "#f4f6ff";
 
@@ -6075,10 +6015,6 @@ function drawRunner(
     ctx.fill();
 
 
-    /*
-     * VISOR
-     */
-
     ctx.fillStyle =
         "#14203b";
 
@@ -6095,10 +6031,6 @@ function drawRunner(
 
     ctx.fill();
 
-
-    /*
-     * LEGS
-     */
 
     ctx.strokeStyle =
         "#171522";
@@ -6542,5 +6474,5 @@ window.addEventListener(
 // ============================================================
 
 console.log(
-    "🌋 VitalStar Volcano Jump loaded."
+    "🌋 VitalStar Volcano Jump loaded — LAVA ONLY."
 );
