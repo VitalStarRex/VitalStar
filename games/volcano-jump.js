@@ -57,7 +57,6 @@ const STATE_SEND_INTERVAL = 250;
 
 const LAVA_WARNING_TIME = 1.5;
 
-const LAVA_WIDTH = 300;
 const LAVA_HEIGHT = 42;
 
 const COLORS = [
@@ -130,7 +129,7 @@ const canvas =
     document.getElementById("gameCanvas");
 
 const ctx =
-    canvas.getContext("2d");
+    canvas?.getContext("2d");
 
 const countdownOverlay =
     document.getElementById("countdownOverlay");
@@ -219,7 +218,7 @@ const authReady =
 
 onAuthStateChanged(
     auth,
-    user => {
+    async user => {
 
         currentUser =
             user || null;
@@ -262,7 +261,7 @@ onAuthStateChanged(
 
 
         setLobbyStatus(
-            `Welcome ${getUserName(currentUser)}. Create or join a room.`
+            `Welcome ${await getFullName(currentUser)}. Create or join a room.`
         );
 
     }
@@ -305,7 +304,9 @@ const player = {
         ROAD_WIDTH / 2 -
         PLAYER_WIDTH / 2,
 
-    y: 570,
+    y:
+        570 -
+        PLAYER_HEIGHT,
 
     vx: 0,
 
@@ -335,7 +336,9 @@ const player = {
 
     eliminationReason: "",
 
-    color: COLORS[0]
+    color: COLORS[0],
+
+    fullName: "Player"
 
 };
 
@@ -413,37 +416,152 @@ function setLobbyStatus(text){
 }
 
 
+// ============================================================
+// FULL NAME
+// ============================================================
+
+async function getFullName(user){
+
+    if(!user)
+        return "Player";
+
+
+    try{
+
+        const userRef =
+            doc(
+                db,
+                "users",
+                user.uid
+            );
+
+
+        const snapshot =
+            await getDocs(
+                query(
+                    collection(db, "users"),
+                    where(
+                        "__name__",
+                        "==",
+                        user.uid
+                    ),
+                    limit(1)
+                )
+            );
+
+
+        if(!snapshot.empty){
+
+            const data =
+                snapshot.docs[0].data();
+
+
+            const fullName =
+                data.fullName ||
+                data.name ||
+                `${data.firstName || ""} ${data.lastName || ""}`.trim();
+
+
+            if(fullName)
+                return fullName;
+
+        }
+
+    }catch(error){
+
+        console.warn(
+            "Could not load full name:",
+            error
+        );
+
+    }
+
+
+    /*
+     * Firebase Auth displayName is the
+     * secondary fallback.
+     *
+     * Email is intentionally NOT used.
+     */
+
+    if(
+        user.displayName &&
+        user.displayName.trim()
+    ){
+
+        return user.displayName.trim();
+
+    }
+
+
+    return "Player";
+
+}
+
+
+// ============================================================
+// SYNCHRONOUS DISPLAY NAME
+// ============================================================
+
 function getUserName(user){
 
     if(!user)
         return "Player";
 
-    return (
-        user.displayName ||
-        user.email?.split("@")[0] ||
-        "Player"
-    );
+
+    if(
+        user.fullName &&
+        user.fullName.trim()
+    ){
+
+        return user.fullName.trim();
+
+    }
+
+
+    if(
+        user.displayName &&
+        user.displayName.trim()
+    ){
+
+        return user.displayName.trim();
+
+    }
+
+
+    return "Player";
 
 }
 
+
+// ============================================================
+// USERNAME
+// Used internally only.
+// Never displayed above the player.
+// ============================================================
 
 function getUsername(user){
 
     if(!user)
         return "player";
 
+
     const name =
         user.displayName ||
-        user.email?.split("@")[0] ||
         "player";
 
+
     return name
-        .replace(/\s+/g, "")
+        .replace(/\s+/g,"")
         .toLowerCase()
         .slice(0,20);
 
 }
 
+
+// ============================================================
+// PLAYER COLOR
+// ============================================================
 
 function getPlayerColor(uid){
 
@@ -452,7 +570,11 @@ function getPlayerColor(uid){
 
     let total = 0;
 
-    for(let i = 0; i < uid.length; i++){
+    for(
+        let i = 0;
+        i < uid.length;
+        i++
+    ){
 
         total +=
             uid.charCodeAt(i);
@@ -465,6 +587,10 @@ function getPlayerColor(uid){
 
 }
 
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
 
 function escapeHtml(value){
 
@@ -975,6 +1101,23 @@ async function joinExistingRoom(
     }
 
 
+    const fullName =
+        await getFullName(
+            currentUser
+        );
+
+
+    /*
+     * Store the full name locally.
+     */
+
+    currentUser.fullName =
+        fullName;
+
+    player.fullName =
+        fullName;
+
+
     player.color =
         getPlayerColor(
             currentUser.uid
@@ -992,7 +1135,9 @@ async function joinExistingRoom(
         ROAD_WIDTH / 2 -
         PLAYER_WIDTH / 2;
 
-    player.y = 570;
+    player.y =
+        570 -
+        PLAYER_HEIGHT;
 
 
     await setDoc(
@@ -1002,10 +1147,24 @@ async function joinExistingRoom(
             uid:
                 currentUser.uid,
 
+            /*
+             * FULL NAME
+             *
+             * This is what is displayed
+             * above the player.
+             */
+
             displayName:
-                getUserName(
-                    currentUser
-                ),
+                fullName,
+
+            fullName:
+                fullName,
+
+            /*
+             * Username is kept only for
+             * compatibility with existing
+             * lobby data.
+             */
 
             username:
                 getUsername(
@@ -1201,13 +1360,33 @@ function subscribeToPlayers(){
                 snapshot.forEach(
                     playerDoc => {
 
+                        const data =
+                            playerDoc.data();
+
+
                         players.set(
                             playerDoc.id,
                             {
                                 uid:
                                     playerDoc.id,
 
-                                ...playerDoc.data()
+                                ...data,
+
+                                /*
+                                 * Always prefer
+                                 * fullName.
+                                 */
+
+                                displayName:
+                                    data.fullName ||
+                                    data.displayName ||
+                                    "Player",
+
+                                fullName:
+                                    data.fullName ||
+                                    data.displayName ||
+                                    "Player"
+
                             }
                         );
 
@@ -1612,7 +1791,9 @@ function beginGame(){
         ROAD_WIDTH / 2 -
         PLAYER_WIDTH / 2;
 
-    player.y = 570;
+    player.y =
+        570 -
+        PLAYER_HEIGHT;
 
     player.vx = 0;
 
@@ -1840,18 +2021,33 @@ function generateLavaEvents(){
 
             time,
 
+            /*
+             * The lava starts at the far
+             * end of the road.
+             */
+
+            startY: 300,
+
+            /*
+             * The player stands at
+             * approximately Y = 528.
+             */
+
+            playerY: 528,
+
+            /*
+             * It continues past the player
+             * and goes behind them.
+             */
+
+            endY: 705,
+
             duration:
-                1.45 +
+                2.2 +
                 random() * .35,
 
             warning:
                 LAVA_WARNING_TIME,
-
-            y:
-                570,
-
-            width:
-                LAVA_WIDTH,
 
             height:
                 LAVA_HEIGHT
@@ -1859,6 +2055,112 @@ function generateLavaEvents(){
         });
 
     }
+
+}
+
+
+// ============================================================
+// ROAD PERSPECTIVE
+// ============================================================
+
+function getRoadBoundsAtY(y){
+
+    const topY = 300;
+
+    const bottomY = 700;
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                (y - topY) /
+                (bottomY - topY)
+            )
+        );
+
+
+    const left =
+        125 +
+        (38 - 125) *
+        progress;
+
+
+    const right =
+        265 +
+        (352 - 265) *
+        progress;
+
+
+    return {
+        left,
+        right,
+        width:
+            right - left
+    };
+
+}
+
+
+// ============================================================
+// GET MOVING LAVA POSITION
+// ============================================================
+
+function getLavaPosition(event){
+
+    const elapsed =
+        gameElapsed -
+        event.time;
+
+
+    const progress =
+        Math.max(
+            0,
+            Math.min(
+                1,
+                elapsed /
+                event.duration
+            )
+        );
+
+
+    /*
+     * The lava moves down the road:
+     *
+     * 300 = far in front
+     * 528 = player
+     * 705 = behind player
+     */
+
+    const y =
+        event.startY +
+        (
+            event.endY -
+            event.startY
+        ) *
+        progress;
+
+
+    const road =
+        getRoadBoundsAtY(y);
+
+
+    return {
+
+        y,
+
+        left:
+            road.left,
+
+        right:
+            road.right,
+
+        width:
+            road.width,
+
+        progress
+
+    };
 
 }
 
@@ -2326,26 +2628,47 @@ function checkLava(){
             event.time;
 
 
+        /*
+         * Not spawned yet.
+         */
+
+        if(elapsed < 0)
+            continue;
+
+
+        /*
+         * Once the lava has travelled
+         * behind the player, it can NEVER
+         * hit the player anymore.
+         */
+
         if(
-            elapsed < 0 ||
             elapsed >
             event.duration
         )
             continue;
 
 
+        const lava =
+            getLavaPosition(
+                event
+            );
+
+
         /*
-         * IMPORTANT:
-         *
-         * The lava is a horizontal wall.
-         *
-         * If the player's feet are above the
-         * top of the lava, the player has
-         * successfully jumped over it.
+         * Lava bottom.
+         */
+
+        const lavaBottom =
+            lava.y;
+
+
+        /*
+         * Lava top.
          */
 
         const lavaTop =
-            event.y -
+            lava.y -
             event.height;
 
 
@@ -2356,19 +2679,27 @@ function checkLava(){
 
         const horizontalHit =
             player.x <
-                event.x +
-                event.width &&
+                lava.right &&
             player.x +
                 player.width >
-                event.x;
+                lava.left;
 
 
         const verticalHit =
             playerBottom >
                 lavaTop &&
             player.y <
-                event.y;
+                lavaBottom;
 
+
+        /*
+         * If the player is above the
+         * lava, the jump succeeds.
+         *
+         * If the lava has already gone
+         * below the player, collision
+         * stops automatically.
+         */
 
         if(
             horizontalHit &&
@@ -2670,8 +3001,7 @@ function updateHUD(){
             .filter(
                 p =>
                     p.alive
-            )
-            .length;
+            ).length;
 
 
     if(aliveValue)
@@ -2783,6 +3113,16 @@ async function updateGameStateNetwork(){
                         player.score
                     ),
 
+                /*
+                 * Keep full name synchronized.
+                 */
+
+                displayName:
+                    player.fullName,
+
+                fullName:
+                    player.fullName,
+
                 updatedAt:
                     serverTimestamp()
 
@@ -2855,6 +3195,12 @@ async function sendPlayerState(
                         player.score
                     ),
 
+                displayName:
+                    player.fullName,
+
+                fullName:
+                    player.fullName,
+
                 updatedAt:
                     serverTimestamp()
 
@@ -2914,6 +3260,12 @@ function renderPlayersList(){
                         currentUser?.uid;
 
 
+                    const fullName =
+                        p.fullName ||
+                        p.displayName ||
+                        "Player";
+
+
                     return `
                         <div class="playerRow">
 
@@ -2935,8 +3287,7 @@ function renderPlayersList(){
 
                                 <div class="playerName">
                                     ${escapeHtml(
-                                        p.displayName ||
-                                        "Player"
+                                        fullName
                                     )}
                                     ${
                                         isYou
@@ -2946,10 +3297,7 @@ function renderPlayersList(){
                                 </div>
 
                                 <div class="playerUsername">
-                                    @${escapeHtml(
-                                        p.username ||
-                                        "player"
-                                    )}
+                                    Player
                                 </div>
 
                             </div>
@@ -3038,6 +3386,12 @@ function renderLeaderboard(){
                         currentUser?.uid;
 
 
+                    const fullName =
+                        p.fullName ||
+                        p.displayName ||
+                        "Player";
+
+
                     return `
                         <div class="leaderRow">
 
@@ -3054,8 +3408,7 @@ function renderLeaderboard(){
                                 }
 
                                 ${escapeHtml(
-                                    p.displayName ||
-                                    "Player"
+                                    fullName
                                 )}
 
                                 ${
@@ -3416,10 +3769,9 @@ function showWinnerScreen(
                 ? (
                     winner.uid ===
                     currentUser?.uid
-                        ? getUserName(
-                            currentUser
-                        )
-                        : winner.displayName ||
+                        ? player.fullName
+                        : winner.fullName ||
+                          winner.displayName ||
                           "Winner"
                 )
                 : "No Winner";
@@ -3453,6 +3805,12 @@ function showWinnerScreen(
                             currentUser?.uid;
 
 
+                        const fullName =
+                            p.fullName ||
+                            p.displayName ||
+                            "Player";
+
+
                         return `
                             <div class="resultRow">
 
@@ -3464,12 +3822,13 @@ function showWinnerScreen(
 
                                     ${
                                         isMe
-                                            ? "⭐ You"
-                                            : escapeHtml(
-                                                p.displayName ||
-                                                "Player"
-                                            )
+                                            ? "⭐ "
+                                            : ""
                                     }
+
+                                    ${escapeHtml(
+                                        fullName
+                                    )}
 
                                     ${
                                         p.alive
@@ -3895,8 +4254,10 @@ function createChat(){
 
                 setTimeout(
                     () => {
+
                         chatMessages.scrollTop =
                             chatMessages.scrollHeight;
+
                     },
                     50
                 );
@@ -4073,10 +4434,11 @@ async function sendChatMessage(){
                 uid:
                     currentUser.uid,
 
+                fullName:
+                    player.fullName,
+
                 displayName:
-                    getUserName(
-                        currentUser
-                    ),
+                    player.fullName,
 
                 text,
 
@@ -4170,6 +4532,12 @@ function renderChatMessages(
             );
 
 
+            const fullName =
+                message.fullName ||
+                message.displayName ||
+                "Player";
+
+
             row.innerHTML =
                 `
                     <div
@@ -4181,8 +4549,7 @@ function renderChatMessages(
                         "
                     >
                         ${escapeHtml(
-                            message.displayName ||
-                            "Player"
+                            fullName
                         )}
                     </div>
 
@@ -4242,6 +4609,10 @@ function updateChatButton(){
 
     if(!chatToggleButton)
         return;
+
+
+    chatToggleButton.style.position =
+        "fixed";
 
 
     chatToggleButton.innerHTML =
@@ -4477,6 +4848,11 @@ function leaveRoomLocal(){
 
     player.distance = 0;
 
+    player.fullName =
+        getUserName(
+            currentUser
+        );
+
 
     winnerOverlay?.style &&
         (winnerOverlay.style.display =
@@ -4560,6 +4936,13 @@ function drawScene(){
     drawLavaBackground();
 
     drawRoad();
+
+    /*
+     * Lava is drawn before players.
+     * When it passes the player it
+     * continues downward, visually
+     * going behind them.
+     */
 
     drawLavaEvents();
 
@@ -5023,6 +5406,10 @@ function drawLavaEvents(){
             event.time;
 
 
+        /*
+         * Before warning.
+         */
+
         if(
             age <
             -event.warning
@@ -5032,6 +5419,11 @@ function drawLavaEvents(){
 
         }
 
+
+        /*
+         * Remove visually after
+         * passing behind the player.
+         */
 
         if(
             age >
@@ -5090,44 +5482,34 @@ function drawLavaEvents(){
         }
 
 
-        /*
-         * FULL ROAD LAVA
-         */
-
-        const progress =
-            Math.min(
-                1,
-                Math.max(
-                    0,
-                    age /
-                    event.duration
-                )
+        const lava =
+            getLavaPosition(
+                event
             );
 
 
-        const wave =
-            Math.sin(
-                progress * Math.PI
-            ) * 8;
-
-
-        const lavaX =
-            ROAD_WIDTH / 2 -
-            LAVA_WIDTH / 2;
-
-
         const lavaY =
-            event.y -
-            event.height -
-            wave;
+            lava.y -
+            event.height;
+
+
+        /*
+         * Once the lava is below
+         * the player it is physically
+         * behind the player.
+         */
+
+        const behindPlayer =
+            lava.y >
+            570;
 
 
         const gradient =
             ctx.createLinearGradient(
-                lavaX,
+                lava.left,
                 lavaY,
-                lavaX,
-                event.y
+                lava.left,
+                lava.y
             );
 
 
@@ -5159,31 +5541,49 @@ function drawLavaEvents(){
         ctx.beginPath();
 
 
+        const segments = 18;
+
+
         for(
-            let x = 0;
-            x <= LAVA_WIDTH;
-            x += 12
+            let i = 0;
+            i <= segments;
+            i++
         ){
 
-            const top =
-                lavaY +
+            const t =
+                i /
+                segments;
+
+
+            const x =
+                lava.left +
+                lava.width *
+                t;
+
+
+            const wave =
                 Math.sin(
-                    x * .09 +
+                    t * Math.PI * 8 +
                     gameElapsed * 12
                 ) * 5;
 
 
-            if(x === 0){
+            const top =
+                lavaY +
+                wave;
+
+
+            if(i === 0){
 
                 ctx.moveTo(
-                    lavaX + x,
+                    x,
                     top
                 );
 
             }else{
 
                 ctx.lineTo(
-                    lavaX + x,
+                    x,
                     top
                 );
 
@@ -5193,15 +5593,14 @@ function drawLavaEvents(){
 
 
         ctx.lineTo(
-            lavaX +
-            LAVA_WIDTH,
-            event.y
+            lava.right,
+            lava.y
         );
 
 
         ctx.lineTo(
-            lavaX,
-            event.y
+            lava.left,
+            lava.y
         );
 
 
@@ -5211,17 +5610,41 @@ function drawLavaEvents(){
 
 
         /*
+         * When behind the player,
+         * make it visually lower and
+         * slightly faded.
+         */
+
+        if(behindPlayer){
+
+            ctx.fillStyle =
+                "rgba(255,70,0,.18)";
+
+            ctx.fillRect(
+                lava.left,
+                lava.y -
+                event.height,
+                lava.width,
+                event.height
+            );
+
+        }
+
+
+        /*
          * Lava glow
          */
 
         ctx.fillStyle =
-            "rgba(255,100,0,.3)";
+            behindPlayer
+                ? "rgba(255,90,0,.18)"
+                : "rgba(255,100,0,.3)";
 
 
         ctx.fillRect(
-            lavaX - 10,
+            lava.left - 8,
             lavaY - 8,
-            LAVA_WIDTH + 20,
+            lava.width + 16,
             8
         );
 
@@ -5237,13 +5660,14 @@ function drawLavaEvents(){
         ){
 
             const bx =
-                lavaX +
+                lava.left +
                 10 +
                 (
                     i * 31
                 ) %
-                (
-                    LAVA_WIDTH - 15
+                Math.max(
+                    20,
+                    lava.width - 15
                 );
 
 
@@ -5436,8 +5860,14 @@ function drawOtherPlayers(){
         const y =
             Number(
                 other.y ??
-                520
+                528
             );
+
+
+        const fullName =
+            other.fullName ||
+            other.displayName ||
+            "Player";
 
 
         drawRunner(
@@ -5445,8 +5875,7 @@ function drawOtherPlayers(){
             y,
             other.color ||
                 "#54d8ff",
-            other.displayName ||
-                "Player",
+            fullName,
             false
         );
 
@@ -5481,9 +5910,10 @@ function drawLocalPlayer(){
         player.x,
         player.y,
         player.color,
-        getUserName(
-            currentUser
-        ),
+        player.fullName ||
+            getUserName(
+                currentUser
+            ),
         true
     );
 
@@ -5528,7 +5958,11 @@ function drawRunner(
 
 
     /*
-     * NAME PLATE
+     * FULL NAME PLATE
+     *
+     * No email.
+     * No username.
+     * No truncation.
      */
 
     ctx.font =
@@ -5544,9 +5978,6 @@ function drawRunner(
         String(
             name ||
             "Player"
-        ).slice(
-            0,
-            24
         );
 
 
@@ -5556,8 +5987,15 @@ function drawRunner(
         ).width;
 
 
+    const plateWidth =
+        Math.min(
+            textWidth + 10,
+            350
+        );
+
+
     ctx.fillStyle =
-        "rgba(4,8,20,.88)";
+        "rgba(4,8,20,.90)";
 
 
     ctx.beginPath();
@@ -5565,12 +6003,11 @@ function drawRunner(
     ctx.roundRect(
         x +
         PLAYER_WIDTH / 2 -
-        textWidth / 2 -
-        5,
+        plateWidth / 2,
 
         y - 22,
 
-        textWidth + 10,
+        plateWidth,
 
         16,
 
@@ -5583,6 +6020,10 @@ function drawRunner(
     ctx.fillStyle =
         "#ffffff";
 
+
+    /*
+     * Full name is rendered.
+     */
 
     ctx.fillText(
         safeName,
