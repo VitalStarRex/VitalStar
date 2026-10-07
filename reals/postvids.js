@@ -4,15 +4,18 @@ postvids.js
 
 NORMAL POST VIDEOS ONLY
 
-- Reads only: posts
-- No group videos
-- TikTok-style vertical scrolling
-- Full-height videos
-- No gap / no space below videos
+FIXED:
+
+- Real vertical scrolling
+- TikTok-style swipe
+- One video per snap
+- No empty space below videos
+- Feed height calculated from actual screen
 - Draggable progress bar
-- Autoplay / muted / data saver
+- Autoplay
+- Muted setting
+- Data saver
 - Like / Comment / Repost / Share
-- User profile picture + username
   ============================================================ */
 
 import { auth, db } from "../firebase.js";
@@ -52,6 +55,8 @@ let autoplayEnabled = true;
 let startMuted = true;
 let dataSaverEnabled = false;
 
+let resizeHandler = null;
+
 /* ============================================================
 SETTINGS
 ============================================================ */
@@ -77,21 +82,24 @@ dataSaverEnabled =
 if (settings) {
 
     if (
-        typeof settings.autoplay === "boolean"
+        typeof settings.autoplay ===
+        "boolean"
     ) {
         autoplayEnabled =
             settings.autoplay;
     }
 
     if (
-        typeof settings.muted === "boolean"
+        typeof settings.muted ===
+        "boolean"
     ) {
         startMuted =
             settings.muted;
     }
 
     if (
-        typeof settings.dataSaver === "boolean"
+        typeof settings.dataSaver ===
+        "boolean"
     ) {
         dataSaverEnabled =
             settings.dataSaver;
@@ -101,7 +109,71 @@ if (settings) {
 }
 
 /* ============================================================
-CHECK NORMAL PUBLIC VIDEO
+IMPORTANT:
+CALCULATE THE REAL AVAILABLE HEIGHT
+============================================================ */
+
+function setFeedHeight() {
+
+if (
+    !container ||
+    destroyed
+) {
+    return;
+}
+
+
+const rect =
+    container.getBoundingClientRect();
+
+
+const viewportHeight =
+    window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+
+
+/*
+   Everything above #realsFeed is occupied by:
+   - Reals header
+   - Tabs
+   - any other content in realsContent
+*/
+
+let availableHeight =
+    viewportHeight -
+    rect.top;
+
+
+/*
+   Safety protection.
+*/
+
+if (
+    !Number.isFinite(
+        availableHeight
+    ) ||
+    availableHeight < 200
+) {
+
+    availableHeight =
+        viewportHeight;
+}
+
+
+container.style.height =
+    `${availableHeight}px`;
+
+container.style.minHeight =
+    `${availableHeight}px`;
+
+container.style.maxHeight =
+    `${availableHeight}px`;
+
+}
+
+/* ============================================================
+PUBLIC NORMAL VIDEO CHECK
 ============================================================ */
 
 function isPublicNormalVideo(data) {
@@ -148,7 +220,7 @@ return !!video;
 }
 
 /* ============================================================
-PLAYABLE VIDEO URL
+PLAYABLE URL
 ============================================================ */
 
 function getPlayableVideoUrl(url) {
@@ -295,7 +367,7 @@ return {
 }
 
 /* ============================================================
-INITIALIZE FEED
+INITIALIZE FIREBASE FEED
 ============================================================ */
 
 function initializeFeed() {
@@ -307,14 +379,6 @@ if (destroyed) {
 
 showLoader();
 
-
-/*
-   IMPORTANT:
-   POSTS TAB USES ONLY posts.
-
-   No collectionGroup().
-   No groups.
-*/
 
 const postsRef =
     collection(
@@ -365,6 +429,7 @@ unsubscribePosts =
                     if (
                         normalized
                     ) {
+
                         loaded.push(
                             normalized
                         );
@@ -372,8 +437,6 @@ unsubscribePosts =
                 }
             );
 
-
-            /* Prevent duplicate normal posts */
 
             const unique =
                 new Map();
@@ -387,9 +450,7 @@ unsubscribePosts =
 
 
                     if (
-                        !unique.has(
-                            key
-                        )
+                        !unique.has(key)
                     ) {
 
                         unique.set(
@@ -415,6 +476,7 @@ unsubscribePosts =
 
 
             if (!destroyed) {
+
                 renderFeed();
             }
         },
@@ -422,7 +484,7 @@ unsubscribePosts =
         error => {
 
             console.error(
-                "VitalStar Post Reals error:",
+                "VitalStar Post Reals:",
                 error
             );
 
@@ -439,7 +501,7 @@ unsubscribePosts =
 }
 
 /* ============================================================
-LOAD PROFILE INFORMATION
+LOAD USER PROFILE
 ============================================================ */
 
 async function loadMissingProfiles() {
@@ -485,7 +547,7 @@ const tasks =
 
             try {
 
-                const userSnap =
+                const snap =
                     await getDoc(
                         doc(
                             db,
@@ -496,14 +558,14 @@ const tasks =
 
 
                 if (
-                    !userSnap.exists()
+                    !snap.exists()
                 ) {
                     return;
                 }
 
 
                 const data =
-                    userSnap.data();
+                    snap.data();
 
 
                 const profile = {
@@ -545,7 +607,7 @@ const tasks =
             } catch (error) {
 
                 console.warn(
-                    "Post profile load failed:",
+                    "Profile load failed:",
                     error
                 );
             }
@@ -560,7 +622,7 @@ await Promise.all(
 }
 
 /* ============================================================
-RENDER
+RENDER FEED
 ============================================================ */
 
 function renderFeed() {
@@ -590,6 +652,10 @@ if (
 
     showEmpty();
 
+    requestAnimationFrame(
+        setFeedHeight
+    );
+
     return;
 }
 
@@ -618,6 +684,7 @@ postVideos.forEach(
 
 
         currentVideos.push({
+
             data:
                 video,
 
@@ -633,11 +700,19 @@ container.appendChild(
 );
 
 
-setupObserver();
-
+/*
+   IMPORTANT:
+   Set height AFTER the feed
+   has been inserted into DOM.
+*/
 
 requestAnimationFrame(
     () => {
+
+        setFeedHeight();
+
+        setupObserver();
+
 
         if (
             autoplayEnabled &&
@@ -670,7 +745,7 @@ requestAnimationFrame(
 }
 
 /* ============================================================
-CREATE VIDEO CARD
+VIDEO CARD
 ============================================================ */
 
 function createVideoCard(
@@ -692,8 +767,6 @@ card.dataset.index =
     index;
 
 
-/* VIDEO */
-
 const videoElement =
     document.createElement(
         "video"
@@ -712,6 +785,12 @@ videoElement.playsInline =
     true;
 
 
+videoElement.setAttribute(
+    "webkit-playsinline",
+    ""
+);
+
+
 videoElement.preload =
     dataSaverEnabled
         ? "metadata"
@@ -725,14 +804,6 @@ videoElement.muted =
 videoElement.loop =
     true;
 
-
-videoElement.setAttribute(
-    "webkit-playsinline",
-    ""
-);
-
-
-/* GRADIENTS */
 
 const topGradient =
     document.createElement(
@@ -754,7 +825,9 @@ bottomGradient.className =
     "reals-bottom-gradient";
 
 
-/* PLAY */
+/* ========================================================
+   PLAY INDICATOR
+   ======================================================== */
 
 const playIndicator =
     document.createElement(
@@ -802,7 +875,7 @@ videoElement.addEventListener(
 
 
 /* ========================================================
-   DRAGGABLE PROGRESS BAR
+   PROGRESS BAR
    ======================================================== */
 
 const progressContainer =
@@ -860,7 +933,8 @@ progressContainer.appendChild(
 );
 
 
-let dragging = false;
+let dragging =
+    false;
 
 
 function seekFromPointer(
@@ -871,7 +945,12 @@ function seekFromPointer(
         progressTrack.getBoundingClientRect();
 
 
-    if (!rect.width) {
+    if (
+        !rect.width ||
+        !Number.isFinite(
+            videoElement.duration
+        )
+    ) {
         return;
     }
 
@@ -893,23 +972,15 @@ function seekFromPointer(
         );
 
 
-    if (
-        Number.isFinite(
-            videoElement.duration
-        ) &&
-        videoElement.duration > 0
-    ) {
-
-        videoElement.currentTime =
-            position *
-            videoElement.duration;
+    videoElement.currentTime =
+        position *
+        videoElement.duration;
 
 
-        updateProgress(
-            card,
-            videoElement
-        );
-    }
+    updateProgress(
+        card,
+        videoElement
+    );
 }
 
 
@@ -1024,7 +1095,9 @@ actions.className =
 const likeButton =
     createActionButton(
         "♡",
-        formatCount(video.likes),
+        formatCount(
+            video.likes
+        ),
         "Like"
     );
 
@@ -1032,7 +1105,9 @@ const likeButton =
 const commentButton =
     createActionButton(
         "💬",
-        formatCount(video.comments),
+        formatCount(
+            video.comments
+        ),
         "Comment"
     );
 
@@ -1040,7 +1115,9 @@ const commentButton =
 const repostButton =
     createActionButton(
         "⟳",
-        formatCount(video.reposts),
+        formatCount(
+            video.reposts
+        ),
         "Repost"
     );
 
@@ -1048,7 +1125,9 @@ const repostButton =
 const shareButton =
     createActionButton(
         "↗",
-        formatCount(video.shares),
+        formatCount(
+            video.shares
+        ),
         "Share"
     );
 
@@ -1071,39 +1150,21 @@ const moreButton =
     );
 
 
-actions.appendChild(
-    likeButton
-);
-
-actions.appendChild(
-    commentButton
-);
-
-actions.appendChild(
-    repostButton
-);
-
-actions.appendChild(
-    shareButton
-);
-
-actions.appendChild(
-    muteButton
-);
-
-actions.appendChild(
+actions.append(
+    likeButton,
+    commentButton,
+    repostButton,
+    shareButton,
+    muteButton,
     moreButton
 );
 
-
-/* LIKE */
 
 likeButton.addEventListener(
     "click",
     async event => {
 
         event.stopPropagation();
-
 
         await toggleLike(
             video,
@@ -1112,8 +1173,6 @@ likeButton.addEventListener(
     }
 );
 
-
-/* COMMENT */
 
 commentButton.addEventListener(
     "click",
@@ -1130,14 +1189,11 @@ commentButton.addEventListener(
 );
 
 
-/* REPOST */
-
 repostButton.addEventListener(
     "click",
     async event => {
 
         event.stopPropagation();
-
 
         await toggleRepost(
             video,
@@ -1147,14 +1203,11 @@ repostButton.addEventListener(
 );
 
 
-/* SHARE */
-
 shareButton.addEventListener(
     "click",
     async event => {
 
         event.stopPropagation();
-
 
         await sharePost(
             video,
@@ -1163,8 +1216,6 @@ shareButton.addEventListener(
     }
 );
 
-
-/* MUTE */
 
 muteButton.addEventListener(
     "click",
@@ -1193,8 +1244,6 @@ muteButton.addEventListener(
     }
 );
 
-
-/* MORE */
 
 moreButton.addEventListener(
     "click",
@@ -1309,20 +1358,14 @@ username.textContent =
         : "VitalStar";
 
 
-creatorText.appendChild(
-    name
-);
-
-creatorText.appendChild(
+creatorText.append(
+    name,
     username
 );
 
 
-creatorRow.appendChild(
-    avatar
-);
-
-creatorRow.appendChild(
+creatorRow.append(
+    avatar,
     creatorText
 );
 
@@ -1352,8 +1395,6 @@ info.appendChild(
 );
 
 
-/* CAPTION */
-
 if (video.text) {
 
     const caption =
@@ -1376,45 +1417,14 @@ if (video.text) {
 }
 
 
-/* ASSEMBLE */
-
-card.appendChild(
-    videoElement
-);
-
-card.appendChild(
-    topGradient
-);
-
-card.appendChild(
-    bottomGradient
-);
-
-card.appendChild(
-    playIndicator
-);
-
-card.appendChild(
-    progressContainer
-);
-
-card.appendChild(
-    actions
-);
-
-card.appendChild(
+card.append(
+    videoElement,
+    topGradient,
+    bottomGradient,
+    playIndicator,
+    progressContainer,
+    actions,
     info
-);
-
-
-videoElement.addEventListener(
-    "error",
-    () => {
-
-        showToast(
-            "This video could not be played."
-        );
-    }
 );
 
 
@@ -1570,13 +1580,6 @@ if (
     ) ||
     video.duration <= 0
 ) {
-
-    fill.style.width =
-        "0%";
-
-    thumb.style.left =
-        "0%";
-
     return;
 }
 
@@ -1604,7 +1607,7 @@ thumb.style.left =
 }
 
 /* ============================================================
-OBSERVER
+TIKTOK-STYLE OBSERVER
 ============================================================ */
 
 function setupObserver() {
@@ -1681,12 +1684,16 @@ observer =
             );
         },
         {
-            threshold:[
-                0,
-                0.35,
-                0.65,
-                0.9
-            ]
+            root:
+                container,
+
+            threshold:
+                [
+                    0.1,
+                    0.5,
+                    0.65,
+                    0.9
+                ]
         }
     );
 
@@ -1722,10 +1729,11 @@ container
 
             video.pause();
 
-
             try {
+
                 video.currentTime =
                     0;
+
             } catch {}
         }
     );
@@ -1889,13 +1897,11 @@ try {
                     }
                 );
 
-            } catch (
-                notificationError
-            ) {
+            } catch (error) {
 
                 console.warn(
-                    "Like notification failed:",
-                    notificationError
+                    "Notification failed:",
+                    error
                 );
             }
         }
@@ -2082,13 +2088,11 @@ try {
                     }
                 );
 
-            } catch (
-                notificationError
-            ) {
+            } catch (error) {
 
                 console.warn(
-                    "Repost notification failed:",
-                    notificationError
+                    "Notification failed:",
+                    error
                 );
             }
         }
@@ -2334,6 +2338,7 @@ container.className =
 
 
 container.innerHTML = `
+
     <div class="reals-loader">
 
         <div class="vs-loader">
@@ -2349,7 +2354,13 @@ container.innerHTML = `
         </div>
 
     </div>
+
 `;
+
+
+requestAnimationFrame(
+    setFeedHeight
+);
 
 }
 
@@ -2365,6 +2376,7 @@ if (!container) {
 
 
 container.innerHTML = `
+
     <div class="reals-empty">
 
         <div class="empty-icon">
@@ -2380,6 +2392,7 @@ container.innerHTML = `
         </div>
 
     </div>
+
 `;
 
 }
@@ -2398,6 +2411,7 @@ if (!container) {
 
 
 container.innerHTML = `
+
     <div class="reals-empty">
 
         <div class="empty-icon">
@@ -2413,6 +2427,7 @@ container.innerHTML = `
         </div>
 
     </div>
+
 `;
 
 }
@@ -2545,50 +2560,6 @@ container
         }
     );
 
-
-container
-    .querySelectorAll(
-        ".reals-action"
-    )
-    .forEach(
-        button => {
-
-            if (
-                button.getAttribute(
-                    "aria-label"
-                ) === "Mute"
-            ) {
-
-                const video =
-                    button
-                        .closest(
-                            ".reals-video-card"
-                        )
-                        ?.querySelector(
-                            "video"
-                        );
-
-
-                const icon =
-                    button.querySelector(
-                        ".action-icon"
-                    );
-
-
-                if (
-                    icon &&
-                    video
-                ) {
-
-                    icon.textContent =
-                        video.muted
-                            ? "🔇"
-                            : "🔊";
-                }
-            }
-        }
-    );
-
 }
 
 /* ============================================================
@@ -2623,6 +2594,26 @@ if (observer) {
 }
 
 
+if (resizeHandler) {
+
+    window.removeEventListener(
+        "resize",
+        resizeHandler
+    );
+
+
+    window.visualViewport
+        ?.removeEventListener(
+            "resize",
+            resizeHandler
+        );
+
+
+    resizeHandler =
+        null;
+}
+
+
 stopAllVideos();
 
 
@@ -2637,6 +2628,15 @@ postVideos =
 if (container) {
 
     container.innerHTML =
+        "";
+
+    container.style.height =
+        "";
+
+    container.style.minHeight =
+        "";
+
+    container.style.maxHeight =
         "";
 }
 
@@ -2692,7 +2692,47 @@ loadSettings();
 injectStyles();
 
 
+/*
+   Keep the feed height correct when:
+   - phone rotates
+   - browser viewport changes
+   - Android browser address bar moves
+*/
+
+resizeHandler =
+    () => {
+
+        requestAnimationFrame(
+            setFeedHeight
+        );
+    };
+
+
+window.addEventListener(
+    "resize",
+    resizeHandler,
+    {
+        passive:true
+    }
+);
+
+
+window.visualViewport
+    ?.addEventListener(
+        "resize",
+        resizeHandler,
+        {
+            passive:true
+        }
+    );
+
+
 initializeFeed();
+
+
+requestAnimationFrame(
+    setFeedHeight
+);
 
 
 return destroyPostVids;
@@ -2730,7 +2770,7 @@ onSettingChange
 };
 
 /* ============================================================
-STYLES
+CSS
 ============================================================ */
 
 function injectStyles() {
@@ -2757,7 +2797,7 @@ style.id =
 style.textContent = `
 
 /* ========================================================
-   REALS FEED
+   FEED
    ======================================================== */
 
 .post-reals-feed{
@@ -2765,22 +2805,26 @@ style.textContent = `
     position:relative;
 
     width:100%;
-    height:100%;
+
+    min-width:0;
 
     min-height:0;
 
-    display:block;
+    margin:0;
+
+    padding:0;
+
+    overflow-x:hidden;
 
     overflow-y:auto;
-    overflow-x:hidden;
+
+    -webkit-overflow-scrolling:touch;
+
+    overscroll-behavior-y:contain;
 
     scroll-snap-type:y mandatory;
 
     scroll-behavior:smooth;
-
-    overscroll-behavior-y:contain;
-
-    -webkit-overflow-scrolling:touch;
 
     touch-action:pan-y;
 
@@ -2788,17 +2832,16 @@ style.textContent = `
 
     background:#050914;
 
-    padding:0;
-    margin:0;
+    box-sizing:border-box;
 }
 
 
 .post-reals-feed::-webkit-scrollbar{
 
-    display:none;
-
     width:0;
     height:0;
+
+    display:none;
 }
 
 
@@ -2813,12 +2856,16 @@ style.textContent = `
     width:100%;
 
     height:100%;
+
     min-height:100%;
 
     margin:0;
+
     padding:0;
 
     overflow:hidden;
+
+    box-sizing:border-box;
 
     background:#050914;
 
@@ -2844,11 +2891,11 @@ style.textContent = `
 
     inset:0;
 
-    width:100%;
-    height:100%;
+    display:block;
 
-    min-width:100%;
-    min-height:100%;
+    width:100%;
+
+    height:100%;
 
     object-fit:cover;
 
@@ -2858,12 +2905,12 @@ style.textContent = `
 
     cursor:pointer;
 
-    display:block;
+    touch-action:pan-y;
 }
 
 
 /* ========================================================
-   TOP GRADIENT
+   GRADIENTS
    ======================================================== */
 
 .reals-top-gradient{
@@ -2879,7 +2926,7 @@ style.textContent = `
     background:
         linear-gradient(
             to bottom,
-            rgba(0,0,0,.45),
+            rgba(0,0,0,.42),
             transparent
         );
 
@@ -2888,10 +2935,6 @@ style.textContent = `
     z-index:2;
 }
 
-
-/* ========================================================
-   BOTTOM GRADIENT
-   ======================================================== */
 
 .reals-bottom-gradient{
 
@@ -2907,7 +2950,7 @@ style.textContent = `
         linear-gradient(
             to top,
             rgba(0,0,0,.82),
-            rgba(0,0,0,.20),
+            rgba(0,0,0,.18),
             transparent
         );
 
@@ -2918,7 +2961,7 @@ style.textContent = `
 
 
 /* ========================================================
-   PLAY BUTTON
+   PLAY
    ======================================================== */
 
 .reals-play-indicator{
@@ -2934,7 +2977,7 @@ style.textContent = `
     width:82px;
     height:82px;
 
-    border:none;
+    border:0;
 
     border-radius:50%;
 
@@ -2948,11 +2991,12 @@ style.textContent = `
     display:flex;
 
     align-items:center;
+
     justify-content:center;
 
     padding-left:4px;
 
-    z-index:7;
+    z-index:8;
 
     opacity:0;
 
@@ -2961,12 +3005,12 @@ style.textContent = `
 
     backdrop-filter:blur(4px);
 
-    cursor:pointer;
+    touch-action:manipulation;
 }
 
 
 /* ========================================================
-   DRAGGABLE PROGRESS
+   PROGRESS BAR
    ======================================================== */
 
 .video-progress-container{
@@ -2975,18 +3019,19 @@ style.textContent = `
 
     left:0;
     right:0;
-
     bottom:0;
 
-    height:25px;
+    height:28px;
 
-    padding:10px 8px;
+    padding:11px 8px;
 
-    z-index:20;
+    box-sizing:border-box;
 
-    cursor:pointer;
+    z-index:30;
 
     touch-action:none;
+
+    cursor:pointer;
 }
 
 
@@ -3012,9 +3057,9 @@ style.textContent = `
     left:0;
     top:0;
 
-    height:100%;
-
     width:0;
+
+    height:100%;
 
     border-radius:10px;
 
@@ -3026,8 +3071,8 @@ style.textContent = `
 
     position:absolute;
 
-    top:50%;
     left:0;
+    top:50%;
 
     width:11px;
     height:11px;
@@ -3038,10 +3083,6 @@ style.textContent = `
 
     transform:
         translate(-50%,-50%);
-
-    box-shadow:
-        0 1px 5px
-        rgba(0,0,0,.4);
 }
 
 
@@ -3053,11 +3094,11 @@ style.textContent = `
 
     position:absolute;
 
-    right:10px;
+    right:8px;
 
     bottom:72px;
 
-    width:55px;
+    width:54px;
 
     display:flex;
 
@@ -3065,19 +3106,21 @@ style.textContent = `
 
     align-items:center;
 
-    gap:13px;
+    gap:11px;
 
-    z-index:15;
+    z-index:20;
 }
 
 
 .reals-action{
 
-    width:52px;
+    width:50px;
 
-    min-height:48px;
+    min-height:47px;
 
-    border:none;
+    border:0;
+
+    padding:0;
 
     background:transparent;
 
@@ -3093,21 +3136,19 @@ style.textContent = `
 
     gap:3px;
 
-    cursor:pointer;
-
     text-shadow:
         0 1px 5px
         rgba(0,0,0,.75);
+
+    touch-action:manipulation;
 }
 
 
 .action-icon{
 
-    font-size:27px;
+    font-size:26px;
 
     line-height:1;
-
-    font-weight:400;
 }
 
 
@@ -3122,22 +3163,24 @@ style.textContent = `
 
 
 /* ========================================================
-   CREATOR INFO
+   USER INFO
    ======================================================== */
 
 .reals-info{
 
     position:absolute;
 
-    left:13px;
+    left:11px;
 
-    right:72px;
+    right:67px;
 
-    bottom:18px;
+    bottom:17px;
 
-    z-index:15;
+    z-index:20;
 
     color:#fff;
+
+    pointer-events:none;
 }
 
 
@@ -3153,14 +3196,17 @@ style.textContent = `
 
     max-width:100%;
 
+    pointer-events:auto;
+
     cursor:pointer;
 }
 
 
 .reals-avatar{
 
-    width:38px;
-    height:38px;
+    width:37px;
+
+    height:37px;
 
     border-radius:50%;
 
@@ -3188,11 +3234,11 @@ style.textContent = `
 
 .reals-creator-name{
 
-    border:none;
-
-    background:transparent;
+    border:0;
 
     padding:0;
+
+    background:transparent;
 
     color:#fff;
 
@@ -3211,15 +3257,13 @@ style.textContent = `
     text-overflow:ellipsis;
 
     max-width:220px;
-
-    cursor:pointer;
 }
 
 
 .reals-username{
 
     color:
-        rgba(255,255,255,.75);
+        rgba(255,255,255,.72);
 
     font-size:11px;
 
@@ -3239,11 +3283,11 @@ style.textContent = `
 
     margin-top:7px;
 
+    color:#fff;
+
     font-size:13px;
 
-    line-height:19px;
-
-    color:#fff;
+    line-height:18px;
 
     max-width:100%;
 
@@ -3282,22 +3326,23 @@ style.textContent = `
 
     justify-content:center;
 
-    text-align:center;
-
-    padding:30px;
-
     box-sizing:border-box;
 
-    color:#fff;
+    text-align:center;
+
+    padding:25px;
 
     background:#050914;
+
+    color:#fff;
 }
 
 
 .vs-loader{
 
-    width:62px;
-    height:62px;
+    width:60px;
+
+    height:60px;
 
     border-radius:50%;
 
@@ -3310,6 +3355,7 @@ style.textContent = `
     display:flex;
 
     align-items:center;
+
     justify-content:center;
 
     animation:
@@ -3325,16 +3371,12 @@ style.textContent = `
     font-weight:800;
 
     letter-spacing:1px;
-
-    animation:
-        vitalstarPostCounterSpin
-        .9s linear infinite;
 }
 
 
 .loader-title{
 
-    margin-top:18px;
+    margin-top:16px;
 
     font-size:16px;
 
@@ -3356,6 +3398,7 @@ style.textContent = `
 .empty-icon{
 
     width:58px;
+
     height:58px;
 
     border-radius:50%;
@@ -3363,13 +3406,14 @@ style.textContent = `
     display:flex;
 
     align-items:center;
+
     justify-content:center;
 
     background:#101a35;
 
     font-size:25px;
 
-    margin-bottom:15px;
+    margin-bottom:14px;
 }
 
 
@@ -3440,10 +3484,6 @@ style.textContent = `
         transform .2s ease;
 
     z-index:99999;
-
-    box-shadow:
-        0 8px 30px
-        rgba(0,0,0,.35);
 }
 
 
@@ -3456,10 +3496,6 @@ style.textContent = `
 }
 
 
-/* ========================================================
-   ANIMATIONS
-   ======================================================== */
-
 @keyframes vitalstarPostSpin{
 
     to{
@@ -3469,43 +3505,18 @@ style.textContent = `
 }
 
 
-@keyframes vitalstarPostCounterSpin{
-
-    to{
-        transform:
-            rotate(-360deg);
-    }
-}
-
-
-/* ========================================================
-   MOBILE
-   ======================================================== */
-
 @media(max-width:600px){
 
     .post-reals-feed{
-
-        width:100%;
-
-        height:100%;
-
-        min-height:0;
-
-        padding:0;
-
-        margin:0;
 
         overflow-y:auto;
 
         overflow-x:hidden;
 
+        touch-action:pan-y;
+
         scroll-snap-type:
             y mandatory;
-
-        scroll-behavior:smooth;
-
-        touch-action:pan-y;
 
         -webkit-overflow-scrolling:touch;
     }
@@ -3528,72 +3539,6 @@ style.textContent = `
         scroll-snap-align:start;
 
         scroll-snap-stop:always;
-    }
-
-
-    .reals-play-indicator{
-
-        width:82px;
-
-        height:82px;
-
-        font-size:28px;
-    }
-
-
-    .reals-actions{
-
-        right:8px;
-
-        bottom:70px;
-
-        gap:11px;
-    }
-
-
-    .reals-action{
-
-        width:49px;
-    }
-
-
-    .action-icon{
-
-        font-size:25px;
-    }
-
-
-    .reals-info{
-
-        left:11px;
-
-        right:67px;
-
-        bottom:17px;
-    }
-
-
-    .reals-avatar{
-
-        width:36px;
-
-        height:36px;
-    }
-
-
-    .reals-creator-name{
-
-        font-size:13px;
-
-        max-width:190px;
-    }
-
-
-    .reals-caption{
-
-        font-size:12.5px;
-
-        line-height:18px;
     }
 }
 
