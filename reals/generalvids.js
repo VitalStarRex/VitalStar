@@ -961,12 +961,8 @@ function initializeFeed() {
                                 return;
                             }
 
-
-                            // Prevent duplicate
-                            // group video entries
                             const uniqueKey =
                                 `${groupId}_${snap.id}`;
-
 
                             if (
                                 seenGroupVideos.has(
@@ -976,11 +972,9 @@ function initializeFeed() {
                                 return;
                             }
 
-
                             seenGroupVideos.add(
                                 uniqueKey
                             );
-
 
                             groupPosts.push(
                                 normalizeGroupPost(
@@ -1218,8 +1212,6 @@ function createVideoCard(
         <div class="video-bottom-gradient"></div>
 
 
-        <!-- LARGE PLAY / PAUSE -->
-
         <button
             class="video-play-indicator"
             type="button"
@@ -1228,8 +1220,6 @@ function createVideoCard(
             ▶
         </button>
 
-
-        <!-- TIKTOK-STYLE DRAGGABLE PROGRESS BAR -->
 
         <div
             class="video-progress-container"
@@ -1250,10 +1240,6 @@ function createVideoCard(
 
         </div>
 
-
-        <!-- =================================================
-             TIKTOK-STYLE ACTIONS
-             ================================================= -->
 
         <div class="video-actions">
 
@@ -1444,7 +1430,7 @@ function createVideoCard(
 
 
     // ========================================================
-    // VIDEO PROGRESS / SEEK
+    // VIDEO PROGRESS
     // ========================================================
 
     const videoElement =
@@ -1485,14 +1471,12 @@ function createVideoCard(
         const duration =
             Number(videoElement.duration);
 
-
         if (
             !Number.isFinite(duration) ||
             duration <= 0
         ) {
             return;
         }
-
 
         const percent =
             Math.min(
@@ -1506,13 +1490,11 @@ function createVideoCard(
                 )
             );
 
-
         if (progressFill) {
 
             progressFill.style.width =
                 `${percent}%`;
         }
-
 
         if (progressThumb) {
 
@@ -1524,14 +1506,15 @@ function createVideoCard(
 
     function seekFromPointer(event) {
 
-        if (!videoElement || !progressTrack) {
+        if (
+            !videoElement ||
+            !progressTrack
+        ) {
             return;
         }
 
-
         const duration =
             Number(videoElement.duration);
-
 
         if (
             !Number.isFinite(duration) ||
@@ -1540,22 +1523,18 @@ function createVideoCard(
             return;
         }
 
-
         const rect =
             progressTrack.getBoundingClientRect();
-
 
         if (!rect.width) {
             return;
         }
-
 
         let position =
             (
                 event.clientX -
                 rect.left
             ) / rect.width;
-
 
         position =
             Math.min(
@@ -1566,10 +1545,8 @@ function createVideoCard(
                 )
             );
 
-
         videoElement.currentTime =
             duration * position;
-
 
         updateProgress();
     }
@@ -1641,9 +1618,11 @@ function createVideoCard(
             draggingProgress = false;
 
             try {
+
                 progressContainer.releasePointerCapture?.(
                     event.pointerId
                 );
+
             } catch {}
         }
     );
@@ -1656,9 +1635,11 @@ function createVideoCard(
             draggingProgress = false;
 
             try {
+
                 progressContainer.releasePointerCapture?.(
                     event.pointerId
                 );
+
             } catch {}
         }
     );
@@ -1679,7 +1660,6 @@ function createVideoCard(
             ) {
                 return;
             }
-
 
             const button =
                 event.target.closest(
@@ -1703,7 +1683,7 @@ function createVideoCard(
 
 
     // ========================================================
-    // BIG PLAY BUTTON
+    // PLAY BUTTON
     // ========================================================
 
     const playButton =
@@ -1720,7 +1700,6 @@ function createVideoCard(
             event.stopPropagation();
 
             if (!videoElement) return;
-
 
             if (videoElement.paused) {
 
@@ -1749,10 +1728,6 @@ function handleAction(
     video,
     card
 ) {
-
-    // ========================================================
-    // GROUP VIDEO
-    // ========================================================
 
     if (
         video.type === "group"
@@ -1791,10 +1766,6 @@ function handleAction(
         }
     }
 
-
-    // ========================================================
-    // NORMAL POST
-    // ========================================================
 
     switch (action) {
 
@@ -1870,7 +1841,7 @@ function handleAction(
 
 
 // ============================================================
-// GROUP-ONLY ACTION MESSAGE
+// GROUP ACTION MESSAGE
 // ============================================================
 
 function showGroupOnlyMessage() {
@@ -1883,8 +1854,6 @@ function showGroupOnlyMessage() {
 
 // ============================================================
 // LIKE
-// Reals heart does NOT like directly.
-// User must enter comments section.
 // ============================================================
 
 function handleLike(
@@ -1899,7 +1868,6 @@ function handleLike(
 
         return;
     }
-
 
     showToast(
         "Enter comment section to like this post."
@@ -1916,11 +1884,9 @@ async function getCurrentUserData() {
     const user =
         auth.currentUser;
 
-
     if (!user) {
         return null;
     }
-
 
     try {
 
@@ -1932,7 +1898,6 @@ async function getCurrentUserData() {
                     user.uid
                 )
             );
-
 
         if (!snap.exists()) {
 
@@ -1952,10 +1917,8 @@ async function getCurrentUserData() {
             };
         }
 
-
         const data =
             snap.data();
-
 
         return {
 
@@ -2015,7 +1978,6 @@ async function createNotification({
         return;
     }
 
-
     await addDoc(
         collection(
             db,
@@ -2064,13 +2026,10 @@ async function updateRealsLikeState(
         return;
     }
 
-
     const user =
         auth.currentUser;
 
-
     if (!user) return;
-
 
     try {
 
@@ -2083,24 +2042,20 @@ async function updateRealsLikeState(
                 )
             );
 
-
         const card =
             container?.querySelector(
                 `[data-id="${CSS.escape(video.id)}"]`
             );
-
 
         const button =
             card?.querySelector(
                 ".like-action"
             );
 
-
         const icon =
             button?.querySelector(
                 ".action-icon"
             );
-
 
         if (snap.exists()) {
 
@@ -2147,13 +2102,10 @@ async function updateRealsRepostState(
         return;
     }
 
-
     const user =
         auth.currentUser;
 
-
     if (!user) return;
-
 
     try {
 
@@ -2166,24 +2118,20 @@ async function updateRealsRepostState(
                 )
             );
 
-
         const card =
             container?.querySelector(
                 `[data-id="${CSS.escape(video.id)}"]`
             );
-
 
         const button =
             card?.querySelector(
                 ".repost-action"
             );
 
-
         const icon =
             button?.querySelector(
                 ".action-icon"
             );
-
 
         if (snap.exists()) {
 
@@ -2231,13 +2179,11 @@ function handleComment(video) {
         return;
     }
 
-
     if (
         !video.originalId
     ) {
         return;
     }
-
 
     window.location.href =
         `../comments.html?postId=${
@@ -2266,10 +2212,8 @@ async function handleRepost(
         return;
     }
 
-
     const user =
         auth.currentUser;
-
 
     if (!user) {
 
@@ -2279,13 +2223,10 @@ async function handleRepost(
         return;
     }
 
-
     const postId =
         video.originalId;
 
-
     if (!postId) return;
-
 
     const postRef =
         doc(
@@ -2294,7 +2235,6 @@ async function handleRepost(
             postId
         );
 
-
     const repostRef =
         doc(
             db,
@@ -2302,24 +2242,20 @@ async function handleRepost(
             `${postId}_${user.uid}`
         );
 
-
     const button =
         card?.querySelector(
             ".repost-action"
         );
-
 
     const count =
         button?.querySelector(
             ".action-count"
         );
 
-
     const icon =
         button?.querySelector(
             ".action-icon"
         );
-
 
     try {
 
@@ -2327,18 +2263,15 @@ async function handleRepost(
             button.disabled = true;
         }
 
-
         const repostSnap =
             await getDoc(
                 repostRef
             );
 
-
         const postSnap =
             await getDoc(
                 postRef
             );
-
 
         if (!postSnap.exists()) {
 
@@ -2349,7 +2282,6 @@ async function handleRepost(
             return;
         }
 
-
         if (
             repostSnap.exists()
         ) {
@@ -2357,7 +2289,6 @@ async function handleRepost(
             await deleteDoc(
                 repostRef
             );
-
 
             await updateDoc(
                 postRef,
@@ -2367,7 +2298,6 @@ async function handleRepost(
                 }
             );
 
-
             const current =
                 Number(
                     count?.dataset.value ??
@@ -2375,13 +2305,11 @@ async function handleRepost(
                     0
                 );
 
-
             const next =
                 Math.max(
                     0,
                     current - 1
                 );
-
 
             if (count) {
 
@@ -2392,20 +2320,16 @@ async function handleRepost(
                     formatCount(next);
             }
 
-
             video.reposts =
                 next;
-
 
             button?.classList.remove(
                 "reposted"
             );
 
-
             if (icon) {
                 icon.textContent = "↻";
             }
-
 
             showToast(
                 "Repost removed"
@@ -2426,7 +2350,6 @@ async function handleRepost(
                 }
             );
 
-
             await updateDoc(
                 postRef,
                 {
@@ -2435,7 +2358,6 @@ async function handleRepost(
                 }
             );
 
-
             const current =
                 Number(
                     count?.dataset.value ??
@@ -2443,10 +2365,8 @@ async function handleRepost(
                     0
                 );
 
-
             const next =
                 current + 1;
-
 
             if (count) {
 
@@ -2457,29 +2377,23 @@ async function handleRepost(
                     formatCount(next);
             }
 
-
             video.reposts =
                 next;
-
 
             button?.classList.add(
                 "reposted"
             );
 
-
             if (icon) {
                 icon.textContent = "⟳";
             }
-
 
             showToast(
                 "Post reposted"
             );
 
-
             const post =
                 postSnap.data() || {};
-
 
             const receiverId =
                 post.uid ||
@@ -2488,7 +2402,6 @@ async function handleRepost(
                 post.createdBy ||
                 "";
 
-
             if (
                 receiverId &&
                 receiverId !== user.uid
@@ -2496,7 +2409,6 @@ async function handleRepost(
 
                 const sender =
                     await getCurrentUserData();
-
 
                 await createNotification({
 
@@ -2553,13 +2465,11 @@ async function handleShare(
         return;
     }
 
-
     if (
         !video.originalId
     ) {
         return;
     }
-
 
     const url =
         new URL(
@@ -2567,16 +2477,13 @@ async function handleShare(
             window.location.href
         );
 
-
     url.searchParams.set(
         "postId",
         video.originalId
     );
 
-
     const shareUrl =
         url.toString();
-
 
     try {
 
@@ -2616,7 +2523,6 @@ async function handleShare(
             );
         }
 
-
         await updateDoc(
             doc(
                 db,
@@ -2629,18 +2535,15 @@ async function handleShare(
             }
         );
 
-
         video.shares =
             Number(
                 video.shares || 0
             ) + 1;
 
-
         const cardCount =
             card?.querySelector(
                 '[data-action="share"] .action-count'
             );
-
 
         if (cardCount) {
 
@@ -2683,29 +2586,23 @@ function toggleMute(
             ".reals-video"
         );
 
-
     if (!element) return;
-
 
     element.muted =
         !element.muted;
 
-
     settings.muted =
         element.muted;
-
 
     localStorage.setItem(
         "vitalstar_reals_muted",
         String(settings.muted)
     );
 
-
     const icon =
         card.querySelector(
             ".mute-icon"
         );
-
 
     if (icon) {
 
@@ -2714,7 +2611,6 @@ function toggleMute(
                 ? "🔇"
                 : "🔊";
     }
-
 
     document
         .querySelectorAll(
@@ -2740,7 +2636,6 @@ function openProfile(video) {
         return;
     }
 
-
     window.location.href =
         `../profile.html?uid=${
             encodeURIComponent(
@@ -2761,7 +2656,6 @@ function openGroup(video) {
     ) {
         return;
     }
-
 
     window.location.href =
         `../group.html?id=${
@@ -2787,7 +2681,6 @@ function showMoreMenu(video) {
         return;
     }
 
-
     openProfile(video);
 }
 
@@ -2802,7 +2695,6 @@ function showToast(message) {
         document.querySelector(
             ".vitalstar-reals-toast"
         );
-
 
     if (!toast) {
 
@@ -2819,20 +2711,16 @@ function showToast(message) {
         );
     }
 
-
     toast.textContent =
         message;
-
 
     toast.classList.add(
         "show"
     );
 
-
     clearTimeout(
         toast._timer
     );
-
 
     toast._timer =
         setTimeout(
@@ -2861,29 +2749,24 @@ export function onSettingChange(
         ...newSettings
     };
 
-
     localStorage.setItem(
         "vitalstar_reals_autoplay",
         String(settings.autoplay)
     );
-
 
     localStorage.setItem(
         "vitalstar_reals_muted",
         String(settings.muted)
     );
 
-
     localStorage.setItem(
         "vitalstar_reals_dataSaver",
         String(settings.dataSaver)
     );
 
-
     if (!container) {
         return;
     }
-
 
     container
         .querySelectorAll(
@@ -2896,7 +2779,9 @@ export function onSettingChange(
                     settings.muted;
 
                 video.preload =
-                    "metadata";
+                    settings.dataSaver
+                        ? "metadata"
+                        : "auto";
             }
         );
 }
@@ -2919,7 +2804,6 @@ function preloadNextVideo(
         return;
     }
 
-
     const cards =
         Array.from(
             document.querySelectorAll(
@@ -2927,27 +2811,22 @@ function preloadNextVideo(
             )
         );
 
-
     const currentCard =
         currentVideo.closest(
             ".reals-video-card"
         );
 
-
     if (!currentCard) {
         return;
     }
-
 
     const currentIndex =
         Number(
             currentCard.dataset.index
         );
 
-
     const nextIndex =
         currentIndex + 1;
-
 
     if (
         nextIndex >= cards.length
@@ -2955,17 +2834,14 @@ function preloadNextVideo(
         return;
     }
 
-
     const nextVideo =
         cards[nextIndex]?.querySelector(
             ".reals-video"
         );
 
-
     if (!nextVideo) {
         return;
     }
-
 
     if (
         nextVideo.dataset.preloaded === "true"
@@ -2973,16 +2849,13 @@ function preloadNextVideo(
         return;
     }
 
-
     nextVideo.preload =
         settings.dataSaver
             ? "metadata"
             : "auto";
 
-
     nextVideo.dataset.preloaded =
         "true";
-
 
     try {
 
@@ -3025,7 +2898,6 @@ function setupVideoBehavior(feed) {
                     }
                 );
 
-
                 video.addEventListener(
                     "pause",
                     () => {
@@ -3046,13 +2918,11 @@ function setupVideoBehavior(feed) {
                     }
                 );
 
-
                 video.addEventListener(
                     "click",
                     event => {
 
                         event.stopPropagation();
-
 
                         if (
                             video.paused
@@ -3090,7 +2960,6 @@ function updatePlayIndicator(
         );
 
     if (!button) return;
-
 
     if (playing) {
 
@@ -3144,7 +3013,6 @@ function setupObserver(feed) {
         return;
     }
 
-
     observer =
         new IntersectionObserver(
             entries => {
@@ -3154,7 +3022,6 @@ function setupObserver(feed) {
 
                         const video =
                             entry.target;
-
 
                         if (
                             entry.isIntersecting &&
@@ -3178,12 +3045,6 @@ function setupObserver(feed) {
                         } else {
 
                             video.pause();
-
-                            /*
-                             * Keep the currently nearby
-                             * videos ready, but release
-                             * far-away videos.
-                             */
 
                             const card =
                                 video.closest(
@@ -3229,7 +3090,7 @@ function setupObserver(feed) {
                 root:null,
 
                 rootMargin:
-                    "100px 0px 100px 0px",
+                    "0px",
 
                 threshold:[
                     0,
@@ -3238,7 +3099,6 @@ function setupObserver(feed) {
                 ]
             }
         );
-
 
     feed
         .querySelectorAll(
@@ -3259,7 +3119,6 @@ function playVideo(video) {
 
     if (!video) return;
 
-
     document
         .querySelectorAll(
             ".reals-video"
@@ -3276,14 +3135,11 @@ function playVideo(video) {
             }
         );
 
-
     video.muted =
         settings.muted;
 
-
     const promise =
         video.play();
-
 
     if (
         promise &&
@@ -3315,7 +3171,6 @@ function cleanupListeners() {
             null;
     }
 
-
     if (
         typeof groupsUnsubscribe ===
         "function"
@@ -3326,7 +3181,6 @@ function cleanupListeners() {
         groupsUnsubscribe =
             null;
     }
-
 
     disconnectObserver();
 }
@@ -3370,7 +3224,6 @@ function formatCount(number) {
     number =
         Number(number) || 0;
 
-
     if (number >= 1000000) {
 
         return (
@@ -3381,7 +3234,6 @@ function formatCount(number) {
         );
     }
 
-
     if (number >= 1000) {
 
         return (
@@ -3391,7 +3243,6 @@ function formatCount(number) {
             + "K"
         );
     }
-
 
     return String(number);
 }
@@ -3411,88 +3262,172 @@ function addStyles() {
         return;
     }
 
-
     const style =
         document.createElement(
             "style"
         );
 
-
     style.id =
         "vitalstar-general-reals-styles";
 
-
     style.textContent = `
 
+        /* ====================================================
+           GLOBAL FEED RESET
+           Removes the empty space below the video
+           ==================================================== */
+
         .general-reals-feed {
+
             width:100%;
+
             height:100%;
+
+            min-height:100%;
+
+            margin:0;
+
+            padding:0;
+
             overflow-y:auto;
+
             overflow-x:hidden;
+
             scroll-snap-type:y mandatory;
+
+            scroll-behavior:smooth;
+
             background:#050914;
+
             scrollbar-width:none;
-            padding:2dvh 0;
+
+            box-sizing:border-box;
+
+            overscroll-behavior-y:contain;
         }
 
+
         .general-reals-feed::-webkit-scrollbar {
+
             display:none;
         }
 
 
+        /* ====================================================
+           VIDEO CARD
+           FULL SCREEN
+           ==================================================== */
+
         .reals-video-card {
+
             position:relative;
+
             width:100%;
-            height:94dvh;
-            margin-bottom:2dvh;
+
+            height:100dvh;
+
+            min-height:100dvh;
+
+            max-height:100dvh;
+
+            margin:0;
+
+            padding:0;
+
             overflow:hidden;
+
             background:#050914;
-            border-radius:10px;
-            scroll-snap-align:center;
+
+            border-radius:0;
+
+            scroll-snap-align:start;
+
             scroll-snap-stop:always;
+
+            box-sizing:border-box;
+
+            flex-shrink:0;
         }
 
+
+        /* ====================================================
+           VIDEO
+           ==================================================== */
 
         .reals-video {
+
             position:absolute;
+
             inset:0;
+
             width:100%;
+
             height:100%;
+
             object-fit:cover;
+
             background:#050914;
+
+            display:block;
+
+            margin:0;
+
+            padding:0;
         }
 
+
+        /* ====================================================
+           TOP GRADIENT
+           ==================================================== */
 
         .video-top-gradient {
+
             position:absolute;
+
             top:0;
+
             left:0;
+
             right:0;
+
             height:16%;
+
             pointer-events:none;
 
-            background:linear-gradient(
-                to bottom,
-                rgba(0,0,0,.48),
-                transparent
-            );
+            background:
+                linear-gradient(
+                    to bottom,
+                    rgba(0,0,0,.48),
+                    transparent
+                );
         }
 
 
+        /* ====================================================
+           BOTTOM GRADIENT
+           ==================================================== */
+
         .video-bottom-gradient {
+
             position:absolute;
+
             left:0;
+
             right:0;
+
             bottom:0;
+
             height:42%;
+
             pointer-events:none;
 
-            background:linear-gradient(
-                to top,
-                rgba(0,0,0,.78),
-                rgba(0,0,0,.28),
-                transparent
-            );
+            background:
+                linear-gradient(
+                    to top,
+                    rgba(0,0,0,.78),
+                    rgba(0,0,0,.28),
+                    transparent
+                );
         }
 
 
@@ -3501,18 +3436,22 @@ function addStyles() {
            ==================================================== */
 
         .video-play-indicator {
+
             position:absolute;
 
             top:50%;
+
             left:50%;
 
             transform:
                 translate(-50%,-50%);
 
             width:88px;
+
             height:88px;
 
             border:0;
+
             border-radius:50%;
 
             background:
@@ -3521,10 +3460,13 @@ function addStyles() {
             color:white;
 
             font-size:42px;
+
             font-weight:500;
 
             display:flex;
+
             align-items:center;
+
             justify-content:center;
 
             padding-left:6px;
@@ -3576,7 +3518,7 @@ function addStyles() {
 
 
         /* ====================================================
-           TIKTOK-STYLE PROGRESS
+           PROGRESS BAR
            ==================================================== */
 
         .video-progress-container {
@@ -3584,7 +3526,9 @@ function addStyles() {
             position:absolute;
 
             left:0;
+
             right:0;
+
             bottom:0;
 
             height:24px;
@@ -3625,9 +3569,11 @@ function addStyles() {
             position:absolute;
 
             left:0;
+
             top:0;
 
             width:0%;
+
             height:100%;
 
             background:#ffffff;
@@ -3643,6 +3589,7 @@ function addStyles() {
             left:0%;
 
             width:9px;
+
             height:9px;
 
             border-radius:50%;
@@ -3666,6 +3613,7 @@ function addStyles() {
         .video-progress-thumb {
 
             width:13px;
+
             height:13px;
         }
 
@@ -3674,12 +3622,13 @@ function addStyles() {
         .video-progress-thumb {
 
             width:15px;
+
             height:15px;
         }
 
 
         /* ====================================================
-           TIKTOK-STYLE ACTION BUTTONS
+           ACTION BUTTONS
            ==================================================== */
 
         .video-actions {
@@ -3687,6 +3636,7 @@ function addStyles() {
             position:absolute;
 
             right:7px;
+
             bottom:74px;
 
             z-index:20;
@@ -3704,6 +3654,7 @@ function addStyles() {
         .reals-action {
 
             width:44px;
+
             min-height:44px;
 
             padding:2px;
@@ -3751,11 +3702,13 @@ function addStyles() {
         .action-icon {
 
             width:32px;
+
             height:32px;
 
             display:flex;
 
             align-items:center;
+
             justify-content:center;
 
             color:#ffffff;
@@ -3794,7 +3747,9 @@ function addStyles() {
         }
 
 
-        /* HEART */
+        /* ====================================================
+           HEART
+           ==================================================== */
 
         .tiktok-heart-icon {
 
@@ -3821,19 +3776,21 @@ function addStyles() {
         }
 
 
-        /* COMMENT BUBBLE */
+        /* ====================================================
+           COMMENT
+           ==================================================== */
 
         .tiktok-comment-icon {
 
             position:relative;
 
             width:28px;
+
             height:24px;
 
             border:2.5px solid #ffffff;
 
-            border-radius:
-                50%;
+            border-radius:50%;
 
             box-sizing:border-box;
         }
@@ -3846,12 +3803,15 @@ function addStyles() {
             position:absolute;
 
             left:3px;
+
             bottom:-6px;
 
             width:8px;
+
             height:8px;
 
             border-left:2.5px solid #ffffff;
+
             border-bottom:2.5px solid #ffffff;
 
             transform:
@@ -3865,6 +3825,7 @@ function addStyles() {
         .tiktok-comment-icon span {
 
             width:4px;
+
             height:4px;
 
             border-radius:50%;
@@ -3877,16 +3838,15 @@ function addStyles() {
         }
 
 
-        /* REPOST */
+        /* ====================================================
+           REPOST
+           ==================================================== */
 
         .tiktok-repost-icon {
 
             font-size:34px;
 
             font-weight:400;
-
-            transform:
-                rotate(0deg);
         }
 
 
@@ -3900,7 +3860,9 @@ function addStyles() {
         }
 
 
-        /* SHARE */
+        /* ====================================================
+           SHARE
+           ==================================================== */
 
         .tiktok-share-icon {
 
@@ -3913,7 +3875,9 @@ function addStyles() {
         }
 
 
-        /* MORE */
+        /* ====================================================
+           MORE
+           ==================================================== */
 
         .tiktok-more-icon {
 
@@ -3925,7 +3889,9 @@ function addStyles() {
         }
 
 
-        /* MUTE */
+        /* ====================================================
+           MUTE
+           ==================================================== */
 
         .mute-icon {
 
@@ -3940,7 +3906,7 @@ function addStyles() {
 
 
         /* ====================================================
-           INFO
+           VIDEO INFORMATION
            ==================================================== */
 
         .video-info {
@@ -3948,7 +3914,9 @@ function addStyles() {
             position:absolute;
 
             left:13px;
+
             right:72px;
+
             bottom:20px;
 
             z-index:5;
@@ -3992,6 +3960,7 @@ function addStyles() {
         .creator-avatar {
 
             width:38px;
+
             height:38px;
 
             padding:0;
@@ -4014,6 +3983,7 @@ function addStyles() {
         .creator-avatar img {
 
             width:100%;
+
             height:100%;
 
             object-fit:cover;
@@ -4025,6 +3995,7 @@ function addStyles() {
         .default-avatar {
 
             width:100%;
+
             height:100%;
 
             display:flex;
@@ -4128,7 +4099,11 @@ function addStyles() {
 
             height:100dvh;
 
-            min-height:100vh;
+            min-height:100dvh;
+
+            margin:0;
+
+            padding:20px;
 
             display:flex;
 
@@ -4144,7 +4119,7 @@ function addStyles() {
 
             color:white;
 
-            padding:20px;
+            box-sizing:border-box;
         }
 
 
@@ -4153,11 +4128,13 @@ function addStyles() {
             position:relative;
 
             width:68px;
+
             height:68px;
 
             display:flex;
 
             align-items:center;
+
             justify-content:center;
         }
 
@@ -4174,6 +4151,7 @@ function addStyles() {
                 rgba(255,255,255,.10);
 
             border-top-color:#3b82f6;
+
             border-right-color:#8b5cf6;
 
             animation:
@@ -4185,6 +4163,7 @@ function addStyles() {
         .vs-logo {
 
             width:42px;
+
             height:42px;
 
             border-radius:50%;
@@ -4192,6 +4171,7 @@ function addStyles() {
             display:flex;
 
             align-items:center;
+
             justify-content:center;
 
             background:
@@ -4234,6 +4214,7 @@ function addStyles() {
         .error-icon {
 
             width:56px;
+
             height:56px;
 
             border-radius:50%;
@@ -4241,6 +4222,7 @@ function addStyles() {
             display:flex;
 
             align-items:center;
+
             justify-content:center;
 
             background:#101a35;
@@ -4315,6 +4297,7 @@ function addStyles() {
             position:fixed;
 
             left:50%;
+
             bottom:24px;
 
             transform:
@@ -4359,6 +4342,10 @@ function addStyles() {
         }
 
 
+        /* ====================================================
+           ANIMATION
+           ==================================================== */
+
         @keyframes vitalstarSpin {
 
             to {
@@ -4373,23 +4360,51 @@ function addStyles() {
 
         @media(max-width:480px) {
 
+            .general-reals-feed {
+
+                width:100%;
+
+                height:100dvh;
+
+                min-height:100dvh;
+
+                padding:0;
+
+                margin:0;
+
+                overflow-y:auto;
+
+                scroll-snap-type:y mandatory;
+            }
+
+
             .reals-video-card {
 
-                height:94dvh;
+                width:100%;
 
-                margin-bottom:1.5dvh;
+                height:100dvh;
 
-                border-radius:8px;
+                min-height:100dvh;
+
+                max-height:100dvh;
+
+                margin:0;
+
+                padding:0;
+
+                border-radius:0;
+
+                scroll-snap-align:start;
             }
 
 
             .video-info {
 
-                bottom:18px;
-
                 left:11px;
 
                 right:68px;
+
+                bottom:18px;
             }
 
 
@@ -4414,6 +4429,7 @@ function addStyles() {
             .action-icon {
 
                 width:30px;
+
                 height:30px;
 
                 font-size:27px;
@@ -4429,6 +4445,7 @@ function addStyles() {
             .tiktok-comment-icon {
 
                 width:27px;
+
                 height:23px;
             }
 
@@ -4467,9 +4484,86 @@ function addStyles() {
 
                 font-size:39px;
             }
-        }
-    `;
 
+
+            .video-progress-container {
+
+                height:24px;
+
+                padding-bottom:5px;
+            }
+        }
+
+
+        /* ====================================================
+           VERY SMALL PHONES
+           ==================================================== */
+
+        @media(max-height:650px) {
+
+            .video-actions {
+
+                bottom:62px;
+
+                gap:4px;
+            }
+
+
+            .video-info {
+
+                bottom:14px;
+            }
+
+
+            .reals-action {
+
+                min-height:36px;
+
+                width:38px;
+            }
+
+
+            .action-icon {
+
+                width:27px;
+
+                height:27px;
+
+                font-size:25px;
+            }
+        }
+
+
+        /* ====================================================
+           SAFE AREA
+           ==================================================== */
+
+        @supports (
+            padding-bottom:
+            env(safe-area-inset-bottom)
+        ) {
+
+            .video-info {
+
+                bottom:
+                    calc(
+                        18px +
+                        env(safe-area-inset-bottom)
+                    );
+            }
+
+
+            .video-actions {
+
+                bottom:
+                    calc(
+                        70px +
+                        env(safe-area-inset-bottom)
+                    );
+            }
+        }
+
+    `;
 
     document.head.appendChild(
         style
