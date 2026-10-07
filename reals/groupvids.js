@@ -131,14 +131,12 @@ function isGroupVideo(data) {
         return false;
     }
 
-
     const mediaType =
         String(
             data.mediaType || ""
         )
             .trim()
             .toLowerCase();
-
 
     if (
         mediaType === "video" ||
@@ -147,10 +145,8 @@ function isGroupVideo(data) {
         return true;
     }
 
-
     const url =
         String(mediaURL).toLowerCase();
-
 
     return (
         url.includes(".mp4") ||
@@ -172,7 +168,6 @@ function getPlayableVideoUrl(url) {
     let result =
         String(url);
 
-
     if (
         result.includes("res.cloudinary.com") &&
         result.includes("/video/upload/") &&
@@ -185,7 +180,6 @@ function getPlayableVideoUrl(url) {
                 "/video/upload/f_mp4/"
             );
     }
-
 
     return result;
 }
@@ -259,7 +253,9 @@ function showEmpty() {
 // ERROR
 // ============================================================
 
-function showError(message = "Unable to load group videos.") {
+function showError(
+    message = "Unable to load group videos."
+) {
 
     if (!container) return;
 
@@ -289,7 +285,6 @@ function showError(message = "Unable to load group videos.") {
 
         </div>
     `;
-
 
     container
         .querySelector("#groupRetryButton")
@@ -427,7 +422,6 @@ async function loadGroupInformation(video) {
         return;
     }
 
-
     try {
 
         const groupSnap =
@@ -439,15 +433,12 @@ async function loadGroupInformation(video) {
                 )
             );
 
-
         if (!groupSnap.exists()) {
             return;
         }
 
-
         const data =
             groupSnap.data() || {};
-
 
         video.groupName =
             data.name ||
@@ -457,7 +448,6 @@ async function loadGroupInformation(video) {
             data.groupTitle ||
             video.groupName ||
             "VitalStar Group";
-
 
         video.groupPhoto =
             data.avatarURL ||
@@ -473,7 +463,6 @@ async function loadGroupInformation(video) {
             video.groupPhoto ||
             "";
 
-
         if (
             !destroyed &&
             container
@@ -484,8 +473,8 @@ async function loadGroupInformation(video) {
                     `[data-id="${CSS.escape(video.id)}"]`
                 );
 
-
             if (card) {
+
                 updateGroupIdentity(
                     card,
                     video
@@ -517,12 +506,10 @@ function updateGroupIdentity(
             ".creator-name"
         );
 
-
     const avatar =
         card.querySelector(
             ".creator-avatar"
         );
-
 
     if (name) {
 
@@ -530,7 +517,6 @@ function updateGroupIdentity(
             video.groupName ||
             "VitalStar Group";
     }
-
 
     if (avatar) {
 
@@ -566,18 +552,15 @@ export function init(options = {}) {
 
     destroyed = false;
 
-
     container =
         options.container ||
         document.querySelector("#realsFeed") ||
         document.querySelector(".reals-feed");
 
-
     settings = {
         ...getSettings(),
         ...(options.settings || {})
     };
-
 
     if (!container) {
 
@@ -588,13 +571,11 @@ export function init(options = {}) {
         return () => {};
     }
 
-
     addStyles();
 
     showLoading();
 
     initializeFeed();
-
 
     return destroyGroupVids;
 }
@@ -612,7 +593,6 @@ export function initGroupVids(options = {}) {
 
 // ============================================================
 // FIREBASE LOAD
-// IMPORTANT:
 // ONLY groups/*/posts
 // NO normal posts collection
 // ============================================================
@@ -626,13 +606,11 @@ function initializeFeed() {
         return;
     }
 
-
     cleanupListeners();
 
     groupVideos = [];
 
     showLoading();
-
 
     try {
 
@@ -645,7 +623,6 @@ function initializeFeed() {
                 limit(500)
             );
 
-
         unsubscribe =
             onSnapshot(
                 groupsQuery,
@@ -654,13 +631,11 @@ function initializeFeed() {
                     const unique =
                         new Map();
 
-
                     snapshot.forEach(
                         snap => {
 
                             const data =
                                 snap.data();
-
 
                             if (
                                 !isGroupVideo(
@@ -670,16 +645,13 @@ function initializeFeed() {
                                 return;
                             }
 
-
                             const path =
                                 snap.ref.path.split("/");
-
 
                             const groupIndex =
                                 path.indexOf(
                                     "groups"
                                 );
-
 
                             const groupId =
                                 groupIndex !== -1
@@ -688,11 +660,9 @@ function initializeFeed() {
                                     ]
                                     : "";
 
-
                             if (!groupId) {
                                 return;
                             }
-
 
                             const video =
                                 normalizeGroupVideo(
@@ -701,16 +671,12 @@ function initializeFeed() {
                                     groupId
                                 );
 
-
                             if (!video.video) {
                                 return;
                             }
 
-
-                            // Prevent duplicate group videos
                             const uniqueKey =
                                 `group:${groupId}:${snap.id}`;
-
 
                             if (
                                 !unique.has(
@@ -726,19 +692,16 @@ function initializeFeed() {
                         }
                     );
 
-
                     groupVideos =
                         Array.from(
                             unique.values()
                         );
-
 
                     groupVideos.sort(
                         (a, b) =>
                             b.createdAt -
                             a.createdAt
                     );
-
 
                     if (
                         !groupVideos.length
@@ -749,9 +712,7 @@ function initializeFeed() {
                         return;
                     }
 
-
                     renderFeed();
-
 
                     await Promise.allSettled(
                         groupVideos.map(
@@ -798,19 +759,15 @@ function renderFeed() {
 
     disconnectObserver();
 
-
     container.innerHTML = "";
-
 
     const feed =
         document.createElement(
             "div"
         );
 
-
     feed.className =
         "group-reals-feed";
-
 
     groupVideos.forEach(
         (video, index) => {
@@ -824,11 +781,9 @@ function renderFeed() {
         }
     );
 
-
     container.appendChild(
         feed
     );
-
 
     setupObserver(feed);
 
@@ -850,27 +805,21 @@ function createVideoCard(
             "article"
         );
 
-
     card.className =
         "reals-video-card";
-
 
     card.dataset.index =
         String(index);
 
-
     card.dataset.id =
         video.id;
-
 
     const name =
         video.groupName ||
         "VitalStar Group";
 
-
     const photo =
         video.groupPhoto;
-
 
     const avatar =
         photo
@@ -889,7 +838,6 @@ function createVideoCard(
                     VS
                 </div>
             `;
-
 
     card.innerHTML = `
 
@@ -1113,24 +1061,20 @@ function createVideoCard(
             ".video-progress-container"
         );
 
-
     const progressTrack =
         card.querySelector(
             ".video-progress-track"
         );
-
 
     const progressFill =
         card.querySelector(
             ".video-progress-fill"
         );
 
-
     const progressThumb =
         card.querySelector(
             ".video-progress-thumb"
         );
-
 
     let dragging =
         false;
@@ -1140,12 +1084,10 @@ function createVideoCard(
 
         if (!videoElement) return;
 
-
         const duration =
             Number(
                 videoElement.duration
             );
-
 
         if (
             !Number.isFinite(duration) ||
@@ -1153,7 +1095,6 @@ function createVideoCard(
         ) {
             return;
         }
-
 
         const percent =
             Math.min(
@@ -1167,13 +1108,11 @@ function createVideoCard(
                 )
             );
 
-
         if (progressFill) {
 
             progressFill.style.width =
                 `${percent}%`;
         }
-
 
         if (progressThumb) {
 
@@ -1192,12 +1131,10 @@ function createVideoCard(
             return;
         }
 
-
         const duration =
             Number(
                 videoElement.duration
             );
-
 
         if (
             !Number.isFinite(duration) ||
@@ -1206,20 +1143,16 @@ function createVideoCard(
             return;
         }
 
-
         const rect =
             progressTrack.getBoundingClientRect();
 
-
         if (!rect.width) return;
-
 
         let position =
             (
                 event.clientX -
                 rect.left
             ) / rect.width;
-
 
         position =
             Math.min(
@@ -1230,10 +1163,8 @@ function createVideoCard(
                 )
             );
 
-
         videoElement.currentTime =
             duration * position;
-
 
         updateProgress();
     }
@@ -1266,11 +1197,9 @@ function createVideoCard(
 
             dragging = true;
 
-
             progressContainer.setPointerCapture?.(
                 event.pointerId
             );
-
 
             seekFromPointer(
                 event
@@ -1285,10 +1214,8 @@ function createVideoCard(
 
             if (!dragging) return;
 
-
             event.preventDefault();
             event.stopPropagation();
-
 
             seekFromPointer(
                 event
@@ -1303,13 +1230,10 @@ function createVideoCard(
 
             if (!dragging) return;
 
-
             event.preventDefault();
             event.stopPropagation();
 
-
             dragging = false;
-
 
             try {
 
@@ -1327,7 +1251,6 @@ function createVideoCard(
         event => {
 
             dragging = false;
-
 
             try {
 
@@ -1356,21 +1279,17 @@ function createVideoCard(
                 return;
             }
 
-
             const button =
                 event.target.closest(
                     "[data-action]"
                 );
 
-
             if (!button) {
                 return;
             }
 
-
             event.preventDefault();
             event.stopPropagation();
-
 
             handleAction(
                 button.dataset.action,
@@ -1396,9 +1315,7 @@ function createVideoCard(
                 event.preventDefault();
                 event.stopPropagation();
 
-
                 if (!videoElement) return;
-
 
                 if (
                     videoElement.paused
@@ -1486,29 +1403,23 @@ function toggleMute(card) {
             ".reals-video"
         );
 
-
     if (!video) return;
-
 
     video.muted =
         !video.muted;
 
-
     settings.muted =
         video.muted;
-
 
     localStorage.setItem(
         "vitalstar_reals_muted",
         String(settings.muted)
     );
 
-
     const icon =
         card.querySelector(
             ".mute-icon"
         );
-
 
     if (icon) {
 
@@ -1517,7 +1428,6 @@ function toggleMute(card) {
                 ? "🔇"
                 : "🔊";
     }
-
 
     document
         .querySelectorAll(
@@ -1543,7 +1453,6 @@ function openGroup(video) {
         return;
     }
 
-
     window.location.href =
         `../group.html?id=${
             encodeURIComponent(
@@ -1564,7 +1473,6 @@ function showToast(message) {
             ".vitalstar-reals-toast"
         );
 
-
     if (!toast) {
 
         toast =
@@ -1572,30 +1480,24 @@ function showToast(message) {
                 "div"
             );
 
-
         toast.className =
             "vitalstar-reals-toast";
-
 
         document.body.appendChild(
             toast
         );
     }
 
-
     toast.textContent =
         message;
-
 
     toast.classList.add(
         "show"
     );
 
-
     clearTimeout(
         toast._timer
     );
-
 
     toast._timer =
         setTimeout(
@@ -1624,29 +1526,24 @@ export function onSettingChange(
         ...newSettings
     };
 
-
     localStorage.setItem(
         "vitalstar_reals_autoplay",
         String(settings.autoplay)
     );
-
 
     localStorage.setItem(
         "vitalstar_reals_muted",
         String(settings.muted)
     );
 
-
     localStorage.setItem(
         "vitalstar_reals_dataSaver",
         String(settings.dataSaver)
     );
 
-
     if (!container) {
         return;
     }
-
 
     container
         .querySelectorAll(
@@ -1657,7 +1554,6 @@ export function onSettingChange(
 
                 video.muted =
                     settings.muted;
-
 
                 video.preload =
                     settings.dataSaver
@@ -1690,11 +1586,9 @@ function setupVideoBehavior(feed) {
                                 ".reals-video-card"
                             );
 
-
                         card?.classList.add(
                             "is-playing"
                         );
-
 
                         updatePlayIndicator(
                             card,
@@ -1713,11 +1607,9 @@ function setupVideoBehavior(feed) {
                                 ".reals-video-card"
                             );
 
-
                         card?.classList.remove(
                             "is-playing"
                         );
-
 
                         updatePlayIndicator(
                             card,
@@ -1732,7 +1624,6 @@ function setupVideoBehavior(feed) {
                     event => {
 
                         event.stopPropagation();
-
 
                         if (
                             video.paused
@@ -1764,15 +1655,12 @@ function updatePlayIndicator(
 
     if (!card) return;
 
-
     const button =
         card.querySelector(
             ".video-play-indicator"
         );
 
-
     if (!button) return;
-
 
     if (playing) {
 
@@ -1810,7 +1698,6 @@ function setupObserver(feed) {
                 ".reals-video"
             );
 
-
         if (
             first &&
             settings.autoplay
@@ -1820,7 +1707,6 @@ function setupObserver(feed) {
                 first
             );
         }
-
 
         return;
     }
@@ -1835,7 +1721,6 @@ function setupObserver(feed) {
 
                         const video =
                             entry.target;
-
 
                         if (
                             entry.isIntersecting &&
@@ -1889,7 +1774,6 @@ function playVideo(video) {
 
     if (!video) return;
 
-
     document
         .querySelectorAll(
             ".reals-video"
@@ -1906,14 +1790,11 @@ function playVideo(video) {
             }
         );
 
-
     video.muted =
         settings.muted;
 
-
     const promise =
         video.play();
-
 
     if (
         promise &&
@@ -1945,7 +1826,6 @@ function cleanupListeners() {
             null;
     }
 
-
     disconnectObserver();
 }
 
@@ -1969,17 +1849,13 @@ export function destroyGroupVids() {
 
     destroyed = true;
 
-
     cleanupListeners();
 
-
     groupVideos = [];
-
 
     if (container) {
         container.innerHTML = "";
     }
-
 
     container = null;
 }
@@ -1994,7 +1870,6 @@ function formatCount(number) {
     number =
         Number(number) || 0;
 
-
     if (number >= 1000000) {
 
         return (
@@ -2005,7 +1880,6 @@ function formatCount(number) {
         );
     }
 
-
     if (number >= 1000) {
 
         return (
@@ -2015,7 +1889,6 @@ function formatCount(number) {
             + "K"
         );
     }
-
 
     return String(number);
 }
@@ -2035,23 +1908,28 @@ function addStyles() {
         return;
     }
 
-
     const style =
         document.createElement(
             "style"
         );
 
-
     style.id =
         "vitalstar-group-reals-styles";
 
-
     style.textContent = `
+
+        /* =====================================================
+           GROUP REALS FEED
+           NO SPACE ABOVE / BELOW VIDEOS
+           ===================================================== */
 
         .group-reals-feed {
 
             width:100%;
             height:100%;
+
+            margin:0;
+            padding:0;
 
             overflow-y:auto;
             overflow-x:hidden;
@@ -2062,7 +1940,7 @@ function addStyles() {
 
             scrollbar-width:none;
 
-            padding:2dvh 0;
+            box-sizing:border-box;
         }
 
 
@@ -2071,22 +1949,31 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           FULL SCREEN VIDEO CARD
+           ===================================================== */
+
         .reals-video-card {
 
             position:relative;
 
             width:100%;
-            height:94dvh;
 
-            margin-bottom:2dvh;
+            height:100dvh;
+            min-height:100dvh;
+
+            margin:0;
+            padding:0;
 
             overflow:hidden;
 
             background:#050914;
 
-            border-radius:10px;
+            border-radius:0;
 
-            scroll-snap-align:center;
+            box-sizing:border-box;
+
+            scroll-snap-align:start;
 
             scroll-snap-stop:always;
         }
@@ -2104,6 +1991,8 @@ function addStyles() {
             object-fit:cover;
 
             background:#050914;
+
+            display:block;
         }
 
 
@@ -2150,6 +2039,10 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           PLAY / PAUSE
+           ===================================================== */
+
         .video-play-indicator {
 
             position:absolute;
@@ -2164,6 +2057,7 @@ function addStyles() {
             height:88px;
 
             border:0;
+
             border-radius:50%;
 
             background:
@@ -2172,6 +2066,7 @@ function addStyles() {
             color:white;
 
             font-size:42px;
+
             font-weight:500;
 
             display:flex;
@@ -2217,6 +2112,10 @@ function addStyles() {
             pointer-events:none;
         }
 
+
+        /* =====================================================
+           VIDEO PROGRESS
+           ===================================================== */
 
         .video-progress-container {
 
@@ -2312,6 +2211,10 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           ACTIONS
+           ===================================================== */
+
         .video-actions {
 
             position:absolute;
@@ -2375,6 +2278,10 @@ function addStyles() {
             font-weight:650;
         }
 
+
+        /* =====================================================
+           VIDEO INFORMATION
+           ===================================================== */
 
         .video-info {
 
@@ -2548,6 +2455,10 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           LOADING / EMPTY / ERROR
+           ===================================================== */
+
         .group-loading,
         .group-empty,
         .group-error {
@@ -2556,7 +2467,10 @@ function addStyles() {
 
             height:100dvh;
 
-            min-height:100vh;
+            min-height:100dvh;
+
+            margin:0;
+            padding:20px;
 
             display:flex;
 
@@ -2572,7 +2486,7 @@ function addStyles() {
 
             color:white;
 
-            padding:20px;
+            box-sizing:border-box;
         }
 
 
@@ -2737,6 +2651,10 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           TOAST
+           ===================================================== */
+
         .vitalstar-reals-toast {
 
             position:fixed;
@@ -2786,6 +2704,10 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           ANIMATION
+           ===================================================== */
+
         @keyframes vitalstarGroupSpin {
 
             to {
@@ -2794,15 +2716,47 @@ function addStyles() {
         }
 
 
+        /* =====================================================
+           MOBILE
+           IMPORTANT: NO SPACE BELOW
+           ===================================================== */
+
         @media(max-width:480px) {
+
+            .group-reals-feed {
+
+                width:100%;
+
+                height:100%;
+
+                padding:0;
+
+                margin:0;
+            }
+
 
             .reals-video-card {
 
-                height:94dvh;
+                width:100%;
 
-                margin-bottom:1.5dvh;
+                height:100dvh;
 
-                border-radius:8px;
+                min-height:100dvh;
+
+                margin:0;
+
+                padding:0;
+
+                border-radius:0;
+            }
+
+
+            .reals-video {
+
+                width:100%;
+                height:100%;
+
+                object-fit:cover;
             }
 
 
@@ -2876,7 +2830,6 @@ function addStyles() {
             }
         }
     `;
-
 
     document.head.appendChild(
         style
