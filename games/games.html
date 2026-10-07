@@ -1,18 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta
+name="viewport"
+content="width=device-width,initial-scale=1.0"
 
-<head>
+«»
 
-<meta charset="UTF-8">
+<title>VitalStar Games</title><style>
 
-<meta
-    name="viewport"
-    content="width=device-width,initial-scale=1.0"
->
-
-<title>VitalStar Games</title>
-
-<style>
+/* =========================================================
+   VITALSTAR GAMES — ADVANCED DESIGN
+========================================================= */
 
 *{
     box-sizing:border-box;
@@ -20,11 +16,107 @@
     padding:0;
 }
 
+:root{
+    --bg:#030611;
+    --panel:rgba(13,19,35,.82);
+    --panel2:rgba(18,25,46,.9);
+    --border:rgba(124,92,255,.22);
+    --purple:#7c5cff;
+    --blue:#277cff;
+    --cyan:#31d8ff;
+    --gold:#ffd84d;
+    --text:#fff;
+    --muted:#8994aa;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
 body{
     font-family:Arial,sans-serif;
-    background:#080b14;
-    color:#fff;
+    color:var(--text);
     min-height:100vh;
+    overflow-x:hidden;
+
+    background:
+        radial-gradient(
+            circle at 10% 5%,
+            rgba(124,92,255,.22),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 90% 15%,
+            rgba(39,124,255,.18),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 50% 80%,
+            rgba(49,216,255,.08),
+            transparent 30%
+        ),
+        #030611;
+}
+
+/* Animated background grid */
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-2;
+    pointer-events:none;
+
+    background-image:
+        linear-gradient(
+            rgba(255,255,255,.025) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.025) 1px,
+            transparent 1px
+        );
+
+    background-size:42px 42px;
+
+    mask-image:linear-gradient(
+        to bottom,
+        black,
+        transparent 90%
+    );
+}
+
+/* Floating light */
+
+body::after{
+    content:"";
+    position:fixed;
+    width:380px;
+    height:380px;
+    border-radius:50%;
+    left:50%;
+    top:45%;
+    transform:translate(-50%,-50%);
+    z-index:-1;
+    pointer-events:none;
+
+    background:radial-gradient(
+        circle,
+        rgba(124,92,255,.08),
+        transparent 70%
+    );
+
+    animation:ambient 7s ease-in-out infinite alternate;
+}
+
+@keyframes ambient{
+    from{
+        transform:translate(-52%,-48%) scale(.9);
+    }
+    to{
+        transform:translate(-48%,-52%) scale(1.12);
+    }
 }
 
 button,
@@ -40,14 +132,19 @@ header{
     position:sticky;
     top:0;
     z-index:50;
-    background:#101522;
-    border-bottom:1px solid #252d40;
+
+    background:rgba(5,9,20,.82);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+
+    border-bottom:1px solid rgba(124,92,255,.18);
     padding:12px;
 }
 
 .header-inner{
     max-width:1050px;
     margin:auto;
+
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -56,11 +153,12 @@ header{
 
 .logo{
     font-size:18px;
-    font-weight:800;
+    font-weight:900;
+    letter-spacing:.3px;
 }
 
 .logo span{
-    color:#7c5cff;
+    color:var(--purple);
 }
 
 .header-right{
@@ -70,23 +168,33 @@ header{
 }
 
 .coins{
-    background:#1a2030;
-    border:1px solid #30394e;
+    background:rgba(255,216,77,.08);
+    border:1px solid rgba(255,216,77,.2);
     padding:7px 10px;
     border-radius:20px;
-    color:#ffd84d;
+    color:var(--gold);
     font-weight:bold;
     font-size:12px;
 }
 
 .premium-mini{
-    background:#7c5cff;
+    background:linear-gradient(
+        135deg,
+        #7c5cff,
+        #a14cff
+    );
+
     color:#fff;
     border:0;
+
     padding:8px 10px;
     border-radius:9px;
+
     font-weight:bold;
     font-size:11px;
+
+    box-shadow:
+        0 7px 20px rgba(124,92,255,.22);
 }
 
 .container{
@@ -95,85 +203,213 @@ header{
     padding:15px 12px 50px;
 }
 
+
+/* =========================================================
+   HERO
+========================================================= */
+
 .hero{
-    background:linear-gradient(
-        135deg,
-        #171d35,
-        #29174e
-    );
-    border:1px solid #393f64;
-    border-radius:20px;
-    padding:21px 16px;
-    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(27,35,72,.92),
+            rgba(40,19,75,.9)
+        );
+
+    border:1px solid rgba(124,92,255,.3);
+    border-radius:24px;
+
+    padding:24px 18px;
+    margin-bottom:18px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.28);
+}
+
+.hero::before{
+    content:"";
+    position:absolute;
+    width:220px;
+    height:220px;
+    right:-70px;
+    top:-90px;
+
+    border-radius:50%;
+
+    background:rgba(124,92,255,.2);
+    filter:blur(5px);
+}
+
+.hero::after{
+    content:"✦";
+    position:absolute;
+    right:28px;
+    bottom:18px;
+
+    color:rgba(255,255,255,.15);
+    font-size:60px;
 }
 
 .hero h1{
-    font-size:25px;
+    position:relative;
+    z-index:1;
+
+    font-size:27px;
     margin-bottom:7px;
+
+    background:linear-gradient(
+        90deg,
+        #fff,
+        #bdb0ff,
+        #6edcff
+    );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
 }
 
 .hero p{
+    position:relative;
+    z-index:1;
+
     color:#b6bed0;
-    line-height:1.5;
+    line-height:1.55;
     font-size:13px;
+    max-width:650px;
 }
 
 .hero-bottom{
+    position:relative;
+    z-index:2;
+
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:10px;
-    margin-top:15px;
+
+    margin-top:17px;
     flex-wrap:wrap;
 }
 
 .premium-button{
     border:0;
-    background:#7c5cff;
+
+    background:linear-gradient(
+        135deg,
+        #7c5cff,
+        #426fff
+    );
+
     color:#fff;
+
     padding:10px 14px;
-    border-radius:10px;
+    border-radius:11px;
+
     font-weight:bold;
     font-size:12px;
+
+    box-shadow:
+        0 8px 25px rgba(70,85,255,.25);
 }
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
 
 .search{
     width:100%;
     margin:3px 0 12px;
-    padding:12px;
-    border-radius:11px;
-    border:1px solid #30394e;
-    background:#101522;
+
+    padding:13px;
+
+    border-radius:12px;
+
+    border:1px solid rgba(124,92,255,.2);
+
+    background:rgba(10,15,28,.82);
+
     color:#fff;
+
     outline:none;
+
+    transition:.2s;
 }
+
+.search:focus{
+    border-color:#7c5cff;
+
+    box-shadow:
+        0 0 0 3px rgba(124,92,255,.08);
+}
+
+
+/* =========================================================
+   TABS
+========================================================= */
 
 .tabs{
     display:flex;
     gap:7px;
     overflow-x:auto;
-    margin-bottom:15px;
+    margin-bottom:16px;
+
+    scrollbar-width:none;
+}
+
+.tabs::-webkit-scrollbar{
+    display:none;
 }
 
 .tab{
     flex:none;
-    padding:8px 12px;
+
+    padding:8px 13px;
+
     border-radius:20px;
-    border:1px solid #30394e;
-    background:#111622;
+
+    border:1px solid rgba(124,92,255,.18);
+
+    background:rgba(13,18,32,.82);
+
     color:#b7bfd0;
+
     cursor:pointer;
+
     font-size:11px;
+
+    transition:.2s;
+}
+
+.tab:hover{
+    border-color:#6654c9;
 }
 
 .tab.active{
-    background:#7c5cff;
+    background:linear-gradient(
+        135deg,
+        #7c5cff,
+        #4e7cff
+    );
+
     color:#fff;
-    border-color:#7c5cff;
+    border-color:transparent;
+
+    box-shadow:
+        0 6px 20px rgba(90,80,255,.2);
 }
 
+
+/* =========================================================
+   SECTIONS
+========================================================= */
+
 .section{
-    margin-top:20px;
+    margin-top:22px;
 }
 
 .section-title{
@@ -181,45 +417,98 @@ header{
     margin-bottom:11px;
 }
 
+
+/* =========================================================
+   GAMES
+========================================================= */
+
 .games{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:10px;
+    gap:11px;
 }
 
 .game{
     position:relative;
-    background:#111622;
-    border:1px solid #252d40;
-    border-radius:15px;
-    padding:13px;
-    min-height:200px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18,25,46,.94),
+            rgba(8,12,23,.94)
+        );
+
+    border:1px solid rgba(124,92,255,.16);
+
+    border-radius:17px;
+
+    padding:14px;
+
+    min-height:205px;
+
     display:flex;
     flex-direction:column;
+
+    overflow:hidden;
+
+    transition:
+        transform .2s,
+        border-color .2s,
+        box-shadow .2s;
+}
+
+.game::before{
+    content:"";
+    position:absolute;
+    width:100px;
+    height:100px;
+    right:-40px;
+    top:-40px;
+
+    border-radius:50%;
+
+    background:rgba(124,92,255,.1);
 }
 
 .game:hover{
-    border-color:#51448d;
+    transform:translateY(-3px);
+
+    border-color:rgba(124,92,255,.55);
+
+    box-shadow:
+        0 15px 35px rgba(0,0,0,.3);
 }
 
 .game-icon{
-    font-size:34px;
-    margin-bottom:7px;
+    position:relative;
+    z-index:1;
+
+    font-size:36px;
+    margin-bottom:8px;
 }
 
 .game h3{
+    position:relative;
+    z-index:1;
+
     font-size:14px;
     margin-bottom:5px;
 }
 
 .game p{
+    position:relative;
+    z-index:1;
+
     color:#929caf;
     font-size:11px;
-    line-height:1.4;
+    line-height:1.45;
     flex:1;
 }
 
 .badges{
+    position:relative;
+    z-index:1;
+
     display:flex;
     gap:4px;
     flex-wrap:wrap;
@@ -229,8 +518,11 @@ header{
 .badge{
     font-size:8px;
     font-weight:bold;
+
     padding:3px 5px;
+
     border-radius:6px;
+
     background:#172b23;
     color:#72e5a2;
 }
@@ -241,15 +533,35 @@ header{
 }
 
 .play{
+    position:relative;
+    z-index:1;
+
     width:100%;
+
     padding:9px;
+
     margin-top:10px;
+
     border:0;
     border-radius:9px;
-    background:#2367e8;
+
+    background:linear-gradient(
+        135deg,
+        #2367e8,
+        #635bff
+    );
+
     color:#fff;
+
     font-weight:bold;
     font-size:11px;
+
+    transition:.2s;
+}
+
+.play:hover{
+    filter:brightness(1.15);
+    transform:translateY(-1px);
 }
 
 .locked{
@@ -258,12 +570,17 @@ header{
 
 .lock{
     position:absolute;
+
     right:8px;
     top:8px;
+
     font-size:8px;
     font-weight:bold;
+
     padding:4px 5px;
+
     border-radius:6px;
+
     background:#29213f;
     color:#d7caff;
 }
@@ -281,15 +598,24 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    PROFILE
-===================================================== */
+========================================================= */
 
 .profile-card{
-    background:#111622;
-    border:1px solid #252d40;
-    border-radius:18px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(17,22,38,.95),
+            rgba(9,13,24,.95)
+        );
+
+    border:1px solid rgba(124,92,255,.18);
+    border-radius:19px;
     padding:16px;
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.2);
 }
 
 .profile-top{
@@ -304,7 +630,11 @@ header{
     height:65px;
     border-radius:50%;
     object-fit:cover;
+
     border:2px solid #7c5cff;
+
+    box-shadow:
+        0 0 20px rgba(124,92,255,.2);
 }
 
 .profile-name{
@@ -325,7 +655,7 @@ header{
 }
 
 .stat{
-    background:#0b0f19;
+    background:rgba(5,9,18,.7);
     border:1px solid #252d40;
     border-radius:10px;
     padding:10px 5px;
@@ -346,13 +676,13 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    LEADERBOARD
-===================================================== */
+========================================================= */
 
 .leaderboard-box{
-    background:#111622;
-    border:1px solid #252d40;
+    background:rgba(17,22,38,.9);
+    border:1px solid rgba(124,92,255,.16);
     border-radius:17px;
     overflow:hidden;
 }
@@ -426,18 +756,25 @@ header{
 }
 
 
-/* =====================================================
-   SEARCH PLAYERS
-===================================================== */
+/* =========================================================
+   PLAYER SEARCH
+========================================================= */
 
 .player-search{
     width:100%;
+
     padding:11px;
+
     background:#0b0f19;
+
     border:1px solid #30394e;
+
     border-radius:10px;
+
     color:#fff;
+
     outline:none;
+
     margin-bottom:8px;
 }
 
@@ -448,9 +785,9 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    ACHIEVEMENTS
-===================================================== */
+========================================================= */
 
 .achievements{
     display:grid;
@@ -462,9 +799,13 @@ header{
     display:flex;
     align-items:center;
     gap:9px;
+
     padding:10px;
+
     border-radius:11px;
+
     border:1px solid #252d40;
+
     background:#111622;
 }
 
@@ -489,9 +830,9 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    HISTORY
-===================================================== */
+========================================================= */
 
 .history{
     background:#111622;
@@ -548,18 +889,26 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    MODALS
-===================================================== */
+========================================================= */
 
 .modal{
     display:none;
+
     position:fixed;
     inset:0;
+
     z-index:100;
-    background:rgba(0,0,0,.8);
+
+    background:rgba(0,0,0,.82);
+
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+
     align-items:center;
     justify-content:center;
+
     padding:15px;
 }
 
@@ -568,11 +917,24 @@ header{
     max-width:390px;
     max-height:90vh;
     overflow:auto;
-    background:#111622;
-    border:1px solid #383f5d;
-    border-radius:19px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #151c31,
+            #0a0e19
+        );
+
+    border:1px solid rgba(124,92,255,.35);
+
+    border-radius:20px;
+
     padding:20px;
+
     text-align:center;
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,.6);
 }
 
 .modal-icon{
@@ -595,9 +957,16 @@ header{
     width:100%;
     padding:11px;
     margin-top:7px;
+
     border:0;
     border-radius:10px;
-    background:#7c5cff;
+
+    background:linear-gradient(
+        135deg,
+        #7c5cff,
+        #426fff
+    );
+
     color:#fff;
     font-weight:bold;
 }
@@ -607,15 +976,16 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    PLAYER PROFILE MODAL
-===================================================== */
+========================================================= */
 
 .player-profile-avatar{
     width:75px;
     height:75px;
     border-radius:50%;
     object-fit:cover;
+
     border:2px solid #7c5cff;
     margin-bottom:8px;
 }
@@ -650,51 +1020,78 @@ header{
 }
 
 
-/* =====================================================
+/* =========================================================
    NOTIFICATION
-===================================================== */
+========================================================= */
 
 .achievement-notification{
     position:fixed;
+
     left:50%;
     bottom:20px;
+
     transform:translateX(-50%);
+
     z-index:300;
+
     background:#171d2c;
+
     border:1px solid #7c5cff;
+
     border-radius:13px;
+
     padding:12px 15px;
+
     display:flex;
     align-items:center;
     gap:10px;
+
     box-shadow:0 10px 30px #000;
+
     width:calc(100% - 30px);
     max-width:350px;
 }
 
-.achievement-notification div:first-child{
-    font-size:25px;
+
+/* =========================================================
+   SOUND CONTROL
+========================================================= */
+
+.sound-control{
+    position:fixed;
+
+    right:14px;
+    bottom:14px;
+
+    z-index:200;
+
+    width:43px;
+    height:43px;
+
+    border-radius:50%;
+
+    border:1px solid rgba(124,92,255,.4);
+
+    background:rgba(10,15,29,.9);
+
+    color:#fff;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:18px;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.4);
+
+    backdrop-filter:blur(12px);
 }
 
-.achievement-notification strong,
-.achievement-notification span{
-    display:block;
-}
 
-.achievement-notification strong{
-    font-size:11px;
-}
-
-.achievement-notification span{
-    color:#b7bfd0;
-    font-size:10px;
-    margin-top:3px;
-}
-
-
-/* =====================================================
+/* =========================================================
    MOBILE
-===================================================== */
+========================================================= */
 
 @media(max-width:700px){
 
@@ -742,481 +1139,450 @@ header{
 
 }
 
-</style>
+</style></head><body><!-- =====================================================
+     BACKGROUND MUSIC
+===================================================== --><audio
+id="gamesBackgroundSound"
+src="./games-bg.mp3"
+loop
+preload="auto"
 
-</head>
+«</audio>»
 
-
-<body>
-
-
-<header>
-
-<div class="header-inner">
-
-    <div class="logo">
-        ⭐ Vital<span>Star</span> Games
-    </div>
-
-    <div class="header-right">
-
-        <div class="coins">
-            🪙 <span id="coinBalance">1000</span>
-        </div>
-
-        <button
-            class="premium-mini"
-            id="premiumTopButton"
-        >
-            👑 Premium
-        </button>
-
-    </div>
-
+<header><div class="header-inner"><div class="logo">
+    ⭐ Vital<span>Star</span> Games
 </div>
 
-</header>
+<div class="header-right">
 
-
-<main class="container">
-
-
-<!-- =====================================================
-     HERO
-===================================================== -->
-
-<section class="hero">
-
-    <h1>
-        🎮 Play. Connect. Compete.
-    </h1>
-
-    <p>
-        Play VitalStar games, challenge your friends,
-        earn virtual rewards and climb the leaderboard.
-    </p>
-
-    <div class="hero-bottom">
-
-        <strong>
-            👥 Multiplayer games available
-        </strong>
-
-        <button
-            class="premium-button"
-            id="premiumButton"
-        >
-            👑 Explore Premium
-        </button>
-
+    <div class="coins">
+        🪙 <span id="coinBalance">1000</span>
     </div>
 
-</section>
-
-
-<!-- =====================================================
-     MY GAME PROFILE
-===================================================== -->
-
-<section class="section">
-
-<h2 class="section-title">
-    👤 My Game Profile
-</h2>
-
-<div class="profile-card">
-
-    <div class="profile-top">
-
-        <img
-            id="myGameAvatar"
-            class="game-avatar"
-            src="https://ui-avatars.com/api/?name=Player"
-            alt="Player"
-        >
-
-        <div>
-
-            <div
-                id="myGameName"
-                class="profile-name"
-            >
-                VitalStar Player
-            </div>
-
-            <div
-                id="myGameUsername"
-                class="profile-username"
-            >
-                @player
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="stats">
-
-        <div class="stat">
-            <strong id="myGamesPlayed">0</strong>
-            <span>Games</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myWins">0</strong>
-            <span>Wins</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myLosses">0</strong>
-            <span>Losses</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myWinRate">0%</strong>
-            <span>Win Rate</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myRating">1000</strong>
-            <span>Rating</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myBestScore">0</strong>
-            <span>Best Score</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myStreak">0</strong>
-            <span>Streak</span>
-        </div>
-
-        <div class="stat">
-            <strong id="myCoins">0</strong>
-            <span>Coins</span>
-        </div>
-
-    </div>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
-     SEARCH / GAMES
-===================================================== -->
-
-<section class="section">
-
-<input
-    type="search"
-    id="gameSearch"
-    class="search"
-    placeholder="🔎 Search games..."
->
-
-
-<div class="tabs">
-
     <button
-        class="tab active"
-        data-category="all"
-    >
-        All
-    </button>
-
-    <button
-        class="tab"
-        data-category="free"
-    >
-        🆓 Free
-    </button>
-
-    <button
-        class="tab"
-        data-category="premium"
+        class="premium-mini"
+        id="premiumTopButton"
     >
         👑 Premium
     </button>
 
-    <button
-        class="tab"
-        data-category="multiplayer"
-    >
-        👥 Multiplayer
-    </button>
-
 </div>
 
+</div></header><main class="container"><!-- =====================================================
+     HERO
+===================================================== --><section class="hero"><h1>
+    🎮 Play. Connect. Compete.
+</h1>
 
-<h2 class="section-title">
-    🎮 Games
-</h2>
+<p>
+    Welcome to VitalStar Games — play exciting games,
+    challenge your friends, earn virtual rewards and
+    climb the leaderboard.
+</p>
 
-<div
-    id="gamesGrid"
-    class="games"
-></div>
+<div class="hero-bottom">
 
-<div
-    id="emptyMessage"
-    class="empty"
->
-    No games found.
-</div>
-
-</section>
-
-
-<!-- =====================================================
-     TOP 10 WINNERS
-===================================================== -->
-
-<section class="section">
-
-<h2 class="section-title">
-    🏆 Top 10 Best Winners
-</h2>
-
-<div
-    id="topWinners"
-    class="leaderboard-box"
->
-
-    <div class="loading">
-        Loading top players...
-    </div>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
-     GLOBAL LEADERBOARD
-===================================================== -->
-
-<section class="section">
-
-<h2 class="section-title">
-    🌎 Global Leaderboard
-</h2>
-
-<div class="leaderboard-box">
-
-    <div
-        id="leaderboard"
-    >
-
-        <div class="loading">
-            Loading leaderboard...
-        </div>
-
-    </div>
-
-</div>
-
-</section>
-
-
-<!-- =====================================================
-     PLAYER SEARCH
-===================================================== -->
-
-<section class="section">
-
-<h2 class="section-title">
-    🔎 Find Players
-</h2>
-
-<input
-    id="playerSearch"
-    class="player-search"
-    type="search"
-    placeholder="Search username..."
->
-
-<div id="playerSearchResults"></div>
-
-</section>
-
-
-<!-- =====================================================
-     ACHIEVEMENTS
-===================================================== -->
-
-<section class="section">
-
-<h2 class="section-title">
-    🏅 Achievements
-</h2>
-
-<div
-    id="achievements"
-    class="achievements"
-></div>
-
-</section>
-
-
-<!-- =====================================================
-     GAME HISTORY
-===================================================== -->
-
-<section class="section">
-
-<h2 class="section-title">
-    📜 My Game History
-</h2>
-
-<div
-    id="gameHistory"
-    class="history"
->
-
-    <div class="loading">
-        Loading game history...
-    </div>
-
-</div>
-
-</section>
-
-
-</main>
-
-
-<!-- =====================================================
-     PREMIUM MODAL
-===================================================== -->
-
-<div
-    class="modal"
-    id="premiumModal"
->
-
-<div class="modal-box">
-
-    <div class="modal-icon">
-        👑
-    </div>
-
-    <h2>
-        VitalStar Games Premium
-    </h2>
-
-    <p>
-        Unlock premium games, exclusive
-        multiplayer features and future
-        Premium content.
-    </p>
-
-    <button id="subscribeButton">
-        👑 Continue to Premium
-    </button>
+    <strong>
+        👥 Multiplayer games available
+    </strong>
 
     <button
-        class="close"
-        id="closePremium"
+        class="premium-button"
+        id="premiumButton"
     >
-        Close
+        👑 Explore Premium
     </button>
 
 </div>
 
-</div>
-
-
-<!-- =====================================================
-     PLAYER PROFILE MODAL
-===================================================== -->
-
-<div
-    class="modal"
-    id="playerProfileModal"
->
-
-<div class="modal-box">
+</section><!-- =====================================================
+     MY GAME PROFILE
+===================================================== --><section class="section"><h2 class="section-title">
+    👤 My Game Profile
+</h2><div class="profile-card"><div class="profile-top">
 
     <img
-        id="profilePlayerAvatar"
-        class="player-profile-avatar"
+        id="myGameAvatar"
+        class="game-avatar"
         src="https://ui-avatars.com/api/?name=Player"
         alt="Player"
     >
 
-    <h2 id="profilePlayerName">
-        Player
-    </h2>
+    <div>
 
-    <div
-        id="profilePlayerUsername"
-        class="player-profile-username"
-    >
-        @player
-    </div>
-
-
-    <div class="profile-grid">
-
-        <div class="profile-stat">
-            <strong id="profileGamesPlayed">0</strong>
-            <small>Games</small>
+        <div
+            id="myGameName"
+            class="profile-name"
+        >
+            VitalStar Player
         </div>
 
-        <div class="profile-stat">
-            <strong id="profileWins">0</strong>
-            <small>Wins</small>
-        </div>
-
-        <div class="profile-stat">
-            <strong id="profileLosses">0</strong>
-            <small>Losses</small>
-        </div>
-
-        <div class="profile-stat">
-            <strong id="profileWinRate">0%</strong>
-            <small>Win Rate</small>
-        </div>
-
-        <div class="profile-stat">
-            <strong id="profileRating">1000</strong>
-            <small>Rating</small>
-        </div>
-
-        <div class="profile-stat">
-            <strong id="profileBestScore">0</strong>
-            <small>Best Score</small>
-        </div>
-
-        <div class="profile-stat">
-            <strong id="profileStreak">0</strong>
-            <small>Best Streak</small>
+        <div
+            id="myGameUsername"
+            class="profile-username"
+        >
+            @player
         </div>
 
     </div>
 
-
-    <button
-        class="close"
-        id="closePlayerProfile"
-    >
-        Close
-    </button>
-
-</div>
-
 </div>
 
 
-<script
+<div class="stats">
+
+    <div class="stat">
+        <strong id="myGamesPlayed">0</strong>
+        <span>Games</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myWins">0</strong>
+        <span>Wins</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myLosses">0</strong>
+        <span>Losses</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myWinRate">0%</strong>
+        <span>Win Rate</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myRating">1000</strong>
+        <span>Rating</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myBestScore">0</strong>
+        <span>Best Score</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myStreak">0</strong>
+        <span>Streak</span>
+    </div>
+
+    <div class="stat">
+        <strong id="myCoins">0</strong>
+        <span>Coins</span>
+    </div>
+
+</div>
+
+</div></section><!-- =====================================================
+     SEARCH / GAMES
+===================================================== --><section class="section"><input
+type="search"
+id="gameSearch"
+class="search"
+placeholder="🔎 Search games..."
+
+«»
+
+<div class="tabs"><button
+    class="tab active"
+    data-category="all"
+>
+    All
+</button>
+
+<button
+    class="tab"
+    data-category="free"
+>
+    🆓 Free
+</button>
+
+<button
+    class="tab"
+    data-category="premium"
+>
+    👑 Premium
+</button>
+
+<button
+    class="tab"
+    data-category="multiplayer"
+>
+    👥 Multiplayer
+</button>
+
+</div><h2 class="section-title">
+    🎮 Games
+</h2><div
+    id="gamesGrid"
+    class="games"
+></div><div
+    id="emptyMessage"
+    class="empty"
+>
+    No games found.
+</div></section><!-- =====================================================
+     TOP 10 WINNERS
+===================================================== --><section class="section"><h2 class="section-title">
+    🏆 Top 10 Best Winners
+</h2><div
+    id="topWinners"
+    class="leaderboard-box"
+><div class="loading">
+    Loading top players...
+</div>
+
+</div></section><!-- =====================================================
+     GLOBAL LEADERBOARD
+===================================================== --><section class="section"><h2 class="section-title">
+    🌎 Global Leaderboard
+</h2><div class="leaderboard-box"><div
+    id="leaderboard"
+>
+
+    <div class="loading">
+        Loading leaderboard...
+    </div>
+
+</div>
+
+</div></section><!-- =====================================================
+     PLAYER SEARCH
+===================================================== --><section class="section"><h2 class="section-title">
+    🔎 Find Players
+</h2><input
+id="playerSearch"
+class="player-search"
+type="search"
+placeholder="Search username..."
+
+«»
+
+<div id="playerSearchResults"></div></section><!-- =====================================================
+     ACHIEVEMENTS
+===================================================== --><section class="section"><h2 class="section-title">
+    🏅 Achievements
+</h2><div
+    id="achievements"
+    class="achievements"
+></div></section><!-- =====================================================
+     GAME HISTORY
+===================================================== --><section class="section"><h2 class="section-title">
+    📜 My Game History
+</h2><div
+    id="gameHistory"
+    class="history"
+><div class="loading">
+    Loading game history...
+</div>
+
+</div></section></main><!-- =====================================================
+     PREMIUM MODAL
+===================================================== --><div
+    class="modal"
+    id="premiumModal"
+><div class="modal-box"><div class="modal-icon">
+    👑
+</div>
+
+<h2>
+    VitalStar Games Premium
+</h2>
+
+<p>
+    Unlock premium games, exclusive
+    multiplayer features and future
+    Premium content.
+</p>
+
+<button id="subscribeButton">
+    👑 Continue to Premium
+</button>
+
+<button
+    class="close"
+    id="closePremium"
+>
+    Close
+</button>
+
+</div></div><!-- =====================================================
+     PLAYER PROFILE MODAL
+===================================================== --><div
+    class="modal"
+    id="playerProfileModal"
+><div class="modal-box"><img
+    id="profilePlayerAvatar"
+    class="player-profile-avatar"
+    src="https://ui-avatars.com/api/?name=Player"
+    alt="Player"
+>
+
+<h2 id="profilePlayerName">
+    Player
+</h2>
+
+<div
+    id="profilePlayerUsername"
+    class="player-profile-username"
+>
+    @player
+</div>
+
+
+<div class="profile-grid">
+
+    <div class="profile-stat">
+        <strong id="profileGamesPlayed">0</strong>
+        <small>Games</small>
+    </div>
+
+    <div class="profile-stat">
+        <strong id="profileWins">0</strong>
+        <small>Wins</small>
+    </div>
+
+    <div class="profile-stat">
+        <strong id="profileLosses">0</strong>
+        <small>Losses</small>
+    </div>
+
+    <div class="profile-stat">
+        <strong id="profileWinRate">0%</strong>
+        <small>Win Rate</small>
+    </div>
+
+    <div class="profile-stat">
+        <strong id="profileRating">1000</strong>
+        <small>Rating</small>
+    </div>
+
+    <div class="profile-stat">
+        <strong id="profileBestScore">0</strong>
+        <small>Best Score</small>
+    </div>
+
+    <div class="profile-stat">
+        <strong id="profileStreak">0</strong>
+        <small>Best Streak</small>
+    </div>
+
+</div>
+
+
+<button
+    class="close"
+    id="closePlayerProfile"
+>
+    Close
+</button>
+
+</div></div><!-- =====================================================
+     SOUND BUTTON
+===================================================== --><button
+class="sound-control"
+id="soundControl"
+aria-label="Toggle background sound"
+
+«»
+
+🔇
+
+</button><script
     type="module"
     src="./games.js"
-></script>
+></script><script>
 
-</body>
+/* =========================================================
+   VITALSTAR GAMES — BACKGROUND SOUND
+========================================================= */
 
-</html>
+const bgSound =
+    document.getElementById("gamesBackgroundSound");
+
+const soundControl =
+    document.getElementById("soundControl");
+
+let soundEnabled = false;
+
+
+/*
+   Browsers block automatic audio playback.
+
+   Start sound after the first user interaction.
+*/
+
+async function startGamesSound(){
+
+    if(soundEnabled) return;
+
+    try{
+
+        bgSound.volume = 0.18;
+
+        await bgSound.play();
+
+        soundEnabled = true;
+
+        soundControl.textContent = "🔊";
+
+    }catch(error){
+
+        soundEnabled = false;
+
+    }
+
+}
+
+
+/* First interaction */
+
+document.addEventListener(
+    "pointerdown",
+    startGamesSound,
+    {
+        once:true
+    }
+);
+
+
+/* Sound button */
+
+soundControl.addEventListener(
+    "click",
+    async function(){
+
+        if(!soundEnabled){
+
+            try{
+
+                bgSound.volume = 0.18;
+
+                await bgSound.play();
+
+                soundEnabled = true;
+
+                soundControl.textContent = "🔊";
+
+            }catch(error){
+
+                console.log(
+                    "Background sound could not start."
+                );
+
+            }
+
+        }else{
+
+            bgSound.pause();
+
+            soundEnabled = false;
+
+            soundControl.textContent = "🔇";
+
+        }
+
+    }
+);
+
+</script></body></html>
