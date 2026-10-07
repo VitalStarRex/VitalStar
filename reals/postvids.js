@@ -109,8 +109,6 @@ function setFeedHeight() {
     container.style.minHeight = `${availableHeight}px`;
     container.style.maxHeight = `${availableHeight}px`;
 
-    /* Like groupvids.js: the container never scrolls itself,
-       the inner feed div does. */
     container.style.overflow = "hidden";
 
     const feedEl = container.querySelector(".post-reals-feed");
@@ -119,8 +117,6 @@ function setFeedHeight() {
         feedEl.style.height = `${availableHeight}px`;
     }
 
-    /* FIX: give every card a real pixel height.
-       height:100% can silently fail. */
     container
         .querySelectorAll(".post-video-card")
         .forEach(card => {
@@ -334,11 +330,6 @@ function initializeFeed() {
                     Array.from(unique.values())
                         .sort((a, b) => b.createdAt - a.createdAt);
 
-                /* FIX: if the same videos are already on screen
-                   (only a like/comment count changed), do NOT
-                   rebuild the feed. Rebuilding sends the user
-                   back to the first video and looks like
-                   "scrolling is broken". */
                 const signature =
                     nextVideos
                         .map(v => v.originalId + "|" + v.video)
@@ -491,39 +482,11 @@ function renderFeed() {
 
     container.appendChild(feed);
 
-    /* Set height AFTER the feed is inserted into the DOM. */
-
     requestAnimationFrame(() => {
 
         setFeedHeight();
 
         setupObserver();
-
-        /* TEMPORARY DIAGNOSTIC: shows a popup with the real numbers.
-           Delete this whole setTimeout block once scrolling works. */
-        setTimeout(() => {
-
-            if (!container) {
-                return;
-            }
-
-            const f = container.querySelector(".post-reals-feed");
-
-            if (!f) {
-                return;
-            }
-
-            const cs = getComputedStyle(f);
-
-            alert(
-                "clientHeight: " + f.clientHeight +
-                "\nscrollHeight: " + f.scrollHeight +
-                "\ndisplay: " + cs.display +
-                "\noverflowY: " + cs.overflowY +
-                "\ncards: " + f.children.length
-            );
-
-        }, 1000);
 
         if (autoplayEnabled && currentVideos.length) {
 
@@ -562,16 +525,19 @@ function createVideoCard(video, index) {
 
     videoElement.setAttribute("webkit-playsinline", "");
 
-    videoElement.preload = dataSaverEnabled ? "metadata" : "auto";
+    videoElement.preload =
+        dataSaverEnabled ? "metadata" : "auto";
 
     videoElement.muted = startMuted;
 
     videoElement.loop = true;
 
     const topGradient = document.createElement("div");
+
     topGradient.className = "reals-top-gradient";
 
     const bottomGradient = document.createElement("div");
+
     bottomGradient.className = "reals-bottom-gradient";
 
     /* ---------------- PLAY INDICATOR ---------------- */
@@ -598,17 +564,29 @@ function createVideoCard(video, index) {
 
     /* ---------------- PROGRESS BAR ---------------- */
 
-    const progressContainer = document.createElement("div");
-    progressContainer.className = "video-progress-container";
+    const progressContainer =
+        document.createElement("div");
 
-    const progressTrack = document.createElement("div");
-    progressTrack.className = "video-progress-track";
+    progressContainer.className =
+        "video-progress-container";
 
-    const progressFill = document.createElement("div");
-    progressFill.className = "video-progress-fill";
+    const progressTrack =
+        document.createElement("div");
 
-    const progressThumb = document.createElement("div");
-    progressThumb.className = "video-progress-thumb";
+    progressTrack.className =
+        "video-progress-track";
+
+    const progressFill =
+        document.createElement("div");
+
+    progressFill.className =
+        "video-progress-fill";
+
+    const progressThumb =
+        document.createElement("div");
+
+    progressThumb.className =
+        "video-progress-thumb";
 
     progressTrack.appendChild(progressFill);
     progressTrack.appendChild(progressThumb);
@@ -618,7 +596,8 @@ function createVideoCard(video, index) {
 
     function seekFromPointer(event) {
 
-        const rect = progressTrack.getBoundingClientRect();
+        const rect =
+            progressTrack.getBoundingClientRect();
 
         if (
             !rect.width ||
@@ -627,59 +606,94 @@ function createVideoCard(video, index) {
             return;
         }
 
-        let position = (event.clientX - rect.left) / rect.width;
+        let position =
+            (event.clientX - rect.left) / rect.width;
 
-        position = Math.max(0, Math.min(1, position));
+        position =
+            Math.max(
+                0,
+                Math.min(1, position)
+            );
 
-        videoElement.currentTime = position * videoElement.duration;
+        videoElement.currentTime =
+            position * videoElement.duration;
 
-        updateProgress(card, videoElement);
+        updateProgress(
+            card,
+            videoElement
+        );
     }
 
-    progressTrack.addEventListener("pointerdown", event => {
+    progressTrack.addEventListener(
+        "pointerdown",
+        event => {
 
-        event.preventDefault();
-        event.stopPropagation();
+            event.preventDefault();
+            event.stopPropagation();
 
-        dragging = true;
+            dragging = true;
 
-        progressTrack.setPointerCapture?.(event.pointerId);
+            progressTrack
+                .setPointerCapture?.(event.pointerId);
 
-        seekFromPointer(event);
-    });
-
-    progressTrack.addEventListener("pointermove", event => {
-
-        if (!dragging) {
-            return;
+            seekFromPointer(event);
         }
+    );
 
-        event.preventDefault();
+    progressTrack.addEventListener(
+        "pointermove",
+        event => {
 
-        seekFromPointer(event);
-    });
+            if (!dragging) {
+                return;
+            }
 
-    progressTrack.addEventListener("pointerup", event => {
+            event.preventDefault();
 
-        dragging = false;
+            seekFromPointer(event);
+        }
+    );
 
-        progressTrack.releasePointerCapture?.(event.pointerId);
-    });
+    progressTrack.addEventListener(
+        "pointerup",
+        event => {
 
-    progressTrack.addEventListener("pointercancel", () => {
+            dragging = false;
 
-        dragging = false;
-    });
+            progressTrack
+                .releasePointerCapture?.(event.pointerId);
+        }
+    );
 
-    videoElement.addEventListener("timeupdate", () => {
+    progressTrack.addEventListener(
+        "pointercancel",
+        () => {
 
-        updateProgress(card, videoElement);
-    });
+            dragging = false;
+        }
+    );
 
-    videoElement.addEventListener("loadedmetadata", () => {
+    videoElement.addEventListener(
+        "timeupdate",
+        () => {
 
-        updateProgress(card, videoElement);
-    });
+            updateProgress(
+                card,
+                videoElement
+            );
+        }
+    );
+
+    videoElement.addEventListener(
+        "loadedmetadata",
+        () => {
+
+            updateProgress(
+                card,
+                videoElement
+            );
+        }
+    );
 
     /* ---------------- ACTIONS ---------------- */
 
@@ -688,22 +702,46 @@ function createVideoCard(video, index) {
     actions.className = "reals-actions";
 
     const likeButton =
-        createActionButton("♡", formatCount(video.likes), "Like");
+        createActionButton(
+            "♡",
+            formatCount(video.likes),
+            "Like"
+        );
 
     const commentButton =
-        createActionButton("💬", formatCount(video.comments), "Comment");
+        createActionButton(
+            "💬",
+            formatCount(video.comments),
+            "Comment"
+        );
 
     const repostButton =
-        createActionButton("⟳", formatCount(video.reposts), "Repost");
+        createActionButton(
+            "⟳",
+            formatCount(video.reposts),
+            "Repost"
+        );
 
     const shareButton =
-        createActionButton("↗", formatCount(video.shares), "Share");
+        createActionButton(
+            "↗",
+            formatCount(video.shares),
+            "Share"
+        );
 
     const muteButton =
-        createActionButton(startMuted ? "🔇" : "🔊", "", "Mute");
+        createActionButton(
+            startMuted ? "🔇" : "🔊",
+            "",
+            "Mute"
+        );
 
     const moreButton =
-        createActionButton("⋮", "", "More");
+        createActionButton(
+            "⋮",
+            "",
+            "More"
+        );
 
     actions.append(
         likeButton,
@@ -718,10 +756,9 @@ function createVideoCard(video, index) {
 
         event.stopPropagation();
 
-        /* Likes are only given inside the comment section,
-           so here we just show a message. No Firebase write,
-           no count change. */
-        showToast("Enter comment section to like.");
+        showToast(
+            "Enter comment section to like."
+        );
     });
 
     commentButton.addEventListener("click", event => {
@@ -729,33 +766,47 @@ function createVideoCard(video, index) {
         event.stopPropagation();
 
         window.location.href =
-            `../comments.html?postId=${encodeURIComponent(video.originalId)}`;
+            `../comments.html?postId=${encodeURIComponent(
+                video.originalId
+            )}`;
     });
 
     repostButton.addEventListener("click", async event => {
 
         event.stopPropagation();
 
-        await toggleRepost(video, repostButton);
+        await toggleRepost(
+            video,
+            repostButton
+        );
     });
 
     shareButton.addEventListener("click", async event => {
 
         event.stopPropagation();
 
-        await sharePost(video, shareButton);
+        await sharePost(
+            video,
+            shareButton
+        );
     });
 
     muteButton.addEventListener("click", event => {
 
         event.stopPropagation();
 
-        videoElement.muted = !videoElement.muted;
+        videoElement.muted =
+            !videoElement.muted;
 
-        const icon = muteButton.querySelector(".action-icon");
+        const icon =
+            muteButton.querySelector(".action-icon");
 
         if (icon) {
-            icon.textContent = videoElement.muted ? "🔇" : "🔊";
+
+            icon.textContent =
+                videoElement.muted
+                    ? "🔇"
+                    : "🔊";
         }
     });
 
@@ -763,72 +814,119 @@ function createVideoCard(video, index) {
 
         event.stopPropagation();
 
-        showToast("More options coming soon.");
+        showToast(
+            "More options coming soon."
+        );
     });
 
     /* ---------------- CREATOR ---------------- */
 
     const info = document.createElement("div");
+
     info.className = "reals-info";
 
-    const creatorRow = document.createElement("div");
-    creatorRow.className = "reals-creator-row";
+    const creatorRow =
+        document.createElement("div");
 
-    const avatar = document.createElement("img");
+    creatorRow.className =
+        "reals-creator-row";
 
-    avatar.className = "reals-avatar";
+    const avatar =
+        document.createElement("img");
+
+    avatar.className =
+        "reals-avatar";
 
     avatar.src =
         video.profilePicture ||
-        createAvatarFallback(video.fullName);
+        createAvatarFallback(
+            video.fullName
+        );
 
-    avatar.alt = video.fullName;
+    avatar.alt =
+        video.fullName;
 
     avatar.onerror = () => {
 
-        avatar.src = createAvatarFallback(video.fullName);
+        avatar.src =
+            createAvatarFallback(
+                video.fullName
+            );
     };
 
-    const creatorText = document.createElement("div");
-    creatorText.className = "reals-creator-text";
+    const creatorText =
+        document.createElement("div");
 
-    const name = document.createElement("button");
+    creatorText.className =
+        "reals-creator-text";
+
+    const name =
+        document.createElement("button");
+
     name.type = "button";
-    name.className = "reals-creator-name";
-    name.textContent = video.fullName;
 
-    const username = document.createElement("div");
-    username.className = "reals-username";
+    name.className =
+        "reals-creator-name";
+
+    name.textContent =
+        video.fullName;
+
+    const username =
+        document.createElement("div");
+
+    username.className =
+        "reals-username";
+
     username.textContent =
-        video.username ? `@${video.username}` : "VitalStar";
+        video.username
+            ? `@${video.username}`
+            : "VitalStar";
 
-    creatorText.append(name, username);
+    creatorText.append(
+        name,
+        username
+    );
 
-    creatorRow.append(avatar, creatorText);
+    creatorRow.append(
+        avatar,
+        creatorText
+    );
 
-    creatorRow.addEventListener("click", event => {
+    creatorRow.addEventListener(
+        "click",
+        event => {
 
-        event.stopPropagation();
+            event.stopPropagation();
 
-        if (!video.uid) {
-            return;
+            if (!video.uid) {
+                return;
+            }
+
+            window.location.href =
+                `../profile.html?uid=${encodeURIComponent(
+                    video.uid
+                )}`;
         }
+    );
 
-        window.location.href =
-            `../profile.html?uid=${encodeURIComponent(video.uid)}`;
-    });
-
-    info.appendChild(creatorRow);
+    info.appendChild(
+        creatorRow
+    );
 
     if (video.text) {
 
-        const caption = document.createElement("div");
+        const caption =
+            document.createElement("div");
 
-        caption.className = "reals-caption";
+        caption.className =
+            "reals-caption";
 
-        caption.textContent = video.text;
+        caption.textContent =
+            video.text;
 
-        info.appendChild(caption);
+        info.appendChild(
+            caption
+        );
     }
 
     card.append(
@@ -848,33 +946,52 @@ function createVideoCard(video, index) {
 ACTION BUTTON
 ============================================================ */
 
-function createActionButton(icon, count, label) {
+function createActionButton(
+    icon,
+    count,
+    label
+) {
 
-    const button = document.createElement("button");
+    const button =
+        document.createElement("button");
 
     button.type = "button";
 
-    button.className = "reals-action";
+    button.className =
+        "reals-action";
 
-    button.setAttribute("aria-label", label);
+    button.setAttribute(
+        "aria-label",
+        label
+    );
 
-    const iconElement = document.createElement("span");
+    const iconElement =
+        document.createElement("span");
 
-    iconElement.className = "action-icon";
+    iconElement.className =
+        "action-icon";
 
-    iconElement.textContent = icon;
+    iconElement.textContent =
+        icon;
 
-    button.appendChild(iconElement);
+    button.appendChild(
+        iconElement
+    );
 
     if (count !== "") {
 
-        const countElement = document.createElement("span");
+        const countElement =
+            document.createElement("span");
 
-        countElement.className = "action-count";
+        countElement.className =
+            "action-count";
 
-        countElement.textContent = count;
+        countElement.textContent =
+            count;
 
-        button.appendChild(countElement);
+        button.appendChild(
+            countElement
+        );
     }
 
     return button;
@@ -884,13 +1001,18 @@ function createActionButton(icon, count, label) {
 PLAY / PAUSE
 ============================================================ */
 
-function togglePlay(video, indicator) {
+function togglePlay(
+    video,
+    indicator
+) {
 
     if (video.paused) {
 
         video.play()
             .then(() => {
-                indicator.style.opacity = "0";
+
+                indicator.style.opacity =
+                    "0";
             })
             .catch(() => {});
 
@@ -898,9 +1020,11 @@ function togglePlay(video, indicator) {
 
         video.pause();
 
-        indicator.textContent = "▶";
+        indicator.textContent =
+            "▶";
 
-        indicator.style.opacity = "1";
+        indicator.style.opacity =
+            "1";
     }
 }
 
@@ -908,11 +1032,20 @@ function togglePlay(video, indicator) {
 PROGRESS
 ============================================================ */
 
-function updateProgress(card, video) {
+function updateProgress(
+    card,
+    video
+) {
 
-    const fill = card.querySelector(".video-progress-fill");
+    const fill =
+        card.querySelector(
+            ".video-progress-fill"
+        );
 
-    const thumb = card.querySelector(".video-progress-thumb");
+    const thumb =
+        card.querySelector(
+            ".video-progress-thumb"
+        );
 
     if (!fill || !thumb) {
         return;
@@ -930,13 +1063,18 @@ function updateProgress(card, video) {
             0,
             Math.min(
                 100,
-                (video.currentTime / video.duration) * 100
+                (
+                    video.currentTime /
+                    video.duration
+                ) * 100
             )
         );
 
-    fill.style.width = `${percent}%`;
+    fill.style.width =
+        `${percent}%`;
 
-    thumb.style.left = `${percent}%`;
+    thumb.style.left =
+        `${percent}%`;
 }
 
 /* ============================================================
@@ -953,53 +1091,74 @@ function setupObserver() {
         new IntersectionObserver(
             entries => {
 
-                entries.forEach(entry => {
+                entries.forEach(
+                    entry => {
 
-                    const video = entry.target.querySelector("video");
+                        const video =
+                            entry.target
+                                .querySelector("video");
 
-                    if (!video) {
-                        return;
-                    }
-
-                    const playButton =
-                        entry.target.querySelector(".reals-play-indicator");
-
-                    if (
-                        entry.isIntersecting &&
-                        entry.intersectionRatio >= 0.65
-                    ) {
-
-                        if (autoplayEnabled) {
-
-                            video.muted = startMuted;
-
-                            video.play()
-                                .then(() => {
-
-                                    if (playButton) {
-                                        playButton.style.opacity = "0";
-                                    }
-                                })
-                                .catch(() => {});
+                        if (!video) {
+                            return;
                         }
 
-                    } else {
+                        const playButton =
+                            entry.target.querySelector(
+                                ".reals-play-indicator"
+                            );
 
-                        video.pause();
+                        if (
+                            entry.isIntersecting &&
+                            entry.intersectionRatio >= 0.65
+                        ) {
+
+                            if (autoplayEnabled) {
+
+                                video.muted =
+                                    startMuted;
+
+                                video.play()
+                                    .then(() => {
+
+                                        if (playButton) {
+
+                                            playButton.style.opacity =
+                                                "0";
+                                        }
+                                    })
+                                    .catch(() => {});
+                            }
+
+                        } else {
+
+                            video.pause();
+                        }
                     }
-                });
+                );
             },
             {
-                root: container.querySelector(".post-reals-feed"),
+                root:
+                    container.querySelector(
+                        ".post-reals-feed"
+                    ),
 
-                threshold: [0.1, 0.5, 0.65, 0.9]
+                threshold: [
+                    0.1,
+                    0.5,
+                    0.65,
+                    0.9
+                ]
             }
         );
 
-    currentVideos.forEach(item => {
+    currentVideos.forEach(
+        item => {
 
-        observer.observe(item.card);
-    });
+            observer.observe(
+                item.card
+            );
+        }
+    );
 }
 
 /* ============================================================
@@ -1028,88 +1187,163 @@ function stopAllVideos() {
 LIKE
 ============================================================ */
 
-async function toggleLike(video, button) {
+async function toggleLike(
+    video,
+    button
+) {
 
-    const user = auth.currentUser;
+    const user =
+        auth.currentUser;
 
     if (!user) {
 
-        showToast("Please sign in to like this post.");
+        showToast(
+            "Please sign in to like this post."
+        );
 
         return;
     }
 
-    const likeId = `${video.originalId}_${user.uid}`;
+    const likeId =
+        `${video.originalId}_${user.uid}`;
 
-    const likeRef = doc(db, "postLikes", likeId);
+    const likeRef =
+        doc(
+            db,
+            "postLikes",
+            likeId
+        );
 
     try {
 
-        const likeSnap = await getDoc(likeRef);
+        const likeSnap =
+            await getDoc(
+                likeRef
+            );
 
-        const icon = button.querySelector(".action-icon");
+        const icon =
+            button.querySelector(
+                ".action-icon"
+            );
 
-        const count = button.querySelector(".action-count");
+        const count =
+            button.querySelector(
+                ".action-count"
+            );
 
         if (likeSnap.exists()) {
 
-            await deleteDoc(likeRef);
-
-            await updateDoc(
-                doc(db, "posts", video.originalId),
-                { likes: increment(-1) }
+            await deleteDoc(
+                likeRef
             );
 
-            video.likes = Math.max(0, video.likes - 1);
+            await updateDoc(
+                doc(
+                    db,
+                    "posts",
+                    video.originalId
+                ),
+                {
+                    likes:
+                        increment(-1)
+                }
+            );
 
-            icon.textContent = "♡";
+            video.likes =
+                Math.max(
+                    0,
+                    video.likes - 1
+                );
+
+            icon.textContent =
+                "♡";
 
         } else {
 
-            await setDoc(likeRef, {
-                uid: user.uid,
-                postId: video.originalId,
-                createdAt: serverTimestamp()
-            });
+            await setDoc(
+                likeRef,
+                {
+                    uid: user.uid,
+                    postId:
+                        video.originalId,
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
 
             await updateDoc(
-                doc(db, "posts", video.originalId),
-                { likes: increment(1) }
+                doc(
+                    db,
+                    "posts",
+                    video.originalId
+                ),
+                {
+                    likes:
+                        increment(1)
+                }
             );
 
             video.likes++;
 
-            icon.textContent = "♥";
+            icon.textContent =
+                "♥";
 
-            if (video.uid && video.uid !== user.uid) {
+            if (
+                video.uid &&
+                video.uid !== user.uid
+            ) {
 
                 try {
 
-                    await addDoc(collection(db, "notifications"), {
-                        recipientId: video.uid,
-                        senderId: user.uid,
-                        type: "like",
-                        postId: video.originalId,
-                        read: false,
-                        createdAt: serverTimestamp()
-                    });
+                    await addDoc(
+                        collection(
+                            db,
+                            "notifications"
+                        ),
+                        {
+                            recipientId:
+                                video.uid,
+                            senderId:
+                                user.uid,
+                            type:
+                                "like",
+                            postId:
+                                video.originalId,
+                            read:
+                                false,
+                            createdAt:
+                                serverTimestamp()
+                        }
+                    );
 
                 } catch (error) {
 
-                    console.warn("Notification failed:", error);
+                    console.warn(
+                        "Notification failed:",
+                        error
+                    );
                 }
             }
         }
 
         if (count) {
-            count.textContent = formatCount(video.likes);
+
+            count.textContent =
+                formatCount(
+                    video.likes
+                );
         }
 
     } catch (error) {
 
-        console.error("Like error:", error);
+        console.error(
+            "Like error:",
+            error
+        );
 
-        showToast("Unable to update like.");
+        showToast(
+            "Unable to update like."
+        );
     }
 }
 
@@ -1117,88 +1351,163 @@ async function toggleLike(video, button) {
 REPOST
 ============================================================ */
 
-async function toggleRepost(video, button) {
+async function toggleRepost(
+    video,
+    button
+) {
 
-    const user = auth.currentUser;
+    const user =
+        auth.currentUser;
 
     if (!user) {
 
-        showToast("Please sign in to repost.");
+        showToast(
+            "Please sign in to repost."
+        );
 
         return;
     }
 
-    const repostId = `${video.originalId}_${user.uid}`;
+    const repostId =
+        `${video.originalId}_${user.uid}`;
 
-    const repostRef = doc(db, "postReposts", repostId);
+    const repostRef =
+        doc(
+            db,
+            "postReposts",
+            repostId
+        );
 
     try {
 
-        const repostSnap = await getDoc(repostRef);
+        const repostSnap =
+            await getDoc(
+                repostRef
+            );
 
-        const icon = button.querySelector(".action-icon");
+        const icon =
+            button.querySelector(
+                ".action-icon"
+            );
 
-        const count = button.querySelector(".action-count");
+        const count =
+            button.querySelector(
+                ".action-count"
+            );
 
         if (repostSnap.exists()) {
 
-            await deleteDoc(repostRef);
-
-            await updateDoc(
-                doc(db, "posts", video.originalId),
-                { reposts: increment(-1) }
+            await deleteDoc(
+                repostRef
             );
 
-            video.reposts = Math.max(0, video.reposts - 1);
+            await updateDoc(
+                doc(
+                    db,
+                    "posts",
+                    video.originalId
+                ),
+                {
+                    reposts:
+                        increment(-1)
+                }
+            );
 
-            icon.textContent = "⟳";
+            video.reposts =
+                Math.max(
+                    0,
+                    video.reposts - 1
+                );
+
+            icon.textContent =
+                "⟳";
 
         } else {
 
-            await setDoc(repostRef, {
-                uid: user.uid,
-                postId: video.originalId,
-                createdAt: serverTimestamp()
-            });
+            await setDoc(
+                repostRef,
+                {
+                    uid: user.uid,
+                    postId:
+                        video.originalId,
+                    createdAt:
+                        serverTimestamp()
+                }
+            );
 
             await updateDoc(
-                doc(db, "posts", video.originalId),
-                { reposts: increment(1) }
+                doc(
+                    db,
+                    "posts",
+                    video.originalId
+                ),
+                {
+                    reposts:
+                        increment(1)
+                }
             );
 
             video.reposts++;
 
-            icon.textContent = "✓";
+            icon.textContent =
+                "✓";
 
-            if (video.uid && video.uid !== user.uid) {
+            if (
+                video.uid &&
+                video.uid !== user.uid
+            ) {
 
                 try {
 
-                    await addDoc(collection(db, "notifications"), {
-                        recipientId: video.uid,
-                        senderId: user.uid,
-                        type: "repost",
-                        postId: video.originalId,
-                        read: false,
-                        createdAt: serverTimestamp()
-                    });
+                    await addDoc(
+                        collection(
+                            db,
+                            "notifications"
+                        ),
+                        {
+                            recipientId:
+                                video.uid,
+                            senderId:
+                                user.uid,
+                            type:
+                                "repost",
+                            postId:
+                                video.originalId,
+                            read:
+                                false,
+                            createdAt:
+                                serverTimestamp()
+                        }
+                    );
 
                 } catch (error) {
 
-                    console.warn("Notification failed:", error);
+                    console.warn(
+                        "Notification failed:",
+                        error
+                    );
                 }
             }
         }
 
         if (count) {
-            count.textContent = formatCount(video.reposts);
+
+            count.textContent =
+                formatCount(
+                    video.reposts
+                );
         }
 
     } catch (error) {
 
-        console.error("Repost error:", error);
+        console.error(
+            "Repost error:",
+            error
+        );
 
-        showToast("Unable to repost.");
+        showToast(
+            "Unable to repost."
+        );
     }
 }
 
@@ -1206,11 +1515,16 @@ async function toggleRepost(video, button) {
 SHARE
 ============================================================ */
 
-async function sharePost(video, button) {
+async function sharePost(
+    video,
+    button
+) {
 
     const shareUrl =
         new URL(
-            `../comments.html?postId=${encodeURIComponent(video.originalId)}`,
+            `../comments.html?postId=${encodeURIComponent(
+                video.originalId
+            )}`,
             window.location.href
         ).href;
 
@@ -1219,36 +1533,64 @@ async function sharePost(video, button) {
         if (navigator.share) {
 
             await navigator.share({
-                title: "VitalStar Post",
-                text: video.text || "Check out this video on VitalStar.",
-                url: shareUrl
+                title:
+                    "VitalStar Post",
+                text:
+                    video.text ||
+                    "Check out this video on VitalStar.",
+                url:
+                    shareUrl
             });
 
         } else if (navigator.clipboard) {
 
-            await navigator.clipboard.writeText(shareUrl);
+            await navigator.clipboard.writeText(
+                shareUrl
+            );
 
-            showToast("Video link copied.");
+            showToast(
+                "Video link copied."
+            );
         }
 
         await updateDoc(
-            doc(db, "posts", video.originalId),
-            { shares: increment(1) }
+            doc(
+                db,
+                "posts",
+                video.originalId
+            ),
+            {
+                shares:
+                    increment(1)
+            }
         );
 
         video.shares++;
 
-        const count = button.querySelector(".action-count");
+        const count =
+            button.querySelector(
+                ".action-count"
+            );
 
         if (count) {
-            count.textContent = formatCount(video.shares);
+
+            count.textContent =
+                formatCount(
+                    video.shares
+                );
         }
 
     } catch (error) {
 
-        if (error?.name !== "AbortError") {
+        if (
+            error?.name !==
+            "AbortError"
+        ) {
 
-            console.warn("Share error:", error);
+            console.warn(
+                "Share error:",
+                error
+            );
         }
     }
 }
@@ -1259,14 +1601,16 @@ COUNT
 
 function formatCount(number) {
 
-    number = Number(number || 0);
+    number =
+        Number(number || 0);
 
     if (number >= 1000000) {
 
         return (
             (number / 1000000)
                 .toFixed(1)
-                .replace(".0", "") + "M"
+                .replace(".0", "") +
+            "M"
         );
     }
 
@@ -1275,7 +1619,8 @@ function formatCount(number) {
         return (
             (number / 1000)
                 .toFixed(1)
-                .replace(".0", "") + "K"
+                .replace(".0", "") +
+            "K"
         );
     }
 
@@ -1292,7 +1637,8 @@ function createAvatarFallback(name) {
         String(name || "V")
             .trim()
             .charAt(0)
-            .toUpperCase() || "V";
+            .toUpperCase() ||
+        "V";
 
     return (
         "data:image/svg+xml;charset=UTF-8," +
@@ -1348,7 +1694,9 @@ function showLoader() {
 
     `;
 
-    requestAnimationFrame(setFeedHeight);
+    requestAnimationFrame(
+        setFeedHeight
+    );
 }
 
 /* ============================================================
@@ -1419,29 +1767,48 @@ TOAST
 
 function showToast(message) {
 
-    let toast = document.querySelector(".reals-toast");
+    let toast =
+        document.querySelector(
+            ".reals-toast"
+        );
 
     if (!toast) {
 
-        toast = document.createElement("div");
+        toast =
+            document.createElement(
+                "div"
+            );
 
-        toast.className = "reals-toast";
+        toast.className =
+            "reals-toast";
 
-        document.body.appendChild(toast);
+        document.body.appendChild(
+            toast
+        );
     }
 
-    toast.textContent = message;
+    toast.textContent =
+        message;
 
-    toast.classList.add("show");
+    toast.classList.add(
+        "show"
+    );
 
-    clearTimeout(toast._timer);
+    clearTimeout(
+        toast._timer
+    );
 
     toast._timer =
-        setTimeout(() => {
+        setTimeout(
+            () => {
 
-            toast.classList.remove("show");
+                toast.classList.remove(
+                    "show"
+                );
 
-        }, 2400);
+            },
+            2400
+        );
 }
 
 /* ============================================================
@@ -1451,18 +1818,35 @@ ESCAPE HTML
 function escapeHtml(value) {
 
     return String(value || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
 
 /* ============================================================
 SETTINGS CHANGE
 ============================================================ */
 
-export function onSettingChange(nextSettings = {}) {
+export function onSettingChange(
+    nextSettings = {}
+) {
 
     settings = {
         ...settings,
@@ -1479,7 +1863,8 @@ export function onSettingChange(nextSettings = {}) {
         .querySelectorAll("video")
         .forEach(video => {
 
-            video.muted = startMuted;
+            video.muted =
+                startMuted;
         });
 }
 
@@ -1509,10 +1894,16 @@ export function destroyPostVids() {
 
     if (resizeHandler) {
 
-        window.removeEventListener("resize", resizeHandler);
+        window.removeEventListener(
+            "resize",
+            resizeHandler
+        );
 
         window.visualViewport
-            ?.removeEventListener("resize", resizeHandler);
+            ?.removeEventListener(
+                "resize",
+                resizeHandler
+            );
 
         resizeHandler = null;
     }
@@ -1543,7 +1934,9 @@ export function destroyPostVids() {
 INIT
 ============================================================ */
 
-export function initPostVids(options = {}) {
+export function initPostVids(
+    options = {}
+) {
 
     destroyPostVids();
 
@@ -1551,14 +1944,21 @@ export function initPostVids(options = {}) {
 
     container =
         options.container ||
-        document.querySelector("#realsFeed") ||
-        document.querySelector(".reals-feed");
+        document.querySelector(
+            "#realsFeed"
+        ) ||
+        document.querySelector(
+            ".reals-feed"
+        );
 
-    settings = options.settings || {};
+    settings =
+        options.settings || {};
 
     if (!container) {
 
-        console.error("VitalStar Post Reals: #realsFeed not found.");
+        console.error(
+            "VitalStar Post Reals: #realsFeed not found."
+        );
 
         return () => {};
     }
@@ -1569,25 +1969,33 @@ export function initPostVids(options = {}) {
 
     resizeHandler = () => {
 
-        requestAnimationFrame(setFeedHeight);
+        requestAnimationFrame(
+            setFeedHeight
+        );
     };
 
     window.addEventListener(
         "resize",
         resizeHandler,
-        { passive: true }
+        {
+            passive: true
+        }
     );
 
     window.visualViewport
         ?.addEventListener(
             "resize",
             resizeHandler,
-            { passive: true }
+            {
+                passive: true
+            }
         );
 
     initializeFeed();
 
-    requestAnimationFrame(setFeedHeight);
+    requestAnimationFrame(
+        setFeedHeight
+    );
 
     return destroyPostVids;
 }
@@ -1596,9 +2004,13 @@ export function initPostVids(options = {}) {
 STANDARD INIT
 ============================================================ */
 
-export function init(options = {}) {
+export function init(
+    options = {}
+) {
 
-    return initPostVids(options);
+    return initPostVids(
+        options
+    );
 }
 
 /* ============================================================
@@ -1622,17 +2034,23 @@ CSS
 
 function injectStyles() {
 
-    if (document.getElementById("vitalstar-post-reals-styles")) {
+    if (
+        document.getElementById(
+            "vitalstar-post-reals-styles"
+        )
+    ) {
         return;
     }
 
-    const style = document.createElement("style");
+    const style =
+        document.createElement(
+            "style"
+        );
 
-    style.id = "vitalstar-post-reals-styles";
+    style.id =
+        "vitalstar-post-reals-styles";
 
     style.textContent = `
-
-/* FEED */
 
 .post-reals-feed{
     position:relative !important;
@@ -1660,8 +2078,6 @@ function injectStyles() {
     display:none;
 }
 
-/* VIDEO CARD */
-
 .post-video-card{
     position:relative;
     display:block !important;
@@ -1680,8 +2096,6 @@ function injectStyles() {
     flex:none;
 }
 
-/* VIDEO */
-
 .post-video-card video{
     position:absolute;
     inset:0;
@@ -1695,15 +2109,17 @@ function injectStyles() {
     touch-action:pan-y;
 }
 
-/* GRADIENTS */
-
 .reals-top-gradient{
     position:absolute;
     top:0;
     left:0;
     right:0;
     height:28%;
-    background:linear-gradient(to bottom, rgba(0,0,0,.42), transparent);
+    background:linear-gradient(
+        to bottom,
+        rgba(0,0,0,.42),
+        transparent
+    );
     pointer-events:none;
     z-index:2;
 }
@@ -1714,12 +2130,15 @@ function injectStyles() {
     right:0;
     bottom:0;
     height:48%;
-    background:linear-gradient(to top, rgba(0,0,0,.82), rgba(0,0,0,.18), transparent);
+    background:linear-gradient(
+        to top,
+        rgba(0,0,0,.82),
+        rgba(0,0,0,.18),
+        transparent
+    );
     pointer-events:none;
     z-index:2;
 }
-
-/* PLAY */
 
 .reals-play-indicator{
     position:absolute;
@@ -1743,8 +2162,6 @@ function injectStyles() {
     backdrop-filter:blur(4px);
     touch-action:manipulation;
 }
-
-/* PROGRESS BAR */
 
 .video-progress-container{
     position:absolute;
@@ -1788,8 +2205,6 @@ function injectStyles() {
     transform:translate(-50%,-50%);
 }
 
-/* ACTIONS */
-
 .reals-actions{
     position:absolute;
     right:8px;
@@ -1828,8 +2243,6 @@ function injectStyles() {
     line-height:1;
     font-weight:500;
 }
-
-/* USER INFO */
 
 .reals-info{
     position:absolute;
@@ -1905,8 +2318,6 @@ function injectStyles() {
     text-shadow:0 1px 5px rgba(0,0,0,.7);
 }
 
-/* LOADER / EMPTY */
-
 .reals-loader,
 .reals-empty{
     width:100%;
@@ -1978,8 +2389,6 @@ function injectStyles() {
     color:rgba(255,255,255,.6);
 }
 
-/* TOAST */
-
 .reals-toast{
     position:fixed;
     left:50%;
@@ -1995,7 +2404,9 @@ function injectStyles() {
     text-align:center;
     opacity:0;
     pointer-events:none;
-    transition:opacity .2s ease, transform .2s ease;
+    transition:
+        opacity .2s ease,
+        transform .2s ease;
     z-index:99999;
 }
 
@@ -2005,7 +2416,9 @@ function injectStyles() {
 }
 
 @keyframes vitalstarPostSpin{
-    to{ transform:rotate(360deg); }
+    to{
+        transform:rotate(360deg);
+    }
 }
 
 @media(max-width:600px){
@@ -2032,5 +2445,7 @@ function injectStyles() {
 
 `;
 
-    document.head.appendChild(style);
+    document.head.appendChild(
+        style
+    );
 }
