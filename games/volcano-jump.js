@@ -22,6 +22,7 @@ import {
     updateDoc,
     deleteDoc,
     onSnapshot,
+    addDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -54,7 +55,10 @@ const GRAVITY = 1350;
 
 const STATE_SEND_INTERVAL = 250;
 
-const LAVA_WARNING_TIME = 1.15;
+const LAVA_WARNING_TIME = 1.5;
+
+const LAVA_WIDTH = 300;
+const LAVA_HEIGHT = 42;
 
 const COLORS = [
     "#54d8ff",
@@ -187,59 +191,82 @@ const jumpButton =
 
 
 // ============================================================
+// SAFETY CHECK
+// ============================================================
+
+if(!canvas || !ctx){
+
+    console.error(
+        "Volcano Jump: gameCanvas was not found."
+    );
+
+}
+
+
+// ============================================================
 // FIREBASE / AUTH STATE
 // ============================================================
 
 let currentUser = null;
 
-let authResolved = false;
-
 let authResolver;
 
-const authReady = new Promise(resolve => {
-    authResolver = resolve;
-});
+const authReady =
+    new Promise(resolve => {
+        authResolver = resolve;
+    });
 
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(
+    auth,
+    user => {
 
-    currentUser = user || null;
+        currentUser =
+            user || null;
 
-    authResolved = true;
+        authResolver(currentUser);
 
-    authResolver(currentUser);
+        if(!currentUser){
 
-    if (!currentUser) {
+            setLobbyStatus(
+                "Please log in to play Volcano Jump."
+            );
+
+            if(readyButton)
+                readyButton.disabled = true;
+
+            if(quickMatchButton)
+                quickMatchButton.disabled = true;
+
+            if(createRoomButton)
+                createRoomButton.disabled = true;
+
+            if(joinRoomButton)
+                joinRoomButton.disabled = true;
+
+            return;
+        }
+
+
+        if(readyButton)
+            readyButton.disabled = false;
+
+        if(quickMatchButton)
+            quickMatchButton.disabled = false;
+
+        if(createRoomButton)
+            createRoomButton.disabled = false;
+
+        if(joinRoomButton)
+            joinRoomButton.disabled = false;
+
 
         setLobbyStatus(
-            "Please log in to play Volcano Jump."
+            `Welcome ${getUserName(currentUser)}. Create or join a room.`
         );
 
-        readyButton.disabled = true;
-
-        quickMatchButton.disabled = true;
-
-        createRoomButton.disabled = true;
-
-        joinRoomButton.disabled = true;
-
-        return;
     }
-
-
-    readyButton.disabled = false;
-
-    quickMatchButton.disabled = false;
-
-    createRoomButton.disabled = false;
-
-    joinRoomButton.disabled = false;
-
-    setLobbyStatus(
-        `Welcome ${getUserName(currentUser)}. Create or join a room.`
-    );
-
-});
+);
 
 
 // ============================================================
@@ -255,6 +282,8 @@ let isHost = false;
 let roomUnsubscribe = null;
 
 let playersUnsubscribe = null;
+
+let chatUnsubscribe = null;
 
 let currentPlayerRef = null;
 
@@ -272,9 +301,11 @@ const players = new Map();
 
 const player = {
 
-    x: ROAD_WIDTH / 2,
+    x:
+        ROAD_WIDTH / 2 -
+        PLAYER_WIDTH / 2,
 
-    y: 560,
+    y: 570,
 
     vx: 0,
 
@@ -298,9 +329,7 @@ const player = {
 
     distance: 0,
 
-    lane: 1,
-
-    invulnerable: 0,
+    invulnerable: 1.5,
 
     lastHit: 0,
 
@@ -323,7 +352,8 @@ let gameStartTime = 0;
 
 let gameElapsed = 0;
 
-let lastFrameTime = performance.now();
+let lastFrameTime =
+    performance.now();
 
 let animationFrame = null;
 
@@ -334,8 +364,6 @@ let resultRecorded = false;
 let lastStateSend = 0;
 
 let lastScoreUpdate = 0;
-
-let cameraOffset = 0;
 
 let roadScroll = 0;
 
@@ -357,29 +385,38 @@ let keys = {
 
 
 // ============================================================
-// ROOM STATUS
+// CHAT STATE
+// ============================================================
+
+let chatPanel = null;
+
+let chatMessages = null;
+
+let chatInput = null;
+
+let chatSendButton = null;
+
+let chatToggleButton = null;
+
+let chatUnread = 0;
+
+
+// ============================================================
+// BASIC HELPERS
 // ============================================================
 
 function setLobbyStatus(text){
 
-    if(lobbyStatus){
-
+    if(lobbyStatus)
         lobbyStatus.textContent = text;
-
-    }
 
 }
 
 
-// ============================================================
-// USER NAME
-// ============================================================
-
 function getUserName(user){
 
-    if(!user){
+    if(!user)
         return "Player";
-    }
 
     return (
         user.displayName ||
@@ -390,15 +427,10 @@ function getUserName(user){
 }
 
 
-// ============================================================
-// USERNAME
-// ============================================================
-
 function getUsername(user){
 
-    if(!user){
+    if(!user)
         return "player";
-    }
 
     const name =
         user.displayName ||
@@ -408,32 +440,40 @@ function getUsername(user){
     return name
         .replace(/\s+/g, "")
         .toLowerCase()
-        .slice(0, 20);
+        .slice(0,20);
 
 }
 
 
-// ============================================================
-// PLAYER COLOR
-// ============================================================
-
 function getPlayerColor(uid){
 
-    if(!uid){
+    if(!uid)
         return COLORS[0];
-    }
 
     let total = 0;
 
     for(let i = 0; i < uid.length; i++){
 
-        total += uid.charCodeAt(i);
+        total +=
+            uid.charCodeAt(i);
 
     }
 
     return COLORS[
         total % COLORS.length
     ];
+
+}
+
+
+function escapeHtml(value){
+
+    return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
 
 }
 
@@ -454,7 +494,8 @@ function generateRoomCode(){
         result +=
             chars[
                 Math.floor(
-                    Math.random() * chars.length
+                    Math.random() *
+                    chars.length
                 )
             ];
 
@@ -469,105 +510,148 @@ function generateRoomCode(){
 // QUICK MATCH
 // ============================================================
 
-quickMatchButton.addEventListener(
-    "click",
-    async () => {
+if(quickMatchButton){
 
-        if(!currentUser){
+    quickMatchButton.addEventListener(
+        "click",
+        async () => {
 
-            setLobbyStatus(
-                "Please log in first."
-            );
+            if(!currentUser){
 
-            return;
-        }
-
-        setLobbyStatus(
-            "Searching for a Volcano Jump match..."
-        );
-
-        quickMatchButton.disabled = true;
-
-        try{
-
-            const roomsQuery = query(
-                collection(db, "gameRooms"),
-                where("game", "==", GAME_ID),
-                limit(20)
-            );
-
-            const snapshot =
-                await getDocs(roomsQuery);
-
-            let selectedRoom = null;
-
-            for(const roomDoc of snapshot.docs){
-
-                const data =
-                    roomDoc.data();
-
-                if(data.status !== "waiting"){
-                    continue;
-                }
-
-                if(data.playersCount >= MAX_PLAYERS){
-                    continue;
-                }
-
-                selectedRoom = roomDoc;
-
-                break;
-
-            }
-
-
-            if(selectedRoom){
-
-                await joinExistingRoom(
-                    selectedRoom.id,
-                    selectedRoom.data()
+                setLobbyStatus(
+                    "Please log in first."
                 );
 
-            }else{
+                return;
+            }
 
-                await createRoom(true);
+            setLobbyStatus(
+                "Searching for a Volcano Jump match..."
+            );
+
+            quickMatchButton.disabled = true;
+
+            try{
+
+                const roomsQuery =
+                    query(
+                        collection(
+                            db,
+                            "gameRooms"
+                        ),
+                        where(
+                            "game",
+                            "==",
+                            GAME_ID
+                        ),
+                        limit(20)
+                    );
+
+                const snapshot =
+                    await getDocs(
+                        roomsQuery
+                    );
+
+                let selectedRoom = null;
+
+                for(
+                    const roomDoc
+                    of snapshot.docs
+                ){
+
+                    const data =
+                        roomDoc.data();
+
+                    if(
+                        data.status !==
+                        "waiting"
+                    ){
+                        continue;
+                    }
+
+
+                    const playerSnapshot =
+                        await getDocs(
+                            collection(
+                                db,
+                                "gameRooms",
+                                roomDoc.id,
+                                "players"
+                            )
+                        );
+
+
+                    if(
+                        playerSnapshot.size >=
+                        MAX_PLAYERS
+                    ){
+                        continue;
+                    }
+
+
+                    selectedRoom =
+                        roomDoc;
+
+                    break;
+
+                }
+
+
+                if(selectedRoom){
+
+                    await joinExistingRoom(
+                        selectedRoom.id,
+                        selectedRoom.data()
+                    );
+
+                }else{
+
+                    await createRoom(true);
+
+                }
+
+            }catch(error){
+
+                console.error(
+                    "Quick match error:",
+                    error
+                );
+
+                setLobbyStatus(
+                    "Could not find a match. Try again."
+                );
 
             }
 
-        }catch(error){
-
-            console.error(
-                "Quick match error:",
-                error
-            );
-
-            setLobbyStatus(
-                "Could not find a match. Try again."
-            );
+            quickMatchButton.disabled = false;
 
         }
+    );
 
-        quickMatchButton.disabled = false;
-
-    }
-);
+}
 
 
 // ============================================================
 // CREATE ROOM
 // ============================================================
 
-createRoomButton.addEventListener(
-    "click",
-    async () => {
+if(createRoomButton){
 
-        await createRoom(false);
+    createRoomButton.addEventListener(
+        "click",
+        async () => {
 
-    }
-);
+            await createRoom(false);
+
+        }
+    );
+
+}
 
 
-async function createRoom(isQuickMatch = false){
+async function createRoom(
+    isQuickMatch = false
+){
 
     if(!currentUser){
 
@@ -597,7 +681,8 @@ async function createRoom(isQuickMatch = false){
 
         const seed =
             Math.floor(
-                Math.random() * 2147483647
+                Math.random() *
+                2147483647
             );
 
 
@@ -609,7 +694,8 @@ async function createRoom(isQuickMatch = false){
 
                 roomCode,
 
-                hostUid: currentUser.uid,
+                hostUid:
+                    currentUser.uid,
 
                 status: "waiting",
 
@@ -617,15 +703,18 @@ async function createRoom(isQuickMatch = false){
 
                 readyCount: 0,
 
-                maxPlayers: MAX_PLAYERS,
+                maxPlayers:
+                    MAX_PLAYERS,
 
-                minPlayers: MIN_PLAYERS,
+                minPlayers:
+                    MIN_PLAYERS,
 
                 seed,
 
                 startAt: null,
 
-                createdAt: serverTimestamp(),
+                createdAt:
+                    serverTimestamp(),
 
                 winnerUid: null
 
@@ -637,12 +726,15 @@ async function createRoom(isQuickMatch = false){
             roomRef.id,
             {
                 roomCode,
-                hostUid: currentUser.uid,
+                hostUid:
+                    currentUser.uid,
                 status: "waiting",
                 playersCount: 0,
                 readyCount: 0,
-                maxPlayers: MAX_PLAYERS,
-                minPlayers: MIN_PLAYERS,
+                maxPlayers:
+                    MAX_PLAYERS,
+                minPlayers:
+                    MIN_PLAYERS,
                 seed
             }
         );
@@ -676,57 +768,22 @@ async function createRoom(isQuickMatch = false){
 // JOIN ROOM BUTTON
 // ============================================================
 
-joinRoomButton.addEventListener(
-    "click",
-    async () => {
+if(joinRoomButton){
 
-        const code =
-            roomInput.value
-                .trim()
-                .toUpperCase();
+    joinRoomButton.addEventListener(
+        "click",
+        async () => {
 
-
-        if(code.length !== 6){
-
-            setLobbyStatus(
-                "Enter a valid 6-character room code."
-            );
-
-            return;
-
-        }
+            const code =
+                roomInput?.value
+                    .trim()
+                    .toUpperCase();
 
 
-        if(!currentUser){
-
-            setLobbyStatus(
-                "Please log in first."
-            );
-
-            return;
-
-        }
-
-
-        joinRoomButton.disabled = true;
-
-
-        try{
-
-            const roomsQuery = query(
-                collection(db, "gameRooms"),
-                where("roomCode", "==", code),
-                limit(1)
-            );
-
-            const snapshot =
-                await getDocs(roomsQuery);
-
-
-            if(snapshot.empty){
+            if(!code || code.length !== 6){
 
                 setLobbyStatus(
-                    "Room not found."
+                    "Enter a valid 6-character room code."
                 );
 
                 return;
@@ -734,17 +791,10 @@ joinRoomButton.addEventListener(
             }
 
 
-            const roomDoc =
-                snapshot.docs[0];
-
-            const data =
-                roomDoc.data();
-
-
-            if(data.game !== GAME_ID){
+            if(!currentUser){
 
                 setLobbyStatus(
-                    "That room is not a Volcano Jump room."
+                    "Please log in first."
                 );
 
                 return;
@@ -752,41 +802,99 @@ joinRoomButton.addEventListener(
             }
 
 
-            if(data.status !== "waiting"){
+            joinRoomButton.disabled = true;
 
-                setLobbyStatus(
-                    "That match has already started."
+
+            try{
+
+                const roomsQuery =
+                    query(
+                        collection(
+                            db,
+                            "gameRooms"
+                        ),
+                        where(
+                            "roomCode",
+                            "==",
+                            code
+                        ),
+                        limit(1)
+                    );
+
+
+                const snapshot =
+                    await getDocs(
+                        roomsQuery
+                    );
+
+
+                if(snapshot.empty){
+
+                    setLobbyStatus(
+                        "Room not found."
+                    );
+
+                    return;
+
+                }
+
+
+                const roomDoc =
+                    snapshot.docs[0];
+
+                const data =
+                    roomDoc.data();
+
+
+                if(data.game !== GAME_ID){
+
+                    setLobbyStatus(
+                        "That room is not a Volcano Jump room."
+                    );
+
+                    return;
+
+                }
+
+
+                if(data.status !== "waiting"){
+
+                    setLobbyStatus(
+                        "That match has already started."
+                    );
+
+                    return;
+
+                }
+
+
+                await joinExistingRoom(
+                    roomDoc.id,
+                    data
                 );
 
-                return;
+            }catch(error){
+
+                console.error(
+                    "Join room error:",
+                    error
+                );
+
+                setLobbyStatus(
+                    "Unable to join room."
+                );
+
+            }finally{
+
+                joinRoomButton.disabled =
+                    false;
 
             }
-
-
-            await joinExistingRoom(
-                roomDoc.id,
-                data
-            );
-
-        }catch(error){
-
-            console.error(
-                "Join room error:",
-                error
-            );
-
-            setLobbyStatus(
-                "Unable to join room."
-            );
-
-        }finally{
-
-            joinRoomButton.disabled = false;
 
         }
+    );
 
-    }
-);
+}
 
 
 // ============================================================
@@ -798,12 +906,14 @@ async function joinExistingRoom(
     targetRoomData
 ){
 
-    if(!currentUser){
+    if(!currentUser)
         return;
-    }
 
 
-    if(targetRoomData.status !== "waiting"){
+    if(
+        targetRoomData.status !==
+        "waiting"
+    ){
 
         setLobbyStatus(
             "This match has already started."
@@ -814,9 +924,11 @@ async function joinExistingRoom(
     }
 
 
-    roomId = targetRoomId;
+    roomId =
+        targetRoomId;
 
-    roomData = targetRoomData;
+    roomData =
+        targetRoomData;
 
     isHost =
         targetRoomData.hostUid ===
@@ -833,7 +945,8 @@ async function joinExistingRoom(
         );
 
 
-    currentPlayerRef = playerRef;
+    currentPlayerRef =
+        playerRef;
 
 
     const existingPlayers =
@@ -862,13 +975,10 @@ async function joinExistingRoom(
     }
 
 
-    const playerColor =
+    player.color =
         getPlayerColor(
             currentUser.uid
         );
-
-
-    player.color = playerColor;
 
     player.ready = false;
 
@@ -878,18 +988,29 @@ async function joinExistingRoom(
 
     player.score = 0;
 
+    player.x =
+        ROAD_WIDTH / 2 -
+        PLAYER_WIDTH / 2;
+
+    player.y = 570;
+
 
     await setDoc(
         playerRef,
         {
 
-            uid: currentUser.uid,
+            uid:
+                currentUser.uid,
 
             displayName:
-                getUserName(currentUser),
+                getUserName(
+                    currentUser
+                ),
 
             username:
-                getUsername(currentUser),
+                getUsername(
+                    currentUser
+                ),
 
             ready: false,
 
@@ -903,11 +1024,13 @@ async function joinExistingRoom(
 
             y: player.y,
 
-            color: playerColor,
+            color: player.color,
 
-            joinedAt: serverTimestamp(),
+            joinedAt:
+                serverTimestamp(),
 
-            updatedAt: serverTimestamp()
+            updatedAt:
+                serverTimestamp()
 
         }
     );
@@ -919,6 +1042,8 @@ async function joinExistingRoom(
 
     subscribeToPlayers();
 
+    createChat();
+
 }
 
 
@@ -928,27 +1053,30 @@ async function joinExistingRoom(
 
 function showGameRoom(){
 
-    lobby.style.display = "block";
+    if(lobby)
+        lobby.style.display =
+            "block";
 
-    gameArea.style.display = "none";
+    if(gameArea)
+        gameArea.style.display =
+            "none";
 
-    roomCodeEl.textContent =
-        roomData?.roomCode || "------";
+    if(roomCodeEl)
+        roomCodeEl.textContent =
+            roomData?.roomCode ||
+            "------";
 
 }
 
 
 // ============================================================
-// SUBSCRIBE ROOM
+// ROOM SUBSCRIPTION
 // ============================================================
 
 function subscribeToRoom(){
 
-    if(roomUnsubscribe){
-
+    if(roomUnsubscribe)
         roomUnsubscribe();
-
-    }
 
 
     const roomRef =
@@ -977,12 +1105,16 @@ function subscribeToRoom(){
                     snapshot.data();
 
 
-                roomCodeEl.textContent =
-                    roomData.roomCode || "------";
+                if(roomCodeEl)
+                    roomCodeEl.textContent =
+                        roomData.roomCode ||
+                        "------";
 
 
-                gameRoomCodeEl.textContent =
-                    roomData.roomCode || "------";
+                if(gameRoomCodeEl)
+                    gameRoomCodeEl.textContent =
+                        roomData.roomCode ||
+                        "------";
 
 
                 if(
@@ -990,8 +1122,10 @@ function subscribeToRoom(){
                     "playing"
                 ){
 
-                    waitingOverlay.style.display =
-                        "none";
+                    if(waitingOverlay)
+                        waitingOverlay.style.display =
+                            "none";
+
 
                     if(
                         roomData.startAt &&
@@ -1038,16 +1172,13 @@ function subscribeToRoom(){
 
 
 // ============================================================
-// SUBSCRIBE PLAYERS
+// PLAYER SUBSCRIPTION
 // ============================================================
 
 function subscribeToPlayers(){
 
-    if(playersUnsubscribe){
-
+    if(playersUnsubscribe)
         playersUnsubscribe();
-
-    }
 
 
     const playersRef =
@@ -1088,8 +1219,12 @@ function subscribeToPlayers(){
                     players.size;
 
 
-                playerCountEl.textContent =
-                    `Players: ${count}/${MAX_PLAYERS}`;
+                if(playerCountEl){
+
+                    playerCountEl.textContent =
+                        `Players: ${count}/${MAX_PLAYERS}`;
+
+                }
 
 
                 renderPlayersList();
@@ -1144,7 +1279,8 @@ function updateWaitingState(){
     const readyCount =
         [...players.values()]
             .filter(
-                p => p.ready === true
+                p =>
+                    p.ready === true
             )
             .length;
 
@@ -1172,8 +1308,17 @@ function updateWaitingState(){
     }
 
 
-    readyButton.disabled =
-        count < 1;
+    if(
+        count >= MIN_PLAYERS &&
+        readyCount === count &&
+        !gameStarted &&
+        !roomData.startAt
+    ){
+
+        if(isHost)
+            startMatch();
+
+    }
 
 
     if(player.ready){
@@ -1196,22 +1341,6 @@ function updateWaitingState(){
 
     }
 
-
-    if(
-        count >= MIN_PLAYERS &&
-        readyCount === count &&
-        !gameStarted &&
-        !roomData.startAt
-    ){
-
-        if(isHost){
-
-            startMatch();
-
-        }
-
-    }
-
 }
 
 
@@ -1219,65 +1348,60 @@ function updateWaitingState(){
 // READY BUTTON
 // ============================================================
 
-readyButton.addEventListener(
-    "click",
-    async () => {
+if(readyButton){
 
-        if(!currentPlayerRef){
-            return;
-        }
+    readyButton.addEventListener(
+        "click",
+        async () => {
 
+            if(!currentPlayerRef)
+                return;
 
-        if(!roomData){
+            if(!roomData)
+                return;
 
-            return;
-
-        }
-
-
-        if(
-            roomData.status !==
-            "waiting"
-        ){
-
-            return;
-
-        }
+            if(
+                roomData.status !==
+                "waiting"
+            )
+                return;
 
 
-        try{
+            try{
 
-            player.ready =
-                !player.ready;
-
-
-            await updateDoc(
-                currentPlayerRef,
-                {
-
-                    ready:
-                        player.ready,
-
-                    updatedAt:
-                        serverTimestamp()
-
-                }
-            );
+                player.ready =
+                    !player.ready;
 
 
-            updateWaitingState();
+                await updateDoc(
+                    currentPlayerRef,
+                    {
 
-        }catch(error){
+                        ready:
+                            player.ready,
 
-            console.error(
-                "Ready error:",
-                error
-            );
+                        updatedAt:
+                            serverTimestamp()
+
+                    }
+                );
+
+
+                updateWaitingState();
+
+            }catch(error){
+
+                console.error(
+                    "Ready error:",
+                    error
+                );
+
+            }
 
         }
+    );
 
-    }
-);
+}
 
 
 // ============================================================
@@ -1286,24 +1410,15 @@ readyButton.addEventListener(
 
 async function startMatch(){
 
-    if(!isHost){
+    if(!isHost || !roomData)
         return;
-    }
-
-
-    if(!roomData){
-        return;
-    }
 
 
     if(
         roomData.status !==
         "waiting"
-    ){
-
+    )
         return;
-
-    }
 
 
     const playerArray =
@@ -1313,22 +1428,19 @@ async function startMatch(){
     if(
         playerArray.length <
         MIN_PLAYERS
-    ){
-
+    )
         return;
-
-    }
 
 
     const everyoneReady =
         playerArray.every(
-            p => p.ready === true
+            p =>
+                p.ready === true
         );
 
 
-    if(!everyoneReady){
+    if(!everyoneReady)
         return;
-    }
 
 
     const startAt =
@@ -1345,7 +1457,8 @@ async function startMatch(){
             ),
             {
 
-                status: "playing",
+                status:
+                    "playing",
 
                 startAt,
 
@@ -1376,18 +1489,18 @@ async function startMatch(){
 
 function startCountdown(startAt){
 
-    if(gameStarted){
+    if(gameStarted)
         return;
-    }
 
 
-    countdownOverlay.classList.remove(
+    countdownOverlay?.classList.remove(
         "hidden"
     );
 
 
-    waitingOverlay.style.display =
-        "none";
+    if(waitingOverlay)
+        waitingOverlay.style.display =
+            "none";
 
 
     if(countdownTimer){
@@ -1402,7 +1515,8 @@ function startCountdown(startAt){
     function updateCountdown(){
 
         const remaining =
-            startAt - Date.now();
+            startAt -
+            Date.now();
 
 
         if(remaining <= 0){
@@ -1413,11 +1527,25 @@ function startCountdown(startAt){
 
             countdownTimer = null;
 
-            countdownOverlay.classList.add(
-                "hidden"
+
+            if(countdownNumber)
+                countdownNumber.textContent =
+                    "GO!";
+
+
+            setTimeout(
+                () => {
+
+                    countdownOverlay?.classList.add(
+                        "hidden"
+                    );
+
+                    beginGame();
+
+                },
+                350
             );
 
-            beginGame();
 
             return;
 
@@ -1430,20 +1558,14 @@ function startCountdown(startAt){
             );
 
 
-        countdownMessage.textContent =
-            "ALL PLAYERS READY!";
+        if(countdownMessage)
+            countdownMessage.textContent =
+                "ALL PLAYERS READY!";
 
 
-        countdownNumber.textContent =
-            seconds;
-
-
-        if(seconds <= 1){
-
+        if(countdownNumber)
             countdownNumber.textContent =
-                "GO!";
-
-        }
+                seconds;
 
     }
 
@@ -1466,9 +1588,8 @@ function startCountdown(startAt){
 
 function beginGame(){
 
-    if(gameStarted){
+    if(gameStarted)
         return;
-    }
 
 
     gameStarted = true;
@@ -1480,7 +1601,6 @@ function beginGame(){
     gameStartTime =
         roomData?.startAt ||
         Date.now();
-
 
     gameElapsed = 0;
 
@@ -1512,8 +1632,12 @@ function beginGame(){
 
     player.invulnerable = 1.5;
 
+
     obstacleSeed =
-        Number(roomData?.seed || 1);
+        Number(
+            roomData?.seed ||
+            1
+        );
 
 
     generateObstacles();
@@ -1521,23 +1645,26 @@ function beginGame(){
     generateLavaEvents();
 
 
-    lobby.style.display =
-        "none";
+    if(lobby)
+        lobby.style.display =
+            "none";
 
-    gameArea.style.display =
-        "block";
-
-
-    waitingOverlay.style.display =
-        "none";
+    if(gameArea)
+        gameArea.style.display =
+            "block";
 
 
-    gameMessage.style.display =
-        "none";
+    if(waitingOverlay)
+        waitingOverlay.style.display =
+            "none";
+
+
+    if(gameMessage)
+        gameMessage.style.display =
+            "none";
 
 
     updateHUD();
-
 
     sendPlayerState(true);
 
@@ -1560,7 +1687,7 @@ function beginGame(){
 
 
 // ============================================================
-// GENERATE OBSTACLES
+// SEEDED RANDOM
 // ============================================================
 
 function seededRandom(seed){
@@ -1571,28 +1698,33 @@ function seededRandom(seed){
 
     return function(){
 
-        value += 0x6D2B79F5;
+        value +=
+            0x6D2B79F5;
 
         let t = value;
 
         t =
             Math.imul(
-                t ^ t >>> 15,
+                t ^
+                t >>> 15,
                 t | 1
             );
 
         t ^=
             t +
             Math.imul(
-                t ^ t >>> 7,
+                t ^
+                t >>> 7,
                 t | 61
             );
 
         return (
             (
-                (t ^ t >>> 14)
+                (t ^
+                t >>> 14)
                 >>> 0
-            ) / 4294967296
+            ) /
+            4294967296
         );
 
     };
@@ -1600,10 +1732,13 @@ function seededRandom(seed){
 }
 
 
+// ============================================================
+// NORMAL OBSTACLES
+// ============================================================
+
 function generateObstacles(){
 
     obstacles = [];
-
 
     const random =
         seededRandom(
@@ -1611,7 +1746,7 @@ function generateObstacles(){
         );
 
 
-    let time = 4;
+    let time = 5;
 
 
     while(
@@ -1620,14 +1755,8 @@ function generateObstacles(){
     ){
 
         time +=
-            2.0 +
-            random() * 2.2;
-
-
-        const type =
-            random() < .55
-                ? "rock"
-                : "meteor";
+            3.5 +
+            random() * 3;
 
 
         const lane =
@@ -1636,43 +1765,36 @@ function generateObstacles(){
             );
 
 
-        const laneX =
-            82 +
-            lane * 113;
-
-
         obstacles.push({
 
             id:
                 `obstacle-${obstacles.length}`,
 
-            type,
+            type:
+                random() < .6
+                    ? "rock"
+                    : "meteor",
 
             time,
 
             lane,
 
             x:
-                laneX,
+                82 +
+                lane * 113,
 
             y:
-                type === "meteor"
-                    ? -80
-                    : 535,
+                535,
 
             width:
-                type === "meteor"
-                    ? 35
-                    : 42,
+                42,
 
             height:
-                type === "meteor"
-                    ? 35
-                    : 36,
+                36,
 
             speed:
-                180 +
-                random() * 130,
+                190 +
+                random() * 100,
 
             direction:
                 random() > .5
@@ -1687,7 +1809,7 @@ function generateObstacles(){
 
 
 // ============================================================
-// GENERATE LAVA EVENTS
+// FULL ROAD LAVA EVENTS
 // ============================================================
 
 function generateLavaEvents(){
@@ -1706,7 +1828,7 @@ function generateLavaEvents(){
 
     while(
         time <
-        GAME_DURATION - 2
+        GAME_DURATION - 3
     ){
 
         time +=
@@ -1719,18 +1841,20 @@ function generateLavaEvents(){
             time,
 
             duration:
-                2.7 +
-                random() * 1.3,
+                1.45 +
+                random() * .35,
 
-            lane:
-                Math.floor(
-                    random() * 3
-                ),
+            warning:
+                LAVA_WARNING_TIME,
 
-            direction:
-                random() > .5
-                    ? 1
-                    : -1
+            y:
+                570,
+
+            width:
+                LAVA_WIDTH,
+
+            height:
+                LAVA_HEIGHT
 
         });
 
@@ -1753,7 +1877,10 @@ function gameLoop(now){
 
     const delta =
         Math.min(
-            (now - lastFrameTime) / 1000,
+            (
+                now -
+                lastFrameTime
+            ) / 1000,
             .035
         );
 
@@ -1777,8 +1904,10 @@ function gameLoop(now){
     gameElapsed =
         Math.max(
             0,
-            (Date.now() - gameStartTime) /
-            1000
+            (
+                Date.now() -
+                gameStartTime
+            ) / 1000
         );
 
 
@@ -1808,7 +1937,6 @@ function gameLoop(now){
 
     drawScene();
 
-
     checkLastPlayerStanding();
 
 }
@@ -1820,9 +1948,8 @@ function gameLoop(now){
 
 function updatePlayer(delta){
 
-    if(!player.alive){
+    if(!player.alive)
         return;
-    }
 
 
     player.invulnerable =
@@ -1836,14 +1963,12 @@ function updatePlayer(delta){
     let direction = 0;
 
 
-    if(keys.left){
-        direction -= 1;
-    }
+    if(keys.left)
+        direction--;
 
 
-    if(keys.right){
-        direction += 1;
-    }
+    if(keys.right)
+        direction++;
 
 
     player.vx =
@@ -1858,10 +1983,10 @@ function updatePlayer(delta){
 
     player.x =
         Math.max(
-            55,
+            45,
             Math.min(
                 ROAD_WIDTH -
-                55 -
+                45 -
                 player.width,
                 player.x
             )
@@ -1920,12 +2045,10 @@ function jump(){
 
     if(
         !player.alive ||
-        gameFinished
-    ){
-
+        gameFinished ||
+        !gameStarted
+    )
         return;
-
-    }
 
 
     if(player.grounded){
@@ -1954,6 +2077,10 @@ function holdButton(
     button,
     key
 ){
+
+    if(!button)
+        return;
+
 
     button.addEventListener(
         "pointerdown",
@@ -2006,23 +2133,26 @@ holdButton(
     "left"
 );
 
-
 holdButton(
     rightButton,
     "right"
 );
 
 
-jumpButton.addEventListener(
-    "pointerdown",
-    event => {
+if(jumpButton){
 
-        event.preventDefault();
+    jumpButton.addEventListener(
+        "pointerdown",
+        event => {
 
-        jump();
+            event.preventDefault();
 
-    }
-);
+            jump();
+
+        }
+    );
+
+}
 
 
 // ============================================================
@@ -2097,17 +2227,19 @@ window.addEventListener(
 
 
 // ============================================================
-// OBSTACLE COLLISION
+// NORMAL OBSTACLE COLLISION
 // ============================================================
 
 function checkObstacles(){
 
-    if(player.invulnerable > 0){
+    if(player.invulnerable > 0)
         return;
-    }
 
 
-    for(const obstacle of obstacles){
+    for(
+        const obstacle
+        of obstacles
+    ){
 
         const age =
             gameElapsed -
@@ -2117,11 +2249,8 @@ function checkObstacles(){
         if(
             age < 0 ||
             age > 4
-        ){
-
+        )
             continue;
-
-        }
 
 
         let x =
@@ -2151,27 +2280,24 @@ function checkObstacles(){
         }
 
 
-        const hit =
+        if(
             rectanglesOverlap(
                 player.x,
                 player.y,
                 player.width,
                 player.height,
-
                 x,
                 y,
                 obstacle.width,
                 obstacle.height
-            );
-
-
-        if(hit){
+            )
+        ){
 
             hitPlayer(
                 "You hit an obstacle."
             );
 
-            break;
+            return;
 
         }
 
@@ -2181,14 +2307,13 @@ function checkObstacles(){
 
 
 // ============================================================
-// LAVA
+// FULL ROAD LAVA COLLISION
 // ============================================================
 
 function checkLava(){
 
-    if(player.invulnerable > 0){
+    if(player.invulnerable > 0)
         return;
-    }
 
 
     for(
@@ -2203,69 +2328,58 @@ function checkLava(){
 
         if(
             elapsed < 0 ||
-            elapsed > event.duration
-        ){
-
+            elapsed >
+            event.duration
+        )
             continue;
 
-        }
+
+        /*
+         * IMPORTANT:
+         *
+         * The lava is a horizontal wall.
+         *
+         * If the player's feet are above the
+         * top of the lava, the player has
+         * successfully jumped over it.
+         */
+
+        const lavaTop =
+            event.y -
+            event.height;
 
 
-        const progress =
-            elapsed /
-            event.duration;
+        const playerBottom =
+            player.y +
+            player.height;
 
 
-        const lavaHeight =
-            95 +
-            Math.sin(
-                progress * Math.PI
-            ) * 25;
+        const horizontalHit =
+            player.x <
+                event.x +
+                event.width &&
+            player.x +
+                player.width >
+                event.x;
 
 
-        const laneWidth =
-            112;
+        const verticalHit =
+            playerBottom >
+                lavaTop &&
+            player.y <
+                event.y;
 
 
-        const laneStart =
-            55 +
-            event.lane *
-            laneWidth;
-
-
-        const lavaX =
-            event.direction > 0
-                ? laneStart +
-                  (progress * 100)
-                : laneStart -
-                  (progress * 100);
-
-
-        const lavaWidth =
-            135;
-
-
-        const hit =
-            rectanglesOverlap(
-                player.x,
-                player.y,
-                player.width,
-                player.height,
-
-                lavaX,
-                570 - lavaHeight,
-                lavaWidth,
-                lavaHeight
-            );
-
-
-        if(hit){
+        if(
+            horizontalHit &&
+            verticalHit
+        ){
 
             hitPlayer(
-                "You entered the lava!"
+                "You fell into the lava!"
             );
 
-            break;
+            return;
 
         }
 
@@ -2308,11 +2422,8 @@ async function hitPlayer(reason){
     if(
         !player.alive ||
         player.invulnerable > 0
-    ){
-
+    )
         return;
-
-    }
 
 
     player.lastHit =
@@ -2320,7 +2431,6 @@ async function hitPlayer(reason){
 
 
     player.lives--;
-
 
     player.invulnerable =
         1.7;
@@ -2346,12 +2456,10 @@ async function hitPlayer(reason){
 
     player.x =
         ROAD_WIDTH / 2 -
-        player.width / 2;
-
+        PLAYER_WIDTH / 2;
 
     player.y =
         520;
-
 
     player.vy =
         JUMP_FORCE * .65;
@@ -2360,7 +2468,11 @@ async function hitPlayer(reason){
     showGameMessage(
         "⚠️",
         "HIT!",
-        `${reason} ${player.lives} life${player.lives === 1 ? "" : "s"} remaining.`,
+        `${reason} ${player.lives} life${
+            player.lives === 1
+                ? ""
+                : "s"
+        } remaining.`,
         1000
     );
 
@@ -2376,9 +2488,8 @@ async function hitPlayer(reason){
 
 async function eliminatePlayer(reason){
 
-    if(!player.alive){
+    if(!player.alive)
         return;
-    }
 
 
     player.alive = false;
@@ -2387,7 +2498,6 @@ async function eliminatePlayer(reason){
 
     player.eliminationReason =
         reason;
-
 
     player.vx = 0;
 
@@ -2411,7 +2521,7 @@ async function eliminatePlayer(reason){
 
 
 // ============================================================
-// CHECK LAST PLAYER
+// LAST PLAYER STANDING
 // ============================================================
 
 function checkLastPlayerStanding(){
@@ -2419,11 +2529,8 @@ function checkLastPlayerStanding(){
     if(
         !gameStarted ||
         gameFinished
-    ){
-
+    )
         return;
-
-    }
 
 
     const allPlayers =
@@ -2433,20 +2540,20 @@ function checkLastPlayerStanding(){
     if(
         allPlayers.length <
         MIN_PLAYERS
-    ){
-
+    )
         return;
-
-    }
 
 
     const alivePlayers =
         allPlayers.filter(
-            p => p.alive === true
+            p =>
+                p.alive === true
         );
 
 
-    if(alivePlayers.length === 1){
+    if(
+        alivePlayers.length === 1
+    ){
 
         const winner =
             alivePlayers[0];
@@ -2472,7 +2579,9 @@ function checkLastPlayerStanding(){
     }
 
 
-    if(alivePlayers.length === 0){
+    if(
+        alivePlayers.length === 0
+    ){
 
         finishGame(
             "everyone-eliminated"
@@ -2490,19 +2599,15 @@ function checkLastPlayerStanding(){
 function updateWorld(delta){
 
     roadScroll +=
-        (120 +
-        gameElapsed * 1.8) *
+        (
+            120 +
+            gameElapsed * 1.8
+        ) *
         delta;
 
 
-    if(
-        roadScroll >
-        80
-    ){
-
+    if(roadScroll > 80)
         roadScroll = 0;
-
-    }
 
 }
 
@@ -2513,15 +2618,16 @@ function updateWorld(delta){
 
 function updateScore(delta){
 
-    if(!player.alive){
+    if(!player.alive)
         return;
-    }
 
 
     player.distance +=
         delta *
-        (8 +
-        gameElapsed * .035);
+        (
+            8 +
+            gameElapsed * .035
+        );
 
 
     player.score =
@@ -2549,22 +2655,28 @@ function updateScore(delta){
 
 function updateHUD(){
 
-    scoreValue.textContent =
-        Math.floor(
-            player.score
-        );
+    if(scoreValue){
+
+        scoreValue.textContent =
+            Math.floor(
+                player.score
+            );
+
+    }
 
 
     const aliveCount =
         [...players.values()]
             .filter(
-                p => p.alive
+                p =>
+                    p.alive
             )
             .length;
 
 
-    aliveValue.textContent =
-        aliveCount;
+    if(aliveValue)
+        aliveValue.textContent =
+            aliveCount;
 
 
     const remaining =
@@ -2587,23 +2699,32 @@ function updateHUD(){
         );
 
 
-    timeValue.textContent =
-        `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+    if(timeValue){
+
+        timeValue.textContent =
+            `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
+
+    }
 
 
-    livesValue.textContent =
-        "❤️".repeat(
-            Math.max(
-                0,
-                player.lives
-            )
-        ) || "💀";
+    if(livesValue){
+
+        livesValue.textContent =
+            "❤️".repeat(
+                Math.max(
+                    0,
+                    player.lives
+                )
+            ) ||
+            "💀";
+
+    }
 
 }
 
 
 // ============================================================
-// FIRESTORE PLAYER STATE
+// NETWORK PLAYER STATE
 // ============================================================
 
 async function updateGameStateNetwork(){
@@ -2612,11 +2733,8 @@ async function updateGameStateNetwork(){
         !currentPlayerRef ||
         !currentUser ||
         gameFinished
-    ){
-
+    )
         return;
-
-    }
 
 
     const now =
@@ -2627,11 +2745,8 @@ async function updateGameStateNetwork(){
         now -
         lastStateSend <
         STATE_SEND_INTERVAL
-    ){
-
+    )
         return;
-
-    }
 
 
     lastStateSend =
@@ -2686,16 +2801,15 @@ async function updateGameStateNetwork(){
 }
 
 
-async function sendPlayerState(force = false){
+async function sendPlayerState(
+    force = false
+){
 
     if(
         !currentPlayerRef ||
         !currentUser
-    ){
-
+    )
         return;
-
-    }
 
 
     if(
@@ -2703,11 +2817,8 @@ async function sendPlayerState(force = false){
         performance.now() -
         lastStateSend <
         STATE_SEND_INTERVAL
-    ){
-
+    )
         return;
-
-    }
 
 
     lastStateSend =
@@ -2763,14 +2874,13 @@ async function sendPlayerState(force = false){
 
 
 // ============================================================
-// RENDER PLAYERS LIST
+// PLAYERS LIST
 // ============================================================
 
 function renderPlayersList(){
 
-    if(!playersList){
+    if(!playersList)
         return;
-    }
 
 
     if(players.size === 0){
@@ -2778,12 +2888,10 @@ function renderPlayersList(){
         playersList.innerHTML = `
             <div class="playerRow">
                 <div class="playerAvatar">?</div>
-
                 <div class="playerDetails">
                     <div class="playerName">
                         Waiting for players...
                     </div>
-
                     <div class="playerUsername">
                         Join the room to play
                     </div>
@@ -2796,81 +2904,88 @@ function renderPlayersList(){
     }
 
 
-    const sorted =
-        [...players.values()];
-
-
     playersList.innerHTML =
-        sorted.map(
-            p => {
+        [...players.values()]
+            .map(
+                p => {
 
-                const isYou =
-                    p.uid ===
-                    currentUser?.uid;
+                    const isYou =
+                        p.uid ===
+                        currentUser?.uid;
 
 
-                return `
-                    <div class="playerRow">
+                    return `
+                        <div class="playerRow">
 
-                        <div
-                            class="playerAvatar"
-                            style="border-color:${p.color || "#54d8ff"}"
-                        >
-                            ${isYou ? "⭐" : "🏃"}
-                        </div>
-
-                        <div class="playerDetails">
-
-                            <div class="playerName">
-                                ${escapeHtml(
-                                    p.displayName ||
-                                    "Player"
-                                )}
-                                ${isYou ? " (You)" : ""}
+                            <div
+                                class="playerAvatar"
+                                style="border-color:${
+                                    p.color ||
+                                    "#54d8ff"
+                                }"
+                            >
+                                ${
+                                    isYou
+                                        ? "⭐"
+                                        : "🏃"
+                                }
                             </div>
 
-                            <div class="playerUsername">
-                                @${escapeHtml(
-                                    p.username ||
-                                    "player"
-                                )}
+                            <div class="playerDetails">
+
+                                <div class="playerName">
+                                    ${escapeHtml(
+                                        p.displayName ||
+                                        "Player"
+                                    )}
+                                    ${
+                                        isYou
+                                            ? " (You)"
+                                            : ""
+                                    }
+                                </div>
+
+                                <div class="playerUsername">
+                                    @${escapeHtml(
+                                        p.username ||
+                                        "player"
+                                    )}
+                                </div>
+
                             </div>
 
-                        </div>
-
-                        <div class="readyBadge ${
-                            p.ready
-                                ? "ready"
-                                : "notReady"
-                        }">
-
-                            ${
+                            <div class="readyBadge ${
                                 p.ready
-                                    ? "READY ✓"
-                                    : "NOT READY"
-                            }
+                                    ? "ready"
+                                    : "notReady"
+                            }">
+
+                                ${
+                                    p.ready
+                                        ? "READY ✓"
+                                        : "NOT READY"
+                                }
+
+                            </div>
 
                         </div>
+                    `;
 
-                    </div>
-                `;
-
-            }
-        )
-        .join("");
+                }
+            )
+            .join("");
 
 }
 
 
 // ============================================================
-// LIVE LEADERBOARD
+// LEADERBOARD
 // ============================================================
 
 function renderLeaderboard(){
 
-    if(!leaderboardRows){
+    if(!leaderboardRows)
         return;
-    }
 
 
     const sorted =
@@ -2889,9 +3004,14 @@ function renderLeaderboard(){
 
                     }
 
+
                     return (
-                        Number(b.score || 0) -
-                        Number(a.score || 0)
+                        Number(
+                            b.score || 0
+                        ) -
+                        Number(
+                            a.score || 0
+                        )
                     );
 
                 }
@@ -2909,67 +3029,57 @@ function renderLeaderboard(){
 
 
     leaderboardRows.innerHTML =
-        sorted.map(
-            (p,index) => {
+        sorted
+            .map(
+                (p,index) => {
 
-                const isYou =
-                    p.uid ===
-                    currentUser?.uid;
+                    const isYou =
+                        p.uid ===
+                        currentUser?.uid;
 
 
-                return `
-                    <div class="leaderRow">
+                    return `
+                        <div class="leaderRow">
 
-                        <div class="rank">
-                            ${index + 1}
+                            <div class="rank">
+                                ${index + 1}
+                            </div>
+
+                            <div class="leaderName">
+
+                                ${
+                                    isYou
+                                        ? "⭐ "
+                                        : ""
+                                }
+
+                                ${escapeHtml(
+                                    p.displayName ||
+                                    "Player"
+                                )}
+
+                                ${
+                                    p.alive
+                                        ? ""
+                                        : " 💀"
+                                }
+
+                            </div>
+
+                            <div class="leaderScore">
+                                ${Math.floor(
+                                    Number(
+                                        p.score || 0
+                                    )
+                                )}
+                            </div>
+
                         </div>
+                    `;
 
-                        <div class="leaderName">
-
-                            ${isYou ? "⭐ " : ""}
-                            ${escapeHtml(
-                                p.displayName ||
-                                "Player"
-                            )}
-
-                            ${
-                                p.alive
-                                    ? ""
-                                    : " 💀"
-                            }
-
-                        </div>
-
-                        <div class="leaderScore">
-                            ${Math.floor(
-                                Number(
-                                    p.score || 0
-                                )
-                            )}
-                        </div>
-
-                    </div>
-                `;
-
-            }
-        )
-        .join("");
-
-}
-
-
-// ============================================================
-// ESCAPE HTML
-// ============================================================
-
-function escapeHtml(value){
-
-    return String(value)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+                }
+            )
+            .join("");
 
 }
 
@@ -2988,18 +3098,22 @@ function showGameMessage(
     duration = 1500
 ){
 
-    messageIcon.textContent =
-        icon;
+    if(messageIcon)
+        messageIcon.textContent =
+            icon;
 
-    messageTitle.textContent =
-        title;
+    if(messageTitle)
+        messageTitle.textContent =
+            title;
 
-    messageText.textContent =
-        text;
+    if(messageText)
+        messageText.textContent =
+            text;
 
 
-    gameMessage.style.display =
-        "block";
+    if(gameMessage)
+        gameMessage.style.display =
+            "block";
 
 
     if(gameMessageTimer){
@@ -3022,8 +3136,9 @@ function showGameMessage(
                         player.alive
                     ){
 
-                        gameMessage.style.display =
-                            "none";
+                        if(gameMessage)
+                            gameMessage.style.display =
+                                "none";
 
                     }
 
@@ -3042,9 +3157,8 @@ function showGameMessage(
 
 async function finishGame(reason){
 
-    if(gameFinished){
+    if(gameFinished)
         return;
-    }
 
 
     gameFinished = true;
@@ -3094,9 +3208,14 @@ async function finishGame(reason){
 
                 }
 
+
                 return (
-                    Number(b.score || 0) -
-                    Number(a.score || 0)
+                    Number(
+                        b.score || 0
+                    ) -
+                    Number(
+                        a.score || 0
+                    )
                 );
 
             }
@@ -3108,22 +3227,33 @@ async function finishGame(reason){
         null;
 
 
-    if(reason === "last-player-standing"){
+    if(
+        reason ===
+        "last-player-standing"
+    ){
 
-        winner = ranked.find(
-            p => p.uid ===
-            currentUser?.uid
-        ) || winner;
+        winner =
+            ranked.find(
+                p =>
+                    p.uid ===
+                    currentUser?.uid
+            ) ||
+            winner;
 
     }
 
 
-    if(reason === "another-player-won"){
+    if(
+        reason ===
+        "another-player-won"
+    ){
 
         winner =
             ranked.find(
-                p => p.alive
-            ) || winner;
+                p =>
+                    p.alive
+            ) ||
+            winner;
 
     }
 
@@ -3188,9 +3318,8 @@ async function recordLocalResult(
     ranked
 ){
 
-    if(resultRecorded){
+    if(resultRecorded)
         return;
-    }
 
 
     resultRecorded = true;
@@ -3200,15 +3329,8 @@ async function recordLocalResult(
         currentUser?.uid;
 
 
-    if(!myUid){
+    if(!myUid)
         return;
-    }
-
-
-    const myRank =
-        ranked.findIndex(
-            p => p.uid === myUid
-        ) + 1;
 
 
     const didWin =
@@ -3229,7 +3351,8 @@ async function recordLocalResult(
             : Math.max(
                 10,
                 Math.floor(
-                    player.score / 10
+                    player.score /
+                    10
                 )
             );
 
@@ -3266,96 +3389,112 @@ function showWinnerScreen(
     ranked
 ){
 
+    if(!winnerOverlay)
+        return;
+
+
     const meWon =
         winner &&
         winner.uid ===
         currentUser?.uid;
 
 
-    if(meWon){
+    if(winnerTitle){
 
         winnerTitle.textContent =
-            "🏆 YOU ARE THE LAST PLAYER!";
-
-    }else{
-
-        winnerTitle.textContent =
-            "👑 LAST PLAYER STANDING!";
+            meWon
+                ? "🏆 YOU ARE THE LAST PLAYER!"
+                : "👑 LAST PLAYER STANDING!";
 
     }
 
 
-    winnerName.textContent =
-        winner
-            ? (
-                winner.uid ===
-                currentUser?.uid
-                    ? "YOU"
-                    : winner.displayName ||
-                      "Winner"
-            )
-            : "No Winner";
+    if(winnerName){
 
-
-    winnerScore.textContent =
-        winner
-            ? `Score: ${Math.floor(
-                Number(
-                    winner.score || 0
+        winnerName.textContent =
+            winner
+                ? (
+                    winner.uid ===
+                    currentUser?.uid
+                        ? getUserName(
+                            currentUser
+                        )
+                        : winner.displayName ||
+                          "Winner"
                 )
-            )}`
-            : "Score: 0";
+                : "No Winner";
+
+    }
 
 
-    resultLeaderboard.innerHTML =
-        ranked.map(
-            (p,index) => {
+    if(winnerScore){
 
-                const isMe =
-                    p.uid ===
-                    currentUser?.uid;
+        winnerScore.textContent =
+            winner
+                ? `Score: ${Math.floor(
+                    Number(
+                        winner.score || 0
+                    )
+                )}`
+                : "Score: 0";
+
+    }
 
 
-                return `
-                    <div class="resultRow">
+    if(resultLeaderboard){
 
-                        <div class="resultRank">
-                            #${index + 1}
-                        </div>
+        resultLeaderboard.innerHTML =
+            ranked
+                .map(
+                    (p,index) => {
 
-                        <div class="resultPlayer">
+                        const isMe =
+                            p.uid ===
+                            currentUser?.uid;
 
-                            ${
-                                isMe
-                                    ? "⭐ You"
-                                    : escapeHtml(
-                                        p.displayName ||
-                                        "Player"
-                                    )
-                            }
 
-                            ${
-                                p.alive
-                                    ? " 🏆"
-                                    : " 💀"
-                            }
+                        return `
+                            <div class="resultRow">
 
-                        </div>
+                                <div class="resultRank">
+                                    #${index + 1}
+                                </div>
 
-                        <div class="resultScore">
-                            ${Math.floor(
-                                Number(
-                                    p.score || 0
-                                )
-                            )}
-                        </div>
+                                <div class="resultPlayer">
 
-                    </div>
-                `;
+                                    ${
+                                        isMe
+                                            ? "⭐ You"
+                                            : escapeHtml(
+                                                p.displayName ||
+                                                "Player"
+                                            )
+                                    }
 
-            }
-        )
-        .join("");
+                                    ${
+                                        p.alive
+                                            ? " 🏆"
+                                            : " 💀"
+                                    }
+
+                                </div>
+
+                                <div class="resultScore">
+                                    ${Math.floor(
+                                        Number(
+                                            p.score || 0
+                                        )
+                                    )}
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
 
 
     winnerOverlay.style.display =
@@ -3365,35 +3504,813 @@ function showWinnerScreen(
 
 
 // ============================================================
-// RETURN TO LOBBY
+// CHAT UI
 // ============================================================
 
-returnLobbyButton.addEventListener(
-    "click",
-    async () => {
+function createChat(){
 
-        winnerOverlay.style.display =
-            "none";
+    if(!roomId)
+        return;
 
-        await leaveRoom();
+
+    if(chatPanel){
+
+        chatPanel.remove();
+
+        chatPanel = null;
 
     }
-);
+
+
+    chatToggleButton =
+        document.createElement(
+            "button"
+        );
+
+
+    chatToggleButton.id =
+        "volcanoChatToggle";
+
+
+    chatToggleButton.innerHTML =
+        "💬";
+
+
+    Object.assign(
+        chatToggleButton.style,
+        {
+
+            position:
+                "fixed",
+
+            right:
+                "18px",
+
+            bottom:
+                "105px",
+
+            width:
+                "52px",
+
+            height:
+                "52px",
+
+            borderRadius:
+                "50%",
+
+            border:
+                "1px solid rgba(84,216,255,.6)",
+
+            background:
+                "linear-gradient(135deg,#101d4a,#26104f)",
+
+            color:
+                "#fff",
+
+            fontSize:
+                "22px",
+
+            zIndex:
+                "9998",
+
+            boxShadow:
+                "0 8px 30px rgba(0,0,0,.45)",
+
+            cursor:
+                "pointer"
+
+        }
+    );
+
+
+    document.body.appendChild(
+        chatToggleButton
+    );
+
+
+    chatPanel =
+        document.createElement(
+            "div"
+        );
+
+
+    chatPanel.id =
+        "volcanoChatPanel";
+
+
+    Object.assign(
+        chatPanel.style,
+        {
+
+            position:
+                "fixed",
+
+            right:
+                "15px",
+
+            bottom:
+                "165px",
+
+            width:
+                "min(340px,calc(100vw - 30px))",
+
+            height:
+                "390px",
+
+            display:
+                "none",
+
+            flexDirection:
+                "column",
+
+            background:
+                "rgba(5,9,20,.96)",
+
+            border:
+                "1px solid rgba(84,216,255,.45)",
+
+            borderRadius:
+                "18px",
+
+            overflow:
+                "hidden",
+
+            zIndex:
+                "9997",
+
+            boxShadow:
+                "0 20px 60px rgba(0,0,0,.6)",
+
+            backdropFilter:
+                "blur(18px)"
+
+        }
+    );
+
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+
+    Object.assign(
+        header.style,
+        {
+
+            padding:
+                "13px 15px",
+
+            display:
+                "flex",
+
+            justifyContent:
+                "space-between",
+
+            alignItems:
+                "center",
+
+            color:
+                "#fff",
+
+            fontWeight:
+                "800",
+
+            background:
+                "linear-gradient(135deg,#111d48,#251044)"
+
+        }
+    );
+
+
+    header.innerHTML =
+        `
+            <span>💬 Volcano Chat</span>
+
+            <button
+                id="volcanoChatClose"
+                style="
+                    border:0;
+                    background:transparent;
+                    color:white;
+                    font-size:20px;
+                    cursor:pointer;
+                "
+            >
+                ×
+            </button>
+        `;
+
+
+    chatPanel.appendChild(
+        header
+    );
+
+
+    chatMessages =
+        document.createElement(
+            "div"
+        );
+
+
+    Object.assign(
+        chatMessages.style,
+        {
+
+            flex:
+                "1",
+
+            overflowY:
+                "auto",
+
+            padding:
+                "12px",
+
+            display:
+                "flex",
+
+            flexDirection:
+                "column",
+
+            gap:
+                "8px"
+
+        }
+    );
+
+
+    chatPanel.appendChild(
+        chatMessages
+    );
+
+
+    const composer =
+        document.createElement(
+            "div"
+        );
+
+
+    Object.assign(
+        composer.style,
+        {
+
+            display:
+                "flex",
+
+            gap:
+                "7px",
+
+            padding:
+                "10px",
+
+            borderTop:
+                "1px solid rgba(255,255,255,.08)"
+
+        }
+    );
+
+
+    chatInput =
+        document.createElement(
+            "input"
+        );
+
+
+    chatInput.placeholder =
+        "Type a message...";
+
+
+    chatInput.maxLength =
+        120;
+
+
+    Object.assign(
+        chatInput.style,
+        {
+
+            flex:
+                "1",
+
+            minWidth:
+                "0",
+
+            padding:
+                "11px",
+
+            borderRadius:
+                "12px",
+
+            border:
+                "1px solid rgba(255,255,255,.12)",
+
+            outline:
+                "none",
+
+            background:
+                "#10182d",
+
+            color:
+                "#fff"
+
+        }
+    );
+
+
+    chatSendButton =
+        document.createElement(
+            "button"
+        );
+
+
+    chatSendButton.textContent =
+        "➤";
+
+
+    Object.assign(
+        chatSendButton.style,
+        {
+
+            width:
+                "45px",
+
+            border:
+                "0",
+
+            borderRadius:
+                "12px",
+
+            background:
+                "#54d8ff",
+
+            color:
+                "#06101d",
+
+            fontWeight:
+                "900",
+
+            cursor:
+                "pointer"
+
+        }
+    );
+
+
+    composer.appendChild(
+        chatInput
+    );
+
+    composer.appendChild(
+        chatSendButton
+    );
+
+    chatPanel.appendChild(
+        composer
+    );
+
+    document.body.appendChild(
+        chatPanel
+    );
+
+
+    chatToggleButton.addEventListener(
+        "click",
+        () => {
+
+            const open =
+                chatPanel.style.display ===
+                "flex";
+
+
+            chatPanel.style.display =
+                open
+                    ? "none"
+                    : "flex";
+
+
+            if(!open){
+
+                chatUnread = 0;
+
+                updateChatButton();
+
+                setTimeout(
+                    () => {
+                        chatMessages.scrollTop =
+                            chatMessages.scrollHeight;
+                    },
+                    50
+                );
+
+            }
+
+        }
+    );
+
+
+    document
+        .getElementById(
+            "volcanoChatClose"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                chatPanel.style.display =
+                    "none";
+
+            }
+        );
+
+
+    chatSendButton.addEventListener(
+        "click",
+        sendChatMessage
+    );
+
+
+    chatInput.addEventListener(
+        "keydown",
+        event => {
+
+            if(event.key === "Enter"){
+
+                event.preventDefault();
+
+                sendChatMessage();
+
+            }
+
+        }
+    );
+
+
+    subscribeToChat();
+
+}
 
 
 // ============================================================
-// LEAVE MATCH
+// CHAT SUBSCRIPTION
 // ============================================================
 
-leaveButton.addEventListener(
-    "click",
-    async () => {
+function subscribeToChat(){
 
-        await leaveRoom();
+    if(chatUnsubscribe)
+        chatUnsubscribe();
+
+
+    if(!roomId)
+        return;
+
+
+    const messagesRef =
+        collection(
+            db,
+            "gameRooms",
+            roomId,
+            "messages"
+        );
+
+
+    const messagesQuery =
+        query(
+            messagesRef,
+            limit(100)
+        );
+
+
+    chatUnsubscribe =
+        onSnapshot(
+            messagesQuery,
+            snapshot => {
+
+                const messages =
+                    snapshot.docs
+                        .map(
+                            d => ({
+                                id:
+                                    d.id,
+
+                                ...d.data()
+                            })
+                        )
+                        .sort(
+                            (a,b) => {
+
+                                const aTime =
+                                    a.createdAt?.seconds ||
+                                    0;
+
+                                const bTime =
+                                    b.createdAt?.seconds ||
+                                    0;
+
+                                return (
+                                    aTime -
+                                    bTime
+                                );
+
+                            }
+                        );
+
+
+                renderChatMessages(
+                    messages
+                );
+
+            },
+            error => {
+
+                console.error(
+                    "Chat listener:",
+                    error
+                );
+
+            }
+        );
+
+}
+
+
+// ============================================================
+// SEND CHAT MESSAGE
+// ============================================================
+
+async function sendChatMessage(){
+
+    if(
+        !currentUser ||
+        !roomId ||
+        !chatInput
+    )
+        return;
+
+
+    const text =
+        chatInput.value
+            .trim()
+            .slice(0,120);
+
+
+    if(!text)
+        return;
+
+
+    chatInput.value = "";
+
+
+    try{
+
+        await addDoc(
+            collection(
+                db,
+                "gameRooms",
+                roomId,
+                "messages"
+            ),
+            {
+
+                uid:
+                    currentUser.uid,
+
+                displayName:
+                    getUserName(
+                        currentUser
+                    ),
+
+                text,
+
+                createdAt:
+                    serverTimestamp()
+
+            }
+        );
+
+    }catch(error){
+
+        console.error(
+            "Chat send error:",
+            error
+        );
 
     }
-);
 
+}
+
+
+// ============================================================
+// RENDER CHAT
+// ============================================================
+
+function renderChatMessages(
+    messages
+){
+
+    if(!chatMessages)
+        return;
+
+
+    const wasAtBottom =
+        chatMessages.scrollHeight -
+        chatMessages.scrollTop -
+        chatMessages.clientHeight <
+        60;
+
+
+    chatMessages.innerHTML =
+        "";
+
+
+    messages.forEach(
+        message => {
+
+            const mine =
+                message.uid ===
+                currentUser?.uid;
+
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+
+            Object.assign(
+                row.style,
+                {
+
+                    alignSelf:
+                        mine
+                            ? "flex-end"
+                            : "flex-start",
+
+                    maxWidth:
+                        "85%",
+
+                    padding:
+                        "8px 11px",
+
+                    borderRadius:
+                        mine
+                            ? "14px 14px 3px 14px"
+                            : "14px 14px 14px 3px",
+
+                    background:
+                        mine
+                            ? "linear-gradient(135deg,#155d7a,#43318a)"
+                            : "#151d32",
+
+                    color:
+                        "#fff",
+
+                    wordBreak:
+                        "break-word"
+
+                }
+            );
+
+
+            row.innerHTML =
+                `
+                    <div
+                        style="
+                            font-size:10px;
+                            opacity:.65;
+                            margin-bottom:3px;
+                            font-weight:700;
+                        "
+                    >
+                        ${escapeHtml(
+                            message.displayName ||
+                            "Player"
+                        )}
+                    </div>
+
+                    <div
+                        style="
+                            font-size:13px;
+                            line-height:1.35;
+                        "
+                    >
+                        ${escapeHtml(
+                            message.text ||
+                            ""
+                        )}
+                    </div>
+                `;
+
+
+            chatMessages.appendChild(
+                row
+            );
+
+        }
+    );
+
+
+    const panelOpen =
+        chatPanel?.style.display ===
+        "flex";
+
+
+    if(!panelOpen){
+
+        chatUnread++;
+
+        updateChatButton();
+
+    }else if(wasAtBottom){
+
+        chatMessages.scrollTop =
+            chatMessages.scrollHeight;
+
+    }else{
+
+        chatMessages.scrollTop =
+            chatMessages.scrollHeight;
+
+    }
+
+}
+
+
+// ============================================================
+// CHAT BADGE
+// ============================================================
+
+function updateChatButton(){
+
+    if(!chatToggleButton)
+        return;
+
+
+    chatToggleButton.innerHTML =
+        chatUnread > 0
+            ? `💬<span style="
+                    position:absolute;
+                    transform:translate(10px,-25px);
+                    background:#ff4d91;
+                    color:white;
+                    min-width:18px;
+                    height:18px;
+                    border-radius:9px;
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:10px;
+                    font-weight:900;
+                ">${Math.min(
+                    chatUnread,
+                    99
+                )}</span>`
+            : "💬";
+
+}
+
+
+// ============================================================
+// WINNER / RETURN
+// ============================================================
+
+if(returnLobbyButton){
+
+    returnLobbyButton.addEventListener(
+        "click",
+        async () => {
+
+            if(winnerOverlay)
+                winnerOverlay.style.display =
+                    "none";
+
+            await leaveRoom();
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// LEAVE BUTTON
+// ============================================================
+
+if(leaveButton){
+
+    leaveButton.addEventListener(
+        "click",
+        async () => {
+
+            await leaveRoom();
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// LEAVE ROOM
+// ============================================================
 
 async function leaveRoom(){
 
@@ -3440,6 +4357,34 @@ async function leaveRoom(){
 
         roomUnsubscribe =
             null;
+
+    }
+
+
+    if(chatUnsubscribe){
+
+        chatUnsubscribe();
+
+        chatUnsubscribe =
+            null;
+
+    }
+
+
+    if(chatPanel){
+
+        chatPanel.remove();
+
+        chatPanel = null;
+
+    }
+
+
+    if(chatToggleButton){
+
+        chatToggleButton.remove();
+
+        chatToggleButton = null;
 
     }
 
@@ -3505,6 +4450,10 @@ async function leaveRoom(){
 }
 
 
+// ============================================================
+// RESET LOCAL ROOM
+// ============================================================
+
 function leaveRoomLocal(){
 
     roomId = null;
@@ -3526,42 +4475,54 @@ function leaveRoomLocal(){
 
     player.score = 0;
 
-
-    winnerOverlay.style.display =
-        "none";
+    player.distance = 0;
 
 
-    gameMessage.style.display =
-        "none";
+    winnerOverlay?.style &&
+        (winnerOverlay.style.display =
+            "none");
 
 
-    gameArea.style.display =
-        "none";
+    if(gameMessage)
+        gameMessage.style.display =
+            "none";
 
 
-    lobby.style.display =
-        "block";
+    if(gameArea)
+        gameArea.style.display =
+            "none";
 
 
-    roomCodeEl.textContent =
-        "------";
+    if(lobby)
+        lobby.style.display =
+            "block";
 
 
-    gameRoomCodeEl.textContent =
-        "------";
+    if(roomCodeEl)
+        roomCodeEl.textContent =
+            "------";
 
 
-    playerCountEl.textContent =
-        "Players: 0/4";
+    if(gameRoomCodeEl)
+        gameRoomCodeEl.textContent =
+            "------";
 
 
-    readyButton.textContent =
-        "🔥 READY";
+    if(playerCountEl)
+        playerCountEl.textContent =
+            "Players: 0/4";
 
 
-    readyButton.classList.remove(
-        "readyOn"
-    );
+    if(readyButton){
+
+        readyButton.textContent =
+            "🔥 READY";
+
+        readyButton.classList.remove(
+            "readyOn"
+        );
+
+    }
 
 
     setLobbyStatus(
@@ -3579,6 +4540,10 @@ function leaveRoomLocal(){
 // ============================================================
 
 function drawScene(){
+
+    if(!ctx)
+        return;
+
 
     ctx.clearRect(
         0,
@@ -3631,12 +4596,10 @@ function drawSky(){
         "#100022"
     );
 
-
     gradient.addColorStop(
         .45,
         "#28001f"
     );
-
 
     gradient.addColorStop(
         1,
@@ -3656,9 +4619,11 @@ function drawSky(){
     );
 
 
-    // Stars
-
-    for(let i = 0; i < 55; i++){
+    for(
+        let i = 0;
+        i < 55;
+        i++
+    ){
 
         const x =
             (
@@ -3719,67 +4684,55 @@ function drawMountains(){
         360
     );
 
-
     ctx.lineTo(
         55,
         250
     );
-
 
     ctx.lineTo(
         100,
         320
     );
 
-
     ctx.lineTo(
         155,
         190
     );
-
 
     ctx.lineTo(
         210,
         315
     );
 
-
     ctx.lineTo(
         275,
         215
     );
-
 
     ctx.lineTo(
         330,
         300
     );
 
-
     ctx.lineTo(
         390,
         230
     );
 
-
     ctx.lineTo(
         390,
         500
     );
-
 
     ctx.lineTo(
         0,
         500
     );
 
-
     ctx.closePath();
 
     ctx.fill();
 
-
-    // Volcano
 
     ctx.fillStyle =
         "#220d22";
@@ -3792,37 +4745,30 @@ function drawMountains(){
         350
     );
 
-
     ctx.lineTo(
         165,
         190
     );
-
 
     ctx.lineTo(
         195,
         135
     );
 
-
     ctx.lineTo(
         225,
         190
     );
-
 
     ctx.lineTo(
         270,
         350
     );
 
-
     ctx.closePath();
 
     ctx.fill();
 
-
-    // Volcano glow
 
     ctx.fillStyle =
         "rgba(255,70,0,.35)";
@@ -3840,7 +4786,6 @@ function drawMountains(){
         0,
         Math.PI * 2
     );
-
 
     ctx.fill();
 
@@ -3867,12 +4812,10 @@ function drawLavaBackground(){
         "#ff4a00"
     );
 
-
     lavaGradient.addColorStop(
         .5,
         "#ff1f00"
     );
-
 
     lavaGradient.addColorStop(
         1,
@@ -3892,7 +4835,11 @@ function drawLavaBackground(){
     );
 
 
-    for(let x = 0; x <= ROAD_WIDTH; x += 12){
+    for(
+        let x = 0;
+        x <= ROAD_WIDTH;
+        x += 12
+    ){
 
         const y =
             500 +
@@ -3900,6 +4847,7 @@ function drawLavaBackground(){
                 x * .045 +
                 gameElapsed * 2
             ) * 8;
+
 
         ctx.lineTo(
             x,
@@ -3914,12 +4862,10 @@ function drawLavaBackground(){
         ROAD_HEIGHT
     );
 
-
     ctx.lineTo(
         0,
         ROAD_HEIGHT
     );
-
 
     ctx.closePath();
 
@@ -3934,8 +4880,6 @@ function drawLavaBackground(){
 
 function drawRoad(){
 
-    // Road shoulders
-
     ctx.fillStyle =
         "#42120c";
 
@@ -3947,8 +4891,6 @@ function drawRoad(){
         385
     );
 
-
-    // Main road
 
     const roadGradient =
         ctx.createLinearGradient(
@@ -3963,7 +4905,6 @@ function drawRoad(){
         0,
         "#313039"
     );
-
 
     roadGradient.addColorStop(
         1,
@@ -3982,31 +4923,25 @@ function drawRoad(){
         300
     );
 
-
     ctx.lineTo(
         265,
         300
     );
-
 
     ctx.lineTo(
         352,
         700
     );
 
-
     ctx.lineTo(
         38,
         700
     );
 
-
     ctx.closePath();
 
     ctx.fill();
 
-
-    // Road edges
 
     ctx.strokeStyle =
         "#ff7028";
@@ -4038,8 +4973,6 @@ function drawRoad(){
     ctx.stroke();
 
 
-    // Center markings
-
     ctx.strokeStyle =
         "rgba(255,255,255,.55)";
 
@@ -4069,14 +5002,13 @@ function drawRoad(){
 
     ctx.stroke();
 
-
     ctx.setLineDash([]);
 
 }
 
 
 // ============================================================
-// LAVA EVENTS
+// FULL ROAD LAVA DRAWING
 // ============================================================
 
 function drawLavaEvents(){
@@ -4092,7 +5024,16 @@ function drawLavaEvents(){
 
 
         if(
-            age < -LAVA_WARNING_TIME ||
+            age <
+            -event.warning
+        ){
+
+            continue;
+
+        }
+
+
+        if(
             age >
             event.duration
         ){
@@ -4102,25 +5043,17 @@ function drawLavaEvents(){
         }
 
 
-        const laneWidth =
-            112;
-
-
-        const laneStart =
-            55 +
-            event.lane *
-            laneWidth;
-
+        /*
+         * WARNING
+         */
 
         if(age < 0){
-
-            // Warning
 
             const pulse =
                 .5 +
                 Math.sin(
                     gameElapsed * 10
-                ) * .2;
+                ) * .25;
 
 
             ctx.fillStyle =
@@ -4128,10 +5061,27 @@ function drawLavaEvents(){
 
 
             ctx.fillRect(
-                laneStart,
-                545,
-                laneWidth - 4,
-                22
+                48,
+                548,
+                294,
+                12
+            );
+
+
+            ctx.font =
+                "bold 14px system-ui";
+
+            ctx.textAlign =
+                "center";
+
+            ctx.fillStyle =
+                "#ffe66b";
+
+
+            ctx.fillText(
+                "🔥 LAVA INCOMING — JUMP!",
+                ROAD_WIDTH / 2,
+                535
             );
 
 
@@ -4140,53 +5090,65 @@ function drawLavaEvents(){
         }
 
 
+        /*
+         * FULL ROAD LAVA
+         */
+
         const progress =
-            age /
-            event.duration;
+            Math.min(
+                1,
+                Math.max(
+                    0,
+                    age /
+                    event.duration
+                )
+            );
 
 
-        const move =
-            event.direction > 0
-                ? progress * 100
-                : -progress * 100;
-
-
-        const x =
-            laneStart +
-            move;
-
-
-        const height =
-            90 +
+        const wave =
             Math.sin(
                 progress * Math.PI
-            ) * 30;
+            ) * 8;
+
+
+        const lavaX =
+            ROAD_WIDTH / 2 -
+            LAVA_WIDTH / 2;
+
+
+        const lavaY =
+            event.y -
+            event.height -
+            wave;
 
 
         const gradient =
             ctx.createLinearGradient(
-                x,
-                570 - height,
-                x,
-                570
+                lavaX,
+                lavaY,
+                lavaX,
+                event.y
             );
 
 
         gradient.addColorStop(
             0,
-            "#ffd52d"
+            "#ffe33b"
         );
-
 
         gradient.addColorStop(
-            .3,
-            "#ff6800"
+            .25,
+            "#ff9d00"
         );
 
+        gradient.addColorStop(
+            .65,
+            "#ff4300"
+        );
 
         gradient.addColorStop(
             1,
-            "#db1600"
+            "#b70900"
         );
 
 
@@ -4196,29 +5158,128 @@ function drawLavaEvents(){
 
         ctx.beginPath();
 
-        ctx.roundRect(
-            x,
-            570 - height,
-            135,
-            height,
-            18
+
+        for(
+            let x = 0;
+            x <= LAVA_WIDTH;
+            x += 12
+        ){
+
+            const top =
+                lavaY +
+                Math.sin(
+                    x * .09 +
+                    gameElapsed * 12
+                ) * 5;
+
+
+            if(x === 0){
+
+                ctx.moveTo(
+                    lavaX + x,
+                    top
+                );
+
+            }else{
+
+                ctx.lineTo(
+                    lavaX + x,
+                    top
+                );
+
+            }
+
+        }
+
+
+        ctx.lineTo(
+            lavaX +
+            LAVA_WIDTH,
+            event.y
         );
+
+
+        ctx.lineTo(
+            lavaX,
+            event.y
+        );
+
+
+        ctx.closePath();
 
         ctx.fill();
 
 
-        // Lava glow
+        /*
+         * Lava glow
+         */
 
         ctx.fillStyle =
-            "rgba(255,130,0,.25)";
+            "rgba(255,100,0,.3)";
 
 
         ctx.fillRect(
-            x - 8,
-            570 - height - 8,
-            151,
-            10
+            lavaX - 10,
+            lavaY - 8,
+            LAVA_WIDTH + 20,
+            8
         );
+
+
+        /*
+         * Lava bubbles
+         */
+
+        for(
+            let i = 0;
+            i < 9;
+            i++
+        ){
+
+            const bx =
+                lavaX +
+                10 +
+                (
+                    i * 31
+                ) %
+                (
+                    LAVA_WIDTH - 15
+                );
+
+
+            const by =
+                lavaY +
+                10 +
+                (
+                    Math.sin(
+                        gameElapsed * 5 +
+                        i
+                    ) + 1
+                ) *
+                9;
+
+
+            ctx.fillStyle =
+                "#ffd52d";
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                bx,
+                by,
+                3 +
+                Math.sin(
+                    gameElapsed * 7 +
+                    i
+                ),
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+        }
 
     }
 
@@ -4226,7 +5287,7 @@ function drawLavaEvents(){
 
 
 // ============================================================
-// OBSTACLES
+// NORMAL OBSTACLES
 // ============================================================
 
 function drawObstacles(){
@@ -4244,11 +5305,8 @@ function drawObstacles(){
         if(
             age < 0 ||
             age > 4
-        ){
-
+        )
             continue;
-
-        }
 
 
         let x =
@@ -4278,8 +5336,6 @@ function drawObstacles(){
         }
 
 
-        // Shadow
-
         ctx.fillStyle =
             "rgba(0,0,0,.3)";
 
@@ -4299,16 +5355,12 @@ function drawObstacles(){
             7,
 
             0,
-
             0,
             Math.PI * 2
         );
 
-
         ctx.fill();
 
-
-        // Rock
 
         ctx.fillStyle =
             obstacle.type ===
@@ -4332,7 +5384,6 @@ function drawObstacles(){
             Math.PI * 2
         );
 
-
         ctx.fill();
 
 
@@ -4342,43 +5393,9 @@ function drawObstacles(){
                 ? "#ff4b16"
                 : "#67616d";
 
-
         ctx.lineWidth = 3;
 
         ctx.stroke();
-
-
-        if(
-            obstacle.type ===
-            "meteor"
-        ){
-
-            ctx.fillStyle =
-                "#ffad25";
-
-
-            ctx.beginPath();
-
-            ctx.arc(
-                x +
-                obstacle.width / 2,
-
-                y +
-                obstacle.height / 2,
-
-                5 +
-                Math.sin(
-                    gameElapsed * 10
-                ) * 2,
-
-                0,
-                Math.PI * 2
-            );
-
-
-            ctx.fill();
-
-        }
 
     }
 
@@ -4399,31 +5416,27 @@ function drawOtherPlayers(){
         if(
             other.uid ===
             currentUser?.uid
-        ){
-
+        )
             continue;
-
-        }
 
 
         if(
             other.alive === false
-        ){
-
+        )
             continue;
-
-        }
 
 
         const x =
             Number(
-                other.x || 180
+                other.x ??
+                180
             );
 
 
         const y =
             Number(
-                other.y || 520
+                other.y ??
+                520
             );
 
 
@@ -4431,9 +5444,9 @@ function drawOtherPlayers(){
             x,
             y,
             other.color ||
-            "#54d8ff",
+                "#54d8ff",
             other.displayName ||
-            "Player",
+                "Player",
             false
         );
 
@@ -4448,13 +5461,8 @@ function drawOtherPlayers(){
 
 function drawLocalPlayer(){
 
-    if(
-        !player.alive
-    ){
-
+    if(!player.alive)
         return;
-
-    }
 
 
     if(
@@ -4473,7 +5481,9 @@ function drawLocalPlayer(){
         player.x,
         player.y,
         player.color,
-        "YOU",
+        getUserName(
+            currentUser
+        ),
         true
     );
 
@@ -4491,8 +5501,6 @@ function drawRunner(
     name,
     local
 ){
-
-    // Shadow
 
     ctx.fillStyle =
         "rgba(0,0,0,.35)";
@@ -4516,11 +5524,77 @@ function drawRunner(
         Math.PI * 2
     );
 
+    ctx.fill();
+
+
+    /*
+     * NAME PLATE
+     */
+
+    ctx.font =
+        local
+            ? "bold 10px system-ui"
+            : "bold 9px system-ui";
+
+    ctx.textAlign =
+        "center";
+
+
+    const safeName =
+        String(
+            name ||
+            "Player"
+        ).slice(
+            0,
+            24
+        );
+
+
+    const textWidth =
+        ctx.measureText(
+            safeName
+        ).width;
+
+
+    ctx.fillStyle =
+        "rgba(4,8,20,.88)";
+
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+        x +
+        PLAYER_WIDTH / 2 -
+        textWidth / 2 -
+        5,
+
+        y - 22,
+
+        textWidth + 10,
+
+        16,
+
+        7
+    );
 
     ctx.fill();
 
 
-    // Body
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.fillText(
+        safeName,
+        x +
+        PLAYER_WIDTH / 2,
+        y - 10
+    );
+
+
+    /*
+     * BODY
+     */
 
     ctx.fillStyle =
         color;
@@ -4536,11 +5610,12 @@ function drawRunner(
         7
     );
 
-
     ctx.fill();
 
 
-    // Helmet
+    /*
+     * HELMET
+     */
 
     ctx.fillStyle =
         "#f4f6ff";
@@ -4556,11 +5631,12 @@ function drawRunner(
         Math.PI * 2
     );
 
-
     ctx.fill();
 
 
-    // Visor
+    /*
+     * VISOR
+     */
 
     ctx.fillStyle =
         "#14203b";
@@ -4576,11 +5652,12 @@ function drawRunner(
         5
     );
 
-
     ctx.fill();
 
 
-    // Legs
+    /*
+     * LEGS
+     */
 
     ctx.strokeStyle =
         "#171522";
@@ -4606,7 +5683,8 @@ function drawRunner(
     );
 
     ctx.lineTo(
-        x + 7 - running,
+        x + 7 -
+        running,
         y + 43
     );
 
@@ -4617,39 +5695,16 @@ function drawRunner(
     );
 
     ctx.lineTo(
-        x + 22 + running,
+        x + 22 +
+        running,
         y + 43
     );
 
 
     ctx.stroke();
 
-
     ctx.lineCap =
         "butt";
-
-
-    // Name
-
-    ctx.font =
-        local
-            ? "bold 9px system-ui"
-            : "bold 8px system-ui";
-
-
-    ctx.textAlign =
-        "center";
-
-
-    ctx.fillStyle =
-        "#ffffff";
-
-
-    ctx.fillText(
-        name,
-        x + PLAYER_WIDTH / 2,
-        y - 8
-    );
 
 }
 
@@ -4673,8 +5728,10 @@ function createJumpParticles(){
                 player.height,
 
             vx:
-                (Math.random() - .5) *
-                80,
+                (
+                    Math.random() -
+                    .5
+                ) * 80,
 
             vy:
                 Math.random() *
@@ -4682,7 +5739,8 @@ function createJumpParticles(){
 
             life:
                 .5 +
-                Math.random() * .4,
+                Math.random() *
+                .4,
 
             maxLife:
                 .8,
@@ -4715,16 +5773,21 @@ function createExplosionParticles(
             y,
 
             vx:
-                (Math.random() - .5) *
-                250,
+                (
+                    Math.random() -
+                    .5
+                ) * 250,
 
             vy:
-                (Math.random() - .5) *
-                250,
+                (
+                    Math.random() -
+                    .5
+                ) * 250,
 
             life:
                 .5 +
-                Math.random() * .8,
+                Math.random() *
+                .8,
 
             maxLife:
                 1.2,
@@ -4827,7 +5890,6 @@ function drawParticles(){
             Math.PI * 2
         );
 
-
         ctx.fill();
 
     }
@@ -4848,11 +5910,8 @@ function drawSpeedLines(){
     if(
         !gameStarted ||
         !player.alive
-    ){
-
+    )
         return;
-
-    }
 
 
     const intensity =
@@ -4874,9 +5933,7 @@ function drawSpeedLines(){
 
         const x =
             45 +
-            (
-                i * 47
-            );
+            i * 47;
 
 
         const y =
@@ -4908,53 +5965,45 @@ function drawSpeedLines(){
 
 
 // ============================================================
-// RESET / DRAW WAITING
+// ROOM INPUT
 // ============================================================
 
-function drawWaitingScene(){
+if(roomInput){
 
-    drawScene();
+    roomInput.addEventListener(
+        "keydown",
+        event => {
 
-}
+            if(event.key === "Enter"){
 
+                joinRoomButton?.click();
 
-// ============================================================
-// INPUT FOCUS PROTECTION
-// ============================================================
-
-roomInput.addEventListener(
-    "keydown",
-    event => {
-
-        if(event.key === "Enter"){
-
-            joinRoomButton.click();
+            }
 
         }
-
-    }
-);
+    );
 
 
-// ============================================================
-// ROOM INPUT CLEANUP
-// ============================================================
+    roomInput.addEventListener(
+        "input",
+        () => {
 
-roomInput.addEventListener(
-    "input",
-    () => {
+            roomInput.value =
+                roomInput.value
+                    .toUpperCase()
+                    .replace(
+                        /[^A-Z0-9]/g,
+                        ""
+                    )
+                    .slice(
+                        0,
+                        6
+                    );
 
-        roomInput.value =
-            roomInput.value
-                .toUpperCase()
-                .replace(
-                    /[^A-Z0-9]/g,
-                    ""
-                )
-                .slice(0,6);
+        }
+    );
 
-    }
-);
+}
 
 
 // ============================================================
@@ -4965,7 +6014,7 @@ drawScene();
 
 
 // ============================================================
-// INITIAL WAITING STATE
+// WAITING CHECK
 // ============================================================
 
 setInterval(
@@ -4987,14 +6036,16 @@ setInterval(
 
 
 // ============================================================
-// PREVENT PAGE SCROLL WHILE USING GAME CONTROLS
+// PREVENT PAGE SCROLL
 // ============================================================
 
 [
     leftButton,
     rightButton,
     jumpButton
-].forEach(
+]
+.filter(Boolean)
+.forEach(
     button => {
 
         button.addEventListener(
@@ -5014,7 +6065,7 @@ setInterval(
 
 
 // ============================================================
-// CLEANUP WHEN LEAVING PAGE
+// CLEANUP
 // ============================================================
 
 window.addEventListener(
@@ -5029,17 +6080,17 @@ window.addEventListener(
 
         }
 
-        if(roomUnsubscribe){
 
+        if(roomUnsubscribe)
             roomUnsubscribe();
 
-        }
 
-        if(playersUnsubscribe){
-
+        if(playersUnsubscribe)
             playersUnsubscribe();
 
-        }
+
+        if(chatUnsubscribe)
+            chatUnsubscribe();
 
     }
 );
