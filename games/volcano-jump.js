@@ -2,7 +2,7 @@
 // VITALSTAR — VOLCANO JUMP
 // Multiplayer Last-Player-Standing Road Survival
 //
-// LAVA ONLY
+// SIMPLE LAVA ONLY
 //
 // Firebase v10.12.2
 // ============================================================
@@ -51,22 +51,22 @@ const PLAYER_WIDTH = 28;
 const PLAYER_HEIGHT = 42;
 
 const PLAYER_SPEED = 235;
-const JUMP_FORCE = -510;
+
+// Strong enough to clearly jump over lava.
+const JUMP_FORCE = -600;
 
 const GRAVITY = 1350;
 
 const STATE_SEND_INTERVAL = 250;
 
-// Lava warning shown before the wave reaches the road.
+// Simple lava.
 const LAVA_WARNING_TIME = 1.0;
+const LAVA_HEIGHT = 30;
 
-const LAVA_HEIGHT = 42;
-
-// Lava travels from the front of the road,
-// across the player position,
-// and then behind the player.
 const LAVA_START_Y = 300;
 const LAVA_END_Y = 705;
+
+const PLAYER_GROUND_Y = 570;
 
 const COLORS = [
     "#54d8ff",
@@ -282,15 +282,11 @@ onAuthStateChanged(
 // ============================================================
 
 let roomId = null;
-
 let roomData = null;
-
 let isHost = false;
 
 let roomUnsubscribe = null;
-
 let playersUnsubscribe = null;
-
 let chatUnsubscribe = null;
 
 let currentPlayerRef = null;
@@ -314,33 +310,26 @@ const player = {
         PLAYER_WIDTH / 2,
 
     y:
-        570 -
+        PLAYER_GROUND_Y -
         PLAYER_HEIGHT,
 
     vx: 0,
-
     vy: 0,
 
     width: PLAYER_WIDTH,
-
     height: PLAYER_HEIGHT,
 
     grounded: true,
-
     jumping: false,
 
     alive: true,
-
     ready: false,
 
     lives: 3,
-
     score: 0,
-
     distance: 0,
 
     invulnerable: 1.5,
-
     lastHit: 0,
 
     eliminationReason: "",
@@ -357,43 +346,34 @@ const player = {
 // ============================================================
 
 let gameStarted = false;
-
 let gameFinished = false;
 
 let gameStartTime = 0;
-
 let gameElapsed = 0;
 
 let lastFrameTime =
     performance.now();
 
 let animationFrame = null;
-
 let countdownTimer = null;
 
 let resultRecorded = false;
 
 let lastStateSend = 0;
-
 let lastScoreUpdate = 0;
 
 let roadScroll = 0;
 
-// Room seed is used only for deterministic visual variation.
 let roomSeed = 1;
 
 // LAVA ONLY.
-// There is deliberately NO obstacles array.
 let lavaEvents = [];
 
 let particles = [];
 
 let keys = {
-
     left: false,
-
     right: false
-
 };
 
 
@@ -402,13 +382,9 @@ let keys = {
 // ============================================================
 
 let chatPanel = null;
-
 let chatMessages = null;
-
 let chatInput = null;
-
 let chatSendButton = null;
-
 let chatToggleButton = null;
 
 let chatUnread = 0;
@@ -435,34 +411,26 @@ async function getFullName(user){
     if(!user)
         return "Player";
 
-
     try{
 
         const snapshot =
             await getDocs(
                 query(
                     collection(db, "users"),
-                    where(
-                        "__name__",
-                        "==",
-                        user.uid
-                    ),
+                    where("__name__", "==", user.uid),
                     limit(1)
                 )
             );
-
 
         if(!snapshot.empty){
 
             const data =
                 snapshot.docs[0].data();
 
-
             const fullName =
                 data.fullName ||
                 data.name ||
                 `${data.firstName || ""} ${data.lastName || ""}`.trim();
-
 
             if(fullName)
                 return fullName;
@@ -503,7 +471,6 @@ function getUserName(user){
     if(!user)
         return "Player";
 
-
     if(
         user.fullName &&
         user.fullName.trim()
@@ -512,7 +479,6 @@ function getUserName(user){
         return user.fullName.trim();
 
     }
-
 
     if(
         user.displayName &&
@@ -523,7 +489,6 @@ function getUserName(user){
 
     }
 
-
     return "Player";
 
 }
@@ -531,7 +496,6 @@ function getUserName(user){
 
 // ============================================================
 // USERNAME
-// Used internally only.
 // ============================================================
 
 function getUsername(user){
@@ -539,11 +503,9 @@ function getUsername(user){
     if(!user)
         return "player";
 
-
     const name =
         user.displayName ||
         "player";
-
 
     return name
         .replace(/\s+/g,"")
@@ -689,7 +651,6 @@ if(quickMatchButton){
                         continue;
                     }
 
-
                     const playerSnapshot =
                         await getDocs(
                             collection(
@@ -700,7 +661,6 @@ if(quickMatchButton){
                             )
                         );
 
-
                     if(
                         playerSnapshot.size >=
                         MAX_PLAYERS
@@ -708,14 +668,12 @@ if(quickMatchButton){
                         continue;
                     }
 
-
                     selectedRoom =
                         roomDoc;
 
                     break;
 
                 }
-
 
                 if(selectedRoom){
 
@@ -783,7 +741,6 @@ async function createRoom(
 
     }
 
-
     try{
 
         const roomRef =
@@ -794,17 +751,14 @@ async function createRoom(
                 )
             );
 
-
         const roomCode =
             generateRoomCode();
-
 
         const seed =
             Math.floor(
                 Math.random() *
                 2147483647
             );
-
 
         await setDoc(
             roomRef,
@@ -820,7 +774,6 @@ async function createRoom(
                 status: "waiting",
 
                 playersCount: 0,
-
                 readyCount: 0,
 
                 maxPlayers:
@@ -841,7 +794,6 @@ async function createRoom(
             }
         );
 
-
         await joinExistingRoom(
             roomRef.id,
             {
@@ -858,7 +810,6 @@ async function createRoom(
                 seed
             }
         );
-
 
         if(isQuickMatch){
 
@@ -899,7 +850,6 @@ if(joinRoomButton){
                     .trim()
                     .toUpperCase();
 
-
             if(!code || code.length !== 6){
 
                 setLobbyStatus(
@@ -909,7 +859,6 @@ if(joinRoomButton){
                 return;
 
             }
-
 
             if(!currentUser){
 
@@ -921,9 +870,7 @@ if(joinRoomButton){
 
             }
 
-
             joinRoomButton.disabled = true;
-
 
             try{
 
@@ -941,12 +888,10 @@ if(joinRoomButton){
                         limit(1)
                     );
 
-
                 const snapshot =
                     await getDocs(
                         roomsQuery
                     );
-
 
                 if(snapshot.empty){
 
@@ -958,13 +903,11 @@ if(joinRoomButton){
 
                 }
 
-
                 const roomDoc =
                     snapshot.docs[0];
 
                 const data =
                     roomDoc.data();
-
 
                 if(data.game !== GAME_ID){
 
@@ -976,7 +919,6 @@ if(joinRoomButton){
 
                 }
 
-
                 if(data.status !== "waiting"){
 
                     setLobbyStatus(
@@ -986,7 +928,6 @@ if(joinRoomButton){
                     return;
 
                 }
-
 
                 await joinExistingRoom(
                     roomDoc.id,
@@ -1029,7 +970,6 @@ async function joinExistingRoom(
     if(!currentUser)
         return;
 
-
     if(
         targetRoomData.status !==
         "waiting"
@@ -1043,7 +983,6 @@ async function joinExistingRoom(
 
     }
 
-
     roomId =
         targetRoomId;
 
@@ -1054,7 +993,6 @@ async function joinExistingRoom(
         targetRoomData.hostUid ===
         currentUser.uid;
 
-
     const playerRef =
         doc(
             db,
@@ -1064,10 +1002,8 @@ async function joinExistingRoom(
             currentUser.uid
         );
 
-
     currentPlayerRef =
         playerRef;
-
 
     const existingPlayers =
         await getDocs(
@@ -1079,20 +1015,12 @@ async function joinExistingRoom(
             )
         );
 
-
-    /*
-     * If this user is already in the room,
-     * don't count their existing document
-     * as an additional player.
-     */
-
     const alreadyJoined =
         existingPlayers.docs.some(
             p =>
                 p.id ===
                 currentUser.uid
         );
-
 
     if(
         existingPlayers.size >= MAX_PLAYERS &&
@@ -1104,19 +1032,16 @@ async function joinExistingRoom(
         );
 
         roomId = null;
-
         currentPlayerRef = null;
 
         return;
 
     }
 
-
     const fullName =
         await getFullName(
             currentUser
         );
-
 
     currentUser.fullName =
         fullName;
@@ -1124,18 +1049,14 @@ async function joinExistingRoom(
     player.fullName =
         fullName;
 
-
     player.color =
         getPlayerColor(
             currentUser.uid
         );
 
     player.ready = false;
-
     player.alive = true;
-
     player.lives = 3;
-
     player.score = 0;
 
     player.x =
@@ -1143,9 +1064,8 @@ async function joinExistingRoom(
         PLAYER_WIDTH / 2;
 
     player.y =
-        570 -
+        PLAYER_GROUND_Y -
         PLAYER_HEIGHT;
-
 
     await setDoc(
         playerRef,
@@ -1187,7 +1107,6 @@ async function joinExistingRoom(
 
         }
     );
-
 
     showGameRoom();
 
@@ -1231,14 +1150,12 @@ function subscribeToRoom(){
     if(roomUnsubscribe)
         roomUnsubscribe();
 
-
     const roomRef =
         doc(
             db,
             "gameRooms",
             roomId
         );
-
 
     roomUnsubscribe =
         onSnapshot(
@@ -1253,22 +1170,18 @@ function subscribeToRoom(){
 
                 }
 
-
                 roomData =
                     snapshot.data();
-
 
                 if(roomCodeEl)
                     roomCodeEl.textContent =
                         roomData.roomCode ||
                         "------";
 
-
                 if(gameRoomCodeEl)
                     gameRoomCodeEl.textContent =
                         roomData.roomCode ||
                         "------";
-
 
                 if(
                     roomData.status ===
@@ -1278,7 +1191,6 @@ function subscribeToRoom(){
                     if(waitingOverlay)
                         waitingOverlay.style.display =
                             "none";
-
 
                     if(
                         roomData.startAt &&
@@ -1293,7 +1205,6 @@ function subscribeToRoom(){
                     }
 
                 }
-
 
                 if(
                     roomData.status ===
@@ -1333,7 +1244,6 @@ function subscribeToPlayers(){
     if(playersUnsubscribe)
         playersUnsubscribe();
 
-
     const playersRef =
         collection(
             db,
@@ -1342,7 +1252,6 @@ function subscribeToPlayers(){
             "players"
         );
 
-
     playersUnsubscribe =
         onSnapshot(
             playersRef,
@@ -1350,13 +1259,11 @@ function subscribeToPlayers(){
 
                 players.clear();
 
-
                 snapshot.forEach(
                     playerDoc => {
 
                         const data =
                             playerDoc.data();
-
 
                         players.set(
                             playerDoc.id,
@@ -1382,10 +1289,8 @@ function subscribeToPlayers(){
                     }
                 );
 
-
                 const count =
                     players.size;
-
 
                 if(playerCountEl){
 
@@ -1394,11 +1299,9 @@ function subscribeToPlayers(){
 
                 }
 
-
                 renderPlayersList();
 
                 renderLeaderboard();
-
 
                 if(
                     roomData &&
@@ -1409,7 +1312,6 @@ function subscribeToPlayers(){
                     updateWaitingState();
 
                 }
-
 
                 if(
                     gameStarted &&
@@ -1443,7 +1345,6 @@ function updateWaitingState(){
     const count =
         players.size;
 
-
     const readyCount =
         [...players.values()]
             .filter(
@@ -1451,7 +1352,6 @@ function updateWaitingState(){
                     p.ready === true
             )
             .length;
-
 
     if(count < MIN_PLAYERS){
 
@@ -1475,7 +1375,6 @@ function updateWaitingState(){
 
     }
 
-
     if(
         count >= MIN_PLAYERS &&
         readyCount === count &&
@@ -1487,7 +1386,6 @@ function updateWaitingState(){
             startMatch();
 
     }
-
 
     if(player.ready){
 
@@ -1534,12 +1432,10 @@ if(readyButton){
             )
                 return;
 
-
             try{
 
                 player.ready =
                     !player.ready;
-
 
                 await updateDoc(
                     currentPlayerRef,
@@ -1553,7 +1449,6 @@ if(readyButton){
 
                     }
                 );
-
 
                 updateWaitingState();
 
@@ -1581,17 +1476,14 @@ async function startMatch(){
     if(!isHost || !roomData)
         return;
 
-
     if(
         roomData.status !==
         "waiting"
     )
         return;
 
-
     const playerArray =
         [...players.values()];
-
 
     if(
         playerArray.length <
@@ -1599,21 +1491,17 @@ async function startMatch(){
     )
         return;
 
-
     const everyoneReady =
         playerArray.every(
             p =>
                 p.ready === true
         );
 
-
     if(!everyoneReady)
         return;
 
-
     const startAt =
         Date.now() + 3500;
-
 
     try{
 
@@ -1660,16 +1548,13 @@ function startCountdown(startAt){
     if(gameStarted)
         return;
 
-
     countdownOverlay?.classList.remove(
         "hidden"
     );
 
-
     if(waitingOverlay)
         waitingOverlay.style.display =
             "none";
-
 
     if(countdownTimer){
 
@@ -1679,13 +1564,11 @@ function startCountdown(startAt){
 
     }
 
-
     function updateCountdown(){
 
         const remaining =
             startAt -
             Date.now();
-
 
         if(remaining <= 0){
 
@@ -1695,11 +1578,9 @@ function startCountdown(startAt){
 
             countdownTimer = null;
 
-
             if(countdownNumber)
                 countdownNumber.textContent =
                     "GO!";
-
 
             setTimeout(
                 () => {
@@ -1714,22 +1595,18 @@ function startCountdown(startAt){
                 350
             );
 
-
             return;
 
         }
-
 
         const seconds =
             Math.ceil(
                 remaining / 1000
             );
 
-
         if(countdownMessage)
             countdownMessage.textContent =
                 "ALL PLAYERS READY!";
-
 
         if(countdownNumber)
             countdownNumber.textContent =
@@ -1737,9 +1614,7 @@ function startCountdown(startAt){
 
     }
 
-
     updateCountdown();
-
 
     countdownTimer =
         setInterval(
@@ -1759,11 +1634,8 @@ function beginGame(){
     if(gameStarted)
         return;
 
-
     gameStarted = true;
-
     gameFinished = false;
-
     resultRecorded = false;
 
     gameStartTime =
@@ -1775,56 +1647,36 @@ function beginGame(){
     lastFrameTime =
         performance.now();
 
-
     player.x =
         ROAD_WIDTH / 2 -
         PLAYER_WIDTH / 2;
 
     player.y =
-        570 -
+        PLAYER_GROUND_Y -
         PLAYER_HEIGHT;
 
     player.vx = 0;
-
     player.vy = 0;
 
     player.grounded = true;
-
     player.jumping = false;
 
     player.alive = true;
 
     player.lives = 3;
-
     player.score = 0;
-
     player.distance = 0;
 
     player.invulnerable = 1.5;
 
-
-    /*
-     * Shared room seed.
-     *
-     * Used only for deterministic background
-     * visuals and lava wave variation.
-     */
     roomSeed =
         Number(
             roomData?.seed ||
             1
         );
 
-
-    /*
-     * LAVA ONLY.
-     *
-     * No rocks.
-     * No meteors.
-     * No obstacle generation.
-     */
+    // Generate only lava.
     generateLavaEvents();
-
 
     if(lobby)
         lobby.style.display =
@@ -1834,21 +1686,17 @@ function beginGame(){
         gameArea.style.display =
             "block";
 
-
     if(waitingOverlay)
         waitingOverlay.style.display =
             "none";
-
 
     if(gameMessage)
         gameMessage.style.display =
             "none";
 
-
     updateHUD();
 
     sendPlayerState(true);
-
 
     if(animationFrame){
 
@@ -1857,7 +1705,6 @@ function beginGame(){
         );
 
     }
-
 
     animationFrame =
         requestAnimationFrame(
@@ -1868,197 +1715,69 @@ function beginGame(){
 
 
 // ============================================================
-// SEEDED RANDOM
-// ============================================================
-
-function seededRandom(seed){
-
-    let value =
-        seed >>> 0;
-
-
-    return function(){
-
-        value +=
-            0x6D2B79F5;
-
-        let t = value;
-
-        t =
-            Math.imul(
-                t ^
-                t >>> 15,
-                t | 1
-            );
-
-        t ^=
-            t +
-            Math.imul(
-                t ^
-                t >>> 7,
-                t | 61
-            );
-
-        return (
-            (
-                (t ^
-                t >>> 14)
-                >>> 0
-            ) /
-            4294967296
-        );
-
-    };
-
-}
-
-
-// ============================================================
 // LAVA DIFFICULTY
-// ============================================================
-//
-// The difficulty is determined ONLY by shared
-// gameElapsed.
-//
-// Therefore every player in the same room
-// gets exactly the same progression.
-//
-// 0–30 sec   = 1.00x / ~3.0 sec
-// 30–60 sec  = 1.25x / ~2.5 sec
-// 60–90 sec  = 1.50x / ~2.1 sec
-// 90–120 sec = 1.80x / ~1.7 sec
-// 120+ sec   = 2.10x+ / ~1.4 sec
 // ============================================================
 
 function getLavaDifficulty(time){
 
-    const t =
-        Math.max(
-            0,
-            Number(time) || 0
-        );
-
-
-    if(t < 30){
+    if(time < 30){
 
         return {
-
             speedMultiplier: 1.0,
-
-            spawnGap: 3.0
-
+            spawnGap: 3.2
         };
 
     }
 
-
-    if(t < 60){
+    if(time < 60){
 
         return {
-
-            speedMultiplier: 1.25,
-
-            spawnGap: 2.5
-
+            speedMultiplier: 1.15,
+            spawnGap: 2.8
         };
 
     }
 
-
-    if(t < 90){
+    if(time < 90){
 
         return {
+            speedMultiplier: 1.3,
+            spawnGap: 2.4
+        };
 
+    }
+
+    if(time < 120){
+
+        return {
             speedMultiplier: 1.5,
-
-            spawnGap: 2.1
-
+            spawnGap: 2.0
         };
 
     }
-
-
-    if(t < 120){
-
-        return {
-
-            speedMultiplier: 1.8,
-
-            spawnGap: 1.7
-
-        };
-
-    }
-
-
-    /*
-     * 120+ seconds.
-     *
-     * Speed continues increasing slightly
-     * after the 120 second milestone.
-     *
-     * At 120 sec = 2.10x
-     * At 150 sec = 2.17x
-     * At 180 sec = 2.24x
-     *
-     * Spawn gap stays around 1.4 sec.
-     */
-
-    const extraTime =
-        Math.max(
-            0,
-            t - 120
-        );
-
-
-    const extraMultiplier =
-        Math.min(
-            0.24,
-            extraTime * 0.002
-        );
-
 
     return {
-
-        speedMultiplier:
-            2.1 +
-            extraMultiplier,
-
-        spawnGap:
-            1.4
-
+        speedMultiplier: 1.7,
+        spawnGap: 1.7
     };
 
 }
 
 
 // ============================================================
-// LAVA MOVEMENT SPEED
-// ============================================================
-//
-// Base speed is deliberately chosen so the lava
-// crosses the entire road in a little under
-// three seconds at 1.0x.
-//
-// Increasing the difficulty multiplier
-// makes the same lava wave move faster.
+// LAVA SPEED
 // ============================================================
 
 function getLavaSpeed(time){
 
     const difficulty =
-        getLavaDifficulty(
-            time
-        );
-
+        getLavaDifficulty(time);
 
     const baseSpeed =
         (
             LAVA_END_Y -
             LAVA_START_Y
-        ) /
-        2.8;
-
+        ) / 3.0;
 
     return (
         baseSpeed *
@@ -2069,49 +1788,22 @@ function getLavaSpeed(time){
 
 
 // ============================================================
-// LAVA SPAWN GAP
-// ============================================================
-
-function getLavaSpawnGap(time){
-
-    return getLavaDifficulty(
-        time
-    ).spawnGap;
-
-}
-
-
-// ============================================================
-// GENERATE LAVA EVENTS
+// GENERATE LAVA
 // ============================================================
 //
-// Lava waves are pre-generated from the same
-// room seed and the same timeline.
+// Very simple:
 //
-// Most importantly:
-//
-// The spawn schedule is based on GAME TIME,
-// not on an individual player's survival time.
-//
-// Every player therefore sees the same lava
-// progression in the room.
+// Every few seconds a lava wave appears.
+// The timing is shared by everyone in the room.
 // ============================================================
 
 function generateLavaEvents(){
 
     lavaEvents = [];
 
+    let time = 4.0;
 
-    const random =
-        seededRandom(
-            roomSeed + 5000
-        );
-
-
-    let time = 3.0;
-
-    let eventIndex = 0;
-
+    let index = 0;
 
     while(
         time <
@@ -2119,57 +1811,23 @@ function generateLavaEvents(){
     ){
 
         const difficulty =
-            getLavaDifficulty(
-                time
-            );
-
-
-        /*
-         * Tiny deterministic variation keeps
-         * the waves from feeling perfectly robotic,
-         * while remaining identical for every
-         * player because the same room seed
-         * is used.
-         *
-         * The variation is kept small so the
-         * requested spawn gaps remain intact.
-         */
-
-        const variation =
-            (
-                random() -
-                0.5
-            ) * 0.12;
-
-
-        const gap =
-            Math.max(
-                1.25,
-                difficulty.spawnGap +
-                variation
-            );
-
+            getLavaDifficulty(time);
 
         const speed =
-            getLavaSpeed(
-                time
-            );
-
+            getLavaSpeed(time);
 
         const distance =
             LAVA_END_Y -
             LAVA_START_Y;
 
-
         const duration =
             distance /
             speed;
 
-
         lavaEvents.push({
 
             id:
-                `lava-${eventIndex}`,
+                `lava-${index}`,
 
             time,
 
@@ -2197,10 +1855,10 @@ function generateLavaEvents(){
 
         });
 
+        index++;
 
-        eventIndex++;
-
-        time += gap;
+        time +=
+            difficulty.spawnGap;
 
     }
 
@@ -2214,7 +1872,6 @@ function generateLavaEvents(){
 function getRoadBoundsAtY(y){
 
     const topY = 300;
-
     const bottomY = 700;
 
     const progress =
@@ -2233,7 +1890,6 @@ function getRoadBoundsAtY(y){
             )
         );
 
-
     const left =
         125 +
         (
@@ -2241,7 +1897,6 @@ function getRoadBoundsAtY(y){
             125
         ) *
         progress;
-
 
     const right =
         265 +
@@ -2251,11 +1906,9 @@ function getRoadBoundsAtY(y){
         ) *
         progress;
 
-
     return {
 
         left,
-
         right,
 
         width:
@@ -2268,7 +1921,7 @@ function getRoadBoundsAtY(y){
 
 
 // ============================================================
-// GET MOVING LAVA POSITION
+// LAVA POSITION
 // ============================================================
 
 function getLavaPosition(event){
@@ -2276,7 +1929,6 @@ function getLavaPosition(event){
     const elapsed =
         gameElapsed -
         event.time;
-
 
     const progress =
         Math.max(
@@ -2288,14 +1940,6 @@ function getLavaPosition(event){
             )
         );
 
-
-    /*
-     * 300 = front/far end
-     * 528 = player area
-     * 570 = player ground
-     * 705 = behind player
-     */
-
     const y =
         event.startY +
         (
@@ -2304,12 +1948,10 @@ function getLavaPosition(event){
         ) *
         progress;
 
-
     const road =
         getRoadBoundsAtY(
             y
         );
-
 
     return {
 
@@ -2342,7 +1984,6 @@ function gameLoop(now){
             gameLoop
         );
 
-
     const delta =
         Math.min(
             (
@@ -2352,10 +1993,8 @@ function gameLoop(now){
             .035
         );
 
-
     lastFrameTime =
         now;
-
 
     if(
         !gameStarted ||
@@ -2368,14 +2007,6 @@ function gameLoop(now){
 
     }
 
-
-    /*
-     * IMPORTANT:
-     *
-     * All difficulty calculations use
-     * this shared room start time.
-     */
-
     gameElapsed =
         Math.max(
             0,
@@ -2384,7 +2015,6 @@ function gameLoop(now){
                 gameStartTime
             ) / 1000
         );
-
 
     if(
         gameElapsed >=
@@ -2396,7 +2026,6 @@ function gameLoop(now){
         return;
 
     }
-
 
     updatePlayer(delta);
 
@@ -2426,7 +2055,6 @@ function updatePlayer(delta){
     if(!player.alive)
         return;
 
-
     player.invulnerable =
         Math.max(
             0,
@@ -2434,27 +2062,21 @@ function updatePlayer(delta){
             delta
         );
 
-
     let direction = 0;
-
 
     if(keys.left)
         direction--;
 
-
     if(keys.right)
         direction++;
-
 
     player.vx =
         direction *
         PLAYER_SPEED;
 
-
     player.x +=
         player.vx *
         delta;
-
 
     player.x =
         Math.max(
@@ -2467,35 +2089,27 @@ function updatePlayer(delta){
             )
         );
 
-
     player.vy +=
         GRAVITY *
         delta;
-
 
     player.y +=
         player.vy *
         delta;
 
-
-    const groundY =
-        570;
-
-
     if(
         player.y +
         player.height >=
-        groundY
+        PLAYER_GROUND_Y
     ){
 
         player.y =
-            groundY -
+            PLAYER_GROUND_Y -
             player.height;
 
         player.vy = 0;
 
         player.grounded = true;
-
         player.jumping = false;
 
     }else{
@@ -2504,10 +2118,7 @@ function updatePlayer(delta){
 
     }
 
-
-    /*
-     * ONLY LAVA COLLISION.
-     */
+    // ONLY LAVA.
     checkLava();
 
 }
@@ -2525,7 +2136,6 @@ function jump(){
         !gameStarted
     )
         return;
-
 
     if(player.grounded){
 
@@ -2557,7 +2167,6 @@ function holdButton(
     if(!button)
         return;
 
-
     button.addEventListener(
         "pointerdown",
         event => {
@@ -2568,7 +2177,6 @@ function holdButton(
 
         }
     );
-
 
     button.addEventListener(
         "pointerup",
@@ -2581,7 +2189,6 @@ function holdButton(
         }
     );
 
-
     button.addEventListener(
         "pointercancel",
         () => {
@@ -2590,7 +2197,6 @@ function holdButton(
 
         }
     );
-
 
     button.addEventListener(
         "pointerleave",
@@ -2648,7 +2254,6 @@ window.addEventListener(
 
         }
 
-
         if(
             event.key === "ArrowRight" ||
             event.key.toLowerCase() === "d"
@@ -2657,7 +2262,6 @@ window.addEventListener(
             keys.right = true;
 
         }
-
 
         if(
             event.key === " " ||
@@ -2688,7 +2292,6 @@ window.addEventListener(
 
         }
 
-
         if(
             event.key === "ArrowRight" ||
             event.key.toLowerCase() === "d"
@@ -2703,22 +2306,36 @@ window.addEventListener(
 
 
 // ============================================================
-// FULL ROAD LAVA COLLISION
+// SIMPLE LAVA COLLISION
 // ============================================================
 //
-// Lava is the ONLY obstacle.
+// THIS IS THE IMPORTANT PART.
 //
-// The player can avoid it by jumping above
-// the lava's top edge.
+// If the player's FEET are above the
+// top of the lava, the player is safe.
 //
-// Once the lava travels beyond the player's
-// ground position it cannot hit anymore.
+// Therefore jumping over the lava works.
 // ============================================================
 
 function checkLava(){
 
-    if(player.invulnerable > 0)
+    if(
+        !player.alive ||
+        player.invulnerable > 0
+    )
         return;
+
+    const playerLeft =
+        player.x + 3;
+
+    const playerRight =
+        player.x +
+        player.width -
+        3;
+
+    const playerBottom =
+        player.y +
+        player.height;
 
 
     for(
@@ -2726,23 +2343,15 @@ function checkLava(){
         of lavaEvents
     ){
 
-        const elapsed =
+        const age =
             gameElapsed -
             event.time;
 
-
-        /*
-         * Not active yet.
-         */
-        if(elapsed < 0)
+        if(age < 0)
             continue;
 
-
-        /*
-         * Already behind the player.
-         */
         if(
-            elapsed >
+            age >
             event.duration
         )
             continue;
@@ -2754,48 +2363,52 @@ function checkLava(){
             );
 
 
-        const lavaBottom =
-            lava.y;
-
-
         const lavaTop =
             lava.y -
             event.height;
 
 
-        const playerBottom =
-            player.y +
-            player.height;
+        /*
+         * The lava only hurts the player
+         * while it is near the player's feet.
+         */
+        const lavaNearPlayer =
+            lava.y >
+            470 &&
+            lava.y <
+            610;
+
+
+        if(!lavaNearPlayer)
+            continue;
 
 
         const horizontalHit =
-            player.x <
-                lava.right &&
-            player.x +
-                player.width >
-                lava.left;
-
-
-        const verticalHit =
-            playerBottom >
-                lavaTop &&
-            player.y <
-                lavaBottom;
+            playerRight >
+                lava.left &&
+            playerLeft <
+                lava.right;
 
 
         /*
-         * Jumping works naturally because
-         * the player's bottom will be above
-         * the lava's top.
+         * MAIN JUMP CHECK.
+         *
+         * If player's feet are above
+         * the top of the lava,
+         * the jump succeeds.
          */
+        const standingInLava =
+            playerBottom >
+            lavaTop + 3;
+
 
         if(
             horizontalHit &&
-            verticalHit
+            standingInLava
         ){
 
             hitPlayer(
-                "You fell into the lava!"
+                "You hit the lava!"
             );
 
             return;
@@ -2803,31 +2416,6 @@ function checkLava(){
         }
 
     }
-
-}
-
-
-// ============================================================
-// RECTANGLE COLLISION
-// ============================================================
-
-function rectanglesOverlap(
-    ax,
-    ay,
-    aw,
-    ah,
-    bx,
-    by,
-    bw,
-    bh
-){
-
-    return (
-        ax < bx + bw &&
-        ax + aw > bx &&
-        ay < by + bh &&
-        ay + ah > by
-    );
 
 }
 
@@ -2844,16 +2432,13 @@ async function hitPlayer(reason){
     )
         return;
 
-
     player.lastHit =
         Date.now();
-
 
     player.lives--;
 
     player.invulnerable =
         1.7;
-
 
     createExplosionParticles(
         player.x +
@@ -2863,7 +2448,6 @@ async function hitPlayer(reason){
         player.height / 2
     );
 
-
     if(player.lives <= 0){
 
         eliminatePlayer(reason);
@@ -2872,17 +2456,19 @@ async function hitPlayer(reason){
 
     }
 
-
     player.x =
         ROAD_WIDTH / 2 -
         PLAYER_WIDTH / 2;
 
     player.y =
-        520;
+        PLAYER_GROUND_Y -
+        PLAYER_HEIGHT;
 
-    player.vy =
-        JUMP_FORCE * .65;
+    player.vy = 0;
 
+    player.grounded = true;
+
+    player.jumping = false;
 
     showGameMessage(
         "🔥",
@@ -2894,7 +2480,6 @@ async function hitPlayer(reason){
         } remaining.`,
         1000
     );
-
 
     await sendPlayerState(true);
 
@@ -2910,21 +2495,16 @@ async function eliminatePlayer(reason){
     if(!player.alive)
         return;
 
-
     player.alive = false;
-
     player.ready = false;
 
     player.eliminationReason =
         reason;
 
     player.vx = 0;
-
     player.vy = 0;
 
-
     await sendPlayerState(true);
-
 
     showGameMessage(
         "💀",
@@ -2932,7 +2512,6 @@ async function eliminatePlayer(reason){
         reason,
         0
     );
-
 
     checkLastPlayerStanding();
 
@@ -2951,10 +2530,8 @@ function checkLastPlayerStanding(){
     )
         return;
 
-
     const allPlayers =
         [...players.values()];
-
 
     if(
         allPlayers.length <
@@ -2962,13 +2539,11 @@ function checkLastPlayerStanding(){
     )
         return;
 
-
     const alivePlayers =
         allPlayers.filter(
             p =>
                 p.alive === true
         );
-
 
     if(
         alivePlayers.length === 1
@@ -2976,7 +2551,6 @@ function checkLastPlayerStanding(){
 
         const winner =
             alivePlayers[0];
-
 
         if(
             winner.uid ===
@@ -2996,7 +2570,6 @@ function checkLastPlayerStanding(){
         }
 
     }
-
 
     if(
         alivePlayers.length === 0
@@ -3024,7 +2597,6 @@ function updateWorld(delta){
         ) *
         delta;
 
-
     if(roadScroll > 80)
         roadScroll = 0;
 
@@ -3040,7 +2612,6 @@ function updateScore(delta){
     if(!player.alive)
         return;
 
-
     player.distance +=
         delta *
         (
@@ -3048,12 +2619,10 @@ function updateScore(delta){
             gameElapsed * .035
         );
 
-
     player.score =
         Math.floor(
             player.distance
         );
-
 
     if(
         player.score >
@@ -3083,7 +2652,6 @@ function updateHUD(){
 
     }
 
-
     const aliveCount =
         [...players.values()]
             .filter(
@@ -3091,11 +2659,9 @@ function updateHUD(){
                     p.alive
             ).length;
 
-
     if(aliveValue)
         aliveValue.textContent =
             aliveCount;
-
 
     const remaining =
         Math.max(
@@ -3104,18 +2670,15 @@ function updateHUD(){
             gameElapsed
         );
 
-
     const minutes =
         Math.floor(
             remaining / 60
         );
 
-
     const seconds =
         Math.floor(
             remaining % 60
         );
-
 
     if(timeValue){
 
@@ -3123,7 +2686,6 @@ function updateHUD(){
             `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
 
     }
-
 
     if(livesValue){
 
@@ -3154,10 +2716,8 @@ async function updateGameStateNetwork(){
     )
         return;
 
-
     const now =
         performance.now();
-
 
     if(
         now -
@@ -3166,10 +2726,8 @@ async function updateGameStateNetwork(){
     )
         return;
 
-
     lastStateSend =
         now;
-
 
     try{
 
@@ -3235,7 +2793,6 @@ async function sendPlayerState(
     )
         return;
 
-
     if(
         !force &&
         performance.now() -
@@ -3244,10 +2801,8 @@ async function sendPlayerState(
     )
         return;
 
-
     lastStateSend =
         performance.now();
-
 
     try{
 
@@ -3312,7 +2867,6 @@ function renderPlayersList(){
     if(!playersList)
         return;
 
-
     if(players.size === 0){
 
         playersList.innerHTML = `
@@ -3333,7 +2887,6 @@ function renderPlayersList(){
 
     }
 
-
     playersList.innerHTML =
         [...players.values()]
             .map(
@@ -3343,12 +2896,10 @@ function renderPlayersList(){
                         p.uid ===
                         currentUser?.uid;
 
-
                     const fullName =
                         p.fullName ||
                         p.displayName ||
                         "Player";
-
 
                     return `
                         <div class="playerRow">
@@ -3419,7 +2970,6 @@ function renderLeaderboard(){
     if(!leaderboardRows)
         return;
 
-
     const sorted =
         [...players.values()]
             .sort(
@@ -3436,7 +2986,6 @@ function renderLeaderboard(){
 
                     }
 
-
                     return (
                         Number(
                             b.score || 0
@@ -3449,7 +2998,6 @@ function renderLeaderboard(){
                 }
             );
 
-
     if(sorted.length === 0){
 
         leaderboardRows.textContent =
@@ -3458,7 +3006,6 @@ function renderLeaderboard(){
         return;
 
     }
-
 
     leaderboardRows.innerHTML =
         sorted
@@ -3469,12 +3016,10 @@ function renderLeaderboard(){
                         p.uid ===
                         currentUser?.uid;
 
-
                     const fullName =
                         p.fullName ||
                         p.displayName ||
                         "Player";
-
 
                     return `
                         <div class="leaderRow">
@@ -3527,7 +3072,6 @@ function renderLeaderboard(){
 
 let gameMessageTimer = null;
 
-
 function showGameMessage(
     icon,
     title,
@@ -3547,11 +3091,9 @@ function showGameMessage(
         messageText.textContent =
             text;
 
-
     if(gameMessage)
         gameMessage.style.display =
             "block";
-
 
     if(gameMessageTimer){
 
@@ -3560,7 +3102,6 @@ function showGameMessage(
         );
 
     }
-
 
     if(duration > 0){
 
@@ -3597,9 +3138,7 @@ async function finishGame(reason){
     if(gameFinished)
         return;
 
-
     gameFinished = true;
-
 
     if(animationFrame){
 
@@ -3611,7 +3150,6 @@ async function finishGame(reason){
 
     }
 
-
     if(countdownTimer){
 
         clearInterval(
@@ -3622,13 +3160,10 @@ async function finishGame(reason){
 
     }
 
-
     await sendPlayerState(true);
-
 
     const allPlayers =
         [...players.values()];
-
 
     const ranked =
         allPlayers.sort(
@@ -3645,7 +3180,6 @@ async function finishGame(reason){
 
                 }
 
-
                 return (
                     Number(
                         b.score || 0
@@ -3658,11 +3192,9 @@ async function finishGame(reason){
             }
         );
 
-
     let winner =
         ranked[0] ||
         null;
-
 
     if(
         reason ===
@@ -3679,7 +3211,6 @@ async function finishGame(reason){
 
     }
 
-
     if(
         reason ===
         "another-player-won"
@@ -3694,18 +3225,15 @@ async function finishGame(reason){
 
     }
 
-
     showWinnerScreen(
         winner,
         ranked
     );
 
-
     await recordLocalResult(
         winner,
         ranked
     );
-
 
     if(
         isHost &&
@@ -3758,29 +3286,23 @@ async function recordLocalResult(
     if(resultRecorded)
         return;
 
-
     resultRecorded = true;
-
 
     const myUid =
         currentUser?.uid;
 
-
     if(!myUid)
         return;
-
 
     const didWin =
         winner &&
         winner.uid ===
         myUid;
 
-
     const result =
         didWin
             ? "win"
             : "loss";
-
 
     const reward =
         didWin
@@ -3792,7 +3314,6 @@ async function recordLocalResult(
                     10
                 )
             );
-
 
     try{
 
@@ -3829,12 +3350,10 @@ function showWinnerScreen(
     if(!winnerOverlay)
         return;
 
-
     const meWon =
         winner &&
         winner.uid ===
         currentUser?.uid;
-
 
     if(winnerTitle){
 
@@ -3844,7 +3363,6 @@ function showWinnerScreen(
                 : "👑 LAST PLAYER STANDING!";
 
     }
-
 
     if(winnerName){
 
@@ -3862,7 +3380,6 @@ function showWinnerScreen(
 
     }
 
-
     if(winnerScore){
 
         winnerScore.textContent =
@@ -3876,7 +3393,6 @@ function showWinnerScreen(
 
     }
 
-
     if(resultLeaderboard){
 
         resultLeaderboard.innerHTML =
@@ -3888,12 +3404,10 @@ function showWinnerScreen(
                             p.uid ===
                             currentUser?.uid;
 
-
                         const fullName =
                             p.fullName ||
                             p.displayName ||
                             "Player";
-
 
                         return `
                             <div class="resultRow">
@@ -3939,7 +3453,6 @@ function showWinnerScreen(
 
     }
 
-
     winnerOverlay.style.display =
         "flex";
 
@@ -3955,7 +3468,6 @@ function createChat(){
     if(!roomId)
         return;
 
-
     if(chatPanel){
 
         chatPanel.remove();
@@ -3964,42 +3476,29 @@ function createChat(){
 
     }
 
-
     chatToggleButton =
         document.createElement(
             "button"
         );
 
-
     chatToggleButton.id =
         "volcanoChatToggle";
 
-
     chatToggleButton.innerHTML =
         "💬";
-
 
     Object.assign(
         chatToggleButton.style,
         {
 
-            position:
-                "fixed",
+            position: "fixed",
+            right: "18px",
+            bottom: "105px",
 
-            right:
-                "18px",
+            width: "52px",
+            height: "52px",
 
-            bottom:
-                "105px",
-
-            width:
-                "52px",
-
-            height:
-                "52px",
-
-            borderRadius:
-                "50%",
+            borderRadius: "50%",
 
             border:
                 "1px solid rgba(84,216,255,.6)",
@@ -4007,64 +3506,49 @@ function createChat(){
             background:
                 "linear-gradient(135deg,#101d4a,#26104f)",
 
-            color:
-                "#fff",
+            color: "#fff",
 
-            fontSize:
-                "22px",
+            fontSize: "22px",
 
-            zIndex:
-                "9998",
+            zIndex: "9998",
 
             boxShadow:
                 "0 8px 30px rgba(0,0,0,.45)",
 
-            cursor:
-                "pointer"
+            cursor: "pointer"
 
         }
     );
 
-
     document.body.appendChild(
         chatToggleButton
     );
-
 
     chatPanel =
         document.createElement(
             "div"
         );
 
-
     chatPanel.id =
         "volcanoChatPanel";
-
 
     Object.assign(
         chatPanel.style,
         {
 
-            position:
-                "fixed",
+            position: "fixed",
 
-            right:
-                "15px",
-
-            bottom:
-                "165px",
+            right: "15px",
+            bottom: "165px",
 
             width:
                 "min(340px,calc(100vw - 30px))",
 
-            height:
-                "390px",
+            height: "390px",
 
-            display:
-                "none",
+            display: "none",
 
-            flexDirection:
-                "column",
+            flexDirection: "column",
 
             background:
                 "rgba(5,9,20,.96)",
@@ -4072,14 +3556,11 @@ function createChat(){
             border:
                 "1px solid rgba(84,216,255,.45)",
 
-            borderRadius:
-                "18px",
+            borderRadius: "18px",
 
-            overflow:
-                "hidden",
+            overflow: "hidden",
 
-            zIndex:
-                "9997",
+            zIndex: "9997",
 
             boxShadow:
                 "0 20px 60px rgba(0,0,0,.6)",
@@ -4090,41 +3571,33 @@ function createChat(){
         }
     );
 
-
     const header =
         document.createElement(
             "div"
         );
 
-
     Object.assign(
         header.style,
         {
 
-            padding:
-                "13px 15px",
+            padding: "13px 15px",
 
-            display:
-                "flex",
+            display: "flex",
 
             justifyContent:
                 "space-between",
 
-            alignItems:
-                "center",
+            alignItems: "center",
 
-            color:
-                "#fff",
+            color: "#fff",
 
-            fontWeight:
-                "800",
+            fontWeight: "800",
 
             background:
                 "linear-gradient(135deg,#111d48,#251044)"
 
         }
     );
-
 
     header.innerHTML =
         `
@@ -4144,67 +3617,52 @@ function createChat(){
             </button>
         `;
 
-
     chatPanel.appendChild(
         header
     );
-
 
     chatMessages =
         document.createElement(
             "div"
         );
 
-
     Object.assign(
         chatMessages.style,
         {
 
-            flex:
-                "1",
+            flex: "1",
 
-            overflowY:
-                "auto",
+            overflowY: "auto",
 
-            padding:
-                "12px",
+            padding: "12px",
 
-            display:
-                "flex",
+            display: "flex",
 
-            flexDirection:
-                "column",
+            flexDirection: "column",
 
-            gap:
-                "8px"
+            gap: "8px"
 
         }
     );
 
-
     chatPanel.appendChild(
         chatMessages
     );
-
 
     const composer =
         document.createElement(
             "div"
         );
 
-
     Object.assign(
         composer.style,
         {
 
-            display:
-                "flex",
+            display: "flex",
 
-            gap:
-                "7px",
+            gap: "7px",
 
-            padding:
-                "10px",
+            padding: "10px",
 
             borderTop:
                 "1px solid rgba(255,255,255,.08)"
@@ -4212,91 +3670,69 @@ function createChat(){
         }
     );
 
-
     chatInput =
         document.createElement(
             "input"
         );
 
-
     chatInput.placeholder =
         "Type a message...";
 
-
     chatInput.maxLength =
         120;
-
 
     Object.assign(
         chatInput.style,
         {
 
-            flex:
-                "1",
+            flex: "1",
 
-            minWidth:
-                "0",
+            minWidth: "0",
 
-            padding:
-                "11px",
+            padding: "11px",
 
-            borderRadius:
-                "12px",
+            borderRadius: "12px",
 
             border:
                 "1px solid rgba(255,255,255,.12)",
 
-            outline:
-                "none",
+            outline: "none",
 
-            background:
-                "#10182d",
+            background: "#10182d",
 
-            color:
-                "#fff"
+            color: "#fff"
 
         }
     );
-
 
     chatSendButton =
         document.createElement(
             "button"
         );
 
-
     chatSendButton.textContent =
         "➤";
-
 
     Object.assign(
         chatSendButton.style,
         {
 
-            width:
-                "45px",
+            width: "45px",
 
-            border:
-                "0",
+            border: "0",
 
-            borderRadius:
-                "12px",
+            borderRadius: "12px",
 
-            background:
-                "#54d8ff",
+            background: "#54d8ff",
 
-            color:
-                "#06101d",
+            color: "#06101d",
 
-            fontWeight:
-                "900",
+            fontWeight: "900",
 
-            cursor:
-                "pointer"
+            cursor: "pointer"
 
         }
     );
-
 
     composer.appendChild(
         chatInput
@@ -4314,7 +3750,6 @@ function createChat(){
         chatPanel
     );
 
-
     chatToggleButton.addEventListener(
         "click",
         () => {
@@ -4323,12 +3758,10 @@ function createChat(){
                 chatPanel.style.display ===
                 "flex";
 
-
             chatPanel.style.display =
                 open
                     ? "none"
                     : "flex";
-
 
             if(!open){
 
@@ -4351,7 +3784,6 @@ function createChat(){
         }
     );
 
-
     document
         .getElementById(
             "volcanoChatClose"
@@ -4366,12 +3798,10 @@ function createChat(){
             }
         );
 
-
     chatSendButton.addEventListener(
         "click",
         sendChatMessage
     );
-
 
     chatInput.addEventListener(
         "keydown",
@@ -4388,7 +3818,6 @@ function createChat(){
         }
     );
 
-
     subscribeToChat();
 
 }
@@ -4403,10 +3832,8 @@ function subscribeToChat(){
     if(chatUnsubscribe)
         chatUnsubscribe();
 
-
     if(!roomId)
         return;
-
 
     const messagesRef =
         collection(
@@ -4416,13 +3843,11 @@ function subscribeToChat(){
             "messages"
         );
 
-
     const messagesQuery =
         query(
             messagesRef,
             limit(100)
         );
-
 
     chatUnsubscribe =
         onSnapshot(
@@ -4458,7 +3883,6 @@ function subscribeToChat(){
                             }
                         );
 
-
                 renderChatMessages(
                     messages
                 );
@@ -4490,19 +3914,15 @@ async function sendChatMessage(){
     )
         return;
 
-
     const text =
         chatInput.value
             .trim()
             .slice(0,120);
 
-
     if(!text)
         return;
 
-
     chatInput.value = "";
-
 
     try{
 
@@ -4555,17 +3975,14 @@ function renderChatMessages(
     if(!chatMessages)
         return;
 
-
     const wasAtBottom =
         chatMessages.scrollHeight -
         chatMessages.scrollTop -
         chatMessages.clientHeight <
         60;
 
-
     chatMessages.innerHTML =
         "";
-
 
     messages.forEach(
         message => {
@@ -4574,12 +3991,10 @@ function renderChatMessages(
                 message.uid ===
                 currentUser?.uid;
 
-
             const row =
                 document.createElement(
                     "div"
                 );
-
 
             Object.assign(
                 row.style,
@@ -4615,12 +4030,10 @@ function renderChatMessages(
                 }
             );
 
-
             const fullName =
                 message.fullName ||
                 message.displayName ||
                 "Player";
-
 
             row.innerHTML =
                 `
@@ -4650,7 +4063,6 @@ function renderChatMessages(
                     </div>
                 `;
 
-
             chatMessages.appendChild(
                 row
             );
@@ -4658,11 +4070,9 @@ function renderChatMessages(
         }
     );
 
-
     const panelOpen =
         chatPanel?.style.display ===
         "flex";
-
 
     if(!panelOpen){
 
@@ -4694,10 +4104,8 @@ function updateChatButton(){
     if(!chatToggleButton)
         return;
 
-
     chatToggleButton.style.position =
         "fixed";
-
 
     chatToggleButton.innerHTML =
         chatUnread > 0
@@ -4770,9 +4178,7 @@ if(leaveButton){
 async function leaveRoom(){
 
     gameFinished = true;
-
     gameStarted = false;
-
 
     if(animationFrame){
 
@@ -4784,7 +4190,6 @@ async function leaveRoom(){
 
     }
 
-
     if(countdownTimer){
 
         clearInterval(
@@ -4795,7 +4200,6 @@ async function leaveRoom(){
 
     }
 
-
     if(playersUnsubscribe){
 
         playersUnsubscribe();
@@ -4804,7 +4208,6 @@ async function leaveRoom(){
             null;
 
     }
-
 
     if(roomUnsubscribe){
 
@@ -4815,7 +4218,6 @@ async function leaveRoom(){
 
     }
 
-
     if(chatUnsubscribe){
 
         chatUnsubscribe();
@@ -4825,7 +4227,6 @@ async function leaveRoom(){
 
     }
 
-
     if(chatPanel){
 
         chatPanel.remove();
@@ -4834,7 +4235,6 @@ async function leaveRoom(){
 
     }
 
-
     if(chatToggleButton){
 
         chatToggleButton.remove();
@@ -4842,7 +4242,6 @@ async function leaveRoom(){
         chatToggleButton = null;
 
     }
-
 
     if(currentPlayerRef){
 
@@ -4862,7 +4261,6 @@ async function leaveRoom(){
         }
 
     }
-
 
     if(
         isHost &&
@@ -4899,7 +4297,6 @@ async function leaveRoom(){
 
     }
 
-
     leaveRoomLocal();
 
 }
@@ -4912,7 +4309,6 @@ async function leaveRoom(){
 function leaveRoomLocal(){
 
     roomId = null;
-
     roomData = null;
 
     currentPlayerRef = null;
@@ -4922,18 +4318,13 @@ function leaveRoomLocal(){
     players.clear();
 
     lavaEvents = [];
-
     particles = [];
 
-
     player.ready = false;
-
     player.alive = true;
 
     player.lives = 3;
-
     player.score = 0;
-
     player.distance = 0;
 
     player.fullName =
@@ -4941,41 +4332,33 @@ function leaveRoomLocal(){
             currentUser
         );
 
-
     winnerOverlay?.style &&
         (winnerOverlay.style.display =
             "none");
-
 
     if(gameMessage)
         gameMessage.style.display =
             "none";
 
-
     if(gameArea)
         gameArea.style.display =
             "none";
-
 
     if(lobby)
         lobby.style.display =
             "block";
 
-
     if(roomCodeEl)
         roomCodeEl.textContent =
             "------";
-
 
     if(gameRoomCodeEl)
         gameRoomCodeEl.textContent =
             "------";
 
-
     if(playerCountEl)
         playerCountEl.textContent =
             "Players: 0/4";
-
 
     if(readyButton){
 
@@ -4988,11 +4371,9 @@ function leaveRoomLocal(){
 
     }
 
-
     setLobbyStatus(
         "Create or join a room to begin."
     );
-
 
     renderPlayersList();
 
@@ -5008,7 +4389,6 @@ function drawScene(){
     if(!ctx)
         return;
 
-
     ctx.clearRect(
         0,
         0,
@@ -5016,30 +4396,18 @@ function drawScene(){
         ROAD_HEIGHT
     );
 
-
     drawSky();
-
     drawMountains();
-
     drawLavaBackground();
-
     drawRoad();
 
-    /*
-     * LAVA ONLY.
-     *
-     * There is deliberately no
-     * drawObstacles() call.
-     */
-
+    // ONLY LAVA.
     drawLavaEvents();
 
     drawOtherPlayers();
-
     drawLocalPlayer();
 
     drawParticles();
-
     drawSpeedLines();
 
 }
@@ -5059,7 +4427,6 @@ function drawSky(){
             ROAD_HEIGHT
         );
 
-
     gradient.addColorStop(
         0,
         "#100022"
@@ -5075,10 +4442,8 @@ function drawSky(){
         "#100006"
     );
 
-
     ctx.fillStyle =
         gradient;
-
 
     ctx.fillRect(
         0,
@@ -5086,7 +4451,6 @@ function drawSky(){
         ROAD_WIDTH,
         ROAD_HEIGHT
     );
-
 
     for(
         let i = 0;
@@ -5101,14 +4465,12 @@ function drawSky(){
             ) %
             ROAD_WIDTH;
 
-
         const y =
             (
                 i * 47 +
                 roomSeed * 7
             ) %
             260;
-
 
         const alpha =
             .25 +
@@ -5119,10 +4481,8 @@ function drawSky(){
                 ) + 1
             ) * .15;
 
-
         ctx.fillStyle =
             `rgba(255,220,170,${alpha})`;
-
 
         ctx.fillRect(
             x,
@@ -5144,7 +4504,6 @@ function drawMountains(){
 
     ctx.fillStyle =
         "#1a0928";
-
 
     ctx.beginPath();
 
@@ -5202,10 +4561,8 @@ function drawMountains(){
 
     ctx.fill();
 
-
     ctx.fillStyle =
         "#220d22";
-
 
     ctx.beginPath();
 
@@ -5238,10 +4595,8 @@ function drawMountains(){
 
     ctx.fill();
 
-
     ctx.fillStyle =
         "rgba(255,70,0,.35)";
-
 
     ctx.beginPath();
 
@@ -5275,7 +4630,6 @@ function drawLavaBackground(){
             570
         );
 
-
     lavaGradient.addColorStop(
         0,
         "#ff4a00"
@@ -5291,10 +4645,8 @@ function drawLavaBackground(){
         "#7c0900"
     );
 
-
     ctx.fillStyle =
         lavaGradient;
-
 
     ctx.beginPath();
 
@@ -5302,7 +4654,6 @@ function drawLavaBackground(){
         0,
         490
     );
-
 
     for(
         let x = 0;
@@ -5317,14 +4668,12 @@ function drawLavaBackground(){
                 gameElapsed * 2
             ) * 8;
 
-
         ctx.lineTo(
             x,
             y
         );
 
     }
-
 
     ctx.lineTo(
         ROAD_WIDTH,
@@ -5352,14 +4701,12 @@ function drawRoad(){
     ctx.fillStyle =
         "#42120c";
 
-
     ctx.fillRect(
         38,
         315,
         314,
         385
     );
-
 
     const roadGradient =
         ctx.createLinearGradient(
@@ -5368,7 +4715,6 @@ function drawRoad(){
             0,
             700
         );
-
 
     roadGradient.addColorStop(
         0,
@@ -5380,10 +4726,8 @@ function drawRoad(){
         "#101016"
     );
 
-
     ctx.fillStyle =
         roadGradient;
-
 
     ctx.beginPath();
 
@@ -5410,7 +4754,6 @@ function drawRoad(){
     ctx.closePath();
 
     ctx.fill();
-
 
     ctx.strokeStyle =
         "#ff7028";
@@ -5441,7 +4784,6 @@ function drawRoad(){
 
     ctx.stroke();
 
-
     ctx.strokeStyle =
         "rgba(255,255,255,.55)";
 
@@ -5452,10 +4794,8 @@ function drawRoad(){
         25
     ]);
 
-
     const offset =
         roadScroll % 53;
-
 
     ctx.beginPath();
 
@@ -5491,10 +4831,6 @@ function drawLavaEvents(){
             gameElapsed -
             event.time;
 
-
-        /*
-         * Not visible yet.
-         */
         if(
             age <
             -event.warning
@@ -5504,10 +4840,6 @@ function drawLavaEvents(){
 
         }
 
-
-        /*
-         * Already behind the player.
-         */
         if(
             age >
             event.duration
@@ -5518,9 +4850,9 @@ function drawLavaEvents(){
         }
 
 
-        /*
-         * WARNING
-         */
+        // -----------------------------
+        // WARNING
+        // -----------------------------
 
         if(age < 0){
 
@@ -5530,18 +4862,15 @@ function drawLavaEvents(){
                     gameElapsed * 10
                 ) * .25;
 
-
             ctx.fillStyle =
                 `rgba(255,190,20,${pulse})`;
-
 
             ctx.fillRect(
                 48,
                 548,
                 294,
-                12
+                8
             );
-
 
             ctx.font =
                 "bold 14px system-ui";
@@ -5552,13 +4881,11 @@ function drawLavaEvents(){
             ctx.fillStyle =
                 "#ffe66b";
 
-
             ctx.fillText(
                 "🔥 LAVA INCOMING — JUMP!",
                 ROAD_WIDTH / 2,
                 535
             );
-
 
             continue;
 
@@ -5570,15 +4897,13 @@ function drawLavaEvents(){
                 event
             );
 
-
         const lavaY =
             lava.y -
             event.height;
 
-
         const behindPlayer =
             lava.y >
-            570;
+            PLAYER_GROUND_Y;
 
 
         const gradient =
@@ -5588,7 +4913,6 @@ function drawLavaEvents(){
                 lava.left,
                 lava.y
             );
-
 
         gradient.addColorStop(
             0,
@@ -5610,16 +4934,12 @@ function drawLavaEvents(){
             "#b70900"
         );
 
-
         ctx.fillStyle =
             gradient;
 
-
         ctx.beginPath();
 
-
         const segments = 18;
-
 
         for(
             let i = 0;
@@ -5631,24 +4951,20 @@ function drawLavaEvents(){
                 i /
                 segments;
 
-
             const x =
                 lava.left +
                 lava.width *
                 t;
 
-
             const wave =
                 Math.sin(
                     t * Math.PI * 8 +
                     gameElapsed * 12
-                ) * 5;
-
+                ) * 3;
 
             const top =
                 lavaY +
                 wave;
-
 
             if(i === 0){
 
@@ -5668,70 +4984,41 @@ function drawLavaEvents(){
 
         }
 
-
         ctx.lineTo(
             lava.right,
             lava.y
         );
-
 
         ctx.lineTo(
             lava.left,
             lava.y
         );
 
-
         ctx.closePath();
 
         ctx.fill();
 
 
-        /*
-         * Fade the lava slightly once
-         * it has moved behind the player.
-         */
-
-        if(behindPlayer){
-
-            ctx.fillStyle =
-                "rgba(255,70,0,.18)";
-
-            ctx.fillRect(
-                lava.left,
-                lava.y -
-                event.height,
-                lava.width,
-                event.height
-            );
-
-        }
-
-
-        /*
-         * Lava glow
-         */
+        // Glow.
 
         ctx.fillStyle =
             behindPlayer
-                ? "rgba(255,90,0,.18)"
-                : "rgba(255,100,0,.3)";
-
+                ? "rgba(255,90,0,.12)"
+                : "rgba(255,100,0,.22)";
 
         ctx.fillRect(
-            lava.left - 8,
-            lavaY - 8,
-            lava.width + 16,
-            8
+            lava.left - 6,
+            lavaY - 5,
+            lava.width + 12,
+            6
         );
 
 
-        /*
-         * Lava bubbles
-         */
+        // Bubbles.
 
         for(
             let i = 0;
-            i < 9;
+            i < 7;
             i++
         ){
 
@@ -5746,33 +5033,26 @@ function drawLavaEvents(){
                     lava.width - 15
                 );
 
-
             const by =
                 lavaY +
-                10 +
+                7 +
                 (
                     Math.sin(
                         gameElapsed * 5 +
                         i
                     ) + 1
                 ) *
-                9;
-
+                6;
 
             ctx.fillStyle =
                 "#ffd52d";
-
 
             ctx.beginPath();
 
             ctx.arc(
                 bx,
                 by,
-                3 +
-                Math.sin(
-                    gameElapsed * 7 +
-                    i
-                ),
+                2.5,
                 0,
                 Math.PI * 2
             );
@@ -5803,12 +5083,10 @@ function drawOtherPlayers(){
         )
             continue;
 
-
         if(
             other.alive === false
         )
             continue;
-
 
         const x =
             Number(
@@ -5816,19 +5094,16 @@ function drawOtherPlayers(){
                 180
             );
 
-
         const y =
             Number(
                 other.y ??
                 528
             );
 
-
         const fullName =
             other.fullName ||
             other.displayName ||
             "Player";
-
 
         drawRunner(
             x,
@@ -5853,7 +5128,6 @@ function drawLocalPlayer(){
     if(!player.alive)
         return;
 
-
     if(
         player.invulnerable > 0 &&
         Math.floor(
@@ -5864,7 +5138,6 @@ function drawLocalPlayer(){
         return;
 
     }
-
 
     drawRunner(
         player.x,
@@ -5895,7 +5168,6 @@ function drawRunner(
     ctx.fillStyle =
         "rgba(0,0,0,.35)";
 
-
     ctx.beginPath();
 
     ctx.ellipse(
@@ -5916,7 +5188,6 @@ function drawRunner(
 
     ctx.fill();
 
-
     ctx.font =
         local
             ? "bold 10px system-ui"
@@ -5925,19 +5196,16 @@ function drawRunner(
     ctx.textAlign =
         "center";
 
-
     const safeName =
         String(
             name ||
             "Player"
         );
 
-
     const textWidth =
         ctx.measureText(
             safeName
         ).width;
-
 
     const plateWidth =
         Math.min(
@@ -5945,10 +5213,8 @@ function drawRunner(
             350
         );
 
-
     ctx.fillStyle =
         "rgba(4,8,20,.90)";
-
 
     ctx.beginPath();
 
@@ -5968,10 +5234,8 @@ function drawRunner(
 
     ctx.fill();
 
-
     ctx.fillStyle =
         "#ffffff";
-
 
     ctx.fillText(
         safeName,
@@ -5980,10 +5244,8 @@ function drawRunner(
         y - 10
     );
 
-
     ctx.fillStyle =
         color;
-
 
     ctx.beginPath();
 
@@ -5997,10 +5259,8 @@ function drawRunner(
 
     ctx.fill();
 
-
     ctx.fillStyle =
         "#f4f6ff";
-
 
     ctx.beginPath();
 
@@ -6014,10 +5274,8 @@ function drawRunner(
 
     ctx.fill();
 
-
     ctx.fillStyle =
         "#14203b";
-
 
     ctx.beginPath();
 
@@ -6031,7 +5289,6 @@ function drawRunner(
 
     ctx.fill();
 
-
     ctx.strokeStyle =
         "#171522";
 
@@ -6040,13 +5297,11 @@ function drawRunner(
     ctx.lineCap =
         "round";
 
-
     const running =
         Math.sin(
             gameElapsed * 12 +
             x
         ) * 5;
-
 
     ctx.beginPath();
 
@@ -6061,7 +5316,6 @@ function drawRunner(
         y + 43
     );
 
-
     ctx.moveTo(
         x + 19,
         y + 36
@@ -6072,7 +5326,6 @@ function drawRunner(
         running,
         y + 43
     );
-
 
     ctx.stroke();
 
@@ -6191,25 +5444,20 @@ function updateParticles(delta){
         const particle =
             particles[i];
 
-
         particle.life -=
             delta;
-
 
         particle.x +=
             particle.vx *
             delta;
 
-
         particle.y +=
             particle.vy *
             delta;
 
-
         particle.vy +=
             200 *
             delta;
-
 
         if(
             particle.life <= 0
@@ -6241,17 +5489,14 @@ function drawParticles(){
                 particle.maxLife
             );
 
-
         ctx.globalAlpha =
             alpha;
-
 
         ctx.fillStyle =
             particle.type ===
             "fire"
                 ? "#ff7625"
                 : "#b7a49a";
-
 
         ctx.beginPath();
 
@@ -6266,7 +5511,6 @@ function drawParticles(){
         ctx.fill();
 
     }
-
 
     ctx.globalAlpha =
         1;
@@ -6286,7 +5530,6 @@ function drawSpeedLines(){
     )
         return;
 
-
     const intensity =
         Math.min(
             .28,
@@ -6294,20 +5537,16 @@ function drawSpeedLines(){
             GAME_DURATION
         );
 
-
     ctx.strokeStyle =
         `rgba(255,255,255,${intensity})`;
 
-
     ctx.lineWidth = 1;
-
 
     for(let i = 0; i < 10; i++){
 
         const x =
             45 +
             i * 47;
-
 
         const y =
             310 +
@@ -6316,7 +5555,6 @@ function drawSpeedLines(){
                 roadScroll
             ) %
             330;
-
 
         ctx.beginPath();
 
@@ -6355,7 +5593,6 @@ if(roomInput){
 
         }
     );
-
 
     roomInput.addEventListener(
         "input",
@@ -6453,14 +5690,11 @@ window.addEventListener(
 
         }
 
-
         if(roomUnsubscribe)
             roomUnsubscribe();
 
-
         if(playersUnsubscribe)
             playersUnsubscribe();
-
 
         if(chatUnsubscribe)
             chatUnsubscribe();
@@ -6474,5 +5708,5 @@ window.addEventListener(
 // ============================================================
 
 console.log(
-    "🌋 VitalStar Volcano Jump loaded — LAVA ONLY."
+    "🌋 VitalStar Volcano Jump loaded — SIMPLE LAVA ONLY."
 );
