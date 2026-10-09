@@ -1,525 +1,1611 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#030313">
-<meta name="description" content="VitalStar — Connect, Share & Shine. Discover friends, share moments and explore communities.">
-
 <title>VitalStar — Connect, Share & Shine</title>
-
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
- --pink:#ff38d5;--blue:#00ddff;--gold:#ffd000;
- --green:#45ff83;--bg:#030313;
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
-html{scroll-behavior:smooth}
+
+html{
+    scroll-behavior:smooth;
+}
+
 body{
- font-family:Arial,Helvetica,sans-serif;color:#fff;
- background:
- radial-gradient(ellipse at 50% -10%,rgba(115,40,255,.3),transparent 45%),
- radial-gradient(circle at 0% 40%,rgba(255,38,207,.11),transparent 32%),
- radial-gradient(circle at 100% 65%,rgba(0,221,255,.1),transparent 30%),
- var(--bg);
- min-height:100vh;overflow-x:hidden;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#fff;
+    background:
+        radial-gradient(circle at 15% 10%,rgba(100,0,255,.18),transparent 28%),
+        radial-gradient(circle at 85% 35%,rgba(0,140,255,.10),transparent 30%),
+        radial-gradient(circle at 50% 75%,rgba(255,0,190,.08),transparent 30%),
+        #030313;
+    min-height:100vh;
+    overflow-x:hidden;
 }
+
+
+/* STARS */
+
 body::before{
- content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
- background-image:
- radial-gradient(circle,#fff 1px,transparent 1.5px),
- radial-gradient(circle,#00eaff 1px,transparent 1.5px),
- radial-gradient(circle,#ff35d5 1px,transparent 1.5px);
- background-size:145px 145px,225px 225px,315px 315px;
- background-position:20px 30px,80px 100px,150px 40px;
- opacity:.36;
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+
+    background-image:
+        radial-gradient(circle,#fff 1px,transparent 1.5px),
+        radial-gradient(circle,#00eaff 1px,transparent 1.5px),
+        radial-gradient(circle,#ff35d5 1px,transparent 1.5px);
+
+    background-size:
+        190px 190px,
+        260px 260px,
+        330px 330px;
+
+    background-position:
+        20px 30px,
+        80px 100px,
+        150px 40px;
+
+    opacity:.3;
+    z-index:0;
 }
-body::after{
- content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
- background:linear-gradient(180deg,transparent 70%,rgba(3,3,19,.65));
+
+
+/* MAIN */
+
+.container{
+    width:88%;
+    max-width:900px;
+    margin:auto;
+    position:relative;
+    z-index:2;
 }
-.container,.footer-inner{width:90%;max-width:1000px;margin:auto;position:relative;z-index:1}
-.pink{color:var(--pink);text-shadow:0 0 15px rgba(255,56,213,.45)}
-.blue{color:var(--blue);text-shadow:0 0 15px rgba(0,221,255,.4)}
-.yellow{color:var(--gold);text-shadow:0 0 15px rgba(255,208,0,.35)}
+
 
 /* HERO */
-.hero{text-align:center;padding:45px 10px 30px}
-.brand-mark{
- width:76px;height:76px;margin:0 auto 19px;
- display:flex;align-items:center;justify-content:center;
- border-radius:25px;border:1px solid rgba(0,221,255,.7);
- background:linear-gradient(145deg,#21104b,#08091e);
- box-shadow:0 0 25px rgba(0,221,255,.15),inset 0 0 20px rgba(255,56,213,.12);
- font-size:33px;font-weight:900;letter-spacing:-3px;
-}
-.brand-mark span{color:var(--gold)}
-.hero h2{font-size:clamp(25px,5vw,40px);line-height:1.3;margin-bottom:13px}
-.hero p{font-size:18px;line-height:1.7;color:#e6e3f5;max-width:680px;margin:auto}
-.hero-label{
- display:inline-flex;align-items:center;gap:8px;
- margin-bottom:18px;padding:8px 14px;border-radius:30px;
- background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13);
- color:#ded9f7;font-size:12px;letter-spacing:1.3px;text-transform:uppercase;
-}
-.hero-label span{color:var(--green)}
 
-/* HERO CTA */
+.hero{
+    text-align:center;
+    padding:45px 10px 30px;
+}
+
+.hero p{
+    font-size:20px;
+    line-height:1.55;
+    font-weight:500;
+}
+
+.pink{
+    color:#ff38d5;
+    text-shadow:0 0 12px rgba(255,56,213,.6);
+}
+
+.blue{
+    color:#00ddff;
+    text-shadow:0 0 12px rgba(0,221,255,.6);
+}
+
+.yellow{
+    color:#ffd000;
+    text-shadow:0 0 12px rgba(255,208,0,.6);
+}
+
+
+/* CTA */
+
 .cta{
- margin:18px 0 55px;padding:38px 25px 32px;
- border-radius:28px;text-align:center;position:relative;overflow:hidden;
- border:1px solid transparent;
- background:linear-gradient(#08051e,#08051e) padding-box,
- linear-gradient(115deg,var(--pink),#813dff,var(--blue),var(--gold)) border-box;
- box-shadow:0 15px 60px rgba(0,0,0,.22),0 0 35px rgba(255,30,210,.10),
- inset 0 0 50px rgba(105,0,255,.10);
-}
-.cta::before,.cta::after{content:"✦";position:absolute;color:var(--gold);font-size:35px;opacity:.75}
-.cta::before{left:7%;top:28px}
-.cta::after{right:7%;bottom:30px}
-.cta h1{font-size:clamp(31px,6vw,48px);line-height:1.2;margin-bottom:14px}
-.cta>p{max-width:620px;margin:auto;font-size:16px;line-height:1.75;color:#e9e6f6}
-.auth-status{
- display:inline-flex;align-items:center;justify-content:center;gap:8px;
- margin-top:18px;padding:9px 16px;border-radius:30px;
- color:var(--green);background:#08051e;font-size:13px;font-weight:bold;
-}
-.auth-status.loading{border:1px solid transparent;background:
- linear-gradient(#08051e,#08051e) padding-box,
- conic-gradient(var(--pink),var(--blue),var(--green),var(--gold),var(--pink)) border-box}
-.auth-status:not(.loading){border:1px solid var(--green)}
-.auth-status.hidden{display:none}
-.auth-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
-.auth-status.loading .auth-dot{animation:pulse 1s infinite}
-@keyframes pulse{50%{opacity:.4;transform:scale(.8)}}
+    width:100%;
+    min-height:285px;
 
-.buttons{display:flex;justify-content:center;align-items:center;gap:13px;flex-wrap:wrap;margin-top:23px}
-.btn{
- display:inline-flex;align-items:center;justify-content:center;
- min-height:46px;padding:13px 26px;border-radius:30px;
- text-decoration:none;font-size:15px;font-weight:bold;
- transition:transform .2s,box-shadow .2s;cursor:pointer;
+    margin:20px 0 45px;
+    padding:32px 25px;
+
+    border-radius:25px;
+    text-align:center;
+
+    position:relative;
+    overflow:hidden;
+
+    border:2px solid transparent;
+
+    background:
+        linear-gradient(#08051e,#08051e) padding-box,
+        linear-gradient(
+            100deg,
+            #ff27c7,
+            #ff32e0,
+            #ffd000
+        ) border-box;
+
+    box-shadow:
+        0 0 25px rgba(255,30,210,.25),
+        0 0 45px rgba(255,180,0,.08),
+        inset 0 0 45px rgba(150,0,255,.09);
 }
-.btn:hover{transform:translateY(-3px)}
-.join{color:#fff;background:linear-gradient(100deg,#ff416c,#ff21b8,#773cff);box-shadow:0 7px 25px rgba(255,30,190,.22)}
-.login{color:#fff;border:1px solid var(--gold);background:rgba(255,208,0,.045)}
-.logout{color:#fff;border:1px solid #ff4d6d;background:rgba(255,40,80,.08)}
+
+.cta::before{
+    content:"✦";
+
+    position:absolute;
+    left:65px;
+    top:65px;
+
+    font-size:48px;
+    color:#ffd000;
+
+    text-shadow:0 0 18px #ffbb00;
+}
+
+.cta::after{
+    content:"✦";
+
+    position:absolute;
+    right:65px;
+    top:70px;
+
+    font-size:45px;
+    color:#ffd000;
+
+    text-shadow:0 0 18px #ffbb00;
+}
+
+.cta h1{
+    font-size:47px;
+    line-height:1.2;
+    margin-bottom:12px;
+}
+
+.cta p{
+    max-width:650px;
+    margin:auto;
+
+    font-size:17px;
+    line-height:1.6;
+    color:#f4f4f7;
+}
+
+
+/* =====================================================
+   AUTH STATUS
+===================================================== */
+
+.auth-status{
+    position:relative;
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    gap:8px;
+
+    margin-top:18px;
+    padding:9px 18px;
+
+    border-radius:25px;
+
+    font-size:14px;
+    font-weight:bold;
+
+    color:#45ff83;
+
+    background:#08051e;
+
+    isolation:isolate;
+    overflow:hidden;
+
+    box-shadow:
+        0 0 18px rgba(0,255,120,.18);
+}
+
+
+/* SPIN ONLY WHILE CHECKING */
+
+.auth-status.loading::before{
+    content:"";
+
+    position:absolute;
+    inset:-3px;
+
+    border-radius:inherit;
+
+    background:
+        conic-gradient(
+            from 0deg,
+            #ff27c7,
+            #00eaff,
+            #40ff68,
+            #ffd000,
+            #ff27c7
+        );
+
+    animation:
+        authSpin 2s linear infinite;
+
+    z-index:-2;
+}
+
+
+/* STATIC BORDER AFTER CHECKING */
+
+.auth-status:not(.loading){
+    border:2px solid #35ff72;
+}
+
+
+/* INNER BACKGROUND */
+
+.auth-status::after{
+    content:"";
+
+    position:absolute;
+    inset:2px;
+
+    border-radius:inherit;
+
+    background:#08051e;
+
+    z-index:-1;
+}
+
+
+@keyframes authSpin{
+
+    from{
+        transform:rotate(0deg);
+    }
+
+    to{
+        transform:rotate(360deg);
+    }
+
+}
+
+
+/* STATUS DOT */
+
+.auth-dot{
+    width:9px;
+    height:9px;
+
+    flex-shrink:0;
+
+    border-radius:50%;
+
+    background:#35ff72;
+
+    box-shadow:
+        0 0 8px #35ff72,
+        0 0 18px #35ff72;
+
+    animation:
+        authPulse 1s ease-in-out infinite;
+}
+
+
+@keyframes authPulse{
+
+    0%,100%{
+        transform:scale(.8);
+        opacity:.55;
+    }
+
+    50%{
+        transform:scale(1.2);
+        opacity:1;
+    }
+
+}
+
+
+.auth-status.hidden{
+    display:none;
+}
+
+
+/* BUTTONS */
+
+.buttons{
+    margin-top:23px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    gap:22px;
+
+    flex-wrap:nowrap;
+}
+
+.btn{
+    display:inline-block;
+
+    padding:13px 35px;
+
+    border-radius:30px;
+
+    text-decoration:none;
+
+    font-size:18px;
+    font-weight:bold;
+
+    transition:.25s ease;
+
+    cursor:pointer;
+
+    user-select:none;
+}
+
+.btn:hover{
+    transform:translateY(-3px);
+}
+
+
+/* REGISTER */
+
+.join{
+    color:#fff;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ff416c,
+            #ff21b8,
+            #773cff
+        );
+
+    box-shadow:
+        0 0 22px rgba(255,30,190,.45);
+}
+
+
+/* LOGIN / ENTER */
+
+.login{
+    color:#fff;
+
+    border:2px solid #ffd000;
+
+    box-shadow:
+        0 0 15px rgba(255,208,0,.3);
+}
+
+
+/* LOGOUT */
+
+.logout{
+    color:#fff;
+
+    border:2px solid #ff4d6d;
+
+    background:rgba(255,40,80,.08);
+
+    box-shadow:
+        0 0 15px rgba(255,40,80,.25);
+}
+
 
 /* FEATURES */
-.features-heading{text-align:center;margin:0 0 28px}
-.section-label{color:var(--blue);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-.features-heading h2{font-size:clamp(26px,5vw,36px);line-height:1.3;margin-bottom:12px}
-.features-heading p{max-width:680px;margin:auto;color:#d6d3e9;font-size:15px;line-height:1.75}
-.features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px;padding-bottom:45px}
-.feature{
- min-height:205px;padding:24px 16px;text-align:center;border-radius:21px;
- background:linear-gradient(145deg,rgba(18,15,48,.92),rgba(7,7,26,.88));
- border:1px solid rgba(255,255,255,.13);
- box-shadow:inset 0 0 35px rgba(90,0,255,.06);
- transition:transform .25s,border-color .25s,background .25s;
-}
-.feature:hover{transform:translateY(-5px);background:rgba(20,14,49,.96);border-color:rgba(255,255,255,.4)}
-.feature:nth-child(1){border-top-color:var(--gold)}
-.feature:nth-child(2){border-top-color:var(--pink)}
-.feature:nth-child(3){border-top-color:var(--blue)}
-.feature:nth-child(4){border-top-color:var(--green)}
-.feature:nth-child(5){border-top-color:#ffbb00}
-.feature:nth-child(6){border-top-color:#bd68ff}
-.icon{
- width:59px;height:59px;margin:0 auto 15px;border-radius:19px;
- display:flex;align-items:center;justify-content:center;font-size:27px;
- background:rgba(255,255,255,.035);border:1px solid currentColor;
-}
-.feature:nth-child(1) .icon{color:var(--gold)}
-.feature:nth-child(2) .icon{color:var(--pink)}
-.feature:nth-child(3) .icon{color:var(--blue)}
-.feature:nth-child(4) .icon{color:var(--green)}
-.feature:nth-child(5) .icon{color:#ffbb00}
-.feature:nth-child(6) .icon{color:#bd68ff}
-.feature h3{font-size:18px;margin-bottom:9px}
-.feature p{font-size:13px;line-height:1.65;color:#d8d5e8}
 
-/* DOWNLOAD STRIP */
-.download-strip{
- margin:0 0 45px;padding:23px 25px;border-radius:20px;
- display:flex;align-items:center;justify-content:space-between;gap:20px;
- border:1px solid rgba(0,221,255,.27);
- background:linear-gradient(110deg,rgba(0,221,255,.06),rgba(255,56,213,.07));
+.features-heading{
+    text-align:center;
+    margin:0 0 27px;
 }
-.download-strip h3{font-size:19px;margin-bottom:7px}
-.download-strip p{font-size:13px;line-height:1.6;color:#cfcee2}
-.download-strip a{flex-shrink:0;color:#fff;text-decoration:none;font-size:14px;font-weight:bold;padding:13px 20px;border-radius:25px;background:linear-gradient(100deg,#ff27c7,#793cff)}
+
+.features-heading h2{
+    font-size:35px;
+    line-height:1.3;
+    margin-bottom:10px;
+}
+
+.features-heading p{
+    max-width:700px;
+    margin:auto;
+
+    font-size:17px;
+    line-height:1.6;
+
+    color:#eeeef5;
+}
+
+
+.features{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+
+    gap:18px;
+    padding-bottom:35px;
+}
+
+
+.feature{
+    height:205px;
+
+    padding:20px 13px;
+
+    text-align:center;
+
+    border-radius:18px;
+
+    background:rgba(8,7,32,.88);
+
+    border:1px solid rgba(255,255,255,.2);
+
+    box-shadow:
+        inset 0 0 35px rgba(90,0,255,.08);
+
+    transition:
+        transform .3s ease,
+        box-shadow .3s ease;
+}
+
+.feature:hover{
+    transform:translateY(-5px);
+
+    box-shadow:
+        0 0 22px rgba(255,255,255,.13),
+        inset 0 0 35px rgba(90,0,255,.12);
+}
+
+
+.feature:nth-child(1){
+    border-color:#ffd000;
+}
+
+.feature:nth-child(2){
+    border-color:#ff38d5;
+}
+
+.feature:nth-child(3){
+    border-color:#00d9ff;
+}
+
+.feature:nth-child(4){
+    border-color:#40ff68;
+}
+
+.feature:nth-child(5){
+    border-color:#ffbb00;
+}
+
+.feature:nth-child(6){
+    border-color:#e63cff;
+}
+
+
+/* ICON */
+
+.icon{
+    width:61px;
+    height:61px;
+
+    margin:0 auto 12px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:29px;
+
+    border:1.5px solid currentColor;
+
+    box-shadow:
+        0 0 16px currentColor;
+}
+
+.feature:nth-child(1) .icon{
+    color:#ffd000;
+}
+
+.feature:nth-child(2) .icon{
+    color:#ff38d5;
+}
+
+.feature:nth-child(3) .icon{
+    color:#00d9ff;
+}
+
+.feature:nth-child(4) .icon{
+    color:#40ff68;
+}
+
+.feature:nth-child(5) .icon{
+    color:#ffbb00;
+}
+
+.feature:nth-child(6) .icon{
+    color:#d738ff;
+}
+
+
+/* FEATURE TEXT */
+
+.feature h3{
+    font-size:19px;
+    margin-bottom:8px;
+}
+
+.feature p{
+    font-size:14px;
+    line-height:1.5;
+    color:#eeeef5;
+}
+
 
 /* FOOTER */
-footer{position:relative;z-index:1;border-top:1px solid rgba(255,205,0,.35);padding:26px 0;background:rgba(3,3,19,.45)}
-.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px}
-.logo{font-size:32px;font-weight:800;letter-spacing:-1.5px}
-.logo span{color:var(--gold)}
-.logo-star{margin-left:6px}
-.copyright{font-size:13px;line-height:1.6;color:#c9c6dc}
-.copyright strong{color:var(--gold)}
 
-/* APP INSTALL POPUP */
+footer{
+    border-top:1px solid rgba(255,205,0,.75);
+    padding:25px 0;
+}
+
+.footer-inner{
+    width:88%;
+    max-width:900px;
+
+    margin:auto;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:20px;
+}
+
+
+.logo{
+    font-size:36px;
+
+    font-weight:800;
+
+    letter-spacing:-1.5px;
+
+    text-shadow:
+        0 0 15px rgba(255,255,255,.18);
+}
+
+.logo span{
+    color:#ffd000;
+
+    text-shadow:
+        0 0 14px rgba(255,208,0,.5);
+}
+
+.logo-star{
+    color:#ffd000 !important;
+    margin-left:7px;
+}
+
+
+.copyright{
+    font-size:15px;
+    color:#eeeef5;
+}
+
+.copyright strong{
+    color:#ffd000;
+}
+
+
+/* =====================================================
+   INSTALL POPUP
+===================================================== */
+
 .install-overlay{
- position:fixed;inset:0;z-index:9999;display:none;
- align-items:center;justify-content:center;padding:18px;
- background:rgba(0,0,12,.84);backdrop-filter:blur(10px);
- -webkit-backdrop-filter:blur(10px);
+    position:fixed;
+    inset:0;
+    z-index:999;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(3,3,19,.8);
+    backdrop-filter:blur(6px);
 }
-.install-overlay.show{display:flex;animation:fadeIn .25s ease}
-.install-popup{
- position:relative;width:100%;max-width:390px;max-height:92vh;overflow:auto;
- padding:30px 22px 23px;text-align:center;border-radius:26px;
- border:1px solid rgba(255,56,213,.65);
- background:radial-gradient(circle at 50% 0%,rgba(126,44,255,.25),transparent 55%),linear-gradient(145deg,#100923,#050516 75%);
- box-shadow:0 20px 80px rgba(0,0,0,.5),0 0 35px rgba(255,56,213,.12);
- animation:popupIn .35s ease;
-}
-.install-close{
- position:absolute;top:11px;right:12px;width:33px;height:33px;
- border:1px solid rgba(255,255,255,.15);border-radius:50%;
- background:rgba(255,255,255,.06);color:#fff;font-size:22px;cursor:pointer;
-}
-.install-logo{
- width:72px;height:72px;margin:0 auto 17px;display:flex;align-items:center;justify-content:center;
- border-radius:22px;border:1px solid rgba(0,221,255,.6);
- background:linear-gradient(145deg,#21104a,#08091e);color:var(--gold);
- font-size:30px;font-weight:900;box-shadow:0 0 25px rgba(0,221,255,.13);
-}
-.install-logo span{color:#fff}
-.install-popup h2{font-size:27px;line-height:1.3;margin-bottom:12px}
-.install-pink{color:var(--pink)}
-.install-popup>p{max-width:310px;margin:0 auto 19px;color:#e5e1f5;font-size:14px;line-height:1.75}
-.install-benefits{
- display:grid;gap:11px;margin:0 auto 22px;padding:15px;text-align:left;
- border:1px solid rgba(255,255,255,.10);border-radius:15px;background:rgba(255,255,255,.035);
-}
-.install-benefits div{font-size:13px;line-height:1.5;color:#f0edf9}
-.install-benefits span{color:var(--green);margin-right:8px}
-.install-actions{display:flex;gap:10px}
-.install-actions button,.install-actions a{
- flex:1;min-width:0;min-height:46px;display:flex;align-items:center;justify-content:center;
- padding:11px 8px;border-radius:25px;font-family:inherit;font-size:14px;font-weight:bold;
- text-align:center;text-decoration:none;cursor:pointer;transition:transform .2s;
-}
-.install-actions button:active,.install-actions a:active{transform:scale(.97)}
-.install-not-yet{color:#eeeaf9;background:transparent;border:1px solid rgba(255,255,255,.3)}
-.install-now{color:#fff;border:0;background:linear-gradient(100deg,#ff27c7,#793cff);box-shadow:0 0 18px rgba(255,39,199,.18)}
-.install-footnote{margin-top:14px;color:#aaa5c5;font-size:11px;line-height:1.6}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes popupIn{from{opacity:0;transform:translateY(15px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 
-/* RESPONSIVE */
+.install-overlay.show{
+    display:flex;
+}
+
+.install-card{
+    width:100%;
+    max-width:380px;
+    padding:32px 24px 26px;
+    border-radius:25px;
+    text-align:center;
+    border:2px solid transparent;
+    background:
+        linear-gradient(#08051e,#08051e) padding-box,
+        linear-gradient(100deg,#ff27c7,#00eaff,#ffd000) border-box;
+    box-shadow:0 0 35px rgba(255,30,210,.3);
+    animation:popIn .4s ease;
+}
+
+@keyframes popIn{
+    from{transform:scale(.85);opacity:0;}
+    to{transform:scale(1);opacity:1;}
+}
+
+.install-star{
+    font-size:46px;
+    color:#ffd000;
+    text-shadow:0 0 18px #ffbb00;
+}
+
+.install-card h2{
+    font-size:26px;
+    margin:8px 0 10px;
+}
+
+.install-card p{
+    font-size:15px;
+    line-height:1.6;
+    color:#f4f4f7;
+}
+
+.install-buttons{
+    display:flex;
+    gap:12px;
+    margin-top:22px;
+}
+
+.install-buttons .btn{
+    flex:1;
+    padding:12px 10px;
+    font-size:15px;
+    background:none;
+    font-family:inherit;
+}
+
+.install-buttons .join{
+    border:none;
+    background:linear-gradient(90deg,#ff416c,#ff21b8,#773cff);
+}
+
+.install-help{
+    display:none;
+    margin-top:14px;
+    font-size:13px;
+    color:#00ddff;
+}
+
+
+/* TABLET */
+
 @media(max-width:800px){
- .features{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
- .feature{min-height:180px}
+
+    .container{
+        width:90%;
+    }
+
+    .features{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .footer-inner{
+        width:90%;
+    }
+
 }
+
+
+/* MOBILE */
+
 @media(max-width:600px){
- .container,.footer-inner{width:91%}
- .hero{padding:31px 3px 23px}
- .brand-mark{width:65px;height:65px;border-radius:21px;font-size:29px;margin-bottom:15px}
- .hero p{font-size:15px}
- .hero-label{font-size:10px;padding:7px 11px}
- .cta{margin:10px 0 40px;padding:29px 15px 25px;border-radius:23px}
- .cta::before{left:15px;top:17px;font-size:25px}
- .cta::after{right:15px;bottom:18px;font-size:25px}
- .cta h1{font-size:32px}
- .cta>p{font-size:14px}
- .btn{padding:12px 17px;font-size:13px}
- .buttons{gap:10px;margin-top:20px}
- .features-heading{margin-bottom:20px}
- .features-heading p{font-size:13px}
- .features{gap:11px;padding-bottom:30px}
- .feature{min-height:158px;padding:15px 8px;border-radius:17px}
- .icon{width:46px;height:46px;border-radius:15px;font-size:22px;margin-bottom:10px}
- .feature h3{font-size:15px;margin-bottom:6px}
- .feature p{font-size:11px;line-height:1.5}
- .download-strip{padding:19px 15px;flex-direction:column;text-align:center;gap:15px}
- .download-strip h3{font-size:17px}
- .download-strip p{font-size:12px}
- .download-strip a{width:100%}
- .footer-inner{flex-direction:column;text-align:center;gap:9px}
- .logo{font-size:29px}
- .copyright{font-size:11px}
- .install-popup{padding:29px 17px 20px}
- .install-popup h2{font-size:25px}
- .install-popup>p{font-size:13px}
- .install-benefits{padding:12px}
- .install-benefits div{font-size:12px}
+
+    .container{
+        width:91%;
+        max-width:390px;
+    }
+
+    .hero{
+        padding:28px 5px 25px;
+    }
+
+    .hero p{
+        font-size:17px;
+        line-height:1.5;
+    }
+
+    .cta{
+        min-height:230px;
+
+        margin:8px 0 30px;
+
+        padding:24px 14px;
+
+        border-radius:20px;
+    }
+
+    .cta h1{
+        font-size:31px;
+        margin-bottom:8px;
+    }
+
+    .cta p{
+        max-width:310px;
+
+        font-size:14px;
+        line-height:1.5;
+    }
+
+    .cta::before{
+        left:17px;
+        top:52px;
+        font-size:32px;
+    }
+
+    .cta::after{
+        right:17px;
+        top:57px;
+        font-size:30px;
+    }
+
+    .auth-status{
+        font-size:12px;
+        padding:7px 13px;
+        max-width:100%;
+    }
+
+    .buttons{
+        margin-top:17px;
+        gap:10px;
+    }
+
+    .btn{
+        padding:10px 17px;
+        font-size:13px;
+        white-space:nowrap;
+    }
+
+    .features-heading{
+        margin:0 0 19px;
+    }
+
+    .features-heading h2{
+        font-size:25px;
+        line-height:1.3;
+    }
+
+    .features-heading p{
+        font-size:14px;
+        line-height:1.5;
+    }
+
+    .features{
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
+        padding-bottom:25px;
+    }
+
+    .feature{
+        height:155px;
+        min-height:155px;
+
+        padding:13px 7px;
+
+        border-radius:14px;
+    }
+
+    .icon{
+        width:45px;
+        height:45px;
+
+        font-size:21px;
+
+        margin-bottom:7px;
+    }
+
+    .feature h3{
+        font-size:15px;
+        margin-bottom:5px;
+    }
+
+    .feature p{
+        font-size:11px;
+        line-height:1.35;
+    }
+
+    footer{
+        padding:20px 0;
+    }
+
+    .footer-inner{
+        width:91%;
+
+        flex-direction:column;
+
+        text-align:center;
+
+        gap:9px;
+    }
+
+    .logo{
+        font-size:29px;
+    }
+
+    .copyright{
+        font-size:12px;
+        line-height:1.4;
+    }
+
 }
-@media(prefers-reduced-motion:reduce){
- *,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+
+
+/* VERY SMALL PHONES */
+
+@media(max-width:380px){
+
+    .container{
+        width:90%;
+    }
+
+    .hero p{
+        font-size:16px;
+    }
+
+    .cta{
+        min-height:220px;
+    }
+
+    .cta h1{
+        font-size:29px;
+    }
+
+    .buttons{
+        gap:7px;
+    }
+
+    .btn{
+        padding:9px 12px;
+        font-size:12px;
+    }
+
+    .features{
+        gap:10px;
+    }
+
+    .feature{
+        height:150px;
+        min-height:150px;
+    }
+
+    .feature p{
+        font-size:10.5px;
+    }
+
 }
+
 </style>
 </head>
-
 <body>
+
 <main class="container">
 
- <!-- HERO -->
- <section class="hero">
-  <div class="brand-mark" aria-label="VitalStar VS logo"><span>V</span>S✦</div>
-  <div class="hero-label"><span>✦</span> WELCOME TO VITALSTAR <span>✦</span></div>
-  <h2>Your world. Your people. <span class="pink">Your Star.</span></h2>
-  <p>
-   A colorful world where everyone can
-   <span class="pink">connect</span>,
-   <span class="blue">share</span> and
-   <span class="yellow">shine.</span>
-  </p>
- </section>
+<!-- HERO -->
 
- <!-- MAIN CTA -->
- <section class="cta">
-  <h1>Ready to <span class="yellow">Shine?</span></h1>
-  <p id="welcomeText">Join VitalStar and become part of a colorful community where people connect, share and shine.</p>
+<section class="hero">
 
-  <div id="authStatus" class="auth-status loading">
-   <span class="auth-dot"></span>
-   <span id="authStatusText">Checking login...</span>
-  </div>
+    <p>
+        A colorful world where everyone can
+        <span class="pink">connect</span>,
+        <span class="blue">share</span> and
+        <span class="yellow">shine.</span>
+    </p>
 
-  <div class="buttons">
-   <a href="register.html" class="btn join" id="joinBtn" aria-disabled="true">Register</a>
-   <a href="login.html" class="btn login" id="loginBtn" aria-disabled="true">Login</a>
-  </div>
- </section>
+</section>
 
- <!-- FEATURES -->
- <section class="features-heading">
-  <div class="section-label">✦ DISCOVER YOUR WORLD ✦</div>
-  <h2>Everything You Need <span class="pink">in One Place</span></h2>
-  <p>Meet new people, share your best moments, discover communities and make every connection count.</p>
- </section>
 
- <section class="features">
-  <div class="feature">
-   <div class="icon">👥</div>
-   <h3>Connect</h3>
-   <p>Find friends and build meaningful connections with people who share your interests.</p>
-  </div>
-  <div class="feature">
-   <div class="icon">💬</div>
-   <h3>Chat</h3>
-   <p>Talk with friends, share a laugh and stay connected throughout the day.</p>
-  </div>
-  <div class="feature">
-   <div class="icon">📸</div>
-   <h3>Share Moments</h3>
-   <p>Share photos, videos and the little moments that make life special.</p>
-  </div>
-  <div class="feature">
-   <div class="icon">🌐</div>
-   <h3>Communities</h3>
-   <p>Discover groups, meet like-minded people and be part of something exciting.</p>
-  </div>
-  <div class="feature">
-   <div class="icon">🔔</div>
-   <h3>Stay Updated</h3>
-   <p>Keep up with your conversations and the latest activity from your community.</p>
-  </div>
-  <div class="feature">
-   <div class="icon">⭐</div>
-   <h3>Shine</h3>
-   <p>Express yourself, celebrate your creativity and let your personality shine.</p>
-  </div>
- </section>
+<!-- CTA -->
 
- <!-- DOWNLOAD STRIP -->
- <section class="download-strip">
-  <div>
-   <h3>✨ Your VitalStar adventure goes everywhere!</h3>
-   <p>Get the VS app on your Android device and keep the fun close at hand.</p>
-  </div>
-  <a href="https://github.com/VitalStarRex/VitalStar/releases/latest/download/VitalStar_Lite_v1.0.0.apk">↓ Get VS App</a>
- </section>
+<section class="cta">
+
+    <h1>
+        Ready to
+        <span class="yellow">Shine?</span>
+    </h1>
+
+
+    <p id="welcomeText">
+        Join VitalStar and become part
+        of a colorful community where
+        people connect, share and shine.
+    </p>
+
+
+    <!-- AUTH STATUS -->
+
+    <div
+        id="authStatus"
+        class="auth-status loading"
+    >
+
+        <span class="auth-dot"></span>
+
+        <span id="authStatusText">
+            Checking login...
+        </span>
+
+    </div>
+
+
+    <!-- BUTTONS -->
+
+    <div class="buttons">
+
+        <a
+            href="register.html"
+            class="btn join"
+            id="joinBtn"
+            aria-disabled="true"
+        >
+            Register
+        </a>
+
+
+        <a
+            href="login.html"
+            class="btn login"
+            id="loginBtn"
+            aria-disabled="true"
+        >
+            Login
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- FEATURES -->
+
+<section class="features-heading">
+
+    <h2>
+        Everything You Need
+        <span class="pink">in One Place</span>
+    </h2>
+
+    <p>
+        Connect with people, share your moments,
+        discover communities and enjoy everything
+        VitalStar has to offer.
+    </p>
+
+</section>
+
+
+<section class="features">
+
+
+    <div class="feature">
+
+        <div class="icon">
+            👥
+        </div>
+
+        <h3>
+            Connect
+        </h3>
+
+        <p>
+            Find friends and build
+            meaningful connections.
+        </p>
+
+    </div>
+
+
+    <div class="feature">
+
+        <div class="icon">
+            💬
+        </div>
+
+        <h3>
+            Chat
+        </h3>
+
+        <p>
+            Talk with friends and
+            stay connected.
+        </p>
+
+    </div>
+
+
+    <div class="feature">
+
+        <div class="icon">
+            📷
+        </div>
+
+        <h3>
+            Share
+        </h3>
+
+        <p>
+            Share photos, videos
+            and moments.
+        </p>
+
+    </div>
+
+
+    <div class="feature">
+
+        <div class="icon">
+            🌐
+        </div>
+
+        <h3>
+            Communities
+        </h3>
+
+        <p>
+            Discover groups and
+            communities.
+        </p>
+
+    </div>
+
+
+    <div class="feature">
+
+        <div class="icon">
+            🔔
+        </div>
+
+        <h3>
+            Notifications
+        </h3>
+
+        <p>
+            Never miss important
+            updates.
+        </p>
+
+    </div>
+
+
+    <div class="feature">
+
+        <div class="icon">
+            ★
+        </div>
+
+        <h3>
+            Shine
+        </h3>
+
+        <p>
+            Express yourself and
+            shine together.
+        </p>
+
+    </div>
+
+
+</section>
+
 </main>
 
-<footer>
- <div class="footer-inner">
-  <div class="logo">Vital<span>Star</span><span class="logo-star">✦</span></div>
-  <div class="copyright">© 2026 <strong>VitalStar</strong> — Connect, Share &amp; Shine ✦</div>
- </div>
-</footer>
 
-<!-- APP INSTALL POPUP -->
-<div class="install-overlay" id="vsInstallOverlay" role="dialog" aria-modal="true" aria-labelledby="vsInstallTitle">
- <section class="install-popup">
-  <button class="install-close" id="vsInstallClose" type="button" aria-label="Close popup">×</button>
+<!-- INSTALL POPUP -->
 
-  <div class="install-logo"><span>V</span>S✦</div>
-
-  <h2 id="vsInstallTitle">Download <span class="install-pink">VS App</span> for Endless Fun! ✨</h2>
-
-  <p>
-   Your world of connection, laughter and discovery awaits! 💜
-   Download the VS app and enjoy amazing moments, chat with friends,
-   share your memories and keep the fun going wherever you go.
-   Your next adventure starts here!
-  </p>
-
-  <div class="install-benefits">
-   <div><span>✓</span> Your VitalStar experience on the go</div>
-   <div><span>✓</span> Connect, share and shine with friends</div>
-   <div><span>✓</span> Easy access from your home screen</div>
-  </div>
-
-  <div class="install-actions">
-   <button type="button" class="install-not-yet" id="vsInstallLater">Not Yet</button>
-   <a class="install-now" id="vsInstallNow" href="https://github.com/VitalStarRex/VitalStar/releases/latest/download/VitalStar_Lite_v1.0.0.apk">↓ Install</a>
-  </div>
-
-  <div class="install-footnote">
-   VitalStar Lite · Android APK · v1.0.0
-   <br>Your next adventure starts with VS. 💜
-  </div>
- </section>
+<div class="install-overlay" id="installPopup">
+    <div class="install-card">
+        <div class="install-star">✦</div>
+        <h2>Get the <span class="yellow">VitalStar</span> App</h2>
+        <p>
+            Install VitalStar on your phone and enjoy
+            <span class="pink">uninterrupted fun</span>.
+            Faster, smoother, and always one tap away. ✨
+        </p>
+        <div class="install-buttons">
+            <button class="btn login" id="installLater">Not yet</button>
+            <button class="btn join" id="installNow">Install</button>
+        </div>
+        <div class="install-help" id="installHelp">
+            On iPhone: tap the Share button, then "Add to Home Screen".
+            On Android: open the browser menu (⋮), then "Install app".
+        </div>
+    </div>
 </div>
 
-<!-- FIREBASE AUTH -->
-<script type="module">
-import { auth, db } from "./firebase.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const authStatus = document.getElementById("authStatus");
-const authStatusText = document.getElementById("authStatusText");
-const welcomeText = document.getElementById("welcomeText");
-const joinBtn = document.getElementById("joinBtn");
-const loginBtn = document.getElementById("loginBtn");
+<!-- FOOTER -->
+
+<footer>
+
+<div class="footer-inner">
+
+    <div class="logo">
+
+        Vital<span>Star</span>
+
+        <span class="logo-star">
+            ✦
+        </span>
+
+    </div>
+
+
+    <div class="copyright">
+
+        © 2026
+        <strong>VitalStar</strong>
+        — Connect, Share & Shine ✦
+
+    </div>
+
+</div>
+
+</footer>
+
+
+<!-- =====================================================
+     FIREBASE AUTH
+===================================================== -->
+
+<script type="module">
+
+import { auth, db } from "./firebase.js";
+
+import {
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    doc,
+    getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+const authStatus =
+    document.getElementById("authStatus");
+
+const authStatusText =
+    document.getElementById("authStatusText");
+
+const welcomeText =
+    document.getElementById("welcomeText");
+
+const joinBtn =
+    document.getElementById("joinBtn");
+
+const loginBtn =
+    document.getElementById("loginBtn");
+
+
+/* =====================================================
+   DISABLE BUTTONS
+===================================================== */
 
 function disableButtons(){
- [joinBtn,loginBtn].forEach(btn=>{
-  btn.style.pointerEvents="none";
-  btn.style.opacity=".55";
-  btn.setAttribute("aria-disabled","true");
- });
+
+    joinBtn.style.pointerEvents = "none";
+    loginBtn.style.pointerEvents = "none";
+
+    joinBtn.style.opacity = "0.55";
+    loginBtn.style.opacity = "0.55";
+
+    joinBtn.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+
+    loginBtn.setAttribute(
+        "aria-disabled",
+        "true"
+    );
+
 }
+
+
+/* =====================================================
+   ENABLE BUTTONS
+===================================================== */
+
 function enableButtons(){
- [joinBtn,loginBtn].forEach(btn=>{
-  btn.style.pointerEvents="auto";
-  btn.style.opacity="1";
-  btn.removeAttribute("aria-disabled");
- });
+
+    joinBtn.style.pointerEvents = "auto";
+    loginBtn.style.pointerEvents = "auto";
+
+    joinBtn.style.opacity = "1";
+    loginBtn.style.opacity = "1";
+
+    joinBtn.removeAttribute(
+        "aria-disabled"
+    );
+
+    loginBtn.removeAttribute(
+        "aria-disabled"
+    );
+
 }
+
+
+/* =====================================================
+   START AUTH CHECK
+===================================================== */
 
 disableButtons();
+
 authStatus.classList.remove("hidden");
 authStatus.classList.add("loading");
-authStatusText.textContent="Checking login...";
 
-onAuthStateChanged(auth,async user=>{
- if(user){
-  authStatus.classList.remove("loading");
-  let fullName=user.displayName||"";
+authStatusText.textContent =
+    "Checking login...";
 
-  try{
-   const userSnap=await getDoc(doc(db,"users",user.uid));
-   if(userSnap.exists()){
-    const data=userSnap.data();
-    fullName=data.fullName||data.name||user.displayName||"";
-   }
-  }catch(error){
-   console.error("Unable to load full name:",error);
-  }
 
-  if(!fullName){
-   fullName=user.email?user.email.split("@")[0]:"VitalStar User";
-  }
+/* =====================================================
+   AUTH STATE
+===================================================== */
 
-  authStatus.classList.remove("hidden");
-  authStatusText.textContent=`✓ Welcome, ${fullName}`;
-  welcomeText.textContent=`Welcome back, ${fullName}! You are already part of our colorful community.`;
+onAuthStateChanged(auth, async (user) => {
 
-  loginBtn.textContent="Logout";
-  loginBtn.href="#";
-  loginBtn.classList.remove("login");
-  loginBtn.classList.add("logout");
+    /* =================================================
+       LOGGED IN
+    ================================================= */
 
-  loginBtn.onclick=async event=>{
-   event.preventDefault();
-   disableButtons();
-   authStatus.classList.remove("hidden");
-   authStatus.classList.add("loading");
-   authStatusText.textContent="Logging out...";
+    if(user){
 
-   try{
-    await signOut(auth);
-    location.reload();
-   }catch(error){
-    console.error("Logout error:",error);
-    authStatus.classList.remove("loading");
-    authStatusText.textContent="Logout failed";
+        /* STOP SPINNING */
+
+        authStatus.classList.remove(
+            "loading"
+        );
+
+
+        let fullName =
+            user.displayName || "";
+
+
+        /* GET FULL NAME FROM FIRESTORE */
+
+        try{
+
+            const userSnap =
+                await getDoc(
+                    doc(
+                        db,
+                        "users",
+                        user.uid
+                    )
+                );
+
+
+            if(userSnap.exists()){
+
+                const data =
+                    userSnap.data();
+
+                fullName =
+                    data.fullName ||
+                    data.name ||
+                    user.displayName ||
+                    "";
+
+            }
+
+        }catch(error){
+
+            console.error(
+                "Unable to load full name:",
+                error
+            );
+
+        }
+
+
+        /* FALLBACK */
+
+        if(!fullName){
+
+            fullName =
+                user.email
+                ? user.email.split("@")[0]
+                : "VitalStar User";
+
+        }
+
+
+        /* AUTH STATUS */
+
+        authStatus.classList.remove(
+            "hidden"
+        );
+
+        authStatusText.textContent =
+            `✓ Welcome, ${fullName}`;
+
+
+        /* WELCOME TEXT */
+
+        welcomeText.textContent =
+            `Welcome back, ${fullName}! You are already part of our colorful community.`;
+
+
+        /* =================================================
+           LOGOUT BUTTON
+        ================================================= */
+
+        loginBtn.textContent =
+            "Logout";
+
+        loginBtn.href =
+            "#";
+
+        loginBtn.classList.remove(
+            "login"
+        );
+
+        loginBtn.classList.add(
+            "logout"
+        );
+
+
+        loginBtn.onclick =
+            async (event) => {
+
+                event.preventDefault();
+
+                disableButtons();
+
+                authStatus.classList.remove(
+                    "hidden"
+                );
+
+                authStatus.classList.add(
+                    "loading"
+                );
+
+                authStatusText.textContent =
+                    "Logging out...";
+
+
+                try{
+
+                    await signOut(auth);
+
+                    location.reload();
+
+                }catch(error){
+
+                    console.error(
+                        "Logout error:",
+                        error
+                    );
+
+                    authStatus.classList.remove(
+                        "loading"
+                    );
+
+                    authStatusText.textContent =
+                        "Logout failed";
+
+                    enableButtons();
+
+                }
+
+            };
+
+
+        /* =================================================
+           ENTER VITALSTAR
+        ================================================= */
+
+        joinBtn.textContent =
+            "ENTER VITALSTAR";
+
+        joinBtn.href =
+            "home.html";
+
+        joinBtn.classList.remove(
+            "join"
+        );
+
+        joinBtn.classList.add(
+            "login"
+        );
+
+
+        /* LOGOUT LEFT */
+
+        joinBtn.parentElement.appendChild(
+            loginBtn
+        );
+
+
+        /* ENTER VITALSTAR RIGHT */
+
+        joinBtn.parentElement.appendChild(
+            joinBtn
+        );
+
+    }
+
+
+    /* =================================================
+       LOGGED OUT
+    ================================================= */
+
+    else{
+
+        /* STOP SPINNING */
+
+        authStatus.classList.remove(
+            "loading"
+        );
+
+
+        /* Hide status */
+
+        authStatus.classList.add(
+            "hidden"
+        );
+
+
+        /* WELCOME TEXT */
+
+        welcomeText.textContent =
+            "Join VitalStar and become part of a colorful community where people connect, share and shine.";
+
+
+        /* =================================================
+           REGISTER
+        ================================================= */
+
+        joinBtn.textContent =
+            "Register";
+
+        joinBtn.href =
+            "register.html";
+
+        joinBtn.classList.remove(
+            "login"
+        );
+
+        joinBtn.classList.add(
+            "join"
+        );
+
+
+        /* =================================================
+           LOGIN
+        ================================================= */
+
+        loginBtn.textContent =
+            "Login";
+
+        loginBtn.href =
+            "login.html";
+
+        loginBtn.classList.remove(
+            "logout"
+        );
+
+        loginBtn.classList.add(
+            "login"
+        );
+
+        loginBtn.onclick = null;
+
+
+        /* REGISTER LEFT */
+
+        joinBtn.parentElement.appendChild(
+            joinBtn
+        );
+
+
+        /* LOGIN RIGHT */
+
+        joinBtn.parentElement.appendChild(
+            loginBtn
+        );
+
+    }
+
+
+    /* =================================================
+       AUTH CHECK FINISHED
+    ================================================= */
+
     enableButtons();
-   }
-  };
 
-  joinBtn.textContent="ENTER VITALSTAR";
-  joinBtn.href="home.html";
-  joinBtn.classList.remove("join");
-  joinBtn.classList.add("login");
-
-  /* Put Logout first and Enter VitalStar second */
-  joinBtn.parentElement.appendChild(loginBtn);
-  joinBtn.parentElement.appendChild(joinBtn);
- }else{
-  authStatus.classList.remove("loading");
-  authStatus.classList.add("hidden");
-
-  welcomeText.textContent="Join VitalStar and become part of a colorful community where people connect, share and shine.";
-
-  joinBtn.textContent="Register";
-  joinBtn.href="register.html";
-  joinBtn.classList.remove("login");
-  joinBtn.classList.add("join");
-
-  loginBtn.textContent="Login";
-  loginBtn.href="login.html";
-  loginBtn.classList.remove("logout");
-  loginBtn.classList.add("login");
-  loginBtn.onclick=null;
-
-  joinBtn.parentElement.appendChild(joinBtn);
-  joinBtn.parentElement.appendChild(loginBtn);
- }
- enableButtons();
 });
+
 </script>
 
-<!-- POPUP BEHAVIOR -->
+
+<!-- =====================================================
+     INSTALL POPUP SCRIPT
+===================================================== -->
+
 <script>
-(()=>{
- const overlay=document.getElementById("vsInstallOverlay");
- const closeBtn=document.getElementById("vsInstallClose");
- const laterBtn=document.getElementById("vsInstallLater");
- const installBtn=document.getElementById("vsInstallNow");
- if(!overlay||!closeBtn||!laterBtn||!installBtn)return;
 
- function closePopup(){
-  overlay.classList.remove("show");
-  try{sessionStorage.setItem("vsInstallPopupDismissed","yes");}catch(error){}
- }
+const popup = document.getElementById("installPopup");
+const installNow = document.getElementById("installNow");
+const installLater = document.getElementById("installLater");
+const installHelp = document.getElementById("installHelp");
 
- closeBtn.addEventListener("click",closePopup);
- laterBtn.addEventListener("click",closePopup);
+let deferredPrompt = null;
 
- overlay.addEventListener("click",event=>{
-  if(event.target===overlay)closePopup();
- });
+const isInstalled =
+    window.matchMedia("(display-mode: standalone)").matches;
 
- document.addEventListener("keydown",event=>{
-  if(event.key==="Escape"&&overlay.classList.contains("show"))closePopup();
- });
+let hiddenUntil = 0;
 
- /* Open popup after a short delay unless dismissed this session */
- let dismissed=false;
- try{dismissed=sessionStorage.getItem("vsInstallPopupDismissed")==="yes";}catch(error){}
+try{
+    hiddenUntil = Number(localStorage.getItem("installHiddenUntil") || 0);
+}catch(e){}
 
- if(!dismissed){
-  window.setTimeout(()=>overlay.classList.add("show"),1800);
- }
-})();
+
+/* Capture the browser's install prompt */
+
+window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+});
+
+
+/* Show popup 2 seconds after page loads */
+
+if(!isInstalled && Date.now() > hiddenUntil){
+    setTimeout(() => popup.classList.add("show"), 2000);
+}
+
+
+/* NOT YET: hide for 1 day */
+
+installLater.onclick = () => {
+
+    try{
+        localStorage.setItem(
+            "installHiddenUntil",
+            Date.now() + 24 * 60 * 60 * 1000
+        );
+    }catch(e){}
+
+    popup.classList.remove("show");
+
+};
+
+
+/* INSTALL */
+
+installNow.onclick = async () => {
+
+    if(deferredPrompt){
+
+        deferredPrompt.prompt();
+
+        await deferredPrompt.userChoice;
+
+        deferredPrompt = null;
+
+        popup.classList.remove("show");
+
+    }else{
+
+        installHelp.style.display = "block";
+
+    }
+
+};
+
 </script>
+
 </body>
 </html>
