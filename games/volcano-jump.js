@@ -1,11 +1,23 @@
-// ============================================================
-// VITALSTAR — VOLCANO JUMP
-// Multiplayer Last-Player-Standing Road Survival
-//
-// SIMPLE LAVA ONLY
-//
-// Firebase v10.12.2
-// ============================================================
+
+/* ============================================================
+   VITALSTAR — VOLCANO JUMP
+   Multiplayer Last-Player-Standing Survival
+
+   FEATURES
+   - Lava is the ONLY obstacle
+   - Difficulty increases as time passes
+   - Multiplayer: up to 4 players
+   - Room creation, room codes and quick match
+   - Ready system and synchronized countdown
+   - Mobile touch controls and keyboard controls
+   - Jumping, collision detection and elimination
+   - Live player positions and leaderboard
+   - Firebase room/player synchronization
+   - Automatic winner and game-result handling
+
+   Firebase v10.12.2
+   File: volcano-jump.js
+   ============================================================ */
 
 import { auth, db } from "../firebase.js";
 
@@ -20,6 +32,7 @@ import {
     where,
     limit,
     getDocs,
+    getDoc,
     setDoc,
     updateDoc,
     deleteDoc,
@@ -28,973 +41,454 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-    recordGameResult
-} from "./games.js";
+import { recordGameResult } from "./games.js";
 
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
 
-// ============================================================
-// CONSTANTS
-// ============================================================
+const GAME_ID = "volcano-jump";
 
 const MAX_PLAYERS = 4;
 const MIN_PLAYERS = 2;
 
-const GAME_ID = "volcano-jump";
-
 const GAME_DURATION = 180;
+const COUNTDOWN_SECONDS = 4;
 
-const ROAD_WIDTH = 390;
-const ROAD_HEIGHT = 700;
+const WORLD_WIDTH = 390;
+const WORLD_HEIGHT = 700;
 
-const PLAYER_WIDTH = 28;
+const PLAYER_WIDTH = 26;
 const PLAYER_HEIGHT = 42;
 
+const GROUND_Y = 565;
 const PLAYER_SPEED = 235;
 
-// Strong enough to clearly jump over lava.
-const JUMP_FORCE = -600;
+const JUMP_FORCE = 610;
+const GRAVITY = 1550;
 
-const GRAVITY = 1350;
+const STATE_SEND_INTERVAL = 180;
+const INVULNERABILITY_TIME = 1.15;
 
-const STATE_SEND_INTERVAL = 250;
+const LAVA_START_Y = 290;
+const LAVA_END_Y = 710;
+const LAVA_HEIGHT = 28;
 
-// Simple lava.
-const LAVA_WARNING_TIME = 1.0;
-const LAVA_HEIGHT = 30;
-
-const LAVA_START_Y = 300;
-const LAVA_END_Y = 705;
-
-const PLAYER_GROUND_Y = 570;
-
-const COLORS = [
-    "#54d8ff",
-    "#ff4d91",
-    "#ffd34e",
-    "#8cff63"
+const PLAYER_COLORS = [
+    "#54e8ff",
+    "#ffca55",
+    "#ff6b9d",
+    "#a68bff"
 ];
 
+const $ = id => document.getElementById(id);
 
-// ============================================================
-// DOM
-// ============================================================
+/* ============================================================
+   DOM
+   ============================================================ */
 
-const lobby =
-    document.getElementById("lobby");
+const el = {
+    lobby: $("lobby"),
+    gameArea: $("gameArea"),
 
-const gameArea =
-    document.getElementById("gameArea");
+    roomCode: $("roomCode"),
+    gameRoomCode: $("gameRoomCode"),
+    playerCount: $("playerCount"),
+    playersList: $("playersList"),
 
-const roomCodeEl =
-    document.getElementById("roomCode");
+    readyButton: $("readyButton"),
+    lobbyStatus: $("lobbyStatus"),
 
-const gameRoomCodeEl =
-    document.getElementById("gameRoomCode");
+    quickMatchButton: $("quickMatchButton"),
+    createRoomButton: $("createRoomButton"),
+    roomInput: $("roomInput"),
+    joinRoomButton: $("joinRoomButton"),
+    leaveButton: $("leaveButton"),
 
-const playerCountEl =
-    document.getElementById("playerCount");
+    scoreValue: $("scoreValue"),
+    aliveValue: $("aliveValue"),
+    timeValue: $("timeValue"),
+    livesValue: $("livesValue"),
 
-const playersList =
-    document.getElementById("playersList");
+    leaderboardRows: $("leaderboardRows"),
 
-const readyButton =
-    document.getElementById("readyButton");
+    gameCanvas: $("gameCanvas"),
 
-const lobbyStatus =
-    document.getElementById("lobbyStatus");
+    countdownOverlay: $("countdownOverlay"),
+    countdownMessage: $("countdownMessage"),
+    countdownNumber: $("countdownNumber"),
 
-const quickMatchButton =
-    document.getElementById("quickMatchButton");
+    waitingOverlay: $("waitingOverlay"),
+    waitingTitle: $("waitingTitle"),
+    waitingText: $("waitingText"),
 
-const createRoomButton =
-    document.getElementById("createRoomButton");
+    gameMessage: $("gameMessage"),
+    messageIcon: $("messageIcon"),
+    messageTitle: $("messageTitle"),
+    messageText: $("messageText"),
 
-const roomInput =
-    document.getElementById("roomInput");
+    winnerOverlay: $("winnerOverlay"),
+    winnerTitle: $("winnerTitle"),
+    winnerName: $("winnerName"),
+    winnerScore: $("winnerScore"),
+    resultLeaderboard: $("resultLeaderboard"),
+    returnLobbyButton: $("returnLobbyButton"),
 
-const joinRoomButton =
-    document.getElementById("joinRoomButton");
+    leftButton: $("leftButton"),
+    rightButton: $("rightButton"),
+    jumpButton: $("jumpButton")
+};
 
-const leaveButton =
-    document.getElementById("leaveButton");
+/* ============================================================
+   CANVAS
+   ============================================================ */
 
-const scoreValue =
-    document.getElementById("scoreValue");
+const canvas = el.gameCanvas;
+const ctx = canvas ? canvas.getContext("2d") : null;
 
-const aliveValue =
-    document.getElementById("aliveValue");
+let canvasScale = 1;
 
-const timeValue =
-    document.getElementById("timeValue");
+function resizeCanvas() {
+    if (!canvas || !ctx) return;
 
-const livesValue =
-    document.getElementById("livesValue");
+    const rect = canvas.getBoundingClientRect();
 
-const leaderboardRows =
-    document.getElementById("leaderboardRows");
+    if (!rect.width || !rect.height) return;
 
-const canvas =
-    document.getElementById("gameCanvas");
+    canvas.width = Math.round(rect.width * devicePixelRatio);
+    canvas.height = Math.round(rect.height * devicePixelRatio);
 
-const ctx =
-    canvas?.getContext("2d");
-
-const countdownOverlay =
-    document.getElementById("countdownOverlay");
-
-const countdownMessage =
-    document.getElementById("countdownMessage");
-
-const countdownNumber =
-    document.getElementById("countdownNumber");
-
-const waitingOverlay =
-    document.getElementById("waitingOverlay");
-
-const waitingTitle =
-    document.getElementById("waitingTitle");
-
-const waitingText =
-    document.getElementById("waitingText");
-
-const gameMessage =
-    document.getElementById("gameMessage");
-
-const messageIcon =
-    document.getElementById("messageIcon");
-
-const messageTitle =
-    document.getElementById("messageTitle");
-
-const messageText =
-    document.getElementById("messageText");
-
-const winnerOverlay =
-    document.getElementById("winnerOverlay");
-
-const winnerTitle =
-    document.getElementById("winnerTitle");
-
-const winnerName =
-    document.getElementById("winnerName");
-
-const winnerScore =
-    document.getElementById("winnerScore");
-
-const resultLeaderboard =
-    document.getElementById("resultLeaderboard");
-
-const returnLobbyButton =
-    document.getElementById("returnLobbyButton");
-
-const leftButton =
-    document.getElementById("leftButton");
-
-const rightButton =
-    document.getElementById("rightButton");
-
-const jumpButton =
-    document.getElementById("jumpButton");
-
-
-// ============================================================
-// SAFETY CHECK
-// ============================================================
-
-if(!canvas || !ctx){
-
-    console.error(
-        "Volcano Jump: gameCanvas was not found."
+    canvasScale = Math.min(
+        rect.width / WORLD_WIDTH,
+        rect.height / WORLD_HEIGHT
     );
 
+    ctx.setTransform(
+        devicePixelRatio * rect.width / WORLD_WIDTH,
+        0,
+        0,
+        devicePixelRatio * rect.height / WORLD_HEIGHT,
+        0,
+        0
+    );
 }
 
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
-// ============================================================
-// FIREBASE / AUTH STATE
-// ============================================================
+/* ============================================================
+   GLOBAL STATE
+   ============================================================ */
 
 let currentUser = null;
 
-let authResolver;
-
-const authReady =
-    new Promise(resolve => {
-        authResolver = resolve;
-    });
-
-
-onAuthStateChanged(
-    auth,
-    async user => {
-
-        currentUser =
-            user || null;
-
-        authResolver(currentUser);
-
-        if(!currentUser){
-
-            setLobbyStatus(
-                "Please log in to play Volcano Jump."
-            );
-
-            if(readyButton)
-                readyButton.disabled = true;
-
-            if(quickMatchButton)
-                quickMatchButton.disabled = true;
-
-            if(createRoomButton)
-                createRoomButton.disabled = true;
-
-            if(joinRoomButton)
-                joinRoomButton.disabled = true;
-
-            return;
-        }
-
-
-        if(readyButton)
-            readyButton.disabled = false;
-
-        if(quickMatchButton)
-            quickMatchButton.disabled = false;
-
-        if(createRoomButton)
-            createRoomButton.disabled = false;
-
-        if(joinRoomButton)
-            joinRoomButton.disabled = false;
-
-
-        setLobbyStatus(
-            `Welcome ${await getFullName(currentUser)}. Create or join a room.`
-        );
-
-    }
-);
-
-
-// ============================================================
-// ROOM STATE
-// ============================================================
-
 let roomId = null;
+let roomCode = null;
 let roomData = null;
-let isHost = false;
 
 let roomUnsubscribe = null;
 let playersUnsubscribe = null;
 let chatUnsubscribe = null;
 
-let currentPlayerRef = null;
+let roomRef = null;
+let playersRef = null;
+let localPlayerRef = null;
 
-
-// ============================================================
-// PLAYERS
-// ============================================================
-
-const players = new Map();
-
-
-// ============================================================
-// LOCAL PLAYER
-// ============================================================
-
-const player = {
-
-    x:
-        ROAD_WIDTH / 2 -
-        PLAYER_WIDTH / 2,
-
-    y:
-        PLAYER_GROUND_Y -
-        PLAYER_HEIGHT,
-
-    vx: 0,
-    vy: 0,
-
-    width: PLAYER_WIDTH,
-    height: PLAYER_HEIGHT,
-
-    grounded: true,
-    jumping: false,
-
-    alive: true,
-    ready: false,
-
-    lives: 3,
-    score: 0,
-    distance: 0,
-
-    invulnerable: 1.5,
-    lastHit: 0,
-
-    eliminationReason: "",
-
-    color: COLORS[0],
-
-    fullName: "Player"
-
-};
-
-
-// ============================================================
-// GAME STATE
-// ============================================================
+let players = new Map();
 
 let gameStarted = false;
 let gameFinished = false;
-
 let gameStartTime = 0;
 let gameElapsed = 0;
 
-let lastFrameTime =
-    performance.now();
+let lastFrameTime = 0;
+let lastStateSend = 0;
+let stateWriteInFlight = false;
+
+let countdownTimer = null;
+let countdownTarget = 0;
 
 let animationFrame = null;
-let countdownTimer = null;
 
 let resultRecorded = false;
+let finishingGame = false;
 
-let lastStateSend = 0;
-let lastScoreUpdate = 0;
+let hitLavaIds = new Set();
+let seenMessageIds = new Set();
 
-let roadScroll = 0;
+let chatPanelOpen = false;
+let unreadMessages = 0;
 
-let roomSeed = 1;
+let pressedKeys = new Set();
 
-// LAVA ONLY.
+let touchLeft = false;
+let touchRight = false;
+let touchJump = false;
+
+let jumpWasPressed = false;
+
 let lavaEvents = [];
-
 let particles = [];
 
-let keys = {
+let self = null;
+
+const input = {
     left: false,
-    right: false
+    right: false,
+    jump: false
 };
 
+/* ============================================================
+   PLAYER OBJECT
+   ============================================================ */
 
-// ============================================================
-// CHAT STATE
-// ============================================================
+function createLocalPlayer() {
+    return {
+        uid: currentUser.uid,
 
-let chatPanel = null;
-let chatMessages = null;
-let chatInput = null;
-let chatSendButton = null;
-let chatToggleButton = null;
+        displayName:
+            currentUser.displayName ||
+            currentUser.email?.split("@")[0] ||
+            "Player",
 
-let chatUnread = 0;
+        username: currentUser.displayName || "Player",
 
+        ready: false,
+        alive: true,
 
-// ============================================================
-// BASIC HELPERS
-// ============================================================
+        lives: 1,
+        score: 0,
 
-function setLobbyStatus(text){
+        x: WORLD_WIDTH / 2,
+        y: GROUND_Y - PLAYER_HEIGHT,
 
-    if(lobbyStatus)
-        lobbyStatus.textContent = text;
+        vx: 0,
+        vy: 0,
 
+        width: PLAYER_WIDTH,
+        height: PLAYER_HEIGHT,
+
+        color: PLAYER_COLORS[
+            Math.floor(Math.random() * PLAYER_COLORS.length)
+        ],
+
+        jumping: false,
+        invulnerableUntil: 0,
+
+        renderedX: WORLD_WIDTH / 2,
+        renderedY: GROUND_Y - PLAYER_HEIGHT,
+
+        updatedAt: Date.now()
+    };
 }
 
+function playerToFirestore(p) {
+    return {
+        uid: p.uid,
+        displayName: p.displayName,
+        username: p.username,
 
-// ============================================================
-// FULL NAME
-// ============================================================
+        ready: !!p.ready,
+        alive: !!p.alive,
 
-async function getFullName(user){
+        lives: Number(p.lives || 0),
+        score: Number(p.score || 0),
 
-    if(!user)
-        return "Player";
+        x: Number(p.x || 0),
+        y: Number(p.y || 0),
 
-    try{
+        vx: Number(p.vx || 0),
+        vy: Number(p.vy || 0),
 
-        const snapshot =
-            await getDocs(
-                query(
-                    collection(db, "users"),
-                    where("__name__", "==", user.uid),
-                    limit(1)
-                )
-            );
+        color: p.color || "#54e8ff",
 
-        if(!snapshot.empty){
-
-            const data =
-                snapshot.docs[0].data();
-
-            const fullName =
-                data.fullName ||
-                data.name ||
-                `${data.firstName || ""} ${data.lastName || ""}`.trim();
-
-            if(fullName)
-                return fullName;
-
-        }
-
-    }catch(error){
-
-        console.warn(
-            "Could not load full name:",
-            error
-        );
-
-    }
-
-
-    if(
-        user.displayName &&
-        user.displayName.trim()
-    ){
-
-        return user.displayName.trim();
-
-    }
-
-
-    return "Player";
-
+        updatedAt: Date.now()
+    };
 }
 
-
-// ============================================================
-// SYNCHRONOUS DISPLAY NAME
-// ============================================================
-
-function getUserName(user){
-
-    if(!user)
-        return "Player";
-
-    if(
-        user.fullName &&
-        user.fullName.trim()
-    ){
-
-        return user.fullName.trim();
-
-    }
-
-    if(
-        user.displayName &&
-        user.displayName.trim()
-    ){
-
-        return user.displayName.trim();
-
-    }
-
-    return "Player";
-
-}
-
-
-// ============================================================
-// USERNAME
-// ============================================================
-
-function getUsername(user){
-
-    if(!user)
-        return "player";
-
-    const name =
-        user.displayName ||
-        "player";
-
-    return name
-        .replace(/\s+/g,"")
-        .toLowerCase()
-        .slice(0,20);
-
-}
-
-
-// ============================================================
-// PLAYER COLOR
-// ============================================================
-
-function getPlayerColor(uid){
-
-    if(!uid)
-        return COLORS[0];
-
-    let total = 0;
-
-    for(
-        let i = 0;
-        i < uid.length;
-        i++
-    ){
-
-        total +=
-            uid.charCodeAt(i);
-
-    }
-
-    return COLORS[
-        total % COLORS.length
-    ];
-
-}
-
-
-// ============================================================
-// ESCAPE HTML
-// ============================================================
-
-function escapeHtml(value){
-
-    return String(value ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-
-}
-
-
-// ============================================================
-// ROOM CODE
-// ============================================================
-
-function generateRoomCode(){
-
-    const chars =
-        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-    let result = "";
-
-    for(let i = 0; i < 6; i++){
-
-        result +=
-            chars[
-                Math.floor(
-                    Math.random() *
-                    chars.length
-                )
-            ];
-
-    }
-
-    return result;
-
-}
-
-
-// ============================================================
-// QUICK MATCH
-// ============================================================
-
-if(quickMatchButton){
-
-    quickMatchButton.addEventListener(
-        "click",
-        async () => {
-
-            if(!currentUser){
-
-                setLobbyStatus(
-                    "Please log in first."
-                );
-
-                return;
-            }
-
-            setLobbyStatus(
-                "Searching for a Volcano Jump match..."
-            );
-
-            quickMatchButton.disabled = true;
-
-            try{
-
-                const roomsQuery =
-                    query(
-                        collection(
-                            db,
-                            "gameRooms"
-                        ),
-                        where(
-                            "game",
-                            "==",
-                            GAME_ID
-                        ),
-                        limit(20)
-                    );
-
-                const snapshot =
-                    await getDocs(
-                        roomsQuery
-                    );
-
-                let selectedRoom = null;
-
-                for(
-                    const roomDoc
-                    of snapshot.docs
-                ){
-
-                    const data =
-                        roomDoc.data();
-
-                    if(
-                        data.status !==
-                        "waiting"
-                    ){
-                        continue;
-                    }
-
-                    const playerSnapshot =
-                        await getDocs(
-                            collection(
-                                db,
-                                "gameRooms",
-                                roomDoc.id,
-                                "players"
-                            )
-                        );
-
-                    if(
-                        playerSnapshot.size >=
-                        MAX_PLAYERS
-                    ){
-                        continue;
-                    }
-
-                    selectedRoom =
-                        roomDoc;
-
-                    break;
-
-                }
-
-                if(selectedRoom){
-
-                    await joinExistingRoom(
-                        selectedRoom.id,
-                        selectedRoom.data()
-                    );
-
-                }else{
-
-                    await createRoom(true);
-
-                }
-
-            }catch(error){
-
-                console.error(
-                    "Quick match error:",
-                    error
-                );
-
-                setLobbyStatus(
-                    "Could not find a match. Try again."
-                );
-
-            }
-
-            quickMatchButton.disabled = false;
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// CREATE ROOM
-// ============================================================
-
-if(createRoomButton){
-
-    createRoomButton.addEventListener(
-        "click",
-        async () => {
-
-            await createRoom(false);
-
-        }
-    );
-
-}
-
-
-async function createRoom(
-    isQuickMatch = false
-){
-
-    if(!currentUser){
-
-        setLobbyStatus(
-            "Please log in first."
-        );
+function applyRemotePlayer(data) {
+    const old = players.get(data.uid);
+
+    if (data.uid === currentUser?.uid && self) {
+        self.ready = !!data.ready;
+        self.alive = data.alive !== false;
+        self.lives = Number(data.lives ?? self.lives);
+        self.score = Number(data.score ?? self.score);
 
         return;
-
     }
 
-    try{
+    const p = {
+        ...data,
 
-        const roomRef =
-            doc(
-                collection(
-                    db,
-                    "gameRooms"
-                )
-            );
+        width: PLAYER_WIDTH,
+        height: PLAYER_HEIGHT,
 
-        const roomCode =
-            generateRoomCode();
+        x: Number(data.x ?? WORLD_WIDTH / 2),
+        y: Number(data.y ?? GROUND_Y - PLAYER_HEIGHT),
 
-        const seed =
-            Math.floor(
-                Math.random() *
-                2147483647
-            );
+        renderedX: old?.renderedX ?? Number(data.x ?? WORLD_WIDTH / 2),
+        renderedY: old?.renderedY ?? Number(data.y ?? GROUND_Y - PLAYER_HEIGHT),
 
-        await setDoc(
-            roomRef,
-            {
+        updatedAt: Number(data.updatedAt || Date.now())
+    };
 
-                game: GAME_ID,
-
-                roomCode,
-
-                hostUid:
-                    currentUser.uid,
-
-                status: "waiting",
-
-                playersCount: 0,
-                readyCount: 0,
-
-                maxPlayers:
-                    MAX_PLAYERS,
-
-                minPlayers:
-                    MIN_PLAYERS,
-
-                seed,
-
-                startAt: null,
-
-                createdAt:
-                    serverTimestamp(),
-
-                winnerUid: null
-
-            }
-        );
-
-        await joinExistingRoom(
-            roomRef.id,
-            {
-                roomCode,
-                hostUid:
-                    currentUser.uid,
-                status: "waiting",
-                playersCount: 0,
-                readyCount: 0,
-                maxPlayers:
-                    MAX_PLAYERS,
-                minPlayers:
-                    MIN_PLAYERS,
-                seed
-            }
-        );
-
-        if(isQuickMatch){
-
-            setLobbyStatus(
-                "Room created. Waiting for another player..."
-            );
-
-        }
-
-    }catch(error){
-
-        console.error(
-            "Create room error:",
-            error
-        );
-
-        setLobbyStatus(
-            "Unable to create room."
-        );
-
-    }
-
+    players.set(data.uid, p);
 }
 
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
 
-// ============================================================
-// JOIN ROOM BUTTON
-// ============================================================
+function setText(element, value) {
+    if (element) element.textContent = String(value);
+}
 
-if(joinRoomButton){
+function showElement(element) {
+    if (element) element.style.display = "";
+}
 
-    joinRoomButton.addEventListener(
-        "click",
-        async () => {
+function hideElement(element) {
+    if (element) element.style.display = "none";
+}
 
-            const code =
-                roomInput?.value
-                    .trim()
-                    .toUpperCase();
+function setLobbyStatus(message) {
+    setText(el.lobbyStatus, message);
+}
 
-            if(!code || code.length !== 6){
+function showLobby() {
+    showElement(el.lobby);
+    hideElement(el.gameArea);
+}
 
-                setLobbyStatus(
-                    "Enter a valid 6-character room code."
-                );
+function showGameArea() {
+    hideElement(el.lobby);
+    showElement(el.gameArea);
+}
 
-                return;
+function showMessage(icon, title, message) {
+    setText(el.messageIcon, icon);
+    setText(el.messageTitle, title);
+    setText(el.messageText, message);
 
-            }
+    showElement(el.gameMessage);
+}
 
-            if(!currentUser){
+function hideMessage() {
+    hideElement(el.gameMessage);
+}
 
-                setLobbyStatus(
-                    "Please log in first."
-                );
+function showWaiting(title, message) {
+    setText(el.waitingTitle, title);
+    setText(el.waitingText, message);
 
-                return;
+    showElement(el.waitingOverlay);
+}
 
-            }
+function hideWaiting() {
+    hideElement(el.waitingOverlay);
+}
 
-            joinRoomButton.disabled = true;
+function showCountdown(number, message = "GET READY!") {
+    setText(el.countdownNumber, number);
+    setText(el.countdownMessage, message);
 
-            try{
+    showElement(el.countdownOverlay);
+}
 
-                const roomsQuery =
-                    query(
-                        collection(
-                            db,
-                            "gameRooms"
-                        ),
-                        where(
-                            "roomCode",
-                            "==",
-                            code
-                        ),
-                        limit(1)
-                    );
+function hideCountdown() {
+    hideElement(el.countdownOverlay);
+}
 
-                const snapshot =
-                    await getDocs(
-                        roomsQuery
-                    );
+function setButtonDisabled(button, disabled) {
+    if (button) button.disabled = disabled;
+}
 
-                if(snapshot.empty){
+/* ============================================================
+   ROOM CODE
+   ============================================================ */
 
-                    setLobbyStatus(
-                        "Room not found."
-                    );
+function generateRoomCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-                    return;
+    let code = "";
 
-                }
+    for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+    }
 
-                const roomDoc =
-                    snapshot.docs[0];
+    return code;
+}
 
-                const data =
-                    roomDoc.data();
-
-                if(data.game !== GAME_ID){
-
-                    setLobbyStatus(
-                        "That room is not a Volcano Jump room."
-                    );
-
-                    return;
-
-                }
-
-                if(data.status !== "waiting"){
-
-                    setLobbyStatus(
-                        "That match has already started."
-                    );
-
-                    return;
-
-                }
-
-                await joinExistingRoom(
-                    roomDoc.id,
-                    data
-                );
-
-            }catch(error){
-
-                console.error(
-                    "Join room error:",
-                    error
-                );
-
-                setLobbyStatus(
-                    "Unable to join room."
-                );
-
-            }finally{
-
-                joinRoomButton.disabled =
-                    false;
-
-            }
-
-        }
+async function findRoomByCode(code) {
+    const q = query(
+        collection(db, "gameRooms"),
+        where("game", "==", GAME_ID),
+        where("roomCode", "==", code),
+        limit(1)
     );
 
+    const snap = await getDocs(q);
+
+    if (snap.empty) return null;
+
+    return snap.docs[0];
 }
 
+/* ============================================================
+   CREATE ROOM
+   ============================================================ */
 
-// ============================================================
-// JOIN EXISTING ROOM
-// ============================================================
-
-async function joinExistingRoom(
-    targetRoomId,
-    targetRoomData
-){
-
-    if(!currentUser)
+async function createRoom() {
+    if (!currentUser) {
+        setLobbyStatus("Please sign in first.");
         return;
-
-    if(
-        targetRoomData.status !==
-        "waiting"
-    ){
-
-        setLobbyStatus(
-            "This match has already started."
-        );
-
-        return;
-
     }
 
-    roomId =
-        targetRoomId;
+    if (roomId) {
+        setLobbyStatus("Leave your current room first.");
+        return;
+    }
 
-    roomData =
-        targetRoomData;
+    try {
+        setLobbyStatus("Creating room...");
 
-    isHost =
-        targetRoomData.hostUid ===
-        currentUser.uid;
+        const code = generateRoomCode();
+        const newRoomRef = doc(collection(db, "gameRooms"));
 
-    const playerRef =
-        doc(
+        roomId = newRoomRef.id;
+        roomCode = code;
+        roomRef = newRoomRef;
+
+        self = createLocalPlayer();
+
+        roomData = {
+            game: GAME_ID,
+            roomCode: code,
+
+            hostUid: currentUser.uid,
+
+            status: "waiting",
+
+            playersCount: 1,
+            readyCount: 0,
+
+            maxPlayers: MAX_PLAYERS,
+            minPlayers: MIN_PLAYERS,
+
+            seed: Math.floor(Math.random() * 2147483647),
+
+            startAt: null,
+            winnerUid: null,
+
+            createdAt: Date.now()
+        };
+
+        await setDoc(roomRef, roomData);
+
+        playersRef = collection(db, "gameRooms", roomId, "players");
+
+        localPlayerRef = doc(
             db,
             "gameRooms",
             roomId,
@@ -1002,4711 +496,1970 @@ async function joinExistingRoom(
             currentUser.uid
         );
 
-    currentPlayerRef =
-        playerRef;
+        await setDoc(localPlayerRef, playerToFirestore(self));
 
-    const existingPlayers =
-        await getDocs(
-            collection(
-                db,
-                "gameRooms",
-                roomId,
-                "players"
-            )
-        );
+        enterRoomUI();
+        subscribeToRoom();
+        subscribeToPlayers();
 
-    const alreadyJoined =
-        existingPlayers.docs.some(
-            p =>
-                p.id ===
-                currentUser.uid
-        );
+        setLobbyStatus("Room created. Invite your friends!");
 
-    if(
-        existingPlayers.size >= MAX_PLAYERS &&
-        !alreadyJoined
-    ){
+    } catch (error) {
+        console.error("Create room error:", error);
 
-        setLobbyStatus(
-            "This room is full."
-        );
+        await resetLocalRoom(false);
 
-        roomId = null;
-        currentPlayerRef = null;
+        setLobbyStatus("Could not create room. Please try again.");
+    }
+}
 
+/* ============================================================
+   JOIN ROOM
+   ============================================================ */
+
+async function joinExistingRoom(roomDocument) {
+    if (!currentUser) {
+        setLobbyStatus("Please sign in first.");
         return;
-
     }
 
-    const fullName =
-        await getFullName(
-            currentUser
-        );
+    if (roomId) {
+        setLobbyStatus("Leave your current room first.");
+        return;
+    }
 
-    currentUser.fullName =
-        fullName;
+    try {
+        setLobbyStatus("Joining room...");
 
-    player.fullName =
-        fullName;
+        const data = roomDocument.data();
+        const id = roomDocument.id;
 
-    player.color =
-        getPlayerColor(
-            currentUser.uid
-        );
-
-    player.ready = false;
-    player.alive = true;
-    player.lives = 3;
-    player.score = 0;
-
-    player.x =
-        ROAD_WIDTH / 2 -
-        PLAYER_WIDTH / 2;
-
-    player.y =
-        PLAYER_GROUND_Y -
-        PLAYER_HEIGHT;
-
-    await setDoc(
-        playerRef,
-        {
-
-            uid:
-                currentUser.uid,
-
-            displayName:
-                fullName,
-
-            fullName:
-                fullName,
-
-            username:
-                getUsername(
-                    currentUser
-                ),
-
-            ready: false,
-
-            alive: true,
-
-            lives: 3,
-
-            score: 0,
-
-            x: player.x,
-
-            y: player.y,
-
-            color: player.color,
-
-            joinedAt:
-                serverTimestamp(),
-
-            updatedAt:
-                serverTimestamp()
-
+        if (data.game !== GAME_ID || data.status !== "waiting") {
+            setLobbyStatus("This room is not available.");
+            return;
         }
-    );
 
-    showGameRoom();
-
-    subscribeToRoom();
-
-    subscribeToPlayers();
-
-    createChat();
-
-}
-
-
-// ============================================================
-// SHOW ROOM
-// ============================================================
-
-function showGameRoom(){
-
-    if(lobby)
-        lobby.style.display =
-            "block";
-
-    if(gameArea)
-        gameArea.style.display =
-            "none";
-
-    if(roomCodeEl)
-        roomCodeEl.textContent =
-            roomData?.roomCode ||
-            "------";
-
-}
-
-
-// ============================================================
-// ROOM SUBSCRIPTION
-// ============================================================
-
-function subscribeToRoom(){
-
-    if(roomUnsubscribe)
-        roomUnsubscribe();
-
-    const roomRef =
-        doc(
+        const playerCollection = collection(
             db,
             "gameRooms",
-            roomId
-        );
-
-    roomUnsubscribe =
-        onSnapshot(
-            roomRef,
-            snapshot => {
-
-                if(!snapshot.exists()){
-
-                    leaveRoomLocal();
-
-                    return;
-
-                }
-
-                roomData =
-                    snapshot.data();
-
-                if(roomCodeEl)
-                    roomCodeEl.textContent =
-                        roomData.roomCode ||
-                        "------";
-
-                if(gameRoomCodeEl)
-                    gameRoomCodeEl.textContent =
-                        roomData.roomCode ||
-                        "------";
-
-                if(
-                    roomData.status ===
-                    "playing"
-                ){
-
-                    if(waitingOverlay)
-                        waitingOverlay.style.display =
-                            "none";
-
-                    if(
-                        roomData.startAt &&
-                        !gameStarted &&
-                        !gameFinished
-                    ){
-
-                        startCountdown(
-                            roomData.startAt
-                        );
-
-                    }
-
-                }
-
-                if(
-                    roomData.status ===
-                    "finished"
-                ){
-
-                    if(!gameFinished){
-
-                        finishGame(
-                            "match-finished"
-                        );
-
-                    }
-
-                }
-
-            },
-            error => {
-
-                console.error(
-                    "Room listener:",
-                    error
-                );
-
-            }
-        );
-
-}
-
-
-// ============================================================
-// PLAYER SUBSCRIPTION
-// ============================================================
-
-function subscribeToPlayers(){
-
-    if(playersUnsubscribe)
-        playersUnsubscribe();
-
-    const playersRef =
-        collection(
-            db,
-            "gameRooms",
-            roomId,
+            id,
             "players"
         );
 
-    playersUnsubscribe =
-        onSnapshot(
-            playersRef,
-            snapshot => {
+        const playerSnapshot = await getDocs(playerCollection);
 
-                players.clear();
-
-                snapshot.forEach(
-                    playerDoc => {
-
-                        const data =
-                            playerDoc.data();
-
-                        players.set(
-                            playerDoc.id,
-                            {
-                                uid:
-                                    playerDoc.id,
-
-                                ...data,
-
-                                displayName:
-                                    data.fullName ||
-                                    data.displayName ||
-                                    "Player",
-
-                                fullName:
-                                    data.fullName ||
-                                    data.displayName ||
-                                    "Player"
-
-                            }
-                        );
-
-                    }
-                );
-
-                const count =
-                    players.size;
-
-                if(playerCountEl){
-
-                    playerCountEl.textContent =
-                        `Players: ${count}/${MAX_PLAYERS}`;
-
-                }
-
-                renderPlayersList();
-
-                renderLeaderboard();
-
-                if(
-                    roomData &&
-                    roomData.status ===
-                    "waiting"
-                ){
-
-                    updateWaitingState();
-
-                }
-
-                if(
-                    gameStarted &&
-                    !gameFinished
-                ){
-
-                    checkLastPlayerStanding();
-
-                }
-
-            },
-            error => {
-
-                console.error(
-                    "Players listener:",
-                    error
-                );
-
-            }
+        const alreadyJoined = playerSnapshot.docs.some(
+            d => d.id === currentUser.uid
         );
 
-}
-
-
-// ============================================================
-// WAITING STATE
-// ============================================================
-
-function updateWaitingState(){
-
-    const count =
-        players.size;
-
-    const readyCount =
-        [...players.values()]
-            .filter(
-                p =>
-                    p.ready === true
-            )
-            .length;
-
-    if(count < MIN_PLAYERS){
-
-        setLobbyStatus(
-            `Waiting for players... ${count}/${MIN_PLAYERS} minimum`
-        );
-
-    }else if(
-        readyCount < count
-    ){
-
-        setLobbyStatus(
-            `${readyCount}/${count} players ready. Everyone must press READY.`
-        );
-
-    }else{
-
-        setLobbyStatus(
-            "All players ready. Starting..."
-        );
-
-    }
-
-    if(
-        count >= MIN_PLAYERS &&
-        readyCount === count &&
-        !gameStarted &&
-        !roomData.startAt
-    ){
-
-        if(isHost)
-            startMatch();
-
-    }
-
-    if(player.ready){
-
-        readyButton.textContent =
-            "✓ READY";
-
-        readyButton.classList.add(
-            "readyOn"
-        );
-
-    }else{
-
-        readyButton.textContent =
-            "🔥 READY";
-
-        readyButton.classList.remove(
-            "readyOn"
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// READY BUTTON
-// ============================================================
-
-if(readyButton){
-
-    readyButton.addEventListener(
-        "click",
-        async () => {
-
-            if(!currentPlayerRef)
-                return;
-
-            if(!roomData)
-                return;
-
-            if(
-                roomData.status !==
-                "waiting"
-            )
-                return;
-
-            try{
-
-                player.ready =
-                    !player.ready;
-
-                await updateDoc(
-                    currentPlayerRef,
-                    {
-
-                        ready:
-                            player.ready,
-
-                        updatedAt:
-                            serverTimestamp()
-
-                    }
-                );
-
-                updateWaitingState();
-
-            }catch(error){
-
-                console.error(
-                    "Ready error:",
-                    error
-                );
-
-            }
-
+        if (!alreadyJoined && playerSnapshot.size >= MAX_PLAYERS) {
+            setLobbyStatus("This room is full.");
+            return;
         }
-    );
 
+        roomId = id;
+        roomCode = data.roomCode;
+        roomData = data;
+
+        roomRef = doc(db, "gameRooms", id);
+        playersRef = playerCollection;
+
+        localPlayerRef = doc(
+            db,
+            "gameRooms",
+            id,
+            "players",
+            currentUser.uid
+        );
+
+        const existing = playerSnapshot.docs.find(
+            d => d.id === currentUser.uid
+        );
+
+        if (existing) {
+            self = {
+                ...createLocalPlayer(),
+                ...existing.data()
+            };
+        } else {
+            self = createLocalPlayer();
+
+            await setDoc(localPlayerRef, playerToFirestore(self));
+        }
+
+        enterRoomUI();
+
+        subscribeToRoom();
+        subscribeToPlayers();
+
+        await updateRoomCounts();
+
+        setLobbyStatus("Joined room successfully.");
+
+    } catch (error) {
+        console.error("Join room error:", error);
+
+        await resetLocalRoom(false);
+
+        setLobbyStatus("Could not join room. Check the room code.");
+    }
 }
 
+async function joinRoomByCode() {
+    const code = (el.roomInput?.value || "")
+        .trim()
+        .toUpperCase();
 
-// ============================================================
-// HOST START MATCH
-// ============================================================
-
-async function startMatch(){
-
-    if(!isHost || !roomData)
+    if (!code) {
+        setLobbyStatus("Enter a room code.");
         return;
-
-    if(
-        roomData.status !==
-        "waiting"
-    )
-        return;
-
-    const playerArray =
-        [...players.values()];
-
-    if(
-        playerArray.length <
-        MIN_PLAYERS
-    )
-        return;
-
-    const everyoneReady =
-        playerArray.every(
-            p =>
-                p.ready === true
-        );
-
-    if(!everyoneReady)
-        return;
-
-    const startAt =
-        Date.now() + 3500;
-
-    try{
-
-        await updateDoc(
-            doc(
-                db,
-                "gameRooms",
-                roomId
-            ),
-            {
-
-                status:
-                    "playing",
-
-                startAt,
-
-                playersCount:
-                    playerArray.length,
-
-                readyCount:
-                    playerArray.length
-
-            }
-        );
-
-    }catch(error){
-
-        console.error(
-            "Start match error:",
-            error
-        );
-
     }
 
+    try {
+        setLobbyStatus("Finding room...");
+
+        const roomDocument = await findRoomByCode(code);
+
+        if (!roomDocument) {
+            setLobbyStatus("Room not found.");
+            return;
+        }
+
+        await joinExistingRoom(roomDocument);
+
+    } catch (error) {
+        console.error("Find room error:", error);
+        setLobbyStatus("Could not find that room.");
+    }
 }
 
+/* ============================================================
+   QUICK MATCH
+   ============================================================ */
 
-// ============================================================
-// COUNTDOWN
-// ============================================================
-
-function startCountdown(startAt){
-
-    if(gameStarted)
+async function quickMatch() {
+    if (!currentUser) {
+        setLobbyStatus("Please sign in first.");
         return;
-
-    countdownOverlay?.classList.remove(
-        "hidden"
-    );
-
-    if(waitingOverlay)
-        waitingOverlay.style.display =
-            "none";
-
-    if(countdownTimer){
-
-        clearInterval(
-            countdownTimer
-        );
-
     }
 
-    function updateCountdown(){
+    if (roomId) {
+        setLobbyStatus("Leave your current room first.");
+        return;
+    }
 
-        const remaining =
-            startAt -
-            Date.now();
+    try {
+        setLobbyStatus("Searching for a match...");
 
-        if(remaining <= 0){
+        const q = query(
+            collection(db, "gameRooms"),
+            where("game", "==", GAME_ID),
+            where("status", "==", "waiting"),
+            limit(20)
+        );
 
-            clearInterval(
-                countdownTimer
+        const snap = await getDocs(q);
+
+        for (const candidate of snap.docs) {
+            const data = candidate.data();
+
+            if (data.hostUid === currentUser.uid) continue;
+
+            const candidatePlayers = await getDocs(
+                collection(db, "gameRooms", candidate.id, "players")
             );
 
+            const existing = candidatePlayers.docs.some(
+                d => d.id === currentUser.uid
+            );
+
+            if (candidatePlayers.size < MAX_PLAYERS || existing) {
+                await joinExistingRoom(candidate);
+                return;
+            }
+        }
+
+        await createRoom();
+
+    } catch (error) {
+        console.error("Quick match error:", error);
+        setLobbyStatus("Quick match failed. Try creating a room.");
+    }
+}
+
+/* ============================================================
+   ENTER ROOM UI
+   ============================================================ */
+
+function enterRoomUI() {
+    showLobby();
+    hideElement(el.winnerOverlay);
+    hideCountdown();
+    hideWaiting();
+    hideMessage();
+
+    setText(el.roomCode, roomCode || "------");
+    setText(el.gameRoomCode, roomCode || "------");
+
+    setButtonDisabled(el.readyButton, false);
+
+    renderLobbyPlayers();
+}
+
+/* ============================================================
+   FIRESTORE ROOM LISTENER
+   ============================================================ */
+
+function subscribeToRoom() {
+    if (!roomRef) return;
+
+    if (roomUnsubscribe) roomUnsubscribe();
+
+    roomUnsubscribe = onSnapshot(
+        roomRef,
+        snapshot => {
+            if (!snapshot.exists()) {
+                setLobbyStatus("Room no longer exists.");
+                return;
+            }
+
+            roomData = snapshot.data();
+
+            setText(el.roomCode, roomData.roomCode || roomCode);
+            setText(el.gameRoomCode, roomData.roomCode || roomCode);
+
+            if (roomData.status === "playing") {
+                if (!gameStarted && !gameFinished) {
+                    startCountdownFromServer(roomData.startAt);
+                }
+            }
+
+            if (roomData.status === "finished") {
+                if (!gameFinished) {
+                    finishGame(
+                        roomData.winnerUid || null,
+                        false
+                    );
+                }
+            }
+
+            if (roomData.status === "waiting") {
+                if (!gameStarted && !gameFinished) {
+                    showLobby();
+                    updateWaitingState();
+                }
+            }
+        },
+        error => {
+            console.error("Room listener error:", error);
+            setLobbyStatus("Connection problem. Reconnect and try again.");
+        }
+    );
+}
+
+/* ============================================================
+   PLAYER LISTENER
+   ============================================================ */
+
+function subscribeToPlayers() {
+    if (!playersRef) return;
+
+    if (playersUnsubscribe) playersUnsubscribe();
+
+    playersUnsubscribe = onSnapshot(
+        playersRef,
+        snapshot => {
+            const incoming = new Map();
+
+            snapshot.forEach(playerDoc => {
+                const data = playerDoc.data();
+
+                incoming.set(playerDoc.id, {
+                    ...data,
+                    uid: playerDoc.id
+                });
+            });
+
+            for (const [uid, data] of incoming) {
+                if (uid === currentUser?.uid) {
+                    if (self) {
+                        self.ready = !!data.ready;
+
+                        if (!gameStarted) {
+                            self.alive = data.alive !== false;
+                        }
+                    }
+                } else {
+                    applyRemotePlayer(data);
+                }
+            }
+
+            for (const uid of [...players.keys()]) {
+                if (!incoming.has(uid)) {
+                    players.delete(uid);
+                }
+            }
+
+            if (self) {
+                players.set(self.uid, self);
+            }
+
+            renderLobbyPlayers();
+            renderLeaderboard();
+            updateHUD();
+            updateWaitingState();
+
+            if (gameStarted && !gameFinished) {
+                checkLocalEndConditions();
+            }
+        },
+        error => {
+            console.error("Player listener error:", error);
+        }
+    );
+}
+
+/* ============================================================
+   UPDATE ROOM COUNTS
+   ============================================================ */
+
+async function updateRoomCounts() {
+    if (!roomRef || !roomData) return;
+
+    try {
+        const snapshot = await getDocs(playersRef);
+
+        let readyCount = 0;
+
+        snapshot.forEach(d => {
+            if (d.data().ready) readyCount++;
+        });
+
+        await updateDoc(roomRef, {
+            playersCount: snapshot.size,
+            readyCount
+        });
+
+    } catch (error) {
+        console.error("Room count update error:", error);
+    }
+}
+
+/* ============================================================
+   LOBBY RENDERING
+   ============================================================ */
+
+function renderLobbyPlayers() {
+    if (!el.playersList) return;
+
+    el.playersList.replaceChildren();
+
+    const allPlayers = [...players.values()];
+
+    if (self && !players.has(self.uid)) {
+        allPlayers.push(self);
+    }
+
+    allPlayers.forEach((p, index) => {
+        const row = document.createElement("div");
+
+        row.className = "volcano-player-row";
+
+        const dot = document.createElement("span");
+
+        dot.className = "volcano-player-dot";
+        dot.style.background = p.color || PLAYER_COLORS[index % PLAYER_COLORS.length];
+
+        const name = document.createElement("span");
+
+        name.className = "volcano-player-name";
+
+        name.textContent =
+            p.displayName ||
+            p.username ||
+            "Player";
+
+        if (p.uid === currentUser?.uid) {
+            name.textContent += " (You)";
+        }
+
+        const status = document.createElement("span");
+
+        status.className = "volcano-player-status";
+
+        if (gameStarted && !p.alive) {
+            status.textContent = "ELIMINATED";
+        } else {
+            status.textContent = p.ready ? "READY" : "NOT READY";
+        }
+
+        row.append(dot, name, status);
+
+        el.playersList.appendChild(row);
+    });
+
+    setText(
+        el.playerCount,
+        `${allPlayers.length}/${MAX_PLAYERS}`
+    );
+}
+
+function updateWaitingState() {
+    if (!roomData || !self) return;
+
+    if (el.readyButton) {
+        el.readyButton.textContent = self.ready
+            ? "CANCEL READY"
+            : "I'M READY";
+    }
+
+    const count = players.size || (self ? 1 : 0);
+
+    const readyCount = [...players.values()]
+        .filter(p => p.ready)
+        .length;
+
+    if (roomData.status === "waiting") {
+        setLobbyStatus(
+            `${count}/${MAX_PLAYERS} players • ${readyCount} ready • Need ${MIN_PLAYERS} players`
+        );
+    }
+}
+
+/* ============================================================
+   READY SYSTEM
+   ============================================================ */
+
+async function toggleReady() {
+    if (!self || !localPlayerRef || !roomData) return;
+
+    if (roomData.status !== "waiting") return;
+
+    const newReady = !self.ready;
+
+    self.ready = newReady;
+
+    renderLobbyPlayers();
+    updateWaitingState();
+
+    try {
+        await updateDoc(localPlayerRef, {
+            ready: newReady,
+            updatedAt: Date.now()
+        });
+
+        await updateRoomCounts();
+
+        await maybeStartMatch();
+
+    } catch (error) {
+        console.error("Ready update error:", error);
+
+        self.ready = !newReady;
+
+        renderLobbyPlayers();
+        updateWaitingState();
+    }
+}
+
+/* ============================================================
+   START MATCH
+   ============================================================ */
+
+async function maybeStartMatch() {
+    if (!roomData || !roomRef || !currentUser) return;
+
+    if (roomData.status !== "waiting") return;
+
+    if (roomData.hostUid !== currentUser.uid) return;
+
+    const snapshot = await getDocs(playersRef);
+
+    if (snapshot.size < MIN_PLAYERS) return;
+    if (snapshot.size > MAX_PLAYERS) return;
+
+    const allReady = snapshot.docs.every(
+        d => d.data().ready === true
+    );
+
+    if (!allReady) return;
+
+    const startAt = Date.now() + COUNTDOWN_SECONDS * 1000;
+
+    try {
+        await updateDoc(roomRef, {
+            status: "playing",
+            startAt,
+            playersCount: snapshot.size,
+            readyCount: snapshot.size
+        });
+    } catch (error) {
+        console.error("Start match error:", error);
+    }
+}
+
+/* ============================================================
+   SYNCHRONIZED COUNTDOWN
+   ============================================================ */
+
+function startCountdownFromServer(startAt) {
+    if (!startAt || gameStarted || gameFinished) return;
+
+    countdownTarget = Number(startAt);
+
+    if (!Number.isFinite(countdownTarget)) return;
+
+    showGameArea();
+    hideWaiting();
+
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+    }
+
+    countdownTimer = setInterval(() => {
+        if (gameFinished || gameStarted) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+            return;
+        }
+
+        const remaining = Math.max(
+            0,
+            Math.ceil((countdownTarget - Date.now()) / 1000)
+        );
+
+        if (remaining > 0) {
+            showCountdown(remaining);
+        } else {
+            clearInterval(countdownTimer);
             countdownTimer = null;
 
-            if(countdownNumber)
-                countdownNumber.textContent =
-                    "GO!";
+            hideCountdown();
 
-            setTimeout(
-                () => {
-
-                    countdownOverlay?.classList.add(
-                        "hidden"
-                    );
-
-                    beginGame();
-
-                },
-                350
-            );
-
-            return;
-
+            startGame();
         }
-
-        const seconds =
-            Math.ceil(
-                remaining / 1000
-            );
-
-        if(countdownMessage)
-            countdownMessage.textContent =
-                "ALL PLAYERS READY!";
-
-        if(countdownNumber)
-            countdownNumber.textContent =
-                seconds;
-
-    }
-
-    updateCountdown();
-
-    countdownTimer =
-        setInterval(
-            updateCountdown,
-            100
-        );
-
+    }, 100);
 }
 
+/* ============================================================
+   START GAME LOCALLY
+   ============================================================ */
 
-// ============================================================
-// BEGIN GAME
-// ============================================================
-
-function beginGame(){
-
-    if(gameStarted)
-        return;
+function startGame() {
+    if (gameStarted || gameFinished) return;
 
     gameStarted = true;
     gameFinished = false;
     resultRecorded = false;
+    finishingGame = false;
 
-    gameStartTime =
-        roomData?.startAt ||
-        Date.now();
+    gameStartTime = Number(roomData?.startAt || Date.now());
 
     gameElapsed = 0;
 
-    lastFrameTime =
-        performance.now();
-
-    player.x =
-        ROAD_WIDTH / 2 -
-        PLAYER_WIDTH / 2;
-
-    player.y =
-        PLAYER_GROUND_Y -
-        PLAYER_HEIGHT;
-
-    player.vx = 0;
-    player.vy = 0;
-
-    player.grounded = true;
-    player.jumping = false;
-
-    player.alive = true;
-
-    player.lives = 3;
-    player.score = 0;
-    player.distance = 0;
-
-    player.invulnerable = 1.5;
-
-    roomSeed =
-        Number(
-            roomData?.seed ||
-            1
-        );
-
-    // Generate only lava.
-    generateLavaEvents();
-
-    if(lobby)
-        lobby.style.display =
-            "none";
-
-    if(gameArea)
-        gameArea.style.display =
-            "block";
-
-    if(waitingOverlay)
-        waitingOverlay.style.display =
-            "none";
-
-    if(gameMessage)
-        gameMessage.style.display =
-            "none";
-
-    updateHUD();
-
-    sendPlayerState(true);
-
-    if(animationFrame){
-
-        cancelAnimationFrame(
-            animationFrame
-        );
-
-    }
-
-    animationFrame =
-        requestAnimationFrame(
-            gameLoop
-        );
-
-}
-
-
-// ============================================================
-// LAVA DIFFICULTY
-// ============================================================
-
-function getLavaDifficulty(time){
-
-    if(time < 30){
-
-        return {
-            speedMultiplier: 1.0,
-            spawnGap: 3.2
-        };
-
-    }
-
-    if(time < 60){
-
-        return {
-            speedMultiplier: 1.15,
-            spawnGap: 2.8
-        };
-
-    }
-
-    if(time < 90){
-
-        return {
-            speedMultiplier: 1.3,
-            spawnGap: 2.4
-        };
-
-    }
-
-    if(time < 120){
-
-        return {
-            speedMultiplier: 1.5,
-            spawnGap: 2.0
-        };
-
-    }
-
-    return {
-        speedMultiplier: 1.7,
-        spawnGap: 1.7
-    };
-
-}
-
-
-// ============================================================
-// LAVA SPEED
-// ============================================================
-
-function getLavaSpeed(time){
-
-    const difficulty =
-        getLavaDifficulty(time);
-
-    const baseSpeed =
-        (
-            LAVA_END_Y -
-            LAVA_START_Y
-        ) / 3.0;
-
-    return (
-        baseSpeed *
-        difficulty.speedMultiplier
-    );
-
-}
-
-
-// ============================================================
-// GENERATE LAVA
-// ============================================================
-//
-// Very simple:
-//
-// Every few seconds a lava wave appears.
-// The timing is shared by everyone in the room.
-// ============================================================
-
-function generateLavaEvents(){
-
-    lavaEvents = [];
-
-    let time = 4.0;
-
-    let index = 0;
-
-    while(
-        time <
-        GAME_DURATION
-    ){
-
-        const difficulty =
-            getLavaDifficulty(time);
-
-        const speed =
-            getLavaSpeed(time);
-
-        const distance =
-            LAVA_END_Y -
-            LAVA_START_Y;
-
-        const duration =
-            distance /
-            speed;
-
-        lavaEvents.push({
-
-            id:
-                `lava-${index}`,
-
-            time,
-
-            startY:
-                LAVA_START_Y,
-
-            endY:
-                LAVA_END_Y,
-
-            duration,
-
-            warning:
-                LAVA_WARNING_TIME,
-
-            height:
-                LAVA_HEIGHT,
-
-            speed,
-
-            speedMultiplier:
-                difficulty.speedMultiplier,
-
-            spawnGap:
-                difficulty.spawnGap
-
-        });
-
-        index++;
-
-        time +=
-            difficulty.spawnGap;
-
-    }
-
-}
-
-
-// ============================================================
-// ROAD PERSPECTIVE
-// ============================================================
-
-function getRoadBoundsAtY(y){
-
-    const topY = 300;
-    const bottomY = 700;
-
-    const progress =
-        Math.max(
-            0,
-            Math.min(
-                1,
-                (
-                    y -
-                    topY
-                ) /
-                (
-                    bottomY -
-                    topY
-                )
-            )
-        );
-
-    const left =
-        125 +
-        (
-            38 -
-            125
-        ) *
-        progress;
-
-    const right =
-        265 +
-        (
-            352 -
-            265
-        ) *
-        progress;
-
-    return {
-
-        left,
-        right,
-
-        width:
-            right -
-            left
-
-    };
-
-}
-
-
-// ============================================================
-// LAVA POSITION
-// ============================================================
-
-function getLavaPosition(event){
-
-    const elapsed =
-        gameElapsed -
-        event.time;
-
-    const progress =
-        Math.max(
-            0,
-            Math.min(
-                1,
-                elapsed /
-                event.duration
-            )
-        );
-
-    const y =
-        event.startY +
-        (
-            event.endY -
-            event.startY
-        ) *
-        progress;
-
-    const road =
-        getRoadBoundsAtY(
-            y
-        );
-
-    return {
-
-        y,
-
-        left:
-            road.left,
-
-        right:
-            road.right,
-
-        width:
-            road.width,
-
-        progress
-
-    };
-
-}
-
-
-// ============================================================
-// GAME LOOP
-// ============================================================
-
-function gameLoop(now){
-
-    animationFrame =
-        requestAnimationFrame(
-            gameLoop
-        );
-
-    const delta =
-        Math.min(
-            (
-                now -
-                lastFrameTime
-            ) / 1000,
-            .035
-        );
-
-    lastFrameTime =
-        now;
-
-    if(
-        !gameStarted ||
-        gameFinished
-    ){
-
-        drawScene();
-
-        return;
-
-    }
-
-    gameElapsed =
-        Math.max(
-            0,
-            (
-                Date.now() -
-                gameStartTime
-            ) / 1000
-        );
-
-    if(
-        gameElapsed >=
-        GAME_DURATION
-    ){
-
-        finishGame("time");
-
-        return;
-
-    }
-
-    updatePlayer(delta);
-
-    updateWorld(delta);
-
-    updateParticles(delta);
-
-    updateScore(delta);
-
-    updateHUD();
-
-    updateGameStateNetwork();
-
-    drawScene();
-
-    checkLastPlayerStanding();
-
-}
-
-
-// ============================================================
-// PLAYER UPDATE
-// ============================================================
-
-function updatePlayer(delta){
-
-    if(!player.alive)
-        return;
-
-    player.invulnerable =
-        Math.max(
-            0,
-            player.invulnerable -
-            delta
-        );
-
-    let direction = 0;
-
-    if(keys.left)
-        direction--;
-
-    if(keys.right)
-        direction++;
-
-    player.vx =
-        direction *
-        PLAYER_SPEED;
-
-    player.x +=
-        player.vx *
-        delta;
-
-    player.x =
-        Math.max(
-            45,
-            Math.min(
-                ROAD_WIDTH -
-                45 -
-                player.width,
-                player.x
-            )
-        );
-
-    player.vy +=
-        GRAVITY *
-        delta;
-
-    player.y +=
-        player.vy *
-        delta;
-
-    if(
-        player.y +
-        player.height >=
-        PLAYER_GROUND_Y
-    ){
-
-        player.y =
-            PLAYER_GROUND_Y -
-            player.height;
-
-        player.vy = 0;
-
-        player.grounded = true;
-        player.jumping = false;
-
-    }else{
-
-        player.grounded = false;
-
-    }
-
-    // ONLY LAVA.
-    checkLava();
-
-}
-
-
-// ============================================================
-// JUMP
-// ============================================================
-
-function jump(){
-
-    if(
-        !player.alive ||
-        gameFinished ||
-        !gameStarted
-    )
-        return;
-
-    if(player.grounded){
-
-        player.vy =
-            JUMP_FORCE;
-
-        player.grounded =
-            false;
-
-        player.jumping =
-            true;
-
-        createJumpParticles();
-
-    }
-
-}
-
-
-// ============================================================
-// TOUCH CONTROLS
-// ============================================================
-
-function holdButton(
-    button,
-    key
-){
-
-    if(!button)
-        return;
-
-    button.addEventListener(
-        "pointerdown",
-        event => {
-
-            event.preventDefault();
-
-            keys[key] = true;
-
-        }
-    );
-
-    button.addEventListener(
-        "pointerup",
-        event => {
-
-            event.preventDefault();
-
-            keys[key] = false;
-
-        }
-    );
-
-    button.addEventListener(
-        "pointercancel",
-        () => {
-
-            keys[key] = false;
-
-        }
-    );
-
-    button.addEventListener(
-        "pointerleave",
-        () => {
-
-            keys[key] = false;
-
-        }
-    );
-
-}
-
-
-holdButton(
-    leftButton,
-    "left"
-);
-
-holdButton(
-    rightButton,
-    "right"
-);
-
-
-if(jumpButton){
-
-    jumpButton.addEventListener(
-        "pointerdown",
-        event => {
-
-            event.preventDefault();
-
-            jump();
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// KEYBOARD
-// ============================================================
-
-window.addEventListener(
-    "keydown",
-    event => {
-
-        if(
-            event.key === "ArrowLeft" ||
-            event.key.toLowerCase() === "a"
-        ){
-
-            keys.left = true;
-
-        }
-
-        if(
-            event.key === "ArrowRight" ||
-            event.key.toLowerCase() === "d"
-        ){
-
-            keys.right = true;
-
-        }
-
-        if(
-            event.key === " " ||
-            event.key === "ArrowUp" ||
-            event.key.toLowerCase() === "w"
-        ){
-
-            event.preventDefault();
-
-            jump();
-
-        }
-
-    }
-);
-
-
-window.addEventListener(
-    "keyup",
-    event => {
-
-        if(
-            event.key === "ArrowLeft" ||
-            event.key.toLowerCase() === "a"
-        ){
-
-            keys.left = false;
-
-        }
-
-        if(
-            event.key === "ArrowRight" ||
-            event.key.toLowerCase() === "d"
-        ){
-
-            keys.right = false;
-
-        }
-
-    }
-);
-
-
-// ============================================================
-// SIMPLE LAVA COLLISION
-// ============================================================
-//
-// THIS IS THE IMPORTANT PART.
-//
-// If the player's FEET are above the
-// top of the lava, the player is safe.
-//
-// Therefore jumping over the lava works.
-// ============================================================
-
-function checkLava(){
-
-    if(
-        !player.alive ||
-        player.invulnerable > 0
-    )
-        return;
-
-    const playerLeft =
-        player.x + 3;
-
-    const playerRight =
-        player.x +
-        player.width -
-        3;
-
-    const playerBottom =
-        player.y +
-        player.height;
-
-
-    for(
-        const event
-        of lavaEvents
-    ){
-
-        const age =
-            gameElapsed -
-            event.time;
-
-        if(age < 0)
-            continue;
-
-        if(
-            age >
-            event.duration
-        )
-            continue;
-
-
-        const lava =
-            getLavaPosition(
-                event
-            );
-
-
-        const lavaTop =
-            lava.y -
-            event.height;
-
-
-        /*
-         * The lava only hurts the player
-         * while it is near the player's feet.
-         */
-        const lavaNearPlayer =
-            lava.y >
-            470 &&
-            lava.y <
-            610;
-
-
-        if(!lavaNearPlayer)
-            continue;
-
-
-        const horizontalHit =
-            playerRight >
-                lava.left &&
-            playerLeft <
-                lava.right;
-
-
-        /*
-         * MAIN JUMP CHECK.
-         *
-         * If player's feet are above
-         * the top of the lava,
-         * the jump succeeds.
-         */
-        const standingInLava =
-            playerBottom >
-            lavaTop + 3;
-
-
-        if(
-            horizontalHit &&
-            standingInLava
-        ){
-
-            hitPlayer(
-                "You hit the lava!"
-            );
-
-            return;
-
-        }
-
-    }
-
-}
-
-
-// ============================================================
-// PLAYER HIT
-// ============================================================
-
-async function hitPlayer(reason){
-
-    if(
-        !player.alive ||
-        player.invulnerable > 0
-    )
-        return;
-
-    player.lastHit =
-        Date.now();
-
-    player.lives--;
-
-    player.invulnerable =
-        1.7;
-
-    createExplosionParticles(
-        player.x +
-        player.width / 2,
-
-        player.y +
-        player.height / 2
-    );
-
-    if(player.lives <= 0){
-
-        eliminatePlayer(reason);
-
-        return;
-
-    }
-
-    player.x =
-        ROAD_WIDTH / 2 -
-        PLAYER_WIDTH / 2;
-
-    player.y =
-        PLAYER_GROUND_Y -
-        PLAYER_HEIGHT;
-
-    player.vy = 0;
-
-    player.grounded = true;
-
-    player.jumping = false;
-
-    showGameMessage(
-        "🔥",
-        "LAVA HIT!",
-        `${reason} ${player.lives} life${
-            player.lives === 1
-                ? ""
-                : "s"
-        } remaining.`,
-        1000
-    );
-
-    await sendPlayerState(true);
-
-}
-
-
-// ============================================================
-// ELIMINATE PLAYER
-// ============================================================
-
-async function eliminatePlayer(reason){
-
-    if(!player.alive)
-        return;
-
-    player.alive = false;
-    player.ready = false;
-
-    player.eliminationReason =
-        reason;
-
-    player.vx = 0;
-    player.vy = 0;
-
-    await sendPlayerState(true);
-
-    showGameMessage(
-        "💀",
-        "ELIMINATED!",
-        reason,
-        0
-    );
-
-    checkLastPlayerStanding();
-
-}
-
-
-// ============================================================
-// LAST PLAYER STANDING
-// ============================================================
-
-function checkLastPlayerStanding(){
-
-    if(
-        !gameStarted ||
-        gameFinished
-    )
-        return;
-
-    const allPlayers =
-        [...players.values()];
-
-    if(
-        allPlayers.length <
-        MIN_PLAYERS
-    )
-        return;
-
-    const alivePlayers =
-        allPlayers.filter(
-            p =>
-                p.alive === true
-        );
-
-    if(
-        alivePlayers.length === 1
-    ){
-
-        const winner =
-            alivePlayers[0];
-
-        if(
-            winner.uid ===
-            currentUser?.uid
-        ){
-
-            finishGame(
-                "last-player-standing"
-            );
-
-        }else{
-
-            finishGame(
-                "another-player-won"
-            );
-
-        }
-
-    }
-
-    if(
-        alivePlayers.length === 0
-    ){
-
-        finishGame(
-            "everyone-eliminated"
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// WORLD
-// ============================================================
-
-function updateWorld(delta){
-
-    roadScroll +=
-        (
-            120 +
-            gameElapsed * 1.8
-        ) *
-        delta;
-
-    if(roadScroll > 80)
-        roadScroll = 0;
-
-}
-
-
-// ============================================================
-// SCORE
-// ============================================================
-
-function updateScore(delta){
-
-    if(!player.alive)
-        return;
-
-    player.distance +=
-        delta *
-        (
-            8 +
-            gameElapsed * .035
-        );
-
-    player.score =
-        Math.floor(
-            player.distance
-        );
-
-    if(
-        player.score >
-        lastScoreUpdate
-    ){
-
-        lastScoreUpdate =
-            player.score;
-
-    }
-
-}
-
-
-// ============================================================
-// HUD
-// ============================================================
-
-function updateHUD(){
-
-    if(scoreValue){
-
-        scoreValue.textContent =
-            Math.floor(
-                player.score
-            );
-
-    }
-
-    const aliveCount =
-        [...players.values()]
-            .filter(
-                p =>
-                    p.alive
-            ).length;
-
-    if(aliveValue)
-        aliveValue.textContent =
-            aliveCount;
-
-    const remaining =
-        Math.max(
-            0,
-            GAME_DURATION -
-            gameElapsed
-        );
-
-    const minutes =
-        Math.floor(
-            remaining / 60
-        );
-
-    const seconds =
-        Math.floor(
-            remaining % 60
-        );
-
-    if(timeValue){
-
-        timeValue.textContent =
-            `${String(minutes).padStart(2,"0")}:${String(seconds).padStart(2,"0")}`;
-
-    }
-
-    if(livesValue){
-
-        livesValue.textContent =
-            "❤️".repeat(
-                Math.max(
-                    0,
-                    player.lives
-                )
-            ) ||
-            "💀";
-
-    }
-
-}
-
-
-// ============================================================
-// NETWORK PLAYER STATE
-// ============================================================
-
-async function updateGameStateNetwork(){
-
-    if(
-        !currentPlayerRef ||
-        !currentUser ||
-        gameFinished
-    )
-        return;
-
-    const now =
-        performance.now();
-
-    if(
-        now -
-        lastStateSend <
-        STATE_SEND_INTERVAL
-    )
-        return;
-
-    lastStateSend =
-        now;
-
-    try{
-
-        await updateDoc(
-            currentPlayerRef,
-            {
-
-                x:
-                    Math.round(
-                        player.x
-                    ),
-
-                y:
-                    Math.round(
-                        player.y
-                    ),
-
-                alive:
-                    player.alive,
-
-                ready:
-                    player.ready,
-
-                lives:
-                    player.lives,
-
-                score:
-                    Math.floor(
-                        player.score
-                    ),
-
-                displayName:
-                    player.fullName,
-
-                fullName:
-                    player.fullName,
-
-                updatedAt:
-                    serverTimestamp()
-
-            }
-        );
-
-    }catch(error){
-
-        console.warn(
-            "State update failed:",
-            error
-        );
-
-    }
-
-}
-
-
-async function sendPlayerState(
-    force = false
-){
-
-    if(
-        !currentPlayerRef ||
-        !currentUser
-    )
-        return;
-
-    if(
-        !force &&
-        performance.now() -
-        lastStateSend <
-        STATE_SEND_INTERVAL
-    )
-        return;
-
-    lastStateSend =
-        performance.now();
-
-    try{
-
-        await updateDoc(
-            currentPlayerRef,
-            {
-
-                x:
-                    Math.round(
-                        player.x
-                    ),
-
-                y:
-                    Math.round(
-                        player.y
-                    ),
-
-                alive:
-                    player.alive,
-
-                ready:
-                    player.ready,
-
-                lives:
-                    player.lives,
-
-                score:
-                    Math.floor(
-                        player.score
-                    ),
-
-                displayName:
-                    player.fullName,
-
-                fullName:
-                    player.fullName,
-
-                updatedAt:
-                    serverTimestamp()
-
-            }
-        );
-
-    }catch(error){
-
-        console.warn(
-            "Could not send player state:",
-            error
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// PLAYERS LIST
-// ============================================================
-
-function renderPlayersList(){
-
-    if(!playersList)
-        return;
-
-    if(players.size === 0){
-
-        playersList.innerHTML = `
-            <div class="playerRow">
-                <div class="playerAvatar">?</div>
-                <div class="playerDetails">
-                    <div class="playerName">
-                        Waiting for players...
-                    </div>
-                    <div class="playerUsername">
-                        Join the room to play
-                    </div>
-                </div>
-            </div>
-        `;
-
-        return;
-
-    }
-
-    playersList.innerHTML =
-        [...players.values()]
-            .map(
-                p => {
-
-                    const isYou =
-                        p.uid ===
-                        currentUser?.uid;
-
-                    const fullName =
-                        p.fullName ||
-                        p.displayName ||
-                        "Player";
-
-                    return `
-                        <div class="playerRow">
-
-                            <div
-                                class="playerAvatar"
-                                style="border-color:${
-                                    p.color ||
-                                    "#54d8ff"
-                                }"
-                            >
-                                ${
-                                    isYou
-                                        ? "⭐"
-                                        : "🏃"
-                                }
-                            </div>
-
-                            <div class="playerDetails">
-
-                                <div class="playerName">
-                                    ${escapeHtml(
-                                        fullName
-                                    )}
-                                    ${
-                                        isYou
-                                            ? " (You)"
-                                            : ""
-                                    }
-                                </div>
-
-                                <div class="playerUsername">
-                                    Player
-                                </div>
-
-                            </div>
-
-                            <div class="readyBadge ${
-                                p.ready
-                                    ? "ready"
-                                    : "notReady"
-                            }">
-
-                                ${
-                                    p.ready
-                                        ? "READY ✓"
-                                        : "NOT READY"
-                                }
-
-                            </div>
-
-                        </div>
-                    `;
-
-                }
-            )
-            .join("");
-
-}
-
-
-// ============================================================
-// LEADERBOARD
-// ============================================================
-
-function renderLeaderboard(){
-
-    if(!leaderboardRows)
-        return;
-
-    const sorted =
-        [...players.values()]
-            .sort(
-                (a,b) => {
-
-                    if(
-                        a.alive !==
-                        b.alive
-                    ){
-
-                        return a.alive
-                            ? -1
-                            : 1;
-
-                    }
-
-                    return (
-                        Number(
-                            b.score || 0
-                        ) -
-                        Number(
-                            a.score || 0
-                        )
-                    );
-
-                }
-            );
-
-    if(sorted.length === 0){
-
-        leaderboardRows.textContent =
-            "Waiting...";
-
-        return;
-
-    }
-
-    leaderboardRows.innerHTML =
-        sorted
-            .map(
-                (p,index) => {
-
-                    const isYou =
-                        p.uid ===
-                        currentUser?.uid;
-
-                    const fullName =
-                        p.fullName ||
-                        p.displayName ||
-                        "Player";
-
-                    return `
-                        <div class="leaderRow">
-
-                            <div class="rank">
-                                ${index + 1}
-                            </div>
-
-                            <div class="leaderName">
-
-                                ${
-                                    isYou
-                                        ? "⭐ "
-                                        : ""
-                                }
-
-                                ${escapeHtml(
-                                    fullName
-                                )}
-
-                                ${
-                                    p.alive
-                                        ? ""
-                                        : " 💀"
-                                }
-
-                            </div>
-
-                            <div class="leaderScore">
-                                ${Math.floor(
-                                    Number(
-                                        p.score || 0
-                                    )
-                                )}
-                            </div>
-
-                        </div>
-                    `;
-
-                }
-            )
-            .join("");
-
-}
-
-
-// ============================================================
-// GAME MESSAGE
-// ============================================================
-
-let gameMessageTimer = null;
-
-function showGameMessage(
-    icon,
-    title,
-    text,
-    duration = 1500
-){
-
-    if(messageIcon)
-        messageIcon.textContent =
-            icon;
-
-    if(messageTitle)
-        messageTitle.textContent =
-            title;
-
-    if(messageText)
-        messageText.textContent =
-            text;
-
-    if(gameMessage)
-        gameMessage.style.display =
-            "block";
-
-    if(gameMessageTimer){
-
-        clearTimeout(
-            gameMessageTimer
-        );
-
-    }
-
-    if(duration > 0){
-
-        gameMessageTimer =
-            setTimeout(
-                () => {
-
-                    if(
-                        gameFinished ||
-                        player.alive
-                    ){
-
-                        if(gameMessage)
-                            gameMessage.style.display =
-                                "none";
-
-                    }
-
-                },
-                duration
-            );
-
-    }
-
-}
-
-
-// ============================================================
-// FINISH GAME
-// ============================================================
-
-async function finishGame(reason){
-
-    if(gameFinished)
-        return;
-
-    gameFinished = true;
-
-    if(animationFrame){
-
-        cancelAnimationFrame(
-            animationFrame
-        );
-
-        animationFrame = null;
-
-    }
-
-    if(countdownTimer){
-
-        clearInterval(
-            countdownTimer
-        );
-
-        countdownTimer = null;
-
-    }
-
-    await sendPlayerState(true);
-
-    const allPlayers =
-        [...players.values()];
-
-    const ranked =
-        allPlayers.sort(
-            (a,b) => {
-
-                if(
-                    a.alive !==
-                    b.alive
-                ){
-
-                    return a.alive
-                        ? -1
-                        : 1;
-
-                }
-
-                return (
-                    Number(
-                        b.score || 0
-                    ) -
-                    Number(
-                        a.score || 0
-                    )
-                );
-
-            }
-        );
-
-    let winner =
-        ranked[0] ||
-        null;
-
-    if(
-        reason ===
-        "last-player-standing"
-    ){
-
-        winner =
-            ranked.find(
-                p =>
-                    p.uid ===
-                    currentUser?.uid
-            ) ||
-            winner;
-
-    }
-
-    if(
-        reason ===
-        "another-player-won"
-    ){
-
-        winner =
-            ranked.find(
-                p =>
-                    p.alive
-            ) ||
-            winner;
-
-    }
-
-    showWinnerScreen(
-        winner,
-        ranked
-    );
-
-    await recordLocalResult(
-        winner,
-        ranked
-    );
-
-    if(
-        isHost &&
-        roomId
-    ){
-
-        try{
-
-            await updateDoc(
-                doc(
-                    db,
-                    "gameRooms",
-                    roomId
-                ),
-                {
-
-                    status:
-                        "finished",
-
-                    winnerUid:
-                        winner?.uid ||
-                        null
-
-                }
-            );
-
-        }catch(error){
-
-            console.warn(
-                "Could not finish room:",
-                error
-            );
-
-        }
-
-    }
-
-}
-
-
-// ============================================================
-// RECORD RESULT
-// ============================================================
-
-async function recordLocalResult(
-    winner,
-    ranked
-){
-
-    if(resultRecorded)
-        return;
-
-    resultRecorded = true;
-
-    const myUid =
-        currentUser?.uid;
-
-    if(!myUid)
-        return;
-
-    const didWin =
-        winner &&
-        winner.uid ===
-        myUid;
-
-    const result =
-        didWin
-            ? "win"
-            : "loss";
-
-    const reward =
-        didWin
-            ? 100
-            : Math.max(
-                10,
-                Math.floor(
-                    player.score /
-                    10
-                )
-            );
-
-    try{
-
-        await recordGameResult(
-            GAME_ID,
-            result,
-            Math.floor(
-                player.score
-            ),
-            reward
-        );
-
-    }catch(error){
-
-        console.warn(
-            "Game result could not be saved:",
-            error
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// WINNER SCREEN
-// ============================================================
-
-function showWinnerScreen(
-    winner,
-    ranked
-){
-
-    if(!winnerOverlay)
-        return;
-
-    const meWon =
-        winner &&
-        winner.uid ===
-        currentUser?.uid;
-
-    if(winnerTitle){
-
-        winnerTitle.textContent =
-            meWon
-                ? "🏆 YOU ARE THE LAST PLAYER!"
-                : "👑 LAST PLAYER STANDING!";
-
-    }
-
-    if(winnerName){
-
-        winnerName.textContent =
-            winner
-                ? (
-                    winner.uid ===
-                    currentUser?.uid
-                        ? player.fullName
-                        : winner.fullName ||
-                          winner.displayName ||
-                          "Winner"
-                )
-                : "No Winner";
-
-    }
-
-    if(winnerScore){
-
-        winnerScore.textContent =
-            winner
-                ? `Score: ${Math.floor(
-                    Number(
-                        winner.score || 0
-                    )
-                )}`
-                : "Score: 0";
-
-    }
-
-    if(resultLeaderboard){
-
-        resultLeaderboard.innerHTML =
-            ranked
-                .map(
-                    (p,index) => {
-
-                        const isMe =
-                            p.uid ===
-                            currentUser?.uid;
-
-                        const fullName =
-                            p.fullName ||
-                            p.displayName ||
-                            "Player";
-
-                        return `
-                            <div class="resultRow">
-
-                                <div class="resultRank">
-                                    #${index + 1}
-                                </div>
-
-                                <div class="resultPlayer">
-
-                                    ${
-                                        isMe
-                                            ? "⭐ "
-                                            : ""
-                                    }
-
-                                    ${escapeHtml(
-                                        fullName
-                                    )}
-
-                                    ${
-                                        p.alive
-                                            ? " 🏆"
-                                            : " 💀"
-                                    }
-
-                                </div>
-
-                                <div class="resultScore">
-                                    ${Math.floor(
-                                        Number(
-                                            p.score || 0
-                                        )
-                                    )}
-                                </div>
-
-                            </div>
-                        `;
-
-                    }
-                )
-                .join("");
-
-    }
-
-    winnerOverlay.style.display =
-        "flex";
-
-}
-
-
-// ============================================================
-// CHAT UI
-// ============================================================
-
-function createChat(){
-
-    if(!roomId)
-        return;
-
-    if(chatPanel){
-
-        chatPanel.remove();
-
-        chatPanel = null;
-
-    }
-
-    chatToggleButton =
-        document.createElement(
-            "button"
-        );
-
-    chatToggleButton.id =
-        "volcanoChatToggle";
-
-    chatToggleButton.innerHTML =
-        "💬";
-
-    Object.assign(
-        chatToggleButton.style,
-        {
-
-            position: "fixed",
-            right: "18px",
-            bottom: "105px",
-
-            width: "52px",
-            height: "52px",
-
-            borderRadius: "50%",
-
-            border:
-                "1px solid rgba(84,216,255,.6)",
-
-            background:
-                "linear-gradient(135deg,#101d4a,#26104f)",
-
-            color: "#fff",
-
-            fontSize: "22px",
-
-            zIndex: "9998",
-
-            boxShadow:
-                "0 8px 30px rgba(0,0,0,.45)",
-
-            cursor: "pointer"
-
-        }
-    );
-
-    document.body.appendChild(
-        chatToggleButton
-    );
-
-    chatPanel =
-        document.createElement(
-            "div"
-        );
-
-    chatPanel.id =
-        "volcanoChatPanel";
-
-    Object.assign(
-        chatPanel.style,
-        {
-
-            position: "fixed",
-
-            right: "15px",
-            bottom: "165px",
-
-            width:
-                "min(340px,calc(100vw - 30px))",
-
-            height: "390px",
-
-            display: "none",
-
-            flexDirection: "column",
-
-            background:
-                "rgba(5,9,20,.96)",
-
-            border:
-                "1px solid rgba(84,216,255,.45)",
-
-            borderRadius: "18px",
-
-            overflow: "hidden",
-
-            zIndex: "9997",
-
-            boxShadow:
-                "0 20px 60px rgba(0,0,0,.6)",
-
-            backdropFilter:
-                "blur(18px)"
-
-        }
-    );
-
-    const header =
-        document.createElement(
-            "div"
-        );
-
-    Object.assign(
-        header.style,
-        {
-
-            padding: "13px 15px",
-
-            display: "flex",
-
-            justifyContent:
-                "space-between",
-
-            alignItems: "center",
-
-            color: "#fff",
-
-            fontWeight: "800",
-
-            background:
-                "linear-gradient(135deg,#111d48,#251044)"
-
-        }
-    );
-
-    header.innerHTML =
-        `
-            <span>💬 Volcano Chat</span>
-
-            <button
-                id="volcanoChatClose"
-                style="
-                    border:0;
-                    background:transparent;
-                    color:white;
-                    font-size:20px;
-                    cursor:pointer;
-                "
-            >
-                ×
-            </button>
-        `;
-
-    chatPanel.appendChild(
-        header
-    );
-
-    chatMessages =
-        document.createElement(
-            "div"
-        );
-
-    Object.assign(
-        chatMessages.style,
-        {
-
-            flex: "1",
-
-            overflowY: "auto",
-
-            padding: "12px",
-
-            display: "flex",
-
-            flexDirection: "column",
-
-            gap: "8px"
-
-        }
-    );
-
-    chatPanel.appendChild(
-        chatMessages
-    );
-
-    const composer =
-        document.createElement(
-            "div"
-        );
-
-    Object.assign(
-        composer.style,
-        {
-
-            display: "flex",
-
-            gap: "7px",
-
-            padding: "10px",
-
-            borderTop:
-                "1px solid rgba(255,255,255,.08)"
-
-        }
-    );
-
-    chatInput =
-        document.createElement(
-            "input"
-        );
-
-    chatInput.placeholder =
-        "Type a message...";
-
-    chatInput.maxLength =
-        120;
-
-    Object.assign(
-        chatInput.style,
-        {
-
-            flex: "1",
-
-            minWidth: "0",
-
-            padding: "11px",
-
-            borderRadius: "12px",
-
-            border:
-                "1px solid rgba(255,255,255,.12)",
-
-            outline: "none",
-
-            background: "#10182d",
-
-            color: "#fff"
-
-        }
-    );
-
-    chatSendButton =
-        document.createElement(
-            "button"
-        );
-
-    chatSendButton.textContent =
-        "➤";
-
-    Object.assign(
-        chatSendButton.style,
-        {
-
-            width: "45px",
-
-            border: "0",
-
-            borderRadius: "12px",
-
-            background: "#54d8ff",
-
-            color: "#06101d",
-
-            fontWeight: "900",
-
-            cursor: "pointer"
-
-        }
-    );
-
-    composer.appendChild(
-        chatInput
-    );
-
-    composer.appendChild(
-        chatSendButton
-    );
-
-    chatPanel.appendChild(
-        composer
-    );
-
-    document.body.appendChild(
-        chatPanel
-    );
-
-    chatToggleButton.addEventListener(
-        "click",
-        () => {
-
-            const open =
-                chatPanel.style.display ===
-                "flex";
-
-            chatPanel.style.display =
-                open
-                    ? "none"
-                    : "flex";
-
-            if(!open){
-
-                chatUnread = 0;
-
-                updateChatButton();
-
-                setTimeout(
-                    () => {
-
-                        chatMessages.scrollTop =
-                            chatMessages.scrollHeight;
-
-                    },
-                    50
-                );
-
-            }
-
-        }
-    );
-
-    document
-        .getElementById(
-            "volcanoChatClose"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                chatPanel.style.display =
-                    "none";
-
-            }
-        );
-
-    chatSendButton.addEventListener(
-        "click",
-        sendChatMessage
-    );
-
-    chatInput.addEventListener(
-        "keydown",
-        event => {
-
-            if(event.key === "Enter"){
-
-                event.preventDefault();
-
-                sendChatMessage();
-
-            }
-
-        }
-    );
-
-    subscribeToChat();
-
-}
-
-
-// ============================================================
-// CHAT SUBSCRIPTION
-// ============================================================
-
-function subscribeToChat(){
-
-    if(chatUnsubscribe)
-        chatUnsubscribe();
-
-    if(!roomId)
-        return;
-
-    const messagesRef =
-        collection(
-            db,
-            "gameRooms",
-            roomId,
-            "messages"
-        );
-
-    const messagesQuery =
-        query(
-            messagesRef,
-            limit(100)
-        );
-
-    chatUnsubscribe =
-        onSnapshot(
-            messagesQuery,
-            snapshot => {
-
-                const messages =
-                    snapshot.docs
-                        .map(
-                            d => ({
-                                id:
-                                    d.id,
-
-                                ...d.data()
-                            })
-                        )
-                        .sort(
-                            (a,b) => {
-
-                                const aTime =
-                                    a.createdAt?.seconds ||
-                                    0;
-
-                                const bTime =
-                                    b.createdAt?.seconds ||
-                                    0;
-
-                                return (
-                                    aTime -
-                                    bTime
-                                );
-
-                            }
-                        );
-
-                renderChatMessages(
-                    messages
-                );
-
-            },
-            error => {
-
-                console.error(
-                    "Chat listener:",
-                    error
-                );
-
-            }
-        );
-
-}
-
-
-// ============================================================
-// SEND CHAT MESSAGE
-// ============================================================
-
-async function sendChatMessage(){
-
-    if(
-        !currentUser ||
-        !roomId ||
-        !chatInput
-    )
-        return;
-
-    const text =
-        chatInput.value
-            .trim()
-            .slice(0,120);
-
-    if(!text)
-        return;
-
-    chatInput.value = "";
-
-    try{
-
-        await addDoc(
-            collection(
-                db,
-                "gameRooms",
-                roomId,
-                "messages"
-            ),
-            {
-
-                uid:
-                    currentUser.uid,
-
-                fullName:
-                    player.fullName,
-
-                displayName:
-                    player.fullName,
-
-                text,
-
-                createdAt:
-                    serverTimestamp()
-
-            }
-        );
-
-    }catch(error){
-
-        console.error(
-            "Chat send error:",
-            error
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// RENDER CHAT
-// ============================================================
-
-function renderChatMessages(
-    messages
-){
-
-    if(!chatMessages)
-        return;
-
-    const wasAtBottom =
-        chatMessages.scrollHeight -
-        chatMessages.scrollTop -
-        chatMessages.clientHeight <
-        60;
-
-    chatMessages.innerHTML =
-        "";
-
-    messages.forEach(
-        message => {
-
-            const mine =
-                message.uid ===
-                currentUser?.uid;
-
-            const row =
-                document.createElement(
-                    "div"
-                );
-
-            Object.assign(
-                row.style,
-                {
-
-                    alignSelf:
-                        mine
-                            ? "flex-end"
-                            : "flex-start",
-
-                    maxWidth:
-                        "85%",
-
-                    padding:
-                        "8px 11px",
-
-                    borderRadius:
-                        mine
-                            ? "14px 14px 3px 14px"
-                            : "14px 14px 14px 3px",
-
-                    background:
-                        mine
-                            ? "linear-gradient(135deg,#155d7a,#43318a)"
-                            : "#151d32",
-
-                    color:
-                        "#fff",
-
-                    wordBreak:
-                        "break-word"
-
-                }
-            );
-
-            const fullName =
-                message.fullName ||
-                message.displayName ||
-                "Player";
-
-            row.innerHTML =
-                `
-                    <div
-                        style="
-                            font-size:10px;
-                            opacity:.65;
-                            margin-bottom:3px;
-                            font-weight:700;
-                        "
-                    >
-                        ${escapeHtml(
-                            fullName
-                        )}
-                    </div>
-
-                    <div
-                        style="
-                            font-size:13px;
-                            line-height:1.35;
-                        "
-                    >
-                        ${escapeHtml(
-                            message.text ||
-                            ""
-                        )}
-                    </div>
-                `;
-
-            chatMessages.appendChild(
-                row
-            );
-
-        }
-    );
-
-    const panelOpen =
-        chatPanel?.style.display ===
-        "flex";
-
-    if(!panelOpen){
-
-        chatUnread++;
-
-        updateChatButton();
-
-    }else if(wasAtBottom){
-
-        chatMessages.scrollTop =
-            chatMessages.scrollHeight;
-
-    }else{
-
-        chatMessages.scrollTop =
-            chatMessages.scrollHeight;
-
-    }
-
-}
-
-
-// ============================================================
-// CHAT BADGE
-// ============================================================
-
-function updateChatButton(){
-
-    if(!chatToggleButton)
-        return;
-
-    chatToggleButton.style.position =
-        "fixed";
-
-    chatToggleButton.innerHTML =
-        chatUnread > 0
-            ? `💬<span style="
-                    position:absolute;
-                    transform:translate(10px,-25px);
-                    background:#ff4d91;
-                    color:white;
-                    min-width:18px;
-                    height:18px;
-                    border-radius:9px;
-                    display:inline-flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:10px;
-                    font-weight:900;
-                ">${Math.min(
-                    chatUnread,
-                    99
-                )}</span>`
-            : "💬";
-
-}
-
-
-// ============================================================
-// WINNER / RETURN
-// ============================================================
-
-if(returnLobbyButton){
-
-    returnLobbyButton.addEventListener(
-        "click",
-        async () => {
-
-            if(winnerOverlay)
-                winnerOverlay.style.display =
-                    "none";
-
-            await leaveRoom();
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// LEAVE BUTTON
-// ============================================================
-
-if(leaveButton){
-
-    leaveButton.addEventListener(
-        "click",
-        async () => {
-
-            await leaveRoom();
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// LEAVE ROOM
-// ============================================================
-
-async function leaveRoom(){
-
-    gameFinished = true;
-    gameStarted = false;
-
-    if(animationFrame){
-
-        cancelAnimationFrame(
-            animationFrame
-        );
-
-        animationFrame = null;
-
-    }
-
-    if(countdownTimer){
-
-        clearInterval(
-            countdownTimer
-        );
-
-        countdownTimer = null;
-
-    }
-
-    if(playersUnsubscribe){
-
-        playersUnsubscribe();
-
-        playersUnsubscribe =
-            null;
-
-    }
-
-    if(roomUnsubscribe){
-
-        roomUnsubscribe();
-
-        roomUnsubscribe =
-            null;
-
-    }
-
-    if(chatUnsubscribe){
-
-        chatUnsubscribe();
-
-        chatUnsubscribe =
-            null;
-
-    }
-
-    if(chatPanel){
-
-        chatPanel.remove();
-
-        chatPanel = null;
-
-    }
-
-    if(chatToggleButton){
-
-        chatToggleButton.remove();
-
-        chatToggleButton = null;
-
-    }
-
-    if(currentPlayerRef){
-
-        try{
-
-            await deleteDoc(
-                currentPlayerRef
-            );
-
-        }catch(error){
-
-            console.warn(
-                "Player removal failed:",
-                error
-            );
-
-        }
-
-    }
-
-    if(
-        isHost &&
-        roomId &&
-        roomData &&
-        roomData.status ===
-        "waiting"
-    ){
-
-        try{
-
-            await updateDoc(
-                doc(
-                    db,
-                    "gameRooms",
-                    roomId
-                ),
-                {
-
-                    status:
-                        "finished"
-
-                }
-            );
-
-        }catch(error){
-
-            console.warn(
-                "Room close failed:",
-                error
-            );
-
-        }
-
-    }
-
-    leaveRoomLocal();
-
-}
-
-
-// ============================================================
-// RESET LOCAL ROOM
-// ============================================================
-
-function leaveRoomLocal(){
-
-    roomId = null;
-    roomData = null;
-
-    currentPlayerRef = null;
-
-    isHost = false;
-
-    players.clear();
-
+    hitLavaIds.clear();
     lavaEvents = [];
     particles = [];
 
-    player.ready = false;
-    player.alive = true;
+    if (self) {
+        self.alive = true;
+        self.lives = 1;
+        self.score = 0;
 
-    player.lives = 3;
-    player.score = 0;
-    player.distance = 0;
+        self.x = WORLD_WIDTH / 2;
+        self.y = GROUND_Y - PLAYER_HEIGHT;
 
-    player.fullName =
-        getUserName(
-            currentUser
-        );
+        self.vx = 0;
+        self.vy = 0;
 
-    winnerOverlay?.style &&
-        (winnerOverlay.style.display =
-            "none");
-
-    if(gameMessage)
-        gameMessage.style.display =
-            "none";
-
-    if(gameArea)
-        gameArea.style.display =
-            "none";
-
-    if(lobby)
-        lobby.style.display =
-            "block";
-
-    if(roomCodeEl)
-        roomCodeEl.textContent =
-            "------";
-
-    if(gameRoomCodeEl)
-        gameRoomCodeEl.textContent =
-            "------";
-
-    if(playerCountEl)
-        playerCountEl.textContent =
-            "Players: 0/4";
-
-    if(readyButton){
-
-        readyButton.textContent =
-            "🔥 READY";
-
-        readyButton.classList.remove(
-            "readyOn"
-        );
-
+        self.jumping = false;
+        self.invulnerableUntil = 0;
     }
 
-    setLobbyStatus(
-        "Create or join a room to begin."
-    );
+    for (const p of players.values()) {
+        p.alive = true;
+        p.lives = 1;
+        p.score = 0;
+    }
 
-    renderPlayersList();
+    showGameArea();
+    hideCountdown();
+    hideWaiting();
+    hideMessage();
+    hideElement(el.winnerOverlay);
 
+    setText(el.scoreValue, "0");
+    setText(el.aliveValue, String(players.size));
+    setText(el.timeValue, String(GAME_DURATION));
+    setText(el.livesValue, "1");
+
+    lastFrameTime = performance.now();
+
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+    }
+
+    animationFrame = requestAnimationFrame(gameLoop);
+
+    sendPlayerState(true);
 }
 
+/* ============================================================
+   LAVA DIFFICULTY
+   ============================================================ */
 
-// ============================================================
-// DRAW SCENE
-// ============================================================
+function getLavaDifficulty(elapsed) {
+    const t = Math.max(0, elapsed);
 
-function drawScene(){
+    return {
+        spawnGap: Math.max(0.82, 2.8 - t * 0.0105),
 
-    if(!ctx)
-        return;
+        speed: Math.min(490, 195 + t * 1.7),
 
-    ctx.clearRect(
+        width: Math.min(280, 115 + t * 0.65),
+
+        warningTime: Math.max(0.4, 1.15 - t * 0.003)
+    };
+}
+
+/* ============================================================
+   DETERMINISTIC LAVA SCHEDULE
+   All clients derive wave timing from the same game start.
+   ============================================================ */
+
+function getLavaSchedule(elapsed) {
+    const result = [];
+
+    let spawnTime = 2;
+    let index = 0;
+
+    while (spawnTime <= elapsed + 5) {
+        const difficulty = getLavaDifficulty(spawnTime);
+
+        const age = elapsed - spawnTime;
+
+        const travelDuration =
+            (LAVA_END_Y - LAVA_START_Y) / difficulty.speed;
+
+        if (age >= 0 && age <= travelDuration + 0.2) {
+            const y = LAVA_START_Y + age * difficulty.speed;
+
+            const road = getRoadBoundsAtY(y);
+
+            const centerOffset =
+                Math.sin(index * 2.13) *
+                Math.max(0, road.right - road.left) *
+                0.18;
+
+            const center = (road.left + road.right) / 2 + centerOffset;
+
+            const width = Math.min(
+                difficulty.width,
+                road.right - road.left
+            );
+
+            result.push({
+                id: `lava-${index}`,
+                y,
+                height: LAVA_HEIGHT,
+                left: center - width / 2,
+                right: center + width / 2,
+                spawnTime,
+                warningTime: difficulty.warningTime
+            });
+        }
+
+        spawnTime += difficulty.spawnGap;
+        index++;
+
+        if (index > 1000) break;
+    }
+
+    return result;
+}
+
+/* ============================================================
+   ROAD PERSPECTIVE
+   ============================================================ */
+
+function getRoadBoundsAtY(y) {
+    const depth = Math.max(
         0,
-        0,
-        ROAD_WIDTH,
-        ROAD_HEIGHT
+        Math.min(1, (y - 120) / (WORLD_HEIGHT - 120))
     );
+
+    const width = 55 + depth * 265;
+
+    return {
+        left: WORLD_WIDTH / 2 - width / 2,
+        right: WORLD_WIDTH / 2 + width / 2
+    };
+}
+
+/* ============================================================
+   GAME LOOP
+   ============================================================ */
+
+function gameLoop(timestamp) {
+    if (!gameStarted || gameFinished) return;
+
+    const dt = Math.min(
+        0.04,
+        Math.max(0, (timestamp - lastFrameTime) / 1000)
+    );
+
+    lastFrameTime = timestamp;
+
+    gameElapsed = Math.max(
+        0,
+        (Date.now() - gameStartTime) / 1000
+    );
+
+    if (gameElapsed >= GAME_DURATION) {
+        handleTimeExpired();
+        return;
+    }
+
+    updateLocalPlayer(dt);
+    updateRemotePlayers(dt);
+    updateLava(dt);
+    updateParticles(dt);
+
+    checkLavaCollisions();
+    updateScore(dt);
+    updateHUD();
+
+    drawScene();
+
+    if (timestamp - lastStateSend >= STATE_SEND_INTERVAL) {
+        lastStateSend = timestamp;
+        sendPlayerState();
+    }
+
+    checkLocalEndConditions();
+
+    if (!gameFinished) {
+        animationFrame = requestAnimationFrame(gameLoop);
+    }
+}
+
+/* ============================================================
+   LOCAL PLAYER MOVEMENT
+   ============================================================ */
+
+function updateLocalPlayer(dt) {
+    if (!self || !self.alive) return;
+
+    input.left = pressedKeys.has("ArrowLeft") ||
+        pressedKeys.has("a") ||
+        touchLeft;
+
+    input.right = pressedKeys.has("ArrowRight") ||
+        pressedKeys.has("d") ||
+        touchRight;
+
+    input.jump = pressedKeys.has(" ") ||
+        pressedKeys.has("ArrowUp") ||
+        pressedKeys.has("w") ||
+        touchJump;
+
+    let direction = 0;
+
+    if (input.left) direction -= 1;
+    if (input.right) direction += 1;
+
+    self.vx = direction * PLAYER_SPEED;
+
+    self.x += self.vx * dt;
+
+    const bounds = getRoadBoundsAtY(GROUND_Y);
+
+    self.x = Math.max(
+        bounds.left + PLAYER_WIDTH / 2,
+        Math.min(
+            bounds.right - PLAYER_WIDTH / 2,
+            self.x
+        )
+    );
+
+    const jumpPressed = input.jump && !jumpWasPressed;
+
+    if (jumpPressed && !self.jumping) {
+        self.vy = -JUMP_FORCE;
+        self.jumping = true;
+
+        spawnJumpParticles(self.x, GROUND_Y);
+    }
+
+    jumpWasPressed = input.jump;
+
+    if (self.jumping) {
+        self.vy += GRAVITY * dt;
+        self.y += self.vy * dt;
+
+        const groundTop = GROUND_Y - PLAYER_HEIGHT;
+
+        if (self.y >= groundTop) {
+            self.y = groundTop;
+            self.vy = 0;
+            self.jumping = false;
+        }
+    } else {
+        self.y = GROUND_Y - PLAYER_HEIGHT;
+    }
+}
+
+/* ============================================================
+   SMOOTH REMOTE PLAYERS
+   ============================================================ */
+
+function updateRemotePlayers(dt) {
+    for (const p of players.values()) {
+        if (p.uid === currentUser?.uid) continue;
+
+        const blend = Math.min(1, dt * 12);
+
+        p.renderedX += (p.x - p.renderedX) * blend;
+        p.renderedY += (p.y - p.renderedY) * blend;
+    }
+}
+
+/* ============================================================
+   LAVA EVENTS
+   ============================================================ */
+
+function updateLava() {
+    lavaEvents = getLavaSchedule(gameElapsed);
+}
+
+/* ============================================================
+   LAVA COLLISION
+   Jumping above the lava wave prevents a collision.
+   Each wave can eliminate a player only once.
+   ============================================================ */
+
+function checkLavaCollisions() {
+    if (!self || !self.alive) return;
+
+    for (const lava of lavaEvents) {
+        if (hitLavaIds.has(lava.id)) continue;
+
+        const playerLeft = self.x - PLAYER_WIDTH / 2;
+        const playerRight = self.x + PLAYER_WIDTH / 2;
+
+        const playerTop = self.y;
+        const playerBottom = self.y + PLAYER_HEIGHT;
+
+        const lavaTop = lava.y - lava.height;
+        const lavaBottom = lava.y;
+
+        const horizontalOverlap =
+            playerRight > lava.left &&
+            playerLeft < lava.right;
+
+        const verticalOverlap =
+            playerBottom > lavaTop &&
+            playerTop < lavaBottom;
+
+        if (horizontalOverlap && verticalOverlap) {
+            hitLavaIds.add(lava.id);
+            eliminateLocalPlayer();
+            break;
+        }
+    }
+}
+
+/* ============================================================
+   ELIMINATION
+   ============================================================ */
+
+function eliminateLocalPlayer() {
+    if (!self || !self.alive || gameFinished) return;
+
+    self.alive = false;
+    self.lives = 0;
+    self.vx = 0;
+    self.vy = 0;
+
+    spawnEliminationParticles(self.x, self.y);
+
+    showMessage(
+        "🌋",
+        "ELIMINATED",
+        "The lava caught you! Watch the remaining players."
+    );
+
+    sendPlayerState(true);
+
+    renderLeaderboard();
+    updateHUD();
+
+    checkLocalEndConditions();
+}
+
+/* ============================================================
+   SCORE
+   ============================================================ */
+
+function updateScore(dt) {
+    if (!self || !self.alive) return;
+
+    self.score += Math.round(dt * 10);
+
+    for (const p of players.values()) {
+        if (p.uid === self.uid || !p.alive) continue;
+
+        if (!Number.isFinite(p.score)) p.score = 0;
+    }
+}
+
+/* ============================================================
+   END CONDITIONS
+   ============================================================ */
+
+function getAlivePlayers() {
+    return [...players.values()].filter(p => p.alive !== false);
+}
+
+function checkLocalEndConditions() {
+    if (!gameStarted || gameFinished) return;
+
+    const alive = getAlivePlayers();
+
+    if (alive.length <= 1 && players.size >= MIN_PLAYERS) {
+        const winner = alive[0] || null;
+
+        finishGame(winner?.uid || null, true);
+    }
+}
+
+function handleTimeExpired() {
+    if (gameFinished) return;
+
+    const ranking = [...players.values()].sort((a, b) => {
+        if (!!a.alive !== !!b.alive) {
+            return a.alive ? -1 : 1;
+        }
+
+        return Number(b.score || 0) - Number(a.score || 0);
+    });
+
+    finishGame(ranking[0]?.uid || null, true);
+}
+
+/* ============================================================
+   FINISH GAME
+   Only the host persists the final room result.
+   ============================================================ */
+
+async function finishGame(winnerUid, requestHostFinish = false) {
+    if (finishingGame || gameFinished) return;
+
+    finishingGame = true;
+    gameFinished = true;
+    gameStarted = false;
+
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+    }
+
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+    }
+
+    hideCountdown();
+    hideWaiting();
+    hideMessage();
+
+    const ranking = [...players.values()].sort((a, b) => {
+        if (!!a.alive !== !!b.alive) {
+            return a.alive ? -1 : 1;
+        }
+
+        return Number(b.score || 0) - Number(a.score || 0);
+    });
+
+    let winner = ranking.find(p => p.uid === winnerUid);
+
+    if (!winner && ranking.length) {
+        winner = ranking[0];
+        winnerUid = winner.uid;
+    }
+
+    const isHost = roomData?.hostUid === currentUser?.uid;
+
+    if (requestHostFinish && isHost && roomRef) {
+        try {
+            await updateDoc(roomRef, {
+                status: "finished",
+                winnerUid: winnerUid || null,
+                finishedAt: Date.now()
+            });
+        } catch (error) {
+            console.error("Persist game result error:", error);
+        }
+    }
+
+    if (self && localPlayerRef) {
+        try {
+            await sendPlayerState(true);
+        } catch (error) {
+            console.warn("Final player state failed:", error);
+        }
+    }
+
+    const didWin = winnerUid === currentUser?.uid;
+
+    setText(
+        el.winnerTitle,
+        didWin ? "VICTORY!" : "GAME OVER"
+    );
+
+    setText(
+        el.winnerName,
+        winner?.displayName || winner?.username || "No winner"
+    );
+
+    setText(
+        el.winnerScore,
+        String(winner?.score || 0)
+    );
+
+    renderResultLeaderboard(ranking);
+
+    showElement(el.winnerOverlay);
+
+    showGameArea();
+
+    if (!resultRecorded && self) {
+        resultRecorded = true;
+
+        try {
+            const score = Number(self.score || 0);
+            const reward = didWin ? 100 : 0;
+
+            await recordGameResult(
+                GAME_ID,
+                didWin ? "win" : "loss",
+                score,
+                reward
+            );
+        } catch (error) {
+            console.warn("Game result recording failed:", error);
+        }
+    }
+
+    finishingGame = false;
+}
+
+/* ============================================================
+   HUD
+   ============================================================ */
+
+function updateHUD() {
+    if (self) {
+        setText(el.scoreValue, Math.floor(self.score || 0));
+        setText(el.livesValue, self.alive ? 1 : 0);
+    }
+
+    setText(
+        el.aliveValue,
+        getAlivePlayers().length
+    );
+
+    setText(
+        el.timeValue,
+        Math.max(0, Math.ceil(GAME_DURATION - gameElapsed))
+    );
+
+    renderLeaderboard();
+}
+
+/* ============================================================
+   LEADERBOARD
+   ============================================================ */
+
+function renderLeaderboard() {
+    if (!el.leaderboardRows) return;
+
+    const ranking = [...players.values()].sort((a, b) => {
+        if (!!a.alive !== !!b.alive) {
+            return a.alive ? -1 : 1;
+        }
+
+        return Number(b.score || 0) - Number(a.score || 0);
+    });
+
+    el.leaderboardRows.replaceChildren();
+
+    ranking.forEach((p, index) => {
+        const row = document.createElement("div");
+
+        row.className = "volcano-leaderboard-row";
+
+        const rank = document.createElement("span");
+        rank.textContent = String(index + 1);
+
+        const name = document.createElement("span");
+        name.textContent = p.displayName || p.username || "Player";
+
+        const score = document.createElement("span");
+        score.textContent = String(Math.floor(p.score || 0));
+
+        const status = document.createElement("span");
+        status.textContent = p.alive ? "ALIVE" : "OUT";
+
+        row.append(rank, name, score, status);
+
+        el.leaderboardRows.appendChild(row);
+    });
+}
+
+function renderResultLeaderboard(ranking) {
+    if (!el.resultLeaderboard) return;
+
+    el.resultLeaderboard.replaceChildren();
+
+    ranking.forEach((p, index) => {
+        const row = document.createElement("div");
+
+        row.className = "volcano-result-row";
+
+        const name = document.createElement("span");
+        name.textContent = `${index + 1}. ${p.displayName || p.username || "Player"}`;
+
+        const score = document.createElement("span");
+        score.textContent = `${Math.floor(p.score || 0)} pts`;
+
+        row.append(name, score);
+
+        el.resultLeaderboard.appendChild(row);
+    });
+}
+
+/* ============================================================
+   FIRESTORE STATE UPDATES
+   ============================================================ */
+
+async function sendPlayerState(force = false) {
+    if (!self || !localPlayerRef) return;
+
+    if (stateWriteInFlight) return;
+
+    if (!force && !gameStarted) return;
+
+    stateWriteInFlight = true;
+
+    try {
+        await updateDoc(
+            localPlayerRef,
+            playerToFirestore(self)
+        );
+    } catch (error) {
+        console.warn("Player state update failed:", error);
+    } finally {
+        stateWriteInFlight = false;
+    }
+}
+
+/* ============================================================
+   PARTICLES
+   ============================================================ */
+
+function spawnJumpParticles(x, y) {
+    for (let i = 0; i < 8; i++) {
+        particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 110,
+            vy: -Math.random() * 100,
+            life: 0.4 + Math.random() * 0.3,
+            size: 2 + Math.random() * 3,
+            color: "#54e8ff"
+        });
+    }
+}
+
+function spawnEliminationParticles(x, y) {
+    for (let i = 0; i < 22; i++) {
+        particles.push({
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 220,
+            vy: (Math.random() - 0.8) * 220,
+            life: 0.6 + Math.random() * 0.8,
+            size: 3 + Math.random() * 5,
+            color: Math.random() > 0.5 ? "#ff5a21" : "#ffca55"
+        });
+    }
+}
+
+function updateParticles(dt) {
+    particles = particles.filter(p => p.life > 0);
+
+    for (const p of particles) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        p.vy += 250 * dt;
+        p.life -= dt;
+    }
+}
+
+/* ============================================================
+   DRAWING
+   ============================================================ */
+
+function drawScene() {
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
     drawSky();
     drawMountains();
     drawLavaBackground();
     drawRoad();
-
-    // ONLY LAVA.
     drawLavaEvents();
-
     drawOtherPlayers();
-    drawLocalPlayer();
+
+    if (self) {
+        drawLocalPlayer();
+    }
 
     drawParticles();
-    drawSpeedLines();
-
+    drawDifficultyIndicator();
 }
 
+function drawSky() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, WORLD_HEIGHT);
 
-// ============================================================
-// SKY
-// ============================================================
+    gradient.addColorStop(0, "#050817");
+    gradient.addColorStop(0.45, "#11152a");
+    gradient.addColorStop(1, "#31151a");
 
-function drawSky(){
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-    const gradient =
-        ctx.createLinearGradient(
-            0,
-            0,
-            0,
-            ROAD_HEIGHT
-        );
+    for (let i = 0; i < 48; i++) {
+        const x = (i * 79 + 23) % WORLD_WIDTH;
+        const y = (i * 43 + 15) % 240;
 
-    gradient.addColorStop(
-        0,
-        "#100022"
-    );
-
-    gradient.addColorStop(
-        .45,
-        "#28001f"
-    );
-
-    gradient.addColorStop(
-        1,
-        "#100006"
-    );
-
-    ctx.fillStyle =
-        gradient;
-
-    ctx.fillRect(
-        0,
-        0,
-        ROAD_WIDTH,
-        ROAD_HEIGHT
-    );
-
-    for(
-        let i = 0;
-        i < 55;
-        i++
-    ){
-
-        const x =
-            (
-                i * 83 +
-                roomSeed * 13
-            ) %
-            ROAD_WIDTH;
-
-        const y =
-            (
-                i * 47 +
-                roomSeed * 7
-            ) %
-            260;
-
-        const alpha =
-            .25 +
-            (
-                Math.sin(
-                    gameElapsed * 2 +
-                    i
-                ) + 1
-            ) * .15;
-
-        ctx.fillStyle =
-            `rgba(255,220,170,${alpha})`;
-
-        ctx.fillRect(
-            x,
-            y,
-            2,
-            2
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// MOUNTAINS
-// ============================================================
-
-function drawMountains(){
-
-    ctx.fillStyle =
-        "#1a0928";
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        0,
-        360
-    );
-
-    ctx.lineTo(
-        55,
-        250
-    );
-
-    ctx.lineTo(
-        100,
-        320
-    );
-
-    ctx.lineTo(
-        155,
-        190
-    );
-
-    ctx.lineTo(
-        210,
-        315
-    );
-
-    ctx.lineTo(
-        275,
-        215
-    );
-
-    ctx.lineTo(
-        330,
-        300
-    );
-
-    ctx.lineTo(
-        390,
-        230
-    );
-
-    ctx.lineTo(
-        390,
-        500
-    );
-
-    ctx.lineTo(
-        0,
-        500
-    );
-
-    ctx.closePath();
-
-    ctx.fill();
-
-    ctx.fillStyle =
-        "#220d22";
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        130,
-        350
-    );
-
-    ctx.lineTo(
-        165,
-        190
-    );
-
-    ctx.lineTo(
-        195,
-        135
-    );
-
-    ctx.lineTo(
-        225,
-        190
-    );
-
-    ctx.lineTo(
-        270,
-        350
-    );
-
-    ctx.closePath();
-
-    ctx.fill();
-
-    ctx.fillStyle =
-        "rgba(255,70,0,.35)";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        195,
-        150,
-        24 +
-        Math.sin(
-            gameElapsed * 3
-        ) * 3,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-}
-
-
-// ============================================================
-// BACKGROUND LAVA
-// ============================================================
-
-function drawLavaBackground(){
-
-    const lavaGradient =
-        ctx.createLinearGradient(
-            0,
-            300,
-            0,
-            570
-        );
-
-    lavaGradient.addColorStop(
-        0,
-        "#ff4a00"
-    );
-
-    lavaGradient.addColorStop(
-        .5,
-        "#ff1f00"
-    );
-
-    lavaGradient.addColorStop(
-        1,
-        "#7c0900"
-    );
-
-    ctx.fillStyle =
-        lavaGradient;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        0,
-        490
-    );
-
-    for(
-        let x = 0;
-        x <= ROAD_WIDTH;
-        x += 12
-    ){
-
-        const y =
-            500 +
-            Math.sin(
-                x * .045 +
-                gameElapsed * 2
-            ) * 8;
-
-        ctx.lineTo(
-            x,
-            y
-        );
-
-    }
-
-    ctx.lineTo(
-        ROAD_WIDTH,
-        ROAD_HEIGHT
-    );
-
-    ctx.lineTo(
-        0,
-        ROAD_HEIGHT
-    );
-
-    ctx.closePath();
-
-    ctx.fill();
-
-}
-
-
-// ============================================================
-// ROAD
-// ============================================================
-
-function drawRoad(){
-
-    ctx.fillStyle =
-        "#42120c";
-
-    ctx.fillRect(
-        38,
-        315,
-        314,
-        385
-    );
-
-    const roadGradient =
-        ctx.createLinearGradient(
-            0,
-            300,
-            0,
-            700
-        );
-
-    roadGradient.addColorStop(
-        0,
-        "#313039"
-    );
-
-    roadGradient.addColorStop(
-        1,
-        "#101016"
-    );
-
-    ctx.fillStyle =
-        roadGradient;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        125,
-        300
-    );
-
-    ctx.lineTo(
-        265,
-        300
-    );
-
-    ctx.lineTo(
-        352,
-        700
-    );
-
-    ctx.lineTo(
-        38,
-        700
-    );
-
-    ctx.closePath();
-
-    ctx.fill();
-
-    ctx.strokeStyle =
-        "#ff7028";
-
-    ctx.lineWidth = 5;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        125,
-        300
-    );
-
-    ctx.lineTo(
-        38,
-        700
-    );
-
-    ctx.moveTo(
-        265,
-        300
-    );
-
-    ctx.lineTo(
-        352,
-        700
-    );
-
-    ctx.stroke();
-
-    ctx.strokeStyle =
-        "rgba(255,255,255,.55)";
-
-    ctx.lineWidth = 4;
-
-    ctx.setLineDash([
-        28,
-        25
-    ]);
-
-    const offset =
-        roadScroll % 53;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        195,
-        290 + offset
-    );
-
-    ctx.lineTo(
-        195,
-        700
-    );
-
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-
-}
-
-
-// ============================================================
-// LAVA DRAWING
-// ============================================================
-
-function drawLavaEvents(){
-
-    for(
-        const event
-        of lavaEvents
-    ){
-
-        const age =
-            gameElapsed -
-            event.time;
-
-        if(
-            age <
-            -event.warning
-        ){
-
-            continue;
-
-        }
-
-        if(
-            age >
-            event.duration
-        ){
-
-            continue;
-
-        }
-
-
-        // -----------------------------
-        // WARNING
-        // -----------------------------
-
-        if(age < 0){
-
-            const pulse =
-                .5 +
-                Math.sin(
-                    gameElapsed * 10
-                ) * .25;
-
-            ctx.fillStyle =
-                `rgba(255,190,20,${pulse})`;
-
-            ctx.fillRect(
-                48,
-                548,
-                294,
-                8
-            );
-
-            ctx.font =
-                "bold 14px system-ui";
-
-            ctx.textAlign =
-                "center";
-
-            ctx.fillStyle =
-                "#ffe66b";
-
-            ctx.fillText(
-                "🔥 LAVA INCOMING — JUMP!",
-                ROAD_WIDTH / 2,
-                535
-            );
-
-            continue;
-
-        }
-
-
-        const lava =
-            getLavaPosition(
-                event
-            );
-
-        const lavaY =
-            lava.y -
-            event.height;
-
-        const behindPlayer =
-            lava.y >
-            PLAYER_GROUND_Y;
-
-
-        const gradient =
-            ctx.createLinearGradient(
-                lava.left,
-                lavaY,
-                lava.left,
-                lava.y
-            );
-
-        gradient.addColorStop(
-            0,
-            "#ffe33b"
-        );
-
-        gradient.addColorStop(
-            .25,
-            "#ff9d00"
-        );
-
-        gradient.addColorStop(
-            .65,
-            "#ff4300"
-        );
-
-        gradient.addColorStop(
-            1,
-            "#b70900"
-        );
-
-        ctx.fillStyle =
-            gradient;
+        ctx.globalAlpha = 0.25 + ((i % 4) * 0.16);
+        ctx.fillStyle = "#ffffff";
 
         ctx.beginPath();
-
-        const segments = 18;
-
-        for(
-            let i = 0;
-            i <= segments;
-            i++
-        ){
-
-            const t =
-                i /
-                segments;
-
-            const x =
-                lava.left +
-                lava.width *
-                t;
-
-            const wave =
-                Math.sin(
-                    t * Math.PI * 8 +
-                    gameElapsed * 12
-                ) * 3;
-
-            const top =
-                lavaY +
-                wave;
-
-            if(i === 0){
-
-                ctx.moveTo(
-                    x,
-                    top
-                );
-
-            }else{
-
-                ctx.lineTo(
-                    x,
-                    top
-                );
-
-            }
-
-        }
-
-        ctx.lineTo(
-            lava.right,
-            lava.y
-        );
-
-        ctx.lineTo(
-            lava.left,
-            lava.y
-        );
-
-        ctx.closePath();
-
+        ctx.arc(x, y, i % 5 === 0 ? 1.8 : 1, 0, Math.PI * 2);
         ctx.fill();
-
-
-        // Glow.
-
-        ctx.fillStyle =
-            behindPlayer
-                ? "rgba(255,90,0,.12)"
-                : "rgba(255,100,0,.22)";
-
-        ctx.fillRect(
-            lava.left - 6,
-            lavaY - 5,
-            lava.width + 12,
-            6
-        );
-
-
-        // Bubbles.
-
-        for(
-            let i = 0;
-            i < 7;
-            i++
-        ){
-
-            const bx =
-                lava.left +
-                10 +
-                (
-                    i * 31
-                ) %
-                Math.max(
-                    20,
-                    lava.width - 15
-                );
-
-            const by =
-                lavaY +
-                7 +
-                (
-                    Math.sin(
-                        gameElapsed * 5 +
-                        i
-                    ) + 1
-                ) *
-                6;
-
-            ctx.fillStyle =
-                "#ffd52d";
-
-            ctx.beginPath();
-
-            ctx.arc(
-                bx,
-                by,
-                2.5,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.fill();
-
-        }
-
     }
 
+    ctx.globalAlpha = 1;
 }
 
-
-// ============================================================
-// OTHER PLAYERS
-// ============================================================
-
-function drawOtherPlayers(){
-
-    for(
-        const other
-        of players.values()
-    ){
-
-        if(
-            other.uid ===
-            currentUser?.uid
-        )
-            continue;
-
-        if(
-            other.alive === false
-        )
-            continue;
-
-        const x =
-            Number(
-                other.x ??
-                180
-            );
-
-        const y =
-            Number(
-                other.y ??
-                528
-            );
-
-        const fullName =
-            other.fullName ||
-            other.displayName ||
-            "Player";
-
-        drawRunner(
-            x,
-            y,
-            other.color ||
-                "#54d8ff",
-            fullName,
-            false
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// LOCAL PLAYER
-// ============================================================
-
-function drawLocalPlayer(){
-
-    if(!player.alive)
-        return;
-
-    if(
-        player.invulnerable > 0 &&
-        Math.floor(
-            player.invulnerable * 12
-        ) % 2 === 0
-    ){
-
-        return;
-
-    }
-
-    drawRunner(
-        player.x,
-        player.y,
-        player.color,
-        player.fullName ||
-            getUserName(
-                currentUser
-            ),
-        true
-    );
-
-}
-
-
-// ============================================================
-// RUNNER
-// ============================================================
-
-function drawRunner(
-    x,
-    y,
-    color,
-    name,
-    local
-){
-
-    ctx.fillStyle =
-        "rgba(0,0,0,.35)";
+function drawMountains() {
+    ctx.fillStyle = "#171a2a";
 
     ctx.beginPath();
+    ctx.moveTo(0, 290);
 
-    ctx.ellipse(
-        x +
-        PLAYER_WIDTH / 2,
+    for (let x = 0; x <= WORLD_WIDTH; x += 35) {
+        const y = 180 + Math.abs(Math.sin(x * 0.035)) * 80;
+        ctx.lineTo(x, y);
+    }
 
-        y +
-        PLAYER_HEIGHT +
-        5,
-
-        17,
-        5,
-
-        0,
-        0,
-        Math.PI * 2
-    );
-
+    ctx.lineTo(WORLD_WIDTH, 400);
+    ctx.lineTo(0, 400);
+    ctx.closePath();
     ctx.fill();
 
-    ctx.font =
-        local
-            ? "bold 10px system-ui"
-            : "bold 9px system-ui";
-
-    ctx.textAlign =
-        "center";
-
-    const safeName =
-        String(
-            name ||
-            "Player"
-        );
-
-    const textWidth =
-        ctx.measureText(
-            safeName
-        ).width;
-
-    const plateWidth =
-        Math.min(
-            textWidth + 10,
-            350
-        );
-
-    ctx.fillStyle =
-        "rgba(4,8,20,.90)";
+    ctx.fillStyle = "#252033";
 
     ctx.beginPath();
+    ctx.moveTo(0, 330);
 
-    ctx.roundRect(
-        x +
-        PLAYER_WIDTH / 2 -
-        plateWidth / 2,
-
-        y - 22,
-
-        plateWidth,
-
-        16,
-
-        7
-    );
-
-    ctx.fill();
-
-    ctx.fillStyle =
-        "#ffffff";
-
-    ctx.fillText(
-        safeName,
-        x +
-        PLAYER_WIDTH / 2,
-        y - 10
-    );
-
-    ctx.fillStyle =
-        color;
-
-    ctx.beginPath();
-
-    ctx.roundRect(
-        x + 5,
-        y + 15,
-        18,
-        23,
-        7
-    );
-
-    ctx.fill();
-
-    ctx.fillStyle =
-        "#f4f6ff";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        x + 14,
-        y + 12,
-        11,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-    ctx.fillStyle =
-        "#14203b";
-
-    ctx.beginPath();
-
-    ctx.roundRect(
-        x + 5,
-        y + 7,
-        18,
-        9,
-        5
-    );
-
-    ctx.fill();
-
-    ctx.strokeStyle =
-        "#171522";
-
-    ctx.lineWidth = 5;
-
-    ctx.lineCap =
-        "round";
-
-    const running =
-        Math.sin(
-            gameElapsed * 12 +
-            x
-        ) * 5;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        x + 10,
-        y + 36
-    );
-
-    ctx.lineTo(
-        x + 7 -
-        running,
-        y + 43
-    );
-
-    ctx.moveTo(
-        x + 19,
-        y + 36
-    );
-
-    ctx.lineTo(
-        x + 22 +
-        running,
-        y + 43
-    );
-
-    ctx.stroke();
-
-    ctx.lineCap =
-        "butt";
-
-}
-
-
-// ============================================================
-// PARTICLES
-// ============================================================
-
-function createJumpParticles(){
-
-    for(let i = 0; i < 8; i++){
-
-        particles.push({
-
-            x:
-                player.x +
-                player.width / 2,
-
-            y:
-                player.y +
-                player.height,
-
-            vx:
-                (
-                    Math.random() -
-                    .5
-                ) * 80,
-
-            vy:
-                Math.random() *
-                60,
-
-            life:
-                .5 +
-                Math.random() *
-                .4,
-
-            maxLife:
-                .8,
-
-            size:
-                2 +
-                Math.random() * 3,
-
-            type:
-                "dust"
-
-        });
-
+    for (let x = 0; x <= WORLD_WIDTH; x += 28) {
+        const y = 235 + Math.abs(Math.cos(x * 0.025)) * 70;
+        ctx.lineTo(x, y);
     }
 
+    ctx.lineTo(WORLD_WIDTH, 430);
+    ctx.lineTo(0, 430);
+    ctx.closePath();
+    ctx.fill();
 }
 
+function drawLavaBackground() {
+    const gradient = ctx.createLinearGradient(0, 300, 0, WORLD_HEIGHT);
 
-function createExplosionParticles(
-    x,
-    y
-){
+    gradient.addColorStop(0, "#4b191a");
+    gradient.addColorStop(0.5, "#e33d16");
+    gradient.addColorStop(1, "#ff9c22");
 
-    for(let i = 0; i < 24; i++){
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 300, WORLD_WIDTH, WORLD_HEIGHT - 300);
 
-        particles.push({
+    ctx.globalAlpha = 0.4;
 
-            x,
+    for (let i = 0; i < 14; i++) {
+        const x = (i * 41 + gameElapsed * (8 + i % 5)) % WORLD_WIDTH;
+        const y = 335 + ((i * 59 + gameElapsed * 18) % 330);
 
-            y,
-
-            vx:
-                (
-                    Math.random() -
-                    .5
-                ) * 250,
-
-            vy:
-                (
-                    Math.random() -
-                    .5
-                ) * 250,
-
-            life:
-                .5 +
-                Math.random() *
-                .8,
-
-            maxLife:
-                1.2,
-
-            size:
-                3 +
-                Math.random() * 5,
-
-            type:
-                "fire"
-
-        });
-
-    }
-
-}
-
-
-function updateParticles(delta){
-
-    for(
-        let i =
-        particles.length - 1;
-        i >= 0;
-        i--
-    ){
-
-        const particle =
-            particles[i];
-
-        particle.life -=
-            delta;
-
-        particle.x +=
-            particle.vx *
-            delta;
-
-        particle.y +=
-            particle.vy *
-            delta;
-
-        particle.vy +=
-            200 *
-            delta;
-
-        if(
-            particle.life <= 0
-        ){
-
-            particles.splice(
-                i,
-                1
-            );
-
-        }
-
-    }
-
-}
-
-
-function drawParticles(){
-
-    for(
-        const particle
-        of particles
-    ){
-
-        const alpha =
-            Math.max(
-                0,
-                particle.life /
-                particle.maxLife
-            );
-
-        ctx.globalAlpha =
-            alpha;
-
-        ctx.fillStyle =
-            particle.type ===
-            "fire"
-                ? "#ff7625"
-                : "#b7a49a";
+        ctx.fillStyle = i % 2 ? "#ffb12d" : "#ff5426";
 
         ctx.beginPath();
-
-        ctx.arc(
-            particle.x,
-            particle.y,
-            particle.size,
+        ctx.ellipse(
+            x,
+            y,
+            8 + (i % 5) * 2,
+            3 + (i % 3),
+            0,
             0,
             Math.PI * 2
         );
 
         ctx.fill();
-
     }
 
-    ctx.globalAlpha =
-        1;
-
+    ctx.globalAlpha = 1;
 }
 
+function drawRoad() {
+    const top = 275;
+    const bottom = WORLD_HEIGHT;
 
-// ============================================================
-// SPEED LINES
-// ============================================================
+    ctx.beginPath();
+    ctx.moveTo(WORLD_WIDTH / 2 - 20, top);
+    ctx.lineTo(WORLD_WIDTH / 2 + 20, top);
+    ctx.lineTo(WORLD_WIDTH / 2 + 166, bottom);
+    ctx.lineTo(WORLD_WIDTH / 2 - 166, bottom);
+    ctx.closePath();
 
-function drawSpeedLines(){
+    const roadGradient = ctx.createLinearGradient(0, top, 0, bottom);
 
-    if(
-        !gameStarted ||
-        !player.alive
-    )
-        return;
+    roadGradient.addColorStop(0, "#343748");
+    roadGradient.addColorStop(1, "#141927");
 
-    const intensity =
-        Math.min(
-            .28,
-            gameElapsed /
-            GAME_DURATION
+    ctx.fillStyle = roadGradient;
+    ctx.fill();
+
+    ctx.strokeStyle = "#ff652f";
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(WORLD_WIDTH / 2 - 20, top);
+    ctx.lineTo(WORLD_WIDTH / 2 - 166, bottom);
+    ctx.moveTo(WORLD_WIDTH / 2 + 20, top);
+    ctx.lineTo(WORLD_WIDTH / 2 + 166, bottom);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(WORLD_WIDTH / 2, top);
+    ctx.lineTo(WORLD_WIDTH / 2, bottom);
+    ctx.stroke();
+}
+
+function drawLavaEvents() {
+    for (const lava of lavaEvents) {
+        const road = getRoadBoundsAtY(lava.y);
+
+        const left = Math.max(road.left, lava.left);
+        const right = Math.min(road.right, lava.right);
+
+        if (right <= left) continue;
+
+        const gradient = ctx.createLinearGradient(
+            0,
+            lava.y - lava.height,
+            0,
+            lava.y
         );
 
-    ctx.strokeStyle =
-        `rgba(255,255,255,${intensity})`;
+        gradient.addColorStop(0, "#fff16a");
+        gradient.addColorStop(0.35, "#ff8a21");
+        gradient.addColorStop(1, "#ff321b");
 
-    ctx.lineWidth = 1;
+        ctx.save();
 
-    for(let i = 0; i < 10; i++){
+        ctx.shadowColor = "#ff5a20";
+        ctx.shadowBlur = 14;
 
-        const x =
-            45 +
-            i * 47;
+        ctx.fillStyle = gradient;
+        ctx.fillRect(
+            left,
+            lava.y - lava.height,
+            right - left,
+            lava.height
+        );
 
-        const y =
-            310 +
-            (
-                i * 61 +
-                roadScroll
-            ) %
-            330;
+        ctx.restore();
+
+        ctx.strokeStyle = "#ffd65a";
+        ctx.lineWidth = 2;
 
         ctx.beginPath();
 
-        ctx.moveTo(
-            x,
-            y
-        );
+        for (let x = left; x <= right; x += 12) {
+            const waveY =
+                lava.y - lava.height +
+                Math.sin(x * 0.09 + gameElapsed * 5) * 3;
 
-        ctx.lineTo(
-            x,
-            y + 18
-        );
+            if (x === left) {
+                ctx.moveTo(x, waveY);
+            } else {
+                ctx.lineTo(x, waveY);
+            }
+        }
 
         ctx.stroke();
+    }
+}
 
+function drawOtherPlayers() {
+    for (const p of players.values()) {
+        if (p.uid === currentUser?.uid) continue;
+        if (p.alive === false) continue;
+
+        drawRunner(
+            p.renderedX ?? p.x,
+            p.renderedY ?? p.y,
+            p.color || "#ffca55",
+            p.displayName || p.username || "Player",
+            false
+        );
+    }
+}
+
+function drawLocalPlayer() {
+    if (!self) return;
+
+    if (!self.alive) {
+        ctx.globalAlpha = 0.35;
     }
 
-}
-
-
-// ============================================================
-// ROOM INPUT
-// ============================================================
-
-if(roomInput){
-
-    roomInput.addEventListener(
-        "keydown",
-        event => {
-
-            if(event.key === "Enter"){
-
-                joinRoomButton?.click();
-
-            }
-
-        }
+    drawRunner(
+        self.x,
+        self.y,
+        self.color || "#54e8ff",
+        "YOU",
+        self.jumping
     );
 
-    roomInput.addEventListener(
-        "input",
-        () => {
-
-            roomInput.value =
-                roomInput.value
-                    .toUpperCase()
-                    .replace(
-                        /[^A-Z0-9]/g,
-                        ""
-                    )
-                    .slice(
-                        0,
-                        6
-                    );
-
-        }
-    );
-
+    ctx.globalAlpha = 1;
 }
 
+function drawRunner(x, y, color, label, jumping) {
+    const left = x - PLAYER_WIDTH / 2;
 
-// ============================================================
-// INITIAL CANVAS
-// ============================================================
+    ctx.save();
 
-drawScene();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
 
+    // Legs
+    ctx.fillStyle = "#171827";
 
-// ============================================================
-// WAITING CHECK
-// ============================================================
+    const legOffset = jumping
+        ? Math.sin(gameElapsed * 14) * 3
+        : Math.sin(gameElapsed * 13 + x) * 3;
 
-setInterval(
-    () => {
+    ctx.fillRect(left + 4, y + 29, 7, 13 + legOffset);
+    ctx.fillRect(left + 15, y + 29, 7, 13 - legOffset);
 
-        if(
-            roomData &&
-            roomData.status ===
-            "waiting"
-        ){
+    // Body
+    ctx.fillStyle = color;
 
-            updateWaitingState();
+    ctx.beginPath();
+    ctx.roundRect(
+        left + 2,
+        y + 12,
+        PLAYER_WIDTH - 4,
+        23,
+        5
+    );
+    ctx.fill();
 
-        }
+    // Head
+    ctx.fillStyle = "#ffd7b0";
 
-    },
-    500
-);
+    ctx.beginPath();
+    ctx.arc(x, y + 7, 8, 0, Math.PI * 2);
+    ctx.fill();
 
+    // Hair / helmet
+    ctx.fillStyle = "#171827";
 
-// ============================================================
-// PREVENT PAGE SCROLL
-// ============================================================
+    ctx.beginPath();
+    ctx.arc(x, y + 5, 8, Math.PI, Math.PI * 2);
+    ctx.fill();
 
-[
-    leftButton,
-    rightButton,
-    jumpButton
-]
-.filter(Boolean)
-.forEach(
-    button => {
+    ctx.restore();
 
-        button.addEventListener(
-            "touchstart",
-            event => {
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 10px Arial";
+    ctx.textAlign = "center";
 
-                event.preventDefault();
+    ctx.fillText(label.slice(0, 13), x, y - 8);
+}
 
-            },
-            {
-                passive:false
-            }
+function drawParticles() {
+    for (const p of particles) {
+        ctx.globalAlpha = Math.max(
+            0,
+            Math.min(1, p.life)
         );
 
+        ctx.fillStyle = p.color;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
     }
+
+    ctx.globalAlpha = 1;
+}
+
+function drawDifficultyIndicator() {
+    const difficulty = getLavaDifficulty(gameElapsed);
+
+    const level = Math.min(
+        10,
+        Math.floor((difficulty.speed - 195) / 28) + 1
+    );
+
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(12, 12, 150, 35);
+
+    ctx.fillStyle = "#ffb443";
+    ctx.font = "bold 12px Arial";
+    ctx.textAlign = "left";
+
+    ctx.fillText(`LAVA LEVEL ${level}`, 21, 27);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "10px Arial";
+
+    ctx.fillText(
+        `Speed ${Math.round(difficulty.speed)}`,
+        21,
+        39
+    );
+}
+
+/* ============================================================
+   KEYBOARD CONTROLS
+   ============================================================ */
+
+window.addEventListener("keydown", event => {
+    const key = event.key === " " ? " " : event.key;
+
+    if ([
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        " "
+    ].includes(key)) {
+        event.preventDefault();
+    }
+
+    pressedKeys.add(key);
+
+    if (key.length === 1) {
+        pressedKeys.add(key.toLowerCase());
+    }
+});
+
+window.addEventListener("keyup", event => {
+    pressedKeys.delete(event.key);
+
+    if (event.key.length === 1) {
+        pressedKeys.delete(event.key.toLowerCase());
+    }
+});
+
+window.addEventListener("blur", () => {
+    pressedKeys.clear();
+
+    touchLeft = false;
+    touchRight = false;
+    touchJump = false;
+});
+
+/* ============================================================
+   MOBILE TOUCH CONTROLS
+   ============================================================ */
+
+function bindHoldButton(button, onDown, onUp) {
+    if (!button) return;
+
+    button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+
+        try {
+            button.setPointerCapture(event.pointerId);
+        } catch (_) {}
+
+        onDown();
+    });
+
+    const release = event => {
+        if (event) event.preventDefault();
+        onUp();
+    };
+
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", release);
+    button.addEventListener("lostpointercapture", release);
+    button.addEventListener("contextmenu", event => {
+        event.preventDefault();
+    });
+}
+
+bindHoldButton(
+    el.leftButton,
+    () => { touchLeft = true; },
+    () => { touchLeft = false; }
 );
 
+bindHoldButton(
+    el.rightButton,
+    () => { touchRight = true; },
+    () => { touchRight = false; }
+);
 
-// ============================================================
-// CLEANUP
-// ============================================================
+bindHoldButton(
+    el.jumpButton,
+    () => { touchJump = true; },
+    () => { touchJump = false; }
+);
 
-window.addEventListener(
-    "pagehide",
-    () => {
+/* ============================================================
+   LEAVE ROOM
+   ============================================================ */
 
-        if(animationFrame){
+async function leaveRoom() {
+    if (!roomId) {
+        showLobby();
+        return;
+    }
 
-            cancelAnimationFrame(
-                animationFrame
-            );
+    const oldRoomId = roomId;
+    const oldRoomRef = roomRef;
+    const oldPlayerRef = localPlayerRef;
+    const oldRoomData = roomData;
 
+    try {
+        if (oldPlayerRef) {
+            await deleteDoc(oldPlayerRef);
         }
 
-        if(roomUnsubscribe)
-            roomUnsubscribe();
+        if (
+            oldRoomRef &&
+            oldRoomData?.hostUid === currentUser?.uid &&
+            oldRoomData?.status === "waiting"
+        ) {
+            await updateDoc(oldRoomRef, {
+                status: "finished",
+                winnerUid: null
+            });
+        } else if (oldRoomRef) {
+            const remaining = await getDocs(
+                collection(db, "gameRooms", oldRoomId, "players")
+            );
 
-        if(playersUnsubscribe)
-            playersUnsubscribe();
+            await updateDoc(oldRoomRef, {
+                playersCount: remaining.size
+            });
+        }
 
-        if(chatUnsubscribe)
-            chatUnsubscribe();
-
+    } catch (error) {
+        console.warn("Leave room error:", error);
     }
-);
 
+    await resetLocalRoom(true);
+}
 
-// ============================================================
-// DONE
-// ============================================================
+/* ============================================================
+   RESET LOCAL ROOM STATE
+   ============================================================ */
 
-console.log(
-    "🌋 VitalStar Volcano Jump loaded — SIMPLE LAVA ONLY."
-);
+async function resetLocalRoom(returnToLobby = true) {
+    if (roomUnsubscribe) {
+        roomUnsubscribe();
+        roomUnsubscribe = null;
+    }
+
+    if (playersUnsubscribe) {
+        playersUnsubscribe();
+        playersUnsubscribe = null;
+    }
+
+    if (chatUnsubscribe) {
+        chatUnsubscribe();
+        chatUnsubscribe = null;
+    }
+
+    if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+    }
+
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+    }
+
+    roomId = null;
+    roomCode = null;
+    roomData = null;
+
+    roomRef = null;
+    playersRef = null;
+    localPlayerRef = null;
+
+    self = null;
+    players.clear();
+
+    gameStarted = false;
+    gameFinished = false;
+    gameElapsed = 0;
+    gameStartTime = 0;
+
+    finishingGame = false;
+    resultRecorded = false;
+    stateWriteInFlight = false;
+
+    hitLavaIds.clear();
+    lavaEvents = [];
+    particles = [];
+
+    pressedKeys.clear();
+
+    touchLeft = false;
+    touchRight = false;
+    touchJump = false;
+
+    jumpWasPressed = false;
+
+    seenMessageIds.clear();
+    unreadMessages = 0;
+
+    hideCountdown();
+    hideWaiting();
+    hideMessage();
+    hideElement(el.winnerOverlay);
+
+    setButtonDisabled(el.readyButton, false);
+
+    if (returnToLobby) {
+        showLobby();
+        setLobbyStatus("Create a room or find a match.");
+    }
+}
+
+/* ============================================================
+   RETURN TO LOBBY
+   ============================================================ */
+
+if (el.returnLobbyButton) {
+    el.returnLobbyButton.addEventListener("click", async () => {
+        await leaveRoom();
+    });
+}
+
+/* ============================================================
+   BUTTON EVENTS
+   ============================================================ */
+
+if (el.createRoomButton) {
+    el.createRoomButton.addEventListener("click", createRoom);
+}
+
+if (el.quickMatchButton) {
+    el.quickMatchButton.addEventListener("click", quickMatch);
+}
+
+if (el.joinRoomButton) {
+    el.joinRoomButton.addEventListener("click", joinRoomByCode);
+}
+
+if (el.readyButton) {
+    el.readyButton.addEventListener("click", toggleReady);
+}
+
+if (el.leaveButton) {
+    el.leaveButton.addEventListener("click", leaveRoom);
+}
+
+if (el.roomInput) {
+    el.roomInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            joinRoomByCode();
+        }
+    });
+}
+
+/* ============================================================
+   OPTIONAL ROOM CHAT
+   Collection: gameRooms/{roomId}/messages
+   ============================================================ */
+
+function subscribeToChat(renderMessages) {
+    if (!roomId || typeof renderMessages !== "function") return;
+
+    if (chatUnsubscribe) {
+        chatUnsubscribe();
+        chatUnsubscribe = null;
+    }
+
+    const messagesRef = collection(
+        db,
+        "gameRooms",
+        roomId,
+        "messages"
+    );
+
+    chatUnsubscribe = onSnapshot(
+        messagesRef,
+        snapshot => {
+            const messages = snapshot.docs
+                .map(d => ({
+                    id: d.id,
+                    ...d.data()
+                }))
+                .sort((a, b) => {
+                    const ta = Number(a.createdAt || 0);
+                    const tb = Number(b.createdAt || 0);
+
+                    return ta - tb;
+                });
+
+            for (const message of messages) {
+                if (seenMessageIds.has(message.id)) continue;
+
+                seenMessageIds.add(message.id);
+
+                if (
+                    message.uid !== currentUser?.uid &&
+                    !chatPanelOpen
+                ) {
+                    unreadMessages++;
+                }
+            }
+
+            renderMessages(messages, unreadMessages);
+        },
+        error => {
+            console.warn("Chat listener error:", error);
+        }
+    );
+}
+
+async function sendRoomChatMessage(text) {
+    if (!roomId || !currentUser) return;
+
+    const message = String(text || "").trim();
+
+    if (!message) return;
+
+    if (message.length > 500) {
+        throw new Error("Message is too long.");
+    }
+
+    await addDoc(
+        collection(db, "gameRooms", roomId, "messages"),
+        {
+            uid: currentUser.uid,
+
+            displayName:
+                currentUser.displayName ||
+                currentUser.email?.split("@")[0] ||
+                "Player",
+
+            text: message,
+
+            createdAt: Date.now(),
+            serverCreatedAt: serverTimestamp()
+        }
+    );
+}
+
+function setChatPanelOpen(isOpen) {
+    chatPanelOpen = !!isOpen;
+
+    if (chatPanelOpen) {
+        unreadMessages = 0;
+    }
+}
+
+/* ============================================================
+   AUTHENTICATION
+   ============================================================ */
+
+onAuthStateChanged(auth, user => {
+    currentUser = user;
+
+    if (!user) {
+        if (!roomId) {
+            setLobbyStatus("Sign in to play Volcano Jump.");
+        }
+
+        return;
+    }
+
+    if (!roomId) {
+        setLobbyStatus("Ready to play Volcano Jump!");
+    }
+});
+
+/* ============================================================
+   PUBLIC GAME HELPERS
+   ============================================================ */
+
+window.VitalStarVolcanoJump = {
+    createRoom,
+    quickMatch,
+    joinRoomByCode,
+    leaveRoom,
+
+    toggleReady,
+
+    subscribeToChat,
+    sendRoomChatMessage,
+    setChatPanelOpen,
+
+    getState() {
+        return {
+            roomId,
+            roomCode,
+            gameStarted,
+            gameFinished,
+            gameElapsed,
+
+            players: [...players.values()].map(p => ({
+                uid: p.uid,
+                displayName: p.displayName,
+                alive: p.alive,
+                score: p.score
+            }))
+        };
+    }
+};
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+
+showLobby();
+
+hideCountdown();
+hideWaiting();
+hideMessage();
+hideElement(el.winnerOverlay);
+
+setLobbyStatus("Ready to play Volcano Jump!");
+
+console.log("VitalStar Volcano Jump initialized.");
