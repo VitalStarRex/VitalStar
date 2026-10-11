@@ -33,7 +33,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;background-im
 @keyframes authPulse{0%,100%{transform:scale(.8);opacity:.55}50%{transform:scale(1.2);opacity:1}}
 .auth-status.hidden{display:none}
 
-.buttons{margin-top:23px;display:flex;justify-content:center;align-items:center;gap:22px;flex-wrap:nowrap}
+.buttons{margin-top:23px;display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
 .btn{display:inline-block;padding:13px 35px;border-radius:30px;text-decoration:none;font-size:18px;font-weight:bold;transition:transform .25s ease,box-shadow .25s ease;cursor:pointer;user-select:none;font-family:inherit}
 .btn:hover{transform:translateY(-3px)}
 .join{color:#fff;background:linear-gradient(90deg,#ff416c,#ff21b8,#773cff);box-shadow:0 0 22px rgba(255,30,190,.45)}
@@ -79,8 +79,9 @@ footer{border-top:1px solid rgba(255,205,0,.75);padding:25px 0;position:relative
 .install-card h2{font-size:26px;margin:8px 0 10px}
 .install-card p{font-size:15px;line-height:1.6;color:#f4f4f7}
 .install-buttons{display:flex;gap:12px;margin-top:22px}
-.install-buttons .btn{flex:1;text-align:center;text-decoration:none;padding:12px 10px;font-size:15px;background:none;font-family:inherit}
+.install-buttons .btn{flex:1;text-align:center;text-decoration:none;padding:12px 10px;font-size:15px;font-family:inherit}
 .install-buttons .join{border:none;background:linear-gradient(90deg,#ff416c,#ff21b8,#773cff)}
+.install-buttons button{cursor:pointer}
 .install-help{display:none;margin-top:14px;font-size:13px;line-height:1.5;color:#00ddff}
 
 /* BLINKING INSTALL APP BUTTON */
@@ -139,6 +140,8 @@ footer{padding:20px 0}
 .features{gap:10px}
 .feature{height:150px;min-height:150px}
 .feature p{font-size:10.5px}
+.install-buttons{gap:7px}
+.install-buttons .btn{padding:11px 6px;font-size:12px}
 }
 </style>
 </head>
@@ -153,7 +156,6 @@ footer{padding:20px 0}
 
 <section class="cta">
 <h1>Ready to <span class="yellow">Shine?</span></h1>
-
 <p id="welcomeText">Join VitalStar and become part of a colorful community where people connect, share and shine.</p>
 
 <div id="authStatus" class="auth-status loading">
@@ -161,7 +163,7 @@ footer{padding:20px 0}
 <span id="authStatusText">Checking login...</span>
 </div>
 
-<div class="buttons">
+<div class="buttons" id="authButtons">
 <a href="register.html" class="btn join" id="joinBtn" aria-disabled="true">Register</a>
 <a href="login.html" class="btn login" id="loginBtn" aria-disabled="true">Login</a>
 </div>
@@ -173,41 +175,12 @@ footer{padding:20px 0}
 </section>
 
 <section class="features">
-<div class="feature">
-<div class="icon">👥</div>
-<h3>Connect</h3>
-<p>Find friends and build meaningful connections.</p>
-</div>
-
-<div class="feature">
-<div class="icon">💬</div>
-<h3>Chat</h3>
-<p>Talk with friends and stay connected.</p>
-</div>
-
-<div class="feature">
-<div class="icon">📷</div>
-<h3>Share</h3>
-<p>Share photos, videos and moments.</p>
-</div>
-
-<div class="feature">
-<div class="icon">🌐</div>
-<h3>Communities</h3>
-<p>Discover groups and communities.</p>
-</div>
-
-<div class="feature">
-<div class="icon">🔔</div>
-<h3>Notifications</h3>
-<p>Never miss important updates.</p>
-</div>
-
-<div class="feature">
-<div class="icon">★</div>
-<h3>Shine</h3>
-<p>Express yourself and shine together.</p>
-</div>
+<div class="feature"><div class="icon">👥</div><h3>Connect</h3><p>Find friends and build meaningful connections.</p></div>
+<div class="feature"><div class="icon">💬</div><h3>Chat</h3><p>Talk with friends and stay connected.</p></div>
+<div class="feature"><div class="icon">📷</div><h3>Share</h3><p>Share photos, videos and moments.</p></div>
+<div class="feature"><div class="icon">🌐</div><h3>Communities</h3><p>Discover groups and communities.</p></div>
+<div class="feature"><div class="icon">🔔</div><h3>Notifications</h3><p>Never miss important updates.</p></div>
+<div class="feature"><div class="icon">★</div><h3>Shine</h3><p>Express yourself and shine together.</p></div>
 </section>
 
 </main>
@@ -215,24 +188,16 @@ footer{padding:20px 0}
 <!-- INSTALL POPUP -->
 <div class="install-overlay" id="installPopup" role="dialog" aria-modal="true" aria-labelledby="installTitle">
 <div class="install-card">
-
 <div class="install-star">✦</div>
-
 <h2 id="installTitle">Get the <span class="yellow">VitalStar</span> App</h2>
-
 <p>Install VitalStar on your phone and enjoy <span class="pink">uninterrupted fun</span>. Faster, smoother, and always one tap away. ✨</p>
 
 <div class="install-buttons">
 <button type="button" class="btn login" id="installLater">App Installed</button>
-
-<a class="btn join install-prompt-btn"
-   id="installNow"
-   href="https://github.com/VitalStarRex/VitalStar/releases/download/v1.0.0/Vitalstar.apk"
-   download="Vitalstar.apk">⬇ Install App</a>
+<a class="btn join install-prompt-btn" id="installNow" href="https://github.com/VitalStarRex/VitalStar/releases/download/v1.0.0/Vitalstar.apk" download="Vitalstar.apk">⬇ Install App</a>
 </div>
 
 <div class="install-help" id="installHelp" aria-live="polite"></div>
-
 </div>
 </div>
 
@@ -243,7 +208,7 @@ footer{padding:20px 0}
 </div>
 </footer>
 
-<!-- FIREBASE AUTH -->
+<!-- FIREBASE AUTHENTICATION -->
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -254,6 +219,7 @@ const authStatusText = document.getElementById("authStatusText");
 const welcomeText = document.getElementById("welcomeText");
 const joinBtn = document.getElementById("joinBtn");
 const loginBtn = document.getElementById("loginBtn");
+const authButtons = document.getElementById("authButtons");
 
 function disableButtons() {
     [joinBtn, loginBtn].forEach(button => {
@@ -278,8 +244,6 @@ authStatusText.textContent = "Checking login...";
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        authStatus.classList.remove("loading");
-
         let fullName = user.displayName || "";
 
         try {
@@ -297,11 +261,18 @@ onAuthStateChanged(auth, async (user) => {
             fullName = user.email ? user.email.split("@")[0] : "VitalStar User";
         }
 
-        authStatus.classList.remove("hidden");
+        authStatus.classList.remove("loading", "hidden");
         authStatusText.textContent = `✓ Welcome, ${fullName}`;
 
         welcomeText.textContent =
             `Welcome back, ${fullName}! You are already part of our colorful community.`;
+
+        // ENTER VITALSTAR is on the RIGHT; Logout is on the LEFT.
+        joinBtn.textContent = "ENTER VITALSTAR";
+        joinBtn.href = "home.html";
+        joinBtn.classList.remove("join");
+        joinBtn.classList.add("login");
+        joinBtn.onclick = null;
 
         loginBtn.textContent = "Logout";
         loginBtn.href = "#";
@@ -318,25 +289,19 @@ onAuthStateChanged(auth, async (user) => {
 
             try {
                 await signOut(auth);
-                location.reload();
+                // Firebase auth state will update automatically.
             } catch (error) {
                 console.error("Logout error:", error);
-
                 authStatus.classList.remove("loading");
-                authStatusText.textContent = "Logout failed";
-
+                authStatusText.textContent = "Logout failed. Please try again.";
+            } finally {
                 enableButtons();
             }
         };
 
-        joinBtn.textContent = "ENTER VITALSTAR";
-        joinBtn.href = "home.html";
-        joinBtn.classList.remove("join");
-        joinBtn.classList.add("login");
-
-        // Keep the buttons in their normal layout order.
-        joinBtn.parentElement.appendChild(joinBtn);
-        joinBtn.parentElement.appendChild(loginBtn);
+        // Explicitly set the order: Logout first, Enter VitalStar second.
+        authButtons.appendChild(loginBtn);
+        authButtons.appendChild(joinBtn);
 
     } else {
         authStatus.classList.remove("loading");
@@ -349,6 +314,7 @@ onAuthStateChanged(auth, async (user) => {
         joinBtn.href = "register.html";
         joinBtn.classList.remove("login");
         joinBtn.classList.add("join");
+        joinBtn.onclick = null;
 
         loginBtn.textContent = "Login";
         loginBtn.href = "login.html";
@@ -356,15 +322,15 @@ onAuthStateChanged(auth, async (user) => {
         loginBtn.classList.add("login");
         loginBtn.onclick = null;
 
-        joinBtn.parentElement.appendChild(joinBtn);
-        joinBtn.parentElement.appendChild(loginBtn);
+        authButtons.appendChild(joinBtn);
+        authButtons.appendChild(loginBtn);
     }
 
     enableButtons();
 });
 </script>
 
-<!-- INSTALL POPUP: 24-HOUR DISMISSAL -->
+<!-- INSTALL POPUP AND 24-HOUR DISMISSAL -->
 <script>
 (() => {
     const popup = document.getElementById("installPopup");
@@ -388,13 +354,11 @@ onAuthStateChanged(auth, async (user) => {
     installNow.href = apkUrl;
     installNow.setAttribute("download", "Vitalstar.apk");
 
-    function dismissedForToday() {
+    function dismissedForOneDay() {
         try {
             const dismissedAt = Number(localStorage.getItem(DISMISS_KEY));
 
-            if (!dismissedAt) {
-                return false;
-            }
+            if (!dismissedAt) return false;
 
             if (Date.now() - dismissedAt < ONE_DAY) {
                 return true;
@@ -402,9 +366,8 @@ onAuthStateChanged(auth, async (user) => {
 
             localStorage.removeItem(DISMISS_KEY);
             return false;
-
         } catch (error) {
-            console.warn("Unable to check popup preference:", error);
+            console.warn("Unable to read popup preference:", error);
             return false;
         }
     }
@@ -419,55 +382,44 @@ onAuthStateChanged(auth, async (user) => {
         popup.classList.remove("show");
     }
 
-    // Show the popup after two seconds unless dismissed
-    // during the previous 24 hours or running as an installed PWA.
-    if (!isStandalone && !dismissedForToday()) {
+    // Show after two seconds unless dismissed within the last 24 hours.
+    if (!isStandalone && !dismissedForOneDay()) {
         window.setTimeout(() => {
-            if (!dismissedForToday()) {
+            if (!dismissedForOneDay()) {
                 popup.classList.add("show");
             }
         }, 2000);
     }
 
-    // "App Installed" dismisses the popup for 24 hours.
+    // App Installed: dismiss for 24 hours.
     installLater.addEventListener("click", closePopupForOneDay);
 
-    // Clicking outside dismisses the popup for 24 hours.
+    // Clicking outside also dismisses for 24 hours.
     popup.addEventListener("click", (event) => {
         if (event.target === popup) {
             closePopupForOneDay();
         }
     });
 
-    // Escape dismisses the popup for 24 hours.
+    // Escape also dismisses for 24 hours.
     document.addEventListener("keydown", (event) => {
-        if (
-            event.key === "Escape" &&
-            popup.classList.contains("show")
-        ) {
+        if (event.key === "Escape" && popup.classList.contains("show")) {
             closePopupForOneDay();
         }
     });
 
-    // APK download instructions.
     installNow.addEventListener("click", (event) => {
         if (isIOS) {
             event.preventDefault();
-
             installHelp.textContent =
                 'APK files cannot be installed on iPhone. Open this website in Safari, tap Share, then choose "Add to Home Screen".';
-
             installHelp.style.display = "block";
             return;
         }
 
-        if (isAndroid) {
-            installHelp.textContent =
-                "Downloading Vitalstar.apk from GitHub. When the download finishes, open it from Downloads and follow Android's installation prompts if your device allows installation.";
-        } else {
-            installHelp.textContent =
-                "The VitalStar Android APK is downloading. APK files are intended for compatible Android devices.";
-        }
+        installHelp.textContent = isAndroid
+            ? "Downloading Vitalstar.apk from GitHub. When the download finishes, open it from Downloads and follow Android's installation prompts if your device allows installation."
+            : "The VitalStar Android APK is downloading. APK files are intended for compatible Android devices.";
 
         installHelp.style.display = "block";
     });
