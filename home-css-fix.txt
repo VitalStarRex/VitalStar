@@ -1,0 +1,21 @@
+/* Add this at the END of the existing <style> in home.html to remove the blank gap. */
+.stories-section:empty,
+.stories-section:not(:has(.story-wrap)) {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+.stories-section:not(:has(.story-wrap)) .stories {
+  display: none;
+}
+.container {
+  padding-top: 76px;
+}
+@media (max-width:600px) {
+  .container { padding-top: 74px; }
+}
+.vs-section, .vs-stats, .vs-footer {
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+}
+.vs-groups-grid[aria-busy="true"] { min-height: 0; }
