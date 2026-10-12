@@ -1110,6 +1110,573 @@ header{
   
 }  
   
+
+/* =========================================================
+   NEW: DISCOVER GROUPS / ONLINE STATS / FOOTER
+   (all class names start with "vs-" so nothing existing clashes)
+   ========================================================= */
+
+.vs-section,
+.vs-stats,
+.vs-footer{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+}
+
+/* Skip painting these until they are near the screen
+   (helps slow phones). */
+.vs-section,
+.vs-stats{
+    content-visibility:auto;
+    contain-intrinsic-size:auto 330px;
+}
+
+/* ---------- DISCOVER GROUPS ---------- */
+
+.vs-section{
+    margin-top:22px;
+    padding:14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #111627,
+            #0d1120
+        );
+
+    border:1px solid rgba(255,255,255,.075);
+    border-radius:21px;
+
+    box-shadow:0 9px 28px rgba(0,0,0,.28);
+}
+
+.vs-section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+
+    margin-bottom:12px;
+}
+
+.vs-section-head h2{
+    margin:0;
+
+    font-size:17px;
+    font-weight:900;
+    letter-spacing:-.2px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #fff,
+            #00d9ff,
+            #8f4dff
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+
+.vs-see-all{
+    flex:0 0 auto;
+
+    color:#00d9ff;
+    text-decoration:none;
+
+    font-size:12px;
+    font-weight:800;
+
+    padding:8px 4px;
+}
+
+.vs-see-all:hover{
+    color:#fff;
+}
+
+.vs-groups-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+}
+
+.vs-g-card{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+
+    padding:12px;
+
+    background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+}
+
+.vs-g-link{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    flex:1;
+    min-width:0;
+
+    color:inherit;
+    text-decoration:none;
+    text-align:center;
+}
+
+.vs-g-avatar{
+    width:48px;
+    height:48px;
+    flex:0 0 48px;
+
+    border-radius:50%;
+    overflow:hidden;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7b2cff,
+            #00cfff
+        );
+
+    color:#fff;
+    font-size:20px;
+    font-weight:900;
+
+    border:2px solid rgba(120,75,255,.7);
+}
+
+.vs-g-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+.vs-g-name{
+    width:100%;
+    margin:9px 0 5px;
+
+    color:#f3f5ff;
+
+    font-size:13px;
+    font-weight:850;
+    line-height:1.25;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow-wrap:anywhere;
+}
+
+.vs-g-verified{
+    margin-left:4px;
+    color:#00d9ff;
+    font-size:11px;
+}
+
+.vs-g-meta{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:4px 8px;
+
+    margin-bottom:10px;
+
+    color:#8f98b6;
+    font-size:11px;
+}
+
+.vs-g-tag{
+    color:#ffd84a;
+    font-weight:800;
+}
+
+.vs-g-btn{
+    width:100%;
+    min-height:40px;
+
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:12px;
+
+    background:rgba(255,255,255,.06);
+    color:#dce2f8;
+
+    font-size:12px;
+    font-weight:850;
+
+    cursor:pointer;
+    transition:.2s;
+
+    -webkit-tap-highlight-color:transparent;
+}
+
+.vs-g-btn.is-primary{
+    border:0;
+    color:#fff;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7639ff,
+            #00cfff
+        );
+
+    box-shadow:0 0 14px rgba(106,54,255,.35);
+}
+
+.vs-g-btn.is-joined{
+    color:#32df72;
+    border-color:rgba(50,223,114,.4);
+    background:rgba(50,223,114,.08);
+}
+
+.vs-g-btn.is-pending{
+    color:#ffd84a;
+    border-color:rgba(255,216,74,.4);
+    background:rgba(255,216,74,.08);
+}
+
+.vs-g-btn:disabled{
+    cursor:default;
+}
+
+.vs-g-btn:not(:disabled):active{
+    transform:scale(.96);
+}
+
+/* loading placeholders */
+
+.vs-g-skeleton{
+    align-items:center;
+    gap:8px;
+    min-height:168px;
+}
+
+.vs-sk-avatar,
+.vs-sk-line,
+.vs-sk-btn{
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.05),
+            rgba(255,255,255,.12),
+            rgba(255,255,255,.05)
+        );
+
+    background-size:200% 100%;
+
+    animation:vsShimmer 1.4s linear infinite;
+}
+
+.vs-sk-avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+}
+
+.vs-sk-line{
+    width:80%;
+    height:11px;
+    border-radius:6px;
+}
+
+.vs-sk-line.short{
+    width:50%;
+}
+
+.vs-sk-btn{
+    width:100%;
+    height:40px;
+    margin-top:auto;
+    border-radius:12px;
+}
+
+@keyframes vsShimmer{
+    from{ background-position:200% 0; }
+    to{ background-position:-200% 0; }
+}
+
+/* error / empty */
+
+.vs-state{
+    padding:22px 12px;
+    text-align:center;
+    border-radius:16px;
+}
+
+.vs-state[hidden]{
+    display:none;
+}
+
+.vs-state p{
+    margin-bottom:12px;
+
+    color:#aab3d0;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.vs-state-error{
+    background:rgba(255,50,80,.08);
+    border:1px solid rgba(255,50,80,.16);
+}
+
+.vs-state-error p{
+    color:#ff9ba5;
+}
+
+.vs-state-empty{
+    background:rgba(255,255,255,.03);
+    border:1px dashed rgba(255,255,255,.12);
+}
+
+.vs-state-btn{
+    display:inline-block;
+
+    margin:4px;
+    padding:10px 16px;
+
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:12px;
+
+    background:rgba(255,255,255,.06);
+    color:#dce2f8;
+
+    font-size:12px;
+    font-weight:850;
+    text-decoration:none;
+
+    cursor:pointer;
+}
+
+.vs-state-btn:hover{
+    background:rgba(255,255,255,.12);
+}
+
+.vs-groups-more{
+    display:block;
+
+    margin-top:12px;
+    padding:12px;
+
+    text-align:center;
+    text-decoration:none;
+
+    color:#00d9ff;
+    font-size:13px;
+    font-weight:850;
+
+    border:1px solid rgba(0,217,255,.25);
+    border-radius:13px;
+}
+
+.vs-groups-more:hover{
+    background:rgba(0,217,255,.07);
+}
+
+/* ---------- ONLINE STATS (black panel) ---------- */
+
+.vs-stats{
+    margin-top:18px;
+    padding:16px 14px;
+
+    background:#000;
+
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:21px;
+
+    box-shadow:
+        0 0 0 1px rgba(0,217,255,.06),
+        0 9px 28px rgba(0,0,0,.5);
+}
+
+.vs-stats-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+
+    margin-bottom:14px;
+}
+
+.vs-stats-head h2{
+    margin:0;
+
+    color:#fff;
+    font-size:17px;
+    font-weight:900;
+    letter-spacing:-.2px;
+}
+
+.vs-live{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+
+    color:#32df72;
+    font-size:11px;
+    font-weight:800;
+}
+
+.vs-live i{
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:#32df72;
+    box-shadow:0 0 8px rgba(50,223,114,.8);
+
+    animation:vsPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes vsPulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:.35; }
+}
+
+.vs-stats-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+}
+
+.vs-stat{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    min-width:0;
+
+    padding:14px 4px;
+
+    background:#0a0a0f;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:15px;
+
+    text-align:center;
+}
+
+.vs-stat-num{
+    color:#00d9ff;
+
+    font-size:26px;
+    font-weight:900;
+    line-height:1;
+
+    text-shadow:0 0 12px rgba(0,217,255,.45);
+}
+
+.vs-stat:nth-child(2) .vs-stat-num{
+    color:#c348ff;
+    text-shadow:0 0 12px rgba(195,72,255,.45);
+}
+
+.vs-stat:nth-child(3) .vs-stat-num{
+    color:#ffd84a;
+    text-shadow:0 0 12px rgba(255,216,74,.4);
+}
+
+.vs-stat-label{
+    color:#8f98b6;
+
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.2px;
+    line-height:1.25;
+}
+
+.vs-stats-note{
+    margin-top:10px;
+
+    color:#8f98b6;
+    font-size:11px;
+    text-align:center;
+}
+
+.vs-stats-note[hidden]{
+    display:none;
+}
+
+/* ---------- FOOTER ---------- */
+
+.vs-footer{
+    margin:38px 0 26px;
+    padding:20px 8px 4px;
+
+    text-align:center;
+
+    border-top:1px solid rgba(255,255,255,.07);
+}
+
+.vs-footer nav{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:4px 6px;
+
+    margin-bottom:12px;
+}
+
+.vs-footer nav a{
+    padding:10px 12px;
+
+    color:#aab3d0;
+    text-decoration:none;
+
+    font-size:13px;
+    font-weight:750;
+
+    border-radius:10px;
+}
+
+.vs-footer nav a:hover{
+    color:#fff;
+    background:rgba(255,255,255,.05);
+}
+
+.vs-footer p{
+    color:#6f7898;
+    font-size:12px;
+}
+
+/* ---------- NEW SECTIONS: SMALL PHONES ---------- */
+
+@media(max-width:340px){
+
+    .vs-groups-grid{
+        grid-template-columns:minmax(0,1fr);
+    }
+
+    .vs-stat-num{
+        font-size:22px;
+    }
+
+}
+
+@media(prefers-reduced-motion:reduce){
+
+    .vs-sk-avatar,
+    .vs-sk-line,
+    .vs-sk-btn,
+    .vs-live i{
+        animation:none;
+    }
+
+}
+
 </style>  </head>  <body>  <header>  <button
 class="menu"
 onclick="openMenu()"
@@ -1264,7 +1831,110 @@ function closeMenu(){
     Good Day...  
 </h2>  <p id="welcomeSub">  
     Welcome back to VitalStar  
-</p>  </div>  <div id="feed"></div>  </main>  <nav class="bottom-nav">  <a href="home.html">  🏠  
+</p>  </div>  <div id="feed"></div>
+
+<!-- =========================================================
+     NEW: DISCOVER GROUPS  (filled by home-groups.js)
+     ========================================================= -->
+<section
+    class="vs-section"
+    id="vsGroupsSection"
+    aria-labelledby="vsGroupsTitle"
+>
+
+    <div class="vs-section-head">
+
+        <h2 id="vsGroupsTitle">👥 Discover Groups</h2>
+
+        <a class="vs-see-all" href="groups.html">See all →</a>
+
+    </div>
+
+    <div
+        class="vs-groups-grid"
+        id="vsGroupsGrid"
+        aria-live="polite"
+        aria-busy="true"
+    ></div>
+
+    <div class="vs-state" id="vsGroupsState" hidden></div>
+
+    <a class="vs-groups-more" href="groups.html">
+        Browse all groups
+    </a>
+
+</section>
+
+<!-- =========================================================
+     NEW: ONLINE STATS  (filled by online-stats.js)
+     ========================================================= -->
+<section
+    class="vs-stats"
+    id="vsOnlineStats"
+    aria-labelledby="vsStatsTitle"
+>
+
+    <div class="vs-stats-head">
+
+        <h2 id="vsStatsTitle">Online Stats</h2>
+
+        <span class="vs-live"><i></i>Live</span>
+
+    </div>
+
+    <div class="vs-stats-grid">
+
+        <div class="vs-stat">
+            <span class="vs-stat-num" id="vsActiveUsers" role="status">…</span>
+            <span class="vs-stat-label">Active Users</span>
+        </div>
+
+        <div class="vs-stat">
+            <span class="vs-stat-num" id="vsActiveFriends" role="status">…</span>
+            <span class="vs-stat-label">Active Friends</span>
+        </div>
+
+        <div class="vs-stat">
+            <span class="vs-stat-num" id="vsActiveAdmins" role="status">…</span>
+            <span class="vs-stat-label">Active Admins</span>
+        </div>
+
+    </div>
+
+    <p class="vs-stats-note" id="vsStatsNote" hidden></p>
+
+</section>
+
+<!-- =========================================================
+     NEW: FOOTER
+     ========================================================= -->
+<footer class="vs-footer">
+
+    <nav aria-label="Footer links">
+
+        <a href="privacy-policy.html">Privacy Policy</a>
+
+        <a href="terms.html">Terms</a>
+
+        <a href="rexweb.html">RexWeb</a>
+
+    </nav>
+
+    <p>
+        &copy; <span id="vsYear">2026</span> VitalStar. All rights reserved.
+    </p>
+
+</footer>
+
+<script>
+(function(){
+    var year = document.getElementById("vsYear");
+    if(year){
+        year.textContent = String(new Date().getFullYear());
+    }
+})();
+</script>
+  </main>  <nav class="bottom-nav">  <a href="home.html">  🏠  
 
 <small>  
     Home  
@@ -1325,7 +1995,11 @@ aria-label="Create Post"
 ></script>  <script  
     type="module"  
     src="logout.js"  
-></script>  <!-- FRIEND REQUEST SIDEBAR COUNT -->  <script type="module">  
+></script>
+<!-- NEW: DISCOVER GROUPS + ONLINE STATS -->
+<script type="module" src="home-groups.js"></script>
+<script type="module" src="online-stats.js"></script>
+  <!-- FRIEND REQUEST SIDEBAR COUNT -->  <script type="module">  
   
 import {  
     auth,  
