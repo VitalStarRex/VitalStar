@@ -124,6 +124,7 @@ const el = {
     roomInput: $("roomInput"),
     joinRoomButton: $("joinRoomButton"),
     leaveButton: $("leaveButton"),
+    leaveLobbyButton: $("leaveLobbyButton"),
 
     scoreValue: $("scoreValue"),
     aliveValue: $("aliveValue"),
@@ -522,8 +523,39 @@ function setText(element, value) {
     if (element) element.textContent = String(value);
 }
 
+/* Elements that need flex layout when visible (see the page CSS) */
+const FLEX_ELEMENTS = new Set([
+    "countdownOverlay",
+    "waitingOverlay",
+    "winnerOverlay"
+]);
+
+/*
+   The page CSS hides some sections with display:none (and one with
+   the .hidden class), so an empty display value would never show them.
+   Use explicit values instead.
+*/
 function showElement(element) {
-    if (element) element.style.display = "";
+    if (!element) return;
+
+    element.classList.remove("hidden");
+
+    element.style.display = FLEX_ELEMENTS.has(element.id)
+        ? "flex"
+        : "block";
+}
+
+function formatTime(totalSeconds) {
+    const s = Math.max(0, Math.floor(totalSeconds));
+
+    const minutes = String(Math.floor(s / 60)).padStart(2, "0");
+    const seconds = String(s % 60).padStart(2, "0");
+
+    return `${minutes}:${seconds}`;
+}
+
+function livesText(alive) {
+    return alive ? "❤️" : "💀";
 }
 
 function hideElement(element) {
@@ -886,6 +918,7 @@ function enterRoomUI() {
     setText(el.gameRoomCode, roomCode || "------");
 
     setButtonDisabled(el.readyButton, false);
+    showElement(el.leaveLobbyButton);
 
     renderLobbyPlayers();
 }
@@ -1057,47 +1090,86 @@ function renderLobbyPlayers() {
         allPlayers.push(self);
     }
 
-    allPlayers.forEach((p, index) => {
+    if (!allPlayers.length) {
         const row = document.createElement("div");
+        row.className = "playerRow";
 
-        row.className = "volcano-player-row";
+        const avatar = document.createElement("div");
+        avatar.className = "playerAvatar";
+        avatar.textContent = "?";
 
-        const dot = document.createElement("span");
+        const details = document.createElement("div");
+        details.className = "playerDetails";
 
-        dot.className = "volcano-player-dot";
-        dot.style.background = p.color || PLAYER_COLORS[index % PLAYER_COLORS.length];
+        const name = document.createElement("div");
+        name.className = "playerName";
+        name.textContent = "Waiting for players...";
 
-        const name = document.createElement("span");
+        const sub = document.createElement("div");
+        sub.className = "playerUsername";
+        sub.textContent = "Join the room to play";
 
-        name.className = "volcano-player-name";
+        details.append(name, sub);
+        row.append(avatar, details);
 
-        name.textContent =
-            p.displayName ||
-            p.username ||
-            "Player";
+        el.playersList.appendChild(row);
+
+        setText(el.playerCount, `Players: 0/${MAX_PLAYERS}`);
+
+        return;
+    }
+
+    allPlayers.forEach((p, index) => {
+        const color = p.color || PLAYER_COLORS[index % PLAYER_COLORS.length];
+        const displayName = p.displayName || p.username || "Player";
+
+        const row = document.createElement("div");
+        row.className = "playerRow";
+
+        const avatar = document.createElement("div");
+        avatar.className = "playerAvatar";
+        avatar.textContent = displayName.charAt(0).toUpperCase();
+        avatar.style.borderColor = color;
+        avatar.style.color = color;
+
+        const details = document.createElement("div");
+        details.className = "playerDetails";
+
+        const name = document.createElement("div");
+        name.className = "playerName";
+        name.textContent = displayName;
 
         if (p.uid === currentUser?.uid) {
             name.textContent += " (You)";
         }
 
-        const status = document.createElement("span");
+        const sub = document.createElement("div");
+        sub.className = "playerUsername";
+        sub.textContent = p.uid === roomData?.hostUid ? "Host" : "Player";
 
-        status.className = "volcano-player-status";
+        details.append(name, sub);
+
+        const badge = document.createElement("div");
 
         if (gameStarted && !p.alive) {
-            status.textContent = "ELIMINATED";
+            badge.className = "readyBadge notReady";
+            badge.textContent = "ELIMINATED";
+        } else if (p.ready) {
+            badge.className = "readyBadge ready";
+            badge.textContent = "READY";
         } else {
-            status.textContent = p.ready ? "READY" : "NOT READY";
+            badge.className = "readyBadge notReady";
+            badge.textContent = "NOT READY";
         }
 
-        row.append(dot, name, status);
+        row.append(avatar, details, badge);
 
         el.playersList.appendChild(row);
     });
 
     setText(
         el.playerCount,
-        `${allPlayers.length}/${MAX_PLAYERS}`
+        `Players: ${allPlayers.length}/${MAX_PLAYERS}`
     );
 }
 
@@ -1106,8 +1178,10 @@ function updateWaitingState() {
 
     if (el.readyButton) {
         el.readyButton.textContent = self.ready
-            ? "CANCEL READY"
-            : "I'M READY";
+            ? "✅ READY (TAP TO CANCEL)"
+            : "🔥 READY";
+
+        el.readyButton.classList.toggle("readyOn", !!self.ready);
     }
 
     const count = players.size || (self ? 1 : 0);
@@ -1300,8 +1374,8 @@ function startGame() {
 
     setText(el.scoreValue, "0");
     setText(el.aliveValue, String(players.size));
-    setText(el.timeValue, String(GAME_DURATION));
-    setText(el.livesValue, "1");
+    setText(el.timeValue, formatTime(GAME_DURATION));
+    setText(el.livesValue, livesText(true));
 
     if (roomId && currentUser) {
         liveRef = rtdbRef(
@@ -1763,7 +1837,7 @@ async function finishGame(winnerUid, persistResult = false) {
 
     setText(
         el.winnerScore,
-        String(Math.floor(winner?.score || 0))
+        `Score: ${Math.floor(winner?.score || 0)}`
     );
 
     renderResultLeaderboard(ranking);
@@ -1826,7 +1900,7 @@ async function finishGame(winnerUid, persistResult = false) {
 function updateHUD() {
     if (self) {
         setText(el.scoreValue, Math.floor(self.score || 0));
-        setText(el.livesValue, self.alive ? 1 : 0);
+        setText(el.livesValue, livesText(self.alive));
     }
 
     setText(
@@ -1836,7 +1910,7 @@ function updateHUD() {
 
     setText(
         el.timeValue,
-        Math.max(0, Math.ceil(GAME_DURATION - gameElapsed))
+        formatTime(Math.ceil(GAME_DURATION - gameElapsed))
     );
 
     // Rebuilding the table 60 times a second is heavy on phones.
@@ -1859,24 +1933,34 @@ function renderLeaderboard() {
 
     el.leaderboardRows.replaceChildren();
 
+    if (!ranking.length) {
+        el.leaderboardRows.textContent = "Waiting...";
+        return;
+    }
+
     ranking.forEach((p, index) => {
         const row = document.createElement("div");
-
-        row.className = "volcano-leaderboard-row";
+        row.className = "leaderRow";
 
         const rank = document.createElement("span");
+        rank.className = "rank";
         rank.textContent = String(index + 1);
 
         const name = document.createElement("span");
-        name.textContent = p.displayName || p.username || "Player";
+        name.className = "leaderName";
+
+        let label = p.displayName || p.username || "Player";
+
+        if (p.uid === currentUser?.uid) label += " (You)";
+        if (!p.alive) label += " • OUT";
+
+        name.textContent = label;
 
         const score = document.createElement("span");
+        score.className = "leaderScore";
         score.textContent = String(Math.floor(p.score || 0));
 
-        const status = document.createElement("span");
-        status.textContent = p.alive ? "ALIVE" : "OUT";
-
-        row.append(rank, name, score, status);
+        row.append(rank, name, score);
 
         el.leaderboardRows.appendChild(row);
     });
@@ -1889,16 +1973,21 @@ function renderResultLeaderboard(ranking) {
 
     ranking.forEach((p, index) => {
         const row = document.createElement("div");
+        row.className = "resultRow";
 
-        row.className = "volcano-result-row";
+        const rank = document.createElement("span");
+        rank.className = "resultRank";
+        rank.textContent = `#${index + 1}`;
 
-        const name = document.createElement("span");
-        name.textContent = `${index + 1}. ${p.displayName || p.username || "Player"}`;
+        const player = document.createElement("span");
+        player.className = "resultPlayer";
+        player.textContent = p.displayName || p.username || "Player";
 
         const score = document.createElement("span");
+        score.className = "resultScore";
         score.textContent = `${Math.floor(p.score || 0)} pts`;
 
-        row.append(name, score);
+        row.append(rank, player, score);
 
         el.resultLeaderboard.appendChild(row);
     });
@@ -2507,7 +2596,23 @@ async function resetLocalRoom(returnToLobby = true) {
     hideMessage();
     hideElement(el.winnerOverlay);
 
-    setButtonDisabled(el.readyButton, false);
+    setButtonDisabled(el.readyButton, true);
+
+    if (el.readyButton) {
+        el.readyButton.textContent = "🔥 READY";
+        el.readyButton.classList.remove("readyOn");
+    }
+
+    setText(el.roomCode, "------");
+    setText(el.gameRoomCode, "------");
+
+    hideElement(el.leaveLobbyButton);
+
+    renderLobbyPlayers();
+
+    if (el.leaderboardRows) {
+        el.leaderboardRows.textContent = "Waiting...";
+    }
 
     if (returnToLobby) {
         showLobby();
@@ -2547,6 +2652,10 @@ if (el.readyButton) {
 
 if (el.leaveButton) {
     el.leaveButton.addEventListener("click", leaveRoom);
+}
+
+if (el.leaveLobbyButton) {
+    el.leaveLobbyButton.addEventListener("click", leaveRoom);
 }
 
 if (el.roomInput) {
