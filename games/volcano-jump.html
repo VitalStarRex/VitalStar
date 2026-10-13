@@ -537,6 +537,10 @@ body{
    JOIN ROOM
    ============================================================ */
 
+.panel .secondaryButton{
+    margin-top:10px;
+}
+
 .joinBox{
     display:flex;
     gap:8px;
@@ -1284,6 +1288,15 @@ body{
                 Create or join a room to begin.
             </div>
 
+
+            <button
+                type="button"
+                id="leaveLobbyButton"
+                class="secondaryButton dangerButton hidden"
+            >
+                🚪 LEAVE ROOM
+            </button>
+
         </div>
 
 
@@ -1390,7 +1403,7 @@ body{
                 </small>
 
                 <strong id="timeValue">
-                    00:00
+                    03:00
                 </strong>
 
             </div>
@@ -1403,7 +1416,7 @@ body{
                 </small>
 
                 <strong id="livesValue">
-                    ❤️❤️❤️
+                    ❤️
                 </strong>
 
             </div>
