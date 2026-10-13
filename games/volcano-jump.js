@@ -1,4 +1,3 @@
-
 /* ============================================================
    VITALSTAR — VOLCANO JUMP
    Multiplayer Last-Player-Standing Survival
@@ -12,14 +11,18 @@
    - Mobile touch controls and keyboard controls
    - Jumping, collision detection and elimination
    - Live player positions and leaderboard
-   - Firebase room/player synchronization
    - Automatic winner and game-result handling
+
+   DATA SPLIT (keeps Firestore reads/writes low)
+   - Firestore  : rooms, lobby player list, ready state, results
+   - Realtime DB: live positions during the match
+                  path = gameLive/{roomId}/{uid}
 
    Firebase v10.12.2
    File: volcano-jump.js
    ============================================================ */
 
-import { auth, db } from "../firebase.js";
+import { auth, db, rtdb } from "../firebase.js";
 
 import {
     onAuthStateChanged
@@ -32,7 +35,6 @@ import {
     where,
     limit,
     getDocs,
-    getDoc,
     setDoc,
     updateDoc,
     deleteDoc,
@@ -41,6 +43,17 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import {
+    ref as rtdbRef,
+    set as rtdbSet,
+    remove as rtdbRemove,
+    onValue,
+    onChildAdded,
+    onChildChanged,
+    onChildRemoved,
+    onDisconnect
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 import { recordGameResult } from "./games.js";
 
 /* ============================================================
@@ -48,6 +61,7 @@ import { recordGameResult } from "./games.js";
    ============================================================ */
 
 const GAME_ID = "volcano-jump";
+const LIVE_PATH = "gameLive";
 
 const MAX_PLAYERS = 4;
 const MIN_PLAYERS = 2;
@@ -68,11 +82,17 @@ const JUMP_FORCE = 610;
 const GRAVITY = 1550;
 
 const STATE_SEND_INTERVAL = 180;
-const INVULNERABILITY_TIME = 1.15;
+const HEARTBEAT_TIMEOUT = 6000;
+const LEADERBOARD_REFRESH = 250;
 
 const LAVA_START_Y = 290;
 const LAVA_END_Y = 710;
 const LAVA_HEIGHT = 28;
+
+/* Road shape — used for BOTH drawing and collision bounds */
+const ROAD_TOP = 275;
+const ROAD_TOP_HALF_WIDTH = 20;
+const ROAD_BOTTOM_HALF_WIDTH = 166;
 
 const PLAYER_COLORS = [
     "#54e8ff",
@@ -140,34 +160,53 @@ const el = {
 };
 
 /* ============================================================
+   SERVER TIME
+   Every phone has a different clock. Realtime Database tells us
+   how far our clock is from the server, so the countdown and the
+   lava schedule line up for all players.
+   ============================================================ */
+
+let serverOffset = 0;
+
+onValue(
+    rtdbRef(rtdb, ".info/serverTimeOffset"),
+    snapshot => {
+        serverOffset = Number(snapshot.val()) || 0;
+    },
+    error => {
+        console.warn("Server time offset unavailable:", error);
+    }
+);
+
+function serverNow() {
+    return Date.now() + serverOffset;
+}
+
+/* ============================================================
    CANVAS
    ============================================================ */
 
 const canvas = el.gameCanvas;
 const ctx = canvas ? canvas.getContext("2d") : null;
 
-let canvasScale = 1;
-
 function resizeCanvas() {
     if (!canvas || !ctx) return;
 
     const rect = canvas.getBoundingClientRect();
 
+    // Hidden canvas has no size yet. showGameArea() calls this again.
     if (!rect.width || !rect.height) return;
 
-    canvas.width = Math.round(rect.width * devicePixelRatio);
-    canvas.height = Math.round(rect.height * devicePixelRatio);
+    const dpr = window.devicePixelRatio || 1;
 
-    canvasScale = Math.min(
-        rect.width / WORLD_WIDTH,
-        rect.height / WORLD_HEIGHT
-    );
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
 
     ctx.setTransform(
-        devicePixelRatio * rect.width / WORLD_WIDTH,
+        dpr * rect.width / WORLD_WIDTH,
         0,
         0,
-        devicePixelRatio * rect.height / WORLD_HEIGHT,
+        dpr * rect.height / WORLD_HEIGHT,
         0,
         0
     );
@@ -175,6 +214,21 @@ function resizeCanvas() {
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
+
+/* Older Android WebViews have no ctx.roundRect */
+function roundedRectPath(c, x, y, w, h, r) {
+    if (typeof c.roundRect === "function") {
+        c.roundRect(x, y, w, h, r);
+        return;
+    }
+
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+}
 
 /* ============================================================
    GLOBAL STATE
@@ -189,20 +243,25 @@ let roomData = null;
 let roomUnsubscribe = null;
 let playersUnsubscribe = null;
 let chatUnsubscribe = null;
+let liveUnsubscribes = [];
 
 let roomRef = null;
 let playersRef = null;
 let localPlayerRef = null;
+let liveRef = null;
 
 let players = new Map();
+let liveCache = new Map();
 
 let gameStarted = false;
 let gameFinished = false;
 let gameStartTime = 0;
 let gameElapsed = 0;
+let startingCount = 0;
 
 let lastFrameTime = 0;
 let lastStateSend = 0;
+let lastLeaderboardRender = 0;
 let stateWriteInFlight = false;
 
 let countdownTimer = null;
@@ -212,6 +271,8 @@ let animationFrame = null;
 
 let resultRecorded = false;
 let finishingGame = false;
+let startRequested = false;
+let leavingRoom = false;
 
 let hitLavaIds = new Set();
 let seenMessageIds = new Set();
@@ -273,7 +334,6 @@ function createLocalPlayer() {
         ],
 
         jumping: false,
-        invulnerableUntil: 0,
 
         renderedX: WORLD_WIDTH / 2,
         renderedY: GROUND_Y - PLAYER_HEIGHT,
@@ -282,6 +342,7 @@ function createLocalPlayer() {
     };
 }
 
+/* Lobby / result data only. Live position goes to Realtime Database. */
 function playerToFirestore(p) {
     return {
         uid: p.uid,
@@ -291,14 +352,7 @@ function playerToFirestore(p) {
         ready: !!p.ready,
         alive: !!p.alive,
 
-        lives: Number(p.lives || 0),
-        score: Number(p.score || 0),
-
-        x: Number(p.x || 0),
-        y: Number(p.y || 0),
-
-        vx: Number(p.vx || 0),
-        vy: Number(p.vy || 0),
+        score: Math.floor(Number(p.score || 0)),
 
         color: p.color || "#54e8ff",
 
@@ -306,34 +360,158 @@ function playerToFirestore(p) {
     };
 }
 
-function applyRemotePlayer(data) {
-    const old = players.get(data.uid);
-
-    if (data.uid === currentUser?.uid && self) {
-        self.ready = !!data.ready;
-        self.alive = data.alive !== false;
-        self.lives = Number(data.lives ?? self.lives);
-        self.score = Number(data.score ?? self.score);
-
-        return;
-    }
-
+function createRemotePlayer(data) {
     const p = {
-        ...data,
+        uid: data.uid,
+        displayName: data.displayName,
+        username: data.username,
+        color: data.color,
+        ready: !!data.ready,
+
+        alive: true,
+        timedOut: false,
+        lives: 1,
+        score: 0,
 
         width: PLAYER_WIDTH,
         height: PLAYER_HEIGHT,
 
-        x: Number(data.x ?? WORLD_WIDTH / 2),
-        y: Number(data.y ?? GROUND_Y - PLAYER_HEIGHT),
+        x: WORLD_WIDTH / 2,
+        y: GROUND_Y - PLAYER_HEIGHT,
 
-        renderedX: old?.renderedX ?? Number(data.x ?? WORLD_WIDTH / 2),
-        renderedY: old?.renderedY ?? Number(data.y ?? GROUND_Y - PLAYER_HEIGHT),
+        renderedX: WORLD_WIDTH / 2,
+        renderedY: GROUND_Y - PLAYER_HEIGHT,
 
-        updatedAt: Number(data.updatedAt || Date.now())
+        lastSeen: performance.now()
     };
 
-    players.set(data.uid, p);
+    const live = liveCache.get(data.uid);
+
+    if (live) {
+        applyLive(p, live);
+
+        p.renderedX = p.x;
+        p.renderedY = p.y;
+    }
+
+    return p;
+}
+
+/* ============================================================
+   LIVE POSITIONS (REALTIME DATABASE)
+   ============================================================ */
+
+function applyLive(p, live) {
+    if (!p || !live) return;
+
+    if (Number.isFinite(Number(live.x))) p.x = Number(live.x);
+    if (Number.isFinite(Number(live.y))) p.y = Number(live.y);
+    if (Number.isFinite(Number(live.score))) p.score = Number(live.score);
+
+    // Eliminated stays eliminated.
+    if (live.alive === false) {
+        p.alive = false;
+        p.lives = 0;
+    }
+
+    p.lastSeen = performance.now();
+}
+
+function handleLiveUpdate(uid, value) {
+    if (!uid || uid === currentUser?.uid) return;
+
+    liveCache.set(uid, value);
+
+    const p = players.get(uid);
+
+    if (p) applyLive(p, value);
+}
+
+function handleLiveRemoved(uid) {
+    if (!uid || uid === currentUser?.uid) return;
+
+    liveCache.delete(uid);
+
+    const p = players.get(uid);
+
+    if (p && gameStarted) {
+        p.alive = false;
+        p.lives = 0;
+    }
+}
+
+function subscribeToLive() {
+    unsubscribeLive();
+
+    if (!roomId) return;
+
+    const liveRoomRef = rtdbRef(rtdb, `${LIVE_PATH}/${roomId}`);
+
+    const onError = error => {
+        console.warn("Live position listener error:", error);
+    };
+
+    liveUnsubscribes = [
+        onChildAdded(
+            liveRoomRef,
+            snap => handleLiveUpdate(snap.key, snap.val()),
+            onError
+        ),
+        onChildChanged(
+            liveRoomRef,
+            snap => handleLiveUpdate(snap.key, snap.val()),
+            onError
+        ),
+        onChildRemoved(
+            liveRoomRef,
+            snap => handleLiveRemoved(snap.key),
+            onError
+        )
+    ];
+}
+
+function unsubscribeLive() {
+    for (const unsubscribe of liveUnsubscribes) {
+        try { unsubscribe(); } catch (_) {}
+    }
+
+    liveUnsubscribes = [];
+}
+
+async function cleanupOwnLive() {
+    if (!liveRef) return;
+
+    const ref = liveRef;
+
+    liveRef = null;
+
+    try { await onDisconnect(ref).cancel(); } catch (_) {}
+    try { await rtdbRemove(ref); } catch (_) {}
+}
+
+async function sendPlayerState(force = false) {
+    if (!self || !liveRef) return;
+
+    if (!force && (!gameStarted || !self.alive)) return;
+
+    // A forced write (elimination / finish) is never skipped.
+    if (stateWriteInFlight && !force) return;
+
+    stateWriteInFlight = true;
+
+    try {
+        await rtdbSet(liveRef, {
+            x: Math.round(self.x * 10) / 10,
+            y: Math.round(self.y * 10) / 10,
+            alive: !!self.alive,
+            score: Math.floor(Number(self.score || 0)),
+            t: serverNow()
+        });
+    } catch (error) {
+        console.warn("Player state update failed:", error);
+    } finally {
+        stateWriteInFlight = false;
+    }
 }
 
 /* ============================================================
@@ -364,6 +542,9 @@ function showLobby() {
 function showGameArea() {
     hideElement(el.lobby);
     showElement(el.gameArea);
+
+    // The canvas only has a size once the game area is visible.
+    resizeCanvas();
 }
 
 function showMessage(icon, title, message) {
@@ -436,6 +617,16 @@ async function findRoomByCode(code) {
 }
 
 /* ============================================================
+   SUBSCRIPTIONS
+   ============================================================ */
+
+function subscribeAll() {
+    subscribeToRoom();
+    subscribeToPlayers();
+    subscribeToLive();
+}
+
+/* ============================================================
    CREATE ROOM
    ============================================================ */
 
@@ -498,9 +689,10 @@ async function createRoom() {
 
         await setDoc(localPlayerRef, playerToFirestore(self));
 
+        players.set(self.uid, self);
+
         enterRoomUI();
-        subscribeToRoom();
-        subscribeToPlayers();
+        subscribeAll();
 
         setLobbyStatus("Room created. Invite your friends!");
 
@@ -548,11 +740,11 @@ async function joinExistingRoom(roomDocument) {
 
         const playerSnapshot = await getDocs(playerCollection);
 
-        const alreadyJoined = playerSnapshot.docs.some(
+        const existing = playerSnapshot.docs.find(
             d => d.id === currentUser.uid
         );
 
-        if (!alreadyJoined && playerSnapshot.size >= MAX_PLAYERS) {
+        if (!existing && playerSnapshot.size >= MAX_PLAYERS) {
             setLobbyStatus("This room is full.");
             return;
         }
@@ -572,10 +764,6 @@ async function joinExistingRoom(roomDocument) {
             currentUser.uid
         );
 
-        const existing = playerSnapshot.docs.find(
-            d => d.id === currentUser.uid
-        );
-
         if (existing) {
             self = {
                 ...createLocalPlayer(),
@@ -587,10 +775,10 @@ async function joinExistingRoom(roomDocument) {
             await setDoc(localPlayerRef, playerToFirestore(self));
         }
 
-        enterRoomUI();
+        players.set(self.uid, self);
 
-        subscribeToRoom();
-        subscribeToPlayers();
+        enterRoomUI();
+        subscribeAll();
 
         await updateRoomCounts();
 
@@ -635,6 +823,8 @@ async function joinRoomByCode() {
 
 /* ============================================================
    QUICK MATCH
+   Uses the playersCount stored on each room, so it needs one
+   query instead of one extra read per candidate room.
    ============================================================ */
 
 async function quickMatch() {
@@ -665,18 +855,12 @@ async function quickMatch() {
 
             if (data.hostUid === currentUser.uid) continue;
 
-            const candidatePlayers = await getDocs(
-                collection(db, "gameRooms", candidate.id, "players")
-            );
+            if (Number(data.playersCount || 0) >= MAX_PLAYERS) continue;
 
-            const existing = candidatePlayers.docs.some(
-                d => d.id === currentUser.uid
-            );
+            await joinExistingRoom(candidate);
 
-            if (candidatePlayers.size < MAX_PLAYERS || existing) {
-                await joinExistingRoom(candidate);
-                return;
-            }
+            // joinExistingRoom sets roomId only on success
+            if (roomId) return;
         }
 
         await createRoom();
@@ -719,7 +903,10 @@ function subscribeToRoom() {
         roomRef,
         snapshot => {
             if (!snapshot.exists()) {
-                setLobbyStatus("Room no longer exists.");
+                if (!leavingRoom) {
+                    setLobbyStatus("Room no longer exists.");
+                }
+
                 return;
             }
 
@@ -728,18 +915,27 @@ function subscribeToRoom() {
             setText(el.roomCode, roomData.roomCode || roomCode);
             setText(el.gameRoomCode, roomData.roomCode || roomCode);
 
+            // Host left before the match began: send everyone back.
+            if (roomData.status === "closed") {
+                if (!gameStarted && !gameFinished && !leavingRoom) {
+                    resetLocalRoom(true).then(() => {
+                        setLobbyStatus("The host closed the room.");
+                    });
+                }
+
+                return;
+            }
+
             if (roomData.status === "playing") {
                 if (!gameStarted && !gameFinished) {
                     startCountdownFromServer(roomData.startAt);
                 }
             }
 
+            // Only players who were actually in the match get a result.
             if (roomData.status === "finished") {
-                if (!gameFinished) {
-                    finishGame(
-                        roomData.winnerUid || null,
-                        false
-                    );
+                if (gameStarted && !gameFinished) {
+                    finishGame(roomData.winnerUid || null, false);
                 }
             }
 
@@ -758,7 +954,8 @@ function subscribeToRoom() {
 }
 
 /* ============================================================
-   PLAYER LISTENER
+   FIRESTORE PLAYER LISTENER
+   Lobby info only. Fires when someone joins, leaves or readies.
    ============================================================ */
 
 function subscribeToPlayers() {
@@ -769,33 +966,36 @@ function subscribeToPlayers() {
     playersUnsubscribe = onSnapshot(
         playersRef,
         snapshot => {
-            const incoming = new Map();
+            const incomingIds = new Set();
 
             snapshot.forEach(playerDoc => {
-                const data = playerDoc.data();
-
-                incoming.set(playerDoc.id, {
-                    ...data,
+                const data = {
+                    ...playerDoc.data(),
                     uid: playerDoc.id
-                });
+                };
+
+                incomingIds.add(playerDoc.id);
+
+                if (playerDoc.id === currentUser?.uid) {
+                    if (self) self.ready = !!data.ready;
+
+                    return;
+                }
+
+                const existing = players.get(playerDoc.id);
+
+                if (existing) {
+                    existing.displayName = data.displayName;
+                    existing.username = data.username;
+                    existing.color = data.color;
+                    existing.ready = !!data.ready;
+                } else {
+                    players.set(playerDoc.id, createRemotePlayer(data));
+                }
             });
 
-            for (const [uid, data] of incoming) {
-                if (uid === currentUser?.uid) {
-                    if (self) {
-                        self.ready = !!data.ready;
-
-                        if (!gameStarted) {
-                            self.alive = data.alive !== false;
-                        }
-                    }
-                } else {
-                    applyRemotePlayer(data);
-                }
-            }
-
             for (const uid of [...players.keys()]) {
-                if (!incoming.has(uid)) {
+                if (uid !== currentUser?.uid && !incomingIds.has(uid)) {
                     players.delete(uid);
                 }
             }
@@ -805,12 +1005,15 @@ function subscribeToPlayers() {
             }
 
             renderLobbyPlayers();
-            renderLeaderboard();
             updateHUD();
             updateWaitingState();
 
             if (gameStarted && !gameFinished) {
                 checkLocalEndConditions();
+            } else {
+                // Host starts the match as soon as everyone is ready,
+                // no matter who pressed READY last.
+                maybeStartMatch();
             }
         },
         error => {
@@ -820,24 +1023,18 @@ function subscribeToPlayers() {
 }
 
 /* ============================================================
-   UPDATE ROOM COUNTS
+   UPDATE ROOM COUNTS (no extra reads)
    ============================================================ */
 
 async function updateRoomCounts() {
     if (!roomRef || !roomData) return;
 
     try {
-        const snapshot = await getDocs(playersRef);
-
-        let readyCount = 0;
-
-        snapshot.forEach(d => {
-            if (d.data().ready) readyCount++;
-        });
+        const list = [...players.values()];
 
         await updateDoc(roomRef, {
-            playersCount: snapshot.size,
-            readyCount
+            playersCount: list.length,
+            readyCount: list.filter(p => p.ready).length
         });
 
     } catch (error) {
@@ -963,51 +1160,57 @@ async function toggleReady() {
 }
 
 /* ============================================================
-   START MATCH
+   START MATCH (host only)
+   Checks the local player list, so it costs no extra reads.
    ============================================================ */
 
 async function maybeStartMatch() {
-    if (!roomData || !roomRef || !currentUser) return;
+    if (startRequested) return;
+
+    if (!roomData || !roomRef || !currentUser || !self) return;
 
     if (roomData.status !== "waiting") return;
 
     if (roomData.hostUid !== currentUser.uid) return;
 
-    const snapshot = await getDocs(playersRef);
+    const list = [...players.values()];
 
-    if (snapshot.size < MIN_PLAYERS) return;
-    if (snapshot.size > MAX_PLAYERS) return;
+    if (list.length < MIN_PLAYERS) return;
+    if (list.length > MAX_PLAYERS) return;
 
-    const allReady = snapshot.docs.every(
-        d => d.data().ready === true
-    );
+    if (!list.every(p => p.ready === true)) return;
 
-    if (!allReady) return;
-
-    const startAt = Date.now() + COUNTDOWN_SECONDS * 1000;
+    startRequested = true;
 
     try {
         await updateDoc(roomRef, {
             status: "playing",
-            startAt,
-            playersCount: snapshot.size,
-            readyCount: snapshot.size
+            startAt: serverNow() + COUNTDOWN_SECONDS * 1000,
+            playersCount: list.length,
+            readyCount: list.length
         });
     } catch (error) {
         console.error("Start match error:", error);
+
+        startRequested = false;
     }
 }
 
 /* ============================================================
-   SYNCHRONIZED COUNTDOWN
+   SYNCHRONIZED COUNTDOWN (server time)
    ============================================================ */
 
 function startCountdownFromServer(startAt) {
     if (!startAt || gameStarted || gameFinished) return;
 
-    countdownTarget = Number(startAt);
+    const target = Number(startAt);
 
-    if (!Number.isFinite(countdownTarget)) return;
+    if (!Number.isFinite(target)) return;
+
+    // Already counting down to this exact start time.
+    if (countdownTimer && countdownTarget === target) return;
+
+    countdownTarget = target;
 
     showGameArea();
     hideWaiting();
@@ -1025,7 +1228,7 @@ function startCountdownFromServer(startAt) {
 
         const remaining = Math.max(
             0,
-            Math.ceil((countdownTarget - Date.now()) / 1000)
+            Math.ceil((countdownTarget - serverNow()) / 1000)
         );
 
         if (remaining > 0) {
@@ -1053,13 +1256,19 @@ function startGame() {
     resultRecorded = false;
     finishingGame = false;
 
-    gameStartTime = Number(roomData?.startAt || Date.now());
+    gameStartTime = Number(roomData?.startAt || serverNow());
 
     gameElapsed = 0;
+
+    // Remember how many players began, so a player leaving a
+    // 2-player match still ends the game correctly.
+    startingCount = players.size;
 
     hitLavaIds.clear();
     lavaEvents = [];
     particles = [];
+
+    const nowPerf = performance.now();
 
     if (self) {
         self.alive = true;
@@ -1073,13 +1282,14 @@ function startGame() {
         self.vy = 0;
 
         self.jumping = false;
-        self.invulnerableUntil = 0;
     }
 
     for (const p of players.values()) {
         p.alive = true;
         p.lives = 1;
         p.score = 0;
+        p.timedOut = false;
+        p.lastSeen = nowPerf;
     }
 
     showGameArea();
@@ -1093,7 +1303,15 @@ function startGame() {
     setText(el.timeValue, String(GAME_DURATION));
     setText(el.livesValue, "1");
 
+    if (roomId && currentUser) {
+        liveRef = rtdbRef(
+            rtdb,
+            `${LIVE_PATH}/${roomId}/${currentUser.uid}`
+        );
+    }
+
     lastFrameTime = performance.now();
+    lastStateSend = lastFrameTime;
 
     if (animationFrame) {
         cancelAnimationFrame(animationFrame);
@@ -1101,7 +1319,16 @@ function startGame() {
 
     animationFrame = requestAnimationFrame(gameLoop);
 
-    sendPlayerState(true);
+    sendPlayerState(true).then(() => {
+        // If the phone loses connection, others see us as eliminated.
+        if (liveRef) {
+            onDisconnect(liveRef)
+                .update({ alive: false })
+                .catch(error => {
+                    console.warn("onDisconnect setup failed:", error);
+                });
+        }
+    });
 }
 
 /* ============================================================
@@ -1124,7 +1351,7 @@ function getLavaDifficulty(elapsed) {
 
 /* ============================================================
    DETERMINISTIC LAVA SCHEDULE
-   All clients derive wave timing from the same game start.
+   All clients derive wave timing from the same server start time.
    ============================================================ */
 
 function getLavaSchedule(elapsed) {
@@ -1180,19 +1407,22 @@ function getLavaSchedule(elapsed) {
 
 /* ============================================================
    ROAD PERSPECTIVE
+   Same numbers as drawRoad(), so players cannot stand off-road.
    ============================================================ */
 
 function getRoadBoundsAtY(y) {
     const depth = Math.max(
         0,
-        Math.min(1, (y - 120) / (WORLD_HEIGHT - 120))
+        Math.min(1, (y - ROAD_TOP) / (WORLD_HEIGHT - ROAD_TOP))
     );
 
-    const width = 55 + depth * 265;
+    const half =
+        ROAD_TOP_HALF_WIDTH +
+        depth * (ROAD_BOTTOM_HALF_WIDTH - ROAD_TOP_HALF_WIDTH);
 
     return {
-        left: WORLD_WIDTH / 2 - width / 2,
-        right: WORLD_WIDTH / 2 + width / 2
+        left: WORLD_WIDTH / 2 - half,
+        right: WORLD_WIDTH / 2 + half
     };
 }
 
@@ -1212,7 +1442,7 @@ function gameLoop(timestamp) {
 
     gameElapsed = Math.max(
         0,
-        (Date.now() - gameStartTime) / 1000
+        (serverNow() - gameStartTime) / 1000
     );
 
     if (gameElapsed >= GAME_DURATION) {
@@ -1222,7 +1452,7 @@ function gameLoop(timestamp) {
 
     updateLocalPlayer(dt);
     updateRemotePlayers(dt);
-    updateLava(dt);
+    updateLava();
     updateParticles(dt);
 
     checkLavaCollisions();
@@ -1231,7 +1461,7 @@ function gameLoop(timestamp) {
 
     drawScene();
 
-    if (timestamp - lastStateSend >= STATE_SEND_INTERVAL) {
+    if (self && self.alive && timestamp - lastStateSend >= STATE_SEND_INTERVAL) {
         lastStateSend = timestamp;
         sendPlayerState();
     }
@@ -1310,12 +1540,25 @@ function updateLocalPlayer(dt) {
 }
 
 /* ============================================================
-   SMOOTH REMOTE PLAYERS
+   REMOTE PLAYERS
+   Smooth movement + heartbeat. A player whose updates stop
+   for HEARTBEAT_TIMEOUT is treated as eliminated.
    ============================================================ */
 
 function updateRemotePlayers(dt) {
+    const nowPerf = performance.now();
+
     for (const p of players.values()) {
         if (p.uid === currentUser?.uid) continue;
+
+        if (
+            p.alive !== false &&
+            nowPerf - (p.lastSeen || nowPerf) > HEARTBEAT_TIMEOUT
+        ) {
+            p.alive = false;
+            p.lives = 0;
+            p.timedOut = true;
+        }
 
         const blend = Math.min(1, dt * 12);
 
@@ -1399,26 +1642,37 @@ function eliminateLocalPlayer() {
 
 /* ============================================================
    SCORE
+   Kept as a decimal so small frames still add up.
+   Only the display is rounded.
    ============================================================ */
 
 function updateScore(dt) {
     if (!self || !self.alive) return;
 
-    self.score += Math.round(dt * 10);
-
-    for (const p of players.values()) {
-        if (p.uid === self.uid || !p.alive) continue;
-
-        if (!Number.isFinite(p.score)) p.score = 0;
-    }
+    self.score += dt * 10;
 }
 
 /* ============================================================
-   END CONDITIONS
+   RANKING + END CONDITIONS
    ============================================================ */
 
 function getAlivePlayers() {
     return [...players.values()].filter(p => p.alive !== false);
+}
+
+function getRanking() {
+    return [...players.values()].sort((a, b) => {
+        if (!!a.alive !== !!b.alive) {
+            return a.alive ? -1 : 1;
+        }
+
+        const scoreDiff = Number(b.score || 0) - Number(a.score || 0);
+
+        if (scoreDiff !== 0) return scoreDiff;
+
+        // Stable tie-break so every phone picks the same winner
+        return String(a.uid).localeCompare(String(b.uid));
+    });
 }
 
 function checkLocalEndConditions() {
@@ -1426,33 +1680,46 @@ function checkLocalEndConditions() {
 
     const alive = getAlivePlayers();
 
-    if (alive.length <= 1 && players.size >= MIN_PLAYERS) {
-        const winner = alive[0] || null;
-
-        finishGame(winner?.uid || null, true);
+    if (startingCount >= MIN_PLAYERS && alive.length <= 1) {
+        finishGame(alive[0]?.uid || null, true);
     }
 }
 
 function handleTimeExpired() {
     if (gameFinished) return;
 
-    const ranking = [...players.values()].sort((a, b) => {
-        if (!!a.alive !== !!b.alive) {
-            return a.alive ? -1 : 1;
-        }
-
-        return Number(b.score || 0) - Number(a.score || 0);
-    });
+    const ranking = getRanking();
 
     finishGame(ranking[0]?.uid || null, true);
 }
 
 /* ============================================================
-   FINISH GAME
-   Only the host persists the final room result.
+   RESULT WRITER
+   The host saves the final room result. If the host has left,
+   the player with the lowest uid does it instead.
    ============================================================ */
 
-async function finishGame(winnerUid, requestHostFinish = false) {
+function isResultWriter() {
+    if (!currentUser) return false;
+
+    const hostUid = roomData?.hostUid;
+
+    if (hostUid && players.has(hostUid)) {
+        return hostUid === currentUser.uid;
+    }
+
+    const ids = [...players.keys()].sort();
+
+    return ids[0] === currentUser.uid;
+}
+
+/* ============================================================
+   FINISH GAME
+   The result screen shows first; saving happens afterwards so
+   slow connections never delay it.
+   ============================================================ */
+
+async function finishGame(winnerUid, persistResult = false) {
     if (finishingGame || gameFinished) return;
 
     finishingGame = true;
@@ -1473,41 +1740,13 @@ async function finishGame(winnerUid, requestHostFinish = false) {
     hideWaiting();
     hideMessage();
 
-    const ranking = [...players.values()].sort((a, b) => {
-        if (!!a.alive !== !!b.alive) {
-            return a.alive ? -1 : 1;
-        }
-
-        return Number(b.score || 0) - Number(a.score || 0);
-    });
+    const ranking = getRanking();
 
     let winner = ranking.find(p => p.uid === winnerUid);
 
     if (!winner && ranking.length) {
         winner = ranking[0];
         winnerUid = winner.uid;
-    }
-
-    const isHost = roomData?.hostUid === currentUser?.uid;
-
-    if (requestHostFinish && isHost && roomRef) {
-        try {
-            await updateDoc(roomRef, {
-                status: "finished",
-                winnerUid: winnerUid || null,
-                finishedAt: Date.now()
-            });
-        } catch (error) {
-            console.error("Persist game result error:", error);
-        }
-    }
-
-    if (self && localPlayerRef) {
-        try {
-            await sendPlayerState(true);
-        } catch (error) {
-            console.warn("Final player state failed:", error);
-        }
     }
 
     const didWin = winnerUid === currentUser?.uid;
@@ -1524,7 +1763,7 @@ async function finishGame(winnerUid, requestHostFinish = false) {
 
     setText(
         el.winnerScore,
-        String(winner?.score || 0)
+        String(Math.floor(winner?.score || 0))
     );
 
     renderResultLeaderboard(ranking);
@@ -1533,11 +1772,37 @@ async function finishGame(winnerUid, requestHostFinish = false) {
 
     showGameArea();
 
+    /* ---- saving (runs after the screen is already visible) ---- */
+
+    if (persistResult && roomRef && isResultWriter()) {
+        try {
+            await updateDoc(roomRef, {
+                status: "finished",
+                winnerUid: winnerUid || null,
+                finishedAt: Date.now()
+            });
+        } catch (error) {
+            console.error("Persist game result error:", error);
+        }
+    }
+
+    if (self && localPlayerRef) {
+        try {
+            await updateDoc(localPlayerRef, {
+                alive: !!self.alive,
+                score: Math.floor(Number(self.score || 0)),
+                updatedAt: Date.now()
+            });
+        } catch (error) {
+            console.warn("Final player state failed:", error);
+        }
+    }
+
     if (!resultRecorded && self) {
         resultRecorded = true;
 
         try {
-            const score = Number(self.score || 0);
+            const score = Math.floor(Number(self.score || 0));
             const reward = didWin ? 100 : 0;
 
             await recordGameResult(
@@ -1574,7 +1839,13 @@ function updateHUD() {
         Math.max(0, Math.ceil(GAME_DURATION - gameElapsed))
     );
 
-    renderLeaderboard();
+    // Rebuilding the table 60 times a second is heavy on phones.
+    const now = performance.now();
+
+    if (now - lastLeaderboardRender >= LEADERBOARD_REFRESH) {
+        lastLeaderboardRender = now;
+        renderLeaderboard();
+    }
 }
 
 /* ============================================================
@@ -1584,13 +1855,7 @@ function updateHUD() {
 function renderLeaderboard() {
     if (!el.leaderboardRows) return;
 
-    const ranking = [...players.values()].sort((a, b) => {
-        if (!!a.alive !== !!b.alive) {
-            return a.alive ? -1 : 1;
-        }
-
-        return Number(b.score || 0) - Number(a.score || 0);
-    });
+    const ranking = getRanking();
 
     el.leaderboardRows.replaceChildren();
 
@@ -1640,31 +1905,6 @@ function renderResultLeaderboard(ranking) {
 }
 
 /* ============================================================
-   FIRESTORE STATE UPDATES
-   ============================================================ */
-
-async function sendPlayerState(force = false) {
-    if (!self || !localPlayerRef) return;
-
-    if (stateWriteInFlight) return;
-
-    if (!force && !gameStarted) return;
-
-    stateWriteInFlight = true;
-
-    try {
-        await updateDoc(
-            localPlayerRef,
-            playerToFirestore(self)
-        );
-    } catch (error) {
-        console.warn("Player state update failed:", error);
-    } finally {
-        stateWriteInFlight = false;
-    }
-}
-
-/* ============================================================
    PARTICLES
    ============================================================ */
 
@@ -1697,8 +1937,6 @@ function spawnEliminationParticles(x, y) {
 }
 
 function updateParticles(dt) {
-    particles = particles.filter(p => p.life > 0);
-
     for (const p of particles) {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
@@ -1706,6 +1944,8 @@ function updateParticles(dt) {
         p.vy += 250 * dt;
         p.life -= dt;
     }
+
+    particles = particles.filter(p => p.life > 0);
 }
 
 /* ============================================================
@@ -1825,14 +2065,15 @@ function drawLavaBackground() {
 }
 
 function drawRoad() {
-    const top = 275;
+    const top = ROAD_TOP;
     const bottom = WORLD_HEIGHT;
+    const center = WORLD_WIDTH / 2;
 
     ctx.beginPath();
-    ctx.moveTo(WORLD_WIDTH / 2 - 20, top);
-    ctx.lineTo(WORLD_WIDTH / 2 + 20, top);
-    ctx.lineTo(WORLD_WIDTH / 2 + 166, bottom);
-    ctx.lineTo(WORLD_WIDTH / 2 - 166, bottom);
+    ctx.moveTo(center - ROAD_TOP_HALF_WIDTH, top);
+    ctx.lineTo(center + ROAD_TOP_HALF_WIDTH, top);
+    ctx.lineTo(center + ROAD_BOTTOM_HALF_WIDTH, bottom);
+    ctx.lineTo(center - ROAD_BOTTOM_HALF_WIDTH, bottom);
     ctx.closePath();
 
     const roadGradient = ctx.createLinearGradient(0, top, 0, bottom);
@@ -1847,18 +2088,18 @@ function drawRoad() {
     ctx.lineWidth = 4;
 
     ctx.beginPath();
-    ctx.moveTo(WORLD_WIDTH / 2 - 20, top);
-    ctx.lineTo(WORLD_WIDTH / 2 - 166, bottom);
-    ctx.moveTo(WORLD_WIDTH / 2 + 20, top);
-    ctx.lineTo(WORLD_WIDTH / 2 + 166, bottom);
+    ctx.moveTo(center - ROAD_TOP_HALF_WIDTH, top);
+    ctx.lineTo(center - ROAD_BOTTOM_HALF_WIDTH, bottom);
+    ctx.moveTo(center + ROAD_TOP_HALF_WIDTH, top);
+    ctx.lineTo(center + ROAD_BOTTOM_HALF_WIDTH, bottom);
     ctx.stroke();
 
     ctx.strokeStyle = "rgba(255,255,255,0.12)";
     ctx.lineWidth = 2;
 
     ctx.beginPath();
-    ctx.moveTo(WORLD_WIDTH / 2, top);
-    ctx.lineTo(WORLD_WIDTH / 2, bottom);
+    ctx.moveTo(center, top);
+    ctx.lineTo(center, bottom);
     ctx.stroke();
 }
 
@@ -1973,7 +2214,8 @@ function drawRunner(x, y, color, label, jumping) {
     ctx.fillStyle = color;
 
     ctx.beginPath();
-    ctx.roundRect(
+    roundedRectPath(
+        ctx,
         left + 2,
         y + 12,
         PLAYER_WIDTH - 4,
@@ -2002,7 +2244,7 @@ function drawRunner(x, y, color, label, jumping) {
     ctx.font = "bold 10px Arial";
     ctx.textAlign = "center";
 
-    ctx.fillText(label.slice(0, 13), x, y - 8);
+    ctx.fillText(String(label).slice(0, 13), x, y - 8);
 }
 
 function drawParticles() {
@@ -2054,7 +2296,7 @@ function drawDifficultyIndicator() {
    ============================================================ */
 
 window.addEventListener("keydown", event => {
-    const key = event.key === " " ? " " : event.key;
+    const key = event.key;
 
     if ([
         "ArrowLeft",
@@ -2146,33 +2388,36 @@ async function leaveRoom() {
         return;
     }
 
-    const oldRoomId = roomId;
+    leavingRoom = true;
+
     const oldRoomRef = roomRef;
     const oldPlayerRef = localPlayerRef;
     const oldRoomData = roomData;
+    const remainingCount = Math.max(0, players.size - 1);
 
     try {
+        await cleanupOwnLive();
+
         if (oldPlayerRef) {
             await deleteDoc(oldPlayerRef);
         }
 
-        if (
-            oldRoomRef &&
-            oldRoomData?.hostUid === currentUser?.uid &&
-            oldRoomData?.status === "waiting"
-        ) {
-            await updateDoc(oldRoomRef, {
-                status: "finished",
-                winnerUid: null
-            });
-        } else if (oldRoomRef) {
-            const remaining = await getDocs(
-                collection(db, "gameRooms", oldRoomId, "players")
-            );
-
-            await updateDoc(oldRoomRef, {
-                playersCount: remaining.size
-            });
+        if (oldRoomRef) {
+            if (
+                oldRoomData?.hostUid === currentUser?.uid &&
+                oldRoomData?.status === "waiting"
+            ) {
+                // "closed" sends waiting guests back to the lobby.
+                await updateDoc(oldRoomRef, {
+                    status: "closed",
+                    winnerUid: null,
+                    playersCount: 0
+                });
+            } else {
+                await updateDoc(oldRoomRef, {
+                    playersCount: remainingCount
+                });
+            }
         }
 
     } catch (error) {
@@ -2180,6 +2425,8 @@ async function leaveRoom() {
     }
 
     await resetLocalRoom(true);
+
+    leavingRoom = false;
 }
 
 /* ============================================================
@@ -2202,6 +2449,8 @@ async function resetLocalRoom(returnToLobby = true) {
         chatUnsubscribe = null;
     }
 
+    unsubscribeLive();
+
     if (countdownTimer) {
         clearInterval(countdownTimer);
         countdownTimer = null;
@@ -2212,6 +2461,8 @@ async function resetLocalRoom(returnToLobby = true) {
         animationFrame = null;
     }
 
+    await cleanupOwnLive();
+
     roomId = null;
     roomCode = null;
     roomData = null;
@@ -2219,18 +2470,22 @@ async function resetLocalRoom(returnToLobby = true) {
     roomRef = null;
     playersRef = null;
     localPlayerRef = null;
+    liveRef = null;
 
     self = null;
     players.clear();
+    liveCache.clear();
 
     gameStarted = false;
     gameFinished = false;
     gameElapsed = 0;
     gameStartTime = 0;
+    startingCount = 0;
 
     finishingGame = false;
     resultRecorded = false;
     stateWriteInFlight = false;
+    startRequested = false;
 
     hitLavaIds.clear();
     lavaEvents = [];
@@ -2443,7 +2698,7 @@ window.VitalStarVolcanoJump = {
                 uid: p.uid,
                 displayName: p.displayName,
                 alive: p.alive,
-                score: p.score
+                score: Math.floor(p.score || 0)
             }))
         };
     }
