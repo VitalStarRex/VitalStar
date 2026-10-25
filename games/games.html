@@ -1,1950 +1,314 @@
+
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070b18">
 <title>VitalStar Games</title>
-
 <style>
-
-/* =========================================================
-   VITALSTAR GAMES — ADVANCED DESIGN
-========================================================= */
-
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-}
-
-:root{
-    --bg:#030611;
-    --panel:rgba(13,19,35,.88);
-    --panel2:rgba(18,25,46,.95);
-    --border:rgba(124,92,255,.22);
-    --purple:#7c5cff;
-    --blue:#277cff;
-    --cyan:#31d8ff;
-    --gold:#ffd84d;
-    --text:#fff;
-    --muted:#8994aa;
-}
-
-html{
-    scroll-behavior:smooth;
-}
-
-body{
-    font-family:Arial,sans-serif;
-    color:var(--text);
-    min-height:100vh;
-    overflow-x:hidden;
-
-    background:
-        radial-gradient(
-            circle at 10% 5%,
-            rgba(124,92,255,.22),
-            transparent 28%
-        ),
-        radial-gradient(
-            circle at 90% 15%,
-            rgba(39,124,255,.18),
-            transparent 30%
-        ),
-        radial-gradient(
-            circle at 50% 80%,
-            rgba(49,216,255,.08),
-            transparent 30%
-        ),
-        #030611;
-}
-
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    z-index:-2;
-    pointer-events:none;
-
-    background-image:
-        linear-gradient(
-            rgba(255,255,255,.025) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(255,255,255,.025) 1px,
-            transparent 1px
-        );
-
-    background-size:42px 42px;
-
-    mask-image:linear-gradient(
-        to bottom,
-        black,
-        transparent 90%
-    );
-}
-
-body::after{
-    content:"";
-    position:fixed;
-
-    width:380px;
-    height:380px;
-
-    border-radius:50%;
-
-    left:50%;
-    top:45%;
-
-    transform:translate(-50%,-50%);
-
-    z-index:-1;
-    pointer-events:none;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(124,92,255,.08),
-            transparent 70%
-        );
-
-    animation:ambient 7s ease-in-out infinite alternate;
-}
-
-@keyframes ambient{
-
-    from{
-        transform:
-            translate(-52%,-48%)
-            scale(.9);
-    }
-
-    to{
-        transform:
-            translate(-48%,-52%)
-            scale(1.12);
-    }
-
-}
-
-button,
-input{
-    font:inherit;
-}
-
-button{
-    cursor:pointer;
-}
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-header{
-    position:sticky;
-    top:0;
-    z-index:50;
-
-    background:
-        rgba(5,9,20,.88);
-
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
-
-    border-bottom:
-        1px solid rgba(124,92,255,.18);
-
-    padding:12px;
-}
-
-.header-inner{
-    max-width:1050px;
-    margin:auto;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    gap:10px;
-}
-
-.logo{
-    font-size:18px;
-    font-weight:900;
-    letter-spacing:.3px;
-}
-
-.logo span{
-    color:var(--purple);
-}
-
-.header-right{
-    display:flex;
-    align-items:center;
-    gap:7px;
-}
-
-.coins{
-    background:
-        rgba(255,216,77,.08);
-
-    border:
-        1px solid rgba(255,216,77,.2);
-
-    padding:7px 10px;
-
-    border-radius:20px;
-
-    color:var(--gold);
-
-    font-weight:bold;
-    font-size:12px;
-}
-
-.premium-mini{
-    background:
-        linear-gradient(
-            135deg,
-            #7c5cff,
-            #a14cff
-        );
-
-    color:#fff;
-    border:0;
-
-    padding:8px 10px;
-
-    border-radius:9px;
-
-    font-weight:bold;
-    font-size:11px;
-
-    box-shadow:
-        0 7px 20px
-        rgba(124,92,255,.22);
-}
-
-/* =========================================================
-   CONTAINER
-========================================================= */
-
-.container{
-    max-width:1050px;
-    margin:auto;
-
-    padding:
-        15px
-        12px
-        50px;
-}
-
-/* =========================================================
-   HERO
-========================================================= */
-
-.hero{
-    position:relative;
-    overflow:hidden;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(27,35,72,.94),
-            rgba(40,19,75,.92)
-        );
-
-    border:
-        1px solid
-        rgba(124,92,255,.3);
-
-    border-radius:24px;
-
-    padding:24px 18px;
-
-    margin-bottom:18px;
-
-    box-shadow:
-        0 20px 60px
-        rgba(0,0,0,.28);
-}
-
-.hero::before{
-    content:"";
-
-    position:absolute;
-
-    width:220px;
-    height:220px;
-
-    right:-70px;
-    top:-90px;
-
-    border-radius:50%;
-
-    background:
-        rgba(124,92,255,.2);
-
-    filter:blur(5px);
-}
-
-.hero::after{
-    content:"✦";
-
-    position:absolute;
-
-    right:28px;
-    bottom:18px;
-
-    color:
-        rgba(255,255,255,.15);
-
-    font-size:60px;
-}
-
-.hero h1{
-    position:relative;
-    z-index:1;
-
-    font-size:27px;
-
-    margin-bottom:7px;
-
-    background:
-        linear-gradient(
-            90deg,
-            #fff,
-            #bdb0ff,
-            #6edcff
-        );
-
-    -webkit-background-clip:text;
-    background-clip:text;
-
-    color:transparent;
-}
-
-.hero p{
-    position:relative;
-    z-index:1;
-
-    color:#b6bed0;
-
-    line-height:1.55;
-
-    font-size:13px;
-
-    max-width:650px;
-}
-
-.hero-bottom{
-    position:relative;
-    z-index:2;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    gap:10px;
-
-    margin-top:17px;
-
-    flex-wrap:wrap;
-}
-
-.premium-button{
-    border:0;
-
-    background:
-        linear-gradient(
-            135deg,
-            #7c5cff,
-            #426fff
-        );
-
-    color:#fff;
-
-    padding:10px 14px;
-
-    border-radius:11px;
-
-    font-weight:bold;
-    font-size:12px;
-
-    box-shadow:
-        0 8px 25px
-        rgba(70,85,255,.25);
-}
-
-/* =========================================================
-   SEARCH
-========================================================= */
-
-.search{
-    width:100%;
-
-    margin:
-        3px
-        0
-        12px;
-
-    padding:13px;
-
-    border-radius:12px;
-
-    border:
-        1px solid
-        rgba(124,92,255,.2);
-
-    background:
-        rgba(10,15,28,.82);
-
-    color:#fff;
-
-    outline:none;
-
-    transition:.2s;
-}
-
-.search:focus{
-    border-color:#7c5cff;
-
-    box-shadow:
-        0 0 0 3px
-        rgba(124,92,255,.08);
-}
-
-/* =========================================================
-   TABS
-========================================================= */
-
-.tabs{
-    display:flex;
-
-    gap:7px;
-
-    overflow-x:auto;
-
-    margin-bottom:16px;
-
-    scrollbar-width:none;
-}
-
-.tabs::-webkit-scrollbar{
-    display:none;
-}
-
-.tab{
-    flex:none;
-
-    padding:8px 13px;
-
-    border-radius:20px;
-
-    border:
-        1px solid
-        rgba(124,92,255,.18);
-
-    background:
-        rgba(13,18,32,.82);
-
-    color:#b7bfd0;
-
-    font-size:11px;
-
-    transition:.2s;
-}
-
-.tab.active{
-    background:
-        linear-gradient(
-            135deg,
-            #7c5cff,
-            #4e7cff
-        );
-
-    color:#fff;
-
-    border-color:transparent;
-
-    box-shadow:
-        0 6px 20px
-        rgba(90,80,255,.2);
-}
-
-/* =========================================================
-   SECTIONS
-========================================================= */
-
-.section{
-    margin-top:22px;
-}
-
-.section-title{
-    font-size:19px;
-    margin-bottom:11px;
-}
-
-/* =========================================================
-   GAMES
-========================================================= */
-
-.games{
-    display:grid;
-
-    grid-template-columns:
-        repeat(3,1fr);
-
-    gap:11px;
-}
-
-.game{
-    position:relative;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(18,25,46,.94),
-            rgba(8,12,23,.94)
-        );
-
-    border:
-        1px solid
-        rgba(124,92,255,.16);
-
-    border-radius:17px;
-
-    padding:14px;
-
-    min-height:205px;
-
-    display:flex;
-    flex-direction:column;
-
-    overflow:hidden;
-
-    transition:
-        transform .2s,
-        border-color .2s,
-        box-shadow .2s;
-}
-
-.game::before{
-    content:"";
-
-    position:absolute;
-
-    width:100px;
-    height:100px;
-
-    right:-40px;
-    top:-40px;
-
-    border-radius:50%;
-
-    background:
-        rgba(124,92,255,.1);
-}
-
-.game:hover{
-    transform:translateY(-3px);
-
-    border-color:
-        rgba(124,92,255,.55);
-
-    box-shadow:
-        0 15px 35px
-        rgba(0,0,0,.3);
-}
-
-.game-icon{
-    position:relative;
-    z-index:1;
-
-    font-size:36px;
-
-    margin-bottom:8px;
-}
-
-.game h3{
-    position:relative;
-    z-index:1;
-
-    font-size:14px;
-
-    margin-bottom:5px;
-}
-
-.game p{
-    position:relative;
-    z-index:1;
-
-    color:#929caf;
-
-    font-size:11px;
-
-    line-height:1.45;
-
-    flex:1;
-}
-
-.badges{
-    position:relative;
-    z-index:1;
-
-    display:flex;
-
-    gap:4px;
-
-    flex-wrap:wrap;
-
-    margin-bottom:7px;
-}
-
-.badge{
-    font-size:8px;
-
-    font-weight:bold;
-
-    padding:3px 5px;
-
-    border-radius:6px;
-
-    background:#172b23;
-
-    color:#72e5a2;
-}
-
-.badge.premium{
-    background:#29213f;
-    color:#d5c6ff;
-}
-
-.play{
-    position:relative;
-    z-index:1;
-
-    width:100%;
-
-    padding:9px;
-
-    margin-top:10px;
-
-    border:0;
-
-    border-radius:9px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #2367e8,
-            #635bff
-        );
-
-    color:#fff;
-
-    font-weight:bold;
-    font-size:11px;
-}
-
-.locked{
-    opacity:.78;
-}
-
-.lock{
-    position:absolute;
-
-    right:8px;
-    top:8px;
-
-    font-size:8px;
-
-    font-weight:bold;
-
-    padding:4px 5px;
-
-    border-radius:6px;
-
-    background:#29213f;
-
-    color:#d7caff;
-}
-
-.empty,
-.loading{
-    text-align:center;
-
-    padding:25px;
-
-    color:#8e97aa;
-
-    font-size:13px;
-}
-
-.empty{
-    display:none;
-}
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-.profile-card{
-    background:
-        linear-gradient(
-            145deg,
-            rgba(17,22,38,.95),
-            rgba(9,13,24,.95)
-        );
-
-    border:
-        1px solid
-        rgba(124,92,255,.18);
-
-    border-radius:19px;
-
-    padding:16px;
-}
-
-.profile-top{
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-
-    margin-bottom:15px;
-}
-
-.game-avatar{
-    width:65px;
-    height:65px;
-
-    border-radius:50%;
-
-    object-fit:cover;
-
-    border:
-        2px solid #7c5cff;
-}
-
-.profile-name{
-    font-size:18px;
-    font-weight:bold;
-}
-
-.profile-username{
-    color:#8993a8;
-
-    font-size:12px;
-
-    margin-top:3px;
-}
-
-.stats{
-    display:grid;
-
-    grid-template-columns:
-        repeat(4,1fr);
-
-    gap:7px;
-}
-
-.stat{
-    background:
-        rgba(5,9,18,.7);
-
-    border:
-        1px solid #252d40;
-
-    border-radius:10px;
-
-    padding:10px 5px;
-
-    text-align:center;
-}
-
-.stat strong{
-    display:block;
-
-    font-size:16px;
-}
-
-.stat span{
-    color:#7f899e;
-
-    font-size:9px;
-
-    display:block;
-
-    margin-top:3px;
-}
-
-/* =========================================================
-   LEADERBOARD
-========================================================= */
-
-.leaderboard-box{
-    background:
-        rgba(17,22,38,.9);
-
-    border:
-        1px solid
-        rgba(124,92,255,.16);
-
-    border-radius:17px;
-
-    overflow:hidden;
-}
-
-.leaderboard-player{
-    display:flex;
-
-    align-items:center;
-
-    gap:9px;
-
-    padding:10px;
-
-    border-bottom:
-        1px solid #202738;
-
-    cursor:pointer;
-}
-
-.leaderboard-player:last-child{
-    border-bottom:0;
-}
-
-.leader-rank{
-    width:30px;
-
-    text-align:center;
-
-    font-size:13px;
-
-    font-weight:bold;
-}
-
-.leader-avatar{
-    width:38px;
-    height:38px;
-
-    border-radius:50%;
-
-    object-fit:cover;
-}
-
-.leader-info{
-    flex:1;
-
-    min-width:0;
-}
-
-.leader-info strong{
-    display:block;
-
-    font-size:12px;
-}
-
-.leader-info small{
-    color:#7e889c;
-
-    font-size:9px;
-}
-
-.leader-stats{
-    text-align:right;
-}
-
-.leader-stats strong{
-    display:block;
-
-    color:#72e5a2;
-
-    font-size:12px;
-}
-
-.leader-stats small{
-    color:#7e889c;
-
-    font-size:8px;
-}
-
-.leader-rating{
-    color:#ffd84d;
-
-    font-size:10px;
-
-    min-width:55px;
-
-    text-align:right;
-}
-
-/* =========================================================
-   PLAYER SEARCH
-========================================================= */
-
-.player-search{
-    width:100%;
-
-    padding:11px;
-
-    background:#0b0f19;
-
-    border:
-        1px solid #30394e;
-
-    border-radius:10px;
-
-    color:#fff;
-
-    outline:none;
-
-    margin-bottom:8px;
-}
-
-#playerSearchResults{
-    background:#111622;
-
-    border-radius:12px;
-
-    overflow:hidden;
-}
-
-/* =========================================================
-   ACHIEVEMENTS
-========================================================= */
-
-.achievements{
-    display:grid;
-
-    grid-template-columns:
-        repeat(2,1fr);
-
-    gap:8px;
-}
-
-.achievement{
-    display:flex;
-
-    align-items:center;
-
-    gap:9px;
-
-    padding:10px;
-
-    border-radius:11px;
-
-    border:
-        1px solid #252d40;
-
-    background:#111622;
-}
-
-.achievement.locked{
-    opacity:.4;
-}
-
-.achievement-icon{
-    font-size:24px;
-}
-
-.achievement strong{
-    display:block;
-
-    font-size:11px;
-}
-
-.achievement small{
-    display:block;
-
-    color:#818b9e;
-
-    font-size:9px;
-
-    margin-top:3px;
-}
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-.history{
-    background:#111622;
-
-    border:
-        1px solid #252d40;
-
-    border-radius:15px;
-
-    overflow:hidden;
-}
-
-.game-history-item{
-    display:flex;
-
-    align-items:center;
-
-    gap:10px;
-
-    padding:11px;
-
-    border-bottom:
-        1px solid #202738;
-}
-
-.game-history-item:last-child{
-    border-bottom:0;
-}
-
-.history-icon{
-    font-size:24px;
-}
-
-.history-info{
-    flex:1;
-}
-
-.history-info strong{
-    display:block;
-
-    font-size:12px;
-}
-
-.history-info small{
-    color:#7f899d;
-
-    font-size:9px;
-}
-
-.history-result{
-    font-size:10px;
-
-    font-weight:bold;
-}
-
-.history-result.win{
-    color:#65e69a;
-}
-
-.history-result.loss{
-    color:#ff7070;
-}
-
-.history-result.draw{
-    color:#ffd84d;
-}
-
-/* =========================================================
-   MODALS
-========================================================= */
-
-.modal{
-    display:none;
-
-    position:fixed;
-
-    inset:0;
-
-    z-index:100;
-
-    background:
-        rgba(0,0,0,.82);
-
-    backdrop-filter:blur(8px);
-
-    -webkit-backdrop-filter:blur(8px);
-
-    align-items:center;
-
-    justify-content:center;
-
-    padding:15px;
-}
-
-.modal-box{
-    width:100%;
-
-    max-width:390px;
-
-    max-height:90vh;
-
-    overflow:auto;
-
-    background:
-        linear-gradient(
-            145deg,
-            #151c31,
-            #0a0e19
-        );
-
-    border:
-        1px solid
-        rgba(124,92,255,.35);
-
-    border-radius:20px;
-
-    padding:20px;
-
-    text-align:center;
-}
-
-.modal-icon{
-    font-size:43px;
-
-    margin-bottom:8px;
-}
-
-.modal-box h2{
-    margin-bottom:7px;
-}
-
-.modal-box p{
-    color:#aab2c4;
-
-    font-size:13px;
-
-    line-height:1.5;
-
-    margin-bottom:12px;
-}
-
-.modal-box button{
-    width:100%;
-
-    padding:11px;
-
-    margin-top:7px;
-
-    border:0;
-
-    border-radius:10px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #7c5cff,
-            #426fff
-        );
-
-    color:#fff;
-
-    font-weight:bold;
-}
-
-.modal-box .close{
-    background:#252d40;
-}
-
-/* =========================================================
-   PLAYER PROFILE
-========================================================= */
-
-.player-profile-avatar{
-    width:75px;
-    height:75px;
-
-    border-radius:50%;
-
-    object-fit:cover;
-
-    border:
-        2px solid #7c5cff;
-
-    margin-bottom:8px;
-}
-
-.player-profile-username{
-    color:#8993a8;
-
-    font-size:11px;
-
-    margin-bottom:15px;
-}
-
-.profile-grid{
-    display:grid;
-
-    grid-template-columns:
-        repeat(2,1fr);
-
-    gap:8px;
-}
-
-.profile-stat{
-    background:#0b0f19;
-
-    border:
-        1px solid #252d40;
-
-    border-radius:10px;
-
-    padding:10px;
-}
-
-.profile-stat strong{
-    display:block;
-
-    font-size:16px;
-}
-
-.profile-stat small{
-    color:#7f899e;
-
-    font-size:9px;
-}
-
-/* =========================================================
-   NOTIFICATION
-========================================================= */
-
-.achievement-notification{
-    position:fixed;
-
-    left:50%;
-    bottom:20px;
-
-    transform:translateX(-50%);
-
-    z-index:300;
-
-    background:#171d2c;
-
-    border:
-        1px solid #7c5cff;
-
-    border-radius:13px;
-
-    padding:12px 15px;
-
-    display:flex;
-
-    align-items:center;
-
-    gap:10px;
-
-    box-shadow:
-        0 10px 30px #000;
-
-    width:
-        calc(100% - 30px);
-
-    max-width:350px;
-}
-
-/* =========================================================
-   SOUND
-========================================================= */
-
-.sound-control{
-    position:fixed;
-
-    right:14px;
-
-    bottom:14px;
-
-    z-index:200;
-
-    width:43px;
-    height:43px;
-
-    border-radius:50%;
-
-    border:
-        1px solid
-        rgba(124,92,255,.4);
-
-    background:
-        rgba(10,15,29,.92);
-
-    color:#fff;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:18px;
-
-    box-shadow:
-        0 8px 25px
-        rgba(0,0,0,.4);
-
-    backdrop-filter:blur(12px);
-}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media(max-width:700px){
-
-    .games{
-        grid-template-columns:
-            repeat(2,1fr);
-    }
-
-}
-
-@media(max-width:430px){
-
-    .container{
-        padding-left:9px;
-        padding-right:9px;
-    }
-
-    .games{
-        gap:8px;
-    }
-
-    .game{
-        padding:11px;
-        min-height:190px;
-    }
-
-    .game-icon{
-        font-size:31px;
-    }
-
-    .hero h1{
-        font-size:22px;
-    }
-
-    .achievements{
-        grid-template-columns:1fr;
-    }
-
-}
-
+:root{color-scheme:dark;--bg:#070b18;--panel:#10182b;--text:#f4f7ff;--muted:#9ba9c6;--cyan:#35e8ff;--purple:#a56bff;--line:#263653}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#17234a,var(--bg) 65%);color:var(--text);font-family:system-ui,Arial,sans-serif;min-height:100vh}
+button,input{font:inherit}
+button{cursor:pointer}
+header{position:sticky;top:0;z-index:5;background:#080d1bea;backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 5%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-size:21px;font-weight:900;letter-spacing:1px;color:var(--cyan);text-shadow:0 0 15px #35e8ff66}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--cyan);background:#12283b;color:var(--text);border-radius:10px;padding:9px 12px}
+main{max-width:1200px;margin:auto;padding:22px 16px 60px}
+.hero{text-align:center;padding:38px 10px 28px}
+.hero h1{font-size:clamp(32px,7vw,60px);margin:0;background:linear-gradient(90deg,var(--cyan),#fff,var(--purple));color:transparent;background-clip:text}
+.hero p,.muted{color:var(--muted)}
+.panel{background:linear-gradient(145deg,#121c32ee,#0b1122ee);border:1px solid var(--line);border-radius:17px;padding:17px;margin-bottom:20px}
+h2{font-size:20px;margin:0 0 14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:#0a1224;border:1px solid var(--line);border-radius:12px;padding:13px;text-align:center}
+.stat strong{display:block;font-size:22px;color:var(--cyan)}
+.stat span{font-size:12px;color:var(--muted)}
+.searchbar{display:flex;gap:9px;margin-bottom:14px}
+input{min-width:0;width:100%;background:#080e1d;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;outline:none}
+input:focus{border-color:var(--cyan)}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.filters button{border:1px solid var(--line);background:#10182b;color:var(--text);border-radius:20px;padding:8px 13px}
+.filters button.active{background:#123248;border-color:var(--cyan);color:var(--cyan)}
+.games{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.game{min-width:0;position:relative;overflow:hidden;border:1px solid #30415e;border-radius:15px;background:linear-gradient(145deg,#182543,#0b1020);padding:15px;transition:.2s}
+.game:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 0 20px #35e8ff19}
+.game .emoji{font-size:37px}
+.game h3{margin:9px 0 5px;font-size:16px}
+.game p{font-size:12px;color:var(--muted);min-height:34px;margin:0 0 12px}
+.tag{font-size:10px;color:var(--cyan);border:1px solid #35e8ff66;border-radius:20px;padding:4px 7px;display:inline-block;margin-bottom:10px}
+.play{display:block;width:100%;border:0;border-radius:9px;background:linear-gradient(90deg,#13bcd5,#8660ff);color:white;padding:10px;font-weight:750}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.listrow{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.listrow:last-child{border:0}
+#chatMessages{height:180px;overflow:auto;background:#080e1d;border:1px solid var(--line);border-radius:10px;padding:10px;margin:12px 0}
+.message{padding:7px 9px;margin:6px 0;background:#14233c;border-radius:9px;overflow-wrap:anywhere}
+.chatform{display:flex;gap:8px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}
+dialog{width:min(500px,92vw);background:#0d1528;color:var(--text);border:1px solid var(--cyan);border-radius:18px;padding:22px}
+dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}
+#musicToggle{white-space:nowrap}
+body.light{color-scheme:light;--bg:#edf3ff;--panel:#fff;--text:#17213a;--muted:#52617b;--line:#ccd7ed;background:linear-gradient(#e5f2ff,#f6f3ff)}
+body.light header{background:#ffffffed}
+body.light .panel,body.light .game{background:#ffffffed}
+body.light .stat,body.light input,body.light #chatMessages{background:#f3f6ff;color:#17213a}
+body.light .filters button{background:#fff;color:#17213a}
+@media(max-width:850px){.games{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:580px){header{padding:11px 12px}.logo{font-size:17px}.btn{padding:8px;font-size:12px}main{padding:14px 11px}.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.game{padding:11px}.game .emoji{font-size:31px}.stats{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{padding:27px 5px 20px}}
 </style>
-
 </head>
-
 <body>
-
-<!-- =====================================================
-     BACKGROUND MUSIC
-===================================================== -->
-
-<audio
-    id="gamesBackgroundSound"
-    src="./games-bg.mp3"
-    loop
-    preload="auto"
-></audio>
-
-
-<!-- =====================================================
-     HEADER
-===================================================== -->
-
 <header>
-
-    <div class="header-inner">
-
-        <div class="logo">
-            ⭐ Vital<span>Star</span> Games
-        </div>
-
-        <div class="header-right">
-
-            <div class="coins">
-                🪙
-                <span id="coinBalance">1000</span>
-            </div>
-
-            <button
-                class="premium-mini"
-                id="premiumTopButton"
-            >
-                👑 Premium
-            </button>
-
-        </div>
-
-    </div>
-
+  <div class="logo">✦ VITALSTAR</div>
+  <div class="actions">
+    <button class="btn" id="musicToggle" type="button">♫ Music: On</button>
+    <button class="btn" id="themeToggle" type="button">☀ Theme</button>
+  </div>
 </header>
 
+<main>
+  <section class="hero">
+    <h1>GAMES UNIVERSE</h1>
+    <p>Connect, compete and shine together.</p>
+    <p>20 games · Friends · Multiplayer · Game chat</p>
+  </section>
 
-<main class="container">
-
-
-<!-- =====================================================
-     HERO
-===================================================== -->
-
-<section class="hero">
-
-    <h1>
-        🎮 Play. Connect. Compete.
-    </h1>
-
-    <p>
-        Welcome to VitalStar Games — play exciting games,
-        challenge your friends, earn virtual rewards and
-        climb the leaderboard.
-    </p>
-
-    <div class="hero-bottom">
-
-        <strong>
-            👥 Multiplayer games available
-        </strong>
-
-        <button
-            class="premium-button"
-            id="premiumButton"
-        >
-            👑 Explore Premium
-        </button>
-
+  <section class="panel">
+    <h2>👤 My Game Profile</h2>
+    <div class="stats">
+      <div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div>
+      <div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div>
+      <div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div>
+      <div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div>
     </div>
+    <p class="muted">Player: <span id="playerName">Guest Player</span></p>
+    <button class="btn" id="editProfile" type="button">Edit player name</button>
+  </section>
 
-</section>
-
-
-<!-- =====================================================
-     MY GAME PROFILE
-===================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        👤 My Game Profile
-    </h2>
-
-    <div class="profile-card">
-
-        <div class="profile-top">
-
-            <img
-                id="myGameAvatar"
-                class="game-avatar"
-                src="https://ui-avatars.com/api/?name=Player"
-                alt="Player"
-            >
-
-            <div>
-
-                <div
-                    id="myGameName"
-                    class="profile-name"
-                >
-                    VitalStar Player
-                </div>
-
-                <div
-                    id="myGameUsername"
-                    class="profile-username"
-                >
-                    @player
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="stats">
-
-            <div class="stat">
-                <strong id="myGamesPlayed">0</strong>
-                <span>Games</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myWins">0</strong>
-                <span>Wins</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myLosses">0</strong>
-                <span>Losses</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myWinRate">0%</strong>
-                <span>Win Rate</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myRating">1000</strong>
-                <span>Rating</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myBestScore">0</strong>
-                <span>Best Score</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myStreak">0</strong>
-                <span>Streak</span>
-            </div>
-
-            <div class="stat">
-                <strong id="myCoins">0</strong>
-                <span>Coins</span>
-            </div>
-
-        </div>
-
+  <section class="panel">
+    <h2>🎮 Choose Your Game</h2>
+    <div class="searchbar">
+      <input id="search" placeholder="Search all 20 games..." aria-label="Search games">
     </div>
-
-</section>
-
-
-<!-- =====================================================
-     GAMES
-===================================================== -->
-
-<section class="section">
-
-    <input
-        type="search"
-        id="gameSearch"
-        class="search"
-        placeholder="🔎 Search games..."
-    >
-
-
-    <div class="tabs">
-
-        <button
-            class="tab active"
-            data-category="all"
-        >
-            All
-        </button>
-
-        <button
-            class="tab"
-            data-category="free"
-        >
-            🆓 Free
-        </button>
-
-        <button
-            class="tab"
-            data-category="premium"
-        >
-            👑 Premium
-        </button>
-
-        <button
-            class="tab"
-            data-category="multiplayer"
-        >
-            👥 Multiplayer
-        </button>
-
+    <div class="filters">
+      <button class="active" data-filter="all">All Games</button>
+      <button data-filter="free">Free</button>
+      <button data-filter="premium">Premium</button>
     </div>
+    <div class="games" id="gamesGrid"></div>
+    <p class="muted" id="empty" hidden>No games match your search.</p>
+  </section>
 
+  <div class="columns">
+    <section class="panel">
+      <h2>🏆 Leaderboard</h2>
+      <div id="leaderboard"><p class="muted">Your recorded results will appear here.</p></div>
+    </section>
+    <section class="panel">
+      <h2>💬 Game Chat</h2>
+      <p class="muted">Chat interface preview. Online messaging requires Firebase setup.</p>
+      <div id="chatMessages" aria-live="polite">
+        <div class="message">VitalStar: Welcome to the Games Universe!</div>
+      </div>
+      <form class="chatform" id="chatForm">
+        <input id="chatInput" maxlength="300" placeholder="Write a test message..." aria-label="Chat message" required>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </section>
+  </div>
 
-    <h2 class="section-title">
-        🎮 Games
-    </h2>
-
-
-    <div
-        id="gamesGrid"
-        class="games"
-    ></div>
-
-
-    <div
-        id="emptyMessage"
-        class="empty"
-    >
-        No games found.
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     TOP 10
-===================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        🏆 Top 10 Best Winners
-    </h2>
-
-    <div
-        id="topWinners"
-        class="leaderboard-box"
-    >
-
-        <div class="loading">
-            Loading top players...
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     GLOBAL LEADERBOARD
-===================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        🌎 Global Leaderboard
-    </h2>
-
-    <div class="leaderboard-box">
-
-        <div id="leaderboard">
-
-            <div class="loading">
-                Loading leaderboard...
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     PLAYER SEARCH
-===================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        🔎 Find Players
-    </h2>
-
-    <input
-        id="playerSearch"
-        class="player-search"
-        type="search"
-        placeholder="Search username..."
-    >
-
-    <div id="playerSearchResults"></div>
-
-</section>
-
-
-<!-- =====================================================
-     ACHIEVEMENTS
-===================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        🏅 Achievements
-    </h2>
-
-    <div
-        id="achievements"
-        class="achievements"
-    ></div>
-
-</section>
-
-
-<!-- =====================================================
-     GAME HISTORY
-===================================================== -->
-
-<section class="section">
-
-    <h2 class="section-title">
-        📜 My Game History
-    </h2>
-
-    <div
-        id="gameHistory"
-        class="history"
-    >
-
-        <div class="loading">
-            Loading game history...
-        </div>
-
-    </div>
-
-</section>
-
+  <section class="panel">
+    <h2>🕹️ Game History</h2>
+    <div id="history"><p class="muted">Your game launches will appear here.</p></div>
+  </section>
 </main>
 
+<dialog id="gameDialog">
+  <h2 id="dialogTitle">VitalStar Game</h2>
+  <p id="dialogDescription"></p>
+  <p class="muted">Online rooms, synchronized gameplay, and live chat must be connected to your Firebase project and game engines before they can work across different devices.</p>
+  <button class="btn" id="closeDialog" type="button">Close</button>
+</dialog>
 
-<!-- =====================================================
-     PREMIUM MODAL
-===================================================== -->
+<footer>VITALSTAR · CONNECT, SHARE AND SHINE</footer>
 
-<div
-    class="modal"
-    id="premiumModal"
->
-
-    <div class="modal-box">
-
-        <div class="modal-icon">
-            👑
-        </div>
-
-        <h2>
-            VitalStar Games Premium
-        </h2>
-
-        <p>
-            Unlock premium games, exclusive
-            multiplayer features and future
-            Premium content.
-        </p>
-
-        <button id="subscribeButton">
-            👑 Continue to Premium
-        </button>
-
-        <button
-            class="close"
-            id="closePremium"
-        >
-            Close
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     PLAYER PROFILE MODAL
-===================================================== -->
-
-<div
-    class="modal"
-    id="playerProfileModal"
->
-
-    <div class="modal-box">
-
-        <img
-            id="profilePlayerAvatar"
-            class="player-profile-avatar"
-            src="https://ui-avatars.com/api/?name=Player"
-            alt="Player"
-        >
-
-        <h2 id="profilePlayerName">
-            Player
-        </h2>
-
-        <div
-            id="profilePlayerUsername"
-            class="player-profile-username"
-        >
-            @player
-        </div>
-
-
-        <div class="profile-grid">
-
-            <div class="profile-stat">
-                <strong id="profileGamesPlayed">0</strong>
-                <small>Games</small>
-            </div>
-
-            <div class="profile-stat">
-                <strong id="profileWins">0</strong>
-                <small>Wins</small>
-            </div>
-
-            <div class="profile-stat">
-                <strong id="profileLosses">0</strong>
-                <small>Losses</small>
-            </div>
-
-            <div class="profile-stat">
-                <strong id="profileWinRate">0%</strong>
-                <small>Win Rate</small>
-            </div>
-
-            <div class="profile-stat">
-                <strong id="profileRating">1000</strong>
-                <small>Rating</small>
-            </div>
-
-            <div class="profile-stat">
-                <strong id="profileBestScore">0</strong>
-                <small>Best Score</small>
-            </div>
-
-            <div class="profile-stat">
-                <strong id="profileStreak">0</strong>
-                <small>Best Streak</small>
-            </div>
-
-        </div>
-
-
-        <button
-            class="close"
-            id="closePlayerProfile"
-        >
-            Close
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     SOUND BUTTON
-===================================================== -->
-
-<button
-    class="sound-control"
-    id="soundControl"
-    aria-label="Toggle background sound"
->
-    🔇
-</button>
-
-
-<!-- =====================================================
-     GAMES JAVASCRIPT
-===================================================== -->
-
-<script
-    type="module"
-    src="./games.js"
-></script>
-
-
-<!-- =====================================================
-     BACKGROUND SOUND CONTROL
-===================================================== -->
+<audio id="backgroundMusic" src="./games-bg.mp3" loop preload="auto"></audio>
 
 <script>
+(() => {
+'use strict';
 
-const bgSound =
-    document.getElementById(
-        "gamesBackgroundSound"
-    );
+const games = [
+ {name:'Pong',emoji:'🏓',type:'free',desc:'Challenge friends in paddle battles.'},
+ {name:'Rock Paper Scissors',emoji:'✊',type:'free',desc:'Challenge friends to quick matches.'},
+ {name:'Car Race',emoji:'🏎️',type:'free',desc:'Race rivals to the finish.'},
+ {name:'Tic-Tac-Toe',emoji:'❎',type:'free',desc:'Classic two-player strategy.'},
+ {name:'Mech Warriors',emoji:'🤖',type:'premium',desc:'Battle with futuristic robots.'},
+ {name:'Blade Masters',emoji:'⚔️',type:'premium',desc:'Sword combat and duels.'},
+ {name:'Dragon Fury',emoji:'🐉',type:'premium',desc:'Epic dragon battles.'},
+ {name:'Sky Combat',emoji:'✈️',type:'premium',desc:'Compete in aerial battles.'},
+ {name:'Neon Snake',emoji:'🐍',type:'free',desc:'Collect points and beat rivals.'},
+ {name:'Brick Breaker',emoji:'🧱',type:'free',desc:'Break blocks and compare scores.'},
+ {name:'Galaxy Defender',emoji:'🚀',type:'free',desc:'Defend the galaxy together.'},
+ {name:'Dino Jump',emoji:'🦖',type:'free',desc:'Race through obstacle courses.'},
+ {name:'Neon Air Hockey',emoji:'🏒',type:'free',desc:'Fast-paced paddle matches.'},
+ {name:'Memory Match',emoji:'🧠',type:'free',desc:'Compete to match the most pairs.'},
+ {name:'Neon Maze',emoji:'🌀',type:'free',desc:'Race to find the exit.'},
+ {name:'Cyber Parkour',emoji:'🏃',type:'premium',desc:'Race across futuristic rooftops.'},
+ {name:'Neon Reflex',emoji:'⚡',type:'free',desc:'Test reaction speed against friends.'},
+ {name:'Bubble Bash',emoji:'🫧',type:'free',desc:'Clear bubbles and compete for points.'},
+ {name:'Tower Defense',emoji:'🗼',type:'premium',desc:'Defend your base with teammates.'},
+ {name:'Zombie Survival',emoji:'🧟',type:'premium',desc:'Survive waves with friends.'}
+];
 
-const soundControl =
-    document.getElementById(
-        "soundControl"
-    );
+const $ = id => document.getElementById(id);
+let filter = 'all';
+let playerName = 'Guest Player';
+let history = [];
+let stats = {played:0,wins:0,coins:0,best:0};
 
-let soundEnabled = false;
-
-
-async function startGamesSound(){
-
-    if(soundEnabled) return;
-
-    if(!bgSound) return;
-
-    try{
-
-        bgSound.volume = 0.18;
-
-        await bgSound.play();
-
-        soundEnabled = true;
-
-        if(soundControl){
-            soundControl.textContent = "🔊";
-        }
-
-    }catch(error){
-
-        console.log(
-            "Background sound waiting for interaction."
-        );
-
-    }
-
+function renderGames(){
+  const query = $('search').value.trim().toLowerCase();
+  const visible = games.filter(g =>
+    (filter === 'all' || g.type === filter) &&
+    (g.name.toLowerCase().includes(query) || g.desc.toLowerCase().includes(query))
+  );
+  $('gamesGrid').innerHTML = '';
+  visible.forEach(game => {
+    const card = document.createElement('article');
+    card.className = 'game';
+    const emoji = document.createElement('div');
+    emoji.className = 'emoji';
+    emoji.textContent = game.emoji;
+    const title = document.createElement('h3');
+    title.textContent = game.name;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = game.type === 'premium' ? '✦ PREMIUM' : '● FREE';
+    const desc = document.createElement('p');
+    desc.textContent = game.desc;
+    const button = document.createElement('button');
+    button.className = 'play';
+    button.textContent = 'Open Game';
+    button.type = 'button';
+    button.addEventListener('click', () => openGame(game));
+    card.append(emoji, title, tag, desc, button);
+    $('gamesGrid').appendChild(card);
+  });
+  $('empty').hidden = visible.length !== 0;
 }
 
-
-/* Start after first interaction */
-
-document.addEventListener(
-    "pointerdown",
-    startGamesSound,
-    {
-        once:true
-    }
-);
-
-
-/* Sound toggle */
-
-if(soundControl){
-
-    soundControl.addEventListener(
-        "click",
-        async function(){
-
-            if(!bgSound) return;
-
-
-            if(
-                bgSound.paused
-            ){
-
-                try{
-
-                    bgSound.volume = 0.18;
-
-                    await bgSound.play();
-
-                    soundEnabled = true;
-
-                    soundControl.textContent =
-                        "🔊";
-
-                }catch(error){
-
-                    console.log(
-                        "Could not start sound."
-                    );
-
-                }
-
-            }else{
-
-                bgSound.pause();
-
-                soundEnabled = false;
-
-                soundControl.textContent =
-                    "🔇";
-
-            }
-
-        }
-    );
-
+function openGame(game){
+  stats.played++;
+  history.unshift({name:game.name,time:new Date().toLocaleString()});
+  history = history.slice(0,10);
+  $('dialogTitle').textContent = '🎮 ' + game.name;
+  $('dialogDescription').textContent = 'You selected ' + game.name + '.';
+  $('gameDialog').showModal();
+  updateProfile();
+  renderHistory();
 }
 
+function updateProfile(){
+  $('playerName').textContent = playerName;
+  $('gamesPlayed').textContent = stats.played;
+  $('wins').textContent = stats.wins;
+  $('coins').textContent = stats.coins;
+  $('bestScore').textContent = stats.best;
+}
+
+function renderHistory(){
+  $('history').replaceChildren();
+  if(!history.length){
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Your game launches will appear here.';
+    $('history').appendChild(p);
+    return;
+  }
+  history.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'listrow';
+    const name = document.createElement('span');
+    name.textContent = item.name;
+    const time = document.createElement('small');
+    time.className = 'muted';
+    time.textContent = item.time;
+    row.append(name,time);
+    $('history').appendChild(row);
+  });
+}
+
+$('search').addEventListener('input', renderGames);
+document.querySelectorAll('[data-filter]').forEach(button => {
+  button.addEventListener('click', () => {
+    filter = button.dataset.filter;
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active',b === button));
+    renderGames();
+  });
+});
+
+$('editProfile').addEventListener('click', () => {
+  const next = prompt('Enter your player name:',playerName);
+  if(next && next.trim()) {
+    playerName = next.trim().slice(0,30);
+    updateProfile();
+  }
+});
+
+$('closeDialog').addEventListener('click', () => $('gameDialog').close());
+
+$('chatForm').addEventListener('submit', event => {
+  event.preventDefault();
+  const input = $('chatInput');
+  const message = input.value.trim();
+  if(!message) return;
+  const bubble = document.createElement('div');
+  bubble.className = 'message';
+  const name = document.createElement('strong');
+  name.textContent = playerName + ': ';
+  bubble.append(name,document.createTextNode(message));
+  $('chatMessages').appendChild(bubble);
+  $('chatMessages').scrollTop = $('chatMessages').scrollHeight;
+  input.value = '';
+});
+
+$('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  $('themeToggle').textContent = document.body.classList.contains('light') ? '☾ Theme' : '☀ Theme';
+});
+
+const music = $('backgroundMusic');
+const musicToggle = $('musicToggle');
+let musicOn = true;
+music.volume = 0.25;
+musicToggle.addEventListener('click', async () => {
+  if(musicOn){
+    music.pause();
+    musicOn = false;
+    musicToggle.textContent = '♫ Music: Off';
+  } else {
+    try {
+      await music.play();
+      musicOn = true;
+      musicToggle.textContent = '♫ Music: On';
+    } catch {
+      musicToggle.textContent = 'Tap to play music';
+    }
+  }
+});
+
+// Browsers may block autoplay until the user interacts with the page.
+document.addEventListener('pointerdown', () => {
+  if(musicOn && music.paused) music.play().catch(() => {});
+}, {once:true});
+
+renderGames();
+updateProfile();
+renderHistory();
+})();
 </script>
-
 </body>
-
 </html>
