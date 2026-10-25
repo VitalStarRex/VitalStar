@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -7,307 +6,116 @@
 <meta name="theme-color" content="#070b18">
 <title>VitalStar Games</title>
 <style>
-:root{color-scheme:dark;--bg:#070b18;--panel:#10182b;--text:#f4f7ff;--muted:#9ba9c6;--cyan:#35e8ff;--purple:#a56bff;--line:#263653}
+:root{color-scheme:dark;--bg:#070b18;--panel:#10182b;--text:#f4f7ff;--muted:#b0bdd7;--cyan:#35e8ff;--purple:#a56bff;--line:#263653}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at top,#17234a,var(--bg) 65%);color:var(--text);font-family:system-ui,Arial,sans-serif;min-height:100vh}
-button,input{font:inherit}
-button{cursor:pointer}
+button,input{font:inherit}button{cursor:pointer}
 header{position:sticky;top:0;z-index:5;background:#080d1bea;backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:13px 5%;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .logo{font-size:21px;font-weight:900;letter-spacing:1px;color:var(--cyan);text-shadow:0 0 15px #35e8ff66}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{border:1px solid var(--cyan);background:#12283b;color:var(--text);border-radius:10px;padding:9px 12px}
-main{max-width:1200px;margin:auto;padding:22px 16px 60px}
-.hero{text-align:center;padding:38px 10px 28px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--cyan);background:#12283b;color:var(--text);border-radius:10px;padding:9px 12px}
+main{max-width:1200px;margin:auto;padding:22px 16px 60px}.hero{text-align:center;padding:38px 10px 28px}
 .hero h1{font-size:clamp(32px,7vw,60px);margin:0;background:linear-gradient(90deg,var(--cyan),#fff,var(--purple));color:transparent;background-clip:text}
-.hero p,.muted{color:var(--muted)}
-.panel{background:linear-gradient(145deg,#121c32ee,#0b1122ee);border:1px solid var(--line);border-radius:17px;padding:17px;margin-bottom:20px}
-h2{font-size:20px;margin:0 0 14px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.stat{background:#0a1224;border:1px solid var(--line);border-radius:12px;padding:13px;text-align:center}
-.stat strong{display:block;font-size:22px;color:var(--cyan)}
-.stat span{font-size:12px;color:var(--muted)}
-.searchbar{display:flex;gap:9px;margin-bottom:14px}
-input{min-width:0;width:100%;background:#080e1d;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;outline:none}
-input:focus{border-color:var(--cyan)}
-.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
-.filters button{border:1px solid var(--line);background:#10182b;color:var(--text);border-radius:20px;padding:8px 13px}
-.filters button.active{background:#123248;border-color:var(--cyan);color:var(--cyan)}
-.games{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
-.game{min-width:0;position:relative;overflow:hidden;border:1px solid #30415e;border-radius:15px;background:linear-gradient(145deg,#182543,#0b1020);padding:15px;transition:.2s}
-.game:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 0 20px #35e8ff19}
-.game .emoji{font-size:37px}
-.game h3{margin:9px 0 5px;font-size:16px}
-.game p{font-size:12px;color:var(--muted);min-height:34px;margin:0 0 12px}
-.tag{font-size:10px;color:var(--cyan);border:1px solid #35e8ff66;border-radius:20px;padding:4px 7px;display:inline-block;margin-bottom:10px}
-.play{display:block;width:100%;border:0;border-radius:9px;background:linear-gradient(90deg,#13bcd5,#8660ff);color:white;padding:10px;font-weight:750}
-.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.listrow{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-.listrow:last-child{border:0}
-#chatMessages{height:180px;overflow:auto;background:#080e1d;border:1px solid var(--line);border-radius:10px;padding:10px;margin:12px 0}
-.message{padding:7px 9px;margin:6px 0;background:#14233c;border-radius:9px;overflow-wrap:anywhere}
-.chatform{display:flex;gap:8px}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}
-dialog{width:min(500px,92vw);background:#0d1528;color:var(--text);border:1px solid var(--cyan);border-radius:18px;padding:22px}
-dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}
-#musicToggle{white-space:nowrap}
+.hero p,.muted{color:var(--muted)}.panel{background:linear-gradient(145deg,#121c32ee,#0b1122ee);border:1px solid var(--line);border-radius:17px;padding:17px;margin-bottom:20px}
+h2{font-size:20px;margin:0 0 14px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:#0a1224;border:1px solid var(--line);border-radius:12px;padding:13px;text-align:center}.stat strong{display:block;font-size:22px;color:var(--cyan)}.stat span{font-size:12px;color:var(--muted)}
+.searchbar{display:flex;gap:9px;margin-bottom:14px}input{min-width:0;width:100%;background:#080e1d;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;outline:none}input:focus{border-color:var(--cyan)}
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}.filters button{border:1px solid var(--line);background:#10182b;color:var(--text);border-radius:20px;padding:8px 13px}.filters button.active{background:#123248;border-color:var(--cyan);color:var(--cyan)}
+.games{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.game{min-width:0;position:relative;isolation:isolate;overflow:hidden;border:1px solid #3d5b83;border-radius:20px;min-height:310px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;transition:transform .28s,border-color .28s,box-shadow .28s;background:#0b1020;color:var(--text);text-decoration:none;box-shadow:0 12px 28px #0005}
+.game::before{content:"";position:absolute;inset:0;z-index:-2;background-image:var(--game-bg);background-position:center;background-size:cover;transform:scale(1.01);transition:transform .5s,filter .3s;filter:saturate(1.25) contrast(1.08)}
+.game::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(4,8,22,.04) 0%,rgba(4,8,22,.2) 25%,rgba(4,8,22,.82) 61%,#070b18 100%)}
+.game:hover,.game:focus-visible{border-color:#35e8ff;transform:translateY(-6px);box-shadow:0 0 0 1px #35e8ff55,0 18px 38px #0008,0 0 24px #35e8ff28;outline:none}.game:hover::before{transform:scale(1.12);filter:saturate(1.55) contrast(1.12)}
+.game .emoji{font-size:43px;filter:drop-shadow(0 4px 10px #000);margin-bottom:auto}.game h3{margin:20px 0 6px;font-size:18px;line-height:1.2;text-shadow:0 3px 10px #000}.game p{font-size:12px;color:#f0f5ff;min-height:34px;margin:0 0 13px;text-shadow:0 2px 7px #000;line-height:1.5}
+.tag{font-size:10px;font-weight:800;letter-spacing:.7px;color:#d8fcff;border:1px solid #68f0ffbb;border-radius:20px;padding:5px 9px;display:inline-block;margin-bottom:8px;background:#071725d9;box-shadow:0 0 14px #35e8ff18;backdrop-filter:blur(6px)}
+.play{display:block;width:100%;margin-top:auto;border:1px solid #ffffff35;border-radius:11px;background:linear-gradient(100deg,#08bfd9f5,#6552f5f5 55%,#b34dff);color:white;padding:11px;font-weight:850;text-align:center;letter-spacing:.2px;box-shadow:0 5px 18px #0004}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.listrow{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.listrow:last-child{border:0}
+#chatMessages{height:180px;overflow:auto;background:#080e1d;border:1px solid var(--line);border-radius:10px;padding:10px;margin:12px 0}.message{padding:7px 9px;margin:6px 0;background:#14233c;border-radius:9px;overflow-wrap:anywhere}.chatform{display:flex;gap:8px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}dialog{width:min(500px,92vw);background:#0d1528;color:var(--text);border:1px solid var(--cyan);border-radius:18px;padding:22px}dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}
+#musicToggle{white-space:nowrap}.notice{padding:10px 12px;border:1px solid #35e8ff55;background:#0c1b2b;border-radius:10px;margin:0 0 15px;color:#c8faff}
 body.light{color-scheme:light;--bg:#edf3ff;--panel:#fff;--text:#17213a;--muted:#52617b;--line:#ccd7ed;background:linear-gradient(#e5f2ff,#f6f3ff)}
-body.light header{background:#ffffffed}
-body.light .panel,body.light .game{background:#ffffffed}
-body.light .stat,body.light input,body.light #chatMessages{background:#f3f6ff;color:#17213a}
-body.light .filters button{background:#fff;color:#17213a}
-@media(max-width:850px){.games{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:580px){header{padding:11px 12px}.logo{font-size:17px}.btn{padding:8px;font-size:12px}main{padding:14px 11px}.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.game{padding:11px}.game .emoji{font-size:31px}.stats{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{padding:27px 5px 20px}}
+body.light header{background:#ffffffed}body.light .panel{background:#ffffffed}body.light .stat,body.light input,body.light #chatMessages{background:#f3f6ff;color:#17213a}body.light .filters button{background:#fff;color:#17213a}
+@media(max-width:950px){.games{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:580px){.games{gap:11px}.game{min-height:260px;padding:12px}.game h3{font-size:16px}.game .emoji{font-size:35px}header{padding:11px 12px}.logo{font-size:17px}.btn{padding:8px;font-size:12px}main{padding:14px 11px}.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.game{padding:11px;min-height:235px}.game .emoji{font-size:31px}.stats{grid-template-columns:repeat(2,1fr)}.columns{grid-template-columns:1fr}.hero{padding:27px 5px 20px}}
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">✦ VITALSTAR</div>
-  <div class="actions">
-    <button class="btn" id="musicToggle" type="button">♫ Music: On</button>
-    <button class="btn" id="themeToggle" type="button">☀ Theme</button>
-  </div>
-</header>
-
+<header><div class="logo">✦ VITALSTAR</div><div class="actions"><button class="btn" id="musicToggle" type="button">♫ Music: On</button><button class="btn" id="themeToggle" type="button">☀ Theme</button></div></header>
 <main>
-  <section class="hero">
-    <h1>GAMES UNIVERSE</h1>
-    <p>Connect, compete and shine together.</p>
-    <p>20 games · Friends · Multiplayer · Game chat</p>
-  </section>
-
-  <section class="panel">
-    <h2>👤 My Game Profile</h2>
-    <div class="stats">
-      <div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div>
-      <div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div>
-      <div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div>
-      <div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div>
-    </div>
-    <p class="muted">Player: <span id="playerName">Guest Player</span></p>
-    <button class="btn" id="editProfile" type="button">Edit player name</button>
-  </section>
-
-  <section class="panel">
-    <h2>🎮 Choose Your Game</h2>
-    <div class="searchbar">
-      <input id="search" placeholder="Search all 20 games..." aria-label="Search games">
-    </div>
-    <div class="filters">
-      <button class="active" data-filter="all">All Games</button>
-      <button data-filter="free">Free</button>
-      <button data-filter="premium">Premium</button>
-    </div>
-    <div class="games" id="gamesGrid"></div>
-    <p class="muted" id="empty" hidden>No games match your search.</p>
-  </section>
-
-  <div class="columns">
-    <section class="panel">
-      <h2>🏆 Leaderboard</h2>
-      <div id="leaderboard"><p class="muted">Your recorded results will appear here.</p></div>
-    </section>
-    <section class="panel">
-      <h2>💬 Game Chat</h2>
-      <p class="muted">Chat interface preview. Online messaging requires Firebase setup.</p>
-      <div id="chatMessages" aria-live="polite">
-        <div class="message">VitalStar: Welcome to the Games Universe!</div>
-      </div>
-      <form class="chatform" id="chatForm">
-        <input id="chatInput" maxlength="300" placeholder="Write a test message..." aria-label="Chat message" required>
-        <button class="btn" type="submit">Send</button>
-      </form>
-    </section>
-  </div>
-
-  <section class="panel">
-    <h2>🕹️ Game History</h2>
-    <div id="history"><p class="muted">Your game launches will appear here.</p></div>
-  </section>
-</main>
-
-<dialog id="gameDialog">
-  <h2 id="dialogTitle">VitalStar Game</h2>
-  <p id="dialogDescription"></p>
-  <p class="muted">Online rooms, synchronized gameplay, and live chat must be connected to your Firebase project and game engines before they can work across different devices.</p>
-  <button class="btn" id="closeDialog" type="button">Close</button>
-</dialog>
-
-<footer>VITALSTAR · CONNECT, SHARE AND SHINE</footer>
-
-<audio id="backgroundMusic" src="./games-bg.mp3" loop preload="auto"></audio>
-
+<section class="hero"><h1>GAMES UNIVERSE</h1><p>Connect, compete and shine together.</p><p>20 games · Friends · Multiplayer · Game chat</p></section>
+<section class="panel">
+<h2>👤 My Game Profile</h2><div class="stats"><div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div><div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div><div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div><div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div></div>
+<p class="muted">Player: <span id="playerName">Login required</span></p><p class="muted" id="authNotice">Your existing VitalStar account is used here. No separate game account is needed.</p>
+</section>
+<section class="panel"><h2>🎮 Choose Your Game</h2><div class="searchbar"><input id="search" placeholder="Search all 20 games..." aria-label="Search games"></div><div class="filters"><button class="active" data-filter="all">All Games</button><button data-filter="free">Free</button><button data-filter="premium">Premium</button></div><div class="games" id="gamesGrid" aria-live="polite"></div><p class="muted" id="empty" hidden>No games match your search.</p></section>
+<div class="columns"><section class="panel"><h2>🏆 Leaderboard</h2><div id="leaderboard"><p class="muted">Log in to view the shared leaderboard.</p></div></section><section class="panel"><h2>💬 Game Chat</h2><p class="muted">Log in to use game chat.</p><div id="chatMessages" aria-live="polite"><div class="message">VitalStar: Welcome to the Games Universe!</div></div><form class="chatform" id="chatForm"><input id="chatInput" maxlength="300" placeholder="Log in to chat..." aria-label="Chat message" required disabled><button class="btn" type="submit" disabled>Send</button></form></section></div>
+<section class="panel"><h2>🕹️ Game History</h2><div id="history"><p class="muted">Log in to see your saved game history.</p></div></section>
+</main><footer>VITALSTAR · CONNECT, SHARE AND SHINE</footer><audio id="backgroundMusic" src="./games-bg.mp3" loop preload="auto"></audio>
 <script>
 (() => {
 'use strict';
-
-const games = [
- {name:'Pong',emoji:'🏓',type:'free',desc:'Challenge friends in paddle battles.'},
- {name:'Rock Paper Scissors',emoji:'✊',type:'free',desc:'Challenge friends to quick matches.'},
- {name:'Car Race',emoji:'🏎️',type:'free',desc:'Race rivals to the finish.'},
- {name:'Tic-Tac-Toe',emoji:'❎',type:'free',desc:'Classic two-player strategy.'},
- {name:'Mech Warriors',emoji:'🤖',type:'premium',desc:'Battle with futuristic robots.'},
- {name:'Blade Masters',emoji:'⚔️',type:'premium',desc:'Sword combat and duels.'},
- {name:'Dragon Fury',emoji:'🐉',type:'premium',desc:'Epic dragon battles.'},
- {name:'Sky Combat',emoji:'✈️',type:'premium',desc:'Compete in aerial battles.'},
- {name:'Neon Snake',emoji:'🐍',type:'free',desc:'Collect points and beat rivals.'},
- {name:'Brick Breaker',emoji:'🧱',type:'free',desc:'Break blocks and compare scores.'},
- {name:'Galaxy Defender',emoji:'🚀',type:'free',desc:'Defend the galaxy together.'},
- {name:'Dino Jump',emoji:'🦖',type:'free',desc:'Race through obstacle courses.'},
- {name:'Neon Air Hockey',emoji:'🏒',type:'free',desc:'Fast-paced paddle matches.'},
- {name:'Memory Match',emoji:'🧠',type:'free',desc:'Compete to match the most pairs.'},
- {name:'Neon Maze',emoji:'🌀',type:'free',desc:'Race to find the exit.'},
- {name:'Cyber Parkour',emoji:'🏃',type:'premium',desc:'Race across futuristic rooftops.'},
- {name:'Neon Reflex',emoji:'⚡',type:'free',desc:'Test reaction speed against friends.'},
- {name:'Bubble Bash',emoji:'🫧',type:'free',desc:'Clear bubbles and compete for points.'},
- {name:'Tower Defense',emoji:'🗼',type:'premium',desc:'Defend your base with teammates.'},
- {name:'Zombie Survival',emoji:'🧟',type:'premium',desc:'Survive waves with friends.'}
+const games=[
+{name:'Pong',emoji:'🏓',type:'free',desc:'Challenge friends in paddle battles.',file:'pong.html',image:'photo-1542751371-adc38448a05e'},
+{name:'Rock Paper Scissors',emoji:'✊',type:'free',desc:'Challenge friends to quick matches.',file:'rock-paper-scissors.html',image:'photo-1511512578047-dfb367046420'},
+{name:'Car Race',emoji:'🏎️',type:'free',desc:'Race rivals to the finish.',file:'car-race.html',image:'photo-1503376780353-7e6692767b70'},
+{name:'Tic-Tac-Toe',emoji:'❎',type:'free',desc:'Classic two-player strategy.',file:'tic-tac-toe.html',image:'photo-1611996575749-79a3a250f948'},
+{name:'Mech Warriors',emoji:'🤖',type:'premium',desc:'Battle with futuristic robots.',file:'mech-warriors.html',image:'photo-1593508512255-86ab42a8e620'},
+{name:'Blade Masters',emoji:'⚔️',type:'premium',desc:'Sword combat and duels.',file:'blade-masters.html',image:'photo-1518709268805-4e9042af9f23'},
+{name:'Dragon Fury',emoji:'🐉',type:'premium',desc:'Epic dragon battles.',file:'dragon-fury.html',image:'photo-1518709268805-4e9042af9f23'},
+{name:'Sky Combat',emoji:'✈️',type:'premium',desc:'Compete in aerial battles.',file:'sky-combat.html',image:'photo-1474302770737-173ee21bab63'},
+{name:'Neon Snake',emoji:'🐍',type:'free',desc:'Collect points and beat rivals.',file:'neon-snake.html',image:'photo-1519608487953-e999c86e7455'},
+{name:'Brick Breaker',emoji:'🧱',type:'free',desc:'Break blocks and compare scores.',file:'brick-breaker.html',image:'photo-1550745165-9bc0b252726f'},
+{name:'Galaxy Defender',emoji:'🚀',type:'free',desc:'Defend the galaxy together.',file:'galaxy-defender.html',image:'photo-1446776811953-b23d57bd21aa'},
+{name:'Dino Jump',emoji:'🦖',type:'free',desc:'Race through obstacle courses.',file:'dino-jump.html',image:'photo-1511497584788-876760111969'},
+{name:'Neon Air Hockey',emoji:'🏒',type:'free',desc:'Fast-paced paddle matches.',file:'neon-air-hockey.html',image:'photo-1519861531473-9200262188bf'},
+{name:'Memory Match',emoji:'🧠',type:'free',desc:'Compete to match the most pairs.',file:'memory-match.html',image:'photo-1511512578047-dfb367046420'},
+{name:'Neon Maze',emoji:'🌀',type:'free',desc:'Race to find the exit.',file:'neon-maze.html',image:'photo-1519608487953-e999c86e7455'},
+{name:'Cyber Parkour',emoji:'🏃',type:'premium',desc:'Race across futuristic rooftops.',file:'cyber-parkour.html',image:'photo-1519608487953-e999c86e7455'},
+{name:'Neon Reflex',emoji:'⚡',type:'free',desc:'Test reaction speed against friends.',file:'neon-reflex.html',image:'photo-1550745165-9bc0b252726f'},
+{name:'Bubble Bash',emoji:'🫧',type:'free',desc:'Clear bubbles and compete for points.',file:'bubble-bash.html',image:'photo-1534447677768-be436bb09401'},
+{name:'Tower Defense',emoji:'🗼',type:'premium',desc:'Defend your base with teammates.',file:'tower-defense.html',image:'photo-1518709268805-4e9042af9f23'},
+{name:'Zombie Survival',emoji:'🧟',type:'premium',desc:'Survive waves with friends.',file:'zombie-survival.html',image:'photo-1509248961158-e54f6934749c'}
 ];
-
-const $ = id => document.getElementById(id);
-let filter = 'all';
-let playerName = 'Guest Player';
-let history = [];
-let stats = {played:0,wins:0,coins:0,best:0};
-
+const $=id=>document.getElementById(id);let filter='all',isLoggedIn=false,playerName='Login required',stats={played:0,wins:0,coins:0,best:0};
 function renderGames(){
-  const query = $('search').value.trim().toLowerCase();
-  const visible = games.filter(g =>
-    (filter === 'all' || g.type === filter) &&
-    (g.name.toLowerCase().includes(query) || g.desc.toLowerCase().includes(query))
-  );
-  $('gamesGrid').innerHTML = '';
-  visible.forEach(game => {
-    const card = document.createElement('article');
-    card.className = 'game';
-    const emoji = document.createElement('div');
-    emoji.className = 'emoji';
-    emoji.textContent = game.emoji;
-    const title = document.createElement('h3');
-    title.textContent = game.name;
-    const tag = document.createElement('span');
-    tag.className = 'tag';
-    tag.textContent = game.type === 'premium' ? '✦ PREMIUM' : '● FREE';
-    const desc = document.createElement('p');
-    desc.textContent = game.desc;
-    const button = document.createElement('button');
-    button.className = 'play';
-    button.textContent = 'Open Game';
-    button.type = 'button';
-    button.addEventListener('click', () => openGame(game));
-    card.append(emoji, title, tag, desc, button);
-    $('gamesGrid').appendChild(card);
+ const query=$('search').value.trim().toLowerCase();
+ const visible=games.filter(g=>(filter==='all'||g.type===filter)&&(g.name.toLowerCase().includes(query)||g.desc.toLowerCase().includes(query)));
+ const grid=$('gamesGrid');grid.replaceChildren();
+ visible.forEach(game=>{
+  const card=document.createElement('article');card.className='game';
+  card.style.setProperty('--game-bg',`url("https://images.unsplash.com/${game.image}?auto=format&fit=crop&w=900&q=80")`);
+  const emoji=document.createElement('div');emoji.className='emoji';emoji.textContent=game.emoji;
+  const title=document.createElement('h3');title.textContent=game.name;
+  const tag=document.createElement('span');tag.className='tag';tag.textContent=game.type==='premium'?'✦ PREMIUM':'● FREE';
+  const desc=document.createElement('p');desc.textContent=game.desc;
+  const link=document.createElement('a');link.className='play';link.href=game.file;link.textContent=isLoggedIn?'▶ PLAY NOW':'🔒 VitalStar Sign-in Required';link.setAttribute('aria-label',(isLoggedIn?'Open ':'Log in to play ')+game.name);
+  link.addEventListener('click',event=>{
+   if(!isLoggedIn){event.preventDefault();alert('Please sign in to VitalStar first, then return here. Your VitalStar session will be reused—no separate game account is needed.');return;}
+   stats.played++;$('gamesPlayed').textContent=stats.played;
   });
-  $('empty').hidden = visible.length !== 0;
+  card.append(emoji,title,tag,desc,link);grid.appendChild(card);
+ });
+ $('empty').hidden=visible.length!==0;
 }
-
-function openGame(game){
-  stats.played++;
-  history.unshift({name:game.name,time:new Date().toLocaleString()});
-  history = history.slice(0,10);
-  $('dialogTitle').textContent = '🎮 ' + game.name;
-  $('dialogDescription').textContent = 'You selected ' + game.name + '.';
-  $('gameDialog').showModal();
-  updateProfile();
-  renderHistory();
-}
-
-function updateProfile(){
-  $('playerName').textContent = playerName;
-  $('gamesPlayed').textContent = stats.played;
-  $('wins').textContent = stats.wins;
-  $('coins').textContent = stats.coins;
-  $('bestScore').textContent = stats.best;
-}
-
-function renderHistory(){
-  $('history').replaceChildren();
-  if(!history.length){
-    const p = document.createElement('p');
-    p.className = 'muted';
-    p.textContent = 'Your game launches will appear here.';
-    $('history').appendChild(p);
-    return;
-  }
-  history.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'listrow';
-    const name = document.createElement('span');
-    name.textContent = item.name;
-    const time = document.createElement('small');
-    time.className = 'muted';
-    time.textContent = item.time;
-    row.append(name,time);
-    $('history').appendChild(row);
-  });
-}
-
-$('search').addEventListener('input', renderGames);
-document.querySelectorAll('[data-filter]').forEach(button => {
-  button.addEventListener('click', () => {
-    filter = button.dataset.filter;
-    document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active',b === button));
-    renderGames();
-  });
-});
-
-$('editProfile').addEventListener('click', () => {
-  const next = prompt('Enter your player name:',playerName);
-  if(next && next.trim()) {
-    playerName = next.trim().slice(0,30);
-    updateProfile();
-  }
-});
-
-$('closeDialog').addEventListener('click', () => $('gameDialog').close());
-
-$('chatForm').addEventListener('submit', event => {
-  event.preventDefault();
-  const input = $('chatInput');
-  const message = input.value.trim();
-  if(!message) return;
-  const bubble = document.createElement('div');
-  bubble.className = 'message';
-  const name = document.createElement('strong');
-  name.textContent = playerName + ': ';
-  bubble.append(name,document.createTextNode(message));
-  $('chatMessages').appendChild(bubble);
-  $('chatMessages').scrollTop = $('chatMessages').scrollHeight;
-  input.value = '';
-});
-
-$('themeToggle').addEventListener('click', () => {
-  document.body.classList.toggle('light');
-  $('themeToggle').textContent = document.body.classList.contains('light') ? '☾ Theme' : '☀ Theme';
-});
-
-const music = $('backgroundMusic');
-const musicToggle = $('musicToggle');
-let musicOn = true;
-music.volume = 0.25;
-musicToggle.addEventListener('click', async () => {
-  if(musicOn){
-    music.pause();
-    musicOn = false;
-    musicToggle.textContent = '♫ Music: Off';
-  } else {
-    try {
-      await music.play();
-      musicOn = true;
-      musicToggle.textContent = '♫ Music: On';
-    } catch {
-      musicToggle.textContent = 'Tap to play music';
-    }
-  }
-});
-
-// Browsers may block autoplay until the user interacts with the page.
-document.addEventListener('pointerdown', () => {
-  if(musicOn && music.paused) music.play().catch(() => {});
-}, {once:true});
-
+$('search').addEventListener('input',renderGames);
+document.querySelectorAll('[data-filter]').forEach(button=>button.addEventListener('click',()=>{filter=button.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===button));renderGames()}));
+$('themeToggle').addEventListener('click',()=>{document.body.classList.toggle('light');$('themeToggle').textContent=document.body.classList.contains('light')?'☾ Theme':'☀ Theme'});
+const music=$('backgroundMusic'),musicToggle=$('musicToggle');let musicOn=true;music.volume=.25;
+musicToggle.addEventListener('click',async()=>{if(musicOn){music.pause();musicOn=false;musicToggle.textContent='♫ Music: Off'}else{try{await music.play();musicOn=true;musicToggle.textContent='♫ Music: On'}catch{musicToggle.textContent='Tap to play music'}}});
+document.addEventListener('pointerdown',()=>{if(musicOn&&music.paused)music.play().catch(()=>{})},{once:true});
+/* Firebase auth is attached separately so the game cards still render if Firebase fails. */
 renderGames();
-updateProfile();
-renderHistory();
+import('../firebase.js').then(async mod=>{
+ const auth=mod.auth;
+ if(!auth)throw new Error('firebase.js must export auth');
+ const {onAuthStateChanged}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+ onAuthStateChanged(auth,user=>{
+  isLoggedIn=!!user;playerName=user?(user.displayName||user.email?.split('@')[0]||'Player'):'Login required';
+  $('playerName').textContent=playerName;
+  if(user){$('authNotice').textContent='Signed in as '+playerName+'. Your VitalStar session is shared with these games—no extra account needed.';}
+  else{$('authNotice').textContent='Not signed in right now. Sign in to VitalStar on the main site, then return here. No game login or registration is needed.';}
+  renderGames();
+ });
+}).catch(error=>{$('authNotice').textContent='Game cards are available. Sign-in status could not be checked: '+error.message+' Make sure ../firebase.js exists and exports auth.';});
 })();
 </script>
 </body>
