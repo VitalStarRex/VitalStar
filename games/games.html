@@ -21,7 +21,7 @@ body.light{color-scheme:light;--bg:#edf3ff;--text:#17213a;--muted:#52617b;--line
 <header><div class="logo"><span class="star">✦</span> VITALSTAR</div><div class="actions"><button class="btn" id="musicToggle" type="button">♫ Music</button><button class="btn" id="themeToggle" type="button">☀ Theme</button></div></header>
 <main>
 <section class="hero"><h1>VITALSTAR</h1><div class="hero-sub">GAMES</div><p>Connect, compete and shine!</p></section>
-<section class="panel"><div class="profile-line"><h2>👤 My Game Profile</h2><span class="muted"><span class="online-dot"></span><span id="playerName">Player</span></span></div><div class="stats"><div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div><div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div><div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div><div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div></div><div class="profile-line" style="margin-top:12px"><button class="btn" id="editProfile" type="button" disabled>Edit player name</button><div id="gameAuthControls" class="actions"></div></div><p id="firebaseNotice" class="muted" role="status">Log in with your VitalStar account before playing or saving game activity.</p></section>
+<section class="panel"><div class="profile-line"><h2>👤 My Game Profile</h2><span class="muted"><span class="online-dot"></span><span id="playerName">Player</span></span></div><div class="stats"><div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div><div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div><div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div><div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div></div><div class="profile-line" style="margin-top:12px"><div id="gameAuthControls" class="actions"></div></div><p id="firebaseNotice" class="muted" role="status">Log in with your VitalStar account before playing or saving game activity.</p></section>
 <section class="games-section"><div class="games" id="gamesGrid" aria-label="VitalStar games"></div><p class="muted" id="empty" hidden>No games available.</p></section>
 <div class="columns"><section class="panel"><h2>🏆 Leaderboard</h2><div id="leaderboard"><p class="muted">Log in to view the shared leaderboard.</p></div></section><section class="panel"><h2>💬 Game Chat</h2><p class="muted">Sign in to read and send community game chat messages.</p><div id="chatMessages" aria-live="polite"><div class="message">Log in to view and send game chat messages.</div></div><form class="chatform" id="chatForm"><input id="chatInput" maxlength="300" placeholder="Write a message..." aria-label="Chat message" required disabled><button class="btn" type="submit" disabled>Send</button></form></section></div>
 <section class="panel"><h2>🕹️ Game History</h2><div id="history"><p class="muted">Log in to see your saved game history.</p></div></section>
@@ -41,7 +41,7 @@ body.light{color-scheme:light;--bg:#edf3ff;--text:#17213a;--muted:#52617b;--line
 </script>
 <script type="module">
 import { auth, db } from "../firebase.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, doc, getDoc, setDoc, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const games = [
@@ -75,13 +75,11 @@ function setAuthUI(user){
  const controls=$('gameAuthControls'); controls.replaceChildren();
  if(user){
   const account=document.createElement('span');account.className='muted';account.textContent='Signed in';
-  const logout=document.createElement('button');logout.className='btn';logout.type='button';logout.textContent='Log out';
-  logout.addEventListener('click',async()=>{try{await signOut(auth);location.href='../login.html'}catch(e){notice('Could not log out: '+e.message,true)}});
-  controls.append(account,logout);
+  controls.append(account);
  }else{
   const hint=document.createElement('span');hint.className='muted';hint.textContent='Sign in to VitalStar to play';controls.append(hint);
  }
- $('editProfile').disabled=!user;$('chatInput').disabled=!user;$('chatForm').querySelector('button').disabled=!user;
+ $('chatInput').disabled=!user;$('chatForm').querySelector('button').disabled=!user;
  renderGames();
 }
 function watchCardImage(card,image){
@@ -170,13 +168,6 @@ function listenChat(){
  },e=>notice('Game chat unavailable: '+e.message,true));
 }
 
-$('editProfile').addEventListener('click',async()=>{
- if(!auth.currentUser){location.href='../login.html';return}
- const next=prompt('Enter your player name:',playerName);if(!next||!next.trim())return;
- const clean=next.trim().slice(0,30);
- try{await setDoc(doc(db,'users',auth.currentUser.uid,'gameProfile','settings'),{playerName:clean,updatedAt:serverTimestamp()},{merge:true});playerName=clean;updateProfile();await updateLeaderboard();notice('Player name saved to your account.')}
- catch(e){notice('Could not save player name: '+e.message,true)}
-});
 $('chatForm').addEventListener('submit',async event=>{
  event.preventDefault();if(!auth.currentUser){location.href='../login.html';return}
  const input=$('chatInput'),text=input.value.trim();if(!text)return;
