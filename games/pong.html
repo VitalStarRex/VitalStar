@@ -72,7 +72,31 @@ window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','w','s','W','S']
 function needOnline(){if(!onlineConfigured||!db){toast('Firebase unavailable. Player vs AI remains available offline.');return false}if(!connected){toast('Waiting for Firebase connection. Try again when Online appears.');return false}return true}
 function roomCodeMake(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let out='';const a=new Uint8Array(6);crypto.getRandomValues(a);for(const n of a)out+=chars[n%chars.length];return out}
 async function createRoom(){if(!needOnline())return;let success=false;for(let i=0;i<5&&!success;i++){const c=roomCodeMake(),ref=db.ref('pongRooms/'+c);try{const tx=await ref.transaction(cur=>cur===null?{code:c,createdAt:firebase.database.ServerValue.TIMESTAMP,status:'waiting',hostId:playerId,players:{p1:{id:playerId,name:playerName,connected:true,ready:false,duration:+$('duration').value,lastSeen:firebase.database.ServerValue.TIMESTAMP},p2:null},paddles:{p1:.5,p2:.5},state:{seq:0,score:[0,0],ball:{x:.5,y:.5,vx:.4,vy:.15},remaining:+$('duration').value*1000},rematch:{p1:false,p2:false}}:undefined);if(tx.committed){success=true;await enterRoom(c,1)}}catch(e){toast('Could not create room: '+e.message);return}}if(!success)toast('Could not reserve a unique room code. Please retry.')}
-async function joinRoom(){if(!needOnline())return;const c=$('roomCode').value.trim().toUpperCase();if(!/^[A-HJ-NP-Z2-9]{6}$/.test(c)){toast('Enter a valid 6-character room code.');return}try{const ref=db.ref('pongRooms/'+c);const tx=await ref.transaction(cur=>{if(!cur||['finished','closed'].includes(cur.status))return;cur.players=cur.players||{};if(cur.players.p1?.id===playerId||cur.players.p2?.id===playerId)return cur;if(cur.players.p2&&cur.players.p2.id)return;cur.players.p2={id:playerId,name:playerName,connected:true,ready:false,duration:+$('duration').value,lastSeen:firebase.database.ServerValue.TIMESTAMP};cur.paddles=cur.paddles||{p1:.5,p2:.5};return cur});if(!tx.committed){toast('Room not found, closed, or already full.');return}const s=tx.snapshot.val(),snum=s.players.p1?.id===playerId?1:s.players.p2?.id===playerId?2:0;if(!snum){toast('Could not verify your room slot.');return}await enterRoom(c,snum)}catch(e){toast('Could not join room: '+e.message)}}
+async function joinRoom(){
+  if(!needOnline())return;
+  const c=$('roomCode').value.trim().toUpperCase();
+  if(!/^[A-HJ-NP-Z2-9]{6}$/.test(c)){toast('Enter a valid 6-character room code.');return}
+  try{
+    const ref=db.ref('pongRooms/'+c);
+    const first=await ref.get();
+    if(!first.exists()){toast('Room not found.');return}
+    const tx=await ref.transaction(cur=>{
+      if(cur===null)return cur; /* cache miss: let the server retry with the real value */
+      if(['finished','closed'].includes(cur.status))return;
+      cur.players=cur.players||{};
+      if(cur.players.p1?.id===playerId||cur.players.p2?.id===playerId)return cur;
+      if(cur.players.p2&&cur.players.p2.id)return;
+      cur.players.p2={id:playerId,name:playerName,connected:true,ready:false,duration:+$('duration').value,lastSeen:firebase.database.ServerValue.TIMESTAMP};
+      cur.paddles=cur.paddles||{p1:.5,p2:.5};
+      return cur;
+    });
+    const s=tx.snapshot.val();
+    if(!tx.committed||!s){toast('Room closed or already full.');return}
+    const snum=s.players?.p1?.id===playerId?1:s.players?.p2?.id===playerId?2:0;
+    if(!snum){toast('Could not verify your room slot.');return}
+    await enterRoom(c,snum);
+  }catch(e){toast('Could not join room: '+e.message)}
+}
 $('createRoom').onclick=createRoom;$('joinRoom').onclick=joinRoom;
 function detachRoomListeners(){if(roomRef&&roomListener)roomRef.off('value',roomListener);roomListener=null;if(chatRef&&chatListener)chatRef.off('child_added',chatListener);chatRef=null;chatListener=null}
 async function enterRoom(c,s){if(roomRef)await leaveRoom(false);roomCode=c;slot=s;roomRef=db.ref('pongRooms/'+c);disconnecting=false;roomData=null;score=[0,0];show('match');hide('home');show('roomControls');hide('resultControls');$('pauseBtn').classList.add('hide');$('matchTitle').textContent='Online 1 vs 1';$('matchSub').textContent='Room '+c+' · two player slots';$('roomCodeBadge').textContent='CODE '+c;$('leftLabel').textContent='PLAYER 1';$('rightLabel').textContent='PLAYER 2';$('matchBadge').textContent='LOBBY';$('controlHint').textContent='Your touchpad controls only your assigned paddle.';$('roomNotice').textContent='Connecting to room…';$('roomDuration').value=$('duration').value;const mine=roomRef.child('players/p'+s);try{await mine.onDisconnect().update({connected:false,ready:false,lastSeen:firebase.database.ServerValue.TIMESTAMP});await mine.update({connected:true,ready:false,lastSeen:firebase.database.ServerValue.TIMESTAMP})}catch(e){toast('Presence setup failed: '+e.message)}roomListener=snap=>{roomData=snap.val();if(!roomData){toast('Room was deleted or expired.');leaveRoom(false).finally(resetUI);return}renderRoom()};roomRef.on('value',roomListener,e=>toast('Room read failed: '+e.message));chatRef=db.ref('pongLobbyChat').limitToLast(40);chatListener=snap=>addChat(snap.val());chatRef.on('child_added',chatListener,e=>toast('Chat unavailable: '+e.message));draw();if(roomData)renderRoom()}
