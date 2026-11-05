@@ -469,6 +469,23 @@ header{
     cursor:pointer;
 }
 
+/* Small online indicator (friends active right now) */
+.story-online{
+    position:absolute;
+    right:3px;
+    bottom:3px;
+    z-index:5;
+
+    width:14px;
+    height:14px;
+
+    border-radius:50%;
+    background:#32df72;
+    border:2.5px solid var(--vs-ring-gap);
+    box-shadow:0 0 7px rgba(50,223,114,.85);
+    pointer-events:none;
+}
+
 .story-name{
     display:block;
     margin-top:7px;
@@ -1188,7 +1205,7 @@ header{
 
 .vs-groups-more:hover{ background:rgba(0,217,255,.08); }
 
-/* Online stats */
+/* Online stats (large card — now hidden; the small dot on friends replaces it) */
 
 .vs-stats{
     margin-top:18px;
@@ -1199,6 +1216,8 @@ header{
     border-radius:21px;
     box-shadow:var(--vs-card-glow);
 }
+
+.vs-stats[hidden]{ display:none; }
 
 .vs-stats-head{
     display:flex;
@@ -1400,6 +1419,96 @@ header{
     .vs-live i{ animation:none; }
 }
 
+/* =========================================================
+   NEW DARK THEME — deep navy + neon blue (matches screenshot)
+   Overrides the shared dark variables for this page.
+   ========================================================= */
+
+:root[data-theme="dark"]{
+    --vs-bg:#050b1f;
+    --vs-text:#ffffff;
+    --vs-text-soft:#dbe6ff;
+    --vs-muted:#a9bbe6;
+    --vs-dim:#8396c4;
+
+    --vs-card:linear-gradient(160deg,rgba(14,30,78,.88),rgba(6,14,42,.94));
+    --vs-card-solid:#0a1634;
+    --vs-card-border:rgba(70,120,255,.42);
+    --vs-card-glow:0 0 0 1px rgba(0,190,255,.08),0 0 22px rgba(30,90,255,.22);
+
+    --vs-line:rgba(90,130,255,.20);
+    --vs-hover:rgba(60,110,255,.12);
+    --vs-chip:rgba(14,30,78,.85);
+    --vs-chip-hover:rgba(40,80,200,.45);
+    --vs-input:rgba(10,22,60,.9);
+    --vs-input-hover:rgba(20,40,100,.95);
+
+    --vs-header-bg:rgba(5,11,31,.90);
+    --vs-nav-bg:rgba(7,16,46,.93);
+    --vs-sidebar-bg:linear-gradient(180deg,#071438,#040a22);
+    --vs-overlay:rgba(2,5,18,.72);
+    --vs-shadow:0 12px 40px rgba(0,0,0,.55);
+
+    --vs-glow-1:rgba(0,120,255,.22);
+    --vs-glow-2:rgba(0,200,255,.14);
+    --vs-glow-3:rgba(40,70,255,.22);
+
+    --vs-cyan:#19c8ff;
+    --vs-purple:#4d8dff;
+    --vs-pink:#ff3b6b;
+    --vs-green:#32df72;
+    --vs-gold:#ffc83a;
+    --vs-gold-border:rgba(255,190,40,.65);
+    --vs-gold-bg:rgba(255,180,0,.10);
+    --vs-danger:#ff2d55;
+
+    --vs-heading:linear-gradient(90deg,#ffffff,#19c8ff);
+    --vs-brand-grad:linear-gradient(135deg,#6a3cff,#19c8ff);
+    --vs-plus-grad:linear-gradient(135deg,#1a5dff,#7a3cff);
+    --vs-plus-shadow:0 0 22px rgba(40,110,255,.75);
+    --vs-ring-gap:#050b1f;
+
+    --vs-stats-bg:rgba(8,18,52,.9);
+    --vs-stat-bg:rgba(20,40,100,.35);
+}
+
+/* Glossy blue tiles for Explore */
+:root[data-theme="dark"] .ex-card{
+    background:linear-gradient(160deg,rgba(18,48,130,.75),rgba(6,16,52,.95));
+    border:1.5px solid rgba(60,140,255,.7);
+    box-shadow:0 0 14px rgba(30,110,255,.35),inset 0 -14px 24px rgba(0,150,255,.14);
+}
+:root[data-theme="dark"] .ex-friends,
+:root[data-theme="dark"] .ex-videos,
+:root[data-theme="dark"] .ex-groups,
+:root[data-theme="dark"] .ex-games{
+    background:linear-gradient(160deg,rgba(18,48,130,.75),rgba(6,16,52,.95));
+    box-shadow:0 0 14px rgba(30,110,255,.35),inset 0 -14px 24px rgba(0,150,255,.14);
+}
+
+:root[data-theme="dark"] .explore{
+    border-color:rgba(70,130,255,.6);
+    box-shadow:0 0 0 1px rgba(0,190,255,.12),0 0 22px rgba(30,100,255,.3);
+}
+:root[data-theme="dark"] .explore h2 span.accent{
+    background:linear-gradient(90deg,#19c8ff,#3d7bff);
+    -webkit-background-clip:text;
+    background-clip:text;
+}
+:root[data-theme="dark"] .bottom-nav{
+    border-color:rgba(70,130,255,.55);
+    box-shadow:0 0 18px rgba(30,100,255,.3),0 12px 40px rgba(0,0,0,.55);
+}
+:root[data-theme="dark"] .bottom-nav a.active::after{
+    background:linear-gradient(90deg,#3d7bff,#19c8ff);
+    box-shadow:0 0 8px #2f7bff;
+}
+:root[data-theme="dark"] .logo-star,
+:root[data-theme="dark"] .sidebar-brand .big-star,
+:root[data-theme="dark"] .sidebar-motto .big-star{
+    text-shadow:0 0 10px var(--vs-cyan),0 0 22px #2f6bff;
+}
+
 </style>
 </head>
 <body>
@@ -1413,7 +1522,7 @@ header{
         <div class="logo-star">☆</div>
         <div class="logo-text">
             <div class="logo">VitalStar</div>
-            <div class="logo-sub">Connect • Share • Grow</div>
+            <div class="logo-sub">Connect • Share • Shine</div>
         </div>
     </div>
 
@@ -1467,7 +1576,7 @@ header{
 
     <div class="sidebar-motto">
         <div class="big-star">☆</div>
-        <b>Connect<br>Share<br>Grow</b>
+        <b>Connect<br>Share<br>Shine</b>
     </div>
 
 </div>
@@ -1571,8 +1680,8 @@ document.addEventListener("click", function(event){
 
     </section>
 
-    <!-- ONLINE STATS (filled by online-stats.js) -->
-    <section class="vs-stats" id="vsOnlineStats" aria-labelledby="vsStatsTitle">
+    <!-- ONLINE STATS: large card hidden (elements kept so online-stats.js keeps working) -->
+    <section class="vs-stats" id="vsOnlineStats" aria-labelledby="vsStatsTitle" hidden>
 
         <div class="vs-stats-head">
             <h2 id="vsStatsTitle">Online Stats</h2>
@@ -1755,6 +1864,9 @@ import {
 
 const storiesContainer = document.getElementById("stories");
 
+/* A friend counts as online if their status says so, or they were seen in the last 2 minutes */
+const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+
 /* Default profile picture */
 const DEFAULT_AVATAR =
     "data:image/svg+xml;charset=UTF-8," +
@@ -1794,8 +1906,10 @@ async function loadProfile(uid){
     }
 }
 
-/* Last active time (for ordering friends) */
-async function getLastActive(uid){
+/* Presence: last active time (for ordering) + online flag (for the small dot) */
+async function getPresence(uid){
+
+    const result = { lastActive: 0, online: false };
 
     try{
 
@@ -1808,12 +1922,17 @@ async function getLastActive(uid){
             if(status){
 
                 if(status.lastSeen !== undefined && status.lastSeen !== null){
-                    return Number(status.lastSeen);
+                    result.lastActive = Number(status.lastSeen);
+                }else if(status.lastActive !== undefined && status.lastActive !== null){
+                    result.lastActive = Number(status.lastActive);
                 }
 
-                if(status.lastActive !== undefined && status.lastActive !== null){
-                    return Number(status.lastActive);
-                }
+                const state = String(status.state || status.status || "").toLowerCase();
+
+                result.online =
+                    status.online === true ||
+                    state === "online" ||
+                    (result.lastActive > 0 && (Date.now() - result.lastActive) < ONLINE_WINDOW_MS);
             }
         }
 
@@ -1821,7 +1940,7 @@ async function getLastActive(uid){
         console.warn("Presence unavailable:", uid);
     }
 
-    return 0;
+    return result;
 }
 
 /* Accepted friends (both directions) */
@@ -1927,6 +2046,16 @@ function createStory(profile, ownStory = false){
         story.appendChild(add);
     }
 
+    /* Small green dot for friends who are online now */
+    if(!ownStory && profile.online){
+
+        const dot = document.createElement("span");
+        dot.className = "story-online";
+        dot.title = "Online";
+
+        story.appendChild(dot);
+    }
+
     const name = document.createElement("span");
     name.className = "story-name";
     name.textContent = ownStory ? "Add Story" : profile.name;
@@ -1992,9 +2121,9 @@ async function loadStories(user){
         friendIds.map(async friendUid => {
 
             const profile = await loadProfile(friendUid);
-            const lastActive = await getLastActive(friendUid);
+            const presence = await getPresence(friendUid);
 
-            return { ...profile, lastActive };
+            return { ...profile, lastActive: presence.lastActive, online: presence.online };
         })
     );
 
