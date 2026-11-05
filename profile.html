@@ -86,7 +86,7 @@ body::before{
 /* COVER + PROFILE PICTURE */
 .cover-container{
     position:relative;
-    width:90%;
+    width:85%;
     margin:0 auto;
     background:var(--vs-card-solid,#0a1634);
     border-bottom:1px solid var(--vs-card-border);
@@ -232,6 +232,7 @@ body::before{
     font-style:normal;
     animation:vsMiniDots 1.2s ease-in-out infinite;
 }
+
 .vs-mini-text i:nth-child(2){ animation-delay:.2s; }
 .vs-mini-text i:nth-child(3){ animation-delay:.4s; }
 
@@ -268,15 +269,15 @@ body::before{
     font-weight:700;
 }
 
-/* PROFILE BUTTONS — CENTERED */
+/* PROFILE BUTTONS — ALWAYS CENTERED */
 .buttons{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    align-items:stretch;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
     justify-content:center;
     gap:10px;
     width:100%;
-    max-width:400px;
+    max-width:420px;
     margin:25px auto;
 }
 
@@ -284,7 +285,8 @@ body::before{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    width:100%;
+    width:calc(50% - 5px);
+    max-width:200px;
     min-width:0;
     min-height:52px;
     padding:10px 4px;
@@ -312,18 +314,22 @@ body::before{
 #messageBtn{ background:linear-gradient(135deg,#008cff,#00c6ff); }
 #editProfileBtn{ background:linear-gradient(135deg,#ffb300,#ff5e00); }
 
+/* FRIEND BUTTON STATES */
 #friendBtn.friend-add{
     background:linear-gradient(135deg,#071a38,#102f66);
     border-color:#168cff;
 }
+
 #friendBtn.friend-remove{
     background:linear-gradient(135deg,#3b0b19,#66152b);
     border-color:#ff4d6d;
 }
+
 #friendBtn.friend-pending{
     background:linear-gradient(135deg,#3d2a00,#664800);
     border-color:#ffc107;
 }
+
 #friendBtn.friend-accept{
     background:linear-gradient(135deg,#063d25,#087044);
     border-color:#00ff88;
@@ -535,13 +541,21 @@ body::before{
     #fullName{ font-size:24px; }
     .stats{ gap:8px; }
     .stats > div{ min-width:84px; padding:10px; }
-    .buttons{ gap:8px; }
+
+    .buttons{
+        justify-content:center;
+        gap:8px;
+    }
+
     .buttons button{
+        width:calc(50% - 4px);
         min-height:48px;
         padding:9px 2px;
         font-size:clamp(9px,2.8vw,12px);
     }
+
     .bottom-nav{ height:64px; border-radius:21px; }
+
     .bottom-nav a.create-btn{
         flex-basis:56px;
         width:56px;
