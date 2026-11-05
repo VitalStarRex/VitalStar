@@ -806,158 +806,54 @@ injectVitalStarIndicatorStyles();
 
 
 // ============================================================
-// CREATE VITALSTAR INDICATOR
+// NORMAL MINI LOADING INDICATOR
+// Uses the profile page's existing #profileLoading slot.
 // ============================================================
 
-function createVitalStarIndicator(
-    text = "Loading...",
-    fullscreen = false
-) {
+function createVitalStarIndicator(text = "Loading...") {
 
-    const wrapper =
-        document.createElement("div");
+    const wrapper = document.createElement("div");
 
-
-    if (fullscreen) {
-
-        wrapper.className =
-            "vitalstar-fullscreen";
-
-    } else {
-
-        wrapper.style.cssText = `
-            width:100%;
-            max-width:500px;
-            margin:30px auto;
-            padding:34px 20px;
-            box-sizing:border-box;
-            text-align:center;
-            border-radius:24px;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(0,255,136,.14) 0%,
-                    rgba(3,25,17,.96) 45%,
-                    rgba(2,9,7,.98) 100%
-                );
-
-            border:
-                1px solid
-                rgba(0,255,136,.28);
-
-            box-shadow:
-                0 0 22px
-                    rgba(0,255,136,.16),
-
-                inset 0 0 25px
-                    rgba(0,255,136,.05);
-
-            color:#ffffff;
-        `;
-    }
-
+    wrapper.className = "vs-mini-loader";
+    wrapper.setAttribute("role", "status");
 
     wrapper.innerHTML = `
-
-        <div class="vitalstar-indicator">
-
-            <div class="vitalstar-glow"></div>
-
-            <div class="vitalstar-vs">
-                VS
-            </div>
-
+        <div class="vs-mini-pill">
+            <div class="vs-mini-ring"><span>VS</span></div>
+            <span class="vs-mini-text">${escapeHTML(text)}<i>.</i><i>.</i><i>.</i></span>
         </div>
-
-        <div class="vitalstar-loading-text">
-            ${escapeHTML(text)}
-        </div>
-
-        ${
-            fullscreen
-                ? `
-                    <div class="vitalstar-loading-subtext">
-                        Connect, Share & Shine
-                    </div>
-                  `
-                : ""
-        }
     `;
-
 
     return wrapper;
 }
 
 
 // ============================================================
-// SHOW FULL-SCREEN LOADING
+// SHOW NORMAL INLINE LOADING
 // ============================================================
 
-function showLoadingIndicator(
-    text = "Loading profile..."
-) {
+function showLoadingIndicator(text = "Loading profile...") {
 
-    let existing =
-        document.getElementById(
-            "vitalstarFullscreenLoader"
-        );
+    const slot = document.getElementById("profileLoading");
 
+    if (!slot)
+        return;
 
-    if (existing)
-        existing.remove();
-
-
-    const indicator =
-        createVitalStarIndicator(
-            text,
-            true
-        );
-
-
-    indicator.id =
-        "vitalstarFullscreenLoader";
-
-
-    document.body.appendChild(
-        indicator
-    );
+    slot.innerHTML = "";
+    slot.appendChild(createVitalStarIndicator(text));
 }
 
 
 // ============================================================
-// REMOVE FULL-SCREEN LOADING
+// REMOVE NORMAL INLINE LOADING
 // ============================================================
 
 function removeLoadingIndicator() {
 
-    const indicator =
-        document.getElementById(
-            "vitalstarFullscreenLoader"
-        );
+    const slot = document.getElementById("profileLoading");
 
-
-    if (!indicator)
-        return;
-
-
-    indicator.style.opacity =
-        "0";
-
-    indicator.style.transition =
-        "opacity .15s ease";
-
-
-    setTimeout(() => {
-
-        if (indicator.parentNode) {
-
-            indicator.parentNode.removeChild(
-                indicator
-            );
-        }
-
-    }, 150);
+    if (slot)
+        slot.innerHTML = "";
 }
 
 
