@@ -124,3 +124,59 @@
 .status-text{
     margin-left:10px;
 }
+
+/* =========================================================
+   VITALSTAR SHARED THEME SUPPORT — MESSAGES
+   The selected theme comes from Home's data-theme attribute.
+   ========================================================= */
+
+html[data-theme="dark"] body {
+    background: linear-gradient(180deg, #02050c, #030712 58%, #050914) !important;
+    color: #fff;
+}
+
+html[data-theme="light"] body {
+    background: linear-gradient(180deg, #f8faff, #eef3ff 58%, #fff) !important;
+    color: #182238;
+}
+
+html[data-theme="light"] .header {
+    background: linear-gradient(135deg, #fff, #eaf0ff);
+    color: #242044;
+}
+
+html[data-theme="light"] .message-card {
+    background: #fff;
+    color: #20263a;
+    border-color: #e6eaf4;
+}
+
+html[data-theme="light"] .name { color: #351477; }
+html[data-theme="light"] .last-message-text { color: #667085; }
+html[data-theme="light"] .time-text { color: #8992a8; }
+
+html[data-theme="light"] .bottom-nav,
+html[data-theme="light"] .vitalstar-bottom-nav {
+    background: rgba(255,255,255,.97);
+    border-top-color: rgba(40,50,90,.10);
+}
+
+html[data-theme="light"] .vitalstar-bottom-nav a { color: #727b91; }
+html[data-theme="light"] .vitalstar-bottom-nav a.active { color: #5c32bb; }
+
+/* Keep message cards responsive and avoid long repaint animations. */
+.message-card {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .message-card,
+    .unread-badge,
+    .vitalstar-fullscreen *,
+    .vitalstar-fullscreen::before,
+    .vitalstar-fullscreen::after {
+        animation: none !important;
+        transition-duration: .01ms !important;
+    }
+}
