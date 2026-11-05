@@ -1,215 +1,611 @@
-<!DOCTYPE html><html lang="en">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VitalStar Register</title><style>
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f2f2f2;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+<title>VitalStar Register</title>
+
+<style>
+* {
+    box-sizing: border-box;
 }
 
-.container{
-    width:330px;
-    background:#fff;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 5px 15px rgba(0,0,0,.2);
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 25px 15px;
+    background: linear-gradient(
+        -45deg,
+        #05001c,
+        #160044,
+        #001c3d,
+        #300047,
+        #001c27
+    );
+    background-size: 400% 400%;
+    animation: neonBG 12s ease infinite;
 }
 
-h1{
-    text-align:center;
-    background:#000;
-    color:gold;
-    padding:12px;
-    border-radius:10px;
-    margin-bottom:20px;
+@keyframes neonBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-input{
-    width:100%;
-    padding:12px;
-    margin-bottom:15px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    box-sizing:border-box;
-    font-size:15px;
+.container {
+    width: 100%;
+    max-width: 380px;
+    background: rgba(5, 5, 25, 0.94);
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #00eaff;
+    box-shadow:
+        0 0 10px #00eaff,
+        0 0 25px rgba(0,234,255,.5),
+        0 0 50px rgba(150,0,255,.3);
 }
 
-.terms{
-    display:flex;
-    align-items:flex-start;
-    gap:8px;
-    margin:5px 0 18px;
-    font-size:13px;
-    line-height:1.5;
-    color:#444;
+h1 {
+    text-align: center;
+    color: gold;
+    background: #000;
+    padding: 14px;
+    border-radius: 12px;
+    margin: 0 0 22px;
+    text-shadow: 0 0 5px gold, 0 0 15px orange;
+    box-shadow: 0 0 15px gold;
 }
 
-.terms input{
-    width:17px;
-    height:17px;
-    margin:2px 0 0;
-    flex-shrink:0;
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 15px;
+    background: #080d25;
+    color: white;
+    border: 1px solid #00d9ff;
+    border-radius: 9px;
+    font-size: 15px;
+    outline: none;
+    box-shadow: 0 0 7px rgba(0,217,255,.3);
+    transition: .3s;
 }
 
-.terms a{
-    color:#1877f2;
-    font-weight:bold;
-    text-decoration:none;
+input:focus {
+    border-color: #ff00e6;
+    box-shadow: 0 0 8px #ff00e6,
+                0 0 18px rgba(255,0,230,.5);
 }
 
-.terms a:hover{
-    text-decoration:underline;
+input::placeholder {
+    color: #a8b4d4;
 }
 
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:25px;
-    background:#1877f2;
-    color:white;
-    font-size:17px;
-    font-weight:bold;
-    cursor:pointer;
+.counter {
+    display: block;
+    text-align: right;
+    color: #00eaff;
+    font-size: 11px;
+    margin-top: -12px;
+    margin-bottom: 13px;
 }
 
-button:hover{
-    background:#0d5dc8;
+.terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 5px 0 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #ddd;
 }
 
-button:disabled{
-    background:#9db8e8;
-    cursor:not-allowed;
+.terms input {
+    margin-top: 3px;
+    flex-shrink: 0;
+    accent-color: #00eaff;
 }
-</style></head><body><div class="container"><h1>VitalStar Register</h1><form id="registerForm"><input type="text" id="fullName" placeholder="Nick Name" required><input type="text" id="username" placeholder="Username" required><input type="email" id="email" placeholder="Email" required><input type="password" id="password" placeholder="Password" required><input type="password" id="confirmPassword" placeholder="Confirm Password" required><div class="terms">
-    <input type="checkbox" id="agreeTerms">
-    <label for="agreeTerms">
-        I agree to the
-        <a href="terms.html" target="_blank">Terms of Service</a>
-        and
-        <a href="privacy.html" target="_blank">Privacy Policy</a>.
-    </label>
-</div><button type="submit" id="registerBtn">Register</button>
 
-</form></div><script type="module">
+.terms a {
+    color: #00eaff;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.terms a:hover {
+    text-decoration: underline;
+}
+
+.show-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: white;
+    font-size: 13px;
+    margin: -3px 0 18px;
+}
+
+.show-row input {
+    accent-color: #00eaff;
+}
+
+button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.register-btn {
+    background: linear-gradient(90deg,#00d9ff,#a100ff);
+    color: white;
+    box-shadow: 0 0 10px #00d9ff,
+                0 0 20px rgba(161,0,255,.5);
+}
+
+.register-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px #00d9ff;
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #aaa;
+    margin: 20px 0;
+    font-size: 13px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: #555;
+}
+
+.google-btn {
+    background: white;
+    color: #222;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 0 12px rgba(255,255,255,.15);
+}
+
+.google-btn:hover {
+    background: #e8e8e8;
+    transform: scale(1.02);
+}
+
+.google-icon {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+}
+
+.footer {
+    text-align: center;
+    color: #aaa;
+    font-size: 13px;
+    margin-top: 20px;
+}
+
+.footer a {
+    color: #00eaff;
+    text-decoration: none;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>VitalStar Register</h1>
+
+<form id="registerForm">
+
+<input
+type="text"
+id="fullName"
+placeholder="Nickname (4-15 characters)"
+minlength="4"
+maxlength="15"
+required
+>
+
+<small class="counter" id="nameCount">0/15</small>
+
+<input
+type="text"
+id="username"
+placeholder="Username (3-10 characters)"
+minlength="3"
+maxlength="10"
+required
+>
+
+<small class="counter" id="usernameCount">0/10</small>
+
+<input
+type="email"
+id="email"
+placeholder="Email Address"
+required
+>
+
+<input
+type="password"
+id="password"
+placeholder="Password"
+required
+>
+
+<input
+type="password"
+id="confirmPassword"
+placeholder="Confirm Password"
+required
+>
+
+<label class="show-row">
+<input type="checkbox" id="showPassword">
+Show Password
+</label>
+
+<div class="terms">
+
+<input type="checkbox" id="agreeTerms" required>
+
+<label for="agreeTerms">
+I agree to the
+<a href="terms.html" target="_blank">Terms of Service</a>
+and
+<a href="privacy.html" target="_blank">Privacy Policy</a>.
+</label>
+
+</div>
+
+<button type="submit" class="register-btn" id="registerBtn">
+Register
+</button>
+
+</form>
+
+<div class="divider">OR</div>
+
+<button type="button" class="google-btn" id="googleBtn">
+
+<svg class="google-icon" viewBox="0 0 48 48">
+<path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11c-.5 2.5-1.9 4.6-4.1 6v5h6.6c3.9-3.6 6.1-8.8 6.1-14.7z"/>
+<path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.2C9.2 39.6 16 44 24 44z"/>
+<path fill="#FBBC05" d="M12.6 27.8a12 12 0 0 1 0-7.6V15H5.8a20 20 0 0 0 0 18z"/>
+<path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4 16 4 9.2 8.4 5.8 15l6.8 5.2c1.6-4.8 6.1-8.1 11.4-8.1z"/>
+</svg>
+
+Sign in with Google
+
+</button>
+
+<div class="footer">
+Already have an account?
+<a href="login.html">Login</a>
+</div>
+
+</div>
+
+<script type="module">
 
 import { auth, db } from "./firebase.js";
 
 import {
-createUserWithEmailAndPassword
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-doc,
-setDoc,
-collection,
-query,
-where,
-getDocs,
-serverTimestamp
+    doc,
+    setDoc,
+    getDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 
 const form = document.getElementById("registerForm");
 const registerBtn = document.getElementById("registerBtn");
-const agreeTerms = document.getElementById("agreeTerms");
+const googleBtn = document.getElementById("googleBtn");
 
-form.addEventListener("submit", async (e)=>{
+const fullNameInput = document.getElementById("fullName");
+const usernameInput = document.getElementById("username");
 
-e.preventDefault();
 
-if(!agreeTerms.checked){
-    alert("Please agree to the Terms of Service and Privacy Policy.");
-    return;
-}
+// Character counters
 
-// Prevent double taps from triggering multiple signups
-registerBtn.disabled = true;
-registerBtn.textContent = "Registering...";
+fullNameInput.addEventListener("input", () => {
 
-const fullName = document.getElementById("fullName").value.trim();
-
-const username = document.getElementById("username").value.trim().toLowerCase();
-
-const email = document.getElementById("email").value.trim();
-
-const password = document.getElementById("password").value;
-
-const confirmPassword = document.getElementById("confirmPassword").value;
-
-if(password !== confirmPassword){
-    alert("Passwords do not match.");
-    registerBtn.disabled = false;
-    registerBtn.textContent = "Register";
-    return;
-}
-
-try{
-
-const q = query(
-    collection(db,"users"),
-    where("username","==",username)
-);
-
-const snap = await getDocs(q);
-
-if(!snap.empty){
-    alert("Username already exists.");
-    registerBtn.disabled = false;
-    registerBtn.textContent = "Register";
-    return;
-}
-
-const cred = await createUserWithEmailAndPassword(
-    auth,
-    email,
-    password
-);
-
-await setDoc(doc(db,"users",cred.user.uid),{
-
-    uid: cred.user.uid,
-
-    fullName: fullName,
-
-    username: username,
-
-    email: email,
-
-    profilePic: "default.png",
-
-    bio: "",
-
-    online: true,
-
-    lastSeen: serverTimestamp(),
-
-    createdAt: serverTimestamp(),
-
-    agreedToTerms: true,
-
-    termsAgreedAt: serverTimestamp()
+    document.getElementById("nameCount").textContent =
+        fullNameInput.value.length + "/15";
 
 });
 
-alert("Registration successful!");
+usernameInput.addEventListener("input", () => {
 
-window.location.href = "edit-profile.html";
+    usernameInput.value = usernameInput.value
+        .replace(/[^a-zA-Z0-9_]/g, "")
+        .toLowerCase()
+        .slice(0, 10);
 
-}catch(error){
-
-alert(error.message);
-registerBtn.disabled = false;
-registerBtn.textContent = "Register";
-
-}
+    document.getElementById("usernameCount").textContent =
+        usernameInput.value.length + "/10";
 
 });
 
-</script></body>
+
+// Show / Hide password
+
+document.getElementById("showPassword")
+.addEventListener("change", (e) => {
+
+    const type = e.target.checked ? "text" : "password";
+
+    document.getElementById("password").type = type;
+    document.getElementById("confirmPassword").type = type;
+
+});
+
+
+// Check username availability
+
+async function usernameExists(username) {
+
+    const q = query(
+        collection(db, "users"),
+        where("username", "==", username)
+    );
+
+    const snap = await getDocs(q);
+
+    return !snap.empty;
+
+}
+
+
+// Create user profile
+
+async function createUserProfile(user, fullName, username) {
+
+    const userRef = doc(db, "users", user.uid);
+
+    const existingProfile = await getDoc(userRef);
+
+    if (existingProfile.exists()) {
+        return;
+    }
+
+    await setDoc(userRef, {
+
+        uid: user.uid,
+        fullName: fullName.slice(0, 15),
+        username: username,
+        email: user.email,
+        profilePic: user.photoURL || "default.png",
+        bio: "",
+        online: true,
+        lastSeen: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        agreedToTerms: true,
+        termsAgreedAt: serverTimestamp()
+
+    });
+
+}
+
+
+// EMAIL REGISTRATION
+
+form.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    if (!document.getElementById("agreeTerms").checked) {
+        alert("Please agree to the Terms and Privacy Policy.");
+        return;
+    }
+
+    const fullName = fullNameInput.value.trim();
+
+    const username = usernameInput.value.trim().toLowerCase();
+
+    const email = document.getElementById("email").value.trim();
+
+    const password = document.getElementById("password").value;
+
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+
+    if (fullName.length < 4 || fullName.length > 15) {
+        alert("Nickname must be between 4 and 15 characters.");
+        return;
+    }
+
+    if (
+        username.length < 3 ||
+        username.length > 10 ||
+        !/^[a-z0-9_]+$/.test(username)
+    ) {
+        alert("Username must be between 3 and 10 characters. Use letters, numbers or underscores.");
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        return;
+    }
+
+    registerBtn.disabled = true;
+    registerBtn.textContent = "Registering...";
+
+    try {
+
+        if (await usernameExists(username)) {
+            throw new Error("Username already exists.");
+        }
+
+        const cred = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+        );
+
+        await createUserProfile(
+            cred.user,
+            fullName,
+            username
+        );
+
+        alert("Registration successful!");
+
+        window.location.href = "edit-profile.html";
+
+    } catch (error) {
+
+        alert(error.message);
+
+        registerBtn.disabled = false;
+        registerBtn.textContent = "Register";
+
+    }
+
+});
+
+
+// GOOGLE SIGN-IN
+
+googleBtn.addEventListener("click", async () => {
+
+    googleBtn.disabled = true;
+    googleBtn.textContent = "Connecting to Google...";
+
+    try {
+
+        const provider = new GoogleAuthProvider();
+
+        const result = await signInWithPopup(auth, provider);
+
+        const user = result.user;
+
+        const userRef = doc(db, "users", user.uid);
+
+        const existingProfile = await getDoc(userRef);
+
+        if (!existingProfile.exists()) {
+
+            const fullName = (
+                user.displayName || "VitalStar User"
+            ).trim().slice(0, 15);
+
+            let baseUsername = (
+                user.email.split("@")[0]
+            ).toLowerCase()
+            .replace(/[^a-z0-9_]/g, "")
+            .slice(0, 10);
+
+            if (baseUsername.length < 3) {
+                baseUsername = "vitalstar";
+            }
+
+            let username = baseUsername;
+
+            if (await usernameExists(username)) {
+
+                let found = false;
+
+                for (let i = 0; i < 100; i++) {
+
+                    const suffix = String(
+                        Math.floor(1000 + Math.random() * 9000)
+                    );
+
+                    username = baseUsername.slice(
+                        0,
+                        10 - suffix.length
+                    ) + suffix;
+
+                    if (!(await usernameExists(username))) {
+                        found = true;
+                        break;
+                    }
+
+                }
+
+                if (!found) {
+                    throw new Error(
+                        "Could not generate an available username. Please try again."
+                    );
+                }
+
+            }
+
+            await createUserProfile(
+                user,
+                fullName.length >= 4 ? fullName : "VitalStar User",
+                username
+            );
+
+        }
+
+        alert("Google sign-in successful!");
+
+        window.location.href = "edit-profile.html";
+
+    } catch (error) {
+
+        alert(error.message);
+
+        googleBtn.disabled = false;
+
+        googleBtn.innerHTML = `
+            <svg class="google-icon" viewBox="0 0 48 48">
+            <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11c-.5 2.5-1.9 4.6-4.1 6v5h6.6c3.9-3.6 6.1-8.8 6.1-14.7z"/>
+            <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.2C9.2 39.6 16 44 24 44z"/>
+            <path fill="#FBBC05" d="M12.6 27.8a12 12 0 0 1 0-7.6V15H5.8a20 20 0 0 0 0 18z"/>
+            <path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4 16 4 9.2 8.4 5.8 15l6.8 5.2c1.6-4.8 6.1-8.1 11.4-8.1z"/>
+            </svg>
+            Sign in with Google
+        `;
+
+    }
+
+});
+
+</script>
+
+</body>
 </html>
