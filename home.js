@@ -790,7 +790,7 @@ document.head.appendChild(style);
 
 
 // ============================================================
-// LOADER (VitalStar indicator from profile.js)
+// SMALL POST-LOADING INDICATOR (shown inside the feed)
 // ============================================================
 
 const indicatorStyle =
@@ -801,184 +801,133 @@ indicatorStyle.id =
 
 indicatorStyle.textContent = `
 
-    @keyframes vitalStarRingSpin {
-        0%   { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    @keyframes vsLoaderSpin {
+        to { transform: rotate(360deg); }
     }
 
-    @keyframes vitalStarRingSpinReverse {
-        0%   { transform: translate(-50%, -50%) rotate(360deg); }
-        100% { transform: translate(-50%, -50%) rotate(0deg); }
+    @keyframes vsLoaderPulse {
+        0%, 100% { opacity:.55; transform:scale(.94); }
+        50%      { opacity:1;   transform:scale(1.06); }
     }
 
-    @keyframes vitalStarPulse {
-        0%, 100% {
-            transform:scale(1);
-            text-shadow:
-                0 0 8px #00ff88,
-                0 0 18px #00ff88,
-                0 0 35px #00ff88;
-        }
-        50% {
-            transform:scale(1.08);
-            text-shadow:
-                0 0 12px #00ff88,
-                0 0 25px #00ff88,
-                0 0 50px #00ff88;
-        }
+    @keyframes vsLoaderDots {
+        0%, 20%   { opacity:.2; }
+        50%       { opacity:1; }
+        80%, 100% { opacity:.2; }
     }
 
-    @keyframes vitalStarGlow {
-        0%, 100% {
-            opacity:.55;
-            transform: translate(-50%, -50%) scale(.96);
-        }
-        50% {
-            opacity:.9;
-            transform: translate(-50%, -50%) scale(1.04);
-        }
+    @keyframes vsLoaderShimmer {
+        from { background-position:200% 0; }
+        to   { background-position:-200% 0; }
     }
 
-    .vitalstar-fullscreen {
-        position:fixed;
-        inset:0;
-        width:100vw;
-        height:100vh;
-        min-height:100vh;
-        z-index:999999;
+    .vs-feed-loader {
         display:flex;
         flex-direction:column;
         align-items:center;
-        justify-content:center;
-        text-align:center;
-        box-sizing:border-box;
-        padding:20px;
-        background:
-            radial-gradient(
-                circle at center,
-                rgba(0,255,136,.13) 0%,
-                rgba(3,25,17,.97) 32%,
-                #020807 72%,
-                #010304 100%
-            );
-        overflow:hidden;
+        gap:14px;
+        width:100%;
+        padding:6px 0 0;
     }
 
-    .vitalstar-fullscreen::before {
-        content:"";
-        position:absolute;
-        inset:-30%;
-        background:
-            radial-gradient(
-                circle,
-                rgba(0,255,136,.13),
-                transparent 55%
-            );
-        animation: vitalStarGlow 1.2s ease-in-out infinite;
-        pointer-events:none;
+    .vs-feed-loader-pill {
+        display:inline-flex;
+        align-items:center;
+        gap:10px;
+        padding:8px 16px 8px 9px;
+        border-radius:999px;
+        background:linear-gradient(145deg, rgba(14,30,78,.9), rgba(6,14,42,.95));
+        border:1px solid rgba(70,130,255,.45);
+        box-shadow:
+            0 0 16px rgba(30,110,255,.28),
+            inset 0 0 10px rgba(0,190,255,.08);
     }
 
-    .vitalstar-indicator {
+    .vs-feed-loader-ring {
         position:relative;
-        width:96px;
-        height:96px;
-        margin:0 auto 20px;
+        width:30px;
+        height:30px;
+        flex:0 0 30px;
         display:flex;
         align-items:center;
         justify-content:center;
-        border-radius:50%;
-        background:
-            radial-gradient(
-                circle,
-                rgba(0,255,136,.22) 0%,
-                rgba(0,180,100,.12) 42%,
-                rgba(0,60,35,.08) 65%,
-                transparent 72%
-            );
-        box-shadow:
-            0 0 18px rgba(0,255,136,.28),
-            0 0 40px rgba(0,255,136,.18),
-            inset 0 0 22px rgba(0,255,136,.12);
     }
 
-    .vitalstar-indicator::before {
+    .vs-feed-loader-ring::before {
         content:"";
         position:absolute;
-        left:50%;
-        top:50%;
-        width:78px;
-        height:78px;
+        inset:0;
         border-radius:50%;
-        border:4px solid transparent;
-        border-top-color:#00ff88;
-        border-right-color:#00d9ff;
-        border-bottom-color:#a855f7;
-        border-left-color:#ff3cac;
-        animation: vitalStarRingSpin .65s linear infinite;
-        filter:
-            drop-shadow(0 0 5px rgba(0,255,136,.9))
-            drop-shadow(0 0 10px rgba(168,85,247,.65));
-        box-sizing:border-box;
+        border:2.5px solid rgba(120,160,255,.18);
+        border-top-color:#19c8ff;
+        border-right-color:#4d8dff;
+        animation:vsLoaderSpin .8s linear infinite;
+        filter:drop-shadow(0 0 4px rgba(25,200,255,.7));
     }
 
-    .vitalstar-indicator::after {
-        content:"";
-        position:absolute;
-        left:50%;
-        top:50%;
-        width:66px;
-        height:66px;
-        border-radius:50%;
-        border:2px dashed rgba(255,255,255,.28);
-        animation: vitalStarRingSpinReverse 1.1s linear infinite;
-        box-sizing:border-box;
+    .vs-feed-loader-vs {
+        font-size:9.5px;
+        font-weight:900;
+        letter-spacing:.3px;
+        color:#fff;
+        animation:vsLoaderPulse 1.3s ease-in-out infinite;
     }
 
-    .vitalstar-vs {
-        position:relative;
-        z-index:5;
-        font-size:27px;
-        font-weight:1000;
-        letter-spacing:1px;
-        color:#ffffff;
-        animation: vitalStarPulse 1s ease-in-out infinite;
-    }
-
-    .vitalstar-glow {
-        position:absolute;
-        left:50%;
-        top:50%;
-        width:120px;
-        height:120px;
-        transform: translate(-50%, -50%);
-        border-radius:50%;
-        background:
-            radial-gradient(
-                circle,
-                rgba(0,255,136,.22),
-                transparent 68%
-            );
-        filter:blur(8px);
-        animation: vitalStarGlow 1.2s ease-in-out infinite;
-        pointer-events:none;
-    }
-
-    .vitalstar-loading-text {
-        position:relative;
-        z-index:5;
-        font-size:15px;
+    .vs-feed-loader-text {
+        color:#dbe6ff;
+        font-size:12.5px;
         font-weight:800;
-        color:#eafff5;
-        letter-spacing:.4px;
-        text-shadow: 0 0 8px rgba(0,255,136,.3);
+        letter-spacing:.2px;
+        white-space:nowrap;
     }
 
-    .vitalstar-loading-subtext {
-        position:relative;
-        z-index:5;
-        margin-top:8px;
-        color:#6fae91;
-        font-size:12px;
+    .vs-feed-loader-text i {
+        font-style:normal;
+        animation:vsLoaderDots 1.2s ease-in-out infinite;
+    }
+
+    .vs-feed-loader-text i:nth-child(2) { animation-delay:.2s; }
+    .vs-feed-loader-text i:nth-child(3) { animation-delay:.4s; }
+
+    .vs-feed-skeleton {
+        width:100%;
+        padding:14px;
+        border-radius:20px;
+        background:linear-gradient(145deg,#11172a,#0d1221);
+        border:1px solid rgba(255,255,255,.07);
+    }
+
+    .vs-sk-row {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-bottom:14px;
+    }
+
+    .vs-sk-circle,
+    .vs-sk-bar,
+    .vs-sk-block {
+        background:linear-gradient(90deg,
+            rgba(255,255,255,.04),
+            rgba(110,150,255,.14),
+            rgba(255,255,255,.04));
+        background-size:200% 100%;
+        animation:vsLoaderShimmer 1.5s linear infinite;
+    }
+
+    .vs-sk-circle { width:46px; height:46px; border-radius:50%; flex:0 0 46px; }
+    .vs-sk-lines  { flex:1; display:flex; flex-direction:column; gap:8px; }
+    .vs-sk-bar    { height:10px; border-radius:6px; width:55%; }
+    .vs-sk-bar.short { width:30%; height:8px; }
+    .vs-sk-block  { height:130px; border-radius:16px; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .vs-feed-loader-ring::before,
+        .vs-feed-loader-vs,
+        .vs-feed-loader-text i,
+        .vs-sk-circle,
+        .vs-sk-bar,
+        .vs-sk-block { animation:none; }
     }
 
 `;
@@ -986,38 +935,54 @@ indicatorStyle.textContent = `
 document.head.appendChild(indicatorStyle);
 
 
+// Small loader placed in the feed area until posts arrive
 const loader =
     document.createElement("div");
 
 loader.id =
-    "vitalstarFullscreenLoader";
+    "vitalstarFeedLoader";
 
 loader.className =
-    "vitalstar-fullscreen";
+    "vs-feed-loader";
+
+loader.setAttribute("role", "status");
+loader.setAttribute("aria-live", "polite");
 
 loader.innerHTML = `
 
-    <div class="vitalstar-indicator">
+    <div class="vs-feed-loader-pill">
 
-        <div class="vitalstar-glow"></div>
-
-        <div class="vitalstar-vs">
-            VS
+        <div class="vs-feed-loader-ring">
+            <span class="vs-feed-loader-vs">VS</span>
         </div>
 
+        <span class="vs-feed-loader-text">
+            Loading posts<i>.</i><i>.</i><i>.</i>
+        </span>
+
     </div>
 
-    <div class="vitalstar-loading-text">
-        Loading VitalStar...
-    </div>
+    <div class="vs-feed-skeleton" aria-hidden="true">
 
-    <div class="vitalstar-loading-subtext">
-        Connect, Share & Shine
+        <div class="vs-sk-row">
+            <div class="vs-sk-circle"></div>
+            <div class="vs-sk-lines">
+                <div class="vs-sk-bar"></div>
+                <div class="vs-sk-bar short"></div>
+            </div>
+        </div>
+
+        <div class="vs-sk-block"></div>
+
     </div>
 
 `;
 
-document.body.appendChild(loader);
+if(feed && !feed.children.length){
+
+    feed.appendChild(loader);
+
+}
 
 
 let loaderHidden = false;
@@ -1030,21 +995,11 @@ function hideVitalStarLoader(){
 
     loaderHidden = true;
 
-    loader.style.opacity =
-        "0";
+    if(loader.parentNode){
 
-    loader.style.transition =
-        "opacity .15s ease";
+        loader.parentNode.removeChild(loader);
 
-    setTimeout(() => {
-
-        if(loader.parentNode){
-
-            loader.parentNode.removeChild(loader);
-
-        }
-
-    }, 150);
+    }
 
 }
 
