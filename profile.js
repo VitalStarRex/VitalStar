@@ -1,8 +1,8 @@
 // ============================================================
 // VITALSTAR — PROFILE PAGE
-// Dark Theme + Friends + Privacy Protection
-// VITALSTAR Loading Indicator + View More Posts
-// Footer + Button Control
+// Friends + Privacy Protection + Posts + Footer + Button Control
+// Small loading indicators (no full-screen loader)
+// Theme is controlled by home.html (theme.css / theme.js)
 // Firebase v10.12.2
 // ============================================================
 
@@ -33,121 +33,68 @@ import {
 // OWNER
 // ============================================================
 
-const VITALSTAR_OWNER_UID =
-    "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
+const VITALSTAR_OWNER_UID = "FvbfTXi65VgpuPtBxr8kGzBRLRr1";
 
 
 // ============================================================
-// DARK THEME
+// OFFLINE PLACEHOLDERS (no external image service needed)
 // ============================================================
 
-function applyDarkTheme() {
+const PLACEHOLDER_AVATAR =
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+            <rect width="200" height="200" fill="#151a2d"/>
+            <circle cx="100" cy="78" r="38" fill="#7c35ff"/>
+            <path d="M35 180 C42 130 70 112 100 112 C130 112 158 130 165 180Z" fill="#00cfff"/>
+        </svg>
+    `);
 
-    document.documentElement.style.background =
-        "#050914";
-
-    if (document.body) {
-
-        document.body.style.background = `
-            radial-gradient(
-                circle at top,
-                #101d3d 0%,
-                #050914 45%,
-                #02040a 100%
-            )
-        `;
-
-        document.body.style.color =
-            "#ffffff";
-    }
-}
-
-
-if (document.readyState === "loading") {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        applyDarkTheme,
-        { once: true }
-    );
-
-} else {
-
-    applyDarkTheme();
-}
+const PLACEHOLDER_COVER =
+    "data:image/svg+xml;charset=UTF-8," +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="350" viewBox="0 0 1200 350">
+            <defs>
+                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#0a1f5c"/>
+                    <stop offset="1" stop-color="#050b1f"/>
+                </linearGradient>
+            </defs>
+            <rect width="1200" height="350" fill="url(#g)"/>
+        </svg>
+    `);
 
 
 // ============================================================
 // ELEMENTS
 // ============================================================
 
-const loader =
-    document.getElementById("loader");
-
-const profileName =
-    document.getElementById("fullName");
-
-const username =
-    document.getElementById("username");
-
-const profileImage =
-    document.getElementById("profilePicture");
-
-const coverImage =
-    document.getElementById("coverPhoto");
-
-const bio =
-    document.getElementById("bio");
-
-const country =
-    document.getElementById("country");
-
-const dob =
-    document.getElementById("dob");
-
-const gender =
-    document.getElementById("gender");
-
-const rank =
-    document.getElementById("rank");
-
-const lastSeen =
-    document.getElementById("lastSeen");
-
-const followersCount =
-    document.getElementById("followers");
-
-const followingCount =
-    document.getElementById("following");
-
-const postsCount =
-    document.getElementById("posts");
-
-const gallery =
-    document.getElementById("gallery");
-
-const editButton =
-    document.getElementById("editProfileBtn");
-
-const followButton =
-    document.getElementById("followBtn");
-
-const messageButton =
-    document.getElementById("messageBtn");
+const profileName = document.getElementById("fullName");
+const username = document.getElementById("username");
+const profileImage = document.getElementById("profilePicture");
+const coverImage = document.getElementById("coverPhoto");
+const bio = document.getElementById("bio");
+const country = document.getElementById("country");
+const dob = document.getElementById("dob");
+const gender = document.getElementById("gender");
+const rank = document.getElementById("rank");
+const lastSeen = document.getElementById("lastSeen");
+const followersCount = document.getElementById("followers");
+const followingCount = document.getElementById("following");
+const postsCount = document.getElementById("posts");
+const gallery = document.getElementById("gallery");
+const editButton = document.getElementById("editProfileBtn");
+const followButton = document.getElementById("followBtn");
+const messageButton = document.getElementById("messageBtn");
 
 
 // ============================================================
 // PROFILE UID
 // ============================================================
 
-const params =
-    new URLSearchParams(
-        window.location.search
-    );
+const params = new URLSearchParams(window.location.search);
 
-let profileUid =
-    params.get("uid") ||
-    params.get("id");
+let profileUid = params.get("uid") || params.get("id");
 
 
 // ============================================================
@@ -155,937 +102,168 @@ let profileUid =
 // ============================================================
 
 let currentUser = null;
-
 let isFriend = false;
-
 let requestSent = false;
-
 let requestReceived = false;
-
 let allProfilePosts = [];
-
 let postsLoading = false;
+let statusUnsubscribe = null;
 
 
 // ============================================================
-// FOOTER + BUTTON
+// HTML ESCAPE
+// ============================================================
+
+function escapeHTML(value) {
+
+    const div = document.createElement("div");
+
+    div.textContent = value || "";
+
+    return div.innerHTML;
+}
+
+function escapeAttribute(value) {
+
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+
+// ============================================================
+// FOOTER + BUTTON (locked until the profile finishes loading)
 // ============================================================
 
 function getFooterCreatePostButton() {
 
-    const byId =
+    return (
         document.getElementById("createPostBtn") ||
         document.getElementById("footerCreatePost") ||
-        document.getElementById("createPost");
-
-    if (byId)
-        return byId;
-
-
-    const footer =
-        document.querySelector("footer") ||
-        document.querySelector(".bottom-nav") ||
-        document.querySelector(".bottom-navigation") ||
-        document.querySelector("nav");
-
-    if (!footer)
-        return null;
-
-
-    return (
-        footer.querySelector(
-            'button[data-action="create-post"]'
-        ) ||
-        footer.querySelector(
-            'button[href*="create-post"]'
-        ) ||
-        footer.querySelector(
-            'button'
-        )
+        document.getElementById("createPost") ||
+        document.querySelector(".bottom-nav .create-btn")
     );
 }
-
-
-// ============================================================
-// FOOTER + STYLES
-// ============================================================
-
-function injectFooterPlusStyles() {
-
-    if (
-        document.getElementById(
-            "vitalstarFooterPlusStyles"
-        )
-    ) {
-        return;
-    }
-
-
-    const style =
-        document.createElement("style");
-
-
-    style.id =
-        "vitalstarFooterPlusStyles";
-
-
-    style.textContent = `
-
-        .vitalstar-plus-locked {
-
-            opacity:.45 !important;
-
-            pointer-events:none !important;
-
-            filter:grayscale(.7) !important;
-
-            cursor:not-allowed !important;
-        }
-
-
-        .vitalstar-plus-unlocked {
-
-            opacity:1 !important;
-
-            pointer-events:auto !important;
-
-            filter:none !important;
-
-            cursor:pointer !important;
-
-            transition:
-                transform .18s ease,
-                box-shadow .18s ease,
-                opacity .18s ease;
-        }
-
-
-        .vitalstar-plus-unlocked:active {
-
-            transform:scale(.9);
-        }
-
-    `;
-
-
-    document.head.appendChild(style);
-}
-
-
-// ============================================================
-// LOCK FOOTER +
-// ============================================================
 
 function lockFooterPlus() {
 
-    const plus =
-        getFooterCreatePostButton();
+    const plus = getFooterCreatePostButton();
 
     if (!plus)
         return;
 
-
-    plus.classList.add(
-        "vitalstar-plus-locked"
-    );
-
-    plus.classList.remove(
-        "vitalstar-plus-unlocked"
-    );
-
-
-    plus.style.opacity =
-        "0.45";
-
-    plus.style.pointerEvents =
-        "none";
-
-    plus.style.cursor =
-        "not-allowed";
-
-    plus.style.filter =
-        "grayscale(.7)";
-
-    plus.setAttribute(
-        "aria-disabled",
-        "true"
-    );
+    plus.classList.add("vitalstar-plus-locked");
+    plus.classList.remove("vitalstar-plus-unlocked");
+    plus.setAttribute("aria-disabled", "true");
 }
-
-
-// ============================================================
-// UNLOCK FOOTER +
-// ============================================================
 
 function unlockFooterPlus() {
 
-    const plus =
-        getFooterCreatePostButton();
+    const plus = getFooterCreatePostButton();
 
     if (!plus)
         return;
 
-
-    plus.classList.remove(
-        "vitalstar-plus-locked"
-    );
-
-    plus.classList.add(
-        "vitalstar-plus-unlocked"
-    );
-
-
-    plus.style.opacity =
-        "1";
-
-    plus.style.pointerEvents =
-        "auto";
-
-    plus.style.cursor =
-        "pointer";
-
-    plus.style.filter =
-        "none";
-
-    plus.style.boxShadow = `
-        0 0 10px rgba(22,140,255,.55),
-        0 0 22px rgba(124,58,237,.35)
-    `;
-
-
-    plus.removeAttribute(
-        "aria-disabled"
-    );
+    plus.classList.remove("vitalstar-plus-locked");
+    plus.classList.add("vitalstar-plus-unlocked");
+    plus.removeAttribute("aria-disabled");
 }
-
-
-// ============================================================
-// PREPARE FOOTER +
-// ============================================================
 
 function setupFooterPlus() {
 
-    injectFooterPlusStyles();
-
     lockFooterPlus();
 
-
-    const plus =
-        getFooterCreatePostButton();
+    const plus = getFooterCreatePostButton();
 
     if (!plus)
         return;
 
-
-    // Make sure it behaves as a BUTTON
-    if (
-        plus.tagName.toLowerCase() ===
-        "button"
-    ) {
-
-        plus.type =
-            "button";
-    }
-
-
-    // Remove old inline navigation if any
-    plus.removeAttribute("href");
-
-
-    if (
-        plus.dataset.vitalstarCreatePostBound ===
-        "true"
-    ) {
+    if (plus.dataset.vitalstarCreatePostBound === "true")
         return;
-    }
 
+    plus.dataset.vitalstarCreatePostBound = "true";
 
-    plus.dataset.vitalstarCreatePostBound =
-        "true";
+    plus.addEventListener("click", event => {
 
+        event.preventDefault();
 
-    plus.addEventListener(
-        "click",
-        event => {
+        if (plus.classList.contains("vitalstar-plus-locked"))
+            return;
 
-            event.preventDefault();
-
-            if (
-                plus.classList.contains(
-                    "vitalstar-plus-locked"
-                )
-            ) {
-                return;
-            }
-
-
-            window.location.href =
-                "create-post.html";
-        }
-    );
+        window.location.href = "create-post.html";
+    });
 }
 
-
-// Run as soon as possible
 setupFooterPlus();
 
 
 // ============================================================
-// VITALSTAR INDICATOR STYLES
+// SMALL LOADING INDICATORS
 // ============================================================
 
-function injectVitalStarIndicatorStyles() {
+function createMiniLoader(text = "Loading") {
 
-    if (
-        document.getElementById(
-            "vitalStarIndicatorStyles"
-        )
-    ) {
-        return;
-    }
+    const wrapper = document.createElement("div");
 
+    wrapper.className = "vs-mini-loader";
 
-    const style =
-        document.createElement("style");
-
-
-    style.id =
-        "vitalStarIndicatorStyles";
-
-
-    style.textContent = `
-
-        @keyframes vitalStarRingSpin {
-
-            0% {
-                transform:
-                    translate(-50%, -50%)
-                    rotate(0deg);
-            }
-
-            100% {
-                transform:
-                    translate(-50%, -50%)
-                    rotate(360deg);
-            }
-        }
-
-
-        @keyframes vitalStarRingSpinReverse {
-
-            0% {
-                transform:
-                    translate(-50%, -50%)
-                    rotate(360deg);
-            }
-
-            100% {
-                transform:
-                    translate(-50%, -50%)
-                    rotate(0deg);
-            }
-        }
-
-
-        @keyframes vitalStarPulse {
-
-            0%,
-            100% {
-
-                transform:scale(1);
-
-                text-shadow:
-                    0 0 8px #00ff88,
-                    0 0 18px #00ff88,
-                    0 0 35px #00ff88;
-            }
-
-
-            50% {
-
-                transform:scale(1.08);
-
-                text-shadow:
-                    0 0 12px #00ff88,
-                    0 0 25px #00ff88,
-                    0 0 50px #00ff88;
-            }
-        }
-
-
-        @keyframes vitalStarGlow {
-
-            0%,
-            100% {
-
-                opacity:.55;
-
-                transform:
-                    translate(-50%, -50%)
-                    scale(.96);
-            }
-
-
-            50% {
-
-                opacity:.9;
-
-                transform:
-                    translate(-50%, -50%)
-                    scale(1.04);
-            }
-        }
-
-
-        .vitalstar-fullscreen {
-
-            position:fixed;
-
-            inset:0;
-
-            width:100vw;
-            height:100vh;
-
-            min-height:100vh;
-
-            z-index:999999;
-
-            display:flex;
-
-            flex-direction:column;
-
-            align-items:center;
-
-            justify-content:center;
-
-            text-align:center;
-
-            box-sizing:border-box;
-
-            padding:20px;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(0,255,136,.13) 0%,
-                    rgba(3,25,17,.97) 32%,
-                    #020807 72%,
-                    #010304 100%
-                );
-
-            overflow:hidden;
-        }
-
-
-        .vitalstar-fullscreen::before {
-
-            content:"";
-
-            position:absolute;
-
-            inset:-30%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(0,255,136,.13),
-                    transparent 55%
-                );
-
-            animation:
-                vitalStarGlow
-                1.2s
-                ease-in-out
-                infinite;
-
-            pointer-events:none;
-        }
-
-
-        .vitalstar-indicator {
-
-            position:relative;
-
-            width:96px;
-            height:96px;
-
-            margin:0 auto 20px;
-
-            display:flex;
-
-            align-items:center;
-            justify-content:center;
-
-            border-radius:50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(0,255,136,.22) 0%,
-                    rgba(0,180,100,.12) 42%,
-                    rgba(0,60,35,.08) 65%,
-                    transparent 72%
-                );
-
-            box-shadow:
-                0 0 18px
-                rgba(0,255,136,.28),
-
-                0 0 40px
-                rgba(0,255,136,.18),
-
-                inset 0 0 22px
-                rgba(0,255,136,.12);
-        }
-
-
-        .vitalstar-indicator::before {
-
-            content:"";
-
-            position:absolute;
-
-            left:50%;
-            top:50%;
-
-            width:78px;
-            height:78px;
-
-            border-radius:50%;
-
-            border:4px solid transparent;
-
-            border-top-color:#00ff88;
-            border-right-color:#00d9ff;
-            border-bottom-color:#a855f7;
-            border-left-color:#ff3cac;
-
-            animation:
-                vitalStarRingSpin
-                .65s
-                linear
-                infinite;
-
-            filter:
-                drop-shadow(
-                    0 0 5px
-                    rgba(0,255,136,.9)
-                )
-                drop-shadow(
-                    0 0 10px
-                    rgba(168,85,247,.65)
-                );
-
-            box-sizing:border-box;
-        }
-
-
-        .vitalstar-indicator::after {
-
-            content:"";
-
-            position:absolute;
-
-            left:50%;
-            top:50%;
-
-            width:66px;
-            height:66px;
-
-            border-radius:50%;
-
-            border:
-                2px dashed
-                rgba(255,255,255,.28);
-
-            animation:
-                vitalStarRingSpinReverse
-                1.1s
-                linear
-                infinite;
-
-            box-sizing:border-box;
-        }
-
-
-        .vitalstar-vs {
-
-            position:relative;
-
-            z-index:5;
-
-            font-size:27px;
-
-            font-weight:1000;
-
-            letter-spacing:1px;
-
-            color:#ffffff;
-
-            animation:
-                vitalStarPulse
-                1s
-                ease-in-out
-                infinite;
-        }
-
-
-        .vitalstar-glow {
-
-            position:absolute;
-
-            left:50%;
-            top:50%;
-
-            width:120px;
-            height:120px;
-
-            transform:
-                translate(-50%, -50%);
-
-            border-radius:50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(0,255,136,.22),
-                    transparent 68%
-                );
-
-            filter:blur(8px);
-
-            animation:
-                vitalStarGlow
-                1.2s
-                ease-in-out
-                infinite;
-
-            pointer-events:none;
-        }
-
-
-        .vitalstar-loading-text {
-
-            position:relative;
-
-            z-index:5;
-
-            font-size:15px;
-
-            font-weight:800;
-
-            color:#eafff5;
-
-            letter-spacing:.4px;
-
-            text-shadow:
-                0 0 8px
-                rgba(0,255,136,.3);
-        }
-
-
-        .vitalstar-loading-subtext {
-
-            position:relative;
-
-            z-index:5;
-
-            margin-top:8px;
-
-            color:#6fae91;
-
-            font-size:12px;
-        }
-    `;
-
-
-    document.head.appendChild(style);
-}
-
-injectVitalStarIndicatorStyles();
-
-
-// ============================================================
-// CREATE VITALSTAR INDICATOR
-// ============================================================
-
-function createVitalStarIndicator(
-    text = "Loading...",
-    fullscreen = false
-) {
-
-    const wrapper =
-        document.createElement("div");
-
-
-    if (fullscreen) {
-
-        wrapper.className =
-            "vitalstar-fullscreen";
-
-    } else {
-
-        wrapper.style.cssText = `
-            width:100%;
-            max-width:500px;
-            margin:30px auto;
-            padding:34px 20px;
-            box-sizing:border-box;
-            text-align:center;
-            border-radius:24px;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(0,255,136,.14) 0%,
-                    rgba(3,25,17,.96) 45%,
-                    rgba(2,9,7,.98) 100%
-                );
-
-            border:
-                1px solid
-                rgba(0,255,136,.28);
-
-            box-shadow:
-                0 0 22px
-                    rgba(0,255,136,.16),
-
-                inset 0 0 25px
-                    rgba(0,255,136,.05);
-
-            color:#ffffff;
-        `;
-    }
-
+    wrapper.setAttribute("role", "status");
 
     wrapper.innerHTML = `
-
-        <div class="vitalstar-indicator">
-
-            <div class="vitalstar-glow"></div>
-
-            <div class="vitalstar-vs">
-                VS
-            </div>
-
+        <div class="vs-mini-pill">
+            <div class="vs-mini-ring"><span>VS</span></div>
+            <span class="vs-mini-text">${escapeHTML(text)}<i>.</i><i>.</i><i>.</i></span>
         </div>
-
-        <div class="vitalstar-loading-text">
-            ${escapeHTML(text)}
-        </div>
-
-        ${
-            fullscreen
-                ? `
-                    <div class="vitalstar-loading-subtext">
-                        Connect, Share & Shine
-                    </div>
-                  `
-                : ""
-        }
     `;
-
 
     return wrapper;
 }
 
+function showLoadingIndicator(text = "Loading profile") {
 
-// ============================================================
-// SHOW FULL-SCREEN LOADING
-// ============================================================
+    const slot = document.getElementById("profileLoading");
 
-function showLoadingIndicator(
-    text = "Loading profile..."
-) {
+    if (!slot)
+        return;
 
-    let existing =
-        document.getElementById(
-            "vitalstarFullscreenLoader"
-        );
+    slot.innerHTML = "";
 
-
-    if (existing)
-        existing.remove();
-
-
-    const indicator =
-        createVitalStarIndicator(
-            text,
-            true
-        );
-
-
-    indicator.id =
-        "vitalstarFullscreenLoader";
-
-
-    document.body.appendChild(
-        indicator
-    );
+    slot.appendChild(createMiniLoader(text));
 }
-
-
-// ============================================================
-// REMOVE FULL-SCREEN LOADING
-// ============================================================
 
 function removeLoadingIndicator() {
 
-    const indicator =
-        document.getElementById(
-            "vitalstarFullscreenLoader"
-        );
+    const slot = document.getElementById("profileLoading");
 
-
-    if (!indicator)
-        return;
-
-
-    indicator.style.opacity =
-        "0";
-
-    indicator.style.transition =
-        "opacity .15s ease";
-
-
-    setTimeout(() => {
-
-        if (indicator.parentNode) {
-
-            indicator.parentNode.removeChild(
-                indicator
-            );
-        }
-
-    }, 150);
+    if (slot)
+        slot.innerHTML = "";
 }
-
-
-// ============================================================
-// POSTS LOADING
-// ============================================================
 
 function showPostsLoadingIndicator() {
 
     if (!gallery)
         return;
 
-
-    const existing =
-        document.getElementById(
-            "postsLoadingIndicator"
-        );
-
+    const existing = document.getElementById("postsLoadingIndicator");
 
     if (existing)
         existing.remove();
 
+    const holder = document.createElement("div");
 
-    const indicator =
-        document.createElement("div");
+    holder.id = "postsLoadingIndicator";
 
+    holder.appendChild(createMiniLoader("Loading posts"));
 
-    indicator.id =
-        "postsLoadingIndicator";
-
-
-    indicator.style.cssText = `
-        width:100%;
-        padding:25px 20px 35px;
-        box-sizing:border-box;
-        text-align:center;
-    `;
-
-
-    indicator.appendChild(
-        createVitalStarIndicator(
-            "Loading posts..."
-        )
-    );
-
-
-    gallery.appendChild(
-        indicator
-    );
+    gallery.appendChild(holder);
 }
-
-
-// ============================================================
-// HIDE MAIN LOADER
-// ============================================================
 
 function hideLoader() {
 
     removeLoadingIndicator();
-
-
-    if (!loader)
-        return;
-
-
-    loader.style.opacity =
-        "0";
-
-    loader.style.pointerEvents =
-        "none";
-
-
-    setTimeout(() => {
-
-        loader.style.display =
-            "none";
-
-    }, 180);
-}
-
-
-// ============================================================
-// BUTTON STYLE
-// ============================================================
-
-function styleButton(button) {
-
-    if (!button)
-        return;
-
-
-    button.style.color =
-        "#ffffff";
-
-    button.style.border =
-        "1px solid #168cff";
-
-    button.style.borderRadius =
-        "12px";
-
-    button.style.cursor =
-        "pointer";
-
-    button.style.transition =
-        "all .2s ease";
-
-    button.style.textAlign =
-        "center";
-
-    button.style.justifyContent =
-        "center";
-
-    button.style.alignItems =
-        "center";
-
-    button.style.display =
-        button.style.display === "none"
-            ? "none"
-            : "inline-flex";
-
-    button.style.minHeight =
-        "42px";
-
-    button.style.padding =
-        "10px 18px";
-
-    button.style.fontWeight =
-        "700";
 }
 
 
@@ -1095,129 +273,80 @@ function styleButton(button) {
 
 function createFriendButton() {
 
-    let button =
-        document.getElementById(
-            "friendBtn"
-        );
-
+    let button = document.getElementById("friendBtn");
 
     if (!button) {
 
-        button =
-            document.createElement(
-                "button"
-            );
+        button = document.createElement("button");
 
-
-        button.id =
-            "friendBtn";
-
-
-        button.type =
-            "button";
-
-
-        button.innerHTML =
-            "👥 Add Friend";
-
+        button.id = "friendBtn";
+        button.type = "button";
+        button.className = "friend-add";
+        button.innerHTML = "👥 Add Friend";
 
         const actions =
-            document.querySelector(
-                ".buttons"
-            ) ||
+            document.querySelector(".buttons") ||
             followButton?.parentElement ||
             messageButton?.parentElement;
 
-
-        if (actions) {
-
-            actions.appendChild(
-                button
-            );
-        }
+        if (actions)
+            actions.appendChild(button);
     }
-
-
-    styleButton(button);
-
 
     return button;
 }
 
+function setFriendButton(button, html, stateClass) {
 
-// ============================================================
-// SHOW PROFILE ELEMENTS
-// ============================================================
+    button.innerHTML = html;
 
-function showProfileElements() {
+    button.classList.remove(
+        "friend-add",
+        "friend-remove",
+        "friend-pending",
+        "friend-accept"
+    );
 
-    if (profileName)
-        profileName.style.display = "";
-
-    if (username)
-        username.style.display = "";
-
-    if (bio)
-        bio.style.display = "";
-
-    if (country)
-        country.style.display = "";
-
-    if (dob)
-        dob.style.display = "";
-
-    if (gender)
-        gender.style.display = "";
-
-    if (rank)
-        rank.style.display = "";
-
-    if (lastSeen)
-        lastSeen.style.display = "";
-
-    if (profileImage)
-        profileImage.style.display = "";
-
-    if (coverImage)
-        coverImage.style.display = "";
+    button.classList.add(stateClass);
 }
 
 
 // ============================================================
-// PRIVATE PROFILE
+// SHOW / HIDE PROFILE ELEMENTS
 // ============================================================
+
+function profileElements() {
+
+    return [
+        profileName,
+        username,
+        bio,
+        country,
+        dob,
+        gender,
+        rank,
+        lastSeen,
+        profileImage,
+        coverImage
+    ];
+}
+
+function showProfileElements() {
+
+    profileElements().forEach(element => {
+
+        if (element)
+            element.style.display = "";
+    });
+}
 
 function showPrivateProfileMessage() {
 
-    if (profileName)
-        profileName.style.display = "none";
+    profileElements().forEach(element => {
 
-    if (username)
-        username.style.display = "none";
-
-    if (bio)
-        bio.style.display = "none";
-
-    if (country)
-        country.style.display = "none";
-
-    if (dob)
-        dob.style.display = "none";
-
-    if (gender)
-        gender.style.display = "none";
-
-    if (rank)
-        rank.style.display = "none";
-
-    if (lastSeen)
-        lastSeen.style.display = "none";
-
-    if (profileImage)
-        profileImage.style.display = "none";
-
-    if (coverImage)
-        coverImage.style.display = "none";
+        if (element)
+            element.style.display = "none";
+    });
 
     if (followButton)
         followButton.style.display = "none";
@@ -1225,87 +354,21 @@ function showPrivateProfileMessage() {
     if (messageButton)
         messageButton.style.display = "none";
 
+    const friendBtn = createFriendButton();
 
-    const friendBtn =
-        createFriendButton();
-
-
-    if (
-        currentUser &&
-        currentUser.uid !== profileUid
-    ) {
-
-        friendBtn.style.display =
-            "inline-flex";
-
-    } else {
-
-        friendBtn.style.display =
-            "none";
-    }
-
+    friendBtn.style.display =
+        currentUser && currentUser.uid !== profileUid
+            ? ""
+            : "none";
 
     if (gallery) {
 
         gallery.innerHTML = `
-            <div style="
-                width:100%;
-                max-width:500px;
-                margin:40px auto;
-                padding:35px 20px;
-                box-sizing:border-box;
-                text-align:center;
-                border-radius:22px;
-
-                background:
-                    linear-gradient(
-                        145deg,
-                        rgba(8,20,45,.98),
-                        rgba(3,8,20,.98)
-                    );
-
-                border:
-                    1px solid
-                    rgba(40,130,255,.45);
-
-                box-shadow:
-                    0 0 30px
-                    rgba(0,100,255,.18);
-
-                color:white;
-            ">
-
-                <div style="
-                    font-size:55px;
-                    margin-bottom:15px;
-                ">
-                    🔒
-                </div>
-
-                <h2 style="
-                    margin:0 0 10px;
-                    color:#fff;
-                ">
-                    Private Profile
-                </h2>
-
-                <p style="
-                    margin:0;
-                    color:#9fb4d8;
-                    line-height:1.6;
-                ">
-                    This profile is visible only
-                    to friends.
-                </p>
-
-                <p style="
-                    margin:12px 0 0;
-                    color:#6f8fbd;
-                    font-size:13px;
-                ">
-                    Send a friend request to connect.
-                </p>
-
+            <div class="vs-private">
+                <div class="lock">🔒</div>
+                <h2>Private Profile</h2>
+                <p>This profile is visible only to friends.</p>
+                <p class="small">Send a friend request to connect.</p>
             </div>
         `;
     }
@@ -1316,42 +379,22 @@ function showPrivateProfileMessage() {
 // ADMIN CHECK
 // ============================================================
 
-async function checkViewerIsAdmin(
-    viewerUid
-) {
+async function checkViewerIsAdmin(viewerUid) {
 
     if (!viewerUid)
         return false;
 
-
-    if (
-        viewerUid ===
-        VITALSTAR_OWNER_UID
-    ) {
-
+    if (viewerUid === VITALSTAR_OWNER_UID)
         return true;
-    }
-
 
     try {
 
-        const snap =
-            await getDoc(
-                doc(
-                    db,
-                    "users",
-                    viewerUid
-                )
-            );
-
+        const snap = await getDoc(doc(db, "users", viewerUid));
 
         if (!snap.exists())
             return false;
 
-
-        const data =
-            snap.data();
-
+        const data = snap.data();
 
         return (
             data.isAdmin === true ||
@@ -1361,11 +404,7 @@ async function checkViewerIsAdmin(
 
     } catch (error) {
 
-        console.error(
-            "Admin check failed:",
-            error
-        );
-
+        console.error("Admin check failed:", error);
 
         return false;
     }
@@ -1376,129 +415,67 @@ async function checkViewerIsAdmin(
 // FRIEND KEY
 // ============================================================
 
-function friendKey(
-    uid1,
-    uid2
-) {
+function friendKey(uid1, uid2) {
 
-    return [
-        uid1,
-        uid2
-    ]
-        .sort()
-        .join("_");
+    return [uid1, uid2].sort().join("_");
 }
 
 
 // ============================================================
-// FRIEND CHECK — ROBUST
+// FRIEND CHECK
 // ============================================================
 
-async function checkIfFriends(
-    viewerUid,
-    targetUid
-) {
+async function checkIfFriends(viewerUid, targetUid) {
 
     if (!viewerUid || !targetUid)
         return false;
 
-
-    if (
-        viewerUid === targetUid
-    ) {
+    if (viewerUid === targetUid)
         return true;
-    }
-
 
     try {
 
-        const friendshipId =
-            friendKey(
-                viewerUid,
-                targetUid
-            );
-
-
-        const friendshipRef =
-            doc(
-                db,
-                "friends",
-                friendshipId
-            );
-
-
         const friendshipSnap =
-            await getDoc(
-                friendshipRef
-            );
-
+            await getDoc(doc(db, "friends", friendKey(viewerUid, targetUid)));
 
         if (friendshipSnap.exists()) {
 
-            const data =
-                friendshipSnap.data();
-
+            const data = friendshipSnap.data();
 
             if (
                 Array.isArray(data.users) &&
                 data.users.includes(viewerUid) &&
                 data.users.includes(targetUid)
             ) {
-
                 return true;
             }
         }
 
-
-        const friendsQuery =
+        const friendsSnapshot = await getDocs(
             query(
-                collection(
-                    db,
-                    "friends"
-                ),
-                where(
-                    "users",
-                    "array-contains",
-                    viewerUid
-                )
-            );
+                collection(db, "friends"),
+                where("users", "array-contains", viewerUid)
+            )
+        );
 
+        for (const friendDoc of friendsSnapshot.docs) {
 
-        const friendsSnapshot =
-            await getDocs(
-                friendsQuery
-            );
-
-
-        for (
-            const friendDoc
-            of friendsSnapshot.docs
-        ) {
-
-            const data =
-                friendDoc.data();
-
+            const data = friendDoc.data();
 
             if (
                 Array.isArray(data.users) &&
                 data.users.includes(viewerUid) &&
                 data.users.includes(targetUid)
             ) {
-
                 return true;
             }
         }
-
 
         return false;
 
     } catch (error) {
 
-        console.error(
-            "Friend check failed:",
-            error
-        );
-
+        console.error("Friend check failed:", error);
 
         return false;
     }
@@ -1509,98 +486,46 @@ async function checkIfFriends(
 // FRIEND REQUEST STATUS
 // ============================================================
 
-async function checkFriendRequestStatus(
-    viewerUid,
-    targetUid
-) {
+async function checkFriendRequestStatus(viewerUid, targetUid) {
 
-    requestSent =
-        false;
-
-    requestReceived =
-        false;
-
+    requestSent = false;
+    requestReceived = false;
 
     try {
 
-        const sentQuery =
+        const sentSnapshot = await getDocs(
             query(
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-                where(
-                    "from",
-                    "==",
-                    viewerUid
-                )
-            );
+                collection(db, "friendRequests"),
+                where("from", "==", viewerUid)
+            )
+        );
 
+        for (const requestDoc of sentSnapshot.docs) {
 
-        const sentSnapshot =
-            await getDocs(
-                sentQuery
-            );
+            const data = requestDoc.data();
 
+            if (data.to === targetUid && data.status === "pending") {
 
-        for (
-            const requestDoc
-            of sentSnapshot.docs
-        ) {
-
-            const data =
-                requestDoc.data();
-
-
-            if (
-                data.to === targetUid &&
-                data.status === "pending"
-            ) {
-
-                requestSent =
-                    true;
+                requestSent = true;
 
                 break;
             }
         }
 
-
-        const receivedQuery =
+        const receivedSnapshot = await getDocs(
             query(
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-                where(
-                    "to",
-                    "==",
-                    viewerUid
-                )
-            );
+                collection(db, "friendRequests"),
+                where("to", "==", viewerUid)
+            )
+        );
 
+        for (const requestDoc of receivedSnapshot.docs) {
 
-        const receivedSnapshot =
-            await getDocs(
-                receivedQuery
-            );
+            const data = requestDoc.data();
 
+            if (data.from === targetUid && data.status === "pending") {
 
-        for (
-            const requestDoc
-            of receivedSnapshot.docs
-        ) {
-
-            const data =
-                requestDoc.data();
-
-
-            if (
-                data.from === targetUid &&
-                data.status === "pending"
-            ) {
-
-                requestReceived =
-                    true;
+                requestReceived = true;
 
                 break;
             }
@@ -1608,10 +533,7 @@ async function checkFriendRequestStatus(
 
     } catch (error) {
 
-        console.error(
-            "Friend request check failed:",
-            error
-        );
+        console.error("Friend request check failed:", error);
     }
 }
 
@@ -1622,60 +544,30 @@ async function checkFriendRequestStatus(
 
 async function findSentFriendRequest() {
 
-    if (
-        !currentUser ||
-        !profileUid
-    ) {
+    if (!currentUser || !profileUid)
         return null;
-    }
-
 
     try {
 
-        const q =
+        const snapshot = await getDocs(
             query(
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-                where(
-                    "from",
-                    "==",
-                    currentUser.uid
-                )
-            );
+                collection(db, "friendRequests"),
+                where("from", "==", currentUser.uid)
+            )
+        );
 
+        for (const requestDoc of snapshot.docs) {
 
-        const snapshot =
-            await getDocs(q);
+            const data = requestDoc.data();
 
-
-        for (
-            const requestDoc
-            of snapshot.docs
-        ) {
-
-            const data =
-                requestDoc.data();
-
-
-            if (
-                data.to === profileUid &&
-                data.status === "pending"
-            ) {
-
+            if (data.to === profileUid && data.status === "pending")
                 return requestDoc;
-            }
         }
 
     } catch (error) {
 
-        console.error(
-            "Find request error:",
-            error
-        );
+        console.error("Find request error:", error);
     }
-
 
     return null;
 }
@@ -1685,53 +577,31 @@ async function findSentFriendRequest() {
 // NOTIFICATION
 // ============================================================
 
-async function createFriendNotification(
-    targetUid,
-    type,
-    extra = {}
-) {
+async function createFriendNotification(targetUid, type, extra = {}) {
 
     if (!currentUser)
         return;
-
 
     try {
 
         const notificationId =
             `${type}_${currentUser.uid}_${targetUid}_${Date.now()}`;
 
-
         await setDoc(
-            doc(
-                db,
-                "notifications",
-                notificationId
-            ),
+            doc(db, "notifications", notificationId),
             {
-                uid:
-                    targetUid,
-
-                fromUid:
-                    currentUser.uid,
-
+                uid: targetUid,
+                fromUid: currentUser.uid,
                 type,
-
-                read:
-                    false,
-
-                createdAt:
-                    Date.now(),
-
+                read: false,
+                createdAt: Date.now(),
                 ...extra
             }
         );
 
     } catch (error) {
 
-        console.error(
-            "Notification error:",
-            error
-        );
+        console.error("Notification error:", error);
     }
 }
 
@@ -1742,13 +612,10 @@ async function createFriendNotification(
 
 async function updateFriendButton() {
 
-    const button =
-        createFriendButton();
-
+    const button = createFriendButton();
 
     if (!button)
         return;
-
 
     if (
         !currentUser ||
@@ -1756,104 +623,41 @@ async function updateFriendButton() {
         currentUser.uid === profileUid
     ) {
 
-        button.style.display =
-            "none";
+        button.style.display = "none";
 
         return;
     }
 
+    button.style.display = "";
+    button.disabled = false;
 
-    button.style.display =
-        "inline-flex";
+    isFriend = await checkIfFriends(currentUser.uid, profileUid);
 
-    button.disabled =
-        false;
-
-    button.style.opacity =
-        "1";
-
-
-    isFriend =
-        await checkIfFriends(
-            currentUser.uid,
-            profileUid
-        );
-
-
-    if (!isFriend) {
-
-        await checkFriendRequestStatus(
-            currentUser.uid,
-            profileUid
-        );
-    }
-
+    if (!isFriend)
+        await checkFriendRequestStatus(currentUser.uid, profileUid);
 
     if (isFriend) {
 
-        button.innerHTML =
-            "❌ Remove Friend";
-
-        button.style.borderColor =
-            "#ff4d6d";
-
-        button.style.background =
-            "linear-gradient(135deg,#3b0b19,#66152b)";
-
-        button.style.boxShadow =
-            "0 0 12px rgba(255,77,109,.3)";
+        setFriendButton(button, "❌ Remove Friend", "friend-remove");
 
         return;
     }
-
 
     if (requestSent) {
 
-        button.innerHTML =
-            "⏳ Cancel Request";
-
-        button.style.borderColor =
-            "#ffc107";
-
-        button.style.background =
-            "linear-gradient(135deg,#3d2a00,#664800)";
-
-        button.style.boxShadow =
-            "0 0 12px rgba(255,193,7,.25)";
+        setFriendButton(button, "⏳ Cancel Request", "friend-pending");
 
         return;
     }
-
 
     if (requestReceived) {
 
-        button.innerHTML =
-            "✅ Accept Friend";
-
-        button.style.borderColor =
-            "#00ff88";
-
-        button.style.background =
-            "linear-gradient(135deg,#063d25,#087044)";
-
-        button.style.boxShadow =
-            "0 0 12px rgba(0,255,136,.25)";
+        setFriendButton(button, "✅ Accept Friend", "friend-accept");
 
         return;
     }
 
-
-    button.innerHTML =
-        "👥 Add Friend";
-
-    button.style.borderColor =
-        "#168cff";
-
-    button.style.background =
-        "linear-gradient(135deg,#071a38,#102f66)";
-
-    button.style.boxShadow =
-        "0 0 12px rgba(22,140,255,.18)";
+    setFriendButton(button, "👥 Add Friend", "friend-add");
 }
 
 
@@ -1871,56 +675,27 @@ async function sendFriendRequest() {
         return;
     }
 
+    const button = createFriendButton();
 
-    const button =
-        createFriendButton();
-
-
-    button.disabled =
-        true;
-
-    button.innerHTML =
-        "⏳ Sending...";
-
+    button.disabled = true;
+    button.innerHTML = "⏳ Sending...";
 
     try {
 
-        const existingQuery =
+        const existing = await getDocs(
             query(
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-                where(
-                    "from",
-                    "==",
-                    currentUser.uid
-                )
-            );
+                collection(db, "friendRequests"),
+                where("from", "==", currentUser.uid)
+            )
+        );
 
+        for (const requestDoc of existing.docs) {
 
-        const existing =
-            await getDocs(
-                existingQuery
-            );
+            const data = requestDoc.data();
 
+            if (data.to === profileUid && data.status === "pending") {
 
-        for (
-            const requestDoc
-            of existing.docs
-        ) {
-
-            const data =
-                requestDoc.data();
-
-
-            if (
-                data.to === profileUid &&
-                data.status === "pending"
-            ) {
-
-                requestSent =
-                    true;
+                requestSent = true;
 
                 await updateFriendButton();
 
@@ -1928,62 +703,33 @@ async function sendFriendRequest() {
             }
         }
 
-
-        const requestRef =
-            doc(
-                collection(
-                    db,
-                    "friendRequests"
-                )
-            );
-
+        const requestRef = doc(collection(db, "friendRequests"));
 
         await setDoc(
             requestRef,
             {
-                from:
-                    currentUser.uid,
-
-                to:
-                    profileUid,
-
-                status:
-                    "pending",
-
-                createdAt:
-                    Date.now()
+                from: currentUser.uid,
+                to: profileUid,
+                status: "pending",
+                createdAt: Date.now()
             }
         );
-
 
         await createFriendNotification(
             profileUid,
             "friend_request",
-            {
-                requestId:
-                    requestRef.id
-            }
+            { requestId: requestRef.id }
         );
 
-
-        requestSent =
-            true;
-
+        requestSent = true;
 
         await updateFriendButton();
 
     } catch (error) {
 
-        console.error(
-            "Send friend request error:",
-            error
-        );
+        console.error("Send friend request error:", error);
 
-
-        alert(
-            "Unable to send friend request."
-        );
-
+        alert("Unable to send friend request.");
 
         await updateFriendButton();
     }
@@ -1996,57 +742,30 @@ async function sendFriendRequest() {
 
 async function cancelFriendRequest() {
 
-    if (
-        !currentUser ||
-        !profileUid
-    ) {
+    if (!currentUser || !profileUid)
         return;
-    }
 
+    const button = createFriendButton();
 
-    const button =
-        createFriendButton();
-
-
-    button.disabled =
-        true;
-
-    button.innerHTML =
-        "⏳ Cancelling...";
-
+    button.disabled = true;
+    button.innerHTML = "⏳ Cancelling...";
 
     try {
 
-        const requestDoc =
-            await findSentFriendRequest();
+        const requestDoc = await findSentFriendRequest();
 
+        if (requestDoc)
+            await deleteDoc(requestDoc.ref);
 
-        if (requestDoc) {
-
-            await deleteDoc(
-                requestDoc.ref
-            );
-        }
-
-
-        requestSent =
-            false;
-
+        requestSent = false;
 
         await updateFriendButton();
 
     } catch (error) {
 
-        console.error(
-            "Cancel friend request error:",
-            error
-        );
+        console.error("Cancel friend request error:", error);
 
-
-        alert(
-            "Unable to cancel friend request."
-        );
-
+        alert("Unable to cancel friend request.");
 
         await updateFriendButton();
     }
@@ -2059,59 +778,31 @@ async function cancelFriendRequest() {
 
 async function acceptFriendRequest() {
 
-    if (
-        !currentUser ||
-        !profileUid
-    ) {
+    if (!currentUser || !profileUid)
         return;
-    }
-
 
     try {
 
-        const q =
+        const snapshot = await getDocs(
             query(
-                collection(
-                    db,
-                    "friendRequests"
-                ),
-                where(
-                    "to",
-                    "==",
-                    currentUser.uid
-                )
-            );
+                collection(db, "friendRequests"),
+                where("to", "==", currentUser.uid)
+            )
+        );
 
+        let requestDoc = null;
 
-        const snapshot =
-            await getDocs(q);
+        for (const item of snapshot.docs) {
 
+            const data = item.data();
 
-        let requestDoc =
-            null;
+            if (data.from === profileUid && data.status === "pending") {
 
-
-        for (
-            const item
-            of snapshot.docs
-        ) {
-
-            const data =
-                item.data();
-
-
-            if (
-                data.from === profileUid &&
-                data.status === "pending"
-            ) {
-
-                requestDoc =
-                    item;
+                requestDoc = item;
 
                 break;
             }
         }
-
 
         if (!requestDoc) {
 
@@ -2120,66 +811,34 @@ async function acceptFriendRequest() {
             return;
         }
 
-
-        const friendshipId =
-            friendKey(
-                currentUser.uid,
-                profileUid
-            );
-
+        const friendshipId = friendKey(currentUser.uid, profileUid);
 
         await setDoc(
-            doc(
-                db,
-                "friends",
-                friendshipId
-            ),
+            doc(db, "friends", friendshipId),
             {
-                users: [
-                    currentUser.uid,
-                    profileUid
-                ],
-
-                key:
-                    friendshipId,
-
-                createdAt:
-                    Date.now()
+                users: [currentUser.uid, profileUid],
+                key: friendshipId,
+                createdAt: Date.now()
             }
         );
-
 
         await setDoc(
             requestDoc.ref,
             {
-                status:
-                    "accepted",
-
-                acceptedAt:
-                    Date.now()
+                status: "accepted",
+                acceptedAt: Date.now()
             },
-            {
-                merge: true
-            }
+            { merge: true }
         );
-
 
         await createFriendNotification(
             profileUid,
             "friend_accepted",
-            {
-                friendId:
-                    currentUser.uid
-            }
+            { friendId: currentUser.uid }
         );
 
-
-        isFriend =
-            true;
-
-        requestReceived =
-            false;
-
+        isFriend = true;
+        requestReceived = false;
 
         await updateFriendButton();
 
@@ -2187,15 +846,44 @@ async function acceptFriendRequest() {
 
     } catch (error) {
 
-        console.error(
-            "Accept friend request error:",
-            error
-        );
+        console.error("Accept friend request error:", error);
+
+        alert("Unable to accept friend request.");
+    }
+}
 
 
-        alert(
-            "Unable to accept friend request."
-        );
+// ============================================================
+// REMOVE ACCEPTED REQUESTS (keeps the home stories list in sync)
+// ============================================================
+
+async function deleteAcceptedRequestsBetween(uidA, uidB) {
+
+    try {
+
+        const pairs = [[uidA, uidB], [uidB, uidA]];
+
+        for (const [from, to] of pairs) {
+
+            const snapshot = await getDocs(
+                query(
+                    collection(db, "friendRequests"),
+                    where("from", "==", from)
+                )
+            );
+
+            for (const requestDoc of snapshot.docs) {
+
+                const data = requestDoc.data();
+
+                if (data.to === to && data.status === "accepted")
+                    await deleteDoc(requestDoc.ref);
+            }
+        }
+
+    } catch (error) {
+
+        console.warn("Could not clean accepted requests:", error);
     }
 }
 
@@ -2214,169 +902,84 @@ async function removeFriend() {
         return;
     }
 
-
-    const confirmed =
-        confirm(
-            "Remove this person from your friends?"
-        );
-
-
-    if (!confirmed)
+    if (!confirm("Remove this person from your friends?"))
         return;
 
+    const button = createFriendButton();
 
-    const button =
-        createFriendButton();
-
-
-    button.disabled =
-        true;
-
-    button.innerHTML =
-        "⏳ Removing...";
-
+    button.disabled = true;
+    button.innerHTML = "⏳ Removing...";
 
     try {
 
-        let removed =
-            false;
-
-
-        const friendshipId =
-            friendKey(
-                currentUser.uid,
-                profileUid
-            );
-
+        let removed = false;
 
         const friendshipRef =
-            doc(
-                db,
-                "friends",
-                friendshipId
-            );
+            doc(db, "friends", friendKey(currentUser.uid, profileUid));
 
+        const friendshipSnap = await getDoc(friendshipRef);
 
-        const friendshipSnap =
-            await getDoc(
-                friendshipRef
-            );
+        if (friendshipSnap.exists()) {
 
-
-        if (
-            friendshipSnap.exists()
-        ) {
-
-            const data =
-                friendshipSnap.data();
-
+            const data = friendshipSnap.data();
 
             if (
                 Array.isArray(data.users) &&
-                data.users.includes(
-                    currentUser.uid
-                ) &&
-                data.users.includes(
-                    profileUid
-                )
+                data.users.includes(currentUser.uid) &&
+                data.users.includes(profileUid)
             ) {
 
-                await deleteDoc(
-                    friendshipRef
-                );
+                await deleteDoc(friendshipRef);
 
-                removed =
-                    true;
+                removed = true;
             }
         }
 
-
         if (!removed) {
 
-            const friendsQuery =
+            const friendsSnapshot = await getDocs(
                 query(
-                    collection(
-                        db,
-                        "friends"
-                    ),
-                    where(
-                        "users",
-                        "array-contains",
-                        currentUser.uid
-                    )
-                );
+                    collection(db, "friends"),
+                    where("users", "array-contains", currentUser.uid)
+                )
+            );
 
+            for (const friendDoc of friendsSnapshot.docs) {
 
-            const friendsSnapshot =
-                await getDocs(
-                    friendsQuery
-                );
-
-
-            for (
-                const friendDoc
-                of friendsSnapshot.docs
-            ) {
-
-                const data =
-                    friendDoc.data();
-
+                const data = friendDoc.data();
 
                 if (
                     Array.isArray(data.users) &&
-                    data.users.includes(
-                        currentUser.uid
-                    ) &&
-                    data.users.includes(
-                        profileUid
-                    )
+                    data.users.includes(currentUser.uid) &&
+                    data.users.includes(profileUid)
                 ) {
 
-                    await deleteDoc(
-                        friendDoc.ref
-                    );
+                    await deleteDoc(friendDoc.ref);
 
-                    removed =
-                        true;
+                    removed = true;
 
                     break;
                 }
             }
         }
 
+        if (removed)
+            await deleteAcceptedRequestsBetween(currentUser.uid, profileUid);
 
-        isFriend =
-            false;
-
-        requestSent =
-            false;
-
-        requestReceived =
-            false;
-
+        isFriend = false;
+        requestSent = false;
+        requestReceived = false;
 
         await updateFriendButton();
 
-
-        if (!removed) {
-
-            alert(
-                "The friendship could not be found."
-            );
-        }
+        if (!removed)
+            alert("The friendship could not be found.");
 
     } catch (error) {
 
-        console.error(
-            "Remove friend error:",
-            error
-        );
+        console.error("Remove friend error:", error);
 
-
-        alert(
-            "Unable to remove friend. Check your Firestore permissions."
-        );
-
+        alert("Unable to remove friend. Check your Firestore permissions.");
 
         await updateFriendButton();
     }
@@ -2387,321 +990,192 @@ async function removeFriend() {
 // FRIEND BUTTON CLICK
 // ============================================================
 
-document.addEventListener(
-    "click",
-    async event => {
+document.addEventListener("click", async event => {
 
-        const button =
-            event.target.closest(
-                "#friendBtn"
-            );
+    const button = event.target.closest("#friendBtn");
 
+    if (!button || button.disabled)
+        return;
 
-        if (!button)
-            return;
+    if (!currentUser || currentUser.uid === profileUid)
+        return;
 
+    if (isFriend) {
 
-        if (button.disabled)
-            return;
+        await removeFriend();
 
-
-        if (
-            !currentUser ||
-            currentUser.uid === profileUid
-        ) {
-            return;
-        }
-
-
-        if (isFriend) {
-
-            await removeFriend();
-
-            return;
-        }
-
-
-        if (requestReceived) {
-
-            await acceptFriendRequest();
-
-            return;
-        }
-
-
-        if (requestSent) {
-
-            await cancelFriendRequest();
-
-            return;
-        }
-
-
-        await sendFriendRequest();
+        return;
     }
-);
+
+    if (requestReceived) {
+
+        await acceptFriendRequest();
+
+        return;
+    }
+
+    if (requestSent) {
+
+        await cancelFriendRequest();
+
+        return;
+    }
+
+    await sendFriendRequest();
+});
 
 
 // ============================================================
 // PRIVACY SYSTEM
 // ============================================================
 
-async function canViewProfile(
-    viewerUid,
-    targetUid,
-    profileData
-) {
+async function canViewProfile(viewerUid, targetUid, profileData) {
 
-    if (
-        viewerUid === targetUid
-    ) {
+    if (viewerUid === targetUid)
         return true;
-    }
 
-
-    const isAdmin =
-        await checkViewerIsAdmin(
-            viewerUid
-        );
-
-
-    if (isAdmin) {
+    if (await checkViewerIsAdmin(viewerUid))
         return true;
-    }
 
-
-    let privacy =
-        profileData?.profilePrivacy;
-
+    let privacy = profileData?.profilePrivacy;
 
     if (
         privacy === undefined ||
         privacy === null ||
         String(privacy).trim() === ""
     ) {
-
-        privacy =
-            "public";
+        privacy = "public";
     }
 
+    privacy = String(privacy).trim().toLowerCase();
 
-    privacy =
-        String(privacy)
-            .trim()
-            .toLowerCase();
-
-
-    if (
-        privacy === "public"
-    ) {
-
+    if (privacy === "public")
         return true;
-    }
 
-
-    if (
-        privacy === "friends"
-    ) {
-
-        return await checkIfFriends(
-            viewerUid,
-            targetUid
-        );
-    }
-
+    if (privacy === "friends")
+        return await checkIfFriends(viewerUid, targetUid);
 
     return true;
 }
 
 
 // ============================================================
-// GET NUMERIC COUNT
+// STORED COUNTS
 // ============================================================
 
-function getStoredCount(
-    data,
-    possibleNames
-) {
+function getStoredCount(data, possibleNames) {
 
-    for (
-        const name
-        of possibleNames
-    ) {
+    for (const name of possibleNames) {
 
-        const value =
-            data[name];
+        const value = data[name];
 
-
-        if (
-            typeof value === "number"
-        ) {
-
+        if (typeof value === "number")
             return value;
-        }
 
+        if (typeof value === "string" && value.trim() !== "") {
 
-        if (
-            typeof value === "string" &&
-            value.trim() !== ""
-        ) {
+            const number = Number(value);
 
-            const number =
-                Number(value);
-
-
-            if (
-                Number.isFinite(number)
-            ) {
-
+            if (Number.isFinite(number))
                 return number;
-            }
         }
 
-
-        if (
-            Array.isArray(value)
-        ) {
-
+        if (Array.isArray(value))
             return value.length;
-        }
     }
-
 
     return null;
 }
 
+async function loadCount(target, uid, profileData, names, subcollection) {
 
-// ============================================================
-// LOAD FOLLOWERS COUNT
-// ============================================================
-
-async function loadFollowersCount(
-    uid,
-    profileData
-) {
-
-    if (!followersCount)
+    if (!target)
         return;
 
-
-    const stored =
-        getStoredCount(
-            profileData,
-            [
-                "followersCount",
-                "followerCount",
-                "followers"
-            ]
-        );
-
+    const stored = getStoredCount(profileData, names);
 
     if (stored !== null) {
 
-        followersCount.textContent =
-            stored;
+        target.textContent = stored;
 
         return;
     }
 
-
     try {
 
-        const followersRef =
-            collection(
-                db,
-                "users",
-                uid,
-                "followers"
-            );
-
-
         const snapshot =
-            await getDocs(
-                followersRef
-            );
+            await getDocs(collection(db, "users", uid, subcollection));
 
-
-        followersCount.textContent =
-            snapshot.size;
+        target.textContent = snapshot.size;
 
     } catch (error) {
 
-        console.error(
-            "Followers count error:",
-            error
-        );
+        console.error(`${subcollection} count error:`, error);
 
-
-        followersCount.textContent =
-            "0";
+        target.textContent = "0";
     }
+}
+
+function loadFollowersCount(uid, profileData) {
+
+    return loadCount(
+        followersCount,
+        uid,
+        profileData,
+        ["followersCount", "followerCount", "followers"],
+        "followers"
+    );
+}
+
+function loadFollowingCount(uid, profileData) {
+
+    return loadCount(
+        followingCount,
+        uid,
+        profileData,
+        ["followingCount", "followingsCount", "following"],
+        "following"
+    );
 }
 
 
 // ============================================================
-// LOAD FOLLOWING COUNT
+// LAST SEEN
 // ============================================================
 
-async function loadFollowingCount(
-    uid,
-    profileData
-) {
+function formatLastSeen(timestamp) {
 
-    if (!followingCount)
-        return;
+    if (!timestamp)
+        return "⚪ Offline";
 
+    let time = timestamp;
 
-    const stored =
-        getStoredCount(
-            profileData,
-            [
-                "followingCount",
-                "followingsCount",
-                "following"
-            ]
-        );
-
-
-    if (stored !== null) {
-
-        followingCount.textContent =
-            stored;
-
-        return;
+    if (
+        typeof timestamp === "object" &&
+        typeof timestamp.toMillis === "function"
+    ) {
+        time = timestamp.toMillis();
     }
 
+    const seconds = Math.floor((Date.now() - time) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
 
-    try {
+    if (seconds < 60)
+        return "🟢 Last seen just now";
 
-        const followingRef =
-            collection(
-                db,
-                "users",
-                uid,
-                "following"
-            );
+    if (minutes < 60)
+        return `⚪ Last seen ${minutes}m ago`;
 
+    if (hours < 24)
+        return `⚪ Last seen ${hours}h ago`;
 
-        const snapshot =
-            await getDocs(
-                followingRef
-            );
+    if (days < 7)
+        return `⚪ Last seen ${days}d ago`;
 
-
-        followingCount.textContent =
-            snapshot.size;
-
-    } catch (error) {
-
-        console.error(
-            "Following count error:",
-            error
-        );
-
-
-        followingCount.textContent =
-            "0";
-    }
+    return `⚪ Last seen ${weeks}w ago`;
 }
 
 
@@ -2711,10 +1185,7 @@ async function loadFollowingCount(
 
 async function loadProfile() {
 
-    if (
-        !currentUser ||
-        !profileUid
-    ) {
+    if (!currentUser || !profileUid) {
 
         hideLoader();
 
@@ -2723,68 +1194,30 @@ async function loadProfile() {
         return;
     }
 
-
     lockFooterPlus();
 
-
-    showLoadingIndicator(
-        "Loading profile..."
-    );
-
+    showLoadingIndicator("Loading profile");
 
     try {
 
-        const profileRef =
-            doc(
-                db,
-                "users",
-                profileUid
-            );
-
-
-        const profileSnap =
-            await getDoc(
-                profileRef
-            );
-
+        const profileSnap = await getDoc(doc(db, "users", profileUid));
 
         if (!profileSnap.exists()) {
 
             if (gallery) {
 
                 gallery.innerHTML = `
-                    <div style="
-                        text-align:center;
-                        padding:50px 20px;
-                        color:#9fb4d8;
-                    ">
-                        <h2>
-                            Profile Not Found
-                        </h2>
-                    </div>
+                    <div class="vs-note"><h2>Profile Not Found</h2></div>
                 `;
             }
-
-
-            unlockFooterPlus();
-
-            hideLoader();
 
             return;
         }
 
-
-        const data =
-            profileSnap.data();
-
+        const data = profileSnap.data();
 
         const allowed =
-            await canViewProfile(
-                currentUser.uid,
-                profileUid,
-                data
-            );
-
+            await canViewProfile(currentUser.uid, profileUid, data);
 
         if (!allowed) {
 
@@ -2792,83 +1225,49 @@ async function loadProfile() {
 
             await updateFriendButton();
 
-            unlockFooterPlus();
-
-            hideLoader();
-
             return;
         }
 
-
         showProfileElements();
-
 
         if (profileName) {
 
             profileName.textContent =
-                data.fullName ||
-                data.name ||
-                "VitalStar User";
+                data.fullName || data.name || "VitalStar User";
         }
-
 
         if (username) {
 
-            if (data.username) {
+            const handle =
+                typeof data.username === "string" ? data.username : "";
 
-                username.textContent =
-                    data.username.startsWith("@")
-                        ? data.username
-                        : "@" + data.username;
-
-            } else {
-
-                username.textContent =
-                    "@username";
-            }
+            username.textContent =
+                handle
+                    ? (handle.startsWith("@") ? handle : "@" + handle)
+                    : "@username";
         }
 
-
-        if (bio) {
-
-            bio.textContent =
-                data.bio ||
-                "No bio yet.";
-        }
-
+        if (bio)
+            bio.textContent = data.bio || "No bio yet.";
 
         if (country) {
 
             country.textContent =
-                data.country
-                    ? `🌍 ${data.country}`
-                    : "🌍 Country";
+                data.country ? `🌍 ${data.country}` : "🌍 Country";
         }
-
 
         if (dob) {
 
-            const birthday =
-                data.dob ||
-                data.dateOfBirth ||
-                "";
+            const birthday = data.dob || data.dateOfBirth || "";
 
-
-            dob.textContent =
-                birthday
-                    ? `🎂 ${birthday}`
-                    : "🎂 Birthday";
+            dob.textContent = birthday ? `🎂 ${birthday}` : "🎂 Birthday";
         }
-
 
         if (gender) {
 
             gender.textContent =
-                data.gender
-                    ? `🚻 ${data.gender}`
-                    : "🚻 Gender";
+                data.gender ? `🚻 ${data.gender}` : "🚻 Gender";
         }
-
 
         if (profileImage) {
 
@@ -2880,27 +1279,15 @@ async function loadProfile() {
                 data.photo ||
                 "";
 
+            profileImage.onerror = () => {
 
-            profileImage.src =
-                imageURL ||
-                "https://via.placeholder.com/300?text=VS";
+                profileImage.onerror = null;
 
+                profileImage.src = PLACEHOLDER_AVATAR;
+            };
 
-            profileImage.style.display =
-                "";
-
-
-            profileImage.onerror =
-                () => {
-
-                    profileImage.onerror =
-                        null;
-
-                    profileImage.src =
-                        "https://via.placeholder.com/300?text=VS";
-                };
+            profileImage.src = imageURL || PLACEHOLDER_AVATAR;
         }
-
 
         if (coverImage) {
 
@@ -2911,238 +1298,131 @@ async function loadProfile() {
                 data.coverURL ||
                 "";
 
+            coverImage.onerror = () => {
 
-            coverImage.src =
-                coverURL ||
-                "https://via.placeholder.com/1200x350?text=VitalStar";
+                coverImage.onerror = null;
 
+                coverImage.src = PLACEHOLDER_COVER;
+            };
 
-            coverImage.style.display =
-                "";
-
-
-            coverImage.onerror =
-                () => {
-
-                    coverImage.onerror =
-                        null;
-
-                    coverImage.src =
-                        "https://via.placeholder.com/1200x350?text=VitalStar";
-                };
+            coverImage.src = coverURL || PLACEHOLDER_COVER;
         }
-
 
         if (rank) {
 
-            if (
-                profileUid ===
-                VITALSTAR_OWNER_UID
-            ) {
+            if (profileUid === VITALSTAR_OWNER_UID) {
 
-                rank.textContent =
-                    "👑 Owner";
+                rank.textContent = "👑 Owner";
 
             } else {
 
                 rank.textContent =
-                    data.rank
-                        ? `🏅 ${data.rank}`
-                        : "🏅 Member";
+                    data.rank ? `🏅 ${data.rank}` : "🏅 Member";
             }
         }
 
-
-        const viewingOwnProfile =
-            currentUser.uid === profileUid;
-
+        const viewingOwnProfile = currentUser.uid === profileUid;
 
         if (viewingOwnProfile) {
 
-            const friendBtn =
-                createFriendButton();
-
-
-            friendBtn.style.display =
-                "none";
-
+            createFriendButton().style.display = "none";
 
             if (editButton)
-                editButton.style.display =
-                    "";
-
+                editButton.style.display = "";
 
             if (followButton)
-                followButton.style.display =
-                    "none";
-
+                followButton.style.display = "none";
 
             if (messageButton)
-                messageButton.style.display =
-                    "none";
+                messageButton.style.display = "none";
 
         } else {
 
             if (editButton)
-                editButton.style.display =
-                    "none";
-
+                editButton.style.display = "none";
 
             if (followButton)
-                followButton.style.display =
-                    "";
-
+                followButton.style.display = "";
 
             if (messageButton)
-                messageButton.style.display =
-                    "";
-
+                messageButton.style.display = "";
 
             await updateFriendButton();
         }
 
-
-        if (
-            !viewingOwnProfile &&
-            followButton
-        ) {
+        if (!viewingOwnProfile && followButton) {
 
             try {
 
-                const followingRef =
-                    doc(
-                        db,
-                        "users",
-                        currentUser.uid,
-                        "following",
-                        profileUid
-                    );
-
-
-                const followingSnap =
-                    await getDoc(
-                        followingRef
-                    );
-
+                const followingSnap = await getDoc(
+                    doc(db, "users", currentUser.uid, "following", profileUid)
+                );
 
                 followButton.textContent =
-                    followingSnap.exists()
-                        ? "Following"
-                        : "Follow";
+                    followingSnap.exists() ? "Following" : "Follow";
 
             } catch (error) {
 
-                console.error(
-                    "Follow status error:",
-                    error
-                );
+                console.error("Follow status error:", error);
             }
         }
 
-
         await Promise.allSettled([
-
-            loadFollowersCount(
-                profileUid,
-                data
-            ),
-
-            loadFollowingCount(
-                profileUid,
-                data
-            )
-
+            loadFollowersCount(profileUid, data),
+            loadFollowingCount(profileUid, data)
         ]);
-
 
         if (lastSeen) {
 
-            const statusRef =
-                ref(
-                    rtdb,
-                    `status/${profileUid}`
-                );
+            // Replace any earlier listener so reloads never stack them
+            if (statusUnsubscribe) {
 
+                statusUnsubscribe();
 
-            onValue(
-                statusRef,
+                statusUnsubscribe = null;
+            }
+
+            statusUnsubscribe = onValue(
+                ref(rtdb, `status/${profileUid}`),
                 snapshot => {
 
-                    const status =
-                        snapshot.val();
+                    const status = snapshot.val();
 
+                    if (status && status.online === true) {
 
-                    if (
-                        status &&
-                        status.online === true
-                    ) {
+                        lastSeen.textContent = "🟢 Online";
+                        lastSeen.style.color = "#32df72";
 
-                        lastSeen.textContent =
-                            "🟢 Online";
+                    } else if (status && status.lastSeen) {
 
-                        lastSeen.style.color =
-                            "#00ff88";
-
-                    } else if (
-                        status &&
-                        status.lastSeen
-                    ) {
-
-                        lastSeen.textContent =
-                            formatLastSeen(
-                                status.lastSeen
-                            );
-
-                        lastSeen.style.color =
-                            "#8ea4c8";
+                        lastSeen.textContent = formatLastSeen(status.lastSeen);
+                        lastSeen.style.color = "";
 
                     } else {
 
-                        lastSeen.textContent =
-                            "⚪ Offline";
-
-                        lastSeen.style.color =
-                            "#8ea4c8";
+                        lastSeen.textContent = "⚪ Offline";
+                        lastSeen.style.color = "";
                     }
                 }
             );
         }
 
-
-        await loadProfilePosts(
-            profileUid
-        );
-
-
-        unlockFooterPlus();
+        await loadProfilePosts(profileUid);
 
     } catch (error) {
 
-        console.error(
-            "Profile loading error:",
-            error
-        );
-
+        console.error("Profile loading error:", error);
 
         if (gallery) {
 
             gallery.innerHTML = `
-                <div style="
-                    text-align:center;
-                    padding:40px 20px;
-                    color:#8ea4c8;
-                ">
-                    Unable to load profile.
-                </div>
+                <div class="vs-note">Unable to load profile.</div>
             `;
         }
 
-
-        // Still unlock the + button after
-        // the profile loading attempt finishes.
-        unlockFooterPlus();
-
     } finally {
+
+        unlockFooterPlus();
 
         hideLoader();
     }
@@ -3150,188 +1430,47 @@ async function loadProfile() {
 
 
 // ============================================================
-// LAST SEEN
-// ============================================================
-
-function formatLastSeen(
-    timestamp
-) {
-
-    if (!timestamp)
-        return "⚪ Offline";
-
-
-    let time =
-        timestamp;
-
-
-    if (
-        typeof timestamp === "object" &&
-        typeof timestamp.toMillis === "function"
-    ) {
-
-        time =
-            timestamp.toMillis();
-    }
-
-
-    const diff =
-        Date.now() -
-        time;
-
-
-    const seconds =
-        Math.floor(
-            diff / 1000
-        );
-
-
-    const minutes =
-        Math.floor(
-            seconds / 60
-        );
-
-
-    const hours =
-        Math.floor(
-            minutes / 60
-        );
-
-
-    const days =
-        Math.floor(
-            hours / 24
-        );
-
-
-    const weeks =
-        Math.floor(
-            days / 7
-        );
-
-
-    if (seconds < 60)
-        return "🟢 Last seen just now";
-
-
-    if (minutes < 60)
-        return `⚪ Last seen ${minutes}m ago`;
-
-
-    if (hours < 24)
-        return `⚪ Last seen ${hours}h ago`;
-
-
-    if (days < 7)
-        return `⚪ Last seen ${days}d ago`;
-
-
-    return `⚪ Last seen ${weeks}w ago`;
-}
-
-
-// ============================================================
 // LOAD POSTS
 // ============================================================
 
-async function loadProfilePosts(
-    uid
-) {
+async function loadProfilePosts(uid) {
 
-    if (!gallery)
+    if (!gallery || postsLoading)
         return;
 
-
-    if (postsLoading)
-        return;
-
-
-    postsLoading =
-        true;
-
+    postsLoading = true;
 
     try {
 
         showPostsLoadingIndicator();
 
+        const snapshot = await getDocs(
+            query(collection(db, "posts"), where("uid", "==", uid))
+        );
 
-        const postsQuery =
-            query(
-                collection(
-                    db,
-                    "posts"
-                ),
-                where(
-                    "uid",
-                    "==",
-                    uid
-                )
-            );
+        if (postsCount)
+            postsCount.textContent = snapshot.size;
 
-
-        const snapshot =
-            await getDocs(
-                postsQuery
-            );
-
-
-        if (postsCount) {
-
-            postsCount.textContent =
-                snapshot.size;
-        }
-
-
-        allProfilePosts =
-            snapshot.docs.sort(
-                (a, b) => {
-
-                    const aTime =
-                        getPostTime(
-                            a.data().createdAt
-                        );
-
-
-                    const bTime =
-                        getPostTime(
-                            b.data().createdAt
-                        );
-
-
-                    return bTime - aTime;
-                }
-            );
-
+        allProfilePosts = snapshot.docs.sort((a, b) =>
+            getPostTime(b.data().createdAt) - getPostTime(a.data().createdAt)
+        );
 
         renderVisiblePosts();
 
     } catch (error) {
 
-        console.error(
-            "Posts loading error:",
-            error
-        );
-
+        console.error("Posts loading error:", error);
 
         if (postsCount)
-            postsCount.textContent =
-                "0";
-
+            postsCount.textContent = "0";
 
         gallery.innerHTML = `
-            <div style="
-                text-align:center;
-                padding:30px;
-                color:#8ea4c8;
-            ">
-                Unable to load posts.
-            </div>
+            <div class="vs-note">Unable to load posts.</div>
         `;
 
     } finally {
 
-        postsLoading =
-            false;
+        postsLoading = false;
     }
 }
 
@@ -3345,140 +1484,41 @@ function renderVisiblePosts() {
     if (!gallery)
         return;
 
+    gallery.innerHTML = "";
 
-    gallery.innerHTML =
-        "";
+    if (allProfilePosts.length === 0) {
 
-
-    if (
-        allProfilePosts.length ===
-        0
-    ) {
-
-        gallery.innerHTML = `
-            <div style="
-                width:100%;
-                text-align:center;
-                padding:40px 20px;
-                color:#8ea4c8;
-            ">
-                No posts yet.
-            </div>
-        `;
+        gallery.innerHTML = `<div class="vs-note">No posts yet.</div>`;
 
         return;
     }
 
-
     // Show only the first 10 posts
-    const visiblePosts =
-        allProfilePosts.slice(
-            0,
-            10
-        );
+    allProfilePosts.slice(0, 10).forEach(renderPostCard);
 
+    // VIEW MORE → user-posts.html
+    if (allProfilePosts.length > 10) {
 
-    visiblePosts.forEach(
-        postDoc => {
+        const seeMore = document.createElement("button");
 
-            renderPostCard(
-                postDoc
-            );
-        }
-    );
+        seeMore.type = "button";
+        seeMore.id = "seeMorePostsBtn";
+        seeMore.className = "view-more-btn";
+        seeMore.textContent = "View More Posts";
 
+        seeMore.addEventListener("click", () => {
 
-    // ========================================================
-    // VIEW MORE BUTTON
-    // Redirects to user-posts.html
-    // ========================================================
+            if (!profileUid)
+                return;
 
-    if (
-        allProfilePosts.length > 10
-    ) {
+            seeMore.disabled = true;
+            seeMore.textContent = "Opening...";
 
-        const seeMore =
-            document.createElement(
-                "button"
-            );
+            window.location.href =
+                `user-posts.html?uid=${encodeURIComponent(profileUid)}`;
+        });
 
-
-        seeMore.type =
-            "button";
-
-
-        seeMore.id =
-            "seeMorePostsBtn";
-
-
-        seeMore.innerHTML =
-            "View More Posts";
-
-
-        seeMore.style.cssText = `
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            width:calc(100% - 30px);
-            max-width:420px;
-            margin:20px auto 30px;
-            padding:13px 20px;
-
-            border:
-                1px solid #168cff;
-
-            border-radius:14px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #071a38,
-                    #102f66
-                );
-
-            color:#ffffff;
-
-            font-size:15px;
-
-            font-weight:800;
-
-            text-align:center;
-
-            cursor:pointer;
-
-            box-shadow:
-                0 0 16px
-                rgba(22,140,255,.18);
-        `;
-
-
-        seeMore.addEventListener(
-            "click",
-            () => {
-
-                if (!profileUid)
-                    return;
-
-
-                seeMore.disabled =
-                    true;
-
-
-                seeMore.innerHTML =
-                    "Opening...";
-
-
-                window.location.href =
-                    `user-posts.html?uid=${encodeURIComponent(
-                        profileUid
-                    )}`;
-            }
-        );
-
-
-        gallery.appendChild(
-            seeMore
-        );
+        gallery.appendChild(seeMore);
     }
 }
 
@@ -3487,113 +1527,47 @@ function renderVisiblePosts() {
 // RENDER SINGLE POST
 // ============================================================
 
-function renderPostCard(
-    postDoc
-) {
+function renderPostCard(postDoc) {
 
-    const post =
-        postDoc.data();
+    const post = postDoc.data();
 
+    const card = document.createElement("div");
 
-    const card =
-        document.createElement(
-            "div"
-        );
+    card.className = "post-card";
 
+    const text = post.text || post.content || "";
 
-    card.style.cssText = `
-        width:100%;
-        margin-bottom:15px;
-        padding:16px;
-        box-sizing:border-box;
-        border-radius:18px;
-
-        background:
-            linear-gradient(
-                145deg,
-                #09162e,
-                #040914
-            );
-
-        border:
-            1px solid
-            rgba(35,115,220,.3);
-
-        box-shadow:
-            0 0 18px
-            rgba(0,70,160,.12);
-
-        color:#fff;
-    `;
-
-
-    const text =
-        post.text ||
-        post.content ||
-        "";
-
-
-    let mediaHTML =
-        "";
-
+    let mediaHTML = "";
 
     if (post.image) {
 
         mediaHTML += `
             <img
-                src="${escapeAttribute(
-                    post.image
-                )}"
+                src="${escapeAttribute(post.image)}"
                 alt="Post image"
-                style="
-                    width:100%;
-                    max-height:450px;
-                    object-fit:cover;
-                    border-radius:14px;
-                    margin-top:12px;
-                    display:block;
-                "
+                loading="lazy"
             >
         `;
     }
-
 
     if (post.video) {
 
         mediaHTML += `
             <video
-                src="${escapeAttribute(
-                    post.video
-                )}"
+                src="${escapeAttribute(post.video)}"
                 controls
-                style="
-                    width:100%;
-                    max-height:450px;
-                    border-radius:14px;
-                    margin-top:12px;
-                    display:block;
-                "
+                preload="metadata"
+                playsinline
             ></video>
         `;
     }
 
-
     card.innerHTML = `
-        <div style="
-            color:#ffffff;
-            line-height:1.6;
-            word-break:break-word;
-        ">
-            ${escapeHTML(text)}
-        </div>
-
+        ${text ? `<div class="post-text">${escapeHTML(text)}</div>` : ""}
         ${mediaHTML}
     `;
 
-
-    gallery.appendChild(
-        card
-    );
+    gallery.appendChild(card);
 }
 
 
@@ -3601,102 +1575,29 @@ function renderPostCard(
 // POST TIME
 // ============================================================
 
-function getPostTime(
-    timestamp
-) {
+function getPostTime(timestamp) {
 
     if (!timestamp)
         return 0;
-
 
     if (
         typeof timestamp === "object" &&
         typeof timestamp.toMillis === "function"
     ) {
-
         return timestamp.toMillis();
     }
 
-
-    if (
-        typeof timestamp === "number"
-    ) {
-
+    if (typeof timestamp === "number")
         return timestamp;
+
+    if (typeof timestamp === "string") {
+
+        const parsed = Date.parse(timestamp);
+
+        return Number.isNaN(parsed) ? 0 : parsed;
     }
-
-
-    if (
-        typeof timestamp === "string"
-    ) {
-
-        const parsed =
-            Date.parse(timestamp);
-
-
-        return Number.isNaN(parsed)
-            ? 0
-            : parsed;
-    }
-
 
     return 0;
-}
-
-
-// ============================================================
-// HTML ESCAPE
-// ============================================================
-
-function escapeHTML(
-    value
-) {
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-
-    div.textContent =
-        value || "";
-
-
-    return div.innerHTML;
-}
-
-
-// ============================================================
-// ATTRIBUTE ESCAPE
-// ============================================================
-
-function escapeAttribute(
-    value
-) {
-
-    return String(
-        value || ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        );
 }
 
 
@@ -3706,14 +1607,10 @@ function escapeAttribute(
 
 if (editButton) {
 
-    editButton.addEventListener(
-        "click",
-        () => {
+    editButton.addEventListener("click", () => {
 
-            window.location.href =
-                "edit-profile.html";
-        }
-    );
+        window.location.href = "edit-profile.html";
+    });
 }
 
 
@@ -3723,20 +1620,14 @@ if (editButton) {
 
 if (messageButton) {
 
-    messageButton.addEventListener(
-        "click",
-        () => {
+    messageButton.addEventListener("click", () => {
 
-            if (!profileUid)
-                return;
+        if (!profileUid)
+            return;
 
-
-            window.location.href =
-                `chat.html?uid=${encodeURIComponent(
-                    profileUid
-                )}`;
-        }
-    );
+        window.location.href =
+            `chat.html?uid=${encodeURIComponent(profileUid)}`;
+    });
 }
 
 
@@ -3744,52 +1635,29 @@ if (messageButton) {
 // AUTH
 // ============================================================
 
-onAuthStateChanged(
-    auth,
-    async user => {
+onAuthStateChanged(auth, async user => {
 
-        if (!user) {
+    if (!user) {
 
-            window.location.href =
-                "login.html";
+        window.location.href = "login.html";
 
-            return;
-        }
-
-
-        currentUser =
-            user;
-
-
-        if (!profileUid) {
-
-            profileUid =
-                user.uid;
-        }
-
-
-        setupFooterPlus();
-
-
-        if (
-            currentUser.uid ===
-            profileUid
-        ) {
-
-            const friendBtn =
-                document.getElementById(
-                    "friendBtn"
-                );
-
-
-            if (friendBtn) {
-
-                friendBtn.style.display =
-                    "none";
-            }
-        }
-
-
-        await loadProfile();
+        return;
     }
-);
+
+    currentUser = user;
+
+    if (!profileUid)
+        profileUid = user.uid;
+
+    setupFooterPlus();
+
+    if (currentUser.uid === profileUid) {
+
+        const friendBtn = document.getElementById("friendBtn");
+
+        if (friendBtn)
+            friendBtn.style.display = "none";
+    }
+
+    await loadProfile();
+});
