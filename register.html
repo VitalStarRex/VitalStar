@@ -6,139 +6,142 @@
 <title>VitalStar Register</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:25px 15px;background:linear-gradient(-45deg,#05001c,#160044,#001c3d,#300047,#001c27);background-size:400% 400%;animation:neonBG 12s ease infinite}
-@keyframes neonBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.container{width:100%;max-width:380px;background:rgba(5,5,25,.94);padding:25px;border-radius:20px;border:1px solid #00eaff;box-shadow:0 0 10px #00eaff,0 0 25px rgba(0,234,255,.5),0 0 50px rgba(150,0,255,.3)}
-h1{text-align:center;color:gold;background:#000;padding:14px;border-radius:12px;margin:0 0 22px;text-shadow:0 0 5px gold,0 0 15px orange;box-shadow:0 0 15px gold}
-input[type=text],input[type=email],input[type=password]{width:100%;padding:13px;margin-bottom:15px;background:#080d25;color:white;border:1px solid #00d9ff;border-radius:9px;font-size:15px;outline:none;box-shadow:0 0 7px rgba(0,217,255,.3);transition:.3s}
-input:focus{border-color:#ff00e6;box-shadow:0 0 8px #ff00e6,0 0 18px rgba(255,0,230,.5)}
-input::placeholder{color:#a8b4d4}
-.counter{display:block;text-align:right;color:#00eaff;font-size:11px;margin-top:-12px;margin-bottom:13px}
-.terms{display:flex;align-items:flex-start;gap:8px;margin:5px 0 20px;font-size:12px;line-height:1.6;color:#ddd}
-.terms input{margin-top:3px;flex-shrink:0;accent-color:#00eaff}
-.terms a,.footer a{color:#00eaff;font-weight:bold;text-decoration:none}
-.terms a:hover,.footer a:hover{text-decoration:underline}
-.show-row{display:flex;align-items:center;gap:7px;color:white;font-size:13px;margin:-3px 0 18px}
-.show-row input{accent-color:#00eaff}
-button{width:100%;padding:13px;border:none;border-radius:30px;font-size:16px;font-weight:bold;cursor:pointer;transition:.3s}
-.register-btn{background:linear-gradient(90deg,#00d9ff,#a100ff);color:white;box-shadow:0 0 10px #00d9ff,0 0 20px rgba(161,0,255,.5)}
-.register-btn:hover{transform:scale(1.03);box-shadow:0 0 25px #00d9ff}
-button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.footer{text-align:center;color:#aaa;font-size:13px;margin-top:20px}
+body{margin:0;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center;font-family:Arial,sans-serif;color:#fff;background:linear-gradient(135deg,#080020,#19004d,#00334d,#51004d);background-size:300% 300%;animation:neonBackground 12s ease infinite}
+@keyframes neonBackground{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.container{width:100%;max-width:390px;padding:27px 25px;border:1px solid #00f0ff;border-radius:18px;background:rgba(8,5,30,.92);box-shadow:0 0 14px #00eaff,0 0 34px rgba(180,0,255,.65)}
+h1{text-align:center;margin:0 0 20px;color:#00f0ff;text-shadow:0 0 12px #00eaff}
+.field{margin-bottom:13px}
+input:not([type=checkbox]){width:100%;padding:13px 14px;border:1px solid #a64dff;border-radius:9px;background:#10082b;color:#fff;font-size:15px;outline:none}
+input::placeholder{color:#bdb2d4}
+input:focus{border-color:#00f0ff;box-shadow:0 0 10px #00cfff}
+.hint{display:block;margin:5px 2px 0;color:#9fefff;font-size:11px}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:75px!important}
+.toggle{position:absolute;right:8px;top:7px;width:auto;padding:6px 9px;border:1px solid #00f0ff;border-radius:7px;background:transparent;color:#00f0ff;font-size:12px;cursor:pointer}
+.terms{display:flex;align-items:flex-start;gap:9px;margin:7px 0 17px;color:#e8e0f8;font-size:13px;line-height:1.5}
+.terms input{width:17px;height:17px;margin:2px 0 0;flex-shrink:0;accent-color:#00dfff}
+.terms a{color:#00f0ff;font-weight:bold;text-decoration:none}
+.main-btn{width:100%;padding:13px;border:0;border-radius:9px;background:linear-gradient(90deg,#00dfff,#9b28ff,#ff20b8);color:white;font-size:17px;font-weight:bold;cursor:pointer;box-shadow:0 0 14px #00bfff}
+.main-btn:hover{filter:brightness(1.12)}
+.main-btn:disabled{opacity:.65;cursor:wait}
+.footer{text-align:center;margin:18px 0 0;color:#e4d9ff;font-size:14px}
+.footer a{color:#00f0ff;text-decoration:none;font-weight:bold}
 </style>
 </head>
 <body>
 <div class="container">
-<h1>VitalStar Register</h1>
-<form id="registerForm">
-<input type="text" id="fullName" placeholder="Nickname (4-20 characters)" minlength="4" maxlength="20" required>
-<small class="counter" id="nameCount">0/15</small>
-<input type="text" id="username" placeholder="Username (3-15 characters)" minlength="3" maxlength="15" required>
-<small class="counter" id="usernameCount">0/15</small>
-<input type="email" id="email" placeholder="Email Address" required>
-<input type="password" id="password" placeholder="Password" required>
-<input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-<label class="show-row"><input type="checkbox" id="showPassword">Show Password</label>
-<div class="terms">
-<input type="checkbox" id="agreeTerms" required>
-<label for="agreeTerms">I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</label>
-</div>
-<button type="submit" class="register-btn" id="registerBtn">Register</button>
-</form>
-<div class="footer">Already have an account? <a href="login.html">Login</a></div>
+  <h1>✦ VitalStar Register ✦</h1>
+  <form id="registerForm">
+    <div class="field">
+      <input type="text" id="fullName" placeholder="Nick Name / Full Name" maxlength="20" autocomplete="name" required>
+      <small class="hint">Maximum 20 characters</small>
+    </div>
+    <div class="field">
+      <input type="text" id="username" placeholder="Username" maxlength="15" autocomplete="username" required>
+      <small class="hint">Maximum 15 characters</small>
+    </div>
+    <div class="field">
+      <input type="email" id="email" placeholder="Email" autocomplete="email" required>
+    </div>
+    <div class="field password-wrap">
+      <input type="password" id="password" placeholder="Password" autocomplete="new-password" required>
+      <button class="toggle" type="button" data-target="password">Show</button>
+    </div>
+    <div class="field password-wrap">
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" autocomplete="new-password" required>
+      <button class="toggle" type="button" data-target="confirmPassword">Show</button>
+    </div>
+    <div class="terms">
+      <input type="checkbox" id="agreeTerms" required>
+      <label for="agreeTerms">I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</label>
+    </div>
+    <button type="submit" id="registerBtn" class="main-btn">Register</button>
+  </form>
+  <p class="footer">Already have an account? <a href="login.html">Login</a></p>
 </div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/15.12.2/firebase-auth.js";
-import { doc, setDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/15.12.2/firebase-firestore.js";
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, setDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const form = document.getElementById("registerForm");
 const registerBtn = document.getElementById("registerBtn");
-const fullNameInput = document.getElementById("fullName");
-const usernameInput = document.getElementById("username");
+const agreeTerms = document.getElementById("agreeTerms");
 
-fullNameInput.addEventListener("input", () => {
-    document.getElementById("nameCount").textContent = fullNameInput.value.length + "/15";
+document.querySelectorAll(".toggle").forEach((button) => {
+  button.addEventListener("click", () => {
+    const input = document.getElementById(button.dataset.target);
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    button.textContent = show ? "Hide" : "Show";
+  });
 });
 
-usernameInput.addEventListener("input", () => {
-    usernameInput.value = usernameInput.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase().slice(0, 10);
-    document.getElementById("usernameCount").textContent = usernameInput.value.length + "/15";
-});
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-document.getElementById("showPassword").addEventListener("change", e => {
-    const type = e.target.checked ? "text" : "password";
-    document.getElementById("password").type = type;
-    document.getElementById("confirmPassword").type = type;
-});
+  const fullName = document.getElementById("fullName").value.trim();
+  const username = document.getElementById("username").value.trim().toLowerCase();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
 
-async function usernameExists(username) {
+  if (fullName.length > 20) {
+    alert("Nickname / Full Name must not exceed 20 characters.");
+    return;
+  }
+  if (username.length > 15) {
+    alert("Username must not exceed 15 characters.");
+    return;
+  }
+  if (!agreeTerms.checked) {
+    alert("Please agree to the Terms of Service and Privacy Policy.");
+    return;
+  }
+  if (password !== confirmPassword) {
+    alert("Passwords do not match.");
+    return;
+  }
+
+  // Prevent double taps from triggering multiple signups.
+  registerBtn.disabled = true;
+  registerBtn.textContent = "Registering...";
+
+  try {
     const q = query(collection(db, "users"), where("username", "==", username));
     const snap = await getDocs(q);
-    return !snap.empty;
-}
 
-form.addEventListener("submit", async e => {
-    e.preventDefault();
-
-    if (!document.getElementById("agreeTerms").checked) {
-        alert("Please agree to the Terms and Privacy Policy.");
-        return;
+    if (!snap.empty) {
+      alert("Username already exists.");
+      return;
     }
 
-    const fullName = fullNameInput.value.trim();
-    const username = usernameInput.value.trim().toLowerCase();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-    if (fullName.length < 4 || fullName.length > 15) {
-        alert("Nickname must be between 4 and 20 characters.");
-        return;
-    }
+    // Keep the existing Firestore user fields and signup flow.
+    await setDoc(doc(db, "users", cred.user.uid), {
+      uid: cred.user.uid,
+      fullName: fullName,
+      username: username,
+      email: email,
+      profilePic: "default.png",
+      bio: "",
+      online: true,
+      lastSeen: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      agreedToTerms: true,
+      termsAgreedAt: serverTimestamp()
+    });
 
-    if (username.length < 3 || username.length > 15 || !/^[a-z0-9_]+$/.test(username)) {
-        alert("Username must be between 3 and 15 characters. Use letters, numbers or underscores.");
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        alert("Passwords do not match.");
-        return;
-    }
-
-    registerBtn.disabled = true;
-    registerBtn.textContent = "Registering...";
-
-    try {
-        if (await usernameExists(username)) {
-            throw new Error("Username already exists.");
-        }
-
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-        await setDoc(doc(db, "users", cred.user.uid), {
-            uid: cred.user.uid,
-            fullName,
-            username,
-            email,
-            profilePic: "default.png",
-            bio: "",
-            online: true,
-            lastSeen: serverTimestamp(),
-            createdAt: serverTimestamp(),
-            agreedToTerms: true,
-            termsAgreedAt: serverTimestamp()
-        });
-
-        alert("Registration successful!");
-        window.location.href = "edit-profile.html";
-    } catch (error) {
-        alert(error.message);
-        registerBtn.disabled = false;
-        registerBtn.textContent = "Register";
-    }
+    alert("Registration successful!");
+    window.location.href = "edit-profile.html";
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    registerBtn.disabled = false;
+    registerBtn.textContent = "Register";
+  }
 });
 </script>
 </body>
