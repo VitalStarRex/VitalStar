@@ -1,920 +1,1120 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VitalStar</title>
-<link rel="manifest" href="manifest.json">
+<!DOCTYPE html>  <html lang="en">  <head>  <meta charset="UTF-8">  <meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
 
-<!-- SHARED THEME: load first so the saved theme shows with no flash -->
-<link rel="stylesheet" href="theme.css">
-<script src="theme.js"></script>
+> 
 
-<style>
+<title>VitalStar</title>  <link rel="manifest" href="manifest.json">  <style>  
+  
+/* =========================================================  
+   VITALSTAR — MODERN SOCIAL HOME  
+   ========================================================= */  
+  
+*{  
+    margin:0;  
+    padding:0;  
+    box-sizing:border-box;  
+    font-family:Arial,Helvetica,sans-serif;  
+}  
+  
+html{  
+    scroll-behavior:smooth;  
+}  
+  
+body{  
+    background:#070914;  
+    color:#fff;  
+    min-height:100vh;  
+    overflow-x:hidden;  
+    padding-bottom:88px;  
+}  
+  
+body::before{  
+    content:"";  
+    position:fixed;  
+    inset:0;  
+    pointer-events:none;  
+  
+    background:  
+        radial-gradient(  
+            circle at 15% 10%,  
+            rgba(0,183,255,.10),  
+            transparent 25%  
+        ),  
+        radial-gradient(  
+            circle at 90% 20%,  
+            rgba(168,59,255,.12),  
+            transparent 25%  
+        ),  
+        radial-gradient(  
+            circle at 50% 100%,  
+            rgba(255,0,153,.07),  
+            transparent 30%  
+        );  
+  
+    z-index:-1;  
+}  
+  
+/* =========================================================  
+   HEADER  
+   ========================================================= */  
+  
+header{  
+    position:fixed;  
+    top:0;  
+    left:0;  
+    width:100%;  
+    height:72px;  
+  
+    display:flex;  
+    align-items:center;  
+  
+    padding:0 14px;  
+  
+    background:rgba(7,9,20,.92);  
+    backdrop-filter:blur(18px);  
+  
+    border-bottom:1px solid rgba(255,255,255,.08);  
+  
+    z-index:1000;  
+}  
+  
+.menu{  
+    width:42px;  
+    height:42px;  
+  
+    border:0;  
+    border-radius:50%;  
+  
+    background:#151a2d;  
+    color:#fff;  
+  
+    font-size:21px;  
+    cursor:pointer;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    margin-right:9px;  
+}  
+  
+.logo-area{  
+    display:flex;  
+    align-items:center;  
+    gap:9px;  
+    flex:1;  
+}  
+  
+.logo-star{  
+    width:42px;  
+    height:42px;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    font-size:35px;  
+    color:#fff;  
+  
+    text-shadow:  
+        0 0 7px #00cfff,  
+        0 0 16px #7b2cff,  
+        0 0 28px #ff19a8;  
+}  
+  
+.logo-text{  
+    line-height:1;  
+}  
+  
+.logo{  
+    font-size:23px;  
+    font-weight:900;  
+    letter-spacing:-.8px;  
+  
+    background:  
+        linear-gradient(  
+            90deg,  
+            #fff,  
+            #00d9ff,  
+            #8f4dff  
+        );  
+  
+    -webkit-background-clip:text;  
+    background-clip:text;  
+    color:transparent;  
+}  
+  
+.logo-sub{  
+    margin-top:4px;  
+    color:#8991ae;  
+    font-size:11px;  
+    letter-spacing:.3px;  
+}  
+  
+.icons{  
+    display:flex;  
+    align-items:center;  
+    gap:8px;  
+}  
+  
+.header-circle{  
+    width:42px;  
+    height:42px;  
+  
+    border:0;  
+    border-radius:50%;  
+  
+    background:#151a2d;  
+    color:#dce4ff;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    text-decoration:none;  
+    font-size:20px;  
+  
+    position:relative;  
+    transition:.2s;  
+}  
+  
+.header-circle:hover{  
+    background:#202743;  
+    transform:translateY(-1px);  
+}  
+  
+.search-trigger{  
+    font-size:23px;  
+}  
+  
+.wallet-trigger{  
+    height:42px;  
+  
+    border:1px solid rgba(255,204,0,.45);  
+    border-radius:22px;  
+  
+    padding:0 11px;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            rgba(255,211,0,.18),  
+            rgba(255,120,0,.14)  
+        );  
+  
+    color:#ffd84a;  
+  
+    display:flex;  
+    align-items:center;  
+    gap:4px;  
+  
+    font-size:12px;  
+    font-weight:900;  
+  
+    cursor:pointer;  
+  
+    box-shadow:  
+        0 0 15px rgba(255,180,0,.10);  
+}  
+  
+#walletBalance{  
+    white-space:nowrap;  
+}  
+  
+/* =========================================================  
+   BADGES  
+   ========================================================= */  
+  
+.badge{  
+    position:absolute;  
+  
+    top:-4px;  
+    right:-3px;  
+  
+    min-width:18px;  
+    height:18px;  
+  
+    padding:0 5px;  
+  
+    border-radius:20px;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    background:#ff326d;  
+    color:#fff;  
+  
+    font-size:10px;  
+    font-weight:900;  
+  
+    border:2px solid #080a15;  
+}  
+  
+/* =========================================================  
+   SIDEBAR  
+   ========================================================= */  
+  
+.sidebar{  
+    position:fixed;  
+  
+    top:0;  
+    left:-285px;  
+  
+    width:275px;  
+    height:100vh;  
+  
+    padding:25px 12px 25px;  
+  
+    background:rgba(10,13,27,.98);  
+    backdrop-filter:blur(20px);  
+  
+    border-right:1px solid rgba(255,255,255,.08);  
+  
+    box-shadow:10px 0 40px rgba(0,0,0,.4);  
+  
+    transition:.3s;  
+  
+    z-index:1500;  
+  
+    overflow-y:auto;  
+}  
+  
+.sidebar-header{  
+    display:flex;  
+    align-items:center;  
+    justify-content:space-between;  
+  
+    margin-bottom:18px;  
+    padding:0 4px;  
+}  
+  
+.sidebar-header strong{  
+    font-size:20px;  
+  
+    background:  
+        linear-gradient(  
+            90deg,  
+            #fff,  
+            #00d9ff,  
+            #8f4dff  
+        );  
+  
+    -webkit-background-clip:text;  
+    background-clip:text;  
+  
+    color:transparent;  
+}  
+  
+.sidebar-close{  
+    width:40px;  
+    height:40px;  
+  
+    border:0;  
+    border-radius:50%;  
+  
+    background:#181d32;  
+    color:#fff;  
+  
+    font-size:18px;  
+    cursor:pointer;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    transition:.2s;  
+}  
+  
+.sidebar-close:hover{  
+    background:#ff326d;  
+    transform:rotate(90deg);  
+}  
+  
+.sidebar a,  
+#logoutBtn{  
+    display:flex;  
+    align-items:center;  
+  
+    width:100%;  
+  
+    margin:5px 0;  
+    padding:14px;  
+  
+    border:0;  
+    border-radius:14px;  
+  
+    background:transparent;  
+  
+    color:#d9def4;  
+  
+    text-decoration:none;  
+    text-align:left;  
+  
+    font-size:15px;  
+    font-weight:700;  
+  
+    cursor:pointer;  
+    transition:.2s;  
+}  
+  
+.sidebar a:hover,  
+#logoutBtn:hover{  
+    background:  
+        linear-gradient(  
+            90deg,  
+            rgba(0,190,255,.12),  
+            rgba(140,55,255,.14)  
+        );  
+  
+    color:#fff;  
+    transform:translateX(3px);  
+}  
+  
+/* =========================================================  
+   FRIEND REQUEST SIDEBAR BADGE  
+   ========================================================= */  
+  
+.sidebar a#friendsMenuLink{  
+    position:relative;  
+}  
+  
+.sidebar-badge{  
+    margin-left:auto;  
+  
+    min-width:21px;  
+    height:21px;  
+  
+    padding:0 6px;  
+  
+    display:none;  
+  
+    align-items:center;  
+    justify-content:center;  
+  
+    border-radius:20px;  
+  
+    background:#ff326d;  
+    color:#fff;  
+  
+    font-size:11px;  
+    font-weight:900;  
+  
+    border:2px solid #0a0d1b;  
+  
+    box-shadow:  
+        0 0 10px rgba(255,50,109,.45);  
+}  
+  
+.sidebar-badge.show{  
+    display:flex;  
+}  
+  
+/* =========================================================  
+   MAIN  
+   ========================================================= */  
+  
+.container{  
+    width:100%;  
+    max-width:900px;  
+  
+    margin:auto;  
+  
+    padding:86px 10px 20px;  
+}  
+  
+/* =========================================================  
+   STORIES  
+   ========================================================= */  
+  
+.stories-section{  
+    margin-bottom:12px;  
+}  
+  
+.stories{  
+    display:flex;  
+  
+    gap:13px;  
+  
+    overflow-x:auto;  
+  
+    padding:5px 3px 13px;  
+  
+    scrollbar-width:none;  
+}  
+  
+.stories::-webkit-scrollbar{  
+    display:none;  
+}  
+  
+.story-wrap{  
+    flex:0 0 70px;  
+    width:70px;  
+    text-align:center;  
+}  
+  
+.story-link{  
+    display:block;  
+  
+    width:68px;  
+    height:68px;  
+  
+    text-decoration:none;  
+    color:inherit;  
+}  
+  
+.story{  
+    position:relative;  
+  
+    width:68px;  
+    height:68px;  
+  
+    border-radius:50%;  
+    cursor:pointer;  
+}  
+  
+/* =========================================================  
+   ROTATING VITALSTAR PROFILE RING  
+   ========================================================= */  
+  
+.story::before{  
+    content:"";  
+  
+    position:absolute;  
+    inset:0;  
+  
+    border-radius:50%;  
+  
+    background:  
+        conic-gradient(  
+            #ffd400,  
+            #00e5ff,  
+            #7c35ff,  
+            #ff239e,  
+            #ffd400  
+        );  
+  
+    animation:  
+        storyRingSpin 2.5s linear infinite;  
+  
+    box-shadow:  
+        0 0 8px rgba(255,212,0,.45),  
+        0 0 15px rgba(0,229,255,.25);  
+}  
+  
+@keyframes storyRingSpin{  
+  
+    from{  
+        transform:rotate(0deg);  
+    }  
+  
+    to{  
+        transform:rotate(360deg);  
+    }  
+  
+}  
+  
+.story-inner{  
+    position:absolute;  
+  
+    inset:4px;  
+  
+    z-index:2;  
+  
+    border-radius:50%;  
+    overflow:hidden;  
+  
+    background:#14182b;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    color:#fff;  
+  
+    border:2px solid #070914;  
+  
+    transition:.2s;  
+}  
+  
+.story:hover .story-inner{  
+    transform:scale(.94);  
+}  
+  
+.story-inner img{  
+    width:100%;  
+    height:100%;  
+  
+    object-fit:cover;  
+    display:block;  
+}  
+  
+.story-placeholder{  
+    font-size:27px;  
+}  
+  
+.story-add{  
+    position:absolute;  
+  
+    right:-2px;  
+    bottom:0;  
+  
+    z-index:5;  
+  
+    width:23px;  
+    height:23px;  
+  
+    border-radius:50%;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:center;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #ffd400,  
+            #00cfff  
+        );  
+  
+    border:2px solid #090b17;  
+  
+    color:#080914;  
+  
+    font-size:17px;  
+    font-weight:900;  
+  
+    box-shadow:  
+        0 0 10px rgba(255,212,0,.45);  
+}  
+  
+.story-name{  
+    display:block;  
+  
+    margin-top:7px;  
+  
+    color:#cbd1e8;  
+  
+    font-size:10px;  
+    font-weight:700;  
+  
+    white-space:nowrap;  
+    overflow:hidden;  
+    text-overflow:ellipsis;  
+}  
+  
+/* =========================================================  
+   CREATE POST  
+   ========================================================= */  
+  
+#createPost{  
+    width:100%;  
+    margin:0 0 17px;  
+}  
+  
+.composer{  
+    background:  
+        linear-gradient(  
+            145deg,  
+            rgba(20,25,45,.96),  
+            rgba(12,15,29,.96)  
+        );  
+  
+    border:1px solid rgba(255,255,255,.08);  
+    border-radius:22px;  
+  
+    padding:13px;  
+  
+    box-shadow:0 8px 30px rgba(0,0,0,.2);  
+  
+    margin-bottom:0;  
+}  
+  
+.composer-top{  
+    display:flex;  
+    align-items:center;  
+    gap:10px;  
+}  
+  
+.composer-avatar{  
+    width:44px;  
+    height:44px;  
+  
+    border-radius:50%;  
+    object-fit:cover;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #7c3cff,  
+            #00d5ff  
+        );  
+  
+    border:2px solid #713cff;  
+}  
+  
+.composer-input{  
+    flex:1;  
+  
+    height:44px;  
+  
+    border:1px solid rgba(255,255,255,.09);  
+    border-radius:24px;  
+  
+    background:#171c31;  
+    color:#dce2f8;  
+  
+    padding:0 17px;  
+  
+    display:flex;  
+    align-items:center;  
+  
+    font-size:14px;  
+    cursor:pointer;  
+}  
+  
+.composer-input:hover{  
+    background:#1d233b;  
+}  
+  
+.composer-actions{  
+    display:flex;  
+  
+    margin-top:12px;  
+    padding-top:10px;  
+  
+    border-top:1px solid rgba(255,255,255,.06);  
+}  
+  
+.composer-action{  
+    flex:1;  
+  
+    border:0;  
+    background:none;  
+  
+    color:#bbc4e2;  
+  
+    font-size:12px;  
+    font-weight:800;  
+  
+    padding:7px;  
+  
+    cursor:pointer;  
+    border-radius:10px;  
+}  
+  
+.composer-action:hover{  
+    background:rgba(255,255,255,.05);  
+}  
+  
+.photo-action{  
+    color:#c348ff;  
+}  
+  
+.video-action{  
+    color:#00caff;  
+}  
+  
+.live-action{  
+    color:#ff39c7;  
+}  
+  
+.feeling-action{  
+    color:#00e6d0;  
+}  
+  
+/* =========================================================  
+   HIDDEN COMPATIBILITY  
+   ========================================================= */  
+  
+.compatibility-text{  
+    display:none;  
+}  
+  
+/* =========================================================  
+   FEED  
+   ========================================================= */  
+  
+#feed{  
+    width:100%;  
+}  
+  
+.post-card{  
+    position:relative;  
+  
+    background:  
+        linear-gradient(  
+            145deg,  
+            #111627,  
+            #0d1120  
+        );  
+  
+    color:#f3f5ff;  
+  
+    border:1px solid rgba(255,255,255,.075);  
+  
+    border-radius:21px;  
+    overflow:hidden;  
+  
+    margin-top:15px;  
+  
+    box-shadow:0 9px 28px rgba(0,0,0,.28);  
+}  
+  
+.user-info{  
+    display:flex;  
+    align-items:center;  
+  
+    padding:14px 14px 9px;  
+}  
+  
+.avatar{  
+    width:45px;  
+    height:45px;  
+  
+    min-width:45px;  
+  
+    border-radius:50%;  
+    margin-right:10px;  
+  
+    object-fit:cover;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #7b2cff,  
+            #00cfff  
+        );  
+  
+    border:2px solid rgba(120,75,255,.7);  
+}  
+  
+.post-card p{  
+    padding:5px 14px 13px;  
+  
+    color:#edf0ff;  
+  
+    font-size:15px;  
+    line-height:1.48;  
+}  
+  
+.post-photo{  
+    display:block;  
+  
+    width:calc(100% - 18px);  
+    margin:0 9px;  
+  
+    max-height:600px;  
+  
+    border-radius:15px;  
+  
+    object-fit:cover;  
+    background:#080b16;  
+}  
+  
+.post-buttons{  
+    display:flex;  
+    align-items:center;  
+    justify-content:space-around;  
+  
+    padding:10px 6px;  
+  
+    border-top:1px solid rgba(255,255,255,.07);  
+}  
+  
+.post-buttons button{  
+    flex:1;  
+  
+    border:none;  
+    background:none;  
+  
+    color:#aeb7d5;  
+  
+    font-size:13px;  
+    font-weight:800;  
+  
+    padding:8px 4px;  
+  
+    cursor:pointer;  
+    border-radius:10px;  
+  
+    transition:.2s;  
+}  
+  
+.post-buttons button:hover{  
+    background:rgba(255,255,255,.05);  
+    color:#fff;  
+}  
+  
+.post-card img{  
+    max-width:100%;  
+}  
+  
+.post-card video{  
+    width:100%;  
+    max-height:600px;  
+  
+    object-fit:cover;  
+}  
+  
+/* =========================================================  
+   FOOTER  
+   ========================================================= */  
+  
+.vital-footer{  
+    display:none;  
+}  
+  
+/* =========================================================  
+   BOTTOM NAV  
+   ========================================================= */  
+  
+.bottom-nav{  
+    position:fixed;  
+  
+    left:50%;  
+    bottom:10px;  
+  
+    transform:translateX(-50%);  
+  
+    width:min(96%,620px);  
+  
+    height:68px;  
+  
+    padding:5px 8px;  
+  
+    display:flex;  
+    align-items:center;  
+    justify-content:space-around;  
+  
+    background:rgba(11,14,28,.94);  
+  
+    backdrop-filter:blur(20px);  
+  
+    border:1px solid rgba(255,255,255,.10);  
+  
+    border-radius:23px;  
+  
+    box-shadow:0 12px 40px rgba(0,0,0,.55);  
+  
+    z-index:1000;  
+}  
+  
+.bottom-nav a{  
+    position:relative;  
+  
+    min-width:54px;  
+  
+    color:#8e96b4;  
+  
+    text-decoration:none;  
+    text-align:center;  
+  
+    font-size:21px;  
+    padding:5px;  
+  
+    transition:.2s;  
+}  
+  
+.bottom-nav a:hover{  
+    color:#fff;  
+}  
+  
+.bottom-nav small{  
+    display:block;  
+  
+    margin-top:3px;  
+  
+    font-size:9px;  
+    font-weight:800;  
+}  
+  
+.bottom-nav a:first-child{  
+    color:#8f56ff;  
+}  
+  
+.bottom-nav a:first-child::after{  
+    content:"";  
+  
+    position:absolute;  
+  
+    bottom:-5px;  
+    left:50%;  
+  
+    transform:translateX(-50%);  
+  
+    width:28px;  
+    height:3px;  
+  
+    border-radius:10px;  
+  
+    background:  
+        linear-gradient(  
+            90deg,  
+            #8b42ff,  
+            #00d9ff  
+        );  
+  
+    box-shadow:0 0 8px #713cff;  
+}  
+  
+.create-btn{  
+    width:57px !important;  
+    height:57px;  
+  
+    min-width:57px !important;  
+  
+    margin-top:-25px;  
+  
+    border-radius:50% !important;  
+  
+    display:flex !important;  
+    align-items:center;  
+    justify-content:center;  
+  
+    background:  
+        linear-gradient(  
+            135deg,  
+            #7639ff,  
+            #00cfff,  
+            #ff28a8  
+        );  
+  
+    color:#fff !important;  
+  
+    font-size:30px !important;  
+  
+    border:4px solid #080b16;  
+  
+    box-shadow:0 0 20px rgba(106,54,255,.55);  
+  
+    text-shadow:0 2px 5px rgba(0,0,0,.3);  
+}  
+  
+.create-btn small{  
+    display:none;  
+}  
+  
+/* =========================================================  
+   MOBILE  
+   ========================================================= */  
+  
+@media(max-width:600px){  
+  
+    header{  
+        height:68px;  
+        padding:0 9px;  
+    }  
+  
+    .menu{  
+        width:38px;  
+        height:38px;  
+  
+        font-size:19px;  
+  
+        margin-right:4px;  
+    }  
+  
+    .logo-star{  
+        width:34px;  
+        height:34px;  
+  
+        font-size:29px;  
+    }  
+  
+    .logo{  
+        font-size:20px;  
+    }  
+  
+    .logo-sub{  
+        font-size:9px;  
+    }  
+  
+    .icons{  
+        gap:5px;  
+    }  
+  
+    .header-circle{  
+        width:38px;  
+        height:38px;  
+  
+        font-size:18px;  
+    }  
+  
+    .wallet-trigger{  
+        height:38px;  
+  
+        padding:0 8px;  
+  
+        font-size:11px;  
+    }  
+  
+    .container{  
+        padding:79px 8px 18px;  
+    }  
+  
+    .stories{  
+        gap:11px;  
+    }  
+  
+    .story-wrap{  
+        flex-basis:65px;  
+        width:65px;  
+    }  
+  
+    .story-link,  
+    .story{  
+        width:63px;  
+        height:63px;  
+    }  
+  
+    .story-name{  
+        font-size:9px;  
+    }  
+  
+    .composer{  
+        border-radius:19px;  
+    }  
+  
+    .composer-action{  
+        font-size:10px;  
+    }  
+  
+    .post-card{  
+        border-radius:18px;  
+    }  
+  
+    .post-card p{  
+        font-size:14px;  
+    }  
+  
+    .post-buttons button{  
+        font-size:12px;  
+    }  
+  
+    .bottom-nav{  
+        bottom:7px;  
+        height:64px;  
+        border-radius:21px;  
+    }  
+  
+    .create-btn{  
+        width:53px !important;  
+        height:53px;  
+  
+        min-width:53px !important;  
+  
+        font-size:27px !important;  
+    }  
+  
+}  
+  
 
 /* =========================================================
-   VITALSTAR — HOME (uses the shared variables in theme.css)
+   NEW: DISCOVER GROUPS / ONLINE STATS / FOOTER
+   (all class names start with "vs-" so nothing existing clashes)
    ========================================================= */
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,Helvetica,sans-serif;
-    -webkit-tap-highlight-color:transparent;
-}
-
-html{ scroll-behavior:smooth; }
-
-body{
-    background:var(--vs-bg);
-    color:var(--vs-text);
-    min-height:100vh;
-    overflow-x:hidden;
-    padding-bottom:calc(104px + env(safe-area-inset-bottom));
-}
-
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:-1;
-
-    background:
-        radial-gradient(circle at 15% 10%,var(--vs-glow-1),transparent 28%),
-        radial-gradient(circle at 90% 20%,var(--vs-glow-2),transparent 28%),
-        radial-gradient(circle at 50% 100%,var(--vs-glow-3),transparent 32%);
-}
-
-/* ---------- HEADER ---------- */
-
-header{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:72px;
-    padding:0 12px;
-
-    display:flex;
-    align-items:center;
-    gap:8px;
-
-    background:var(--vs-header-bg);
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-    border-bottom:1px solid var(--vs-line);
-
-    z-index:1000;
-}
-
-.menu{
-    flex:0 0 auto;
-    width:42px;
-    height:42px;
-
-    border:1px solid var(--vs-card-border);
-    border-radius:50%;
-    background:var(--vs-chip);
-    color:var(--vs-text);
-
-    font-size:20px;
-    cursor:pointer;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.logo-area{
-    display:flex;
-    align-items:center;
-    gap:7px;
-    flex:1;
-    min-width:0;
-}
-
-.logo-star{
-    flex:0 0 auto;
-    font-size:32px;
-    line-height:1;
-    color:var(--vs-cyan);
-    text-shadow:0 0 8px var(--vs-cyan),0 0 18px var(--vs-purple);
-}
-
-:root[data-theme="light"] .logo-star{ text-shadow:0 2px 6px rgba(80,90,255,.35); }
-
-.logo-text{ line-height:1; min-width:0; }
-
-.logo{
-    font-size:21px;
-    font-weight:900;
-    letter-spacing:-.6px;
-
-    background:var(--vs-heading);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-}
-
-.logo-sub{
-    margin-top:4px;
-    color:var(--vs-dim);
-    font-size:9.5px;
-    white-space:nowrap;
-}
-
-.icons{
-    flex:0 0 auto;
-    display:flex;
-    align-items:center;
-    gap:7px;
-}
-
-.header-circle{
-    position:relative;
-    width:40px;
-    height:40px;
-
-    border:1px solid var(--vs-card-border);
-    border-radius:50%;
-    background:var(--vs-chip);
-    color:var(--vs-text-soft);
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    text-decoration:none;
-    font-size:19px;
-    transition:.2s;
-}
-
-.header-circle:hover{
-    background:var(--vs-chip-hover);
-    transform:translateY(-1px);
-}
-
-/* Coin balance pill */
-.wallet-trigger{
-    height:40px;
-    padding:0 11px 0 7px;
-
-    border:1px solid var(--vs-gold-border);
-    border-radius:22px;
-    background:var(--vs-gold-bg);
-    color:var(--vs-gold);
-
-    display:flex;
-    align-items:center;
-    gap:6px;
-
-    font-size:14px;
-    font-weight:900;
-    cursor:pointer;
-
-    box-shadow:0 0 15px rgba(255,180,0,.14);
-    transition:transform .15s;
-}
-
-.wallet-trigger:active{ transform:scale(.95); }
-
-#walletBalance{ white-space:nowrap; }
-
-.badge{
-    position:absolute;
-    top:-5px;
-    right:-4px;
-
-    min-width:18px;
-    height:18px;
-    padding:0 5px;
-
-    border-radius:20px;
-    background:var(--vs-danger);
-    color:#fff;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    font-size:10px;
-    font-weight:900;
-
-    border:2px solid var(--vs-bg);
-    pointer-events:none;
-}
-
-/* ---------- SIDEBAR ---------- */
-
-.sidebar-backdrop{
-    position:fixed;
-    inset:0;
-    z-index:1400;
-
-    background:var(--vs-overlay);
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .3s;
-}
-
-.sidebar-backdrop.show{
-    opacity:1;
-    pointer-events:auto;
-}
-
-.sidebar{
-    position:fixed;
-    top:0;
-    left:-285px;
-
-    width:min(275px,82vw);
-    height:100vh;
-    height:100dvh;
-
-    padding:20px 12px 18px;
-
-    display:flex;
-    flex-direction:column;
-
-    background:var(--vs-sidebar-bg);
-    border-right:1px solid var(--vs-card-border);
-    box-shadow:10px 0 40px rgba(0,0,0,.28);
-
-    transition:left .3s;
-    z-index:1500;
-    overflow-y:auto;
-}
-
-.sidebar-close{
-    align-self:flex-end;
-
-    width:40px;
-    height:40px;
-
-    border:1px solid var(--vs-card-border);
-    border-radius:50%;
-    background:var(--vs-chip);
-    color:var(--vs-text);
-
-    font-size:17px;
-    cursor:pointer;
-    transition:.2s;
-}
-
-.sidebar-close:hover{
-    background:var(--vs-danger);
-    color:#fff;
-    transform:rotate(90deg);
-}
-
-.sidebar-brand{
-    text-align:center;
-    margin:2px 0 22px;
-}
-
-.sidebar-brand .big-star{
-    font-size:58px;
-    line-height:1;
-    color:var(--vs-cyan);
-    text-shadow:0 0 12px var(--vs-cyan),0 0 26px var(--vs-purple);
-}
-
-:root[data-theme="light"] .sidebar-brand .big-star{
-    text-shadow:0 4px 10px rgba(80,90,255,.35);
-}
-
-.sidebar-brand strong{
-    display:block;
-    margin-top:4px;
-    font-size:25px;
-    font-weight:900;
-    letter-spacing:-.6px;
-
-    background:var(--vs-heading);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-}
-
-.sidebar a,
-.sidebar .side-btn{
-    display:flex;
-    align-items:center;
-    gap:12px;
-
-    width:100%;
-    margin:4px 0;
-    padding:13px 14px;
-
-    border:0;
-    border-radius:14px;
-    background:transparent;
-    color:var(--vs-text-soft);
-
-    text-decoration:none;
-    text-align:left;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.2s;
-}
-
-.sidebar a:hover,
-.sidebar .side-btn:hover{
-    background:linear-gradient(90deg,rgba(0,190,255,.14),rgba(140,55,255,.16));
-    color:var(--vs-text);
-    transform:translateX(3px);
-}
-
-.side-ico{
-    width:28px;
-    text-align:center;
-    font-size:20px;
-}
-
-.sidebar-motto{
-    margin-top:auto;
-    padding:22px 0 6px;
-    text-align:center;
-}
-
-.sidebar-motto .big-star{
-    font-size:46px;
-    line-height:1;
-    color:var(--vs-cyan);
-    text-shadow:0 0 10px var(--vs-cyan),0 0 22px var(--vs-purple);
-}
-
-:root[data-theme="light"] .sidebar-motto .big-star{
-    text-shadow:0 4px 10px rgba(80,90,255,.3);
-}
-
-.sidebar-motto b{
-    display:block;
-    margin-top:6px;
-    font-size:19px;
-    line-height:1.2;
-    font-weight:900;
-
-    background:linear-gradient(180deg,var(--vs-cyan),var(--vs-purple));
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-}
-
-/* ---------- MAIN ---------- */
-
-.container{
-    width:100%;
-    max-width:900px;
-    margin:auto;
-    padding:86px 10px 20px;
-}
-
-/* ---------- STORIES ---------- */
-
-.stories-section{ margin-bottom:10px; }
-
-.stories{
-    display:flex;
-    gap:12px;
-    overflow-x:auto;
-    padding:5px 3px 10px;
-    scrollbar-width:none;
-}
-
-.stories::-webkit-scrollbar{ display:none; }
-
-.story-wrap{
-    flex:0 0 70px;
-    width:70px;
-    text-align:center;
-}
-
-.story-link{
-    display:block;
-    width:68px;
-    height:68px;
-    text-decoration:none;
-    color:inherit;
-}
-
-.story{
-    position:relative;
-    width:68px;
-    height:68px;
-    border-radius:50%;
-    cursor:pointer;
-}
-
-.story::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    border-radius:50%;
-
-    background:conic-gradient(#ffd400,#00e5ff,#7c35ff,#ff239e,#ffd400);
-    animation:storyRingSpin 2.5s linear infinite;
-    box-shadow:0 0 8px rgba(255,212,0,.4),0 0 15px rgba(0,229,255,.22);
-}
-
-@keyframes storyRingSpin{
-    from{ transform:rotate(0deg); }
-    to{ transform:rotate(360deg); }
-}
-
-.story-inner{
-    position:absolute;
-    inset:4px;
-    z-index:2;
-
-    border-radius:50%;
-    overflow:hidden;
-    background:var(--vs-chip);
-    border:2px solid var(--vs-ring-gap);
-    transition:.2s;
-}
-
-.story:hover .story-inner{ transform:scale(.94); }
-
-.story-inner img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-}
-
-.story-add{
-    position:absolute;
-    right:-2px;
-    bottom:0;
-    z-index:5;
-
-    width:23px;
-    height:23px;
-
-    border-radius:50%;
-    border:2px solid var(--vs-ring-gap);
-    background:linear-gradient(135deg,#ffd400,#00cfff);
-    color:#080914;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    font-size:17px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.story-name{
-    display:block;
-    margin-top:7px;
-
-    color:var(--vs-text-soft);
-    font-size:10px;
-    font-weight:700;
-
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-
-.story-verified{ color:var(--vs-cyan); }
-
-.story-more .story-inner{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:var(--vs-cyan);
-    font-size:24px;
-    font-weight:900;
-}
-
-.story-more .story::before{
-    animation:none;
-    background:linear-gradient(135deg,#7639ff,#00cfff);
-    opacity:.8;
-}
-
-/* ---------- EXPLORE VITALSTAR ---------- */
-
-.explore{
-    margin:4px 0 14px;
-    padding:12px;
-
-    background:var(--vs-card);
-    border:1px solid var(--vs-card-border);
-    border-radius:22px;
-    box-shadow:var(--vs-card-glow);
-}
-
-:root[data-theme="dark"] .explore{
-    border-color:rgba(120,110,255,.55);
-    box-shadow:0 0 0 1px rgba(0,217,255,.12),0 0 22px rgba(118,57,255,.28);
-}
-
-.explore h2{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:11px;
-    padding:0 2px;
-
-    font-size:18px;
-    font-weight:900;
-    color:var(--vs-text);
-}
-
-.explore h2 span.accent{
-    background:var(--vs-heading);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-}
-
-:root[data-theme="dark"] .explore h2 span.accent{
-    background:linear-gradient(90deg,#00d9ff,#8f4dff);
-    -webkit-background-clip:text;
-    background-clip:text;
-}
-
-.explore-grid{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:9px;
-}
-
-.ex-card{
-    position:relative;
-
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:7px;
-
-    min-width:0;
-    min-height:94px;
-    padding:12px 4px 10px;
-
-    border-radius:17px;
-    color:#fff;
-    text-decoration:none;
-    text-align:center;
-
-    transition:transform .2s,box-shadow .2s;
-}
-
-.ex-card:hover{ transform:translateY(-3px); }
-.ex-card:active{ transform:scale(.94); }
-
-.ex-ico{
-    font-size:30px;
-    line-height:1;
-    filter:drop-shadow(0 3px 5px rgba(0,0,0,.35));
-}
-
-.ex-title{
-    font-size:12px;
-    font-weight:850;
-    max-width:100%;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.ex-friends{ background:linear-gradient(145deg,#0a6cff,#00c8ff); }
-.ex-videos{  background:linear-gradient(145deg,#ff2d87,#8f2dff); }
-.ex-groups{  background:linear-gradient(145deg,#00b894,#0097e6); }
-.ex-games{   background:linear-gradient(145deg,#ff8a00,#ff3d6e); }
-
-/* Dark theme: deeper tiles with a neon outline */
-:root[data-theme="dark"] .ex-card{
-    border:1.5px solid rgba(255,255,255,.18);
-    box-shadow:0 0 14px rgba(0,0,0,.4);
-}
-:root[data-theme="dark"] .ex-friends{ box-shadow:0 0 16px rgba(0,160,255,.45); }
-:root[data-theme="dark"] .ex-videos{  box-shadow:0 0 16px rgba(190,45,255,.45); }
-:root[data-theme="dark"] .ex-groups{  box-shadow:0 0 16px rgba(0,190,170,.45); }
-:root[data-theme="dark"] .ex-games{   box-shadow:0 0 16px rgba(255,100,60,.5); }
-
-/* White theme: soft shadows */
-:root[data-theme="light"] .ex-card{
-    box-shadow:0 8px 18px rgba(60,80,170,.22);
-}
-
-.ex-badge{
-    position:absolute;
-    top:-6px;
-    right:-4px;
-
-    min-width:20px;
-    height:20px;
-    padding:0 5px;
-
-    display:none;
-    align-items:center;
-    justify-content:center;
-
-    border-radius:20px;
-    background:var(--vs-danger);
-    color:#fff;
-
-    font-size:10px;
-    font-weight:900;
-    border:2px solid var(--vs-card-solid);
-}
-
-.ex-badge.show{ display:flex; }
-
-/* ---------- CREATE POST (filled by post.js) ---------- */
-
-#createPost{
-    width:100%;
-    margin:0 0 14px;
-}
-
-.composer{
-    background:var(--vs-card);
-    border:1px solid var(--vs-card-border);
-    border-radius:22px;
-    padding:12px;
-    box-shadow:var(--vs-card-glow);
-}
-
-.composer-top{
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-
-.composer-avatar{
-    width:44px;
-    height:44px;
-    border-radius:50%;
-    object-fit:cover;
-    background:var(--vs-brand-grad);
-    border:2px solid var(--vs-purple);
-}
-
-.composer-input{
-    flex:1;
-    min-width:0;
-    height:44px;
-
-    border:1px solid var(--vs-line);
-    border-radius:24px;
-    background:var(--vs-input);
-    color:var(--vs-text-soft);
-
-    padding:0 17px;
-    display:flex;
-    align-items:center;
-
-    font-size:14px;
-    cursor:pointer;
-}
-
-.composer-input:hover{ background:var(--vs-input-hover); }
-
-.composer-actions{
-    display:flex;
-    margin-top:10px;
-    padding-top:8px;
-    border-top:1px solid var(--vs-line);
-}
-
-.composer-action{
-    flex:1;
-    border:0;
-    background:none;
-    color:var(--vs-muted);
-
-    font-size:12px;
-    font-weight:800;
-    padding:8px 4px;
-
-    cursor:pointer;
-    border-radius:10px;
-}
-
-.composer-action:hover{ background:var(--vs-hover); }
-
-.photo-action{ color:var(--vs-purple); }
-.video-action{ color:var(--vs-cyan); }
-.live-action{ color:var(--vs-pink); }
-.feeling-action{ color:var(--vs-green); }
-
-.compatibility-text{ display:none; }
-
-/* ---------- FEED ---------- */
-
-#feed{ width:100%; }
-
-.post-card{
-    position:relative;
-
-    background:var(--vs-card);
-    color:var(--vs-text);
-
-    border:1px solid var(--vs-card-border);
-    border-radius:21px;
-    overflow:hidden;
-
-    margin-top:12px;
-    box-shadow:var(--vs-card-glow);
-}
-
-.user-info{
-    display:flex;
-    align-items:center;
-    padding:12px 12px 6px;
-}
-
-.avatar{
-    width:46px;
-    height:46px;
-    min-width:46px;
-
-    border-radius:50%;
-    margin-right:10px;
-    object-fit:cover;
-
-    background:var(--vs-brand-grad);
-    border:2px solid var(--vs-purple);
-}
-
-.post-card p{
-    padding:4px 14px 10px;
-    color:var(--vs-text);
-    font-size:15px;
-    line-height:1.45;
-    overflow-wrap:anywhere;
-}
-
-.post-photo{
-    display:block;
-    width:calc(100% - 16px);
-    margin:0 8px;
-    max-height:560px;
-
-    border-radius:15px;
-    object-fit:cover;
-    background:var(--vs-input);
-}
-
-.post-buttons{
-    display:flex;
-    align-items:center;
-    justify-content:space-around;
-
-    padding:6px 6px;
-    border-top:1px solid var(--vs-line);
-    margin-top:8px;
-}
-
-.post-buttons button{
-    flex:1;
-    border:none;
-    background:none;
-    color:var(--vs-muted);
-
-    font-size:13px;
-    font-weight:800;
-    padding:9px 4px;
-
-    cursor:pointer;
-    border-radius:10px;
-    transition:.2s;
-}
-
-.post-buttons button:hover{
-    background:var(--vs-hover);
-    color:var(--vs-text);
-}
-
-.post-buttons button:active{ transform:scale(.94); }
-
-.post-card img{ max-width:100%; }
-
-.post-card video{
-    width:100%;
-    max-height:560px;
-    object-fit:cover;
-}
-
-/* ---------- BOTTOM NAV ---------- */
-
-.bottom-nav{
-    position:fixed;
-    left:50%;
-    bottom:calc(10px + env(safe-area-inset-bottom));
-    transform:translateX(-50%);
-
-    width:min(96%,620px);
-    height:68px;
-    padding:5px 8px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-around;
-
-    background:var(--vs-nav-bg);
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
-
-    border:1px solid var(--vs-card-border);
-    border-radius:24px;
-    box-shadow:var(--vs-shadow);
-
-    z-index:1000;
-}
-
-:root[data-theme="dark"] .bottom-nav{
-    border-color:rgba(110,100,255,.5);
-    box-shadow:0 0 18px rgba(118,57,255,.25),0 12px 40px rgba(0,0,0,.55);
-}
-
-.bottom-nav a{
-    position:relative;
-    flex:1;
-    min-width:0;
-
-    color:var(--vs-dim);
-    text-decoration:none;
-    text-align:center;
-
-    font-size:22px;
-    padding:5px 2px;
-    transition:.2s;
-}
-
-.bottom-nav a:hover{ color:var(--vs-text); }
-
-.bottom-nav small{
-    display:block;
-    margin-top:3px;
-    font-size:10px;
-    font-weight:800;
-}
-
-.bottom-nav a.active{ color:var(--vs-purple); }
-
-.bottom-nav a.active::after{
-    content:"";
-    position:absolute;
-    bottom:-5px;
-    left:50%;
-    transform:translateX(-50%);
-
-    width:30px;
-    height:3px;
-    border-radius:10px;
-    background:linear-gradient(90deg,#8b42ff,#00d9ff);
-    box-shadow:0 0 8px #713cff;
-}
-
-.bottom-nav .coin-link .vs-coin{
-    display:block;
-    margin:0 auto;
-}
-
-.bottom-nav a.create-btn{
-    flex:0 0 62px;
-    width:62px;
-    height:62px;
-    margin-top:-30px;
-
-    border-radius:50%;
-    border:4px solid var(--vs-ring-gap);
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    background:var(--vs-plus-grad);
-    box-shadow:var(--vs-plus-shadow);
-    color:#fff;
-    font-size:34px;
-    font-weight:300;
-    padding:0;
-
-    animation:plusGlow 2.6s ease-in-out infinite;
-}
-
-:root[data-theme="light"] .bottom-nav a.create-btn{ animation:none; }
-
-.bottom-nav a.create-btn:active{ transform:scale(.92); }
-
-@keyframes plusGlow{
-    0%,100%{ filter:brightness(1); }
-    50%{ filter:brightness(1.18); }
-}
-
-/* ---------- DISCOVER GROUPS / ONLINE STATS / FOOTER ---------- */
 
 .vs-section,
 .vs-stats,
@@ -924,20 +1124,31 @@ header{
     max-width:100%;
 }
 
+/* Skip painting these until they are near the screen
+   (helps slow phones). */
 .vs-section,
 .vs-stats{
     content-visibility:auto;
     contain-intrinsic-size:auto 330px;
 }
 
+/* ---------- DISCOVER GROUPS ---------- */
+
 .vs-section{
     margin-top:22px;
     padding:14px;
 
-    background:var(--vs-card);
-    border:1px solid var(--vs-card-border);
+    background:
+        linear-gradient(
+            145deg,
+            #111627,
+            #0d1120
+        );
+
+    border:1px solid rgba(255,255,255,.075);
     border-radius:21px;
-    box-shadow:var(--vs-card-glow);
+
+    box-shadow:0 9px 28px rgba(0,0,0,.28);
 }
 
 .vs-section-head{
@@ -945,16 +1156,25 @@ header{
     align-items:center;
     justify-content:space-between;
     gap:10px;
+
     margin-bottom:12px;
 }
 
 .vs-section-head h2{
     margin:0;
+
     font-size:17px;
     font-weight:900;
     letter-spacing:-.2px;
 
-    background:var(--vs-heading);
+    background:
+        linear-gradient(
+            90deg,
+            #fff,
+            #00d9ff,
+            #8f4dff
+        );
+
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
@@ -962,14 +1182,19 @@ header{
 
 .vs-see-all{
     flex:0 0 auto;
-    color:var(--vs-cyan);
+
+    color:#00d9ff;
     text-decoration:none;
+
     font-size:12px;
     font-weight:800;
+
     padding:8px 4px;
 }
 
-.vs-see-all:hover{ color:var(--vs-text); }
+.vs-see-all:hover{
+    color:#fff;
+}
 
 .vs-groups-grid{
     display:grid;
@@ -981,10 +1206,11 @@ header{
     display:flex;
     flex-direction:column;
     min-width:0;
+
     padding:12px;
 
-    background:var(--vs-hover);
-    border:1px solid var(--vs-line);
+    background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.08);
     border-radius:16px;
 }
 
@@ -994,6 +1220,7 @@ header{
     align-items:center;
     flex:1;
     min-width:0;
+
     color:inherit;
     text-decoration:none;
     text-align:center;
@@ -1011,10 +1238,17 @@ header{
     align-items:center;
     justify-content:center;
 
-    background:var(--vs-brand-grad);
+    background:
+        linear-gradient(
+            135deg,
+            #7b2cff,
+            #00cfff
+        );
+
     color:#fff;
     font-size:20px;
     font-weight:900;
+
     border:2px solid rgba(120,75,255,.7);
 }
 
@@ -1029,7 +1263,8 @@ header{
     width:100%;
     margin:9px 0 5px;
 
-    color:var(--vs-text);
+    color:#f3f5ff;
+
     font-size:13px;
     font-weight:850;
     line-height:1.25;
@@ -1044,7 +1279,7 @@ header{
 
 .vs-g-verified{
     margin-left:4px;
-    color:var(--vs-cyan);
+    color:#00d9ff;
     font-size:11px;
 }
 
@@ -1054,13 +1289,15 @@ header{
     align-items:center;
     justify-content:center;
     gap:4px 8px;
+
     margin-bottom:10px;
-    color:var(--vs-dim);
+
+    color:#8f98b6;
     font-size:11px;
 }
 
 .vs-g-tag{
-    color:var(--vs-gold);
+    color:#ffd84a;
     font-weight:800;
 }
 
@@ -1068,38 +1305,56 @@ header{
     width:100%;
     min-height:40px;
 
-    border:1px solid var(--vs-card-border);
+    border:1px solid rgba(255,255,255,.14);
     border-radius:12px;
-    background:var(--vs-hover);
-    color:var(--vs-text-soft);
+
+    background:rgba(255,255,255,.06);
+    color:#dce2f8;
 
     font-size:12px;
     font-weight:850;
+
     cursor:pointer;
     transition:.2s;
+
+    -webkit-tap-highlight-color:transparent;
 }
 
 .vs-g-btn.is-primary{
     border:0;
     color:#fff;
-    background:var(--vs-brand-grad);
-    box-shadow:0 0 14px rgba(106,54,255,.3);
+
+    background:
+        linear-gradient(
+            135deg,
+            #7639ff,
+            #00cfff
+        );
+
+    box-shadow:0 0 14px rgba(106,54,255,.35);
 }
 
 .vs-g-btn.is-joined{
-    color:var(--vs-green);
+    color:#32df72;
     border-color:rgba(50,223,114,.4);
     background:rgba(50,223,114,.08);
 }
 
 .vs-g-btn.is-pending{
-    color:var(--vs-gold);
+    color:#ffd84a;
     border-color:rgba(255,216,74,.4);
     background:rgba(255,216,74,.08);
 }
 
-.vs-g-btn:disabled{ cursor:default; }
-.vs-g-btn:not(:disabled):active{ transform:scale(.96); }
+.vs-g-btn:disabled{
+    cursor:default;
+}
+
+.vs-g-btn:not(:disabled):active{
+    transform:scale(.96);
+}
+
+/* loading placeholders */
 
 .vs-g-skeleton{
     align-items:center;
@@ -1110,20 +1365,48 @@ header{
 .vs-sk-avatar,
 .vs-sk-line,
 .vs-sk-btn{
-    background:linear-gradient(90deg,var(--vs-hover),var(--vs-line),var(--vs-hover));
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.05),
+            rgba(255,255,255,.12),
+            rgba(255,255,255,.05)
+        );
+
     background-size:200% 100%;
+
     animation:vsShimmer 1.4s linear infinite;
 }
 
-.vs-sk-avatar{ width:48px; height:48px; border-radius:50%; }
-.vs-sk-line{ width:80%; height:11px; border-radius:6px; }
-.vs-sk-line.short{ width:50%; }
-.vs-sk-btn{ width:100%; height:40px; margin-top:auto; border-radius:12px; }
+.vs-sk-avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+}
+
+.vs-sk-line{
+    width:80%;
+    height:11px;
+    border-radius:6px;
+}
+
+.vs-sk-line.short{
+    width:50%;
+}
+
+.vs-sk-btn{
+    width:100%;
+    height:40px;
+    margin-top:auto;
+    border-radius:12px;
+}
 
 @keyframes vsShimmer{
     from{ background-position:200% 0; }
     to{ background-position:-200% 0; }
 }
+
+/* error / empty */
 
 .vs-state{
     padding:22px 12px;
@@ -1131,73 +1414,90 @@ header{
     border-radius:16px;
 }
 
-.vs-state[hidden]{ display:none; }
+.vs-state[hidden]{
+    display:none;
+}
 
 .vs-state p{
     margin-bottom:12px;
-    color:var(--vs-muted);
+
+    color:#aab3d0;
     font-size:13px;
     line-height:1.5;
 }
 
 .vs-state-error{
     background:rgba(255,50,80,.08);
-    border:1px solid rgba(255,50,80,.18);
+    border:1px solid rgba(255,50,80,.16);
 }
 
-.vs-state-error p{ color:var(--vs-danger); }
+.vs-state-error p{
+    color:#ff9ba5;
+}
 
 .vs-state-empty{
-    background:var(--vs-hover);
-    border:1px dashed var(--vs-card-border);
+    background:rgba(255,255,255,.03);
+    border:1px dashed rgba(255,255,255,.12);
 }
 
 .vs-state-btn{
     display:inline-block;
+
     margin:4px;
     padding:10px 16px;
 
-    border:1px solid var(--vs-card-border);
+    border:1px solid rgba(255,255,255,.14);
     border-radius:12px;
-    background:var(--vs-hover);
-    color:var(--vs-text-soft);
+
+    background:rgba(255,255,255,.06);
+    color:#dce2f8;
 
     font-size:12px;
     font-weight:850;
     text-decoration:none;
+
     cursor:pointer;
 }
 
-.vs-state-btn:hover{ background:var(--vs-chip-hover); }
+.vs-state-btn:hover{
+    background:rgba(255,255,255,.12);
+}
 
 .vs-groups-more{
     display:block;
+
     margin-top:12px;
     padding:12px;
 
     text-align:center;
     text-decoration:none;
 
-    color:var(--vs-cyan);
+    color:#00d9ff;
     font-size:13px;
     font-weight:850;
 
-    border:1px solid rgba(0,217,255,.28);
+    border:1px solid rgba(0,217,255,.25);
     border-radius:13px;
 }
 
-.vs-groups-more:hover{ background:rgba(0,217,255,.08); }
+.vs-groups-more:hover{
+    background:rgba(0,217,255,.07);
+}
 
-/* Online stats */
+/* ---------- ONLINE STATS (black panel) ---------- */
 
 .vs-stats{
     margin-top:18px;
     padding:16px 14px;
 
-    background:var(--vs-stats-bg);
-    border:1px solid var(--vs-card-border);
+    background:#000;
+
+    border:1px solid rgba(255,255,255,.12);
     border-radius:21px;
-    box-shadow:var(--vs-card-glow);
+
+    box-shadow:
+        0 0 0 1px rgba(0,217,255,.06),
+        0 9px 28px rgba(0,0,0,.5);
 }
 
 .vs-stats-head{
@@ -1205,12 +1505,14 @@ header{
     align-items:center;
     justify-content:space-between;
     gap:10px;
+
     margin-bottom:14px;
 }
 
 .vs-stats-head h2{
     margin:0;
-    color:var(--vs-text);
+
+    color:#fff;
     font-size:17px;
     font-weight:900;
     letter-spacing:-.2px;
@@ -1220,7 +1522,8 @@ header{
     display:inline-flex;
     align-items:center;
     gap:6px;
-    color:var(--vs-green);
+
+    color:#32df72;
     font-size:11px;
     font-weight:800;
 }
@@ -1228,9 +1531,12 @@ header{
 .vs-live i{
     width:8px;
     height:8px;
+
     border-radius:50%;
-    background:var(--vs-green);
+
+    background:#32df72;
     box-shadow:0 0 8px rgba(50,223,114,.8);
+
     animation:vsPulse 1.6s ease-in-out infinite;
 }
 
@@ -1252,28 +1558,39 @@ header{
     justify-content:center;
     gap:5px;
     min-width:0;
+
     padding:14px 4px;
 
-    background:var(--vs-stat-bg);
-    border:1px solid var(--vs-line);
+    background:#0a0a0f;
+    border:1px solid rgba(255,255,255,.09);
     border-radius:15px;
+
     text-align:center;
 }
 
 .vs-stat-num{
-    color:var(--vs-cyan);
+    color:#00d9ff;
+
     font-size:26px;
     font-weight:900;
     line-height:1;
+
+    text-shadow:0 0 12px rgba(0,217,255,.45);
 }
 
-:root[data-theme="dark"] .vs-stat-num{ text-shadow:0 0 12px rgba(0,217,255,.45); }
+.vs-stat:nth-child(2) .vs-stat-num{
+    color:#c348ff;
+    text-shadow:0 0 12px rgba(195,72,255,.45);
+}
 
-.vs-stat:nth-child(2) .vs-stat-num{ color:var(--vs-purple); }
-.vs-stat:nth-child(3) .vs-stat-num{ color:var(--vs-gold); }
+.vs-stat:nth-child(3) .vs-stat-num{
+    color:#ffd84a;
+    text-shadow:0 0 12px rgba(255,216,74,.4);
+}
 
 .vs-stat-label{
-    color:var(--vs-dim);
+    color:#8f98b6;
+
     font-size:10px;
     font-weight:800;
     letter-spacing:.2px;
@@ -1282,20 +1599,25 @@ header{
 
 .vs-stats-note{
     margin-top:10px;
-    color:var(--vs-dim);
+
+    color:#8f98b6;
     font-size:11px;
     text-align:center;
 }
 
-.vs-stats-note[hidden]{ display:none; }
+.vs-stats-note[hidden]{
+    display:none;
+}
 
-/* Footer */
+/* ---------- FOOTER ---------- */
 
 .vs-footer{
     margin:38px 0 26px;
     padding:20px 8px 4px;
+
     text-align:center;
-    border-top:1px solid var(--vs-line);
+
+    border-top:1px solid rgba(255,255,255,.07);
 }
 
 .vs-footer nav{
@@ -1304,761 +1626,1343 @@ header{
     align-items:center;
     justify-content:center;
     gap:4px 6px;
+
     margin-bottom:12px;
 }
 
 .vs-footer nav a{
     padding:10px 12px;
-    color:var(--vs-muted);
+
+    color:#aab3d0;
     text-decoration:none;
+
     font-size:13px;
     font-weight:750;
+
     border-radius:10px;
 }
 
 .vs-footer nav a:hover{
-    color:var(--vs-text);
-    background:var(--vs-hover);
+    color:#fff;
+    background:rgba(255,255,255,.05);
 }
 
 .vs-footer p{
-    color:var(--vs-dim);
+    color:#6f7898;
     font-size:12px;
 }
 
-/* ---------- SMALL PHONES ---------- */
-
-@media(max-width:600px){
-
-    header{ height:68px; padding:0 8px; gap:5px; }
-
-    .menu{ width:38px; height:38px; font-size:19px; }
-
-    .logo-star{ font-size:28px; }
-    .logo{ font-size:19px; }
-    .logo-sub{ font-size:8.5px; }
-
-    .icons{ gap:5px; }
-
-    .header-circle{ width:36px; height:36px; font-size:17px; }
-
-    .wallet-trigger{ height:36px; padding:0 9px 0 6px; font-size:13px; }
-
-    .container{ padding:79px 8px 18px; }
-
-    .story-wrap{ flex-basis:65px; width:65px; }
-    .story-link,
-    .story{ width:63px; height:63px; }
-    .story-name{ font-size:9px; }
-
-    .composer{ border-radius:19px; }
-    .composer-action{ font-size:11px; }
-
-    .post-card{ border-radius:18px; }
-    .post-card p{ font-size:14px; }
-    .post-buttons button{ font-size:12px; }
-
-    .bottom-nav{ height:64px; border-radius:21px; }
-
-    .bottom-nav a.create-btn{
-        flex-basis:56px;
-        width:56px;
-        height:56px;
-        margin-top:-28px;
-        font-size:30px;
-    }
-}
-
-@media(max-width:360px){
-
-    .logo-sub{ display:none; }
-    .ex-title{ font-size:11px; }
-    .ex-ico{ font-size:26px; }
-    .explore-grid{ gap:6px; }
-}
+/* ---------- NEW SECTIONS: SMALL PHONES ---------- */
 
 @media(max-width:340px){
 
-    .vs-groups-grid{ grid-template-columns:minmax(0,1fr); }
-    .vs-stat-num{ font-size:22px; }
-}
+    .vs-groups-grid{
+        grid-template-columns:minmax(0,1fr);
+    }
 
-@media(min-width:900px){
+    .vs-stat-num{
+        font-size:22px;
+    }
 
-    .ex-card{ min-height:110px; }
-    .ex-ico{ font-size:36px; }
-    .ex-title{ font-size:14px; }
 }
 
 @media(prefers-reduced-motion:reduce){
 
-    .story::before,
-    .bottom-nav a.create-btn,
     .vs-sk-avatar,
     .vs-sk-line,
     .vs-sk-btn,
-    .vs-live i{ animation:none; }
+    .vs-live i{
+        animation:none;
+    }
+
 }
 
-</style>
-</head>
-<body>
 
-<!-- ======================= HEADER ======================= -->
-<header>
 
-    <button class="menu" onclick="openMenu()" aria-label="Open menu">☰</button>
+/* VITALSTAR UPGRADE: Explore shortcuts, Coins label and theme dialog */
+.theme-menu-button{display:flex;align-items:center;width:100%;margin:5px 0;padding:14px;border:0;border-radius:14px;background:transparent;color:#d9def4;text-align:left;font-size:15px;font-weight:700;cursor:pointer;transition:.2s}
+.theme-menu-button:hover{background:linear-gradient(90deg,rgba(0,190,255,.12),rgba(140,55,255,.14));color:#fff;transform:translateX(3px)}
+.coin-word{font-size:10px;font-weight:900;letter-spacing:.3px;color:#ffe27a}
+.wallet-trigger{gap:5px}
+.explore-vitalstar{margin:9px 0 17px;padding:14px;border:1px solid rgba(112,132,255,.2);border-radius:21px;background:linear-gradient(145deg,rgba(19,25,48,.96),rgba(12,16,31,.96));box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.explore-vitalstar-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.explore-kicker{display:block;color:#8d9abd;font-size:9px;font-weight:900;letter-spacing:1.5px;margin-bottom:4px}
+.explore-vitalstar h2,.theme-dialog h2{margin:0;color:#f3f5ff;font-size:17px;font-weight:900;letter-spacing:-.3px}
+.explore-spark{font-size:25px;color:#57dfff;text-shadow:0 0 14px #743cff}
+.explore-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.explore-tile{position:relative;display:flex;min-width:0;min-height:105px;flex-direction:column;justify-content:flex-end;gap:4px;padding:10px 8px;border:1px solid rgba(255,255,255,.1);border-radius:15px;color:#fff;text-decoration:none;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.explore-tile:before{content:"";position:absolute;inset:0;opacity:.9;z-index:0}
+.explore-tile>*{position:relative;z-index:1}
+.explore-tile:hover,.explore-tile:focus-visible{transform:translateY(-3px);border-color:rgba(90,220,255,.6);box-shadow:0 7px 22px rgba(0,0,0,.3);outline:none}
+.tile-friends:before{background:radial-gradient(circle at 80% 10%,rgba(0,198,255,.42),transparent 55%),linear-gradient(145deg,#172c55,#10172b)}
+.tile-videos:before{background:radial-gradient(circle at 80% 10%,rgba(222,65,255,.4),transparent 55%),linear-gradient(145deg,#382052,#17152d)}
+.tile-groups:before{background:radial-gradient(circle at 80% 10%,rgba(32,235,190,.35),transparent 55%),linear-gradient(145deg,#16453f,#102b32)}
+.tile-games:before{background:radial-gradient(circle at 80% 10%,rgba(255,190,55,.4),transparent 55%),linear-gradient(145deg,#513719,#282039)}
+.tile-icon{font-size:23px;line-height:1.1;margin-bottom:4px}
+.explore-tile strong{font-size:12px;font-weight:900;white-space:nowrap}
+.explore-tile small{font-size:8px;color:#c2cbe4;line-height:1.25}
+.theme-overlay{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.68);backdrop-filter:blur(9px)}
+.theme-overlay[hidden]{display:none}
+.theme-dialog{width:min(100%,410px);padding:20px;border:1px solid rgba(119,133,255,.28);border-radius:23px;background:#101629;color:#f5f7ff;box-shadow:0 22px 80px rgba(0,0,0,.55)}
+.theme-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.theme-dialog-close{width:36px;height:36px;border:0;border-radius:50%;background:#202943;color:#fff;font-size:18px}
+.theme-dialog-copy{margin:12px 0 16px;color:#aab5d3;font-size:12px;line-height:1.55}
+.theme-options{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.theme-option{position:relative;display:flex;flex-direction:column;gap:7px;padding:10px;text-align:left;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#171f35;color:#fff;cursor:pointer}
+.theme-option[aria-pressed="true"]{border-color:#36d8ff;box-shadow:0 0 0 2px rgba(54,216,255,.14),0 0 20px rgba(65,111,255,.18)}
+.theme-preview{height:66px;display:flex;align-items:flex-end;gap:5px;padding:8px;border-radius:10px;overflow:hidden}
+.theme-preview i{display:block;height:27px;flex:1;border-radius:5px}
+.dark-preview{background:linear-gradient(135deg,#080d1d,#25164b)}
+.dark-preview i:nth-child(1){background:#00cfff}.dark-preview i:nth-child(2){background:#843cff}.dark-preview i:nth-child(3){background:#ff36ad}
+.light-preview{background:linear-gradient(135deg,#fff,#e8edff)}
+.light-preview i:nth-child(1){background:#54cfff}.light-preview i:nth-child(2){background:#a58aff}.light-preview i:nth-child(3){background:#ff8bc8}
+.theme-option strong{font-size:12px}.theme-option small{font-size:9px;color:#aab5d3}.theme-check{display:none;position:absolute;right:9px;top:9px;width:19px;height:19px;border-radius:50%;background:#19c9ed;color:#07111f;text-align:center;font-size:13px;font-weight:900}.theme-option[aria-pressed="true"] .theme-check{display:block}
+.theme-save-note{margin:14px 0 0;color:#8e9bbd;font-size:10px;line-height:1.5}
+@media(max-width:430px){.explore-shortcuts{gap:7px}.explore-tile{min-height:96px;padding:9px 6px}.explore-tile strong{font-size:11px}.explore-tile small{font-size:7px}.explore-vitalstar{padding:12px}}
 
-    <div class="logo-area">
-        <div class="logo-star">☆</div>
-        <div class="logo-text">
-            <div class="logo">VitalStar</div>
-            <div class="logo-sub">Connect • Share • Grow</div>
-        </div>
+</style>    <link rel="stylesheet" href="theme-system.css">
+  <script src="theme-system.js" defer></script>
+</head>  <body>  <header>  <button
+class="menu"
+onclick="openMenu()"
+aria-label="Open menu"
+
+> 
+
+☰
+
+</button>  <div class="logo-area">  <div class="logo-star">  
+    ☆  
+</div>  <div class="logo-text">  <div class="logo">  
+    VitalStar  
+</div>  <div class="logo-sub">  
+    Connect • Share • Grow  
+</div>  </div>  </div>  <div class="icons">  <a
+href="users.html"
+class="header-circle search-trigger"
+aria-label="Search"
+
+> 
+
+🔍
+
+</a>  <button
+class="wallet-trigger"
+id="walletButton"
+type="button"
+
+> 
+
+<span aria-hidden="true">🪙</span>
+
+<span id="walletBalance">0</span>
+<span class="coin-word">Coins</span>  </button>  <div style="position:relative">  <a
+href="notifications.html"
+class="header-circle"
+aria-label="Notifications"
+
+> 
+
+🔔
+
+</a>  <span
+id="notificationBadge"
+class="badge"
+
+> 
+
+0
+
+</span>  </div>  <div style="position:relative">  <a
+href="message.html"
+class="header-circle"
+aria-label="Messages"
+
+> 
+
+💬
+
+</a>  <span
+id="messageBadge"
+class="badge"
+
+> 
+
+0
+
+</span>  </div>  </div>  </header>  <div  
+    class="sidebar"  
+    id="sidebar"  
+>  <div class="sidebar-header">  <strong>  
+    VitalStar  
+</strong>  <button
+class="sidebar-close"
+onclick="closeMenu()"
+aria-label="Close menu"
+
+> 
+
+✕
+
+</button>  </div>  <a href="message.html">
+    💬 &nbsp; Messages
+</a>
+<a href="edit-profile.html">
+    ⚙️ &nbsp; Settings
+</a>
+<a href="saved.html">
+    🔖 &nbsp; Saved Posts
+</a>
+<button type="button" class="theme-menu-button" id="openThemeSettings">
+    🎨 &nbsp; Theme Settings
+</button>
+  <button id="logoutBtn">  
+    🚪 &nbsp; Logout  
+</button>  </div>  <script>  
+  
+function openMenu(){  
+  
+    const sidebar =  
+        document.getElementById("sidebar");  
+  
+    if(  
+        sidebar.style.left === "0px"  
+    ){  
+  
+        closeMenu();  
+  
+    }else{  
+  
+        sidebar.style.left =  
+            "0px";  
+  
+    }  
+  
+}  
+  
+function closeMenu(){  
+  
+    document  
+        .getElementById("sidebar")  
+        .style.left =  
+            "-285px";  
+  
+}  
+  
+</script>  <div class="theme-overlay" id="themeOverlay" hidden>
+  <section class="theme-dialog" role="dialog" aria-modal="true" aria-labelledby="themeDialogTitle">
+    <div class="theme-dialog-head"><div><span class="explore-kicker">PERSONALIZE YOUR EXPERIENCE</span><h2 id="themeDialogTitle">Theme Settings</h2></div><button type="button" class="theme-dialog-close" id="closeThemeSettings" aria-label="Close theme settings">✕</button></div>
+    <p class="theme-dialog-copy">Choose how VitalStar looks. Your selection is saved on this device.</p>
+    <div class="theme-options">
+      <button type="button" class="theme-option" data-theme-choice="dark"><span class="theme-preview dark-preview"><i></i><i></i><i></i></span><strong>Dark Theme</strong><small>Midnight • Neon • Glass</small><span class="theme-check" aria-hidden="true">✓</span></button>
+      <button type="button" class="theme-option" data-theme-choice="light"><span class="theme-preview light-preview"><i></i><i></i><i></i></span><strong>White Theme</strong><small>Bright • Clean • Soft</small><span class="theme-check" aria-hidden="true">✓</span></button>
     </div>
-
-    <div class="icons">
-
-        <a href="users.html" class="header-circle" aria-label="Search">🔍</a>
-
-        <!-- Coin balance (id kept so existing wallet.js keeps working) -->
-        <button class="wallet-trigger" id="walletButton" type="button" aria-label="Coin balance">
-            <i class="vs-coin"></i>
-            <span id="walletBalance" data-coin-balance>0</span>
-        </button>
-
-        <div style="position:relative">
-            <a href="notifications.html" class="header-circle" aria-label="Notifications">🔔</a>
-            <span id="notificationBadge" class="badge">0</span>
-        </div>
-
-        <div style="position:relative">
-            <a href="message.html" class="header-circle" aria-label="Messages">💬</a>
-            <span id="messageBadge" class="badge">0</span>
-        </div>
-
-    </div>
-
-</header>
-
-<!-- ======================= SIDEBAR ======================= -->
-<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMenu()"></div>
-
-<div class="sidebar" id="sidebar">
-
-    <button class="sidebar-close" onclick="closeMenu()" aria-label="Close menu">✕</button>
-
-    <div class="sidebar-brand">
-        <div class="big-star">☆</div>
-        <strong>VitalStar</strong>
-    </div>
-
-    <a href="message.html"><span class="side-ico">💬</span> Messages</a>
-    <a href="edit-profile.html"><span class="side-ico">⚙️</span> Settings</a>
-    <a href="saved.html"><span class="side-ico">🔖</span> Saved Posts</a>
-
-    <button type="button" class="side-btn" id="themeSettingsBtn" data-open-theme>
-        <span class="side-ico">🎨</span> Theme Settings
-    </button>
-
-    <button type="button" class="side-btn" id="logoutBtn">
-        <span class="side-ico">🚪</span> Logout
-    </button>
-
-    <div class="sidebar-motto">
-        <div class="big-star">☆</div>
-        <b>Connect<br>Share<br>Grow</b>
-    </div>
-
+    <p class="theme-save-note" id="themeSaveNote" aria-live="polite">Theme applies wherever the VitalStar shared theme files are installed.</p>
+  </section>
 </div>
 
-<script>
+<main class="container">  <section class="stories-section">  <div  
+    class="stories"  
+    id="stories"  
+></div>
 
-function openMenu(){
+</section>
 
-    var sidebar = document.getElementById("sidebar");
+<section class="explore-vitalstar" aria-labelledby="exploreVitalStarTitle">
+  <div class="explore-vitalstar-heading">
+    <div><span class="explore-kicker">DISCOVER MORE</span><h2 id="exploreVitalStarTitle">Explore VitalStar</h2></div>
+    <span class="explore-spark" aria-hidden="true">✦</span>
+  </div>
+  <div class="explore-shortcuts">
+    <a class="explore-tile tile-friends" href="myfriends.html"><span class="tile-icon">👥</span><strong>Friends</strong><small>Connect with people</small></a>
+    <a class="explore-tile tile-videos" href="reals/reals.html"><span class="tile-icon">🎬</span><strong>Videos</strong><small>Watch and share</small></a>
+    <a class="explore-tile tile-groups" href="groups.html"><span class="tile-icon">🫂</span><strong>Groups</strong><small>Find your community</small></a>
+    <a class="explore-tile tile-games" href="games/games.html"><span class="tile-icon">🎮</span><strong>Games</strong><small>Play and compete</small></a>
+  </div>
+</section>
 
-    if(sidebar.style.left === "0px"){
-        closeMenu();
-        return;
-    }
+<div id="createPost"></div>  <div class="compatibility-text">  <h2 id="welcomeText">  
+    Good Day...  
+</h2>  <p id="welcomeSub">  
+    Welcome back to VitalStar  
+</p>  </div>  <div id="feed"></div>
 
-    sidebar.style.left = "0px";
-    document.getElementById("sidebarBackdrop").classList.add("show");
-}
+<!-- =========================================================
+     NEW: DISCOVER GROUPS  (filled by home-groups.js)
+     ========================================================= -->
+<section
+    class="vs-section"
+    id="vsGroupsSection"
+    aria-labelledby="vsGroupsTitle"
+>
 
-function closeMenu(){
+    <div class="vs-section-head">
 
-    document.getElementById("sidebar").style.left = "-285px";
-    document.getElementById("sidebarBackdrop").classList.remove("show");
-}
+        <h2 id="vsGroupsTitle">👥 Discover Groups</h2>
 
-/* Close the menu when Theme Settings opens. */
-document.addEventListener("click", function(event){
+        <a class="vs-see-all" href="groups.html">See all →</a>
 
-    if(event.target.closest && event.target.closest("[data-open-theme]")){
-        closeMenu();
-    }
-
-});
-
-</script>
-
-<!-- ======================= MAIN ======================= -->
-<main class="container">
-
-    <!-- 1. FRIENDS + STORIES -->
-    <section class="stories-section">
-        <div class="stories" id="stories"></div>
-    </section>
-
-    <!-- 2. EXPLORE VITALSTAR -->
-    <section class="explore" aria-labelledby="exploreTitle">
-
-        <h2 id="exploreTitle">🚀 <span>Explore <span class="accent">VitalStar</span></span></h2>
-
-        <div class="explore-grid">
-
-            <a class="ex-card ex-friends" href="myfriends.html" aria-label="Friends — discover and connect with people">
-                <span class="ex-badge" id="friendRequestBadge">0</span>
-                <span class="ex-ico">👥</span>
-                <span class="ex-title">Friends</span>
-            </a>
-
-            <a class="ex-card ex-videos" href="reals/reals.html" aria-label="Videos — watch and share entertaining videos">
-                <span class="ex-ico">🎬</span>
-                <span class="ex-title">Videos</span>
-            </a>
-
-            <a class="ex-card ex-groups" href="groups.html" aria-label="Groups — join communities and interact">
-                <span class="ex-ico">🫂</span>
-                <span class="ex-title">Groups</span>
-            </a>
-
-            <a class="ex-card ex-games" href="games/games.html" aria-label="Games — play online games with friends">
-                <span class="ex-ico">🎮</span>
-                <span class="ex-title">Games</span>
-            </a>
-
-        </div>
-
-    </section>
-
-    <!-- 3. CREATE POST (filled by post.js) -->
-    <div id="createPost"></div>
-
-    <div class="compatibility-text">
-        <h2 id="welcomeText">Good Day...</h2>
-        <p id="welcomeSub">Welcome back to VitalStar</p>
     </div>
 
-    <!-- 4. FEED -->
-    <div id="feed"></div>
+    <div
+        class="vs-groups-grid"
+        id="vsGroupsGrid"
+        aria-live="polite"
+        aria-busy="true"
+    ></div>
 
-    <!-- DISCOVER GROUPS (filled by home-groups.js) -->
-    <section class="vs-section" id="vsGroupsSection" aria-labelledby="vsGroupsTitle">
+    <div class="vs-state" id="vsGroupsState" hidden></div>
 
-        <div class="vs-section-head">
-            <h2 id="vsGroupsTitle">👥 Discover Groups</h2>
-            <a class="vs-see-all" href="groups.html">See all →</a>
+    <a class="vs-groups-more" href="groups.html">
+        Browse all groups
+    </a>
+
+</section>
+
+<!-- =========================================================
+     NEW: ONLINE STATS  (filled by online-stats.js)
+     ========================================================= -->
+<section
+    class="vs-stats"
+    id="vsOnlineStats"
+    aria-labelledby="vsStatsTitle"
+>
+
+    <div class="vs-stats-head">
+
+        <h2 id="vsStatsTitle">Online Stats</h2>
+
+        <span class="vs-live"><i></i>Live</span>
+
+    </div>
+
+    <div class="vs-stats-grid">
+
+        <div class="vs-stat">
+            <span class="vs-stat-num" id="vsActiveUsers" role="status">…</span>
+            <span class="vs-stat-label">Active Users</span>
         </div>
 
-        <div class="vs-groups-grid" id="vsGroupsGrid" aria-live="polite" aria-busy="true"></div>
-
-        <div class="vs-state" id="vsGroupsState" hidden></div>
-
-        <a class="vs-groups-more" href="groups.html">Browse all groups</a>
-
-    </section>
-
-    <!-- ONLINE STATS (filled by online-stats.js) -->
-    <section class="vs-stats" id="vsOnlineStats" aria-labelledby="vsStatsTitle">
-
-        <div class="vs-stats-head">
-            <h2 id="vsStatsTitle">Online Stats</h2>
-            <span class="vs-live"><i></i>Live</span>
+        <div class="vs-stat">
+            <span class="vs-stat-num" id="vsActiveFriends" role="status">…</span>
+            <span class="vs-stat-label">Active Friends</span>
         </div>
 
-        <div class="vs-stats-grid">
-
-            <div class="vs-stat">
-                <span class="vs-stat-num" id="vsActiveUsers" role="status">…</span>
-                <span class="vs-stat-label">Active Users</span>
-            </div>
-
-            <div class="vs-stat">
-                <span class="vs-stat-num" id="vsActiveFriends" role="status">…</span>
-                <span class="vs-stat-label">Active Friends</span>
-            </div>
-
-            <div class="vs-stat">
-                <span class="vs-stat-num" id="vsActiveAdmins" role="status">…</span>
-                <span class="vs-stat-label">Active Admins</span>
-            </div>
-
+        <div class="vs-stat">
+            <span class="vs-stat-num" id="vsActiveAdmins" role="status">…</span>
+            <span class="vs-stat-label">Active Admins</span>
         </div>
 
-        <p class="vs-stats-note" id="vsStatsNote" hidden></p>
+    </div>
 
-    </section>
+    <p class="vs-stats-note" id="vsStatsNote" hidden></p>
 
-    <!-- FOOTER -->
-    <footer class="vs-footer">
+</section>
 
-        <nav aria-label="Footer links">
-            <a href="policy.html">🔒Privacy Policy</a>
-            <a href="terms.html">🤝Terms</a>
-            <a href="http://rexweb.web.app">RexWeb</a>
-        </nav>
+<!-- =========================================================
+     NEW: FOOTER
+     ========================================================= -->
+<footer class="vs-footer">
 
-        <p>&copy; <span id="vsYear">2026</span> VitalStar. All rights reserved.</p>
+    <nav aria-label="Footer links">
 
-    </footer>
+        <a href="policy.html">🔒Privacy Policy</a>
 
-    <script>
-    (function(){
-        var year = document.getElementById("vsYear");
-        if(year){
-            year.textContent = String(new Date().getFullYear());
-        }
-    })();
-    </script>
+        <a href="terms.html">🤝Terms</a>
 
-</main>
+        <a href="https://rexweb.web.app">RexWeb</a>
 
-<!-- ======================= BOTTOM NAV ======================= -->
-<nav class="bottom-nav">
+    </nav>
 
-    <a href="home.html" class="active">
-        🏠
-        <small>Home</small>
-    </a>
+    <p>
+        &copy; <span id="vsYear">2026</span> VitalStar. All rights reserved.
+    </p>
 
-    <a href="users.html">
-        🔎
-        <small>Explore</small>
-    </a>
+</footer>
 
-    <!-- Create Post (+) : opens the existing post creator -->
-    <a href="#" class="create-btn" id="bottomCreatePost" aria-label="Create Post">+</a>
+<script>
+(function(){
+    var year = document.getElementById("vsYear");
+    if(year){
+        year.textContent = String(new Date().getFullYear());
+    }
+})();
+</script>
+  </main>  <nav class="bottom-nav">  <a href="home.html">  🏠  
 
-    <!-- Coins (same route as before: wallet.html) -->
-    <a href="wallet.html" class="coin-link">
-        <i class="vs-coin big"></i>
-        <small>Coins</small>
-    </a>
+<small>  
+    Home  
+</small>
 
-    <a href="profile.html">
-        👤
-        <small>Profile</small>
-    </a>
+</a>  <a href="users.html">  🔎  
 
-</nav>
+<small>  
+    Explore  
+</small>
 
-<!-- ======================= EXISTING SCRIPTS ======================= -->
-<script type="module" src="auth-guard.js"></script>
-<script type="module" src="presence.js"></script>
-<script type="module" src="message-badge.js"></script>
-<script type="module" src="wallet.js"></script>
-<script type="module" src="post.js"></script>
-<script type="module" src="home.js"></script>
-<script type="module" src="online-count.js"></script>
-<script type="module" src="notifications.js"></script>
-<script type="module" src="logout.js"></script>
+</a>  <a
+href="#"
+class="create-btn"
+id="bottomCreatePost"
+aria-label="Create Post"
 
-<!-- DISCOVER GROUPS + ONLINE STATS -->
+> 
+
++
+
+</a>  <a href="wallet.html">  🪙  
+
+<small>  
+    Coins  
+</small>
+
+</a>  <a href="profile.html">  👤  
+
+<small>  
+    Profile  
+</small>
+
+</a>  </nav>  <script  
+    type="module"  
+    src="auth-guard.js"  
+></script>  <script  
+    type="module"  
+    src="presence.js"  
+></script>  <script  
+    type="module"  
+    src="message-badge.js"  
+></script>  <script  
+    type="module"  
+    src="wallet.js"  
+></script>  <script  
+    type="module"  
+    src="post.js"  
+></script>  <script  
+    type="module"  
+    src="home.js"  
+></script>  <script  
+    type="module"  
+    src="online-count.js"  
+></script>  <script  
+    type="module"  
+    src="notifications.js"  
+></script>  <script  
+    type="module"  
+    src="logout.js"  
+></script>
+<!-- NEW: DISCOVER GROUPS + ONLINE STATS -->
 <script type="module" src="home-groups.js"></script>
 <script type="module" src="online-stats.js"></script>
-
-<!-- FRIEND REQUEST COUNT (shown on the Friends card) -->
-<script type="module">
-
-import { auth, db } from "./firebase.js";
-
-import {
-    collection,
-    query,
-    where,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const friendRequestBadge = document.getElementById("friendRequestBadge");
-
-function updateFriendRequestBadge(count){
-
-    if(!friendRequestBadge){
-        return;
-    }
-
-    if(count > 0){
-        friendRequestBadge.textContent = count > 99 ? "99+" : count;
-        friendRequestBadge.classList.add("show");
-    }else{
-        friendRequestBadge.textContent = "0";
-        friendRequestBadge.classList.remove("show");
-    }
-}
-
-auth.onAuthStateChanged(user => {
-
-    if(!user){
-        updateFriendRequestBadge(0);
-        return;
-    }
-
-    const requestsQuery = query(
-        collection(db, "friendRequests"),
-        where("to", "==", user.uid)
-    );
-
-    onSnapshot(
-        requestsQuery,
-        snapshot => {
-
-            let count = 0;
-
-            snapshot.forEach(requestDoc => {
-                if(requestDoc.data().status === "pending"){
-                    count++;
-                }
-            });
-
-            updateFriendRequestBadge(count);
-        },
-        error => {
-            console.error("Friend request badge error:", error);
-            updateFriendRequestBadge(0);
-        }
-    );
-});
-
+  <!-- FRIEND REQUEST SIDEBAR COUNT -->  <script type="module">  
+  
+import {  
+    auth,  
+    db  
+} from "./firebase.js";  
+  
+import {  
+    collection,  
+    query,  
+    where,  
+    onSnapshot  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
+  
+  
+const friendRequestBadge =  
+    document.getElementById(  
+        "friendRequestBadge"  
+    );  
+  
+  
+function updateFriendRequestBadge(  
+    count  
+){  
+  
+    if(!friendRequestBadge){  
+        return;  
+    }  
+  
+    if(count > 0){  
+  
+        friendRequestBadge.textContent =  
+            count > 99  
+                ? "99+"  
+                : count;  
+  
+        friendRequestBadge.classList.add(  
+            "show"  
+        );  
+  
+    }else{  
+  
+        friendRequestBadge.textContent =  
+            "0";  
+  
+        friendRequestBadge.classList.remove(  
+            "show"  
+        );  
+  
+    }  
+  
+}  
+  
+  
+auth.onAuthStateChanged(  
+    user => {  
+  
+        if(!user){  
+  
+            updateFriendRequestBadge(  
+                0  
+            );  
+  
+            return;  
+        }  
+  
+  
+        const requestsQuery =  
+            query(  
+  
+                collection(  
+                    db,  
+                    "friendRequests"  
+                ),  
+  
+                where(  
+                    "to",  
+                    "==",  
+                    user.uid  
+                )  
+  
+            );  
+  
+  
+        onSnapshot(  
+  
+            requestsQuery,  
+  
+            snapshot => {  
+  
+                let count = 0;  
+  
+  
+                snapshot.forEach(  
+                    requestDoc => {  
+  
+                        const request =  
+                            requestDoc.data();  
+  
+  
+                        if(  
+                            request.status ===  
+                            "pending"  
+                        ){  
+  
+                            count++;  
+  
+                        }  
+  
+                    }  
+                );  
+  
+  
+                updateFriendRequestBadge(  
+                    count  
+                );  
+  
+            },  
+  
+            error => {  
+  
+                console.error(  
+                    "Friend request badge error:",  
+                    error  
+                );  
+  
+                updateFriendRequestBadge(  
+                    0  
+                );  
+  
+            }  
+  
+        );  
+  
+    }  
+);  
+  
+</script>  <!-- DYNAMIC STORIES LOADER -->  <script type="module">  
+  
+import {  
+    auth,  
+    db,  
+    rtdb  
+} from "./firebase.js";  
+  
+import {  
+    doc,  
+    getDoc,  
+    collection,  
+    query,  
+    where,  
+    getDocs  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";  
+  
+import {  
+    ref,  
+    get  
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";  
+  
+  
+const storiesContainer =  
+    document.getElementById("stories");  
+  
+  
+/* =========================================================  
+   DEFAULT PROFILE IMAGE  
+   ========================================================= */  
+  
+const DEFAULT_AVATAR =  
+    "data:image/svg+xml;charset=UTF-8," +  
+    encodeURIComponent(`  
+        <svg xmlns="http://www.w3.org/2000/svg"  
+             width="200"  
+             height="200"  
+             viewBox="0 0 200 200">  
+  
+            <rect  
+                width="200"  
+                height="200"  
+                rx="100"  
+                fill="#151a2d"  
+            />  
+  
+            <circle  
+                cx="100"  
+                cy="78"  
+                r="38"  
+                fill="#7c35ff"  
+            />  
+  
+            <path  
+                d="M35 180  
+                   C42 130 70 112 100 112  
+                   C130 112 158 130 165 180Z"  
+                fill="#00cfff"  
+            />  
+  
+        </svg>  
+    `);  
+  
+  
+/* =========================================================  
+   LOAD PROFILE — FULL NAME  
+   ========================================================= */  
+  
+async function loadProfile(uid){  
+  
+    try{  
+  
+        const snapshot =  
+            await getDoc(  
+                doc(  
+                    db,  
+                    "users",  
+                    uid  
+                )  
+            );  
+  
+  
+        if(!snapshot.exists()){  
+  
+            return {  
+  
+                uid: uid,  
+  
+                name: "",  
+  
+                profilePicture: ""  
+  
+            };  
+  
+        }  
+  
+  
+        const data =  
+            snapshot.data();  
+  
+  
+        return {  
+  
+            uid: uid,  
+  
+            /*  
+             * FULL NAME ONLY  
+             */  
+  
+            name:  
+                data.fullName ||  
+                "",  
+  
+            profilePicture:  
+                data.profilePicture ||  
+                data.photoURL ||  
+                ""  
+  
+        };  
+  
+    }catch(error){  
+  
+        console.error(  
+            "Could not load profile:",  
+            uid,  
+            error  
+        );  
+  
+  
+        return {  
+  
+            uid: uid,  
+  
+            name: "",  
+  
+            profilePicture: ""  
+  
+        };  
+  
+    }  
+  
+}  
+  
+  
+/* =========================================================  
+   LAST ACTIVE  
+   ========================================================= */  
+  
+async function getLastActive(uid){  
+  
+    try{  
+  
+        const snapshot =  
+            await get(  
+                ref(  
+                    rtdb,  
+                    `status/${uid}`  
+                )  
+            );  
+  
+  
+        if(snapshot.exists()){  
+  
+            const status =  
+                snapshot.val();  
+  
+  
+            if(status){  
+  
+                if(  
+                    status.lastSeen !==  
+                    undefined &&  
+                    status.lastSeen !==  
+                    null  
+                ){  
+  
+                    return Number(  
+                        status.lastSeen  
+                    );  
+  
+                }  
+  
+                if(  
+                    status.lastActive !==  
+                    undefined &&  
+                    status.lastActive !==  
+                    null  
+                ){  
+  
+                    return Number(  
+                        status.lastActive  
+                    );  
+  
+                }  
+  
+            }  
+  
+        }  
+  
+    }catch(error){  
+  
+        console.warn(  
+            "Presence unavailable:",  
+            uid  
+        );  
+  
+    }  
+  
+  
+    return 0;  
+  
+}  
+  
+  
+/* =========================================================  
+   GET ACCEPTED FRIENDS  
+   ========================================================= */  
+  
+async function getAcceptedFriends(uid){  
+  
+    const friendIds =  
+        new Set();  
+  
+  
+    try{  
+  
+        const sentQuery =  
+            query(  
+  
+                collection(  
+                    db,  
+                    "friendRequests"  
+                ),  
+  
+                where(  
+                    "from",  
+                    "==",  
+                    uid  
+                ),  
+  
+                where(  
+                    "status",  
+                    "==",  
+                    "accepted"  
+                )  
+  
+            );  
+  
+  
+        const sentSnapshot =  
+            await getDocs(  
+                sentQuery  
+            );  
+  
+  
+        sentSnapshot.forEach(  
+            requestDoc => {  
+  
+                const data =  
+                    requestDoc.data();  
+  
+  
+                if(data.to){  
+  
+                    friendIds.add(  
+                        data.to  
+                    );  
+  
+                }  
+  
+            }  
+        );  
+  
+    }catch(error){  
+  
+        console.warn(  
+            "Sent friends query failed:",  
+            error  
+        );  
+  
+    }  
+  
+  
+    try{  
+  
+        const receivedQuery =  
+            query(  
+  
+                collection(  
+                    db,  
+                    "friendRequests"  
+                ),  
+  
+                where(  
+                    "to",  
+                    "==",  
+                    uid  
+                ),  
+  
+                where(  
+                    "status",  
+                    "==",  
+                    "accepted"  
+                )  
+  
+            );  
+  
+  
+        const receivedSnapshot =  
+            await getDocs(  
+                receivedQuery  
+            );  
+  
+  
+        receivedSnapshot.forEach(  
+            requestDoc => {  
+  
+                const data =  
+                    requestDoc.data();  
+  
+  
+                if(data.from){  
+  
+                    friendIds.add(  
+                        data.from  
+                    );  
+  
+                }  
+  
+            }  
+        );  
+  
+    }catch(error){  
+  
+        console.warn(  
+            "Received friends query failed:",  
+            error  
+        );  
+  
+    }  
+  
+  
+    return [  
+        ...friendIds  
+    ];  
+  
+}  
+  
+  
+/* =========================================================  
+   CREATE STORY  
+   ========================================================= */  
+  
+function createStory(  
+    profile,  
+    ownStory = false  
+){  
+  
+    const wrap =  
+        document.createElement(  
+            "div"  
+        );  
+  
+    wrap.className =  
+        "story-wrap";  
+  
+  
+    const link =  
+        document.createElement(  
+            "a"  
+        );  
+  
+    link.className =  
+        "story-link";  
+  
+    link.href =  
+        `profile.html?uid=${encodeURIComponent(  
+            profile.uid  
+        )}`;  
+  
+    link.title =  
+        profile.name  
+            ? `View ${profile.name}'s profile`  
+            : "View profile";  
+  
+  
+    const story =  
+        document.createElement(  
+            "div"  
+        );  
+  
+    story.className =  
+        "story";  
+  
+  
+    const inner =  
+        document.createElement(  
+            "div"  
+        );  
+  
+    inner.className =  
+        "story-inner";  
+  
+  
+    const image =  
+        document.createElement(  
+            "img"  
+        );  
+  
+    image.src =  
+        profile.profilePicture ||  
+        DEFAULT_AVATAR;  
+  
+    image.alt =  
+        profile.name ||  
+        "Profile";  
+  
+  
+    image.onerror =  
+        function(){  
+  
+            this.onerror = null;  
+  
+            this.src =  
+                DEFAULT_AVATAR;  
+  
+        };  
+  
+  
+    inner.appendChild(  
+        image  
+    );  
+  
+    story.appendChild(  
+        inner  
+    );  
+  
+    link.appendChild(  
+        story  
+    );  
+  
+  
+    /* PLUS BUTTON FOR CURRENT USER */  
+  
+    if(ownStory){  
+  
+        const add =  
+            document.createElement(  
+                "button"  
+            );  
+  
+        add.type =  
+            "button";  
+  
+        add.className =  
+            "story-add";  
+  
+        add.textContent =  
+            "+";  
+  
+        add.title =  
+            "Create a story";  
+  
+  
+        add.addEventListener(  
+            "click",  
+            function(event){  
+  
+                event.preventDefault();  
+                event.stopPropagation();  
+  
+  
+                if(  
+                    window.VitalStarStory &&  
+                    typeof  
+                    window.VitalStarStory.open ===  
+                    "function"  
+                ){  
+  
+                    window.VitalStarStory.open();  
+  
+                    return;  
+  
+                }  
+  
+  
+                if(  
+                    window.VitalStarPost &&  
+                    typeof  
+                    window.VitalStarPost.open ===  
+                    "function"  
+                ){  
+  
+                    window.VitalStarPost.open();  
+  
+                }  
+  
+            }  
+        );  
+  
+  
+        story.appendChild(  
+            add  
+        );  
+  
+    }  
+  
+  
+    const name =  
+        document.createElement(  
+            "span"  
+        );  
+  
+    name.className =  
+        "story-name";  
+  
+    /*  
+     * FULL NAME ONLY  
+     */  
+  
+    name.textContent =  
+        profile.name;  
+  
+  
+    wrap.appendChild(  
+        link  
+    );  
+  
+    wrap.appendChild(  
+        name  
+    );  
+  
+  
+    return wrap;  
+  
+}  
+  
+  
+/* =========================================================  
+   RENDER STORIES  
+   ========================================================= */  
+  
+async function loadStories(user){  
+  
+    if(!storiesContainer){  
+        return;  
+    }  
+  
+  
+    storiesContainer.innerHTML =  
+        "";  
+  
+  
+    /* CURRENT USER FIRST */  
+  
+    const currentProfile =  
+        await loadProfile(  
+            user.uid  
+        );  
+  
+  
+    storiesContainer.appendChild(  
+  
+        createStory(  
+            currentProfile,  
+            true  
+        )  
+  
+    );  
+  
+  
+    /* GET ACCEPTED FRIENDS */  
+  
+    const friendIds =  
+        await getAcceptedFriends(  
+            user.uid  
+        );  
+  
+  
+    if(!friendIds.length){  
+        return;  
+    }  
+  
+  
+    /* LOAD FRIEND PROFILES + LAST ACTIVE */  
+  
+    const friends =  
+        await Promise.all(  
+  
+            friendIds.map(  
+                async friendUid => {  
+  
+                    const profile =  
+                        await loadProfile(  
+                            friendUid  
+                        );  
+  
+  
+                    const lastActive =  
+                        await getLastActive(  
+                            friendUid  
+                        );  
+  
+  
+                    return {  
+  
+                        ...profile,  
+  
+                        lastActive  
+  
+                    };  
+  
+                }  
+            )  
+  
+        );  
+  
+  
+    /* MOST RECENTLY ACTIVE FIRST */  
+  
+    friends.sort(  
+        (a,b) =>  
+            b.lastActive -  
+            a.lastActive  
+    );  
+  
+  
+    /* MAXIMUM 5 FRIENDS */  
+  
+    const recentFriends =  
+        friends.slice(  
+            0,  
+            5  
+        );  
+  
+  
+    recentFriends.forEach(  
+        friend => {  
+  
+            storiesContainer.appendChild(  
+  
+                createStory(  
+                    friend,  
+                    false  
+                )  
+  
+            );  
+  
+        }  
+    );  
+  
+}  
+  
+  
+/* =========================================================  
+   AUTH  
+   ========================================================= */  
+  
+auth.onAuthStateChanged(  
+    async user => {  
+  
+        if(!user){  
+  
+            if(storiesContainer){  
+  
+                storiesContainer.innerHTML =  
+                    "";  
+  
+            }  
+  
+            return;  
+  
+        }  
+  
+  
+        try{  
+  
+            await loadStories(  
+                user  
+            );  
+  
+        }catch(error){  
+  
+            console.error(  
+                "Stories error:",  
+                error  
+            );  
+  
+        }  
+  
+    }  
+);  
+  
+</script>  <!-- BOTTOM CREATE BUTTON -->  <script type="module">  
+  
+document  
+    .getElementById("bottomCreatePost")  
+    ?.addEventListener(  
+        "click",  
+        function(event){  
+  
+            event.preventDefault();  
+  
+            if(  
+                window.VitalStarPost &&  
+                typeof  
+                window.VitalStarPost.open ===  
+                "function"  
+            ){  
+  
+                window.VitalStarPost.open();  
+  
+            }  
+  
+        }  
+    );  
+  
+</script>  <!-- SERVICE WORKER -->  <script>  
+  
+if(  
+    "serviceWorker" in navigator  
+){  
+  
+    navigator.serviceWorker.register(  
+        "./firebase-messaging-sw.js"  
+    )  
+  
+    .then(function(registration){  
+  
+        console.log(  
+            "Service Worker registered:",  
+            registration  
+        );  
+  
+    })  
+  
+    .catch(function(error){  
+  
+        console.error(  
+            "Service Worker Error:",  
+            error  
+        );  
+  
+    });  
+  
+}  
+  
+</script>  <script>
+(function(){
+  const overlay=document.getElementById('themeOverlay');
+  const openButton=document.getElementById('openThemeSettings');
+  const closeButton=document.getElementById('closeThemeSettings');
+  const options=[...document.querySelectorAll('[data-theme-choice]')];
+  function syncOptions(){
+    const current=document.documentElement.getAttribute('data-theme')||'dark';
+    options.forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.themeChoice===current)));
+  }
+  function open(){if(overlay){overlay.hidden=false;syncOptions();}}
+  function close(){if(overlay)overlay.hidden=true;}
+  openButton?.addEventListener('click',open);
+  closeButton?.addEventListener('click',close);
+  overlay?.addEventListener('click',e=>{if(e.target===overlay)close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  options.forEach(btn=>btn.addEventListener('click',()=>{
+    if(window.VitalStarTheme?.setTheme){window.VitalStarTheme.setTheme(btn.dataset.themeChoice);syncOptions();}
+  }));
+  window.addEventListener('vitalstar-theme-change',syncOptions);
+  // Keep the header display in coin terminology while the legacy wallet module is being migrated.
+  const balance=document.getElementById('walletBalance');
+  if(balance){
+    const clean=()=>{const value=balance.textContent.replace(/[₦$€£,]/g,'').trim();balance.textContent=value||'0';};
+    clean();new MutationObserver(clean).observe(balance,{childList:true,subtree:true,characterData:true});
+  }
+})();
 </script>
-
-<!-- DYNAMIC STORIES LOADER -->
-<script type="module">
-
-import { auth, db, rtdb } from "./firebase.js";
-
-import {
-    doc,
-    getDoc,
-    collection,
-    query,
-    where,
-    getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import {
-    ref,
-    get
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-const storiesContainer = document.getElementById("stories");
-
-/* Default profile picture */
-const DEFAULT_AVATAR =
-    "data:image/svg+xml;charset=UTF-8," +
-    encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-            <rect width="200" height="200" rx="100" fill="#151a2d"/>
-            <circle cx="100" cy="78" r="38" fill="#7c35ff"/>
-            <path d="M35 180 C42 130 70 112 100 112 C130 112 158 130 165 180Z" fill="#00cfff"/>
-        </svg>
-    `);
-
-/* Load a profile (full name + picture) */
-async function loadProfile(uid){
-
-    try{
-
-        const snapshot = await getDoc(doc(db, "users", uid));
-
-        if(!snapshot.exists()){
-            return { uid, name:"", profilePicture:"", verified:false };
-        }
-
-        const data = snapshot.data();
-
-        return {
-            uid,
-            name: data.fullName || "",
-            profilePicture: data.profilePicture || data.photoURL || "",
-            verified: data.verified === true || data.isVerified === true
-        };
-
-    }catch(error){
-
-        console.error("Could not load profile:", uid, error);
-
-        return { uid, name:"", profilePicture:"", verified:false };
-    }
-}
-
-/* Last active time (for ordering friends) */
-async function getLastActive(uid){
-
-    try{
-
-        const snapshot = await get(ref(rtdb, `status/${uid}`));
-
-        if(snapshot.exists()){
-
-            const status = snapshot.val();
-
-            if(status){
-
-                if(status.lastSeen !== undefined && status.lastSeen !== null){
-                    return Number(status.lastSeen);
-                }
-
-                if(status.lastActive !== undefined && status.lastActive !== null){
-                    return Number(status.lastActive);
-                }
-            }
-        }
-
-    }catch(error){
-        console.warn("Presence unavailable:", uid);
-    }
-
-    return 0;
-}
-
-/* Accepted friends (both directions) */
-async function getAcceptedFriends(uid){
-
-    const friendIds = new Set();
-
-    try{
-
-        const sentSnapshot = await getDocs(query(
-            collection(db, "friendRequests"),
-            where("from", "==", uid),
-            where("status", "==", "accepted")
-        ));
-
-        sentSnapshot.forEach(requestDoc => {
-            const data = requestDoc.data();
-            if(data.to){
-                friendIds.add(data.to);
-            }
-        });
-
-    }catch(error){
-        console.warn("Sent friends query failed:", error);
-    }
-
-    try{
-
-        const receivedSnapshot = await getDocs(query(
-            collection(db, "friendRequests"),
-            where("to", "==", uid),
-            where("status", "==", "accepted")
-        ));
-
-        receivedSnapshot.forEach(requestDoc => {
-            const data = requestDoc.data();
-            if(data.from){
-                friendIds.add(data.from);
-            }
-        });
-
-    }catch(error){
-        console.warn("Received friends query failed:", error);
-    }
-
-    return [...friendIds];
-}
-
-/* One story bubble */
-function createStory(profile, ownStory = false){
-
-    const wrap = document.createElement("div");
-    wrap.className = "story-wrap";
-
-    const link = document.createElement("a");
-    link.className = "story-link";
-    link.href = `profile.html?uid=${encodeURIComponent(profile.uid)}`;
-    link.title = profile.name ? `View ${profile.name}'s profile` : "View profile";
-
-    const story = document.createElement("div");
-    story.className = "story";
-
-    const inner = document.createElement("div");
-    inner.className = "story-inner";
-
-    const image = document.createElement("img");
-    image.src = profile.profilePicture || DEFAULT_AVATAR;
-    image.alt = profile.name || "Profile";
-
-    image.onerror = function(){
-        this.onerror = null;
-        this.src = DEFAULT_AVATAR;
-    };
-
-    inner.appendChild(image);
-    story.appendChild(inner);
-    link.appendChild(story);
-
-    /* + button for the current user */
-    if(ownStory){
-
-        const add = document.createElement("button");
-        add.type = "button";
-        add.className = "story-add";
-        add.textContent = "+";
-        add.title = "Create a story";
-
-        add.addEventListener("click", function(event){
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            if(window.VitalStarStory && typeof window.VitalStarStory.open === "function"){
-                window.VitalStarStory.open();
-                return;
-            }
-
-            if(window.VitalStarPost && typeof window.VitalStarPost.open === "function"){
-                window.VitalStarPost.open();
-            }
-        });
-
-        story.appendChild(add);
-    }
-
-    const name = document.createElement("span");
-    name.className = "story-name";
-    name.textContent = ownStory ? "Add Story" : profile.name;
-
-    if(profile.verified && !ownStory){
-        const badge = document.createElement("span");
-        badge.className = "story-verified";
-        badge.textContent = " ✔";
-        name.appendChild(badge);
-    }
-
-    wrap.appendChild(link);
-    wrap.appendChild(name);
-
-    return wrap;
-}
-
-/* "More" bubble → opens the full friends list */
-function createMoreBubble(){
-
-    const wrap = document.createElement("div");
-    wrap.className = "story-wrap story-more";
-
-    const link = document.createElement("a");
-    link.className = "story-link";
-    link.href = "myfriends.html";
-    link.setAttribute("aria-label", "More friends");
-
-    link.innerHTML =
-        '<div class="story"><div class="story-inner">›</div></div>';
-
-    const name = document.createElement("span");
-    name.className = "story-name";
-    name.textContent = "More";
-
-    wrap.appendChild(link);
-    wrap.appendChild(name);
-
-    return wrap;
-}
-
-/* Render stories */
-async function loadStories(user){
-
-    if(!storiesContainer){
-        return;
-    }
-
-    storiesContainer.innerHTML = "";
-
-    /* Current user first */
-    const currentProfile = await loadProfile(user.uid);
-
-    storiesContainer.appendChild(createStory(currentProfile, true));
-
-    const friendIds = await getAcceptedFriends(user.uid);
-
-    if(!friendIds.length){
-        return;
-    }
-
-    const friends = await Promise.all(
-        friendIds.map(async friendUid => {
-
-            const profile = await loadProfile(friendUid);
-            const lastActive = await getLastActive(friendUid);
-
-            return { ...profile, lastActive };
-        })
-    );
-
-    /* Most recently active first, maximum 5 */
-    friends.sort((a, b) => b.lastActive - a.lastActive);
-
-    friends.slice(0, 5).forEach(friend => {
-        storiesContainer.appendChild(createStory(friend, false));
-    });
-
-    storiesContainer.appendChild(createMoreBubble());
-}
-
-auth.onAuthStateChanged(async user => {
-
-    if(!user){
-
-        if(storiesContainer){
-            storiesContainer.innerHTML = "";
-        }
-
-        return;
-    }
-
-    try{
-        await loadStories(user);
-    }catch(error){
-        console.error("Stories error:", error);
-    }
-});
-
-</script>
-
-<!-- BOTTOM CREATE (+) BUTTON -->
-<script type="module">
-
-document
-    .getElementById("bottomCreatePost")
-    ?.addEventListener("click", function(event){
-
-        event.preventDefault();
-
-        if(window.VitalStarPost && typeof window.VitalStarPost.open === "function"){
-            window.VitalStarPost.open();
-        }
-    });
-
-</script>
-
-<!-- SERVICE WORKER -->
-<script>
-
-if("serviceWorker" in navigator){
-
-    navigator.serviceWorker.register("./firebase-messaging-sw.js")
-        .then(function(registration){
-            console.log("Service Worker registered:", registration);
-        })
-        .catch(function(error){
-            console.error("Service Worker Error:", error);
-        });
-}
-
-</script>
-
-</body>
-</html>
+</body>  </html>
