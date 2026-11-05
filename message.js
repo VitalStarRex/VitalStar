@@ -606,6 +606,135 @@ document.head.appendChild(
 
 
 // ============================================================
+// FOLLOW THE SHARED VITALSTAR HOME THEME
+// Home's theme-system.js sets documentElement[data-theme] and
+// emits vitalstar-theme-change. Messages mirrors that setting.
+// ============================================================
+
+const vitalStarMessagesThemeStyle = document.createElement("style");
+vitalStarMessagesThemeStyle.textContent = `
+    html[data-theme="light"] body,
+    body[data-theme="light"] {
+        background: linear-gradient(180deg, #f8faff 0%, #eef3ff 55%, #ffffff 100%) !important;
+        color: #182238 !important;
+        color-scheme: light;
+    }
+
+    html[data-theme="light"] .header {
+        background: linear-gradient(135deg, #ffffff, #eaf0ff) !important;
+        color: #242044 !important;
+        box-shadow: 0 5px 20px rgba(70, 75, 130, .10) !important;
+        border-bottom: 1px solid rgba(90, 85, 170, .10);
+    }
+
+    html[data-theme="light"] .header-subtitle { color: #68718a !important; }
+    html[data-theme="light"] .header-icon {
+        background: rgba(105, 75, 210, .10) !important;
+        color: #5130a8 !important;
+    }
+    html[data-theme="light"] #searchInput,
+    html[data-theme="light"] input[type="search"] {
+        background: #ffffff !important;
+        color: #20263a !important;
+        border: 1px solid #e1e6f2 !important;
+        box-shadow: 0 3px 12px rgba(40, 55, 100, .07) !important;
+    }
+    html[data-theme="light"] #searchInput::placeholder { color: #8992a8 !important; }
+
+    html[data-theme="light"] .message-card {
+        background: rgba(255,255,255,.96) !important;
+        color: #20263a !important;
+        border: 1px solid #e6eaf4 !important;
+        box-shadow: 0 5px 18px rgba(50, 60, 110, .08) !important;
+    }
+    html[data-theme="light"] .message-card .name { color: #351477 !important; }
+    html[data-theme="light"] .message-card .last-message,
+    html[data-theme="light"] .message-card .last-message-text { color: #667085 !important; }
+    html[data-theme="light"] .message-card .time-text { color: #8992a8 !important; }
+    html[data-theme="light"] .profile-picture,
+    html[data-theme="light"] .profile-letter { border-color: #ffffff !important; }
+    html[data-theme="light"] .profile-letter {
+        background: linear-gradient(135deg, #6a11cb, #2575fc) !important;
+        color: #ffffff !important;
+    }
+    html[data-theme="light"] .online-dot { border-color: #ffffff !important; }
+    html[data-theme="light"] .unread-badge {
+        background: linear-gradient(135deg, #6a11cb, #2575fc) !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 8px rgba(75,60,200,.20) !important;
+    }
+    html[data-theme="light"] .delete-chat-btn {
+        background: #fff1f3 !important;
+        color: #e63950 !important;
+        border-color: #ffe0e5 !important;
+    }
+    html[data-theme="light"] .empty-state {
+        background: rgba(255,255,255,.86) !important;
+        color: #20263a !important;
+        box-shadow: 0 5px 20px rgba(40,55,100,.06) !important;
+    }
+    html[data-theme="light"] .empty-state h2,
+    html[data-theme="light"] .empty-title { color: #351477 !important; }
+    html[data-theme="light"] .empty-state p,
+    html[data-theme="light"] .empty-text { color: #778198 !important; }
+    html[data-theme="light"] .vitalstar-bottom-nav {
+        background: rgba(255,255,255,.97) !important;
+        border-top: 1px solid rgba(40,50,90,.10) !important;
+        box-shadow: 0 -5px 20px rgba(30,40,80,.08) !important;
+    }
+    html[data-theme="light"] .vitalstar-bottom-nav a { color: #727b91 !important; }
+    html[data-theme="light"] .vitalstar-bottom-nav a.active { color: #5c32bb !important; }
+    html[data-theme="light"] .vitalstar-bottom-nav .create-btn {
+        border-color: #ffffff !important;
+        color: #ffffff !important;
+    }
+    html[data-theme="light"] .vitalstar-fullscreen {
+        background: radial-gradient(circle at center, rgba(255,255,255,.96), rgba(239,243,255,.98)) !important;
+    }
+    html[data-theme="light"] .vitalstar-loading-text { color: #26304a !important; }
+    html[data-theme="light"] .vitalstar-loading-subtext { color: #6d7790 !important; }
+`;
+
+document.head.appendChild(vitalStarMessagesThemeStyle);
+
+function syncVitalStarMessagesTheme() {
+    const selectedTheme =
+        document.documentElement.getAttribute("data-theme") ||
+        document.body.getAttribute("data-theme") ||
+        "dark";
+
+    document.documentElement.setAttribute(
+        "data-theme",
+        selectedTheme === "light" ? "light" : "dark"
+    );
+}
+
+syncVitalStarMessagesTheme();
+
+window.addEventListener(
+    "vitalstar-theme-change",
+    syncVitalStarMessagesTheme
+);
+
+window.addEventListener("storage", event => {
+    if (!event.key || /theme/i.test(event.key)) {
+        syncVitalStarMessagesTheme();
+    }
+});
+
+const vitalStarThemeObserver = new MutationObserver(
+    syncVitalStarMessagesTheme
+);
+
+vitalStarThemeObserver.observe(
+    document.documentElement,
+    { attributes: true, attributeFilter: ["data-theme"] }
+);
+
+
+
+
+// ============================================================
 // CREATE HOME FOOTER
 // ============================================================
 
@@ -866,8 +995,8 @@ vitalStarLoaderStyle.textContent = `
         pointer-events:all;
 
         transition:
-            opacity .3s ease,
-            visibility .3s ease;
+            opacity .18s ease,
+            visibility .18s ease;
     }
 
 
@@ -1106,6 +1235,21 @@ vitalStarLoaderStyle.textContent = `
 
     }
 
+    /* Keep the loader smooth on lower-powered mobile devices. */
+    .vitalstar-indicator::before { animation-duration: 1s; }
+    .vitalstar-indicator::after { animation-duration: 1.7s; }
+    .vitalstar-glow { filter: none; animation-duration: 1.7s; }
+    .vitalstar-fullscreen::before { animation-duration: 1.7s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .vitalstar-fullscreen *,
+        .vitalstar-fullscreen::before,
+        .vitalstar-fullscreen::after {
+            animation-duration: .01ms !important;
+            animation-iteration-count: 1 !important;
+        }
+    }
+
 `;
 
 document.head.appendChild(
@@ -1155,7 +1299,7 @@ function hideVitalStarLoader() {
 
         loader.remove();
 
-    }, 400);
+    }, 220);
 
 }
 
@@ -1185,6 +1329,9 @@ const chatListeners =
 
 const unreadCounts =
     new Map();
+
+const profileCache = new Map();
+let hasReceivedInitialChats = false;
 
 
 // ============================================================
@@ -2405,6 +2552,13 @@ onAuthStateChanged(
 
                 renderChats();
 
+                // Show the actual conversation list immediately.
+                // Profile pictures/names fill in asynchronously afterwards.
+                if (!hasReceivedInitialChats) {
+                    hasReceivedInitialChats = true;
+                    hideVitalStarLoader();
+                }
+
 
                 // ============================================
                 // REMOVE OLD LISTENERS
@@ -2436,68 +2590,47 @@ onAuthStateChanged(
 
 
                 // ============================================
-                // LOAD PROFILES
+                // LOAD PROFILES IN PARALLEL (WITH SESSION CACHE)
                 // ============================================
 
-                for (
-                    const chat of chats
-                ) {
-
-                    try {
-
-                        const userSnap =
-                            await getDoc(
-                                doc(
-                                    db,
-                                    "users",
-                                    chat.otherUserId
-                                )
-                            );
-
-
-                        if (
-                            userSnap.exists()
-                        ) {
-
-                            const userData =
-                                userSnap.data();
-
-
-                            chat.fullName =
-                                userData.fullName ||
-                                userData.username ||
-                                "Unknown User";
-
-
-                            chat.profilePic =
-                                getProfilePicture(
-                                    userData
-                                );
-
-                        } else {
-
-                            chat.fullName =
-                                "Unknown User";
-
+                await Promise.all(
+                    chats.map(async chat => {
+                        if (profileCache.has(chat.otherUserId)) {
+                            Object.assign(chat, profileCache.get(chat.otherUserId));
+                            return;
                         }
 
-                    } catch (error) {
+                        try {
+                            const userSnap = await getDoc(
+                                doc(db, "users", chat.otherUserId)
+                            );
 
-                        console.error(
-                            "Profile loading error:",
-                            error
-                        );
+                            let profile = {
+                                fullName: "Unknown User",
+                                profilePic: ""
+                            };
 
+                            if (userSnap.exists()) {
+                                const userData = userSnap.data();
+                                profile = {
+                                    fullName: userData.fullName || userData.username || "Unknown User",
+                                    profilePic: getProfilePicture(userData)
+                                };
+                            }
 
-                        chat.fullName =
-                            "Unknown User";
+                            profileCache.set(chat.otherUserId, profile);
+                            Object.assign(chat, profile);
+                        } catch (error) {
+                            console.error("Profile loading error:", error);
+                            Object.assign(chat, {
+                                fullName: "Unknown User",
+                                profilePic: ""
+                            });
+                        }
+                    })
+                );
 
-                    }
-
-
-                    renderChats();
-
-                }
+                renderChats();
 
 
                 // ============================================
