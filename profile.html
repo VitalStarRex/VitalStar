@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -83,7 +84,6 @@ body::before{
     margin:0 auto;
 }
 
-
 .cover-container{
     position:relative;
     width:100%;
@@ -91,7 +91,6 @@ body::before{
     background:var(--vs-card-solid,#0a1634);
     border-bottom:1px solid var(--vs-card-border);
 }
-
 
 .cover-photo{
     display:block;
@@ -101,12 +100,11 @@ body::before{
     background:var(--vs-input);
 }
 
-}
-
+/* PROFILE PICTURE — CENTERED AND MOVED UP */
 .profile-image-box{
     position:absolute;
     left:50%;
-    bottom:-75px;
+    bottom:-45px;
     transform:translateX(-50%);
     width:150px;
     height:150px;
@@ -539,7 +537,13 @@ body::before{
 /* SMALL PHONES */
 @media(max-width:600px){
     .cover-photo{ height:160px; }
-    .profile-image-box{ width:125px; height:125px; bottom:-62px; }
+
+    .profile-image-box{
+        width:125px;
+        height:125px;
+        bottom:-32px;
+    }
+
     .profile-info{ margin-top:75px; padding:15px 10px; }
     #fullName{ font-size:24px; }
     .stats{ gap:8px; }
