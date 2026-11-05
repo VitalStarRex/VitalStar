@@ -83,21 +83,24 @@ body::before{
     margin:0 auto;
 }
 
-/* COVER + PROFILE PICTURE */
+
 .cover-container{
     position:relative;
-    width:85%;
+    width:100%;
     margin:0 auto;
     background:var(--vs-card-solid,#0a1634);
     border-bottom:1px solid var(--vs-card-border);
 }
 
+
 .cover-photo{
     display:block;
     width:100%;
-    height:190px;
+    height:140px;
     object-fit:cover;
     background:var(--vs-input);
+}
+
 }
 
 .profile-image-box{
@@ -535,7 +538,7 @@ body::before{
 
 /* SMALL PHONES */
 @media(max-width:600px){
-    .cover-photo{ height:210px; }
+    .cover-photo{ height:160px; }
     .profile-image-box{ width:125px; height:125px; bottom:-62px; }
     .profile-info{ margin-top:75px; padding:15px 10px; }
     #fullName{ font-size:24px; }
