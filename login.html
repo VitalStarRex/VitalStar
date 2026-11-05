@@ -6,90 +6,85 @@
 <title>VitalStar Login</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center;font-family:Arial,sans-serif;background:linear-gradient(-45deg,#05001c,#160044,#001c3d,#300047,#001c27);background-size:400% 400%;animation:neonBG 12s ease infinite}
-@keyframes neonBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.box{width:100%;max-width:380px;padding:28px;text-align:center;background:rgba(5,5,25,.94);border:1px solid #00eaff;border-radius:20px;box-shadow:0 0 10px #00eaff,0 0 25px rgba(0,234,255,.5),0 0 50px rgba(150,0,255,.3)}
-h2{color:gold;background:#000;padding:14px;border-radius:12px;text-shadow:0 0 5px gold,0 0 15px orange;box-shadow:0 0 15px gold;margin-top:0}
-input[type=text],input[type=password]{width:100%;padding:14px;margin:10px 0;background:#080d25;color:white;border:1px solid #00d9ff;border-radius:9px;font-size:15px;outline:none;box-shadow:0 0 7px rgba(0,217,255,.3)}
-input:focus{border-color:#ff00e6;box-shadow:0 0 10px #ff00e6}
-input::placeholder{color:#a8b4d4}
-.password-box{position:relative}
-.password-box input{padding-right:65px}
-.show-password{position:absolute;right:12px;top:25px;color:#00eaff;font-size:12px;cursor:pointer;user-select:none}
-button{width:100%;padding:14px;border:none;border-radius:30px;font-size:16px;font-weight:bold;cursor:pointer;transition:.3s}
-.login-btn{color:white;background:linear-gradient(90deg,#00d9ff,#a100ff);box-shadow:0 0 10px #00d9ff,0 0 20px rgba(161,0,255,.5)}
-.login-btn:hover{transform:scale(1.03);box-shadow:0 0 25px #00d9ff}
-button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.links{color:#aaa;font-size:13px;margin-top:22px;line-height:2}
-a{color:#00eaff;text-decoration:none;font-weight:bold}
+body{margin:0;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center;font-family:Arial,sans-serif;color:#fff;background:linear-gradient(135deg,#080020,#19004d,#00334d,#51004d);background-size:300% 300%;animation:neonBackground 12s ease infinite}
+@keyframes neonBackground{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.box{width:100%;max-width:360px;padding:30px 25px;border:1px solid #00f0ff;border-radius:18px;text-align:center;background:rgba(8,5,30,.91);box-shadow:0 0 14px #00eaff,0 0 34px rgba(180,0,255,.65)}
+h1{margin:0 0 8px;color:#00f0ff;text-shadow:0 0 12px #00eaff}
+.subtitle{margin:0 0 22px;color:#e4d9ff}
+input{width:100%;padding:13px 14px;margin:8px 0 14px;border:1px solid #a64dff;border-radius:9px;background:#10082b;color:#fff;font-size:15px;outline:none}
+input::placeholder{color:#bdb2d4}
+input:focus{border-color:#00f0ff;box-shadow:0 0 10px #00cfff}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:75px}
+.toggle{position:absolute;right:8px;top:17px;width:auto;padding:6px 9px;border:1px solid #00f0ff;border-radius:7px;background:transparent;color:#00f0ff;font-size:12px;cursor:pointer}
+.main-btn{width:100%;padding:13px;border:0;border-radius:9px;background:linear-gradient(90deg,#00dfff,#9b28ff,#ff20b8);color:white;font-size:17px;font-weight:bold;cursor:pointer;box-shadow:0 0 14px #00bfff}
+.main-btn:disabled{opacity:.65;cursor:wait}
+a{color:#00f0ff;text-decoration:none;font-weight:bold}
 a:hover{text-decoration:underline}
+.footer{margin:20px 0 0;color:#e4d9ff;font-size:14px}
 </style>
 </head>
 <body>
 <div class="box">
-<h2>VitalStar Login</h2>
-<form id="loginForm">
-<input id="username" type="text" placeholder="Username" minlength="3" maxlength="15" autocomplete="username" required>
-<div class="password-box">
-<input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
-<span class="show-password" id="togglePassword">SHOW</span>
-</div>
-<button type="submit" class="login-btn" id="loginBtn">Login</button>
-</form>
-<div class="links">Don't have an account? <a href="register.html">Register</a></div>
+  <h1>✦ VitalStar ✦</h1>
+  <p class="subtitle">Welcome back! Login to continue.</p>
+  <form id="loginForm">
+    <input id="username" type="text" placeholder="Username" maxlength="15" autocomplete="username" required>
+    <div class="password-wrap">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+      <button class="toggle" type="button" id="togglePassword">Show</button>
+    </div>
+    <button class="main-btn" type="submit" id="loginBtn">Login</button>
+  </form>
+  <p class="footer">Don't have an account? <a href="register.html">Register</a></p>
 </div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/15.12.2/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/15.12.2/firebase-firestore.js";
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const loginForm = document.getElementById("loginForm");
+const form = document.getElementById("loginForm");
 const loginBtn = document.getElementById("loginBtn");
 const passwordInput = document.getElementById("password");
 
-document.getElementById("togglePassword").addEventListener("click", () => {
-    const toggle = document.getElementById("togglePassword");
-    const showing = passwordInput.type === "password";
-    passwordInput.type = showing ? "text" : "password";
-    toggle.textContent = showing ? "HIDE" : "SHOW";
+document.getElementById("togglePassword").addEventListener("click", function () {
+  const show = passwordInput.type === "password";
+  passwordInput.type = show ? "text" : "password";
+  this.textContent = show ? "Hide" : "Show";
 });
 
-loginForm.addEventListener("submit", async e => {
-    e.preventDefault();
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const username = document.getElementById("username").value.trim().toLowerCase();
+  const password = passwordInput.value;
 
-    const username = document.getElementById("username").value.trim().toLowerCase();
-    const password = passwordInput.value;
+  if (username.length > 15) {
+    alert("Username must not exceed 15 characters.");
+    return;
+  }
 
-    if (username.length < 3 || username.length > 15 || !/^[a-z0-9_]+$/.test(username)) {
-        alert("Username must be between 3 and 15 characters.");
-        return;
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Logging in...";
+
+  try {
+    const q = query(collection(db, "users"), where("username", "==", username));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      alert("Username not found.");
+      return;
     }
 
-    loginBtn.disabled = true;
-    loginBtn.textContent = "Logging in...";
-
-    try {
-        const q = query(collection(db, "users"), where("username", "==", username));
-        const snap = await getDocs(q);
-
-        if (snap.empty) {
-            throw new Error("Username not found.");
-        }
-
-        const userData = snap.docs[0].data();
-
-        if (!userData.email) {
-            throw new Error("Account email not found.");
-        }
-
-        await signInWithEmailAndPassword(auth, userData.email, password);
-        window.location.href = "home.html";
-    } catch (error) {
-        alert(error.code === "auth/invalid-credential" ? "Incorrect username or password." : error.message);
-        loginBtn.disabled = false;
-        loginBtn.textContent = "Login";
-    }
+    const email = snap.docs[0].data().email;
+    await signInWithEmailAndPassword(auth, email, password);
+    window.location.href = "home.html";
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Login";
+  }
 });
 </script>
 </body>
