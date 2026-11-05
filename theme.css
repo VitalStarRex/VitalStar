@@ -1,0 +1,315 @@
+/* =========================================================
+   VITALSTAR — SHARED THEME (theme.css)
+   One file controls Dark + White themes for EVERY page.
+   Add to any page's <head>:
+     <link rel="stylesheet" href="theme.css">
+     <script src="theme.js"></script>
+   ========================================================= */
+
+/* ---------- DARK THEME (default) ---------- */
+:root,
+:root[data-theme="dark"]{
+    color-scheme:dark;
+
+    --vs-bg:#070914;
+    --vs-glow-1:rgba(0,183,255,.13);
+    --vs-glow-2:rgba(168,59,255,.15);
+    --vs-glow-3:rgba(255,0,153,.08);
+
+    --vs-header-bg:rgba(7,9,20,.92);
+    --vs-sidebar-bg:linear-gradient(180deg,rgba(9,12,32,.99),rgba(6,8,20,.99));
+    --vs-nav-bg:rgba(11,14,34,.94);
+    --vs-overlay:rgba(0,0,0,.55);
+
+    --vs-card:linear-gradient(145deg,#111732,#0c1126);
+    --vs-card-solid:#111627;
+    --vs-card-border:rgba(110,130,255,.22);
+    --vs-card-glow:0 0 0 1px rgba(0,217,255,.05),0 9px 28px rgba(0,0,0,.35);
+
+    --vs-chip:#151a2d;
+    --vs-chip-hover:#202743;
+    --vs-input:#171c31;
+    --vs-input-hover:#1d233b;
+    --vs-line:rgba(255,255,255,.08);
+    --vs-hover:rgba(255,255,255,.06);
+
+    --vs-text:#f3f5ff;
+    --vs-text-soft:#dce2f8;
+    --vs-muted:#aab3d0;
+    --vs-dim:#8991ae;
+
+    --vs-blue:#4d7cff;
+    --vs-cyan:#00d9ff;
+    --vs-purple:#8f4dff;
+    --vs-pink:#ff28a8;
+    --vs-green:#32df72;
+    --vs-danger:#ff326d;
+
+    --vs-heading:linear-gradient(90deg,#fff,#00d9ff,#8f4dff);
+    --vs-brand-grad:linear-gradient(135deg,#7639ff,#00cfff);
+    --vs-plus-grad:linear-gradient(135deg,#7639ff,#00cfff 55%,#ff28a8);
+    --vs-plus-shadow:0 0 0 3px rgba(0,217,255,.35),0 0 22px rgba(0,207,255,.75),0 0 44px rgba(118,57,255,.65);
+
+    --vs-gold:#ffd84a;
+    --vs-gold-bg:linear-gradient(135deg,rgba(255,211,0,.20),rgba(255,120,0,.14));
+    --vs-gold-border:rgba(255,204,0,.5);
+
+    --vs-stats-bg:#000;
+    --vs-stat-bg:#0a0a0f;
+    --vs-ring-gap:#070914;
+    --vs-shadow:0 12px 40px rgba(0,0,0,.55);
+}
+
+/* ---------- WHITE THEME ---------- */
+:root[data-theme="light"]{
+    color-scheme:light;
+
+    --vs-bg:#f2f5fc;
+    --vs-glow-1:rgba(0,183,255,.14);
+    --vs-glow-2:rgba(168,59,255,.12);
+    --vs-glow-3:rgba(255,0,153,.07);
+
+    --vs-header-bg:rgba(255,255,255,.93);
+    --vs-sidebar-bg:linear-gradient(180deg,rgba(255,255,255,.99),rgba(240,244,255,.99));
+    --vs-nav-bg:rgba(255,255,255,.95);
+    --vs-overlay:rgba(30,40,90,.35);
+
+    --vs-card:linear-gradient(145deg,#ffffff,#f7f9ff);
+    --vs-card-solid:#ffffff;
+    --vs-card-border:rgba(60,80,170,.14);
+    --vs-card-glow:0 8px 24px rgba(50,70,150,.12);
+
+    --vs-chip:#eaeefa;
+    --vs-chip-hover:#dde4f6;
+    --vs-input:#eef1fa;
+    --vs-input-hover:#e4e9f8;
+    --vs-line:rgba(40,55,120,.10);
+    --vs-hover:rgba(60,80,170,.07);
+
+    --vs-text:#141a33;
+    --vs-text-soft:#2b3358;
+    --vs-muted:#5f6a8f;
+    --vs-dim:#7d87aa;
+
+    --vs-blue:#2f63e8;
+    --vs-cyan:#0090c0;
+    --vs-purple:#7a3df0;
+    --vs-pink:#e0208f;
+    --vs-green:#1a9d4f;
+    --vs-danger:#e5245f;
+
+    --vs-heading:linear-gradient(90deg,#2b2fd8,#0090c0,#7a3df0);
+    --vs-brand-grad:linear-gradient(135deg,#6a3cff,#00a8e8);
+    --vs-plus-grad:linear-gradient(135deg,#6a3cff,#00b4f0 60%,#c84bff);
+    --vs-plus-shadow:0 8px 22px rgba(90,70,255,.45),0 0 0 4px rgba(255,255,255,.9);
+
+    --vs-gold:#a86d00;
+    --vs-gold-bg:linear-gradient(135deg,rgba(255,211,0,.30),rgba(255,160,0,.18));
+    --vs-gold-border:rgba(220,160,0,.55);
+
+    --vs-stats-bg:#ffffff;
+    --vs-stat-bg:#f3f6fd;
+    --vs-ring-gap:#f2f5fc;
+    --vs-shadow:0 10px 30px rgba(50,70,150,.18);
+}
+
+/* ---------- SMOOTH SWITCH ---------- */
+html.vs-theming,
+html.vs-theming *{
+    transition:
+        background-color .3s ease,
+        color .3s ease,
+        border-color .3s ease,
+        box-shadow .3s ease !important;
+}
+
+/* ---------- GOLD COIN GRAPHIC (use <i class="vs-coin"></i>) ---------- */
+.vs-coin{
+    display:inline-block;
+    flex:0 0 auto;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    position:relative;
+
+    background:
+        radial-gradient(circle at 32% 28%,#fff6b0 0%,#ffd400 38%,#e08a00 100%);
+
+    border:2px solid #b36b00;
+    box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.35),
+        0 0 10px rgba(255,190,0,.55);
+}
+
+.vs-coin::after{
+    content:"★";
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    line-height:1;
+    color:#a85d00;
+    text-shadow:0 1px 0 rgba(255,255,255,.5);
+    font-style:normal;
+}
+
+.vs-coin.big{ width:30px; height:30px; }
+.vs-coin.big::after{ font-size:17px; }
+
+/* ---------- THEME SETTINGS MODAL ---------- */
+.vs-theme-overlay{
+    position:fixed;
+    inset:0;
+    z-index:5000;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+
+    background:var(--vs-overlay);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+}
+
+.vs-theme-overlay[hidden]{ display:none; }
+
+.vs-theme-modal{
+    width:100%;
+    max-width:380px;
+
+    padding:20px 18px 18px;
+
+    background:var(--vs-card-solid);
+    color:var(--vs-text);
+
+    border:1px solid var(--vs-card-border);
+    border-radius:24px;
+
+    box-shadow:var(--vs-shadow);
+
+    animation:vsThemePop .22s ease;
+}
+
+@keyframes vsThemePop{
+    from{ opacity:0; transform:translateY(10px) scale(.97); }
+    to{ opacity:1; transform:none; }
+}
+
+.vs-theme-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+}
+
+.vs-theme-head h2{
+    font-size:19px;
+    font-weight:900;
+
+    background:var(--vs-heading);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+
+.vs-theme-x{
+    width:38px;
+    height:38px;
+    border:0;
+    border-radius:50%;
+    background:var(--vs-chip);
+    color:var(--vs-text);
+    font-size:16px;
+    cursor:pointer;
+}
+
+.vs-theme-sub{
+    margin-bottom:14px;
+    color:var(--vs-muted);
+    font-size:13px;
+}
+
+.vs-theme-options{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.vs-theme-opt{
+    position:relative;
+    padding:10px 10px 12px;
+
+    border:2px solid var(--vs-line);
+    border-radius:18px;
+
+    background:var(--vs-input);
+    color:var(--vs-text);
+
+    text-align:center;
+    font-size:13px;
+    font-weight:850;
+    cursor:pointer;
+
+    -webkit-tap-highlight-color:transparent;
+    transition:transform .15s,border-color .2s;
+}
+
+.vs-theme-opt:active{ transform:scale(.96); }
+
+.vs-theme-opt.is-active{
+    border-color:var(--vs-cyan);
+    box-shadow:0 0 14px rgba(0,217,255,.35);
+}
+
+.vs-theme-opt.is-active::after{
+    content:"✓";
+    position:absolute;
+    top:7px;
+    right:9px;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    background:var(--vs-brand-grad);
+    color:#fff;
+    font-size:12px;
+    line-height:20px;
+}
+
+.vs-theme-prev{
+    height:70px;
+    margin-bottom:9px;
+    border-radius:12px;
+    border:1px solid rgba(128,128,128,.3);
+    position:relative;
+    overflow:hidden;
+}
+
+.vs-theme-prev::before{
+    content:"";
+    position:absolute;
+    left:8px; right:8px; top:10px;
+    height:14px;
+    border-radius:7px;
+    background:linear-gradient(90deg,#7639ff,#00cfff);
+}
+
+.vs-theme-prev::after{
+    content:"";
+    position:absolute;
+    left:8px; right:30px; bottom:10px;
+    height:20px;
+    border-radius:8px;
+    background:rgba(128,128,128,.28);
+}
+
+.vs-theme-prev.dark{ background:#0b0f26; }
+.vs-theme-prev.light{ background:#f2f5fc; }
+
+@media(prefers-reduced-motion:reduce){
+    .vs-theme-modal{ animation:none; }
+    html.vs-theming,
+    html.vs-theming *{ transition:none !important; }
+}
