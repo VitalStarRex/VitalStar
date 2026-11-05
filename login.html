@@ -1,336 +1,68 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>VitalStar Login</title>
-
 <style>
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial, sans-serif;
-
-    background: linear-gradient(
-        -45deg,
-        #05001c,
-        #160044,
-        #001c3d,
-        #300047,
-        #001c27
-    );
-
-    background-size: 400% 400%;
-    animation: neonBG 12s ease infinite;
-}
-
-@keyframes neonBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.box {
-    width: 100%;
-    max-width: 380px;
-    padding: 28px;
-    text-align: center;
-
-    background: rgba(5, 5, 25, .94);
-    border: 1px solid #00eaff;
-    border-radius: 20px;
-
-    box-shadow:
-        0 0 10px #00eaff,
-        0 0 25px rgba(0,234,255,.5),
-        0 0 50px rgba(150,0,255,.3);
-}
-
-h2 {
-    color: gold;
-    background: #000;
-    padding: 14px;
-    border-radius: 12px;
-
-    text-shadow: 0 0 5px gold, 0 0 15px orange;
-    box-shadow: 0 0 15px gold;
-    margin-top: 0;
-}
-
-input[type="text"],
-input[type="password"],
-input[type="email"] {
-    width: 100%;
-    padding: 14px;
-    margin: 10px 0;
-
-    background: #080d25;
-    color: white;
-
-    border: 1px solid #00d9ff;
-    border-radius: 9px;
-
-    font-size: 15px;
-    outline: none;
-
-    box-shadow: 0 0 7px rgba(0,217,255,.3);
-}
-
-input:focus {
-    border-color: #ff00e6;
-    box-shadow: 0 0 10px #ff00e6;
-}
-
-input::placeholder {
-    color: #a8b4d4;
-}
-
-.password-box {
-    position: relative;
-}
-
-.password-box input {
-    padding-right: 65px;
-}
-
-.show-password {
-    position: absolute;
-    right: 12px;
-    top: 25px;
-    color: #00eaff;
-    font-size: 12px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.show-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: white;
-    font-size: 13px;
-    text-align: left;
-    margin: 10px 0 20px;
-}
-
-.show-row input {
-    accent-color: #00eaff;
-}
-
-button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 30px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: .3s;
-}
-
-.login-btn {
-    color: white;
-    background: linear-gradient(90deg,#00d9ff,#a100ff);
-    box-shadow: 0 0 10px #00d9ff,
-                0 0 20px rgba(161,0,255,.5);
-}
-
-.login-btn:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 25px #00d9ff;
-}
-
-button:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #aaa;
-    margin: 22px 0;
-    font-size: 13px;
-}
-
-.divider::before,
-.divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: #555;
-}
-
-.google-btn {
-    background: white;
-    color: #222;
-    border: 1px solid #ddd;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-
-    box-shadow: 0 0 12px rgba(255,255,255,.15);
-}
-
-.google-btn:hover {
-    background: #e8e8e8;
-    transform: scale(1.02);
-}
-
-.google-icon {
-    width: 21px;
-    height: 21px;
-}
-
-.links {
-    color: #aaa;
-    font-size: 13px;
-    margin-top: 22px;
-    line-height: 2;
-}
-
-a {
-    color: #00eaff;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-a:hover {
-    text-decoration: underline;
-}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center;font-family:Arial,sans-serif;background:linear-gradient(-45deg,#05001c,#160044,#001c3d,#300047,#001c27);background-size:400% 400%;animation:neonBG 12s ease infinite}
+@keyframes neonBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.box{width:100%;max-width:380px;padding:28px;text-align:center;background:rgba(5,5,25,.94);border:1px solid #00eaff;border-radius:20px;box-shadow:0 0 10px #00eaff,0 0 25px rgba(0,234,255,.5),0 0 50px rgba(150,0,255,.3)}
+h2{color:gold;background:#000;padding:14px;border-radius:12px;text-shadow:0 0 5px gold,0 0 15px orange;box-shadow:0 0 15px gold;margin-top:0}
+input[type=text],input[type=password]{width:100%;padding:14px;margin:10px 0;background:#080d25;color:white;border:1px solid #00d9ff;border-radius:9px;font-size:15px;outline:none;box-shadow:0 0 7px rgba(0,217,255,.3)}
+input:focus{border-color:#ff00e6;box-shadow:0 0 10px #ff00e6}
+input::placeholder{color:#a8b4d4}
+.password-box{position:relative}
+.password-box input{padding-right:65px}
+.show-password{position:absolute;right:12px;top:25px;color:#00eaff;font-size:12px;cursor:pointer;user-select:none}
+button{width:100%;padding:14px;border:none;border-radius:30px;font-size:16px;font-weight:bold;cursor:pointer;transition:.3s}
+.login-btn{color:white;background:linear-gradient(90deg,#00d9ff,#a100ff);box-shadow:0 0 10px #00d9ff,0 0 20px rgba(161,0,255,.5)}
+.login-btn:hover{transform:scale(1.03);box-shadow:0 0 25px #00d9ff}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.links{color:#aaa;font-size:13px;margin-top:22px;line-height:2}
+a{color:#00eaff;text-decoration:none;font-weight:bold}
+a:hover{text-decoration:underline}
 </style>
 </head>
-
 <body>
-
 <div class="box">
-
 <h2>VitalStar Login</h2>
-
 <form id="loginForm">
-
-<input
-id="username"
-type="text"
-placeholder="Username"
-minlength="3"
-maxlength="10"
-autocomplete="username"
-required
->
-
+<input id="username" type="text" placeholder="Username" minlength="3" maxlength="15" autocomplete="username" required>
 <div class="password-box">
-
-<input
-id="password"
-type="password"
-placeholder="Password"
-autocomplete="current-password"
-required
->
-
-<span class="show-password" id="togglePassword">
-SHOW
-</span>
-
+<input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+<span class="show-password" id="togglePassword">SHOW</span>
 </div>
-
-<button type="submit" class="login-btn" id="loginBtn">
-Login
-</button>
-
+<button type="submit" class="login-btn" id="loginBtn">Login</button>
 </form>
-
-<div class="divider">OR</div>
-
-<button type="button" class="google-btn" id="googleBtn">
-
-<svg class="google-icon" viewBox="0 0 48 48">
-<path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11c-.5 2.5-1.9 4.6-4.1 6v5h6.6c3.9-3.6 6.1-8.8 6.1-14.7z"/>
-<path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.2C9.2 39.6 16 44 24 44z"/>
-<path fill="#FBBC05" d="M12.6 27.8a12 12 0 0 1 0-7.6V15H5.8a20 20 0 0 0 0 18z"/>
-<path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4 16 4 9.2 8.4 5.8 15l6.8 5.2c1.6-4.8 6.1-8.1 11.4-8.1z"/>
-</svg>
-
-Sign in with Google
-
-</button>
-
-<div class="links">
-Don't have an account?
-<a href="register.html">Register</a>
-</div>
-
+<div class="links">Don't have an account? <a href="register.html">Register</a></div>
 </div>
 
 <script type="module">
-
 import { auth, db } from "./firebase.js";
-
-import {
-    signInWithEmailAndPassword,
-    GoogleAuthProvider,
-    signInWithPopup
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
-    collection,
-    query,
-    where,
-    getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/15.12.2/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/15.12.2/firebase-firestore.js";
 
 const loginForm = document.getElementById("loginForm");
 const loginBtn = document.getElementById("loginBtn");
-const googleBtn = document.getElementById("googleBtn");
-
-
-// SHOW / HIDE PASSWORD
-
 const passwordInput = document.getElementById("password");
-const togglePassword = document.getElementById("togglePassword");
 
-togglePassword.addEventListener("click", () => {
-
-    if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        togglePassword.textContent = "HIDE";
-    } else {
-        passwordInput.type = "password";
-        togglePassword.textContent = "SHOW";
-    }
-
+document.getElementById("togglePassword").addEventListener("click", () => {
+    const toggle = document.getElementById("togglePassword");
+    const showing = passwordInput.type === "password";
+    passwordInput.type = showing ? "text" : "password";
+    toggle.textContent = showing ? "HIDE" : "SHOW";
 });
 
-
-// USERNAME LOGIN
-
-loginForm.addEventListener("submit", async (e) => {
-
+loginForm.addEventListener("submit", async e => {
     e.preventDefault();
 
-    const username = document.getElementById("username")
-        .value.trim().toLowerCase();
-
+    const username = document.getElementById("username").value.trim().toLowerCase();
     const password = passwordInput.value;
 
-    if (username.length < 3 || username.length > 10) {
-        alert("Username must be between 3 and 10 characters.");
+    if (username.length < 3 || username.length > 15 || !/^[a-z0-9_]+$/.test(username)) {
+        alert("Username must be between 3 and 15 characters.");
         return;
     }
 
@@ -338,12 +70,7 @@ loginForm.addEventListener("submit", async (e) => {
     loginBtn.textContent = "Logging in...";
 
     try {
-
-        const q = query(
-            collection(db, "users"),
-            where("username", "==", username)
-        );
-
+        const q = query(collection(db, "users"), where("username", "==", username));
         const snap = await getDocs(q);
 
         if (snap.empty) {
@@ -356,66 +83,14 @@ loginForm.addEventListener("submit", async (e) => {
             throw new Error("Account email not found.");
         }
 
-        await signInWithEmailAndPassword(
-            auth,
-            userData.email,
-            password
-        );
-
+        await signInWithEmailAndPassword(auth, userData.email, password);
         window.location.href = "home.html";
-
     } catch (error) {
-
-        alert(
-            error.code === "auth/invalid-credential"
-            ? "Incorrect username or password."
-            : error.message
-        );
-
+        alert(error.code === "auth/invalid-credential" ? "Incorrect username or password." : error.message);
         loginBtn.disabled = false;
         loginBtn.textContent = "Login";
-
     }
-
 });
-
-
-// GOOGLE SIGN-IN
-
-googleBtn.addEventListener("click", async () => {
-
-    googleBtn.disabled = true;
-    googleBtn.textContent = "Connecting to Google...";
-
-    try {
-
-        const provider = new GoogleAuthProvider();
-
-        await signInWithPopup(auth, provider);
-
-        window.location.href = "home.html";
-
-    } catch (error) {
-
-        alert(error.message);
-
-        googleBtn.disabled = false;
-
-        googleBtn.innerHTML = `
-            <svg class="google-icon" viewBox="0 0 48 48">
-            <path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11c-.5 2.5-1.9 4.6-4.1 6v5h6.6c3.9-3.6 6.1-8.8 6.1-14.7z"/>
-            <path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.2C9.2 39.6 16 44 24 44z"/>
-            <path fill="#FBBC05" d="M12.6 27.8a12 12 0 0 1 0-7.6V15H5.8a20 20 0 0 0 0 18z"/>
-            <path fill="#EA4335" d="M24 12.1c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 6.1 29.5 4 24 4 16 4 9.2 8.4 5.8 15l6.8 5.2c1.6-4.8 6.1-8.1 11.4-8.1z"/>
-            </svg>
-            Sign in with Google
-        `;
-
-    }
-
-});
-
 </script>
-
 </body>
 </html>
