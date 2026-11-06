@@ -41,6 +41,38 @@
     --vs-ring-gap:#050b1f;
 }
 
+:root[data-theme="light"]{
+    --vs-bg:#f4f7fc;
+    --vs-text:#0a1634;
+    --vs-text-soft:#1a2b5c;
+    --vs-muted:#55699c;
+    --vs-dim:#687cae;
+    --vs-card:linear-gradient(160deg,rgba(255,255,255,.9),rgba(240,245,255,.95));
+    --vs-card-solid:#ffffff;
+    --vs-card-border:rgba(70,120,255,.2);
+    --vs-card-glow:0 0 0 1px rgba(0,120,255,.05),0 0 20px rgba(30,90,255,.1);
+    --vs-line:rgba(90,130,255,.15);
+    --vs-hover:rgba(60,110,255,.08);
+    --vs-chip:rgba(230,238,255,.85);
+    --vs-chip-hover:rgba(40,80,200,.2);
+    --vs-input:rgba(240,245,255,.9);
+    --vs-nav-bg:rgba(255,255,255,.92);
+    --vs-shadow:0 12px 40px rgba(0,0,0,.1);
+    --vs-glow-1:rgba(0,120,255,.1);
+    --vs-glow-2:rgba(0,200,255,.08);
+    --vs-glow-3:rgba(40,70,255,.1);
+    --vs-cyan:#0099cc;
+    --vs-purple:#3366cc;
+    --vs-green:#10a350;
+    --vs-gold:#d99b00;
+    --vs-danger:#e6005c;
+    --vs-heading:linear-gradient(90deg,#0a1634,#0066ff);
+    --vs-brand-grad:linear-gradient(135deg,#6a3cff,#0099cc);
+    --vs-plus-grad:linear-gradient(135deg,#1a5dff,#7a3cff);
+    --vs-plus-shadow:0 0 22px rgba(40,110,255,.4);
+    --vs-ring-gap:#f4f7fc;
+}
+
 *{
     margin:0;
     padding:0;
@@ -81,7 +113,7 @@ body::before{
     position:relative;
     width:100%;
     margin:0 auto;
-    background:var(--vs-card-solid,#0a1634);
+    background:var(--vs-card-solid);
     border-bottom:1px solid var(--vs-card-border);
 }
 
@@ -114,7 +146,7 @@ body::before{
     object-fit:cover;
     border-radius:50%;
     background:var(--vs-input);
-    border:4px solid var(--vs-ring-gap,#050b1f);
+    border:4px solid var(--vs-ring-gap);
 }
 
 /* PROFILE INFORMATION */
@@ -502,7 +534,7 @@ body::before{
     align-items:center;
     justify-content:center;
     border-radius:50%;
-    border:4px solid var(--vs-ring-gap,#050b1f);
+    border:4px solid var(--vs-ring-gap);
     background:var(--vs-plus-grad);
     box-shadow:var(--vs-plus-shadow);
     color:#fff;
@@ -670,3 +702,4 @@ body::before{
 
 </body>
 </html>
+
