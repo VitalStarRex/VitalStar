@@ -177,6 +177,7 @@ button:disabled{filter:saturate(.55)}
 
 /* While a match is actually being played: show only the game (scores, table, touchpad, leave button). */
 body.playing{overflow:hidden;overscroll-behavior:none}
+body.playing:before{display:none}
 body.playing .top,body.playing aside,body.playing .foot,body.playing #roomControls,body.playing #resultControls{display:none!important}
 body.playing .wrap{max-width:none;padding:0}
 body.playing .layout{display:block}
@@ -233,7 +234,8 @@ function applySpeed(k){const c=SPEEDS[k]||SPEEDS.normal;onlineScale=c.scale;onli
 const ballScale=()=>mode==='ai'?aiBallScale:onlineScale,ballAccel=()=>mode==='ai'?aiBallAccel:onlineAccel;
 /* Physics runs in fixed steps so ball speed and timers are identical on slow and fast phones. */
 const STEP=1/120;
-const canvas=$('game'),ctx=canvas.getContext('2d',{alpha:false,desynchronized:true});let toastTimer,paddleTimer,hostSim=null,vb=null;
+/* No "desynchronized" flag: it lets the phone show the canvas while a frame is only half drawn (background but no paddles/ball), which looked like dimming/flicker. */
+const canvas=$('game'),ctx=canvas.getContext('2d',{alpha:false});let toastTimer,paddleTimer,hostSim=null,vb=null;
 function toast(s){$('toast').textContent=s;$('toast').classList.remove('hide');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hide'),3200)}function show(id){$(id).classList.remove('hide')}function hide(id){$(id).classList.add('hide')}function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function stopLoop(){running=false;loopToken++;if(raf)cancelAnimationFrame(raf);raf=0;hostSim=null;acc=0}
 function setPlayMode(on){document.body.classList.toggle('playing',!!on)}
@@ -244,7 +246,7 @@ function roundRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill(
 /* ---------- Space table arena ---------- */
 /* The table occupies TB (fractions of the canvas); the space background shows around it. Game coordinates 0..1 map onto the table. */
 const TB={x:.035,y:.05,w:.93,h:.9};
-let bgCache=null;
+let bgCache=null,spr=null;
 function buildBg(w,h){
   const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');const k=Math.max(1,w/700);
   let s=20261106;const rnd=()=>(s=(Math.imul(s,1664525)+1013904223)>>>0)/4294967296;
@@ -270,9 +272,17 @@ function buildBg(w,h){
   g.strokeStyle='rgba(255,255,255,.18)';g.lineWidth=Math.max(1,k);g.beginPath();g.roundRect(tx+rim+1,ty+rim+1,tw-2*rim-2,th-2*rim-2,Math.max(2,R-rim));g.stroke();
   g.fillStyle='#e8f0ff';[ty,ty+th].forEach(y=>{g.beginPath();g.roundRect(tx+tw/2-5*k,y-6*k,10*k,12*k,4*k);g.fill()});
   return c}
-function draw(){const w=canvas.width,h=canvas.height;if(!bgCache||bgCache.width!==w||bgCache.height!==h)bgCache=buildBg(w,h);ctx.drawImage(bgCache,0,0);const tx=w*TB.x,ty=h*TB.y,tw=w*TB.w,th=h*TB.h,k=Math.max(1,w/700),pw=tw*.018,ph=th*.21;ctx.shadowBlur=14*k;ctx.shadowColor='#38e8ff';ctx.fillStyle='#38e8ff';roundRect(tx+tw*.035,ty+paddles[0]*th-ph/2,pw,ph,pw/2);ctx.shadowColor='#ff4fd8';ctx.fillStyle='#ff4fd8';roundRect(tx+tw*.947,ty+paddles[1]*th-ph/2,pw,ph,pw/2);const r=Math.min(tw*.014,th*.024);ctx.shadowColor='#9ff3ff';ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(tx+ball.x*tw,ty+ball.y*th,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}
+/* Paddles and ball with their glow are pre-rendered once per canvas size. Per frame we only copy small images, which is far cheaper than blurring shadows live on a phone. */
+function buildSprites(w,h,k,pw,ph,r){
+  const pad=Math.ceil(14*k*2)+2;
+  const mk=(sw,sh,col,draw)=>{const c=document.createElement('canvas');c.width=Math.ceil(sw+2*pad);c.height=Math.ceil(sh+2*pad);const g=c.getContext('2d');g.shadowBlur=14*k;g.shadowColor=col;g.fillStyle=col===('#9ff3ff')?'#fff':col;draw(g);return c};
+  return{w,h,pad,
+    p0:mk(pw,ph,'#38e8ff',g=>{g.beginPath();g.roundRect(pad,pad,pw,ph,pw/2);g.fill()}),
+    p1:mk(pw,ph,'#ff4fd8',g=>{g.beginPath();g.roundRect(pad,pad,pw,ph,pw/2);g.fill()}),
+    b:mk(r*2,r*2,'#9ff3ff',g=>{g.beginPath();g.arc(pad+r,pad+r,r,0,Math.PI*2);g.fill()})}}
+function draw(){const w=canvas.width,h=canvas.height;if(!bgCache||bgCache.width!==w||bgCache.height!==h){bgCache=buildBg(w,h);spr=null}ctx.drawImage(bgCache,0,0);const tx=w*TB.x,ty=h*TB.y,tw=w*TB.w,th=h*TB.h,k=Math.max(1,w/700),pw=tw*.018,ph=th*.21,r=Math.min(tw*.014,th*.024);if(!spr||spr.w!==w||spr.h!==h)spr=buildSprites(w,h,k,pw,ph,r);const pad=spr.pad;ctx.drawImage(spr.p0,tx+tw*.035-pad,ty+paddles[0]*th-ph/2-pad);ctx.drawImage(spr.p1,tx+tw*.947-pad,ty+paddles[1]*th-ph/2-pad);ctx.drawImage(spr.b,tx+ball.x*tw-r-pad,ty+ball.y*th-r-pad)}
 /* Match the canvas buffer to its on-screen size so the table is sharp and fills the screen. */
-function sizeCanvas(){const r=canvas.getBoundingClientRect();if(r.width<10||r.height<10)return;const dpr=Math.min(window.devicePixelRatio||1,1.75),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(canvas.width===w&&canvas.height===h)return;canvas.width=w;canvas.height=h;bgCache=null;draw()}
+function sizeCanvas(){const r=canvas.getBoundingClientRect();if(r.width<10||r.height<10)return;const dpr=Math.min(window.devicePixelRatio||1,1.75),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);if(canvas.width===w&&canvas.height===h)return;canvas.width=w;canvas.height=h;bgCache=null;spr=null;draw()}
 if(window.ResizeObserver)new ResizeObserver(()=>sizeCanvas()).observe(canvas);window.addEventListener('resize',sizeCanvas);window.addEventListener('orientationchange',()=>setTimeout(sizeCanvas,250));
 function resetBall(dir){const scale=ballScale();ball={x:.5,y:.5,vx:dir*(.34+Math.random()*.08)*scale,vy:(Math.random()-.5)*.35*scale}}
 function updateTimer(){let sec=duration;if(mode==='ai')sec=Math.max(0,Math.ceil(duration-elapsed));else if(roomData){if(roomData.status==='countdown')sec=Math.max(0,Math.ceil((Number(roomData.countdownEndsAt||0)-serverNow())/1000));else if(roomData.status==='playing'){const st=roomData.state||{};let rem=Number(st.remaining||0);if(slot===1&&hostSim)rem=hostSim.remaining;else rem-=Math.max(0,Math.min(250,serverNow()-Number(st.lastTick||serverNow())));sec=Math.max(0,Math.ceil(rem/1000))}else sec=Math.max(0,Math.ceil(Number(roomData.state?.remaining??duration*1000)/1000))}const txt=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');if($('timeLeft').textContent!==txt)$('timeLeft').textContent=txt}
