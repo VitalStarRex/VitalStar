@@ -1,21 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VitalStar Profile</title>
-
-<!-- Set theme before first paint to avoid a flash. theme.js can still override it. -->
-<script>
-(function(){
-    var t = null;
-    try { t = localStorage.getItem("theme"); } catch(e){}
-    if(t !== "light" && t !== "dark"){
-        t = (window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
-    }
-    document.documentElement.setAttribute("data-theme", t);
-})();
-</script>
 
 <link rel="stylesheet" href="theme.css">
 <script src="theme.js"></script>
