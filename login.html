@@ -4,88 +4,491 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VitalStar Login</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;padding:20px;display:flex;justify-content:center;align-items:center;font-family:Arial,sans-serif;color:#fff;background:linear-gradient(135deg,#080020,#19004d,#00334d,#51004d);background-size:300% 300%;animation:neonBackground 12s ease infinite}
-@keyframes neonBackground{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.box{width:100%;max-width:360px;padding:30px 25px;border:1px solid #00f0ff;border-radius:18px;text-align:center;background:rgba(8,5,30,.91);box-shadow:0 0 14px #00eaff,0 0 34px rgba(180,0,255,.65)}
-h1{margin:0 0 8px;color:#00f0ff;text-shadow:0 0 12px #00eaff}
-.subtitle{margin:0 0 22px;color:#e4d9ff}
-input{width:100%;padding:13px 14px;margin:8px 0 14px;border:1px solid #a64dff;border-radius:9px;background:#10082b;color:#fff;font-size:15px;outline:none}
+
+body{
+margin:0;
+min-height:100vh;
+padding:20px;
+display:flex;
+justify-content:center;
+align-items:center;
+font-family:Arial,sans-serif;
+color:#fff;
+background:linear-gradient(135deg,#080020,#19004d,#00334d,#51004d);
+background-size:300% 300%;
+animation:neonBackground 12s ease infinite
+}
+
+@keyframes neonBackground{
+0%{background-position:0% 50%}
+50%{background-position:100% 50%}
+100%{background-position:0% 50%}
+}
+
+.box{
+width:100%;
+max-width:360px;
+padding:30px 25px;
+border:1px solid #00f0ff;
+border-radius:18px;
+text-align:center;
+background:rgba(8,5,30,.91);
+box-shadow:0 0 14px #00eaff,0 0 34px rgba(180,0,255,.65)
+}
+
+h1{
+margin:0 0 8px;
+color:#00f0ff;
+text-shadow:0 0 12px #00eaff
+}
+
+.subtitle{
+margin:0 0 22px;
+color:#e4d9ff
+}
+
+input{
+width:100%;
+padding:13px 14px;
+margin:8px 0 14px;
+border:1px solid #a64dff;
+border-radius:9px;
+background:#10082b;
+color:#fff;
+font-size:15px;
+outline:none
+}
+
 input::placeholder{color:#bdb2d4}
-input:focus{border-color:#00f0ff;box-shadow:0 0 10px #00cfff}
+
+input:focus{
+border-color:#00f0ff;
+box-shadow:0 0 10px #00cfff
+}
+
 .password-wrap{position:relative}
+
 .password-wrap input{padding-right:75px}
-.toggle{position:absolute;right:8px;top:17px;width:auto;padding:6px 9px;border:1px solid #00f0ff;border-radius:7px;background:transparent;color:#00f0ff;font-size:12px;cursor:pointer}
-.main-btn{width:100%;padding:13px;border:0;border-radius:9px;background:linear-gradient(90deg,#00dfff,#9b28ff,#ff20b8);color:white;font-size:17px;font-weight:bold;cursor:pointer;box-shadow:0 0 14px #00bfff}
-.main-btn:disabled{opacity:.65;cursor:wait}
-a{color:#00f0ff;text-decoration:none;font-weight:bold}
+
+.toggle{
+position:absolute;
+right:8px;
+top:17px;
+width:auto;
+padding:6px 9px;
+border:1px solid #00f0ff;
+border-radius:7px;
+background:transparent;
+color:#00f0ff;
+font-size:12px;
+cursor:pointer
+}
+
+.main-btn{
+width:100%;
+padding:13px;
+border:0;
+border-radius:9px;
+background:linear-gradient(90deg,#00dfff,#9b28ff,#ff20b8);
+color:white;
+font-size:17px;
+font-weight:bold;
+cursor:pointer;
+box-shadow:0 0 14px #00bfff
+}
+
+.main-btn:disabled{
+opacity:.65;
+cursor:wait
+}
+
+a{
+color:#00f0ff;
+text-decoration:none;
+font-weight:bold
+}
+
 a:hover{text-decoration:underline}
-.footer{margin:20px 0 0;color:#e4d9ff;font-size:14px}
+
+.footer{
+margin:20px 0 0;
+color:#e4d9ff;
+font-size:14px
+}
 </style>
 </head>
+
 <body>
+
 <div class="box">
-  <h1>✦ VitalStar ✦</h1>
-  <p class="subtitle">Welcome back! Login to continue.</p>
-  <form id="loginForm">
-    <input id="username" type="text" placeholder="Username" maxlength="15" autocomplete="username" required>
-    <div class="password-wrap">
-      <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
-      <button class="toggle" type="button" id="togglePassword">Show</button>
-    </div>
-    <button class="main-btn" type="submit" id="loginBtn">Login</button>
-  </form>
-  <p class="footer">Don't have an account? <a href="register.html">Register</a></p>
+
+<h1>✦ VitalStar ✦</h1>
+
+<p class="subtitle">
+Welcome back! Login to continue.
+</p>
+
+<form id="loginForm">
+
+<input
+id="username"
+type="text"
+placeholder="Username"
+maxlength="15"
+autocomplete="username"
+required
+>
+
+<div class="password-wrap">
+
+<input
+id="password"
+type="password"
+placeholder="Password"
+autocomplete="current-password"
+required
+>
+
+<button
+class="toggle"
+type="button"
+id="togglePassword"
+>Show</button>
+
 </div>
 
+<button
+class="main-btn"
+type="submit"
+id="loginBtn"
+>Login</button>
+
+</form>
+
+<p class="footer">
+Don't have an account?
+<a href="register.html">Register</a>
+</p>
+
+</div>
+
+
 <script type="module">
+
 import { auth, db } from "./firebase.js";
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+collection,
+query,
+where,
+getDocs,
+doc,
+updateDoc,
+deleteField
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 
 const form = document.getElementById("loginForm");
+
 const loginBtn = document.getElementById("loginBtn");
+
 const passwordInput = document.getElementById("password");
 
-document.getElementById("togglePassword").addEventListener("click", function () {
-  const show = passwordInput.type === "password";
-  passwordInput.type = show ? "text" : "password";
-  this.textContent = show ? "Hide" : "Show";
+
+// ============================================================
+// SHOW / HIDE PASSWORD
+// ============================================================
+
+document.getElementById("togglePassword")
+.addEventListener("click", function(){
+
+const show = passwordInput.type === "password";
+
+passwordInput.type = show ? "text" : "password";
+
+this.textContent = show ? "Hide" : "Show";
+
 });
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const username = document.getElementById("username").value.trim().toLowerCase();
-  const password = passwordInput.value;
 
-  if (username.length > 15) {
-    alert("Username must not exceed 15 characters.");
-    return;
-  }
+// ============================================================
+// LOGIN
+// ============================================================
 
-  loginBtn.disabled = true;
-  loginBtn.textContent = "Logging in...";
+form.addEventListener("submit", async (event)=>{
 
-  try {
-    const q = query(collection(db, "users"), where("username", "==", username));
-    const snap = await getDocs(q);
+event.preventDefault();
 
-    if (snap.empty) {
-      alert("Username not found.");
-      return;
-    }
+const username = document
+.getElementById("username")
+.value
+.trim()
+.toLowerCase();
 
-    const email = snap.docs[0].data().email;
-    await signInWithEmailAndPassword(auth, email, password);
-    window.location.href = "home.html";
-  } catch (error) {
-    alert(error.message);
-  } finally {
-    loginBtn.disabled = false;
-    loginBtn.textContent = "Login";
-  }
+const password = passwordInput.value;
+
+
+if(username.length > 15){
+
+alert("Username must not exceed 15 characters.");
+
+return;
+
+}
+
+
+loginBtn.disabled = true;
+
+loginBtn.textContent = "Logging in...";
+
+
+try{
+
+
+// ==========================================================
+// FIND USERNAME IN FIRESTORE
+// ==========================================================
+
+const q = query(
+collection(db,"users"),
+where("username","==",username)
+);
+
+const snap = await getDocs(q);
+
+
+if(snap.empty){
+
+alert("Username not found.");
+
+return;
+
+}
+
+
+if(snap.size > 1){
+
+alert("Multiple accounts use this username. Please contact VitalStar support.");
+
+return;
+
+}
+
+
+const userDoc = snap.docs[0];
+
+const userData = userDoc.data();
+
+const userRef = doc(db,"users",userDoc.id);
+
+
+// ==========================================================
+// GET STORED EMAILS
+// ==========================================================
+
+const currentEmail = userData.email || "";
+
+const pendingEmail = userData.pendingEmail || "";
+
+
+if(!currentEmail && !pendingEmail){
+
+alert("No login email found for this account.");
+
+return;
+
+}
+
+
+// ==========================================================
+// LOGIN USING CURRENT EMAIL
+// ==========================================================
+
+let credential = null;
+
+let loginError = null;
+
+
+if(currentEmail){
+
+try{
+
+credential = await signInWithEmailAndPassword(
+auth,
+currentEmail,
+password
+);
+
+}catch(error){
+
+loginError = error;
+
+}
+
+}
+
+
+// ==========================================================
+// TRY PENDING EMAIL IF CURRENT EMAIL FAILS
+// ==========================================================
+
+if(
+!credential &&
+pendingEmail &&
+pendingEmail.toLowerCase() !== currentEmail.toLowerCase()
+){
+
+if(
+loginError?.code === "auth/invalid-credential" ||
+loginError?.code === "auth/user-not-found"
+){
+
+try{
+
+credential = await signInWithEmailAndPassword(
+auth,
+pendingEmail,
+password
+);
+
+}catch(error){
+
+loginError = error;
+
+}
+
+}
+
+}
+
+
+// ==========================================================
+// LOGIN FAILED
+// ==========================================================
+
+if(!credential){
+
+if(
+loginError?.code === "auth/invalid-credential" ||
+loginError?.code === "auth/wrong-password"
+){
+
+throw new Error("Incorrect username or password.");
+
+}
+
+if(loginError?.code === "auth/too-many-requests"){
+
+throw new Error("Too many login attempts. Please try again later.");
+
+}
+
+throw new Error(
+loginError?.message || "Login failed. Please try again."
+);
+
+}
+
+
+// ==========================================================
+// VERIFY ACCOUNT ID
+// ==========================================================
+
+if(credential.user.uid !== userDoc.id){
+
+await signOut(auth);
+
+throw new Error(
+"Account verification failed. Please contact VitalStar support."
+);
+
+}
+
+
+// ==========================================================
+// AUTOMATIC FIRESTORE EMAIL SYNCHRONIZATION
+// ==========================================================
+
+const authenticatedEmail = credential.user.email || "";
+
+if(!authenticatedEmail){
+
+await signOut(auth);
+
+throw new Error("Firebase did not return an email for this account.");
+
+}
+
+
+if(
+authenticatedEmail.toLowerCase() !==
+currentEmail.toLowerCase()
+){
+
+// If a pending email exists, only synchronize when
+// Firebase's authenticated email matches that pending email.
+
+if(
+!pendingEmail ||
+authenticatedEmail.toLowerCase() ===
+pendingEmail.toLowerCase()
+){
+
+await updateDoc(userRef,{
+
+email: authenticatedEmail,
+
+pendingEmail: deleteField()
+
 });
+
+}
+
+}else if(pendingEmail){
+
+// Existing email still works, so the pending change
+// has not yet been confirmed. Keep it for later.
+
+console.log("Pending email verification is still awaiting completion.");
+
+}
+
+
+// ==========================================================
+// LOGIN SUCCESS
+// ==========================================================
+
+window.location.href = "home.html";
+
+
+}catch(error){
+
+console.error("VitalStar Login Error:",error);
+
+alert(error.message || "Login failed.");
+
+}finally{
+
+loginBtn.disabled = false;
+
+loginBtn.textContent = "Login";
+
+}
+
+});
+
 </script>
+
 </body>
 </html>
