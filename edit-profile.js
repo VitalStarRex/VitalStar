@@ -8,10 +8,11 @@ import {
 
 import {
     onAuthStateChanged,
-    updateEmail,
+    verifyBeforeUpdateEmail,
     updatePassword,
     reauthenticateWithCredential,
-    EmailAuthProvider
+    EmailAuthProvider,
+    reload
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // ============================================================
@@ -21,11 +22,12 @@ import {
 // - Profile picture
 // - Cover photo
 // - Personal information
-// - Email change with re-authentication
+// - Verified email change
 // - Password change
 // - Profile privacy
 // - Submit/loading indicator
 // - Dark theme support
+// - Firestore email synchronization
 // ============================================================
 
 
@@ -63,7 +65,6 @@ const country = document.getElementById("country");
 const bio = document.getElementById("bio");
 const password = document.getElementById("password");
 
-// Profile privacy field
 const profilePrivacy = document.getElementById("profilePrivacy");
 
 const form = document.getElementById("editProfileForm");
@@ -73,10 +74,9 @@ const form = document.getElementById("editProfileForm");
 // SUBMIT BUTTON
 // ============================================================
 
-const submitButton =
-    form?.querySelector(
-        'button[type="submit"], input[type="submit"]'
-    );
+const submitButton = form?.querySelector(
+    'button[type="submit"], input[type="submit"]'
+);
 
 
 // ============================================================
@@ -98,8 +98,7 @@ if (profileImage) {
         imageFile = e.target.files[0];
 
         if (imageFile && profilePreview) {
-            profilePreview.src =
-                URL.createObjectURL(imageFile);
+            profilePreview.src = URL.createObjectURL(imageFile);
         }
 
     });
@@ -118,8 +117,7 @@ if (coverImage) {
         coverFile = e.target.files[0];
 
         if (coverFile && coverPreview) {
-            coverPreview.src =
-                URL.createObjectURL(coverFile);
+            coverPreview.src = URL.createObjectURL(coverFile);
         }
 
     });
@@ -140,11 +138,7 @@ onAuthStateChanged(auth, async (user) => {
 
     try {
 
-        const userRef = doc(
-            db,
-            "users",
-            user.uid
-        );
+        const userRef = doc(db, "users", user.uid);
 
         const snap = await getDoc(userRef);
 
@@ -157,39 +151,45 @@ onAuthStateChanged(auth, async (user) => {
 
         const data = snap.data();
 
+        // ====================================================
+        // SYNCHRONIZE EMAIL
+        // ====================================================
+
+        if (user.email && data.email !== user.email) {
+
+            await updateDoc(userRef, {
+                email: user.email
+            });
+
+        }
+
 
         // ====================================================
         // LOAD BASIC INFORMATION
         // ====================================================
 
         if (fullName) {
-            fullName.value =
-                data.fullName || "";
+            fullName.value = data.fullName || "";
         }
 
         if (gender) {
-            gender.value =
-                data.gender || "";
+            gender.value = data.gender || "";
         }
 
         if (email) {
-            email.value =
-                user.email || "";
+            email.value = user.email || "";
         }
 
         if (dob) {
-            dob.value =
-                data.dob || "";
+            dob.value = data.dob || "";
         }
 
         if (country) {
-            country.value =
-                data.country || "";
+            country.value = data.country || "";
         }
 
         if (bio) {
-            bio.value =
-                data.bio || "";
+            bio.value = data.bio || "";
         }
 
 
@@ -209,13 +209,9 @@ onAuthStateChanged(auth, async (user) => {
         // LOAD PROFILE PICTURE
         // ====================================================
 
-        if (
-            data.profilePicture &&
-            profilePreview
-        ) {
+        if (data.profilePicture && profilePreview) {
 
-            profilePreview.src =
-                data.profilePicture;
+            profilePreview.src = data.profilePicture;
 
         }
 
@@ -224,26 +220,17 @@ onAuthStateChanged(auth, async (user) => {
         // LOAD COVER PHOTO
         // ====================================================
 
-        if (
-            data.coverPhoto &&
-            coverPreview
-        ) {
+        if (data.coverPhoto && coverPreview) {
 
-            coverPreview.src =
-                data.coverPhoto;
+            coverPreview.src = data.coverPhoto;
 
         }
 
     } catch (err) {
 
-        console.error(
-            "Load Profile Error:",
-            err
-        );
+        console.error("Load Profile Error:", err);
 
-        alert(
-            "Failed to load profile."
-        );
+        alert("Failed to load profile.");
 
     }
 
@@ -258,10 +245,7 @@ async function uploadImage(file) {
 
     const formData = new FormData();
 
-    formData.append(
-        "file",
-        file
-    );
+    formData.append("file", file);
 
     formData.append(
         "upload_preset",
@@ -276,8 +260,7 @@ async function uploadImage(file) {
         }
     );
 
-    const result =
-        await response.json();
+    const result = await response.json();
 
     if (!response.ok) {
 
@@ -310,29 +293,22 @@ function setSubmitting(isSubmitting) {
         submitButton.dataset.originalText =
             submitButton.textContent;
 
-        submitButton.textContent =
-            "Saving...";
+        submitButton.textContent = "Saving...";
 
-        submitButton.classList.add(
-            "submitting"
-        );
+        submitButton.classList.add("submitting");
 
     } else {
 
         submitButton.disabled = false;
 
-        if (
-            submitButton.dataset.originalText
-        ) {
+        if (submitButton.dataset.originalText) {
 
             submitButton.textContent =
                 submitButton.dataset.originalText;
 
         }
 
-        submitButton.classList.remove(
-            "submitting"
-        );
+        submitButton.classList.remove("submitting");
 
     }
 
@@ -345,321 +321,195 @@ function setSubmitting(isSubmitting) {
 
 if (form) {
 
-    form.addEventListener(
-        "submit",
-        async (e) => {
+    form.addEventListener("submit", async (e) => {
 
-            e.preventDefault();
+        e.preventDefault();
+
+        const user = auth.currentUser;
+
+        if (!user) {
+
+            alert("Please log in first.");
+
+            return;
+
+        }
+
+        if (submitButton && submitButton.disabled) {
+            return;
+        }
+
+        setSubmitting(true);
+
+        let emailVerificationSent = false;
+
+        try {
+
+            // =================================================
+            // CURRENT IMAGE URLS
+            // =================================================
+
+            let profilePicture =
+                profilePreview?.src || "";
+
+            let coverPhoto =
+                coverPreview?.src || "";
 
 
-            const user =
-                auth.currentUser;
+            // =================================================
+            // UPLOAD NEW PROFILE PICTURE
+            // =================================================
 
-            if (!user) {
+            if (imageFile) {
 
-                alert(
-                    "Please log in first."
-                );
-
-                return;
+                profilePicture = await uploadImage(imageFile);
 
             }
 
 
-            // Prevent double submission
+            // =================================================
+            // UPLOAD NEW COVER PHOTO
+            // =================================================
+
+            if (coverFile) {
+
+                coverPhoto = await uploadImage(coverFile);
+
+            }
+
+
+            // =================================================
+            // PROFILE PRIVACY
+            // =================================================
+
+            const privacyValue =
+                profilePrivacy?.value || "public";
+
+            const profilePrivacyValue =
+                privacyValue === "friends"
+                    ? "friends"
+                    : "public";
+
+
+            // =================================================
+            // UPDATE FIRESTORE PROFILE
+            // =================================================
+
+            await updateDoc(
+                doc(db, "users", user.uid),
+                {
+
+                    fullName:
+                        fullName?.value.trim() || "",
+
+                    gender:
+                        gender?.value.trim() || "",
+
+                    dob:
+                        dob?.value || "",
+
+                    country:
+                        country?.value.trim() || "",
+
+                    bio:
+                        bio?.value.trim() || "",
+
+                    profilePicture,
+
+                    coverPhoto,
+
+                    profilePrivacy: profilePrivacyValue
+
+                }
+            );
+
+
+            // =================================================
+            // CHANGE EMAIL — VERIFICATION
+            // =================================================
+
+            const newEmail = email?.value.trim() || "";
+
+            const currentEmail = user.email || "";
+
             if (
-                submitButton &&
-                submitButton.disabled
+                newEmail &&
+                newEmail.toLowerCase() !==
+                currentEmail.toLowerCase()
             ) {
 
-                return;
-
-            }
-
-
-            setSubmitting(true);
-
-
-            try {
-
-                // =================================================
-                // CURRENT IMAGE URLS
-                // =================================================
-
-                let profilePicture =
-                    profilePreview?.src || "";
-
-                let coverPhoto =
-                    coverPreview?.src || "";
-
-
-                // =================================================
-                // UPLOAD NEW PROFILE PICTURE
-                // =================================================
-
-                if (imageFile) {
-
-                    profilePicture =
-                        await uploadImage(
-                            imageFile
-                        );
-
-                }
-
-
-                // =================================================
-                // UPLOAD NEW COVER PHOTO
-                // =================================================
-
-                if (coverFile) {
-
-                    coverPhoto =
-                        await uploadImage(
-                            coverFile
-                        );
-
-                }
-
-
-                // =================================================
-                // PROFILE PRIVACY
-                // =================================================
-
-                const privacyValue =
-                    profilePrivacy?.value ||
-                    "public";
-
-
-                // Only allow supported privacy values
-                const profilePrivacyValue =
-                    privacyValue === "friends"
-                        ? "friends"
-                        : "public";
-
-
-                // =================================================
-                // UPDATE FIRESTORE PROFILE
-                // =================================================
-
-                await updateDoc(
-                    doc(
-                        db,
-                        "users",
-                        user.uid
-                    ),
-                    {
-
-                        fullName:
-                            fullName?.value.trim() || "",
-
-                        gender:
-                            gender?.value.trim() || "",
-
-                        dob:
-                            dob?.value || "",
-
-                        country:
-                            country?.value.trim() || "",
-
-                        bio:
-                            bio?.value.trim() || "",
-
-                        profilePicture,
-
-                        coverPhoto,
-
-                        profilePrivacy:
-                            profilePrivacyValue
-
-                    }
+                const currentPassword = prompt(
+                    "Enter your current password to change your email:"
                 );
 
+                if (!currentPassword) {
 
-                // =================================================
-                // CHANGE EMAIL
-                // =================================================
+                    alert("Email change cancelled. Your other profile changes were saved.");
 
-                const newEmail =
-                    email?.value.trim() || "";
-
-                const currentEmail =
-                    user.email || "";
-
-
-                if (
-                    newEmail &&
-                    newEmail.toLowerCase() !==
-                    currentEmail.toLowerCase()
-                ) {
-
-                    // Ask for CURRENT password.
-                    // This is different from the new
-                    // password field.
-
-                    const currentPassword =
-                        prompt(
-                            "Enter your current password to change your email:"
-                        );
-
-
-                    if (!currentPassword) {
-
-                        alert(
-                            "Email was not changed because your current password was not provided."
-                        );
-
-                    } else {
-
-                        try {
-
-                            // Re-authenticate user
-
-                            const credential =
-                                EmailAuthProvider.credential(
-                                    currentEmail,
-                                    currentPassword
-                                );
-
-
-                            await reauthenticateWithCredential(
-                                user,
-                                credential
-                            );
-
-
-                            // Change email
-
-                            await updateEmail(
-                                user,
-                                newEmail
-                            );
-
-
-                            console.log(
-                                "Email updated successfully."
-                            );
-
-
-                        } catch (err) {
-
-                            console.error(
-                                "Email Update Error:",
-                                err
-                            );
-
-
-                            if (
-                                err.code ===
-                                    "auth/wrong-password" ||
-                                err.code ===
-                                    "auth/invalid-credential"
-                            ) {
-
-                                alert(
-                                    "The current password is incorrect. Your email was not changed."
-                                );
-
-
-                            } else if (
-                                err.code ===
-                                "auth/invalid-email"
-                            ) {
-
-                                alert(
-                                    "The new email address is invalid."
-                                );
-
-
-                            } else if (
-                                err.code ===
-                                "auth/email-already-in-use"
-                            ) {
-
-                                alert(
-                                    "That email address is already being used by another account."
-                                );
-
-
-                            } else if (
-                                err.code ===
-                                "auth/requires-recent-login"
-                            ) {
-
-                                alert(
-                                    "Please log out and log in again, then try changing your email."
-                                );
-
-
-                            } else {
-
-                                alert(
-                                    err.message ||
-                                    "Email could not be updated."
-                                );
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-
-                // =================================================
-                // CHANGE PASSWORD
-                // =================================================
-
-                if (
-                    password?.value.trim()
-                ) {
+                } else {
 
                     try {
 
-                        await updatePassword(
+                        // Re-authenticate user
+
+                        const credential =
+                            EmailAuthProvider.credential(
+                                currentEmail,
+                                currentPassword
+                            );
+
+                        await reauthenticateWithCredential(
                             user,
-                            password.value.trim()
+                            credential
                         );
 
 
-                        console.log(
-                            "Password updated successfully."
+                        // Send verification to new email
+
+                        await verifyBeforeUpdateEmail(
+                            user,
+                            newEmail
                         );
 
+                        emailVerificationSent = true;
 
                     } catch (err) {
 
                         console.error(
-                            "Password Update Error:",
+                            "Email Update Error:",
                             err
                         );
 
-
                         if (
-                            err.code ===
-                            "auth/requires-recent-login"
+                            err.code === "auth/wrong-password" ||
+                            err.code === "auth/invalid-credential"
                         ) {
 
-                            alert(
-                                "Your password could not be changed because Firebase requires a recent login. Please log out and log in again, then try again."
-                            );
-
+                            alert("Your current password is incorrect. Your email was not changed.");
 
                         } else if (
-                            err.code ===
-                            "auth/weak-password"
+                            err.code === "auth/invalid-email"
                         ) {
 
-                            alert(
-                                "The new password is too weak. Please choose a stronger password."
-                            );
+                            alert("The new email address is invalid.");
 
+                        } else if (
+                            err.code === "auth/email-already-in-use"
+                        ) {
+
+                            alert("That email is already being used by another account.");
+
+                        } else if (
+                            err.code === "auth/requires-recent-login"
+                        ) {
+
+                            alert("Please log out and log in again before changing your email.");
 
                         } else {
 
                             alert(
                                 err.message ||
-                                "Password could not be updated."
+                                "Email change failed."
                             );
 
                         }
@@ -668,41 +518,105 @@ if (form) {
 
                 }
 
-
-                // =================================================
-                // SUCCESS
-                // =================================================
-
-                alert(
-                    "Profile updated successfully!"
-                );
+            }
 
 
-                window.location.href =
-                    "profile.html";
+            // =================================================
+            // CHANGE PASSWORD
+            // =================================================
 
+            if (password?.value) {
 
-            } catch (err) {
+                try {
 
-                console.error(
-                    "Profile Update Error:",
-                    err
-                );
+                    await updatePassword(
+                        user,
+                        password.value
+                    );
 
+                    // Clear password field after success
 
-                alert(
-                    err.message ||
-                    "Failed to update profile."
-                );
+                    password.value = "";
 
+                } catch (err) {
 
-            } finally {
+                    console.error(
+                        "Password Update Error:",
+                        err
+                    );
 
-                setSubmitting(false);
+                    if (
+                        err.code === "auth/requires-recent-login"
+                    ) {
+
+                        alert(
+                            "Your password could not be changed. Please log out and log in again, then try again."
+                        );
+
+                    } else if (
+                        err.code === "auth/weak-password"
+                    ) {
+
+                        alert(
+                            "Your new password is too weak. Please choose a stronger password."
+                        );
+
+                    } else {
+
+                        alert(
+                            err.message ||
+                            "Password could not be updated."
+                        );
+
+                    }
+
+                }
 
             }
 
+
+            // =================================================
+            // SUCCESS MESSAGE
+            // =================================================
+
+            if (emailVerificationSent) {
+
+                alert(
+                    "Profile updated successfully! A verification link has been sent to your new email. Open it to complete your email change."
+                );
+
+            } else {
+
+                alert("Profile updated successfully!");
+
+            }
+
+
+            // =================================================
+            // REDIRECT
+            // =================================================
+
+            window.location.href = "profile.html";
+
+
+        } catch (err) {
+
+            console.error(
+                "Profile Update Error:",
+                err
+            );
+
+            alert(
+                err.message ||
+                "Failed to update profile."
+            );
+
+        } finally {
+
+            setSubmitting(false);
+
         }
-    );
+
+    });
 
 }
