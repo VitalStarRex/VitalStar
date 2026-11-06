@@ -3,7 +3,8 @@ import { auth, db } from "./firebase.js";
 import {
     doc,
     getDoc,
-    updateDoc
+    updateDoc,
+    deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -23,11 +24,12 @@ import {
 // - Cover photo
 // - Personal information
 // - Verified email change
+// - Automatic Firestore email synchronization
+// - Pending email support
 // - Password change
 // - Profile privacy
 // - Submit/loading indicator
 // - Dark theme support
-// - Firestore email synchronization
 // ============================================================
 
 
@@ -126,7 +128,7 @@ if (coverImage) {
 
 
 // ============================================================
-// LOAD USER PROFILE
+// LOAD USER PROFILE + SYNCHRONIZE EMAIL
 // ============================================================
 
 onAuthStateChanged(auth, async (user) => {
@@ -137,6 +139,8 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     try {
+
+        await reload(user);
 
         const userRef = doc(db, "users", user.uid);
 
@@ -152,13 +156,17 @@ onAuthStateChanged(auth, async (user) => {
         const data = snap.data();
 
         // ====================================================
-        // SYNCHRONIZE EMAIL
+        // AUTOMATIC EMAIL SYNCHRONIZATION
         // ====================================================
 
-        if (user.email && data.email !== user.email) {
+        if (
+            user.email &&
+            data.email !== user.email
+        ) {
 
             await updateDoc(userRef, {
-                email: user.email
+                email: user.email,
+                pendingEmail: deleteField()
             });
 
         }
@@ -345,6 +353,8 @@ if (form) {
 
         try {
 
+            await reload(user);
+
             // =================================================
             // CURRENT IMAGE URLS
             // =================================================
@@ -395,37 +405,36 @@ if (form) {
             // UPDATE FIRESTORE PROFILE
             // =================================================
 
-            await updateDoc(
-                doc(db, "users", user.uid),
-                {
+            const userRef = doc(db, "users", user.uid);
 
-                    fullName:
-                        fullName?.value.trim() || "",
+            await updateDoc(userRef, {
 
-                    gender:
-                        gender?.value.trim() || "",
+                fullName:
+                    fullName?.value.trim() || "",
 
-                    dob:
-                        dob?.value || "",
+                gender:
+                    gender?.value.trim() || "",
 
-                    country:
-                        country?.value.trim() || "",
+                dob:
+                    dob?.value || "",
 
-                    bio:
-                        bio?.value.trim() || "",
+                country:
+                    country?.value.trim() || "",
 
-                    profilePicture,
+                bio:
+                    bio?.value.trim() || "",
 
-                    coverPhoto,
+                profilePicture,
 
-                    profilePrivacy: profilePrivacyValue
+                coverPhoto,
 
-                }
-            );
+                profilePrivacy: profilePrivacyValue
+
+            });
 
 
             // =================================================
-            // CHANGE EMAIL — VERIFICATION
+            // CHANGE EMAIL — VERIFIED
             // =================================================
 
             const newEmail = email?.value.trim() || "";
@@ -444,13 +453,15 @@ if (form) {
 
                 if (!currentPassword) {
 
-                    alert("Email change cancelled. Your other profile changes were saved.");
+                    alert(
+                        "Email change cancelled. Your other profile changes were saved."
+                    );
 
                 } else {
 
                     try {
 
-                        // Re-authenticate user
+                        // Re-authenticate existing account
 
                         const credential =
                             EmailAuthProvider.credential(
@@ -464,7 +475,17 @@ if (form) {
                         );
 
 
-                        // Send verification to new email
+                        // Save pending email first.
+                        // Do NOT replace the active email yet.
+
+                        await updateDoc(userRef, {
+
+                            pendingEmail: newEmail
+
+                        });
+
+
+                        // Send verification to the new email
 
                         await verifyBeforeUpdateEmail(
                             user,
@@ -480,30 +501,60 @@ if (form) {
                             err
                         );
 
+                        // Remove pending email if request failed
+
+                        if (!emailVerificationSent) {
+
+                            try {
+
+                                await updateDoc(userRef, {
+                                    pendingEmail: deleteField()
+                                });
+
+                            } catch (cleanupError) {
+
+                                console.error(
+                                    "Pending Email Cleanup Error:",
+                                    cleanupError
+                                );
+
+                            }
+
+                        }
+
+
                         if (
                             err.code === "auth/wrong-password" ||
                             err.code === "auth/invalid-credential"
                         ) {
 
-                            alert("Your current password is incorrect. Your email was not changed.");
+                            alert(
+                                "Your current password is incorrect. Your email was not changed."
+                            );
 
                         } else if (
                             err.code === "auth/invalid-email"
                         ) {
 
-                            alert("The new email address is invalid.");
+                            alert(
+                                "The new email address is invalid."
+                            );
 
                         } else if (
                             err.code === "auth/email-already-in-use"
                         ) {
 
-                            alert("That email is already being used by another account.");
+                            alert(
+                                "That email is already being used by another account."
+                            );
 
                         } else if (
                             err.code === "auth/requires-recent-login"
                         ) {
 
-                            alert("Please log out and log in again before changing your email.");
+                            alert(
+                                "Please log out and log in again before changing your email."
+                            );
 
                         } else {
 
@@ -533,8 +584,6 @@ if (form) {
                         user,
                         password.value
                     );
-
-                    // Clear password field after success
 
                     password.value = "";
 
@@ -582,7 +631,7 @@ if (form) {
             if (emailVerificationSent) {
 
                 alert(
-                    "Profile updated successfully! A verification link has been sent to your new email. Open it to complete your email change."
+                    "Profile saved! A verification link has been sent to your new email. After verifying, log in with your username and password. VitalStar will synchronize your email automatically."
                 );
 
             } else {
