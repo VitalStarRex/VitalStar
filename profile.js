@@ -1,6 +1,6 @@
 // ============================================================
 // VITALSTAR — PROFILE PAGE
-// Dark Theme + Friends + Privacy Protection
+// Theme-aware (Dark/Light) + Friends + Privacy Protection
 // VITALSTAR Loading Indicator + View More Posts
 // Footer + Button Control
 // Firebase v10.12.2
@@ -38,43 +38,11 @@ const VITALSTAR_OWNER_UID =
 
 
 // ============================================================
-// DARK THEME
+// THEME
+// The page background and text colors now come from the CSS
+// theme (profile.html / theme.css). Nothing is forced here, so
+// the light theme can turn the whole page white.
 // ============================================================
-
-function applyDarkTheme() {
-
-    document.documentElement.style.background =
-        "#050914";
-
-    if (document.body) {
-
-        document.body.style.background = `
-            radial-gradient(
-                circle at top,
-                #101d3d 0%,
-                #050914 45%,
-                #02040a 100%
-            )
-        `;
-
-        document.body.style.color =
-            "#ffffff";
-    }
-}
-
-
-if (document.readyState === "loading") {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        applyDarkTheme,
-        { once: true }
-    );
-
-} else {
-
-    applyDarkTheme();
-}
 
 
 // ============================================================
@@ -1147,61 +1115,18 @@ function showPrivateProfileMessage() {
     if (gallery) {
 
         gallery.innerHTML = `
-            <div style="
-                width:100%;
-                max-width:500px;
-                margin:40px auto;
-                padding:35px 20px;
-                box-sizing:border-box;
-                text-align:center;
-                border-radius:22px;
+            <div class="vs-private">
 
-                background:
-                    linear-gradient(
-                        145deg,
-                        rgba(8,20,45,.98),
-                        rgba(3,8,20,.98)
-                    );
+                <div class="lock">🔒</div>
 
-                border:
-                    1px solid
-                    rgba(40,130,255,.45);
+                <h2>Private Profile</h2>
 
-                box-shadow:
-                    0 0 30px
-                    rgba(0,100,255,.18);
-
-                color:white;
-            ">
-
-                <div style="
-                    font-size:55px;
-                    margin-bottom:15px;
-                ">
-                    🔒
-                </div>
-
-                <h2 style="
-                    margin:0 0 10px;
-                    color:#fff;
-                ">
-                    Private Profile
-                </h2>
-
-                <p style="
-                    margin:0;
-                    color:#9fb4d8;
-                    line-height:1.6;
-                ">
+                <p>
                     This profile is visible only
                     to friends.
                 </p>
 
-                <p style="
-                    margin:12px 0 0;
-                    color:#6f8fbd;
-                    font-size:13px;
-                ">
+                <p class="small">
                     Send a friend request to connect.
                 </p>
 
@@ -2655,11 +2580,7 @@ async function loadProfile() {
             if (gallery) {
 
                 gallery.innerHTML = `
-                    <div style="
-                        text-align:center;
-                        padding:50px 20px;
-                        color:#9fb4d8;
-                    ">
+                    <div class="vs-note">
                         <h2>
                             Profile Not Found
                         </h2>
@@ -2990,7 +2911,7 @@ async function loadProfile() {
                             "🟢 Online";
 
                         lastSeen.style.color =
-                            "#00ff88";
+                            "var(--vs-green)";
 
                     } else if (
                         status &&
@@ -3003,7 +2924,7 @@ async function loadProfile() {
                             );
 
                         lastSeen.style.color =
-                            "#8ea4c8";
+                            "var(--vs-dim)";
 
                     } else {
 
@@ -3011,7 +2932,7 @@ async function loadProfile() {
                             "⚪ Offline";
 
                         lastSeen.style.color =
-                            "#8ea4c8";
+                            "var(--vs-dim)";
                     }
                 }
             );
@@ -3036,11 +2957,7 @@ async function loadProfile() {
         if (gallery) {
 
             gallery.innerHTML = `
-                <div style="
-                    text-align:center;
-                    padding:40px 20px;
-                    color:#8ea4c8;
-                ">
+                <div class="vs-note">
                     Unable to load profile.
                 </div>
             `;
@@ -3228,11 +3145,7 @@ async function loadProfilePosts(
 
 
         gallery.innerHTML = `
-            <div style="
-                text-align:center;
-                padding:30px;
-                color:#8ea4c8;
-            ">
+            <div class="vs-note">
                 Unable to load posts.
             </div>
         `;
@@ -3265,12 +3178,7 @@ function renderVisiblePosts() {
     ) {
 
         gallery.innerHTML = `
-            <div style="
-                width:100%;
-                text-align:center;
-                padding:40px 20px;
-                color:#8ea4c8;
-            ">
+            <div class="vs-note">
                 No posts yet.
             </div>
         `;
@@ -3320,45 +3228,12 @@ function renderVisiblePosts() {
             "seeMorePostsBtn";
 
 
+        seeMore.className =
+            "view-more-btn";
+
+
         seeMore.innerHTML =
             "View More Posts";
-
-
-        seeMore.style.cssText = `
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            width:calc(100% - 30px);
-            max-width:420px;
-            margin:20px auto 30px;
-            padding:13px 20px;
-
-            border:
-                1px solid #168cff;
-
-            border-radius:14px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #071a38,
-                    #102f66
-                );
-
-            color:#ffffff;
-
-            font-size:15px;
-
-            font-weight:800;
-
-            text-align:center;
-
-            cursor:pointer;
-
-            box-shadow:
-                0 0 16px
-                rgba(22,140,255,.18);
-        `;
 
 
         seeMore.addEventListener(
@@ -3410,30 +3285,8 @@ function renderPostCard(
         );
 
 
-    card.style.cssText = `
-        width:100%;
-        margin-bottom:15px;
-        padding:16px;
-        box-sizing:border-box;
-        border-radius:18px;
-
-        background:
-            linear-gradient(
-                145deg,
-                #09162e,
-                #040914
-            );
-
-        border:
-            1px solid
-            rgba(35,115,220,.3);
-
-        box-shadow:
-            0 0 18px
-            rgba(0,70,160,.12);
-
-        color:#fff;
-    `;
+    card.className =
+        "post-card";
 
 
     const text =
@@ -3488,13 +3341,7 @@ function renderPostCard(
 
 
     card.innerHTML = `
-        <div style="
-            color:#ffffff;
-            line-height:1.6;
-            word-break:break-word;
-        ">
-            ${escapeHTML(text)}
-        </div>
+        <div class="post-text">${escapeHTML(text)}</div>
 
         ${mediaHTML}
     `;
