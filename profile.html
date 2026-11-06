@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VitalStar Profile</title>
+
+<!-- Set theme before first paint to avoid a flash. theme.js can still override it. -->
+<script>
+(function(){
+    var t = null;
+    try { t = localStorage.getItem("theme"); } catch(e){}
+    if(t !== "light" && t !== "dark"){
+        t = (window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
 
 <link rel="stylesheet" href="theme.css">
 <script src="theme.js"></script>
@@ -87,6 +99,7 @@ body{
     background:var(--vs-bg);
     color:var(--vs-text);
     min-height:100vh;
+    min-height:100dvh;
     overflow-x:hidden;
     padding-bottom:calc(110px + env(safe-area-inset-bottom));
 }
@@ -107,6 +120,8 @@ body::before{
     width:100%;
     max-width:900px;
     margin:0 auto;
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
 }
 
 .cover-container{
@@ -120,7 +135,7 @@ body::before{
 .cover-photo{
     display:block;
     width:100%;
-    height:140px;
+    height:160px;
     object-fit:cover;
     background:var(--vs-input);
 }
@@ -295,10 +310,11 @@ body::before{
     font-weight:700;
 }
 
-/* PROFILE BUTTONS - Single Line Row */
+/* PROFILE BUTTONS - wrap instead of clipping long labels */
 .buttons{
     display:flex;
     flex-direction:row;
+    flex-wrap:wrap;
     align-items:center;
     justify-content:center;
     gap:8px;
@@ -308,17 +324,19 @@ body::before{
 }
 
 .buttons button{
-    flex:1 1 0;
+    flex:1 1 72px;
     min-width:0;
     min-height:46px;
-    padding:8px 4px;
+    padding:8px 6px;
     border:1px solid transparent;
     border-radius:14px;
     cursor:pointer;
     color:#fff;
-    font-size:clamp(9px,2.4vw,13px);
+    font-size:clamp(11px,2.8vw,13px);
     font-weight:800;
     white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
     background:linear-gradient(135deg,#005eff,#19c8ff);
     box-shadow:0 0 12px rgba(0,102,255,.35),0 4px 12px rgba(0,0,0,.3);
     transition:transform .2s,box-shadow .2s,opacity .2s;
@@ -500,6 +518,12 @@ body::before{
 
 .bottom-nav a:hover{ color:var(--vs-text); }
 
+.bottom-nav a:focus-visible,
+.buttons button:focus-visible{
+    outline:2px solid var(--vs-cyan);
+    outline-offset:2px;
+}
+
 .bottom-nav small{
     display:block;
     margin-top:3px;
@@ -548,7 +572,6 @@ body::before{
     opacity:.45 !important;
     pointer-events:none !important;
     filter:grayscale(.7) !important;
-    cursor:not-allowed !important;
 }
 
 .vitalstar-plus-unlocked{
@@ -557,8 +580,6 @@ body::before{
 
 /* SMALL PHONES */
 @media(max-width:600px){
-    .cover-photo{ height:160px; }
-
     .profile-image-box{
         width:125px;
         height:125px;
@@ -570,9 +591,7 @@ body::before{
     .stats{ gap:8px; }
     .stats > div{ min-width:84px; padding:10px; }
 
-    .buttons{
-        gap:6px;
-    }
+    .buttons{ gap:6px; }
 
     .bottom-nav{ height:64px; border-radius:21px; }
 
@@ -628,11 +647,11 @@ body::before{
         <p class="username" id="username">@username</p>
 
         <div class="details">
-            <p id="country">🌍 Country</p>
-            <p id="dob">🎂 Birthday</p>
-            <p id="gender">🚻 Gender</p>
-            <p id="rank">🏅 Member</p>
-            <p id="lastSeen">🟢 Online</p>
+            <p id="country"><span aria-hidden="true">🌍</span> Country</p>
+            <p id="dob"><span aria-hidden="true">🎂</span> Birthday</p>
+            <p id="gender"><span aria-hidden="true">🚻</span> Gender</p>
+            <p id="rank"><span aria-hidden="true">🏅</span> Member</p>
+            <p id="lastSeen"><span aria-hidden="true">🟢</span> Online</p>
         </div>
 
         <p id="bio" class="bio">No bio yet.</p>
@@ -655,10 +674,10 @@ body::before{
         </div>
 
         <div class="buttons">
-            <button id="editProfileBtn">✏ Edit Profile</button>
-            <button id="friendBtn" class="friend-add">👥 Add Friend</button>
-            <button id="followBtn">➕ Follow</button>
-            <button id="messageBtn">💬 Message</button>
+            <button id="editProfileBtn" type="button">✏ Edit Profile</button>
+            <button id="friendBtn" type="button" class="friend-add">👥 Add Friend</button>
+            <button id="followBtn" type="button">➕ Follow</button>
+            <button id="messageBtn" type="button">💬 Message</button>
         </div>
 
     </div>
@@ -670,27 +689,27 @@ body::before{
 
 </div>
 
-<nav class="bottom-nav">
+<nav class="bottom-nav" aria-label="Main">
 
     <a href="home.html">
-        🏠
+        <span aria-hidden="true">🏠</span>
         <small>Home</small>
     </a>
 
     <a href="users.html">
-        🔎
+        <span aria-hidden="true">🔎</span>
         <small>Explore</small>
     </a>
 
     <a href="create-post.html" class="create-btn" id="createPostBtn" aria-label="Create Post">+</a>
 
     <a href="wallet.html" class="coin-link">
-        <i class="vs-coin big"></i>
+        <i class="vs-coin big" aria-hidden="true"></i>
         <small>Coins</small>
     </a>
 
-    <a href="profile.html" class="active">
-        👤
+    <a href="profile.html" class="active" aria-current="page">
+        <span aria-hidden="true">👤</span>
         <small>Profile</small>
     </a>
 
@@ -702,4 +721,3 @@ body::before{
 
 </body>
 </html>
-
