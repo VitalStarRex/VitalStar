@@ -1,469 +1,787 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Create Post - VitalStar</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070914">
+<title>Edit Profile - VitalStar</title>
 
-    <!-- SHARED THEME (switch is controlled from home.html) -->
-    <link rel="stylesheet" href="theme.css">
-    <script src="theme.js"></script>
+<!-- Apply saved theme before page paints -->
+<script src="theme.js"></script>
 
-    <style>
-/* =========================================================
-   VITALSTAR — CREATE POST
-   Theme is controlled by home.html (theme.css + theme.js).
-   Dark = neon navy blue. Light uses the shared light variables.
-   ========================================================= */
-
-/* ---------- Neon navy dark theme (same as home.html) ---------- */
-:root[data-theme="dark"]{
-    --vs-bg:#050b1f;
-    --vs-text:#ffffff;
-    --vs-text-soft:#dbe6ff;
-    --vs-muted:#a9bbe6;
-    --vs-dim:#8396c4;
-
-    --vs-card:linear-gradient(160deg,rgba(14,30,78,.88),rgba(6,14,42,.94));
-    --vs-card-solid:#0a1634;
-    --vs-card-border:rgba(70,120,255,.42);
-    --vs-card-glow:0 0 0 1px rgba(0,190,255,.08),0 0 22px rgba(30,90,255,.22);
-
-    --vs-line:rgba(90,130,255,.20);
-    --vs-hover:rgba(60,110,255,.12);
-    --vs-chip:rgba(14,30,78,.85);
-    --vs-chip-hover:rgba(40,80,200,.45);
-    --vs-input:rgba(10,22,60,.9);
-    --vs-input-hover:rgba(20,40,100,.95);
-
-    --vs-header-bg:rgba(5,11,31,.90);
-    --vs-nav-bg:rgba(7,16,46,.93);
-    --vs-shadow:0 12px 40px rgba(0,0,0,.55);
-
-    --vs-glow-1:rgba(0,120,255,.22);
-    --vs-glow-2:rgba(0,200,255,.14);
-    --vs-glow-3:rgba(40,70,255,.22);
-
-    --vs-cyan:#19c8ff;
-    --vs-purple:#4d8dff;
-    --vs-pink:#ff3b6b;
-    --vs-green:#32df72;
-    --vs-danger:#ff2d55;
-
-    --vs-heading:linear-gradient(90deg,#ffffff,#19c8ff);
-    --vs-brand-grad:linear-gradient(135deg,#6a3cff,#19c8ff);
-    --vs-plus-grad:linear-gradient(135deg,#1a5dff,#7a3cff);
-    --vs-plus-shadow:0 0 22px rgba(40,110,255,.75);
-    --vs-ring-gap:#050b1f;
+<style>
+:root{
+    --bg:#070914;
+    --surface:#101329;
+    --surface2:#171c38;
+    --input:#090d20;
+    --text:#f5f6ff;
+    --muted:#a4abc9;
+    --border:rgba(112,130,255,.24);
+    --accent:#477aff;
+    --accent2:#853dff;
+    --shadow:rgba(0,0,0,.35);
+    --success:#42d9a0;
+    --danger:#ff657c;
+    --radius:16px;
 }
 
-/* ---------- Base ---------- */
+html[data-theme="light"]{
+    --bg:#f0f3fa;
+    --surface:#ffffff;
+    --surface2:#f0f3fc;
+    --input:#f6f8fd;
+    --text:#18213b;
+    --muted:#69738f;
+    --border:rgba(55,85,160,.19);
+    --accent:#3268ec;
+    --accent2:#7540dc;
+    --shadow:rgba(35,55,100,.10);
+    --success:#159b70;
+    --danger:#d94059;
+}
+
 *{
+    box-sizing:border-box;
     margin:0;
     padding:0;
-    box-sizing:border-box;
-    font-family:Arial,Helvetica,sans-serif;
-    -webkit-tap-highlight-color:transparent;
+    font-family:Arial,sans-serif;
 }
 
-html{ scroll-behavior:smooth; }
+html,body{min-height:100%;}
 
 body{
-    background:var(--vs-bg);
-    color:var(--vs-text);
-    min-height:100vh;
-    overflow-x:hidden;
-    padding-bottom:calc(110px + env(safe-area-inset-bottom));
+    background:var(--bg);
+    background-image:
+        radial-gradient(circle at 10% 0%,rgba(65,90,220,.13),transparent 35%),
+        radial-gradient(circle at 95% 35%,rgba(125,55,220,.09),transparent 30%);
+    color:var(--text);
+    padding:18px 12px 100px;
+    transition:background .25s,color .25s;
 }
 
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:-1;
-    background:
-        radial-gradient(circle at 15% 10%,var(--vs-glow-1),transparent 28%),
-        radial-gradient(circle at 90% 20%,var(--vs-glow-2),transparent 28%),
-        radial-gradient(circle at 50% 100%,var(--vs-glow-3),transparent 32%);
-}
+button,input,textarea,select{font:inherit;}
 
-/* ---------- Header ---------- */
-.header{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:68px;
-    padding:0 16px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    background:var(--vs-header-bg);
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-    border-bottom:1px solid var(--vs-line);
-    z-index:1000;
-}
-
-.header h2{
-    font-size:20px;
-    font-weight:900;
-    letter-spacing:-.3px;
-    background:var(--vs-heading);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-}
-
-/* ---------- Layout ---------- */
 .container{
     width:100%;
-    max-width:700px;
+    max-width:520px;
     margin:0 auto;
-    padding:86px 12px 20px;
+    padding:24px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:0 15px 45px var(--shadow);
 }
 
-.post-card{
-    position:relative;
-    padding:16px;
-
-    background:var(--vs-card);
-    border:1px solid var(--vs-card-border);
-    border-radius:22px;
-    box-shadow:var(--vs-card-glow);
-    overflow:hidden;
+.top-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:24px;
 }
 
-.post-card::before{
-    content:"";
-    position:absolute;
-    top:0;
-    left:15%;
-    width:70%;
-    height:1px;
-    background:linear-gradient(90deg,transparent,rgba(0,217,255,.6),rgba(77,141,255,.7),transparent);
+.top-heading h1{
+    font-size:25px;
+    letter-spacing:-.6px;
 }
 
-/* ---------- Text area ---------- */
-#postText{
-    display:block;
-    width:100%;
-    min-height:150px;
-    padding:14px 16px;
-
-    background:var(--vs-input);
-    color:var(--vs-text);
-    border:1px solid var(--vs-line);
-    border-radius:16px;
-    outline:none;
-    resize:vertical;
-
-    font-size:16px;
-    line-height:1.55;
-    transition:border-color .2s,box-shadow .2s,background .2s;
+.theme-button{
+    padding:10px 13px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--surface2);
+    color:var(--text);
+    cursor:pointer;
+    font-size:13px;
+    font-weight:bold;
 }
 
-#postText::placeholder{ color:var(--vs-dim); }
-
-#postText:focus{
-    background:var(--vs-input-hover);
-    border-color:var(--vs-cyan);
-    box-shadow:0 0 0 3px rgba(25,200,255,.15),0 0 18px rgba(30,110,255,.25);
+.section{
+    margin-bottom:23px;
 }
 
-/* ---------- Preview ---------- */
-.preview-box{ margin-top:12px; }
+.section-title{
+    font-size:15px;
+    font-weight:bold;
+    margin-bottom:12px;
+    color:var(--text);
+}
 
-.preview{
-    display:block;
-    width:100%;
-    max-height:420px;
-    margin-top:10px;
+.image-card{
+    padding:17px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:15px;
+    text-align:center;
+    margin-bottom:13px;
+}
 
+.profile-preview{
+    width:118px;
+    height:118px;
     object-fit:cover;
-    background:#000;
-    border:1px solid var(--vs-card-border);
-    border-radius:16px;
-    box-shadow:0 0 16px rgba(30,110,255,.2);
+    border-radius:50%;
+    border:3px solid var(--accent);
+    box-shadow:0 0 20px rgba(65,105,255,.23);
 }
 
-/* ---------- Upload buttons ---------- */
-.upload-buttons{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:10px;
-    margin-top:14px;
+.cover-preview{
+    display:block;
+    width:100%;
+    height:155px;
+    object-fit:cover;
+    border-radius:11px;
+    border:1px solid var(--border);
 }
 
-.upload-btn{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    min-height:46px;
-    padding:10px 8px;
-
-    background:var(--vs-chip);
-    border:1px solid var(--vs-card-border);
-    border-radius:14px;
-    color:var(--vs-text-soft);
-
+.image-card h3{
     font-size:14px;
-    font-weight:850;
-    text-align:center;
+    margin:12px 0;
+}
+
+.file-input{display:none;}
+
+.upload-button{
+    display:inline-block;
+    padding:10px 15px;
+    border-radius:9px;
+    background:linear-gradient(120deg,var(--accent),var(--accent2));
+    color:white;
+    font-size:13px;
+    font-weight:bold;
     cursor:pointer;
-    user-select:none;
-    transition:transform .15s,background .2s,box-shadow .2s;
+    margin-top:12px;
 }
 
-.upload-btn:hover{
-    background:var(--vs-chip-hover);
-    transform:translateY(-1px);
+.upload-status{
+    min-height:17px;
+    margin-top:9px;
+    color:var(--muted);
+    font-size:11px;
 }
 
-.upload-btn:active{ transform:scale(.96); }
-
-.image-btn{ color:var(--vs-purple); box-shadow:0 0 12px rgba(77,141,255,.18); }
-.video-btn{ color:var(--vs-cyan);   box-shadow:0 0 12px rgba(25,200,255,.18); }
-
-/* ---------- Post button ---------- */
-.post-btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    min-width:190px;
-    min-height:52px;
-    padding:0 30px;
-
-    border:0;
-    border-radius:26px;
-    background:var(--vs-brand-grad);
-    color:#fff;
-
-    font-size:16px;
-    font-weight:900;
-    letter-spacing:.2px;
-    cursor:pointer;
-
-    box-shadow:0 0 22px rgba(60,120,255,.5);
-    transition:transform .15s,filter .2s,box-shadow .2s;
+.form-group{
+    margin-bottom:17px;
 }
 
-.post-btn:hover{
-    filter:brightness(1.1);
-    box-shadow:0 0 28px rgba(60,140,255,.7);
+.form-group>label{
+    display:block;
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:8px;
+    color:var(--text);
 }
 
-.post-btn:active{ transform:scale(.95); }
-
-.post-btn:disabled{
-    opacity:.55;
-    cursor:not-allowed;
-    box-shadow:none;
-    filter:grayscale(.3);
-}
-
-/* ---------- Bottom navigation (same as home.html) ---------- */
-.bottom-nav{
-    position:fixed;
-    left:50%;
-    bottom:calc(10px + env(safe-area-inset-bottom));
-    transform:translateX(-50%);
-
-    width:min(96%,620px);
-    height:68px;
-    padding:5px 8px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-around;
-
-    background:var(--vs-nav-bg);
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
-
-    border:1px solid var(--vs-card-border);
-    border-radius:24px;
-    box-shadow:var(--vs-shadow);
-
-    z-index:1000;
-}
-
-:root[data-theme="dark"] .bottom-nav{
-    border-color:rgba(70,130,255,.55);
-    box-shadow:0 0 18px rgba(30,100,255,.3),0 12px 40px rgba(0,0,0,.55);
-}
-
-.bottom-nav a{
-    position:relative;
-    flex:1;
-    min-width:0;
-    padding:5px 2px;
-
-    color:var(--vs-dim);
-    text-decoration:none;
-    text-align:center;
-    font-size:22px;
+.form-group input,
+.form-group textarea,
+.form-group select,
+.calendar-trigger{
+    width:100%;
+    min-height:47px;
+    padding:13px 14px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    background:var(--input);
+    color:var(--text);
+    font-size:14px;
+    outline:none;
     transition:.2s;
 }
 
-.bottom-nav a:hover{ color:var(--vs-text); }
-
-.bottom-nav small{
-    display:block;
-    margin-top:3px;
-    font-size:10px;
-    font-weight:800;
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.calendar-trigger:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(70,110,255,.12);
 }
 
-.bottom-nav a.create-btn{
-    flex:0 0 62px;
-    width:62px;
-    height:62px;
-    margin-top:-30px;
-    padding:0;
+.form-group input::placeholder,
+.form-group textarea::placeholder{
+    color:var(--muted);
+}
 
+.form-group select option{
+    background:var(--surface);
+    color:var(--text);
+}
+
+.form-group textarea{
+    min-height:105px;
+    resize:vertical;
+    line-height:1.5;
+}
+
+.nickname-box{
+    padding:15px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:13px;
+}
+
+.nickname-box input{
+    background:var(--input);
+}
+
+.nickname-info{
+    font-size:11px;
+    line-height:1.5;
+    color:var(--muted);
+    margin-top:9px;
+}
+
+.nickname-locked{
+    color:var(--danger);
+}
+
+.nickname-available{
+    color:var(--success);
+}
+
+/* CUSTOM CALENDAR */
+
+.calendar-wrap{position:relative;}
+
+.calendar-trigger{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    text-align:left;
+}
+
+.calendar-popup{
+    position:absolute;
+    top:calc(100% + 9px);
+    left:0;
+    right:0;
+    z-index:50;
+    padding:15px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:15px;
+    box-shadow:0 15px 35px var(--shadow);
+}
+
+.calendar-popup[hidden]{display:none;}
+
+.calendar-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+    gap:8px;
+}
+
+.calendar-header strong{
+    font-size:14px;
+}
+
+.calendar-nav{
+    width:34px;
+    height:34px;
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text);
+    border-radius:9px;
+    cursor:pointer;
+}
+
+.calendar-weekdays,
+.calendar-days{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:5px;
+    text-align:center;
+}
+
+.calendar-weekdays{
+    margin-bottom:8px;
+}
+
+.calendar-weekdays span{
+    font-size:10px;
+    color:var(--muted);
+    padding:5px 0;
+}
+
+.calendar-day{
+    min-width:0;
+    aspect-ratio:1;
+    border:0;
+    border-radius:9px;
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+    font-size:12px;
+}
+
+.calendar-day:hover:not(:disabled){
+    background:var(--surface2);
+}
+
+.calendar-day.selected{
+    background:linear-gradient(120deg,var(--accent),var(--accent2));
+    color:white;
+    font-weight:bold;
+}
+
+.calendar-day:disabled{
+    opacity:.25;
+    cursor:not-allowed;
+}
+
+.calendar-footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+}
+
+.calendar-footer button{
+    border:0;
+    background:transparent;
+    color:var(--accent);
+    cursor:pointer;
+    font-size:12px;
+    font-weight:bold;
+}
+
+/* PRIVACY */
+
+.privacy-box{
+    padding:16px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:14px;
+    margin-bottom:20px;
+}
+
+.privacy-box h3{
+    font-size:14px;
+    margin-bottom:7px;
+}
+
+.privacy-box p{
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.6;
+    margin-bottom:13px;
+}
+
+/* SAVE */
+
+.save-button{
+    width:100%;
+    min-height:49px;
+    border:0;
+    border-radius:11px;
+    background:linear-gradient(120deg,var(--accent),var(--accent2));
+    color:white;
+    font-size:15px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 18px rgba(70,100,255,.22);
+    transition:.2s;
+}
+
+.save-button:active{transform:scale(.99);}
+
+.save-button:disabled{
+    opacity:.75;
+    cursor:not-allowed;
+}
+
+.save-spinner,
+.mini-spinner{
+    display:inline-block;
+    width:15px;
+    height:15px;
+    border:2px solid rgba(255,255,255,.35);
+    border-top-color:white;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+    vertical-align:middle;
+    margin-right:7px;
+}
+
+.mini-spinner{
+    width:12px;
+    height:12px;
+    border-width:2px;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg);}
+}
+
+/* THEME SETTINGS POPUP FROM theme.js */
+
+.vs-theme-overlay{
+    position:fixed;
+    inset:0;
+    z-index:3000;
+    background:rgba(0,0,0,.65);
     display:flex;
     align-items:center;
     justify-content:center;
+    padding:20px;
+    backdrop-filter:blur(7px);
+}
 
+.vs-theme-overlay[hidden]{display:none;}
+
+.vs-theme-modal{
+    width:100%;
+    max-width:350px;
+    padding:22px;
+    background:var(--surface);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:0 20px 60px var(--shadow);
+}
+
+.vs-theme-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.vs-theme-head h2{font-size:19px;}
+
+.vs-theme-x{
+    border:0;
+    background:var(--surface2);
+    color:var(--text);
+    border-radius:8px;
+    width:34px;
+    height:34px;
+    cursor:pointer;
+}
+
+.vs-theme-sub{
+    color:var(--muted);
+    font-size:12px;
+    margin:12px 0 18px;
+}
+
+.vs-theme-options{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.vs-theme-opt{
+    padding:10px;
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text);
+    border-radius:12px;
+    cursor:pointer;
+}
+
+.vs-theme-opt.is-active{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px rgba(70,110,255,.15);
+}
+
+.vs-theme-prev{
+    height:65px;
+    border-radius:8px;
+    margin-bottom:9px;
+}
+
+.vs-theme-prev.dark{background:#080b1c;}
+.vs-theme-prev.light{background:#f0f3fa;}
+
+/* BOTTOM NAVIGATION */
+
+.bottom-nav{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:66px;
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    background:var(--surface);
+    border-top:1px solid var(--border);
+    box-shadow:0 -5px 20px var(--shadow);
+    z-index:1000;
+    backdrop-filter:blur(14px);
+}
+
+.bottom-nav a{
+    min-width:50px;
+    text-decoration:none;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    font-size:20px;
+}
+
+.bottom-nav small{
+    font-size:10px;
+    margin-top:3px;
+}
+
+.bottom-nav a:hover{color:var(--accent);}
+
+.create-button{
+    width:49px;
+    height:49px;
+    margin-top:-23px;
+    border:2px solid var(--surface);
     border-radius:50%;
-    border:4px solid var(--vs-ring-gap);
-    background:var(--vs-plus-grad);
-    box-shadow:var(--vs-plus-shadow);
-    color:#fff;
-    font-size:34px;
-    font-weight:300;
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(120deg,var(--accent),var(--accent2));
+    color:white!important;
+    font-size:27px!important;
+    box-shadow:0 0 17px rgba(70,100,255,.4);
 }
 
-.bottom-nav a.create-btn:active{ transform:scale(.92); }
-
-/* ---------- Small phones ---------- */
-@media(max-width:600px){
-    .header{ height:62px; }
-    .container{ padding:78px 8px 18px; }
-    .post-card{ padding:13px; border-radius:19px; }
-    #postText{ min-height:130px; font-size:15px; }
-    .post-btn{ width:100%; min-width:0; }
-    .bottom-nav{ height:64px; border-radius:21px; }
-    .bottom-nav a.create-btn{
-        flex-basis:56px;
-        width:56px;
-        height:56px;
-        margin-top:-28px;
-        font-size:30px;
-    }
+html.vs-theming,
+html.vs-theming body{
+    transition:background .3s,color .3s;
 }
 
-/* Footer: coin icon + active underline (same as home.html) */
-.bottom-nav .coin-link .vs-coin{ display:block; margin:0 auto; }
-.bottom-nav a.active{ color:var(--vs-purple); }
-
-    </style>
+@media(max-width:520px){
+    body{padding:10px 9px 95px;}
+    .container{padding:18px;border-radius:16px;}
+    .top-heading h1{font-size:22px;}
+    .cover-preview{height:135px;}
+}
+</style>
 </head>
+
 <body>
 
-<header class="header">
-    <h2>✨ Create Post</h2>
-</header>
+<main class="container">
 
-<div class="container">
-
-    <div class="post-card">
-
-        <textarea
-            id="postText"
-            placeholder="What's on your mind?"
-        ></textarea>
-
-        <div class="preview-box">
-
-            <img
-                id="imagePreview"
-                class="preview"
-                style="display:none;"
-            >
-
-            <video
-                id="videoPreview"
-                class="preview"
-                controls
-                style="display:none;"
-            ></video>
-
-        </div>
-
-        <div class="upload-buttons">
-
-            <label for="postImage" class="upload-btn image-btn">
-                📷 Image
-            </label>
-
-            <input
-                type="file"
-                id="postImage"
-                accept="image/*"
-                hidden
-            >
-
-            <label for="postVideo" class="upload-btn video-btn">
-                🎥 Video
-            </label>
-
-            <input
-                type="file"
-                id="postVideo"
-                accept="video/*"
-                hidden
-            >
-
-        </div>
-          <br/><br/><center>
-        <button
-            id="postButton"
-            class="post-btn"
-            onclick="createPost()">
-            🚀 Post
-        </button></center>
-
+    <div class="top-heading">
+        <h1>✦ Edit Profile</h1>
+        <button type="button" class="theme-button" data-open-theme>
+            🎨 Theme
+        </button>
     </div>
 
-</div>
+    <!-- PROFILE IMAGES -->
+    <section class="section">
+        <div class="section-title">Profile Images</div>
 
+        <div class="image-card">
+            <img id="profilePreview"
+                 class="profile-preview"
+                 src="default-avatar.png"
+                 alt="Profile picture">
 
-<!-- Bottom Navigation (same as home.html) -->
+            <h3>Profile Picture</h3>
+
+            <input type="file" id="profileImage"
+                   class="file-input" accept="image/*">
+
+            <label for="profileImage" class="upload-button">
+                📷 Change Picture
+            </label>
+
+            <div id="profileUploadStatus" class="upload-status"></div>
+        </div>
+
+        <div class="image-card">
+            <img id="coverPreview"
+                 class="cover-preview"
+                 src="https://via.placeholder.com/600x220"
+                 alt="Cover photo">
+
+            <h3>Cover Photo</h3>
+
+            <input type="file" id="coverImage"
+                   class="file-input" accept="image/*">
+
+            <label for="coverImage" class="upload-button">
+                🖼️ Change Cover
+            </label>
+
+            <div id="coverUploadStatus" class="upload-status"></div>
+        </div>
+    </section>
+
+    <form id="editProfileForm">
+
+        <!-- NICKNAME -->
+        <div class="form-group">
+            <label for="fullName">Nick Name</label>
+
+            <div class="nickname-box">
+                <input type="text"
+                       id="fullName"
+                       maxlength="40"
+                       placeholder="Enter your nickname"
+                       autocomplete="nickname"
+                       required>
+
+                <div id="nicknameStatus" class="nickname-info">
+                    You can change your nickname once every 30 days.
+                </div>
+            </div>
+        </div>
+
+        <!-- GENDER -->
+        <div class="form-group">
+            <label for="gender">Gender</label>
+
+            <select id="gender" required>
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+
+        <!-- EMAIL -->
+        <div class="form-group">
+            <label for="email">Email Address</label>
+
+            <input type="email"
+                   id="email"
+                   placeholder="Enter your email"
+                   autocomplete="email">
+        </div>
+
+        <!-- CUSTOM DATE PICKER -->
+        <div class="form-group">
+            <label>Date of Birth</label>
+
+            <div class="calendar-wrap">
+
+                <input type="hidden" id="dob">
+
+                <button type="button"
+                        class="calendar-trigger"
+                        id="calendarToggle">
+                    <span id="dobDisplay">Choose your date of birth</span>
+                    <span>📅</span>
+                </button>
+
+                <div class="calendar-popup" id="calendarPopup" hidden>
+
+                    <div class="calendar-header">
+                        <button type="button" class="calendar-nav"
+                                id="prevMonth">‹</button>
+
+                        <strong id="calendarMonthYear"></strong>
+
+                        <button type="button" class="calendar-nav"
+                                id="nextMonth">›</button>
+                    </div>
+
+                    <div class="calendar-weekdays">
+                        <span>Sun</span><span>Mon</span>
+                        <span>Tue</span><span>Wed</span>
+                        <span>Thu</span><span>Fri</span>
+                        <span>Sat</span>
+                    </div>
+
+                    <div class="calendar-days" id="calendarDays"></div>
+
+                    <div class="calendar-footer">
+                        <button type="button" id="clearDob">Clear</button>
+                        <button type="button" id="todayDob">Today</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- COUNTRY -->
+        <div class="form-group">
+            <label for="country">Country</label>
+
+            <input type="text"
+                   id="country"
+                   placeholder="Enter your country"
+                   autocomplete="country-name">
+        </div>
+
+        <!-- BIO -->
+        <div class="form-group">
+            <label for="bio">About Me</label>
+
+            <textarea id="bio"
+                      maxlength="300"
+                      placeholder="Tell people about yourself"></textarea>
+        </div>
+
+        <!-- PRIVACY -->
+        <div class="privacy-box">
+            <h3>🔒 Profile Privacy</h3>
+
+            <p>
+                Choose who can view your profile.
+                Admins can still view profiles marked as friends-only.
+            </p>
+
+            <div class="form-group" style="margin:0">
+                <label for="profilePrivacy">Who can view your profile?</label>
+
+                <select id="profilePrivacy">
+                    <option value="public">🌎 Everyone can view</option>
+                    <option value="friends">👥 Only my friends can view</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="form-group">
+            <label for="password">New Password</label>
+
+            <input type="password"
+                   id="password"
+                   placeholder="Leave empty to keep current password"
+                   autocomplete="new-password">
+        </div>
+
+        <button type="submit"
+                class="save-button"
+                id="saveProfileButton">
+            <span id="saveButtonText">Save Changes</span>
+        </button>
+
+    </form>
+</main>
+
+<!-- BOTTOM NAVIGATION -->
 <nav class="bottom-nav">
 
     <a href="home.html">
-        🏠
-        <small>Home</small>
+        <span>🏠</span><small>Home</small>
     </a>
 
     <a href="users.html">
-        🔎
-        <small>Explore</small>
+        <span>👥</span><small>Friends</small>
     </a>
 
-    <a href="create-post.html" class="create-btn" aria-label="Create Post">+</a>
+    <a href="create-post.html" class="create-button">+</a>
 
-    <a href="wallet.html" class="coin-link">
-        <i class="vs-coin big"></i>
-        <small>Coins</small>
+    <a href="general-room.html">
+        <span>💬</span><small>Chat</small>
     </a>
 
     <a href="profile.html">
-        👤
-        <small>Profile</small>
+        <span>👤</span><small>Profile</small>
     </a>
 
 </nav>
 
-
-<script type="module" src="create-post.js"></script>
+<script type="module" src="edit-profile.js"></script>
 <script type="module" src="auth-guard.js"></script>
 
 </body>
