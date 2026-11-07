@@ -1,23 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>VitalStar Wallet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1877f2">
+<title>VitalStar Coins</title>
 
 <style>
-
-/* =========================================================
-   RESET
-   ========================================================= */
-
 *{
     margin:0;
     padding:0;
@@ -32,10 +23,6 @@ body{
     padding-bottom:40px;
 }
 
-/* =========================================================
-   HEADER
-   ========================================================= */
-
 header{
     position:sticky;
     top:0;
@@ -46,14 +33,8 @@ header{
     justify-content:space-between;
     padding:0 18px;
     color:white;
-    background:
-        linear-gradient(
-            135deg,
-            #1877f2,
-            #7b2ff7
-        );
-    box-shadow:
-        0 3px 15px rgba(0,0,0,.2);
+    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    box-shadow:0 3px 15px rgba(0,0,0,.2);
     z-index:100;
 }
 
@@ -73,13 +54,7 @@ header{
     font-weight:900;
 }
 
-.header-space{
-    width:42px;
-}
-
-/* =========================================================
-   CONTAINER
-   ========================================================= */
+.header-space{width:42px}
 
 .container{
     width:min(100%,650px);
@@ -87,9 +62,7 @@ header{
     padding:20px 15px;
 }
 
-/* =========================================================
-   WALLET BALANCE CARD
-   ========================================================= */
+/* WALLET CARD */
 
 .wallet-card{
     position:relative;
@@ -97,15 +70,8 @@ header{
     padding:28px 24px;
     border-radius:28px;
     color:white;
-    background:
-        linear-gradient(
-            135deg,
-            #7b2ff7,
-            #1877f2,
-            #00c6ff
-        );
-    box-shadow:
-        0 15px 35px rgba(70,80,200,.35);
+    background:linear-gradient(135deg,#7b2ff7,#1877f2,#00c6ff);
+    box-shadow:0 15px 35px rgba(70,80,200,.35);
 }
 
 .wallet-card::before{
@@ -141,7 +107,6 @@ header{
     gap:8px;
     font-size:15px;
     font-weight:bold;
-    opacity:.9;
 }
 
 .wallet-amount{
@@ -156,10 +121,6 @@ header{
     font-size:13px;
     opacity:.85;
 }
-
-/* =========================================================
-   VITALSTAR ACCOUNT NUMBER
-   ========================================================= */
 
 .wallet-account{
     margin-top:18px;
@@ -180,7 +141,6 @@ header{
     display:block;
     margin-top:4px;
     font-size:19px;
-    letter-spacing:2px;
 }
 
 .wallet-footer{
@@ -200,13 +160,10 @@ header{
 }
 
 .wallet-logo{
-    font-size:20px;
-    font-weight:900;
+    font-size:22px;
 }
 
-/* =========================================================
-   ACTION BUTTONS
-   ========================================================= */
+/* ACTIONS */
 
 .actions{
     display:grid;
@@ -227,26 +184,20 @@ header{
     gap:8px;
     font-size:15px;
     font-weight:900;
-    transition:.2s ease;
-    box-shadow:
-        0 5px 15px rgba(0,0,0,.08);
+    transition:.2s;
+    box-shadow:0 5px 15px rgba(0,0,0,.08);
 }
 
-.action-btn:hover{
-    transform:translateY(-3px);
-}
+.action-btn:hover{transform:translateY(-3px)}
+.action-btn:active{transform:scale(.97)}
 
-.action-btn:active{
-    transform:scale(.97);
-}
-
-.deposit-btn{
-    background:#fff;
+.send-btn{
+    background:white;
     color:#1877f2;
 }
 
-.withdraw-btn{
-    background:#fff;
+.earn-btn{
+    background:white;
     color:#7b2ff7;
 }
 
@@ -258,19 +209,13 @@ header{
     align-items:center;
     justify-content:center;
     font-size:25px;
+    background:#eef2ff;
 }
 
-.deposit-btn .action-icon{
-    background:#eaf3ff;
-}
+.send-btn .action-icon{background:#eaf3ff}
+.earn-btn .action-icon{background:#f2ebff}
 
-.withdraw-btn .action-icon{
-    background:#f2ebff;
-}
-
-/* =========================================================
-   STATS
-   ========================================================= */
+/* STATS */
 
 .stats{
     display:grid;
@@ -283,8 +228,7 @@ header{
     background:white;
     border-radius:18px;
     padding:18px;
-    box-shadow:
-        0 5px 15px rgba(0,0,0,.07);
+    box-shadow:0 5px 15px rgba(0,0,0,.07);
 }
 
 .stat-label{
@@ -299,9 +243,7 @@ header{
     font-weight:900;
 }
 
-/* =========================================================
-   TRANSACTION HISTORY
-   ========================================================= */
+/* HISTORY */
 
 .section-header{
     display:flex;
@@ -328,20 +270,7 @@ header{
     padding:15px;
     background:white;
     border-radius:18px;
-    box-shadow:
-        0 4px 12px rgba(0,0,0,.06);
-}
-
-.transaction-icon{
-    width:46px;
-    height:46px;
-    min-width:46px;
-    border-radius:15px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:21px;
-    background:#eef2ff;
+    box-shadow:0 4px 12px rgba(0,0,0,.06);
 }
 
 .transaction-info{
@@ -349,78 +278,42 @@ header{
     min-width:0;
 }
 
-.transaction-title{
+.transaction-info strong{
     font-size:15px;
-    font-weight:900;
-    overflow:hidden;
-    white-space:nowrap;
-    text-overflow:ellipsis;
+    display:block;
 }
 
-.transaction-date{
+.transaction-info small{
+    display:block;
     margin-top:4px;
     color:#888;
     font-size:12px;
 }
 
-.transaction-amount{
-    font-size:15px;
-    font-weight:900;
-    white-space:nowrap;
-}
-
-.transaction-amount.credit{
+.transaction-positive{
     color:#16a34a;
+    font-size:14px;
+    font-weight:900;
 }
 
-.transaction-amount.debit{
+.transaction-negative{
     color:#e11d48;
+    font-size:14px;
+    font-weight:900;
 }
 
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
+/* EMPTY STATE */
 
-.empty-state{
+.empty-transactions{
     text-align:center;
     padding:35px 20px;
     border-radius:22px;
     background:white;
-    box-shadow:
-        0 5px 15px rgba(0,0,0,.06);
-}
-
-.empty-icon{
-    font-size:42px;
-}
-
-.empty-title{
-    margin-top:10px;
-    font-size:18px;
-    font-weight:900;
-}
-
-.empty-text{
-    margin-top:7px;
     color:#777;
     font-size:14px;
-    line-height:1.5;
 }
 
-/* =========================================================
-   LOADING
-   ========================================================= */
-
-.loading{
-    text-align:center;
-    padding:25px;
-    color:#777;
-    font-weight:bold;
-}
-
-/* =========================================================
-   MODAL
-   ========================================================= */
+/* MODAL */
 
 .modal{
     position:fixed;
@@ -433,9 +326,7 @@ header{
     z-index:1000;
 }
 
-.modal.show{
-    display:flex;
-}
+.modal.show{display:flex}
 
 .modal-box{
     width:min(100%,600px);
@@ -444,8 +335,7 @@ header{
     padding:24px;
     border-radius:28px 28px 20px 20px;
     background:white;
-    box-shadow:
-        0 -10px 40px rgba(0,0,0,.2);
+    box-shadow:0 -10px 40px rgba(0,0,0,.2);
 }
 
 .modal-handle{
@@ -467,9 +357,7 @@ header{
     line-height:1.5;
 }
 
-.form-group{
-    margin-top:15px;
-}
+.form-group{margin-top:15px}
 
 .form-group label{
     display:block;
@@ -478,8 +366,7 @@ header{
     font-weight:bold;
 }
 
-.form-group input,
-.form-group select{
+.form-group input{
     width:100%;
     padding:15px;
     border:2px solid #e5e7eb;
@@ -489,10 +376,7 @@ header{
     background:white;
 }
 
-.form-group input:focus,
-.form-group select:focus{
-    border-color:#1877f2;
-}
+.form-group input:focus{border-color:#1877f2}
 
 .modal-actions{
     display:flex;
@@ -517,50 +401,42 @@ header{
 
 .continue-btn{
     color:white;
-    background:
-        linear-gradient(
-            135deg,
-            #1877f2,
-            #7b2ff7
-        );
+    background:linear-gradient(135deg,#1877f2,#7b2ff7);
 }
 
-/* =========================================================
-   DARK MODE
-   ========================================================= */
+button:disabled{
+    opacity:.6;
+    cursor:not-allowed;
+}
+
+/* DARK MODE */
 
 body.dark-mode{
     background:#121212;
     color:#eee;
 }
 
-body.dark-mode .deposit-btn,
-body.dark-mode .withdraw-btn,
+body.dark-mode .send-btn,
+body.dark-mode .earn-btn,
 body.dark-mode .stat-card,
 body.dark-mode .transaction-item,
-body.dark-mode .empty-state,
+body.dark-mode .empty-transactions,
 body.dark-mode .modal-box{
     background:#1e1e1e;
     color:#eee;
 }
 
 body.dark-mode .stat-label,
-body.dark-mode .transaction-date,
-body.dark-mode .empty-text,
+body.dark-mode .transaction-info small,
 body.dark-mode .modal-text{
     color:#aaa;
 }
 
-body.dark-mode .deposit-btn .action-icon{
-    background:#17345a;
+body.dark-mode .action-icon{
+    background:#28203d;
 }
 
-body.dark-mode .withdraw-btn .action-icon{
-    background:#321f54;
-}
-
-body.dark-mode .form-group input,
-body.dark-mode .form-group select{
+body.dark-mode .form-group input{
     background:#282828;
     color:white;
     border-color:#444;
@@ -572,426 +448,202 @@ body.dark-mode .cancel-btn{
 }
 
 @media(max-width:380px){
-
-    .wallet-amount{
-        font-size:31px;
-    }
-
-    .wallet-card{
-        padding:24px 18px;
-    }
-
-    .wallet-account-number{
-        font-size:17px;
-        letter-spacing:1.5px;
-    }
-
-    .actions{
-        gap:10px;
-    }
-
+    .wallet-amount{font-size:31px}
+    .wallet-card{padding:24px 18px}
+    .actions{gap:10px}
 }
-
 </style>
-
 </head>
 
 <body>
 
-
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
-
 <header>
-
-<button
-    class="back-btn"
-    type="button"
-    onclick="history.back()"
->
-    ←
-</button>
-
-<div class="wallet-title">
-    💰 VitalStar Wallet
-</div>
-
-<div class="header-space"></div>
-
+    <button class="back-btn" type="button" onclick="history.back()">←</button>
+    <div class="wallet-title">🪙 VitalStar Coins</div>
+    <div class="header-space"></div>
 </header>
-
-
-<!-- =========================================================
-     MAIN CONTENT
-     ========================================================= -->
 
 <main class="container">
 
+    <!-- WALLET CARD -->
 
-<!-- WALLET CARD -->
+    <section class="wallet-card">
+        <div class="wallet-content">
 
-<section class="wallet-card">
+            <div class="wallet-label">
+                🪙 Available Coins
+            </div>
 
-<div class="wallet-content">
+            <div class="wallet-amount" id="walletPageBalance">
+                0 VSC
+            </div>
 
-    <div class="wallet-label">
-        💰 Available Balance
-    </div>
+            <div class="wallet-currency">
+                VitalStar Virtual Currency
+            </div>
 
-    <div
-        class="wallet-amount"
-        id="walletPageBalance"
-    >
-        ₦0.00
-    </div>
+            <div class="wallet-account">
+                <span class="wallet-account-label">
+                    WALLET OWNER
+                </span>
 
-    <div class="wallet-currency">
-        Nigerian Naira • NGN
-    </div>
+                <strong class="wallet-account-number" id="walletOwner">
+                    Loading...
+                </strong>
+            </div>
 
+            <div class="wallet-footer">
+                <div class="wallet-owner">
+                    Your VitalStar Wallet
+                </div>
+                <div class="wallet-logo">⭐</div>
+            </div>
 
-    <!-- VITALSTAR ACCOUNT NUMBER -->
+        </div>
+    </section>
 
-    <div class="wallet-account">
+    <!-- ACTIONS -->
 
-        <span class="wallet-account-label">
-            VitalStar Account Number
-        </span>
+    <section class="actions">
 
-        <strong
-            id="walletAccountNumber"
-            class="wallet-account-number"
-        >
-            Generating...
-        </strong>
+        <button class="action-btn send-btn"
+                id="sendCoinsButton"
+                type="button">
 
-    </div>
+            <span class="action-icon">📤</span>
+            Send Coins
 
+        </button>
 
-    <div class="wallet-footer">
+        <button class="action-btn earn-btn"
+                type="button"
+                onclick="document.getElementById('earnInfo').scrollIntoView({behavior:'smooth'})">
 
-        <div
-            class="wallet-owner"
-            id="walletOwner"
-        >
-            VitalStar Member
+            <span class="action-icon">🎮</span>
+            Earn Coins
+
+        </button>
+
+    </section>
+
+    <!-- STATS -->
+
+    <section class="stats">
+
+        <div class="stat-card">
+            <div class="stat-label">TOTAL EARNED</div>
+            <div class="stat-value" id="totalEarned">0 VSC</div>
         </div>
 
-        <div class="wallet-logo">
-            ⭐
+        <div class="stat-card">
+            <div class="stat-label">TOTAL SPENT</div>
+            <div class="stat-value" id="totalSpent">0 VSC</div>
         </div>
 
-    </div>
+    </section>
 
-</div>
+    <!-- HISTORY -->
 
-</section>
+    <section>
 
+        <div class="section-header">
+            <h2 class="section-title">Coin History</h2>
+        </div>
 
-<!-- ACTIONS -->
+        <div class="transaction-list" id="transactionList">
+            <div class="loading">Loading coin history...</div>
+        </div>
 
-<section class="actions">
+    </section>
 
-<button
-    class="action-btn deposit-btn"
-    id="depositButton"
-    type="button"
->
+    <!-- EARN INFORMATION -->
 
-    <span class="action-icon">
-        ➕
-    </span>
+    <section id="earnInfo" style="margin-top:25px">
 
-    Deposit
+        <div class="stat-card">
+            <h3>🎮 Earn VitalStar Coins</h3>
+            <p style="margin-top:9px;color:#777;line-height:1.6;font-size:14px">
+                Play supported games and complete eligible activities
+                to receive VitalStar Coins.
+            </p>
+        </div>
 
-</button>
-
-
-<button
-    class="action-btn withdraw-btn"
-    id="withdrawButton"
-    type="button"
->
-
-    <span class="action-icon">
-        💸
-    </span>
-
-    Withdraw
-
-</button>
-
-</section>
-
-
-<!-- WALLET STATS -->
-
-<section class="stats">
-
-<div class="stat-card">
-
-    <div class="stat-label">
-        Deposited
-    </div>
-
-    <div
-        class="stat-value"
-        id="totalDeposited"
-    >
-        ₦0.00
-    </div>
-
-</div>
-
-
-<div class="stat-card">
-
-    <div class="stat-label">
-        Spent
-    </div>
-
-    <div
-        class="stat-value"
-        id="totalSpent"
-    >
-        ₦0.00
-    </div>
-
-</div>
-
-</section>
-
-
-<!-- TRANSACTION HISTORY -->
-
-<section>
-
-<div class="section-header">
-
-    <h2 class="section-title">
-        Transaction History
-    </h2>
-
-</div>
-
-
-<div
-    class="transaction-list"
-    id="transactionList"
->
-
-    <div class="loading">
-        Loading transactions...
-    </div>
-
-</div>
-
-</section>
-
+    </section>
 
 </main>
 
+<!-- SEND COINS MODAL -->
 
-<!-- =========================================================
-     DEPOSIT MODAL
-     ========================================================= -->
+<div class="modal" id="sendCoinsModal">
 
-<div
-    class="modal"
-    id="depositModal"
->
+    <div class="modal-box">
 
-<div class="modal-box">
+        <div class="modal-handle"></div>
 
-<div class="modal-handle"></div>
+        <h2 class="modal-title">📤 Send Coins</h2>
 
-<h2 class="modal-title">
-    💰 Deposit Money
-</h2>
+        <p class="modal-text">
+            Send VitalStar Coins to another user using their username.
+        </p>
 
-<p class="modal-text">
-    Enter the amount you want to add to your VitalStar Wallet.
-</p>
+        <div class="form-group">
+            <label for="recipientUsername">
+                Recipient Username
+            </label>
 
-<div class="form-group">
+            <input
+                id="recipientUsername"
+                type="text"
+                placeholder="Enter VitalStar username"
+                autocomplete="off"
+            >
+        </div>
 
-<label for="depositAmount">
-    Amount
-</label>
+        <div class="form-group">
+            <label for="sendCoinAmount">
+                Amount of Coins
+            </label>
 
-<input
-    id="depositAmount"
-    type="number"
-    min="100"
-    step="1"
-    placeholder="Enter amount in Naira"
-/>
+            <input
+                id="sendCoinAmount"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="Enter VSC amount"
+            >
+        </div>
 
-</div>
+        <div class="modal-actions">
 
-<div class="modal-actions">
+            <button
+                class="cancel-btn"
+                id="closeSendCoins"
+                type="button">
+                Cancel
+            </button>
 
-<button
-    class="cancel-btn"
-    type="button"
-    data-close="depositModal"
->
-    Cancel
-</button>
+            <button
+                class="continue-btn"
+                id="continueSendCoins"
+                type="button">
+                Send Coins
+            </button>
 
-<button
-    class="continue-btn"
-    id="continueDeposit"
-    type="button"
->
-    Continue
-</button>
+        </div>
 
-</div>
-
-</div>
-
-</div>
-
-
-<!-- =========================================================
-     WITHDRAW MODAL
-     ========================================================= -->
-
-<div
-    class="modal"
-    id="withdrawModal"
->
-
-<div class="modal-box">
-
-<div class="modal-handle"></div>
-
-<h2 class="modal-title">
-    💸 Withdraw Money
-</h2>
-
-<p class="modal-text">
-    Enter the amount you want to withdraw from your VitalStar Wallet.
-</p>
-
-<div class="form-group">
-
-<label for="withdrawAmount">
-    Amount
-</label>
-
-<input
-    id="withdrawAmount"
-    type="number"
-    min="100"
-    step="1"
-    placeholder="Enter amount in Naira"
-/>
+    </div>
 
 </div>
 
+<!-- SCRIPT -->
 
-<div class="form-group">
-
-<label for="bankName">
-    Bank Name
-</label>
-
-<input
-    id="bankName"
-    type="text"
-    placeholder="Enter your bank name"
-/>
-
-</div>
-
-
-<div class="form-group">
-
-<label for="accountNumber">
-    Account Number
-</label>
-
-<input
-    id="accountNumber"
-    type="text"
-    inputmode="numeric"
-    maxlength="10"
-    placeholder="10-digit account number"
-/>
-
-</div>
-
-
-<div class="form-group">
-
-<label for="accountName">
-    Account Name
-</label>
-
-<input
-    id="accountName"
-    type="text"
-    placeholder="Account holder name"
-/>
-
-</div>
-
-
-<div class="modal-actions">
-
-<button
-    class="cancel-btn"
-    type="button"
-    data-close="withdrawModal"
->
-    Cancel
-</button>
-
-<button
-    class="continue-btn"
-    id="continueWithdraw"
-    type="button"
->
-    Withdraw
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-
-<!-- =========================================================
-     WALLET SCRIPT
-     ========================================================= -->
-
-<script
-    type="module"
-    src="wallet.js"
-></script>
-
-
-<!-- =========================================================
-     DARK MODE
-     ========================================================= -->
+<script type="module" src="wallet.js"></script>
 
 <script>
-
-if(
-    localStorage.getItem("darkMode") === "enabled"
-){
-    document.body.classList.add(
-        "dark-mode"
-    );
+if(localStorage.getItem("darkMode")==="enabled"){
+    document.body.classList.add("dark-mode");
 }
-
 </script>
 
-
 </body>
-
 </html>
