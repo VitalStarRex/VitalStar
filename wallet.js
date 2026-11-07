@@ -1,8 +1,8 @@
 
 /* =========================================================
-   VITALSTAR COINS — WALLET SYSTEM
-   Currency: VSC (Virtual Coins)
-   New users receive 10 FREE welcome coins.
+   VITALSTAR COINS — SECURE WALLET
+   Firebase v10.12.2
+   Cloudflare Worker Backend
    ========================================================= */
 
 import { auth, db } from "./firebase.js";
@@ -14,17 +14,13 @@ import {
 import {
     doc,
     getDoc,
-    setDoc,
     collection,
     query,
     orderBy,
     limit,
     getDocs,
-    where,
-    serverTimestamp,
-    runTransaction
+    where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 
 /* =========================================================
    DOM
@@ -32,7 +28,6 @@ import {
 
 const walletBalance = document.getElementById("walletBalance");
 const walletButton = document.getElementById("walletButton");
-
 const walletPageBalance = document.getElementById("walletPageBalance");
 const walletOwner = document.getElementById("walletOwner");
 
@@ -40,14 +35,12 @@ const totalEarned = document.getElementById("totalEarned")
     || document.getElementById("totalDeposited");
 
 const totalSpent = document.getElementById("totalSpent");
-
 const transactionList = document.getElementById("transactionList");
 
 const sendCoinsButton = document.getElementById("sendCoinsButton");
 const sendCoinsModal = document.getElementById("sendCoinsModal");
 const continueSendCoins = document.getElementById("continueSendCoins");
 const closeSendCoins = document.getElementById("closeSendCoins");
-
 
 /* =========================================================
    STATE
@@ -56,70 +49,59 @@ const closeSendCoins = document.getElementById("closeSendCoins");
 let currentUser = null;
 let currentWallet = null;
 
+const WALLET_API =
+    "https://vitalstar-wallet-api.amehchristian.workers.dev";
+
+/* =========================================================
+   SECURE BACKEND REQUEST
+   ========================================================= */
+
+async function walletRequest(endpoint, data = {}) {
+
+    if (!currentUser) {
+        throw new Error("Please log in first.");
+    }
+
+    const token = await currentUser.getIdToken();
+
+    const response = await fetch(WALLET_API + endpoint, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.success) {
+        throw new Error(
+            result.error || "Wallet request failed."
+        );
+    }
+
+    return result;
+}
 
 /* =========================================================
    COIN FORMAT
    ========================================================= */
 
 function formatCoins(amount) {
-
-    return Number(amount || 0).toLocaleString("en-NG")
-        + " VSC";
+    return Number(amount || 0).toLocaleString("en-NG") + " VSC";
 }
 
-
 /* =========================================================
-   CREATE WALLET — 10 FREE WELCOME COINS
+   CREATE WALLET
    ========================================================= */
 
 async function createWallet(user) {
 
-    const walletRef = doc(db, "wallets", user.uid);
+    const result = await walletRequest("/wallet/init");
 
-    const welcomeBonusRef = doc(
-        collection(walletRef, "transactions")
-    );
-
-    await runTransaction(db, async transaction => {
-
-        const existingWallet = await transaction.get(walletRef);
-
-        // Never give duplicate welcome bonuses.
-        if (existingWallet.exists()) return;
-
-        transaction.set(walletRef, {
-
-            balance: 10,
-            totalEarned: 10,
-            totalSpent: 0,
-            totalSent: 0,
-            totalReceived: 0,
-
-            currency: "VSC",
-
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-
-        });
-
-        transaction.set(welcomeBonusRef, {
-
-            type: "earned",
-            amount: 10,
-
-            description: "Welcome Bonus - 10 Free VSC",
-
-            createdAt: serverTimestamp()
-
-        });
-
-    });
-
-    const snapshot = await getDoc(walletRef);
-
-    return snapshot.data();
+    return result.wallet;
 }
-
 
 /* =========================================================
    LOAD WALLET
@@ -136,48 +118,13 @@ async function loadWallet(user) {
         await createWallet(user);
 
         snapshot = await getDoc(walletRef);
-
     }
 
-    let wallet = snapshot.data();
-
-    // Migrate existing wallet documents.
-    // Existing balances remain unchanged.
-
-    const updates = {};
-
-    if (wallet.currency !== "VSC") {
-        updates.currency = "VSC";
+    if (!snapshot.exists()) {
+        throw new Error("Wallet could not be initialized.");
     }
 
-    if (typeof wallet.totalEarned !== "number") {
-        updates.totalEarned = 0;
-    }
-
-    if (typeof wallet.totalSpent !== "number") {
-        updates.totalSpent = 0;
-    }
-
-    if (typeof wallet.totalSent !== "number") {
-        updates.totalSent = 0;
-    }
-
-    if (typeof wallet.totalReceived !== "number") {
-        updates.totalReceived = 0;
-    }
-
-    if (Object.keys(updates).length) {
-
-        updates.updatedAt = serverTimestamp();
-
-        await setDoc(walletRef, updates, {
-            merge: true
-        });
-
-        snapshot = await getDoc(walletRef);
-
-        wallet = snapshot.data();
-    }
+    const wallet = snapshot.data();
 
     currentWallet = wallet;
 
@@ -187,7 +134,6 @@ async function loadWallet(user) {
 
     await loadTransactions(user);
 }
-
 
 /* =========================================================
    UPDATE WALLET DISPLAY
@@ -215,7 +161,6 @@ function updateWalletDisplay(wallet) {
             formatCoins(wallet.totalSpent || 0);
     }
 }
-
 
 /* =========================================================
    LOAD WALLET OWNER
@@ -255,7 +200,6 @@ async function loadWalletOwner(user) {
     }
 }
 
-
 /* =========================================================
    LOAD TRANSACTIONS
    ========================================================= */
@@ -288,6 +232,7 @@ async function loadTransactions(user) {
             const empty = document.createElement("div");
 
             empty.className = "empty-transactions";
+
             empty.textContent = "No coin transactions yet.";
 
             transactionList.appendChild(empty);
@@ -319,8 +264,7 @@ async function loadTransactions(user) {
 
             const title = document.createElement("strong");
 
-            title.textContent =
-                data.description || type;
+            title.textContent = data.description || type;
 
             const date = document.createElement("small");
 
@@ -354,19 +298,22 @@ async function loadTransactions(user) {
     }
 }
 
-
 /* =========================================================
    MODAL CONTROLS
    ========================================================= */
 
 function openModal(modal) {
 
-    if (modal) modal.style.display = "flex";
+    if (modal) {
+        modal.style.display = "flex";
+    }
 }
 
 function closeModal(modal) {
 
-    if (modal) modal.style.display = "none";
+    if (modal) {
+        modal.style.display = "none";
+    }
 }
 
 if (sendCoinsButton) {
@@ -390,9 +337,8 @@ window.addEventListener("click", event => {
     }
 });
 
-
 /* =========================================================
-   FIND USER BY VITALSTAR USERNAME
+   FIND USER BY USERNAME
    ========================================================= */
 
 async function findRecipient(username) {
@@ -424,19 +370,16 @@ async function findRecipient(username) {
     }
 
     if (result.empty) {
-
         throw new Error("VitalStar user not found.");
     }
 
     if (result.size > 1) {
-
         throw new Error("Username is not unique.");
     }
 
     const recipientDoc = result.docs[0];
 
     if (recipientDoc.id === currentUser.uid) {
-
         throw new Error("You cannot send coins to yourself.");
     }
 
@@ -446,9 +389,8 @@ async function findRecipient(username) {
     };
 }
 
-
 /* =========================================================
-   SEND COINS
+   SEND COINS — CLOUDFLARE BACKEND
    ========================================================= */
 
 async function sendCoins() {
@@ -477,16 +419,20 @@ async function sendCoins() {
 
     const amount = Number(amountInput.value);
 
-    if (!Number.isSafeInteger(amount) || amount <= 0) {
+    if (!username) {
 
-        alert("Enter a valid whole number of coins.");
+        alert("Enter a VitalStar username.");
 
         return;
     }
 
-    if (amount > 1000000) {
+    if (
+        !Number.isSafeInteger(amount) ||
+        amount <= 0 ||
+        amount > 1000000
+    ) {
 
-        alert("Maximum transfer is 1,000,000 VSC.");
+        alert("Enter a valid amount between 1 and 1,000,000 VSC.");
 
         return;
     }
@@ -494,6 +440,7 @@ async function sendCoins() {
     if (continueSendCoins) {
 
         continueSendCoins.disabled = true;
+
         continueSendCoins.textContent = "Processing...";
     }
 
@@ -507,180 +454,9 @@ async function sendCoins() {
 
         if (!confirmed) return;
 
-        const senderUID = currentUser.uid;
-        const recipientUID = recipient.uid;
-
-        const senderWalletRef = doc(
-            db, "wallets", senderUID
-        );
-
-        const recipientWalletRef = doc(
-            db, "wallets", recipientUID
-        );
-
-        const senderHistoryRef = doc(
-            collection(senderWalletRef, "transactions")
-        );
-
-        const recipientHistoryRef = doc(
-            collection(recipientWalletRef, "transactions")
-        );
-
-        const recipientWelcomeRef = doc(
-            collection(recipientWalletRef, "transactions")
-        );
-
-        await runTransaction(db, async transaction => {
-
-            // READ PHASE.
-
-            const senderSnapshot =
-                await transaction.get(senderWalletRef);
-
-            const recipientSnapshot =
-                await transaction.get(recipientWalletRef);
-
-            if (!senderSnapshot.exists()) {
-
-                throw new Error("Your wallet does not exist.");
-            }
-
-            const senderData = senderSnapshot.data();
-
-            const senderBalance =
-                Number(senderData.balance || 0);
-
-            const recipientExists = recipientSnapshot.exists();
-
-            // A new recipient receives 10 welcome coins.
-            const recipientData = recipientExists
-                ? recipientSnapshot.data()
-                : {
-                    balance: 10,
-                    totalEarned: 10,
-                    totalSpent: 0,
-                    totalSent: 0,
-                    totalReceived: 0,
-                    currency: "VSC"
-                };
-
-            const recipientBalance =
-                Number(recipientData.balance || 0);
-
-            if (
-                !Number.isSafeInteger(senderBalance) ||
-                !Number.isSafeInteger(recipientBalance)
-            ) {
-                throw new Error("Invalid wallet balance.");
-            }
-
-            if (senderBalance < amount) {
-
-                throw new Error("Insufficient VSC balance.");
-            }
-
-            const newRecipientBalance =
-                recipientBalance + amount;
-
-            if (!Number.isSafeInteger(newRecipientBalance)) {
-
-                throw new Error("Recipient balance limit exceeded.");
-            }
-
-            // WRITE PHASE.
-
-            transaction.update(senderWalletRef, {
-
-                balance: senderBalance - amount,
-
-                totalSent:
-                    Number(senderData.totalSent || 0) + amount,
-
-                updatedAt: serverTimestamp()
-
-            });
-
-            transaction.set(recipientWalletRef, {
-
-                balance: newRecipientBalance,
-
-                totalEarned:
-                    Number(recipientData.totalEarned || 0),
-
-                totalSpent:
-                    Number(recipientData.totalSpent || 0),
-
-                totalSent:
-                    Number(recipientData.totalSent || 0),
-
-                totalReceived:
-                    Number(recipientData.totalReceived || 0) + amount,
-
-                currency: "VSC",
-
-                createdAt: recipientExists
-                    ? recipientData.createdAt || serverTimestamp()
-                    : serverTimestamp(),
-
-                updatedAt: serverTimestamp()
-
-            }, { merge: true });
-
-
-            // CREATE WELCOME BONUS HISTORY FOR NEW RECIPIENT.
-
-            if (!recipientExists) {
-
-                transaction.set(recipientWelcomeRef, {
-
-                    type: "earned",
-                    amount: 10,
-
-                    description: "Welcome Bonus - 10 Free VSC",
-
-                    createdAt: serverTimestamp()
-
-                });
-            }
-
-
-            // SENDER HISTORY.
-
-            transaction.set(senderHistoryRef, {
-
-                type: "sent",
-
-                amount,
-
-                recipientUID,
-
-                recipientUsername: recipient.username,
-
-                description: `Sent coins to @${recipient.username}`,
-
-                createdAt: serverTimestamp()
-
-            });
-
-
-            // RECIPIENT HISTORY.
-
-            transaction.set(recipientHistoryRef, {
-
-                type: "received",
-
-                amount,
-
-                senderUID,
-
-                senderUsername: currentUser.displayName || "VitalStar User",
-
-                description: "Received VitalStar Coins",
-
-                createdAt: serverTimestamp()
-
-            });
-
+        await walletRequest("/wallet/transfer", {
+            username: recipient.username,
+            amount
         });
 
         alert(
@@ -688,6 +464,7 @@ async function sendCoins() {
         );
 
         usernameInput.value = "";
+
         amountInput.value = "";
 
         closeModal(sendCoinsModal);
@@ -705,11 +482,11 @@ async function sendCoins() {
         if (continueSendCoins) {
 
             continueSendCoins.disabled = false;
+
             continueSendCoins.textContent = "Send Coins";
         }
     }
 }
-
 
 /* =========================================================
    SEND BUTTON EVENT
@@ -720,7 +497,6 @@ if (continueSendCoins) {
     continueSendCoins.addEventListener("click", sendCoins);
 }
 
-
 /* =========================================================
    AUTH STATE
    ========================================================= */
@@ -730,6 +506,7 @@ onAuthStateChanged(auth, async user => {
     if (!user) {
 
         currentUser = null;
+
         currentWallet = null;
 
         if (walletBalance) {
