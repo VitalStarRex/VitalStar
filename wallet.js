@@ -1,5 +1,7 @@
+
 /* =========================================================
-   VITALSTAR WALLET
+   VITALSTAR COINS — WALLET SYSTEM
+   Currency: VSC (Virtual Coins)
    ========================================================= */
 
 import { auth, db } from "./firebase.js";
@@ -17,6 +19,7 @@ import {
     orderBy,
     limit,
     getDocs,
+    where,
     serverTimestamp,
     runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -31,21 +34,18 @@ const walletButton = document.getElementById("walletButton");
 
 const walletPageBalance = document.getElementById("walletPageBalance");
 const walletOwner = document.getElementById("walletOwner");
-const walletAccountNumber = document.getElementById("walletAccountNumber");
 
-const totalDeposited = document.getElementById("totalDeposited");
+const totalEarned = document.getElementById("totalEarned")
+    || document.getElementById("totalDeposited");
+
 const totalSpent = document.getElementById("totalSpent");
 
 const transactionList = document.getElementById("transactionList");
 
-const depositButton = document.getElementById("depositButton");
-const withdrawButton = document.getElementById("withdrawButton");
-
-const depositModal = document.getElementById("depositModal");
-const withdrawModal = document.getElementById("withdrawModal");
-
-const continueDeposit = document.getElementById("continueDeposit");
-const continueWithdraw = document.getElementById("continueWithdraw");
+const sendCoinsButton = document.getElementById("sendCoinsButton");
+const sendCoinsModal = document.getElementById("sendCoinsModal");
+const continueSendCoins = document.getElementById("continueSendCoins");
+const closeSendCoins = document.getElementById("closeSendCoins");
 
 
 /* =========================================================
@@ -57,63 +57,13 @@ let currentWallet = null;
 
 
 /* =========================================================
-   FORMAT MONEY
+   COIN FORMAT
    ========================================================= */
 
-function formatMoney(amount) {
-    return "₦" + Number(amount || 0).toLocaleString("en-NG", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
+function formatCoins(amount) {
 
-
-/* =========================================================
-   GENERATE UNIQUE VITALSTAR ACCOUNT NUMBER
-   ========================================================= */
-
-async function generateAccountNumber() {
-
-    const counterRef = doc(
-        db,
-        "system",
-        "accountNumberCounter"
-    );
-
-    const accountNumber = await runTransaction(
-        db,
-        async transaction => {
-
-            const counterSnapshot =
-                await transaction.get(counterRef);
-
-            let nextNumber = 1000000000;
-
-            if (counterSnapshot.exists()) {
-
-                const data = counterSnapshot.data();
-
-                nextNumber =
-                    Number(data.nextNumber) ||
-                    1000000000;
-            }
-
-            transaction.set(
-                counterRef,
-                {
-                    nextNumber: nextNumber + 1,
-                    updatedAt: serverTimestamp()
-                },
-                {
-                    merge: true
-                }
-            );
-
-            return String(nextNumber);
-        }
-    );
-
-    return accountNumber;
+    return Number(amount || 0).toLocaleString("en-NG")
+        + " VSC";
 }
 
 
@@ -123,65 +73,22 @@ async function generateAccountNumber() {
 
 async function createWallet(user) {
 
-    const walletRef = doc(
-        db,
-        "wallets",
-        user.uid
-    );
-
-    const accountNumber =
-        await generateAccountNumber();
+    const walletRef = doc(db, "wallets", user.uid);
 
     const walletData = {
         balance: 0,
-        totalDeposited: 0,
+        totalEarned: 0,
         totalSpent: 0,
-        currency: "NGN",
-        accountNumber,
+        totalSent: 0,
+        totalReceived: 0,
+        currency: "VSC",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
     };
 
-    await setDoc(
-        walletRef,
-        walletData
-    );
+    await setDoc(walletRef, walletData);
 
     return walletData;
-}
-
-
-/* =========================================================
-   MAKE SURE ACCOUNT NUMBER EXISTS
-   ========================================================= */
-
-async function ensureAccountNumber(
-    walletRef,
-    walletData
-) {
-
-    if (
-        walletData &&
-        walletData.accountNumber
-    ) {
-        return walletData.accountNumber;
-    }
-
-    const accountNumber =
-        await generateAccountNumber();
-
-    await setDoc(
-        walletRef,
-        {
-            accountNumber,
-            updatedAt: serverTimestamp()
-        },
-        {
-            merge: true
-        }
-    );
-
-    return accountNumber;
 }
 
 
@@ -191,42 +98,60 @@ async function ensureAccountNumber(
 
 async function loadWallet(user) {
 
-    const walletRef = doc(
-        db,
-        "wallets",
-        user.uid
-    );
+    const walletRef = doc(db, "wallets", user.uid);
 
-    let walletSnapshot =
-        await getDoc(walletRef);
+    let snapshot = await getDoc(walletRef);
 
-    let walletData;
+    if (!snapshot.exists()) {
 
-    if (!walletSnapshot.exists()) {
+        await createWallet(user);
 
-        walletData =
-            await createWallet(user);
+        snapshot = await getDoc(walletRef);
 
-    } else {
-
-        walletData =
-            walletSnapshot.data();
-
-        await ensureAccountNumber(
-            walletRef,
-            walletData
-        );
-
-        walletSnapshot =
-            await getDoc(walletRef);
-
-        walletData =
-            walletSnapshot.data();
     }
 
-    currentWallet = walletData;
+    let wallet = snapshot.data();
 
-    updateWalletDisplay(walletData);
+    // Migrate existing wallet documents.
+
+    const updates = {};
+
+    if (wallet.currency !== "VSC") {
+        updates.currency = "VSC";
+    }
+
+    if (typeof wallet.totalEarned !== "number") {
+        updates.totalEarned = 0;
+    }
+
+    if (typeof wallet.totalSpent !== "number") {
+        updates.totalSpent = 0;
+    }
+
+    if (typeof wallet.totalSent !== "number") {
+        updates.totalSent = 0;
+    }
+
+    if (typeof wallet.totalReceived !== "number") {
+        updates.totalReceived = 0;
+    }
+
+    if (Object.keys(updates).length) {
+
+        updates.updatedAt = serverTimestamp();
+
+        await setDoc(walletRef, updates, {
+            merge: true
+        });
+
+        snapshot = await getDoc(walletRef);
+
+        wallet = snapshot.data();
+    }
+
+    currentWallet = wallet;
+
+    updateWalletDisplay(wallet);
 
     await loadWalletOwner(user);
 
@@ -240,40 +165,24 @@ async function loadWallet(user) {
 
 function updateWalletDisplay(wallet) {
 
-    const balance =
-        Number(wallet.balance || 0);
+    const balance = Number(wallet.balance || 0);
 
     if (walletBalance) {
-        walletBalance.textContent =
-            formatMoney(balance);
+        walletBalance.textContent = formatCoins(balance);
     }
 
     if (walletPageBalance) {
-        walletPageBalance.textContent =
-            formatMoney(balance);
+        walletPageBalance.textContent = formatCoins(balance);
     }
 
-    if (walletAccountNumber) {
-
-        walletAccountNumber.textContent =
-            wallet.accountNumber ||
-            "Generating...";
-    }
-
-    if (totalDeposited) {
-
-        totalDeposited.textContent =
-            formatMoney(
-                wallet.totalDeposited || 0
-            );
+    if (totalEarned) {
+        totalEarned.textContent =
+            formatCoins(wallet.totalEarned || 0);
     }
 
     if (totalSpent) {
-
         totalSpent.textContent =
-            formatMoney(
-                wallet.totalSpent || 0
-            );
+            formatCoins(wallet.totalSpent || 0);
     }
 }
 
@@ -288,19 +197,13 @@ async function loadWalletOwner(user) {
 
     try {
 
-        const userRef = doc(
-            db,
-            "users",
-            user.uid
-        );
+        const userRef = doc(db, "users", user.uid);
 
-        const userSnapshot =
-            await getDoc(userRef);
+        const snapshot = await getDoc(userRef);
 
-        if (userSnapshot.exists()) {
+        if (snapshot.exists()) {
 
-            const data =
-                userSnapshot.data();
+            const data = snapshot.data();
 
             walletOwner.textContent =
                 data.fullName ||
@@ -311,19 +214,14 @@ async function loadWalletOwner(user) {
         } else {
 
             walletOwner.textContent =
-                user.email ||
-                "VitalStar User";
+                user.email || "VitalStar User";
         }
 
     } catch (error) {
 
-        console.error(
-            "Failed to load wallet owner:",
-            error
-        );
+        console.error("Owner loading error:", error);
 
-        walletOwner.textContent =
-            "VitalStar User";
+        walletOwner.textContent = "VitalStar User";
     }
 }
 
@@ -338,610 +236,489 @@ async function loadTransactions(user) {
 
     try {
 
-        const transactionsRef =
-            collection(
-                db,
-                "wallets",
-                user.uid,
-                "transactions"
-            );
+        const transactionsRef = collection(
+            db,
+            "wallets",
+            user.uid,
+            "transactions"
+        );
 
-        const transactionsQuery =
-            query(
-                transactionsRef,
-                orderBy(
-                    "createdAt",
-                    "desc"
-                ),
-                limit(50)
-            );
+        const transactionsQuery = query(
+            transactionsRef,
+            orderBy("createdAt", "desc"),
+            limit(50)
+        );
 
-        const snapshot =
-            await getDocs(
-                transactionsQuery
-            );
+        const snapshot = await getDocs(transactionsQuery);
 
-        transactionList.innerHTML = "";
+        transactionList.replaceChildren();
 
         if (snapshot.empty) {
 
-            transactionList.innerHTML = `
-                <div class="empty-transactions">
-                    No transactions yet.
-                </div>
-            `;
+            const empty = document.createElement("div");
+
+            empty.className = "empty-transactions";
+            empty.textContent = "No coin transactions yet.";
+
+            transactionList.appendChild(empty);
 
             return;
         }
 
         snapshot.forEach(transaction => {
 
-            const data =
-                transaction.data();
+            const data = transaction.data();
 
-            const amount =
-                Number(data.amount || 0);
+            const amount = Number(data.amount || 0);
 
-            const type =
-                data.type || "transaction";
+            const type = data.type || "transaction";
 
-            const isDeposit =
-                type === "deposit";
+            const positive = [
+                "received",
+                "earned",
+                "game_reward"
+            ].includes(type);
 
-            const sign =
-                isDeposit ? "+" : "-";
+            const item = document.createElement("div");
 
-            const item =
-                document.createElement("div");
+            item.className = "transaction-item";
 
-            item.className =
-                "transaction-item";
+            const info = document.createElement("div");
 
-            item.innerHTML = `
-                <div class="transaction-info">
+            info.className = "transaction-info";
 
-                    <strong>
-                        ${
-                            data.description ||
-                            (
-                                isDeposit
-                                    ? "Deposit"
-                                    : "Payment"
-                            )
-                        }
-                    </strong>
+            const title = document.createElement("strong");
 
-                    <small>
-                        ${
-                            data.createdAt &&
-                            data.createdAt.toDate
-                                ? data.createdAt
-                                    .toDate()
-                                    .toLocaleString()
-                                : "Recent"
-                        }
-                    </small>
+            title.textContent =
+                data.description || type;
 
-                </div>
+            const date = document.createElement("small");
 
-                <div class="${
-                    isDeposit
-                        ? "transaction-positive"
-                        : "transaction-negative"
-                }">
-                    ${sign}${formatMoney(amount)}
-                </div>
-            `;
+            date.textContent =
+                data.createdAt?.toDate
+                    ? data.createdAt.toDate().toLocaleString()
+                    : "Recent";
+
+            info.append(title, date);
+
+            const amountElement = document.createElement("div");
+
+            amountElement.className = positive
+                ? "transaction-positive"
+                : "transaction-negative";
+
+            amountElement.textContent =
+                (positive ? "+" : "-") + formatCoins(amount);
+
+            item.append(info, amountElement);
 
             transactionList.appendChild(item);
         });
 
     } catch (error) {
 
-        console.error(
-            "Failed to load transactions:",
-            error
-        );
+        console.error("Transaction loading error:", error);
 
-        transactionList.innerHTML = `
-            <div class="empty-transactions">
-                Unable to load transactions.
-            </div>
-        `;
+        transactionList.textContent =
+            "Unable to load coin history.";
     }
 }
 
 
 /* =========================================================
-   OPEN / CLOSE MODALS
+   MODAL CONTROLS
    ========================================================= */
 
 function openModal(modal) {
 
-    if (!modal) return;
-
-    modal.style.display = "flex";
+    if (modal) modal.style.display = "flex";
 }
 
 function closeModal(modal) {
 
-    if (!modal) return;
+    if (modal) modal.style.display = "none";
+}
 
-    modal.style.display = "none";
+if (sendCoinsButton) {
+
+    sendCoinsButton.addEventListener("click", () => {
+        openModal(sendCoinsModal);
+    });
+}
+
+if (closeSendCoins) {
+
+    closeSendCoins.addEventListener("click", () => {
+        closeModal(sendCoinsModal);
+    });
+}
+
+window.addEventListener("click", event => {
+
+    if (event.target === sendCoinsModal) {
+        closeModal(sendCoinsModal);
+    }
+});
+
+
+/* =========================================================
+   FIND USER BY VITALSTAR USERNAME
+   ========================================================= */
+
+async function findRecipient(username) {
+
+    const normalized = username
+        .trim()
+        .replace(/^@/, "")
+        .toLowerCase();
+
+    if (!normalized) {
+        throw new Error("Enter a VitalStar username.");
+    }
+
+    const usersRef = collection(db, "users");
+
+    // Preferred lookup: normalized username field.
+
+    let result = await getDocs(query(
+        usersRef,
+        where("usernameLower", "==", normalized),
+        limit(2)
+    ));
+
+    // Fallback for existing case-sensitive usernames.
+
+    if (result.empty) {
+
+        result = await getDocs(query(
+            usersRef,
+            where("username", "==", normalized),
+            limit(2)
+        ));
+    }
+
+    if (result.empty) {
+
+        throw new Error("VitalStar user not found.");
+    }
+
+    if (result.size > 1) {
+
+        throw new Error("Username is not unique.");
+    }
+
+    const recipientDoc = result.docs[0];
+
+    if (recipientDoc.id === currentUser.uid) {
+
+        throw new Error("You cannot send coins to yourself.");
+    }
+
+    return {
+        uid: recipientDoc.id,
+        username: recipientDoc.data().username || normalized
+    };
 }
 
 
 /* =========================================================
-   DEPOSIT
-   =========================================================
-   
-   IMPORTANT:
-   The deposit destination is identified ONLY by the
-   VitalStar Account Number.
-
-   No email.
-   No Firebase UID.
-   No Paystack authorization URL.
+   SEND COINS
    ========================================================= */
 
-async function makeDeposit() {
+async function sendCoins() {
 
     if (!currentUser) {
 
-        alert(
-            "Please log in before making a deposit."
-        );
+        alert("Please log in first.");
 
         return;
     }
 
-    if (!currentWallet) {
-
-        alert(
-            "Your wallet is still loading."
-        );
-
-        return;
-    }
+    const usernameInput =
+        document.getElementById("recipientUsername");
 
     const amountInput =
-        document.getElementById("depositAmount");
+        document.getElementById("sendCoinAmount");
 
-    const accountInput =
-        document.getElementById("depositAccountNumber");
+    if (!usernameInput || !amountInput) {
 
-    if (!amountInput) {
-
-        alert(
-            "Deposit amount field was not found."
-        );
+        alert("Send coins form fields are missing.");
 
         return;
     }
 
-    const amount =
-        Number(amountInput.value);
+    const username = usernameInput.value.trim();
 
-    /*
-       If the account-number field exists,
-       use it. Otherwise automatically use
-       the logged-in user's own account number.
-    */
+    const amount = Number(amountInput.value);
 
-    const accountNumber =
-        accountInput &&
-        accountInput.value.trim()
-            ? accountInput.value.trim()
-            : currentWallet.accountNumber;
+    if (!Number.isSafeInteger(amount) || amount <= 0) {
 
-    if (!accountNumber) {
-
-        alert(
-            "Your VitalStar Account Number is not available yet."
-        );
+        alert("Enter a valid whole number of coins.");
 
         return;
     }
 
-    if (!/^\d{10}$/.test(accountNumber)) {
+    if (amount > 1000000) {
 
-        alert(
-            "Enter a valid 10-digit VitalStar Account Number."
-        );
+        alert("Maximum transfer is 1,000,000 VSC.");
 
         return;
     }
 
-    if (!Number.isFinite(amount) || amount < 100) {
+    if (continueSendCoins) {
 
-        alert(
-            "Minimum deposit is ₦100."
-        );
-
-        return;
-    }
-
-    if (continueDeposit) {
-
-        continueDeposit.disabled = true;
-
-        continueDeposit.textContent =
-            "Processing...";
+        continueSendCoins.disabled = true;
+        continueSendCoins.textContent = "Processing...";
     }
 
     try {
 
-        /*
-           ONLY the account number and amount
-           are sent as deposit details.
-        */
+        // Identify the recipient.
 
-        const response =
-            await fetch(
-                "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/wallet-deposit",
-                {
-                    method: "POST",
+        const recipient = await findRecipient(username);
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        amount,
-                        accountNumber
-                    })
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.error ||
-                result.message ||
-                "Deposit request failed."
-            );
-        }
-
-        /*
-           The backend should return success
-           after processing the deposit.
-        */
-
-        alert(
-            result.message ||
-            "Deposit request submitted successfully."
+        const confirmed = confirm(
+            `Send ${formatCoins(amount)} to @${recipient.username}?`
         );
 
-        closeModal(depositModal);
+        if (!confirmed) return;
 
+        const senderUID = currentUser.uid;
+        const recipientUID = recipient.uid;
+
+        const senderWalletRef = doc(
+            db, "wallets", senderUID
+        );
+
+        const recipientWalletRef = doc(
+            db, "wallets", recipientUID
+        );
+
+        // Generate transaction IDs before the transaction.
+
+        const senderHistoryRef = doc(
+            collection(senderWalletRef, "transactions")
+        );
+
+        const recipientHistoryRef = doc(
+            collection(recipientWalletRef, "transactions")
+        );
+
+        await runTransaction(db, async transaction => {
+
+            // READ PHASE.
+
+            const senderSnapshot =
+                await transaction.get(senderWalletRef);
+
+            const recipientSnapshot =
+                await transaction.get(recipientWalletRef);
+
+            if (!senderSnapshot.exists()) {
+
+                throw new Error("Your wallet does not exist.");
+            }
+
+            const senderData = senderSnapshot.data();
+
+            const senderBalance =
+                Number(senderData.balance || 0);
+
+            const recipientData = recipientSnapshot.exists()
+                ? recipientSnapshot.data()
+                : {
+                    balance: 0,
+                    totalEarned: 0,
+                    totalSpent: 0,
+                    totalSent: 0,
+                    totalReceived: 0,
+                    currency: "VSC"
+                };
+
+            const recipientBalance =
+                Number(recipientData.balance || 0);
+
+            if (
+                !Number.isSafeInteger(senderBalance) ||
+                !Number.isSafeInteger(recipientBalance)
+            ) {
+                throw new Error("Invalid wallet balance.");
+            }
+
+            if (senderBalance < amount) {
+
+                throw new Error("Insufficient VSC balance.");
+            }
+
+            const newRecipientBalance =
+                recipientBalance + amount;
+
+            if (!Number.isSafeInteger(newRecipientBalance)) {
+
+                throw new Error("Recipient balance limit exceeded.");
+            }
+
+            // WRITE PHASE.
+
+            transaction.update(senderWalletRef, {
+
+                balance: senderBalance - amount,
+
+                totalSent:
+                    Number(senderData.totalSent || 0) + amount,
+
+                updatedAt: serverTimestamp()
+
+            });
+
+            transaction.set(recipientWalletRef, {
+
+                balance: newRecipientBalance,
+
+                totalEarned:
+                    Number(recipientData.totalEarned || 0),
+
+                totalSpent:
+                    Number(recipientData.totalSpent || 0),
+
+                totalSent:
+                    Number(recipientData.totalSent || 0),
+
+                totalReceived:
+                    Number(recipientData.totalReceived || 0) + amount,
+
+                currency: "VSC",
+
+                updatedAt: serverTimestamp()
+
+            }, { merge: true });
+
+
+            // SENDER HISTORY.
+
+            transaction.set(senderHistoryRef, {
+
+                type: "sent",
+
+                amount,
+
+                recipientUID,
+
+                recipientUsername: recipient.username,
+
+                description: `Sent coins to @${recipient.username}`,
+
+                createdAt: serverTimestamp()
+
+            });
+
+
+            // RECIPIENT HISTORY.
+
+            transaction.set(recipientHistoryRef, {
+
+                type: "received",
+
+                amount,
+
+                senderUID,
+
+                senderUsername: currentUser.displayName || "VitalStar User",
+
+                description: "Received VitalStar Coins",
+
+                createdAt: serverTimestamp()
+
+            });
+
+        });
+
+        alert(
+            `Successfully sent ${formatCoins(amount)} to @${recipient.username}.`
+        );
+
+        usernameInput.value = "";
         amountInput.value = "";
 
-        if (accountInput) {
-            accountInput.value = "";
-        }
+        closeModal(sendCoinsModal);
 
         await loadWallet(currentUser);
 
     } catch (error) {
 
-        console.error(
-            "Deposit error:",
-            error
-        );
+        console.error("Send coins error:", error);
 
-        alert(
-            error.message ||
-            "Unable to process deposit."
-        );
+        alert(error.message || "Unable to send coins.");
 
     } finally {
 
-        if (continueDeposit) {
+        if (continueSendCoins) {
 
-            continueDeposit.disabled = false;
-
-            continueDeposit.textContent =
-                "Deposit";
+            continueSendCoins.disabled = false;
+            continueSendCoins.textContent = "Send Coins";
         }
     }
 }
 
 
 /* =========================================================
-   WITHDRAW
+   SEND BUTTON EVENT
    ========================================================= */
 
-async function makeWithdraw() {
+if (continueSendCoins) {
 
-    if (!currentUser) {
-
-        alert(
-            "Please log in first."
-        );
-
-        return;
-    }
-
-    const amountInput =
-        document.getElementById("withdrawAmount");
-
-    const bankNameInput =
-        document.getElementById("withdrawBankName");
-
-    const accountNumberInput =
-        document.getElementById("withdrawAccountNumber");
-
-    const accountNameInput =
-        document.getElementById("withdrawAccountName");
-
-    if (!amountInput) return;
-
-    const amount =
-        Number(amountInput.value);
-
-    const bankName =
-        bankNameInput
-            ? bankNameInput.value.trim()
-            : "";
-
-    const accountNumber =
-        accountNumberInput
-            ? accountNumberInput.value.trim()
-            : "";
-
-    const accountName =
-        accountNameInput
-            ? accountNameInput.value.trim()
-            : "";
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-
-        alert(
-            "Enter a valid withdrawal amount."
-        );
-
-        return;
-    }
-
-    if (amount < 100) {
-
-        alert(
-            "Minimum withdrawal is ₦100."
-        );
-
-        return;
-    }
-
-    if (!bankName) {
-
-        alert(
-            "Enter your bank name."
-        );
-
-        return;
-    }
-
-    if (!accountNumber) {
-
-        alert(
-            "Enter your bank account number."
-        );
-
-        return;
-    }
-
-    if (!accountName) {
-
-        alert(
-            "Enter the account name."
-        );
-
-        return;
-    }
-
-    if (continueWithdraw) {
-
-        continueWithdraw.disabled = true;
-
-        continueWithdraw.textContent =
-            "Processing...";
-    }
-
-    try {
-
-        /*
-           Withdrawal backend should verify
-           the authenticated Firebase user
-           server-side before changing balance.
-        */
-
-        const response =
-            await fetch(
-                "https://caolbkawexnilpsgrwyz.supabase.co/functions/v1/wallet-withdraw",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        amount,
-                        bankName,
-                        accountNumber,
-                        accountName
-                    })
-                }
-            );
-
-        const result =
-            await response.json();
-
-        if (!response.ok) {
-
-            throw new Error(
-                result.error ||
-                result.message ||
-                "Withdrawal failed."
-            );
-        }
-
-        alert(
-            result.message ||
-            "Withdrawal request submitted."
-        );
-
-        closeModal(withdrawModal);
-
-        amountInput.value = "";
-
-        if (bankNameInput)
-            bankNameInput.value = "";
-
-        if (accountNumberInput)
-            accountNumberInput.value = "";
-
-        if (accountNameInput)
-            accountNameInput.value = "";
-
-        await loadWallet(currentUser);
-
-    } catch (error) {
-
-        console.error(
-            "Withdrawal error:",
-            error
-        );
-
-        alert(
-            error.message ||
-            "Unable to process withdrawal."
-        );
-
-    } finally {
-
-        if (continueWithdraw) {
-
-            continueWithdraw.disabled = false;
-
-            continueWithdraw.textContent =
-                "Withdraw";
-        }
-    }
+    continueSendCoins.addEventListener("click", sendCoins);
 }
-
-
-/* =========================================================
-   BUTTON EVENTS
-   ========================================================= */
-
-if (depositButton) {
-
-    depositButton.addEventListener(
-        "click",
-        () => openModal(depositModal)
-    );
-}
-
-if (withdrawButton) {
-
-    withdrawButton.addEventListener(
-        "click",
-        () => openModal(withdrawModal)
-    );
-}
-
-if (continueDeposit) {
-
-    continueDeposit.addEventListener(
-        "click",
-        makeDeposit
-    );
-}
-
-if (continueWithdraw) {
-
-    continueWithdraw.addEventListener(
-        "click",
-        makeWithdraw
-    );
-}
-
-
-/* =========================================================
-   CLOSE MODALS WHEN CLICKING OUTSIDE
-   ========================================================= */
-
-window.addEventListener(
-    "click",
-    event => {
-
-        if (
-            depositModal &&
-            event.target === depositModal
-        ) {
-            closeModal(depositModal);
-        }
-
-        if (
-            withdrawModal &&
-            event.target === withdrawModal
-        ) {
-            closeModal(withdrawModal);
-        }
-    }
-);
 
 
 /* =========================================================
    AUTH STATE
    ========================================================= */
 
-onAuthStateChanged(
-    auth,
-    async user => {
+onAuthStateChanged(auth, async user => {
 
-        if (!user) {
+    if (!user) {
 
-            currentUser = null;
-            currentWallet = null;
+        currentUser = null;
+        currentWallet = null;
 
-            if (walletBalance)
-                walletBalance.textContent =
-                    "₦0.00";
-
-            if (walletPageBalance)
-                walletPageBalance.textContent =
-                    "₦0.00";
-
-            if (walletAccountNumber)
-                walletAccountNumber.textContent =
-                    "Not logged in";
-
-            return;
+        if (walletBalance) {
+            walletBalance.textContent = "0 VSC";
         }
 
-        currentUser = user;
-
-        try {
-
-            await loadWallet(user);
-
-        } catch (error) {
-
-            console.error(
-                "Wallet loading error:",
-                error
-            );
-
-            alert(
-                "Unable to load your wallet."
-            );
+        if (walletPageBalance) {
+            walletPageBalance.textContent = "0 VSC";
         }
+
+        if (totalEarned) {
+            totalEarned.textContent = "0 VSC";
+        }
+
+        if (totalSpent) {
+            totalSpent.textContent = "0 VSC";
+        }
+
+        if (walletOwner) {
+            walletOwner.textContent = "Not logged in";
+        }
+
+        if (transactionList) {
+            transactionList.replaceChildren();
+        }
+
+        return;
     }
-);
+
+    currentUser = user;
+
+    try {
+
+        await loadWallet(user);
+
+    } catch (error) {
+
+        console.error("Wallet loading error:", error);
+
+        alert("Unable to load your VitalStar wallet.");
+    }
+});
