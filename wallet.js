@@ -2,6 +2,7 @@
 /* =========================================================
    VITALSTAR COINS — WALLET SYSTEM
    Currency: VSC (Virtual Coins)
+   New users receive 10 FREE welcome coins.
    ========================================================= */
 
 import { auth, db } from "./firebase.js";
@@ -68,27 +69,55 @@ function formatCoins(amount) {
 
 
 /* =========================================================
-   CREATE WALLET
+   CREATE WALLET — 10 FREE WELCOME COINS
    ========================================================= */
 
 async function createWallet(user) {
 
     const walletRef = doc(db, "wallets", user.uid);
 
-    const walletData = {
-        balance: 0,
-        totalEarned: 0,
-        totalSpent: 0,
-        totalSent: 0,
-        totalReceived: 0,
-        currency: "VSC",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    };
+    const welcomeBonusRef = doc(
+        collection(walletRef, "transactions")
+    );
 
-    await setDoc(walletRef, walletData);
+    await runTransaction(db, async transaction => {
 
-    return walletData;
+        const existingWallet = await transaction.get(walletRef);
+
+        // Never give duplicate welcome bonuses.
+        if (existingWallet.exists()) return;
+
+        transaction.set(walletRef, {
+
+            balance: 10,
+            totalEarned: 10,
+            totalSpent: 0,
+            totalSent: 0,
+            totalReceived: 0,
+
+            currency: "VSC",
+
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+
+        });
+
+        transaction.set(welcomeBonusRef, {
+
+            type: "earned",
+            amount: 10,
+
+            description: "Welcome Bonus - 10 Free VSC",
+
+            createdAt: serverTimestamp()
+
+        });
+
+    });
+
+    const snapshot = await getDoc(walletRef);
+
+    return snapshot.data();
 }
 
 
@@ -113,6 +142,7 @@ async function loadWallet(user) {
     let wallet = snapshot.data();
 
     // Migrate existing wallet documents.
+    // Existing balances remain unchanged.
 
     const updates = {};
 
@@ -378,15 +408,11 @@ async function findRecipient(username) {
 
     const usersRef = collection(db, "users");
 
-    // Preferred lookup: normalized username field.
-
     let result = await getDocs(query(
         usersRef,
         where("usernameLower", "==", normalized),
         limit(2)
     ));
-
-    // Fallback for existing case-sensitive usernames.
 
     if (result.empty) {
 
@@ -473,8 +499,6 @@ async function sendCoins() {
 
     try {
 
-        // Identify the recipient.
-
         const recipient = await findRecipient(username);
 
         const confirmed = confirm(
@@ -494,13 +518,15 @@ async function sendCoins() {
             db, "wallets", recipientUID
         );
 
-        // Generate transaction IDs before the transaction.
-
         const senderHistoryRef = doc(
             collection(senderWalletRef, "transactions")
         );
 
         const recipientHistoryRef = doc(
+            collection(recipientWalletRef, "transactions")
+        );
+
+        const recipientWelcomeRef = doc(
             collection(recipientWalletRef, "transactions")
         );
 
@@ -524,11 +550,14 @@ async function sendCoins() {
             const senderBalance =
                 Number(senderData.balance || 0);
 
-            const recipientData = recipientSnapshot.exists()
+            const recipientExists = recipientSnapshot.exists();
+
+            // A new recipient receives 10 welcome coins.
+            const recipientData = recipientExists
                 ? recipientSnapshot.data()
                 : {
-                    balance: 0,
-                    totalEarned: 0,
+                    balance: 10,
+                    totalEarned: 10,
                     totalSpent: 0,
                     totalSent: 0,
                     totalReceived: 0,
@@ -589,9 +618,30 @@ async function sendCoins() {
 
                 currency: "VSC",
 
+                createdAt: recipientExists
+                    ? recipientData.createdAt || serverTimestamp()
+                    : serverTimestamp(),
+
                 updatedAt: serverTimestamp()
 
             }, { merge: true });
+
+
+            // CREATE WELCOME BONUS HISTORY FOR NEW RECIPIENT.
+
+            if (!recipientExists) {
+
+                transaction.set(recipientWelcomeRef, {
+
+                    type: "earned",
+                    amount: 10,
+
+                    description: "Welcome Bonus - 10 Free VSC",
+
+                    createdAt: serverTimestamp()
+
+                });
+            }
 
 
             // SENDER HISTORY.
