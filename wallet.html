@@ -278,39 +278,6 @@ header{
     background:rgba(166,108,255,.13);
 }
 
-/* STATS */
-
-.stats{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-bottom:20px;
-}
-
-.stat-card{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:13px;
-    box-shadow:var(--shadow),var(--glow);
-    transition:background .3s,border-color .3s;
-}
-
-.stat-label{
-    color:var(--muted);
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:.6px;
-}
-
-.stat-value{
-    margin-top:6px;
-    font-size:17px;
-    font-weight:900;
-    color:var(--cyan);
-    overflow-wrap:anywhere;
-}
-
 /* HISTORY */
 
 .section-header{
@@ -389,27 +356,6 @@ header{
     text-align:center;
     padding:20px;
     color:var(--muted);
-    font-size:12px;
-}
-
-/* EARN INFORMATION */
-
-#earnInfo{
-    margin-top:18px;
-}
-
-#earnInfo .stat-card{
-    padding:15px;
-}
-
-#earnInfo h3{
-    font-size:15px;
-}
-
-#earnInfo p{
-    margin-top:7px;
-    color:var(--muted);
-    line-height:1.5;
     font-size:12px;
 }
 
@@ -556,8 +502,6 @@ html[data-theme="light"] .modal-box{
     .wallet-amount{font-size:29px}
     .actions{gap:8px}
     .action-btn{min-height:80px}
-    .stat-card{padding:11px}
-    .stat-value{font-size:15px}
 }
 
 /* ACCESSIBILITY */
@@ -620,24 +564,10 @@ html[data-theme="light"] .modal-box{
 
         <button class="action-btn earn-btn"
                 type="button"
-                onclick="document.getElementById('earnInfo').scrollIntoView({behavior:'smooth'})">
+                onclick="window.location.href='games/games.html'">
             <span class="action-icon">🎮</span>
             Earn Coins
         </button>
-
-    </section>
-
-    <section class="stats">
-
-        <div class="stat-card">
-            <div class="stat-label">TOTAL EARNED</div>
-            <div class="stat-value" id="totalEarned">0 VSC</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">TOTAL SPENT</div>
-            <div class="stat-value" id="totalSpent">0 VSC</div>
-        </div>
 
     </section>
 
@@ -648,16 +578,6 @@ html[data-theme="light"] .modal-box{
 
         <div class="transaction-list" id="transactionList">
             <div class="loading">Loading coin history...</div>
-        </div>
-    </section>
-
-    <section id="earnInfo">
-        <div class="stat-card">
-            <h3>🎮 Earn VitalStar Coins</h3>
-            <p>
-                Play supported games and complete eligible activities
-                to receive VitalStar Coins.
-            </p>
         </div>
     </section>
 
