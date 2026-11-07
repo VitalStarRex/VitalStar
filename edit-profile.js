@@ -22,6 +22,7 @@ reload
 // Theme is controlled entirely by theme.js (data-theme on <html>).
 // ============================================================
 
+const NAME_MAX_LENGTH = 20;
 const NAME_LOCK_DAYS = 30;
 const NAME_LOCK_MS = NAME_LOCK_DAYS * 24 * 60 * 60 * 1000;
 
@@ -319,7 +320,7 @@ if (changedAt) {
 
 nameHint.classList.add("free");
 nameHint.textContent =
-    "You can change your nick name once every " + NAME_LOCK_DAYS + " days.";
+    "You can change your nick name once every " + NAME_LOCK_DAYS + " days. Maximum " + NAME_MAX_LENGTH + " characters.";
 
 }
 
@@ -497,6 +498,10 @@ form.addEventListener("submit", async (e) => {
 
         // Nick name: only when changed AND not locked (once per 30 days)
         const newName = fullName?.value.trim() || "";
+
+        if (newName.length > NAME_MAX_LENGTH) {
+            throw new Error("Nick name can't be more than " + NAME_MAX_LENGTH + " characters.");
+        }
 
         if (newName !== originalName) {
 
