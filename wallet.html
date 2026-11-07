@@ -5,8 +5,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#1877f2">
+<meta name="theme-color" content="#070914">
 <title>VitalStar Coins</title>
+
+<!-- Shared VitalStar theme controller -->
+<script src="theme.js"></script>
 
 <style>
 *{
@@ -16,50 +19,96 @@
     font-family:Arial,sans-serif;
 }
 
+:root{
+    color-scheme:dark;
+    --bg:#070914;
+    --surface:#101629;
+    --surface2:#151d33;
+    --text:#edf4ff;
+    --muted:#8e9bb5;
+    --border:rgba(91,190,255,.16);
+    --cyan:#21e7f5;
+    --purple:#a66cff;
+    --blue:#398aff;
+    --shadow:0 5px 22px rgba(0,0,0,.24);
+    --glow:0 0 15px rgba(33,231,245,.12);
+}
+
+html[data-theme="light"]{
+    color-scheme:light;
+    --bg:#f1f5ff;
+    --surface:#ffffff;
+    --surface2:#f7f8ff;
+    --text:#202a40;
+    --muted:#77839a;
+    --border:rgba(89,115,190,.15);
+    --cyan:#168fc4;
+    --purple:#8050df;
+    --blue:#3979ed;
+    --shadow:0 5px 20px rgba(52,75,130,.09);
+    --glow:0 0 15px rgba(75,110,220,.07);
+}
+
+html{
+    min-height:100%;
+    background:var(--bg);
+}
+
 body{
     min-height:100vh;
-    background:#eef2ff;
-    color:#222;
-    padding-bottom:40px;
+    padding-bottom:30px;
+    background:
+        radial-gradient(ellipse at 10% 0%,rgba(63,87,190,.09),transparent 45%),
+        var(--bg);
+    color:var(--text);
+    transition:background .3s,color .3s;
 }
+
+html.vs-theming body{
+    transition:background .3s,color .3s;
+}
+
+/* HEADER */
 
 header{
     position:sticky;
     top:0;
-    width:100%;
-    height:65px;
+    z-index:100;
+    height:58px;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:0 18px;
+    padding:0 15px;
     color:white;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
-    box-shadow:0 3px 15px rgba(0,0,0,.2);
-    z-index:100;
+    background:linear-gradient(110deg,#101b3b,#34216b,#075c85);
+    border-bottom:1px solid rgba(33,231,245,.25);
+    box-shadow:0 3px 20px rgba(0,0,0,.2);
 }
 
 .back-btn{
-    width:42px;
-    height:42px;
-    border:none;
-    border-radius:50%;
-    background:rgba(255,255,255,.18);
+    width:36px;
+    height:36px;
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:12px;
+    background:rgba(255,255,255,.1);
     color:white;
-    font-size:26px;
+    font-size:23px;
     cursor:pointer;
 }
 
 .wallet-title{
-    font-size:21px;
+    font-size:18px;
     font-weight:900;
 }
 
-.header-space{width:42px}
+.header-space{width:36px}
+
+/* MAIN */
 
 .container{
-    width:min(100%,650px);
+    width:min(100%,540px);
     margin:auto;
-    padding:20px 15px;
+    padding:15px 13px;
 }
 
 /* WALLET CARD */
@@ -67,32 +116,37 @@ header{
 .wallet-card{
     position:relative;
     overflow:hidden;
-    padding:28px 24px;
-    border-radius:28px;
+    padding:21px 19px;
+    border-radius:21px;
     color:white;
-    background:linear-gradient(135deg,#7b2ff7,#1877f2,#00c6ff);
-    box-shadow:0 15px 35px rgba(70,80,200,.35);
+    background:linear-gradient(125deg,#21134c,#123d79,#087b9a);
+    border:1px solid rgba(33,231,245,.35);
+    box-shadow:
+        0 8px 28px rgba(0,0,0,.22),
+        0 0 20px rgba(33,231,245,.13),
+        inset 0 0 20px rgba(255,255,255,.035);
 }
 
 .wallet-card::before{
     content:"";
     position:absolute;
-    width:180px;
-    height:180px;
+    width:150px;
+    height:150px;
     border-radius:50%;
-    background:rgba(255,255,255,.12);
-    top:-80px;
-    right:-50px;
+    background:rgba(33,231,245,.13);
+    filter:blur(3px);
+    top:-85px;
+    right:-40px;
 }
 
 .wallet-card::after{
     content:"";
     position:absolute;
-    width:130px;
-    height:130px;
+    width:105px;
+    height:105px;
     border-radius:50%;
-    border:25px solid rgba(255,255,255,.08);
-    bottom:-75px;
+    border:20px solid rgba(175,111,255,.13);
+    bottom:-65px;
     left:-35px;
 }
 
@@ -104,143 +158,157 @@ header{
 .wallet-label{
     display:flex;
     align-items:center;
-    gap:8px;
-    font-size:15px;
+    gap:7px;
+    font-size:13px;
     font-weight:bold;
+    color:#d6faff;
 }
 
 .wallet-amount{
-    margin-top:12px;
-    font-size:38px;
+    margin-top:9px;
+    font-size:34px;
     font-weight:900;
-    word-break:break-word;
+    letter-spacing:-1px;
+    overflow-wrap:anywhere;
+    text-shadow:0 0 15px rgba(33,231,245,.35);
 }
 
 .wallet-currency{
-    margin-top:8px;
-    font-size:13px;
-    opacity:.85;
+    margin-top:5px;
+    font-size:11px;
+    color:#c4d9ef;
 }
 
 .wallet-account{
-    margin-top:18px;
-    padding:13px 15px;
-    border-radius:15px;
-    background:rgba(255,255,255,.14);
-    border:1px solid rgba(255,255,255,.18);
+    margin-top:15px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(255,255,255,.09);
+    border:1px solid rgba(255,255,255,.15);
 }
 
 .wallet-account-label{
     display:block;
-    font-size:11px;
+    font-size:10px;
     opacity:.8;
     font-weight:bold;
+    letter-spacing:.7px;
 }
 
 .wallet-account-number{
     display:block;
     margin-top:4px;
-    font-size:19px;
+    font-size:15px;
+    overflow-wrap:anywhere;
 }
 
 .wallet-footer{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-top:20px;
+    margin-top:14px;
 }
 
 .wallet-owner{
-    font-size:14px;
+    font-size:12px;
     font-weight:bold;
-    max-width:70%;
+    max-width:75%;
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
 }
 
 .wallet-logo{
-    font-size:22px;
+    font-size:20px;
+    filter:drop-shadow(0 0 7px #21e7f5);
 }
 
-/* ACTIONS */
+/* ACTION BUTTONS */
 
 .actions{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:15px;
-    margin:22px 0;
+    gap:11px;
+    margin:15px 0;
 }
 
 .action-btn{
-    border:none;
-    padding:18px 12px;
-    border-radius:20px;
+    min-height:88px;
+    border:1px solid var(--border);
+    padding:12px 8px;
+    border-radius:15px;
     cursor:pointer;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:8px;
-    font-size:15px;
+    gap:7px;
+    font-size:13px;
     font-weight:900;
-    transition:.2s;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    color:var(--text);
+    background:var(--surface);
+    box-shadow:var(--shadow),var(--glow);
+    transition:transform .2s,border-color .2s,box-shadow .2s;
 }
 
-.action-btn:hover{transform:translateY(-3px)}
+.action-btn:hover{
+    transform:translateY(-2px);
+    border-color:var(--cyan);
+    box-shadow:0 0 15px rgba(33,231,245,.18);
+}
+
 .action-btn:active{transform:scale(.97)}
 
-.send-btn{
-    background:white;
-    color:#1877f2;
-}
-
-.earn-btn{
-    background:white;
-    color:#7b2ff7;
-}
-
 .action-icon{
-    width:50px;
-    height:50px;
-    border-radius:16px;
+    width:39px;
+    height:39px;
+    border-radius:12px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:25px;
-    background:#eef2ff;
+    font-size:21px;
+    background:rgba(33,231,245,.09);
 }
 
-.send-btn .action-icon{background:#eaf3ff}
-.earn-btn .action-icon{background:#f2ebff}
+.send-btn .action-icon{
+    background:rgba(33,231,245,.11);
+}
+
+.earn-btn .action-icon{
+    background:rgba(166,108,255,.13);
+}
 
 /* STATS */
 
 .stats{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-bottom:25px;
+    gap:10px;
+    margin-bottom:20px;
 }
 
 .stat-card{
-    background:white;
-    border-radius:18px;
-    padding:18px;
-    box-shadow:0 5px 15px rgba(0,0,0,.07);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:13px;
+    box-shadow:var(--shadow),var(--glow);
+    transition:background .3s,border-color .3s;
 }
 
 .stat-label{
-    color:#777;
-    font-size:12px;
-    font-weight:bold;
+    color:var(--muted);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.6px;
 }
 
 .stat-value{
-    margin-top:8px;
-    font-size:18px;
+    margin-top:6px;
+    font-size:17px;
     font-weight:900;
+    color:var(--cyan);
+    overflow-wrap:anywhere;
 }
 
 /* HISTORY */
@@ -249,28 +317,30 @@ header{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:14px;
+    margin-bottom:10px;
 }
 
 .section-title{
-    font-size:20px;
+    font-size:17px;
     font-weight:900;
 }
 
 .transaction-list{
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:8px;
 }
 
 .transaction-item{
     display:flex;
     align-items:center;
-    gap:12px;
-    padding:15px;
-    background:white;
-    border-radius:18px;
-    box-shadow:0 4px 12px rgba(0,0,0,.06);
+    gap:10px;
+    padding:11px 12px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:13px;
+    box-shadow:var(--shadow);
+    color:var(--text);
 }
 
 .transaction-info{
@@ -279,38 +349,68 @@ header{
 }
 
 .transaction-info strong{
-    font-size:15px;
+    font-size:13px;
     display:block;
+    overflow-wrap:anywhere;
 }
 
 .transaction-info small{
     display:block;
     margin-top:4px;
-    color:#888;
-    font-size:12px;
+    color:var(--muted);
+    font-size:10px;
 }
 
 .transaction-positive{
-    color:#16a34a;
-    font-size:14px;
+    color:#20c997;
+    font-size:13px;
     font-weight:900;
+    white-space:nowrap;
 }
 
 .transaction-negative{
-    color:#e11d48;
-    font-size:14px;
+    color:#ff668c;
+    font-size:13px;
     font-weight:900;
+    white-space:nowrap;
 }
-
-/* EMPTY STATE */
 
 .empty-transactions{
     text-align:center;
-    padding:35px 20px;
-    border-radius:22px;
-    background:white;
-    color:#777;
-    font-size:14px;
+    padding:25px 15px;
+    border-radius:15px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-size:12px;
+}
+
+.loading{
+    text-align:center;
+    padding:20px;
+    color:var(--muted);
+    font-size:12px;
+}
+
+/* EARN INFORMATION */
+
+#earnInfo{
+    margin-top:18px;
+}
+
+#earnInfo .stat-card{
+    padding:15px;
+}
+
+#earnInfo h3{
+    font-size:15px;
+}
+
+#earnInfo p{
+    margin-top:7px;
+    color:var(--muted);
+    line-height:1.5;
+    font-size:12px;
 }
 
 /* MODAL */
@@ -321,136 +421,152 @@ header{
     display:none;
     align-items:flex-end;
     justify-content:center;
-    padding:15px;
-    background:rgba(0,0,0,.55);
+    padding:12px;
+    background:rgba(0,0,0,.7);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
     z-index:1000;
 }
 
 .modal.show{display:flex}
 
 .modal-box{
-    width:min(100%,600px);
-    max-height:90vh;
+    width:min(100%,480px);
+    max-height:85vh;
     overflow-y:auto;
-    padding:24px;
-    border-radius:28px 28px 20px 20px;
-    background:white;
-    box-shadow:0 -10px 40px rgba(0,0,0,.2);
+    padding:19px;
+    border-radius:21px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    box-shadow:
+        0 0 25px rgba(33,231,245,.12),
+        0 -5px 35px rgba(0,0,0,.3);
+    animation:modalUp .25s ease;
+}
+
+@keyframes modalUp{
+    from{transform:translateY(20px);opacity:0}
+    to{transform:translateY(0);opacity:1}
 }
 
 .modal-handle{
-    width:45px;
-    height:5px;
-    margin:0 auto 18px;
+    width:38px;
+    height:4px;
+    margin:0 auto 15px;
     border-radius:20px;
-    background:#ddd;
+    background:var(--muted);
+    opacity:.5;
 }
 
 .modal-title{
-    font-size:23px;
+    font-size:20px;
     font-weight:900;
 }
 
 .modal-text{
-    margin:8px 0 20px;
-    color:#666;
+    margin:7px 0 15px;
+    color:var(--muted);
+    font-size:12px;
     line-height:1.5;
 }
 
-.form-group{margin-top:15px}
+.form-group{margin-top:12px}
 
 .form-group label{
     display:block;
-    margin-bottom:8px;
-    font-size:14px;
+    margin-bottom:6px;
+    font-size:12px;
     font-weight:bold;
 }
 
 .form-group input{
     width:100%;
-    padding:15px;
-    border:2px solid #e5e7eb;
-    border-radius:15px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:11px;
     outline:none;
-    font-size:16px;
-    background:white;
+    font-size:14px;
+    color:var(--text);
+    background:var(--surface2);
+    transition:border-color .2s,box-shadow .2s;
 }
 
-.form-group input:focus{border-color:#1877f2}
+.form-group input:focus{
+    border-color:var(--cyan);
+    box-shadow:0 0 10px rgba(33,231,245,.14);
+}
 
 .modal-actions{
     display:flex;
-    gap:10px;
-    margin-top:22px;
+    gap:9px;
+    margin-top:18px;
 }
 
 .modal-actions button{
     flex:1;
     border:none;
-    padding:15px;
-    border-radius:15px;
-    font-size:15px;
+    padding:12px;
+    border-radius:11px;
+    font-size:13px;
     font-weight:900;
     cursor:pointer;
 }
 
 .cancel-btn{
-    background:#eee;
-    color:#333;
+    background:var(--surface2);
+    color:var(--text);
+    border:1px solid var(--border)!important;
 }
 
 .continue-btn{
     color:white;
-    background:linear-gradient(135deg,#1877f2,#7b2ff7);
+    background:linear-gradient(110deg,#1877f2,#853cff);
+    box-shadow:0 0 13px rgba(123,47,247,.2);
 }
 
 button:disabled{
-    opacity:.6;
+    opacity:.55;
     cursor:not-allowed;
 }
 
-/* DARK MODE */
+/* LIGHT THEME DETAILS */
 
-body.dark-mode{
-    background:#121212;
-    color:#eee;
+html[data-theme="light"] .wallet-card{
+    box-shadow:0 9px 25px rgba(61,91,180,.17);
 }
 
-body.dark-mode .send-btn,
-body.dark-mode .earn-btn,
-body.dark-mode .stat-card,
-body.dark-mode .transaction-item,
-body.dark-mode .empty-transactions,
-body.dark-mode .modal-box{
-    background:#1e1e1e;
-    color:#eee;
+html[data-theme="light"] .action-btn:hover{
+    box-shadow:0 5px 16px rgba(65,100,200,.12);
 }
 
-body.dark-mode .stat-label,
-body.dark-mode .transaction-info small,
-body.dark-mode .modal-text{
-    color:#aaa;
+html[data-theme="light"] .modal{
+    background:rgba(30,40,70,.4);
 }
 
-body.dark-mode .action-icon{
-    background:#28203d;
+html[data-theme="light"] .modal-box{
+    box-shadow:0 10px 35px rgba(40,60,120,.16);
 }
 
-body.dark-mode .form-group input{
-    background:#282828;
-    color:white;
-    border-color:#444;
-}
-
-body.dark-mode .cancel-btn{
-    background:#333;
-    color:white;
-}
+/* SMALL SCREENS */
 
 @media(max-width:380px){
-    .wallet-amount{font-size:31px}
-    .wallet-card{padding:24px 18px}
-    .actions{gap:10px}
+    .container{padding:12px 10px}
+    .wallet-card{padding:18px 15px}
+    .wallet-amount{font-size:29px}
+    .actions{gap:8px}
+    .action-btn{min-height:80px}
+    .stat-card{padding:11px}
+    .stat-value{font-size:15px}
+}
+
+/* ACCESSIBILITY */
+
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+        animation-duration:.01ms!important;
+        transition-duration:.01ms!important;
+    }
 }
 </style>
 </head>
@@ -458,23 +574,19 @@ body.dark-mode .cancel-btn{
 <body>
 
 <header>
-    <button class="back-btn" type="button" onclick="history.back()">←</button>
+    <button class="back-btn" type="button" onclick="history.back()" aria-label="Go back">←</button>
     <div class="wallet-title">🪙 VitalStar Coins</div>
     <div class="header-space"></div>
 </header>
 
 <main class="container">
 
-    <!-- WALLET CARD -->
-
     <section class="wallet-card">
         <div class="wallet-content">
 
-            <div class="wallet-label">
-                🪙 Available Coins
-            </div>
+            <div class="wallet-label">🪙 Available Coins</div>
 
-            <div class="wallet-amount" id="walletPageBalance">
+            <div class="wallet-amount" id="walletPageBalance" data-coin-balance>
                 0 VSC
             </div>
 
@@ -483,50 +595,37 @@ body.dark-mode .cancel-btn{
             </div>
 
             <div class="wallet-account">
-                <span class="wallet-account-label">
-                    WALLET OWNER
-                </span>
-
+                <span class="wallet-account-label">WALLET OWNER</span>
                 <strong class="wallet-account-number" id="walletOwner">
                     Loading...
                 </strong>
             </div>
 
             <div class="wallet-footer">
-                <div class="wallet-owner">
-                    Your VitalStar Wallet
-                </div>
+                <div class="wallet-owner">Your VitalStar Wallet</div>
                 <div class="wallet-logo">⭐</div>
             </div>
 
         </div>
     </section>
 
-    <!-- ACTIONS -->
-
     <section class="actions">
 
         <button class="action-btn send-btn"
                 id="sendCoinsButton"
                 type="button">
-
             <span class="action-icon">📤</span>
             Send Coins
-
         </button>
 
         <button class="action-btn earn-btn"
                 type="button"
                 onclick="document.getElementById('earnInfo').scrollIntoView({behavior:'smooth'})">
-
             <span class="action-icon">🎮</span>
             Earn Coins
-
         </button>
 
     </section>
-
-    <!-- STATS -->
 
     <section class="stats">
 
@@ -542,10 +641,7 @@ body.dark-mode .cancel-btn{
 
     </section>
 
-    <!-- HISTORY -->
-
     <section>
-
         <div class="section-header">
             <h2 class="section-title">Coin History</h2>
         </div>
@@ -553,21 +649,16 @@ body.dark-mode .cancel-btn{
         <div class="transaction-list" id="transactionList">
             <div class="loading">Loading coin history...</div>
         </div>
-
     </section>
 
-    <!-- EARN INFORMATION -->
-
-    <section id="earnInfo" style="margin-top:25px">
-
+    <section id="earnInfo">
         <div class="stat-card">
             <h3>🎮 Earn VitalStar Coins</h3>
-            <p style="margin-top:9px;color:#777;line-height:1.6;font-size:14px">
+            <p>
                 Play supported games and complete eligible activities
                 to receive VitalStar Coins.
             </p>
         </div>
-
     </section>
 
 </main>
@@ -587,30 +678,22 @@ body.dark-mode .cancel-btn{
         </p>
 
         <div class="form-group">
-            <label for="recipientUsername">
-                Recipient Username
-            </label>
-
+            <label for="recipientUsername">Recipient Username</label>
             <input
                 id="recipientUsername"
                 type="text"
                 placeholder="Enter VitalStar username"
-                autocomplete="off"
-            >
+                autocomplete="off">
         </div>
 
         <div class="form-group">
-            <label for="sendCoinAmount">
-                Amount of Coins
-            </label>
-
+            <label for="sendCoinAmount">Amount of Coins</label>
             <input
                 id="sendCoinAmount"
                 type="number"
                 min="1"
                 step="1"
-                placeholder="Enter VSC amount"
-            >
+                placeholder="Enter VSC amount">
         </div>
 
         <div class="modal-actions">
@@ -632,18 +715,9 @@ body.dark-mode .cancel-btn{
         </div>
 
     </div>
-
 </div>
 
-<!-- SCRIPT -->
-
 <script type="module" src="wallet.js"></script>
-
-<script>
-if(localStorage.getItem("darkMode")==="enabled"){
-    document.body.classList.add("dark-mode");
-}
-</script>
 
 </body>
 </html>
