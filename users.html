@@ -1,168 +1,713 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#070914">
 <title>VitalStar Users</title>
 
-<input type="text" id="searchInput" placeholder="Search users...">
+<!-- Applies the saved theme BEFORE first paint (same source as the messages page) -->
+<script>
+(function () {
+    var LIGHT = ["light", "white", "bright"];
+    var DARK = ["dark", "night"];
+
+    function readTheme() {
+        var stored = "";
+        var keys = ["vitalstar-theme", "vs-theme", "theme", "themeMode", "vitalstarTheme"];
+        for (var i = 0; i < keys.length; i++) {
+            try {
+                var value = localStorage.getItem(keys[i]);
+                if (!value) continue;
+                var n = String(value).toLowerCase();
+                if (LIGHT.indexOf(n) > -1) stored = "light";
+                else if (DARK.indexOf(n) > -1) stored = "dark";
+                if (stored) break;
+                try {
+                    var p = JSON.parse(value);
+                    var m = String((p && (p.theme || p.mode || p.value)) || "").toLowerCase();
+                    if (LIGHT.indexOf(m) > -1) stored = "light";
+                    else if (DARK.indexOf(m) > -1) stored = "dark";
+                    if (stored) break;
+                } catch (e) {}
+            } catch (e) {}
+        }
+        var root = document.documentElement.getAttribute("data-theme");
+        var chosen = String(stored || root || "dark").toLowerCase();
+        return LIGHT.indexOf(chosen) > -1 ? "light" : "dark";
+    }
+
+    function apply() {
+        var theme = readTheme();
+        var html = document.documentElement;
+        if (html.getAttribute("data-theme") !== theme) html.setAttribute("data-theme", theme);
+        html.style.colorScheme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "light" ? "#f4f7ff" : "#070914");
+    }
+
+    apply();
+
+    window.addEventListener("vitalstar-theme-change", apply);
+    window.addEventListener("themechange", apply);
+    window.addEventListener("storage", function (e) {
+        if (!e.key || /theme/i.test(e.key)) apply();
+    });
+    window.addEventListener("pageshow", apply);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) apply();
+    });
+})();
+</script>
 
 <style>
+
+/* =========================================================
+   THEME TOKENS
+   ========================================================= */
+
+:root,
+html[data-theme="dark"]{
+    --bg:#070914;
+    --glow-1:rgba(0,210,255,.12);
+    --glow-2:rgba(143,61,255,.14);
+    --glow-3:rgba(255,25,168,.08);
+
+    --surface:#12172a;
+    --surface-2:#161c33;
+    --card-a:rgba(20,26,48,.96);
+    --card-b:rgba(11,15,29,.96);
+
+    --text:#ffffff;
+    --text-soft:#dce2f8;
+    --muted:#7f88a7;
+
+    --border:rgba(255,255,255,.08);
+    --border-strong:rgba(255,255,255,.16);
+
+    --header-bg:rgba(7,9,20,.82);
+    --nav-bg:rgba(5,9,20,.96);
+    --nav-text:#b8c7dc;
+
+    --shadow:0 8px 28px rgba(0,0,0,.28);
+    --shadow-hover:0 14px 38px rgba(0,0,0,.38);
+
+    --accent-1:#7a3cff;
+    --accent-2:#00a2ff;
+    --accent-3:#00e0ff;
+    --accent-glow:rgba(122,60,255,.38);
+
+    --neon:#00ff88;
+    --dot-ring:#111629;
+    --input-focus:rgba(0,200,255,.45);
+    --loader-bg:rgba(5,12,24,.92);
+    --loader-text:#eafff5;
+    --loader-border:rgba(0,255,136,.35);
+}
+
+html[data-theme="light"]{
+    --bg:#f4f7ff;
+    --glow-1:rgba(0,162,255,.14);
+    --glow-2:rgba(122,60,255,.13);
+    --glow-3:rgba(255,80,170,.09);
+
+    --surface:#ffffff;
+    --surface-2:#f0f3fc;
+    --card-a:rgba(255,255,255,.98);
+    --card-b:rgba(250,252,255,.98);
+
+    --text:#182238;
+    --text-soft:#2a3556;
+    --muted:#68718a;
+
+    --border:rgba(40,55,110,.10);
+    --border-strong:rgba(40,55,110,.20);
+
+    --header-bg:rgba(255,255,255,.86);
+    --nav-bg:rgba(255,255,255,.97);
+    --nav-text:#727b91;
+
+    --shadow:0 6px 22px rgba(50,65,120,.10);
+    --shadow-hover:0 14px 34px rgba(50,65,120,.18);
+
+    --accent-1:#6a3cf0;
+    --accent-2:#2575fc;
+    --accent-3:#00a2e8;
+    --accent-glow:rgba(106,60,240,.28);
+
+    --neon:#12b868;
+    --dot-ring:#ffffff;
+    --input-focus:rgba(37,117,252,.40);
+    --loader-bg:rgba(255,255,255,.96);
+    --loader-text:#26304a;
+    --loader-border:rgba(106,60,240,.30);
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html{
+    background:var(--bg);
+    color-scheme:dark;
+}
+
+html[data-theme="light"]{
+    color-scheme:light;
+}
+
 body{
     margin:0;
-    font-family:Arial,sans-serif;
-    background:#f0f2f5;
+    min-height:100vh;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:calc(95px + env(safe-area-inset-bottom,0px));
+    transition:background .3s ease,color .3s ease;
 }
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-1;
+    background:
+        radial-gradient(circle at 8% 8%,var(--glow-1),transparent 28%),
+        radial-gradient(circle at 92% 14%,var(--glow-2),transparent 28%),
+        radial-gradient(circle at 50% 105%,var(--glow-3),transparent 34%);
+}
+
+::selection{
+    background:var(--accent-glow);
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 .header{
-    background:#1877f2;
-    color:white;
-    padding:15px;
+    position:sticky;
+    top:0;
+    z-index:1000;
+
+    min-height:calc(64px + env(safe-area-inset-top,0px));
+    padding:env(safe-area-inset-top,0px) 14px 0;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:21px;
+    font-weight:900;
+    letter-spacing:.3px;
     text-align:center;
-    font-size:22px;
-    font-weight:bold;
+
+    color:var(--text);
+    background:var(--header-bg);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    backdrop-filter:blur(20px) saturate(160%);
+    border-bottom:1px solid var(--border);
 }
 
+.header::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:-1px;
+    height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent-1),var(--accent-3),transparent);
+    opacity:.55;
+}
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.page{
+    width:100%;
+    max-width:800px;
+    margin:auto;
+    padding:16px 12px 0;
+}
+
+.search-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    height:52px;
+    padding:0 16px;
+    margin-bottom:16px;
+
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:18px;
+
+    box-shadow:var(--shadow);
+    transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
+}
+
+.search-box:focus-within{
+    border-color:var(--input-focus);
+    box-shadow:0 0 0 4px var(--accent-glow),var(--shadow);
+    transform:translateY(-1px);
+}
+
+.search-box > span{
+    font-size:18px;
+    opacity:.85;
+}
+
+#searchInput{
+    flex:1;
+    width:100%;
+    height:100%;
+    min-width:0;
+
+    border:0;
+    outline:0;
+    background:transparent;
+
+    color:var(--text);
+    font-size:14.5px;
+    font-family:inherit;
+}
+
+#searchInput::placeholder{
+    color:var(--muted);
+}
+
+/* =========================================================
+   USERS LIST
+   ========================================================= */
+
 #usersList{
-    padding:10px;
+    padding:0;
 }
 
 .user{
+    position:relative;
     display:flex;
     align-items:center;
-    background:white;
-    padding:12px;
+    gap:12px;
+
+    padding:13px;
     margin-bottom:10px;
-    border-radius:10px;
+
+    background:linear-gradient(145deg,var(--card-a),var(--card-b));
+    border:1px solid var(--border);
+    border-radius:20px;
+
+    box-shadow:var(--shadow);
+    overflow:hidden;
     cursor:pointer;
+
+    animation:userIn .4s ease both;
+    transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+
+.user::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:16%;
+    bottom:16%;
+    width:3px;
+    border-radius:0 4px 4px 0;
+    background:linear-gradient(180deg,var(--accent-3),var(--accent-1));
+    opacity:0;
+    transition:opacity .22s ease;
+}
+
+.user:hover{
+    transform:translateY(-2px);
+    border-color:var(--border-strong);
+    box-shadow:var(--shadow-hover);
+}
+
+.user:hover::before{
+    opacity:1;
+}
+
+.user:active{
+    transform:scale(.985);
+}
+
+.user:nth-child(2){animation-delay:.04s;}
+.user:nth-child(3){animation-delay:.08s;}
+.user:nth-child(4){animation-delay:.12s;}
+.user:nth-child(5){animation-delay:.16s;}
+.user:nth-child(n+6){animation-delay:.2s;}
+
+@keyframes userIn{
+    from{opacity:0;transform:translateY(12px);}
+    to{opacity:1;transform:translateY(0);}
 }
 
 .avatar{
-    width:50px;
-    height:50px;
+    flex:0 0 auto;
+    width:54px;
+    height:54px;
+
     border-radius:50%;
-    background:#1877f2;
-    color:white;
+    object-fit:cover;
+
     display:flex;
     justify-content:center;
     align-items:center;
-    font-size:20px;
-    font-weight:bold;
-    margin-right:12px;
+
+    background:linear-gradient(135deg,var(--accent-1),var(--accent-3));
+    color:#fff;
+    font-size:21px;
+    font-weight:900;
+
+    border:2px solid var(--accent-1);
+    box-shadow:0 0 0 3px var(--accent-glow),0 4px 14px rgba(0,0,0,.18);
+}
+
+.avatar img{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    object-fit:cover;
 }
 
 .info{
     flex:1;
+    min-width:0;
 }
 
 .name{
-    font-size:18px;
-    font-weight:bold;
+    font-size:15px;
+    font-weight:900;
+    color:var(--text);
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .status{
-    color:gray;
-    font-size:14px;
-}
-</style>
+    margin-top:4px;
+    color:var(--muted);
+    font-size:12.5px;
 
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+/* Optional helpers for friendship status text/pills (use if your JS adds them) */
+.status.checking{
+    display:inline-block;
+    width:90px;
+    height:10px;
+    border-radius:6px;
+    vertical-align:middle;
+    color:transparent;
+    background:linear-gradient(90deg,var(--surface-2),var(--border-strong),var(--surface-2));
+    background-size:200% 100%;
+    animation:shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer{
+    from{background-position:200% 0;}
+    to{background-position:-200% 0;}
+}
+
+/* =========================================================
+   SMALL NEON LOADER
+   ========================================================= */
+
+@keyframes vsNeonSpin{to{transform:rotate(360deg);}}
+
+@keyframes vsNeonPulse{
+    0%,100%{box-shadow:0 0 10px rgba(0,255,136,.25),0 0 22px rgba(22,131,255,.18);}
+    50%{box-shadow:0 0 16px rgba(0,255,136,.5),0 0 34px rgba(22,131,255,.32);}
+}
+
+@keyframes vsNeonDots{
+    0%,80%,100%{opacity:.25;}
+    40%{opacity:1;}
+}
+
+.vs-neon-loader{
+    position:fixed;
+    left:50%;
+    bottom:calc(88px + env(safe-area-inset-bottom,0px));
+    z-index:1500;
+
+    transform:translateX(-50%) translateY(0);
+
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+
+    padding:8px 16px 8px 10px;
+    border-radius:999px;
+
+    background:var(--loader-bg);
+    border:1px solid var(--loader-border);
+    color:var(--loader-text);
+
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.3px;
+
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+
+    animation:vsNeonPulse 1.8s ease-in-out infinite;
+    transition:opacity .25s ease,transform .25s ease,visibility .25s ease;
+    pointer-events:none;
+}
+
+.vs-neon-loader.hide{
+    opacity:0;
+    visibility:hidden;
+    transform:translateX(-50%) translateY(8px);
+}
+
+.vs-neon-ring{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:2.5px solid transparent;
+    border-top-color:var(--neon);
+    border-right-color:#1683ff;
+    border-bottom-color:#a855f7;
+    filter:drop-shadow(0 0 4px rgba(0,255,136,.9));
+    animation:vsNeonSpin .8s linear infinite;
+}
+
+.vs-neon-dots span{
+    animation:vsNeonDots 1.2s infinite;
+}
+.vs-neon-dots span:nth-child(2){animation-delay:.2s;}
+.vs-neon-dots span:nth-child(3){animation-delay:.4s;}
+
+/* =========================================================
+   EMPTY STATE (optional, if your JS renders one)
+   ========================================================= */
+
+.empty-state,
+.empty{
+    text-align:center;
+    padding:44px 22px;
+    color:var(--muted);
+    background:linear-gradient(145deg,var(--card-a),var(--card-b));
+    border:1px dashed var(--border-strong);
+    border-radius:22px;
+}
+
+/* =========================================================
+   BOTTOM NAVIGATION
+   ========================================================= */
+
+.vitalstar-bottom-nav{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1000;
+
+    width:100%;
+    height:calc(68px + env(safe-area-inset-bottom,0px));
+    padding:0 8px env(safe-area-inset-bottom,0px);
+
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+
+    background:var(--nav-bg);
+    border-top:1px solid rgba(0,102,255,.30);
+    box-shadow:0 -5px 25px rgba(0,0,0,.30),0 -1px 12px rgba(0,102,255,.08);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+}
+
+.vitalstar-bottom-nav a{
+    position:relative;
+    width:20%;
+    height:100%;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+
+    text-decoration:none;
+    color:var(--nav-text);
+    transition:color .2s ease,transform .2s ease;
+}
+
+.vitalstar-bottom-nav a:hover,
+.vitalstar-bottom-nav a.active{
+    color:var(--text);
+}
+
+html[data-theme="light"] .vitalstar-bottom-nav a.active{
+    color:var(--accent-1);
+}
+
+.vitalstar-bottom-nav a.active::before{
+    content:"";
+    position:absolute;
+    top:0;
+    width:32px;
+    height:3px;
+    border-radius:0 0 6px 6px;
+    background:linear-gradient(90deg,#1683ff,#ffd700);
+    box-shadow:0 0 10px rgba(0,102,255,.7);
+}
+
+.nav-icon{
+    font-size:21px;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.vitalstar-bottom-nav small{
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.15px;
+}
+
+.vitalstar-bottom-nav .create-btn{
+    width:58px;
+    height:58px;
+    margin-top:-28px;
+
+    border-radius:50%;
+    background:linear-gradient(135deg,#1683ff,#6b35ff);
+    color:#fff;
+    border:3px solid var(--bg);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:28px;
+    box-shadow:0 0 18px rgba(0,102,255,.55),0 7px 22px rgba(0,0,0,.35);
+    transition:transform .2s ease,box-shadow .2s ease;
+}
+
+.vitalstar-bottom-nav .create-btn:hover{
+    transform:translateY(-3px) scale(1.04);
+    box-shadow:0 0 24px rgba(0,102,255,.7),0 9px 25px rgba(0,0,0,.4);
+}
+
+@media(max-width:600px){
+    .header{font-size:19px;}
+    .page{padding:14px 9px 0;}
+    .user{padding:11px;gap:10px;border-radius:18px;}
+    .avatar{width:49px;height:49px;font-size:19px;}
+    .vitalstar-bottom-nav small{font-size:9px;}
+    .vitalstar-bottom-nav .create-btn{width:56px;height:56px;margin-top:-26px;}
+}
+
+@media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        transition-duration:.01ms !important;
+    }
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="header">
-👥 VitalStar Users
+    👥 VitalStar Users
 </div>
 
-<div id="usersList"></div>
+<main class="page">
+
+    <div class="search-box">
+        <span>🔍</span>
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search users..."
+            autocomplete="off"
+        >
+    </div>
+
+    <div id="usersList"></div>
+
+</main>
+
+<!-- Small neon loader: stays until friendship status has been loaded -->
+<div id="usersLoader" class="vs-neon-loader" role="status" aria-live="polite">
+    <div class="vs-neon-ring"></div>
+    <div>Loading<span class="vs-neon-dots"><span>.</span><span>.</span><span>.</span></span></div>
+</div>
+
+<script>
+/* Call window.hideUsersLoader() from users.js AFTER friendship statuses are loaded.
+   (Or dispatch:  window.dispatchEvent(new Event("vitalstar-users-ready")) ) */
+(function () {
+    var loader = document.getElementById("usersLoader");
+    var hidden = false;
+
+    function hide() {
+        if (hidden || !loader) return;
+        hidden = true;
+        loader.classList.add("hide");
+        setTimeout(function () { loader.remove(); }, 300);
+    }
+
+    window.hideUsersLoader = hide;
+    window.addEventListener("vitalstar-users-ready", hide);
+
+    // Safety net so it can never spin forever
+    setTimeout(hide, 15000);
+})();
+</script>
 
 <script type="module" src="users.js"></script>
-   
-
 <script type="module" src="auth-guard.js"></script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!-- Bottom Navigation -->
-<div style="
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-height:65px;
-background:#e5e5e5;
-border-top:1px solid #ccc;
-display:flex;
-justify-content:space-around;
-align-items:center;
-box-shadow:0 -2px 8px rgba(0,0,0,0.1);
-z-index:1000;
-">
+<nav class="vitalstar-bottom-nav" aria-label="VitalStar navigation">
 
-    <a href="home.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>🏠</span>
-        <small style="font-size:12px;">Home</small>
+    <a href="home.html" aria-label="Home">
+        <span class="nav-icon">🏠</span>
+        <small>Home</small>
     </a>
 
-    <a href="users.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👥</span>
-        <small style="font-size:12px;">Friends</small>
+    <a href="users.html" class="active" aria-label="Discover">
+        <span class="nav-icon">🔎</span>
+        <small>Discover</small>
     </a>
 
-    <a href="create-post.html" style="
-    width:55px;
-    height:55px;
-    background:#1877f2;
-    color:white;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-decoration:none;
-    font-size:30px;
-    margin-top:-25px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-    ">
-        ➕
+    <a href="create-post.html" class="create-btn" aria-label="Create post">
+        <span class="nav-icon">+</span>
     </a>
 
-    <a href="general-room.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>💬</span>
-        <small style="font-size:12px;">Chat</small>
+    <a href="general-room.html" aria-label="Coins">
+        <span class="nav-icon">🪙</span>
+        <small>Coins</small>
     </a>
 
-    <a href="profile.html" style="text-decoration:none;color:#333;display:flex;flex-direction:column;align-items:center;font-size:22px;">
-        <span>👤</span>
-        <small style="font-size:12px;">Profile</small>
+    <a href="profile.html" aria-label="Profile">
+        <span class="nav-icon">👤</span>
+        <small>Profile</small>
     </a>
 
-</div>
-
-
-
-
+</nav>
 
 </body>
 </html>
