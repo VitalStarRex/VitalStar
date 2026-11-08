@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#070914">
-<title>VitalStar Users</title>
+<title>VitalStar — Discover</title>
 
 <!-- Applies the saved theme BEFORE first paint (same source as the messages page) -->
 <script>
@@ -292,7 +292,7 @@ body::before{
     padding:0;
 }
 
-.user{
+.user-card{
     position:relative;
     display:flex;
     align-items:center;
@@ -307,13 +307,12 @@ body::before{
 
     box-shadow:var(--shadow);
     overflow:hidden;
-    cursor:pointer;
 
     animation:userIn .4s ease both;
     transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
 }
 
-.user::before{
+.user-card::before{
     content:"";
     position:absolute;
     left:0;
@@ -326,100 +325,217 @@ body::before{
     transition:opacity .22s ease;
 }
 
-.user:hover{
+.user-card:hover{
     transform:translateY(-2px);
     border-color:var(--border-strong);
     box-shadow:var(--shadow-hover);
 }
 
-.user:hover::before{
+.user-card:hover::before{
     opacity:1;
 }
 
-.user:active{
-    transform:scale(.985);
-}
-
-.user:nth-child(2){animation-delay:.04s;}
-.user:nth-child(3){animation-delay:.08s;}
-.user:nth-child(4){animation-delay:.12s;}
-.user:nth-child(5){animation-delay:.16s;}
-.user:nth-child(n+6){animation-delay:.2s;}
+.user-card:nth-child(2){animation-delay:.04s;}
+.user-card:nth-child(3){animation-delay:.08s;}
+.user-card:nth-child(4){animation-delay:.12s;}
+.user-card:nth-child(5){animation-delay:.16s;}
+.user-card:nth-child(n+6){animation-delay:.2s;}
 
 @keyframes userIn{
     from{opacity:0;transform:translateY(12px);}
     to{opacity:1;transform:translateY(0);}
 }
 
-.avatar{
+/* AVATAR */
+
+.user-avatar-wrap{
+    position:relative;
     flex:0 0 auto;
-    width:54px;
-    height:54px;
+}
+
+.user-avatar{
+    width:56px;
+    height:56px;
+    display:block;
 
     border-radius:50%;
     object-fit:cover;
 
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
     background:linear-gradient(135deg,var(--accent-1),var(--accent-3));
-    color:#fff;
-    font-size:21px;
-    font-weight:900;
-
     border:2px solid var(--accent-1);
     box-shadow:0 0 0 3px var(--accent-glow),0 4px 14px rgba(0,0,0,.18);
 }
 
-.avatar img{
-    width:100%;
-    height:100%;
-    border-radius:50%;
-    object-fit:cover;
+.initial-avatar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:22px;
+    font-weight:900;
 }
 
-.info{
+.group-indicator{
+    position:absolute;
+    right:-4px;
+    bottom:-3px;
+
+    width:22px;
+    height:22px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
+    border:2px solid var(--dot-ring);
+    font-size:11px;
+    box-shadow:0 0 10px var(--accent-glow);
+}
+
+/* INFO */
+
+.user-info{
     flex:1;
     min-width:0;
 }
 
-.name{
-    font-size:15px;
-    font-weight:900;
-    color:var(--text);
-
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+.user-name-row{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px;
 }
 
-.status{
+.user-name{
+    color:var(--text);
+    font-size:15.5px;
+    font-weight:900;
+}
+
+.verified{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--accent-2),var(--accent-3));
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+}
+
+.group-label{
+    padding:3px 8px;
+    border-radius:999px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    color:var(--accent-3);
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.5px;
+}
+
+.user-username{
     margin-top:4px;
     color:var(--muted);
     font-size:12.5px;
-
-    white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
-/* Optional helpers for friendship status text/pills (use if your JS adds them) */
-.status.checking{
-    display:inline-block;
-    width:90px;
-    height:10px;
-    border-radius:6px;
-    vertical-align:middle;
+/* BUTTONS */
+
+.user-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+}
+
+.user-btn{
+    border:1px solid transparent;
+    border-radius:13px;
+    padding:9px 12px;
+
+    font-family:inherit;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.2px;
+    white-space:nowrap;
+
+    cursor:pointer;
+    transition:transform .18s ease,filter .2s ease,box-shadow .2s ease;
+}
+
+.user-btn:hover:not(:disabled){
+    transform:translateY(-1px);
+    filter:brightness(1.08);
+}
+
+.user-btn:active:not(:disabled){
+    transform:scale(.94);
+}
+
+.user-btn:focus-visible{
+    outline:2px solid var(--accent-3);
+    outline-offset:2px;
+}
+
+.add-friend-btn{
+    background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
+    color:#fff;
+    box-shadow:0 5px 16px var(--accent-glow);
+}
+
+.add-friend-btn:disabled{
+    background:var(--surface-2);
+    color:var(--muted);
+    border-color:var(--border);
+    box-shadow:none;
+    cursor:default;
+}
+
+.add-friend-btn.checking{
     color:transparent;
     background:linear-gradient(90deg,var(--surface-2),var(--border-strong),var(--surface-2));
     background-size:200% 100%;
     animation:shimmer 1.2s linear infinite;
+    position:relative;
+}
+
+.add-friend-btn.checking::after{
+    content:"Checking...";
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
 }
 
 @keyframes shimmer{
     from{background-position:200% 0;}
     to{background-position:-200% 0;}
+}
+
+.profile-btn{
+    background:var(--surface-2);
+    color:var(--text-soft);
+    border-color:var(--border);
+}
+
+.chat-btn{
+    background:rgba(0,162,255,.14);
+    color:var(--accent-3);
+    border-color:rgba(0,162,255,.28);
+}
+
+html[data-theme="light"] .chat-btn{
+    color:#1c6fd6;
 }
 
 /* =========================================================
@@ -591,8 +707,10 @@ html[data-theme="light"] .vitalstar-bottom-nav a.active{
 @media(max-width:600px){
     .header{font-size:19px;}
     .page{padding:14px 9px 0;}
-    .user{padding:11px;gap:10px;border-radius:18px;}
-    .avatar{width:49px;height:49px;font-size:19px;}
+    .user-card{padding:11px;gap:10px;border-radius:18px;flex-wrap:wrap;align-items:flex-start;}
+    .user-avatar{width:50px;height:50px;font-size:19px;}
+    .user-info{width:calc(100% - 66px);flex:1 1 auto;}
+    .user-actions{width:100%;padding-left:60px;justify-content:flex-start;}
     .vitalstar-bottom-nav small{font-size:9px;}
     .vitalstar-bottom-nav .create-btn{width:56px;height:56px;margin-top:-26px;}
 }
@@ -611,7 +729,7 @@ html[data-theme="light"] .vitalstar-bottom-nav a.active{
 <body>
 
 <div class="header">
-    👥 VitalStar Users
+    🔎 Discover People
 </div>
 
 <main class="page">
