@@ -44,7 +44,13 @@ h1{margin:0 0 10px;font:400 clamp(36px,10vw,54px)/.95 var(--display);text-shadow
 .card p{margin:8px 0;font-size:16px;opacity:.95}
 .row{margin-top:10px}.row .lbl{display:block;margin-bottom:4px}
 input,select{width:100%;box-sizing:border-box;padding:11px;border-radius:4px;border:1px solid rgba(255,241,210,.4);background:rgba(0,0,0,.35);color:var(--hud);font:700 16px var(--body);-webkit-user-select:text;user-select:text}
-#jcode{text-align:center;letter-spacing:6px;text-transform:uppercase;font-size:18px}
+button.ld{pointer-events:none;opacity:.85}
+button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-left:.6em;vertical-align:-.08em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spn .7s linear infinite}
+.spin{display:inline-block;width:.9em;height:.9em;margin-right:.6em;vertical-align:-.12em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spn .7s linear infinite}
+@keyframes spn{to{transform:rotate(1turn)}}
+.sk{display:inline-block;min-width:110px;border-radius:4px;color:transparent!important;background:linear-gradient(90deg,rgba(255,241,210,.12),rgba(255,241,210,.42),rgba(255,241,210,.12));background-size:200% 100%;animation:shm 1.1s linear infinite}
+@keyframes shm{to{background-position:-200% 0}}
+.req{color:var(--accent)}
 button.b{margin-top:8px;width:100%;padding:11px;border:1px solid rgba(255,241,210,.45);background:rgba(255,241,210,.06);color:var(--hud);font:700 16px var(--body);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:4px}
 button.go{margin-top:12px;width:100%;padding:14px;border:0;background:linear-gradient(180deg,#ffa05a,#e2631d);color:var(--ink);font:400 22px var(--display);letter-spacing:.08em;cursor:pointer;border-radius:4px;box-shadow:0 4px 0 #8f3a0c}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fff1d2;outline-offset:2px}
@@ -99,7 +105,10 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
       <p class="kick" style="margin-top:18px">ACTIVE ROOMS</p>
       <div id="rooms" style="max-height:170px;overflow-y:auto;touch-action:pan-y"></div>
       <button class="go" id="quick">QUICK PLAY</button>
-      <div class="row"><span class="lbl">Join with a room code</span><div style="display:flex;gap:6px"><input id="jcode" maxlength="6" placeholder="CODE" autocapitalize="characters" autocomplete="off"><button class="b" id="jbtn" style="width:90px;margin:0">Join</button></div></div>
+      <div class="row" id="pwAsk" hidden><span class="lbl" id="pwLbl">Password</span><div style="display:flex;gap:6px"><input id="pwIn" type="password" maxlength="20" placeholder="Room password" autocomplete="off"><button class="b" id="pwGo" style="width:84px;margin:0">Join</button><button class="b" id="pwNo" style="width:84px;margin:0">Cancel</button></div></div>
+      <p class="kick" style="margin-top:18px">CREATE A ROOM</p>
+      <div class="row"><span class="lbl">Room name <span class="req">*</span> (max 15 characters)</span><input id="rname" maxlength="15" placeholder="Room name" autocomplete="off"></div>
+      <div class="row"><span class="lbl">Password (optional)</span><input id="rpw" type="password" maxlength="20" placeholder="Leave empty for a public room" autocomplete="off"></div>
       <div class="row"><span class="lbl">New room landscape (host picks)</span><select id="mapO"></select></div>
       <div class="row"><span class="lbl">New room length</span><select id="durO"><option value="60">1 minute</option><option value="120" selected>2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
       <button class="b" id="create">Create new room</button>
@@ -109,12 +118,12 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
   </div>
 
   <div class="card" id="lobby" hidden>
-    <p class="kick">ROOM LOBBY</p><h1 id="rc" style="font-size:42px">CODE</h1>
+    <p class="kick">ROOM LOBBY</p><h1 id="rc" style="font-size:32px;overflow-wrap:anywhere">ROOM</h1>
     <div id="tags"></div>
     <div class="row"><span class="lbl">Landscape (host sets)</span><select id="rmap"></select></div>
     <div class="row"><span class="lbl">Match length (host sets)</span><select id="rdur"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
     <button class="go" id="ready">I'M READY</button>
-    <button class="b" id="copy">Copy room code</button><button class="b" id="lv2">Leave room</button>
+    <button class="b" id="lv2">Leave room</button>
     <p id="note" style="font-size:13px">Waiting for another player…</p>
   </div>
 
@@ -187,8 +196,14 @@ function profileName(d){if(!d||typeof d!=='object')return '';for(const k of ['fu
 async function syncName(u){if(!ref)myId=u.uid;let n=cl(u.displayName);for(const p of ['users/','profiles/','userProfiles/']){try{const f=profileName((await db.ref(p+u.uid).once('value')).val());if(f){n=f;break}}catch{}}
 if(!n&&fsdb){for(const c of ['users','profiles','userProfiles']){try{const s=await fsdb.collection(c).doc(u.uid).get();if(s.exists){const f=profileName(s.data());if(f){n=f;break}}}catch{}}}
 if(n)myName=n;$('autoName').textContent=myName}
-$('autoName').textContent=myName;
-if(auth)auth.onAuthStateChanged(u=>{if(u)syncName(u).catch(()=>{})});
+const rcl=v=>typeof v==='string'?v.replace(/\s+/g,' ').trim().slice(0,15):'';
+async function hashPw(p,salt){const t='nx|'+salt+'|'+p;try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}catch{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return 'f'+(h>>>0).toString(16)}}
+function withLoad(b,fn){return async(...a)=>{if(b.classList.contains('ld'))return;b.classList.add('ld');b.disabled=true;try{return await fn(...a)}finally{b.classList.remove('ld');b.disabled=false}}}
+let nameDone;const nameReady=new Promise(r=>nameDone=r);
+function nameFin(){const a=$('autoName');a.classList.remove('sk');a.textContent=myName;nameDone()}
+$('autoName').classList.add('sk');$('autoName').textContent='Loading name';
+setTimeout(nameFin,5000);if(!auth)nameFin();
+if(auth)auth.onAuthStateChanged(u=>{if(u)syncName(u).catch(()=>{}).finally(nameFin);else nameFin()});
 function toast(s){const t=$('toast');t.textContent=s;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200)}
 function vib(n){try{if(touch&&navigator.vibrate)navigator.vibrate(n)}catch{}}
 /* keep the screen awake during a match */
@@ -346,7 +361,7 @@ const sh=[];
 let mode='home',phase='home',ref=null,R_=null,unsubs=[],startT=0,endT=0,dur=120,lastN=-1,keys={},mouse=new THREE.Vector2(0,-.3),firing=false,touch=matchMedia('(pointer:coarse)').matches,stick={on:false,id:-1,ox:0,oy:0,x:0,y:0},th=0,vph=.66,vrad=33,lastSend=0,sbT=0,paused=false,pT=0;
 const show=i=>$(i).hidden=false,hide=i=>$(i).hidden=true;
 const CARDS=['home','lobby','setC','shopC','socC'];function showCard(id){CARDS.forEach(c=>$(c).hidden=c!==id)}
-const gen=()=>Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+let pwRoom='';
 /* ---------- settings ---------- */
 function applySet(){const r=document.documentElement.style;r.setProperty('--fsz',{s:110,m:150,l:190}[SET.fs]+'px');r.setProperty('--fop',{t:.4,m:.7,o:1}[SET.fo]);
 document.querySelectorAll('#setC .seg').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',SET[sg.dataset.k]===b.dataset.v)));
@@ -371,21 +386,28 @@ else{const g=document.createElement('div');g.className='pg';COLS.forEach(c=>{con
 b.onclick=()=>{if(own){SHOP.col=c[0]}else if(SHOP.coins>=c[3]){SHOP.coins-=c[3];SHOP.own[c[0]]=1;SHOP.col=c[0];sfx('pick')}else return renderShop('Insufficient coins. '+c[1]+' costs '+c[3]+'.');saveShop();renderShop()};g.append(b)});L.append(g)}}
 $('tArm').onclick=()=>{shopTab='arm';renderShop()};$('tCol').onclick=()=>{shopTab='col';renderShop()};$('tGr').onclick=()=>{shopTab='gr';renderShop()};
 /* ---------- rooms ---------- */
-async function createRoom(){audio();if(!db)return toast('Online needs a connection.');try{let c=gen(),r=db.ref('nxTankRooms/'+c);if((await r.get()).exists()){c=gen();r=db.ref('nxTankRooms/'+c)}await r.set({status:'waiting',duration:+$('durO').value,map:+$('mapO').value,created:TS()});await enter(c,r)}catch(e){toast('Could not create room: '+e.message)}}
-$('create').onclick=createRoom;
-async function joinRoom(c){audio();if(!db)return toast('Online needs a connection.');try{const r=db.ref('nxTankRooms/'+c),d=(await r.get()).val();if(!d)return toast('Room not found.');const ps=d.players||{};if(d.status!=='waiting'&&!ps[myId])return toast('That match already started.');if(Object.keys(ps).length>=4&&!ps[myId])return toast('Room is full (4 players).');await enter(c,r)}catch(e){toast('Could not join: '+e.message)}}
-$('jbtn').onclick=()=>{const c=$('jcode').value.trim().toUpperCase();if(!/^[A-HJ-NP-Z2-9]{6}$/.test(c))return toast('Enter a valid 6-character room code.');joinRoom(c)};
+async function createRoom(nm,pw){audio();if(!db)return toast('Online needs a connection.');
+if(nm===undefined){nm=rcl($('rname').value);pw=$('rpw').value;if(!nm){toast('Room name is required (max 15 characters).');$('rname').focus();return}}
+try{await nameReady;const r=db.ref('nxTankRooms').push(),data={name:nm,status:'waiting',duration:+$('durO').value,map:+$('mapO').value,created:TS()};if(pw)data.pw=await hashPw(pw,r.key);await r.set(data);$('rpw').value='';await enter(r.key,r)}catch(e){toast('Could not create room: '+e.message)}}
+$('create').onclick=withLoad($('create'),()=>createRoom());
+async function joinRoom(c,pw){audio();if(!db){toast('Online needs a connection.');return false}try{await nameReady;const r=db.ref('nxTankRooms/'+c),d=(await r.get()).val();if(!d){toast('Room not found.');return false}const ps=d.players||{};if(d.status!=='waiting'&&!ps[myId]){toast('That match already started.');return false}if(Object.keys(ps).length>=4&&!ps[myId]){toast('Room is full (4 players).');return false}
+if(d.pw&&!ps[myId]){if(!pw){askPw(c,rcl(d.name||'Room'));return false}if(await hashPw(pw,c)!==d.pw){toast('Wrong password.');return false}}
+await enter(c,r);return true}catch(e){toast('Could not join: '+e.message);return false}}
+function askPw(key,name){pwRoom=key;$('pwLbl').textContent='Password for '+name;$('pwIn').value='';show('pwAsk');$('pwIn').focus()}
+$('pwGo').onclick=withLoad($('pwGo'),async()=>{const p=$('pwIn').value;if(!p)return toast('Enter the password.');if(await joinRoom(pwRoom,p)){hide('pwAsk');$('pwIn').value=''}});
+$('pwNo').onclick=()=>{hide('pwAsk');$('pwIn').value=''};
+function loadingEl(t){const p=document.createElement('p');p.style.cssText='font-size:14px;opacity:.8;margin:6px 0';const i=document.createElement('span');i.className='spin';p.append(i,document.createTextNode(t));return p}
 let roomsRef=null,roomsL=null;
-function watchRooms(on){if(roomsRef){roomsRef.off('value',roomsL);roomsRef=null}if(!on||!db)return;roomsRef=db.ref('nxTankRooms').limitToLast(40);
-roomsL=roomsRef.on('value',s=>{const box=$('rooms');box.replaceChildren();let n=0;s.forEach(c=>{const d=c.val()||{},ps=d.players||{},ids=Object.keys(ps).sort();if(d.status!=='waiting'||!ids.length||ids.length>=4)return;n++;
-const b=document.createElement('button');b.className='b';b.style.cssText='display:flex;justify-content:space-between;gap:8px;text-align:left';const a=document.createElement('span');a.textContent=(ps[ids[0]].name||'Player')+"'s room";const q=document.createElement('span');q.textContent=ids.length+'/4 · '+Math.round((d.duration||120)/60)+' min';b.append(a,q);b.onclick=()=>joinRoom(c.key);box.append(b)});
-if(!n){const p=document.createElement('p');p.style.cssText='font-size:14px;opacity:.8;margin:6px 0';p.textContent='No active rooms yet. Tap Quick play or create one.';box.append(p)}},e=>{$('rooms').textContent='Could not load rooms: '+e.message})}
-$('quick').onclick=async()=>{audio();if(!db)return toast('Online needs a connection.');try{const s=await db.ref('nxTankRooms').limitToLast(40).get();let pick=null,best=0;s.forEach(c=>{const d=c.val()||{},n=Object.keys(d.players||{}).length;if(d.status==='waiting'&&n>0&&n<4&&n>=best){best=n;pick=c.key}});if(pick)joinRoom(pick);else createRoom()}catch(e){toast('Quick play failed: '+e.message)}};
+function watchRooms(on){if(roomsRef){roomsRef.off('value',roomsL);roomsRef=null}if(!on||!db)return;$('rooms').replaceChildren(loadingEl('Loading rooms…'));roomsRef=db.ref('nxTankRooms').limitToLast(40);
+roomsL=roomsRef.on('value',s=>{const box=$('rooms');box.replaceChildren();let n=0;s.forEach(c=>{const d=c.val()||{},ps=d.players||{},ids=Object.keys(ps);if(d.status!=='waiting'||!ids.length||ids.length>=4)return;n++;
+const key=c.key,nm=rcl(d.name||'Room'),b=document.createElement('button');b.className='b';b.style.cssText='display:flex;justify-content:space-between;gap:8px;text-align:left';const a=document.createElement('span');a.textContent=(d.pw?'🔒 ':'')+nm;const q=document.createElement('span');q.textContent=ids.length+'/4 · '+Math.round((d.duration||120)/60)+' min';b.append(a,q);b.onclick=d.pw?()=>askPw(key,nm):withLoad(b,()=>joinRoom(key));box.append(b)});
+if(!n){const p=document.createElement('p');p.style.cssText='font-size:14px;opacity:.8;margin:6px 0';p.textContent='No open rooms yet. Tap Quick play or create one.';box.append(p)}},e=>{$('rooms').textContent='Could not load rooms: '+e.message})}
+$('quick').onclick=withLoad($('quick'),async()=>{audio();if(!db)return toast('Online needs a connection.');try{await nameReady;const s=await db.ref('nxTankRooms').limitToLast(40).get();let pick=null,best=0;s.forEach(c=>{const d=c.val()||{},n=Object.keys(d.players||{}).length;if(d.status==='waiting'&&!d.pw&&n>0&&n<4&&n>=best){best=n;pick=c.key}});if(pick)await joinRoom(pick);else await createRoom(rcl(myName.slice(0,9)+' room'),'')}catch(e){toast('Quick play failed: '+e.message)}});
 $('mAI').onclick=()=>{watchRooms(false);hide('onPanel');show('aiPanel')};
 $('mOn').onclick=()=>{if(!db)return toast('Online needs a connection.');hide('aiPanel');show('onPanel');watchRooms(true)};
 async function enter(c,r){watchRooms(false);const ps=(await r.child('players').get()).val()||{},used=Object.values(ps).map(p=>p.ci),ci=[0,1,2,3].find(i=>!used.includes(i));
 await r.child('players/'+myId).set({name:myName,ci,col:myCol(),ar:SHOP.arm,ready:false,x:0,z:0,h:0,a:0,hp:100,k:0,d:0,dead:false});r.child('players/'+myId).onDisconnect().remove();
-ref=r;mode='online';me=mk(myId,myName,ci,myCol(),SHOP.arm);$('rc').textContent='CODE '+c;
+ref=r;mode='online';me=mk(myId,myName,ci,myCol(),SHOP.arm);$('rc').textContent='ROOM';
 const l1=r.on('value',onRoom),l2=r.child('shots').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500)return;const o=P[v.o];if(o)o.rec=.6;missile(v.x,v.z,v.a,v.o)}),l4=r.child('grens').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500)return;spawnGren(v.o,v.x,v.z,v.a,v.p)}),l3=r.child('kills').on('child_added',s=>{const v=s.val();if(v&&v.k===myId&&now()-v.t<4000){me.kills++;say('KILL!');sfx('pick')}});
 unsubs=[()=>r.off('value',l1),()=>r.child('shots').off('child_added',l2),()=>r.child('kills').off('child_added',l3),()=>r.child('grens').off('child_added',l4)];showCard('lobby')}
 function onRoom(s){const d=s.val();if(!d){if(phase!=='home'){toast('Room closed.');exitRoom(false)}return}R_=d;buildWorld(d.map|0);const ps=d.players||{};
@@ -399,11 +421,10 @@ else if(d.status==='finished'&&phase!=='over'&&phase!=='lobby'&&phase!=='home')f
 function toLobby(){phase='lobby';hide('end');hide('hud');hide('bar');hide('zone');hide('orbit');hide('fire');setWake(false);show('menu');showCard('lobby');setReady(false)}
 function setReady(v){me.ready=v;$('ready').textContent=v?'CANCEL READY':"I'M READY"}
 function drawLobby(d,ids,host,ps){const t=$('tags');t.replaceChildren();ids.forEach(i=>{const e=document.createElement('div');e.className='tag'+(ps[i].ready?' on':'');const a=document.createElement('span');a.textContent=(ps[i].name||'Player')+(i===ids[0]?' (host)':'');a.style.color=hx(ps[i].col!=null?ps[i].col:TC[(ps[i].ci||0)%4]);const b=document.createElement('span');b.textContent=ps[i].ready?'READY':'waiting';e.append(a,b);t.append(e)});
-$('rdur').value=d.duration;$('rdur').disabled=!host;$('rmap').value=d.map|0;$('rmap').disabled=!host;$('note').textContent=ids.length<2?'Waiting for another player… share the code.':'Everyone must press Ready.'}
+$('rc').textContent=d.name||'ROOM';$('rdur').value=d.duration;$('rdur').disabled=!host;$('rmap').value=d.map|0;$('rmap').disabled=!host;$('note').textContent=ids.length<2?'Waiting for another player…'+(d.pw?' Share the password.':''):'Everyone must press Ready.'}
 $('rdur').onchange=()=>ref&&ref.child('duration').set(+$('rdur').value);
-$('ready').onclick=()=>{audio();if(!ref)return;const v=!me.ready,go=()=>{setReady(v);ref.child('players/'+myId+'/ready').set(v)};if(v)landFirst(go);else go()};
-$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(ref.key);toast('Room code copied: '+ref.key)}catch{toast('Share this code: '+ref.key)}};
-$('lv2').onclick=$('leave').onclick=$('eLeave').onclick=()=>exitRoom(true);
+$('ready').onclick=()=>{audio();if(!ref)return;const r=ref,v=!me.ready,b=$('ready'),go=async()=>{setReady(v);b.classList.add('ld');b.disabled=true;try{await r.child('players/'+myId+'/ready').set(v)}catch(e){toast('Could not update ready: '+e.message)}finally{b.classList.remove('ld');b.disabled=false}};if(v)landFirst(go);else go()};
+['lv2','leave','eLeave'].forEach(i=>{$(i).onclick=withLoad($(i),()=>exitRoom(true))});
 async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];const r=ref;ref=null;R_=null;phase='home';mode='home';paused=false;hide('pauseOv');for(const id in P)rmEnt(id);me=null;sh.splice(0).forEach(s=>scene.remove(s.m));clearFx();grens.splice(0).forEach(g=>scene.remove(g.m));setWake(false);
 hide('end');hide('hud');hide('bar');hide('zone');hide('orbit');hide('fire');show('menu');showCard('home');if(!$('onPanel').hidden)watchRooms(true);
 if(r&&rm){try{await r.child('players/'+myId).onDisconnect().cancel();await r.child('players/'+myId).remove();if(!(await r.child('players').get()).val())await r.remove()}catch{}}}
@@ -417,6 +438,7 @@ const mult=mode==='bots'?({easy:.5,normal:1,hard:1.5,expert:2}[diff]||1):1,rewar
 if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win')STATS.wins++;else if(res==='loss')STATS.losses++;else STATS.draws++;SHOP.coins+=reward;saveShop();saveStats();$('eR').textContent='+'+reward+' coins';if(mode==='online')submitLeader(res,me.kills).catch(()=>{})}else $('eR').textContent='';
 sfx('pick');hide('hud');hide('zone');hide('orbit');hide('fire');hide('bar');setWake(false);show('end');if(ref&&Object.keys(P).sort()[0]===myId)ref.child('status').set('finished')}
 $('again').onclick=()=>mode==='bots'?landFirst(startBots):ref.transaction(c=>{if(!c||c.status!=='finished')return;c.status='waiting';c.startAt=null;for(const i in c.players)Object.assign(c.players[i],{ready:false,k:0,d:0,hp:100,dead:false});return c}).then(r=>{if(!r.committed)toast('Waiting for the match to close…')});
+{const ab=$('again'),f0=ab.onclick;ab.onclick=async()=>{if(ab.classList.contains('ld'))return;ab.classList.add('ld');try{await f0()}finally{ab.classList.remove('ld')}}}
 function say(t){const b=$('banner');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
 /* ---------- pause (vs AI only) ---------- */
 function doPause(on){if(on===paused)return;if(on){if(mode!=='bots'||(phase!=='play'&&phase!=='count'))return;paused=true;pT=now();show('pauseOv');firing=false;stick.on=false;hide('base');try{AC&&AC.suspend()}catch{}}
