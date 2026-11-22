@@ -208,15 +208,28 @@ const TC=[0x667f3c,0xb4532a,0x3f5878,0x7a45b0],SPD=8.5,BS=64,DMG=20,RL=.65,TR=2.
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 /* ---------- saved settings, shop, stats ---------- */
 const SET=Object.assign({cam:'chase',snd:'1',fs:'m',fo:'m'},ls.get('nxTankSet',{}));
-const SHOP=Object.assign({coins:0,arm:0,col:'olive',own:{},gren:0},ls.get('nxTankShop',{}));SHOP.gren=Math.max(0,+SHOP.gren||0);SHOP.own=Object.assign({olive:1},SHOP.own);
+const SHOP=Object.assign({coins:0,arm:0,col:'olive',own:{},gren:0},{});SHOP.gren=Math.max(0,+SHOP.gren||0);SHOP.own=Object.assign({olive:1},SHOP.own);
 const STATS=Object.assign({played:0,wins:0,losses:0,draws:0,kills:0},ls.get('nxTankStats',{}));
 const COLS=[['olive','Olive',0x667f3c,0],['desert','Desert',0xc2a15a,3],['navy','Navy',0x3f5878,3],['forest','Forest',0x2f5d34,4],['crimson','Crimson',0x9a3a32,5],['sky','Sky',0x5aa0d8,5],['teal','Teal',0x2a8c86,5],['purple','Purple',0x7a45b0,6],['orange','Orange',0xe8742a,6],['snow','Snow',0xe6ecef,6],['stealth','Stealth',0x2f3238,6],['lime','Lime',0x9ad43a,8],['pink','Pink',0xf08cb8,8],['gold','Gold',0xd4a634,12]];
-const ARMC=[0,50,100,150,220,300,400,520,650,800,1000],GP=50,TN=['Scout','Dune Runner','Sand Viper','Scorpion','Cobra','Hornet','Mamba','Jackal','Falcon','Raptor','Supreme'];
-COLS.forEach(c=>c[3]*=10);
+const ARMC=[0,50,100,150,220,300,400,520,650,800,1000],GP=10,TN=['Scout','Dune Runner','Sand Viper','Scorpion','Cobra','Hornet','Mamba','Jackal','Falcon','Raptor','Supreme'];
 const myCol=()=>(COLS.find(c=>c[0]===SHOP.col)||COLS[0])[2];
 const muted=()=>SET.snd==='0';
 let useArm=null;const armLv=()=>useArm==null?SHOP.arm:useArm;const dmgMul=()=>1-.03*armLv(),rlBase=()=>RL*(1-.02*armLv());
-function saveShop(){ls.set('nxTankShop',SHOP);$('coinN').textContent=SHOP.coins}
+let shopRef=null,shopOff=null,shopLoaded=false,pendCoins=0,mig=false;
+function updShop(){$('coinN').textContent=shopLoaded?SHOP.coins:'…';if(!$('shopC').hidden)renderShop()}
+function applyShop(c,t){Object.assign(SHOP,{coins:Math.max(0,+c||0),arm:clamp((+(t&&t.arm))|0,0,10),col:(t&&t.col)||'olive',gren:Math.max(0,+(t&&t.gren)||0),own:Object.assign({olive:1},(t&&t.own)||{})})}
+/* coins live in Firestore at wallets/{uid}.coins; unlocked tanks, paint and grenades sit beside them in wallets/{uid}.tank (merge, so other wallet fields are never touched) */
+function pushShop(){if(!shopLoaded||!shopRef)return;shopRef.set({coins:SHOP.coins,tank:{arm:SHOP.arm,col:SHOP.col,own:SHOP.own,gren:SHOP.gren},tankUpdated:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>toast('Could not save coins: '+e.message))}
+function saveShop(){updShop();pushShop()}
+function loadShop(uid){if(!fsdb)return;if(shopOff){shopOff();shopOff=null}shopLoaded=false;mig=false;const r=fsdb.collection('wallets').doc(uid);shopRef=r;
+shopOff=r.onSnapshot(async snap=>{const v=snap.exists?snap.data():null;
+if(v&&v.tank){applyShop(v.coins,v.tank);shopLoaded=true;if(pendCoins){SHOP.coins+=pendCoins;pendCoins=0;pushShop()}updShop();return}
+if(shopLoaded||mig)return;mig=true;
+let old=null;try{if(db){const l=(await db.ref('tankShop/'+uid).once('value')).val();if(l)old=l}}catch{}
+if(!old)old=ls.get('nxTankShop',null);
+const base=old&&typeof old==='object'?old:null;
+applyShop(v&&typeof v.coins==='number'?v.coins:(base?base.coins:0),base);
+shopLoaded=true;mig=false;SHOP.coins+=pendCoins;pendCoins=0;pushShop();try{localStorage.removeItem('nxTankShop')}catch{}updShop()},e=>{toast('Could not load your coins: '+e.message)})}
 function saveStats(){ls.set('nxTankStats',STATS);$('sP').textContent=STATS.played;$('sW').textContent=STATS.wins;$('sL').textContent=STATS.losses;$('sD').textContent=STATS.draws;$('sK').textContent=STATS.kills}
 function recordOnce(id){const ids=ls.get('nxTankRec',{});if(id&&ids[id])return false;if(id){ids[id]=1;const k=Object.keys(ids);if(k.length>300)delete ids[k[0]];ls.set('nxTankRec',ids)}return true}
 /* ---------- firebase ---------- */
@@ -235,7 +248,7 @@ let nameDone;const nameReady=new Promise(r=>nameDone=r);
 function nameFin(){const a=$('autoName');a.classList.remove('sk');a.textContent=myName;nameDone()}
 $('autoName').classList.add('sk');$('autoName').textContent='Loading name';
 setTimeout(nameFin,5000);if(!auth)nameFin();
-if(auth)auth.onAuthStateChanged(u=>{if(u)syncName(u).catch(()=>{}).finally(nameFin);else auth.signInAnonymously().catch(e=>{$('net').textContent='Sign-in failed: '+e.message;nameFin()})});
+if(auth)auth.onAuthStateChanged(u=>{if(u){loadShop(u.uid);syncName(u).catch(()=>{}).finally(nameFin)}else auth.signInAnonymously().catch(e=>{$('net').textContent='Sign-in failed: '+e.message;nameFin()})});
 function toast(s){const t=$('toast');t.textContent=s;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200)}
 function vib(n){try{if(touch&&navigator.vibrate)navigator.vibrate(n)}catch{}}
 /* keep the screen awake during a match */
@@ -428,7 +441,7 @@ $('oSet').onclick=()=>showCard('setC');$('oShop').onclick=()=>{shopTab='arm';ren
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>showCard('home'));
 /* ---------- shop ---------- */
 let shopTab='arm';
-function renderShop(msg){$('coinLine').textContent='Coins: '+SHOP.coins+'. Coins are hard to earn: win online matches (the big payout) or beat the AI (1 coin per win).';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',shopTab==='arm');$('tCol').setAttribute('aria-pressed',shopTab==='col');$('tGr').setAttribute('aria-pressed',shopTab==='gr');const L=$('shopList');L.replaceChildren();
+function renderShop(msg){if(!shopLoaded){$('coinLine').textContent='Loading your coins… (needs a connection)';$('shopMsg').textContent='';$('shopList').replaceChildren();return}$('coinLine').textContent='Coins: '+SHOP.coins+'. Coins are hard to earn: win online matches (the big payout) or beat the AI (1 coin per win).';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',shopTab==='arm');$('tCol').setAttribute('aria-pressed',shopTab==='col');$('tGr').setAttribute('aria-pressed',shopTab==='gr');const L=$('shopList');L.replaceChildren();
 if(shopTab==='arm'){for(let n=0;n<=10;n++){const own=n<=SHOP.arm,cur=n===SHOP.arm,next=n===SHOP.arm+1,d=document.createElement('div');d.className='shr';d.style.opacity=own||next?1:.5;const s=document.createElement('span'),t=document.createElement('b');t.textContent=TN[n]+' (Lv '+n+')';const sm=document.createElement('small');sm.textContent=(n*3)+'% less damage · '+(n*2)+'% faster reload · bigger tank';s.append(t,document.createElement('br'),sm);
 const b=document.createElement('button');b.className='b';b.textContent=cur?'In use':own?'Owned':'Buy '+ARMC[n];if(next)b.style.borderColor='var(--accent)';
 b.onclick=()=>{if(own)return;if(!next)return renderShop('Buy '+TN[SHOP.arm+1]+' first.');if(SHOP.coins<ARMC[n])return renderShop('Insufficient coins. '+TN[n]+' costs '+ARMC[n]+'.');SHOP.coins-=ARMC[n];SHOP.arm=n;saveShop();sfx('pick');renderShop('Upgraded to '+TN[n]+'.')};d.append(s,b);L.append(d)}}
@@ -439,9 +452,9 @@ b.onclick=()=>{if(own){SHOP.col=c[0]}else if(SHOP.coins>=c[3]){SHOP.coins-=c[3];
 $('tArm').onclick=()=>{shopTab='arm';renderShop()};$('tCol').onclick=()=>{shopTab='col';renderShop()};$('tGr').onclick=()=>{shopTab='gr';renderShop()};
 /* ---------- rooms ---------- */
 async function hashPw(s){s=String(s||'').trim();if(!s)return '';try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('nxTank|'+s));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}catch{let h=5381;for(const ch of 'nxTank|'+s)h=(h*33^ch.charCodeAt(0))>>>0;return 'h'+h.toString(16)}}
-async function createRoom(){audio();if(!db)return toast('Online needs a connection.');const nm=$('roomName').value.replace(/\s+/g,' ').trim().slice(0,24),usePw=$('pwKey').getAttribute('aria-pressed')==='true',pwt=$('roomPw').value.trim();if(!nm){$('roomName').focus();return toast('Enter a room name first.')}if(usePw&&!pwt){$('roomPw').focus();return toast('Type a password, or tap the key again to remove it.')}const tk=clamp(+$('tankO').value|0,0,10);if(tk>SHOP.arm)return toast('You have not unlocked that tank yet.');try{await nameReady;const pw=usePw?await hashPw(pwt):null;let c=gen(),r=db.ref('nxTankRooms/'+c);if((await r.get()).exists()){c=gen();r=db.ref('nxTankRooms/'+c)}await r.set({status:'waiting',duration:+$('durO').value,map:+$('mapO').value,name:nm,pw:pw,tank:tk,created:TS()});await enter(c,r)}catch(e){toast('Could not create room: '+e.message)}}
+async function createRoom(){audio();if(!db)return toast('Online needs a connection.');if(!shopLoaded)return toast('Still loading your coins and tanks…');const nm=$('roomName').value.replace(/\s+/g,' ').trim().slice(0,24),usePw=$('pwKey').getAttribute('aria-pressed')==='true',pwt=$('roomPw').value.trim();if(!nm){$('roomName').focus();return toast('Enter a room name first.')}if(usePw&&!pwt){$('roomPw').focus();return toast('Type a password, or tap the key again to remove it.')}const tk=clamp(+$('tankO').value|0,0,10);if(tk>SHOP.arm)return toast('You have not unlocked that tank yet.');try{await nameReady;const pw=usePw?await hashPw(pwt):null;let c=gen(),r=db.ref('nxTankRooms/'+c);if((await r.get()).exists()){c=gen();r=db.ref('nxTankRooms/'+c)}await r.set({status:'waiting',duration:+$('durO').value,map:+$('mapO').value,name:nm,pw:pw,tank:tk,created:TS()});await enter(c,r)}catch(e){toast('Could not create room: '+e.message)}}
 $('create').onclick=withLoad($('create'),()=>createRoom());
-async function joinRoom(c,pw){audio();if(!db)return toast('Online needs a connection.');try{await nameReady;const r=db.ref('nxTankRooms/'+c),d=(await r.get()).val();if(!d)return toast('Room not found.');const ps=d.players||{};if((d.tank|0)>SHOP.arm&&!ps[myId])return toast('You need the '+TN[d.tank|0]+' tank unlocked to join this room.');if(d.status!=='waiting'&&!ps[myId])return toast('That match already started.');if(Object.keys(ps).length>=4&&!ps[myId])return toast('Room is full (4 players).');if(d.pw&&!ps[myId]&&await hashPw(pw)!==d.pw)return toast('Wrong password.');await enter(c,r)}catch(e){toast('Could not join: '+e.message)}}
+async function joinRoom(c,pw){audio();if(!db)return toast('Online needs a connection.');if(!shopLoaded)return toast('Still loading your coins and tanks…');try{await nameReady;const r=db.ref('nxTankRooms/'+c),d=(await r.get()).val();if(!d)return toast('Room not found.');const ps=d.players||{};if((d.tank|0)>SHOP.arm&&!ps[myId])return toast('You need the '+TN[d.tank|0]+' tank unlocked to join this room.');if(d.status!=='waiting'&&!ps[myId])return toast('That match already started.');if(Object.keys(ps).length>=4&&!ps[myId])return toast('Room is full (4 players).');if(d.pw&&!ps[myId]&&await hashPw(pw)!==d.pw)return toast('Wrong password.');await enter(c,r)}catch(e){toast('Could not join: '+e.message)}}
 let roomsRef=null,roomsL=null;
 function watchRooms(on){if(roomsRef){roomsRef.off('value',roomsL);roomsRef=null}if(!on||!db)return;$('rooms').replaceChildren(loadingEl('Loading rooms…'));roomsRef=db.ref('nxTankRooms').limitToLast(40);
 roomsL=roomsRef.on('value',s=>{const box=$('rooms');box.replaceChildren();let n=0;s.forEach(c=>{const d=c.val()||{},ps=d.players||{},ids=Object.keys(ps).sort();if(d.status!=='waiting'||!ids.length||ids.length>=4)return;n++;
@@ -493,7 +506,7 @@ aimAng=null;aimV=null;gHold=false;hide('menu');hide('end');show('hud');show('bar
 function finish(){if(phase==='over')return;phase='over';paused=false;hide('pauseOv');openChat(false);$('feed').replaceChildren();const arr=Object.values(P).sort((a,b)=>b.kills-a.kills),top=arr[0].kills,tied=arr.filter(p=>p.kills===top).length>1,mine=me.kills===top,res=mine?(tied?'draw':'win'):'loss';
 $('eT').textContent=res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED';const l=$('eL');l.replaceChildren();arr.forEach((p,i)=>{const e=document.createElement('div');e.className='tag';const a=document.createElement('span');a.textContent=(i+1)+'. '+p.name;const b=document.createElement('b');b.textContent=p.kills+' kills';e.append(a,b);l.append(e)});
 const reward=mode==='bots'?(res==='win'?1:0):(res==='win'?10+Math.floor(me.kills/3):res==='draw'?4:1),rid=mode==='bots'?'ai-'+Date.now():'on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;
-if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win')STATS.wins++;else if(res==='loss')STATS.losses++;else STATS.draws++;SHOP.coins+=reward;saveShop();saveStats();$('eR').textContent=reward?'+'+reward+(reward>1?' coins':' coin'):'No coins this time';if(mode==='online')submitLeader(res,me.kills).catch(()=>{})}else $('eR').textContent='';
+if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win')STATS.wins++;else if(res==='loss')STATS.losses++;else STATS.draws++;if(shopLoaded){SHOP.coins+=reward;saveShop()}else pendCoins+=reward;saveStats();$('eR').textContent=reward?'+'+reward+(reward>1?' coins':' coin'):'No coins this time';if(mode==='online')submitLeader(res,me.kills).catch(()=>{})}else $('eR').textContent='';
 sfx('pick');hide('hud');hide('zone');hide('orbit');hide('fire');hide('bar');setWake(false);show('end');if(ref&&Object.keys(P).sort()[0]===myId)ref.child('status').set('finished')}
 $('again').onclick=()=>mode==='bots'?landFirst(startBots):ref.transaction(c=>{if(!c||c.status!=='finished')return;c.status='waiting';c.startAt=null;for(const i in c.players)Object.assign(c.players[i],{ready:false,inn:false,k:0,d:0,hp:100,dead:false});c.go=null;return c}).then(r=>{if(!r.committed)toast('Waiting for the match to close…')});
 {const ab=$('again'),f0=ab.onclick;ab.onclick=async()=>{if(ab.classList.contains('ld'))return;ab.classList.add('ld');try{await f0()}finally{ab.classList.remove('ld')}}}
