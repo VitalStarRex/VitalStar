@@ -217,18 +217,18 @@ const muted=()=>SET.snd==='0';
 let useArm=null;const armLv=()=>useArm==null?SHOP.arm:useArm;const dmgMul=()=>1-.03*armLv(),rlBase=()=>RL*(1-.02*armLv());
 let shopRef=null,shopOff=null,shopLoaded=false,pendCoins=0,mig=false;
 function updShop(){$('coinN').textContent=shopLoaded?SHOP.coins:'…';if(!$('shopC').hidden)renderShop()}
-function applyShop(c,t){Object.assign(SHOP,{coins:Math.max(0,+c||0),arm:clamp((+(t&&t.arm))|0,0,10),col:(t&&t.col)||'olive',gren:Math.max(0,+(t&&t.gren)||0),own:Object.assign({olive:1},(t&&t.own)||{})})}
-/* coins live in Firestore at wallets/{uid}.coins; unlocked tanks, paint and grenades sit beside them in wallets/{uid}.tank (merge, so other wallet fields are never touched) */
-function pushShop(){if(!shopLoaded||!shopRef)return;shopRef.set({coins:SHOP.coins,tank:{arm:SHOP.arm,col:SHOP.col,own:SHOP.own,gren:SHOP.gren},tankUpdated:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>toast('Could not save coins: '+e.message))}
+function applyShop(c,t){Object.assign(SHOP,{coins:Math.max(0,Math.floor(+c||0)),arm:clamp((+(t&&t.arm))|0,0,10),col:(t&&t.col)||'olive',gren:Math.max(0,Math.floor(+(t&&t.gren)||0)),own:Object.assign({olive:1},(t&&t.own)||{})})}
+/* coins, unlocked tanks, paint and grenades are saved in Firestore at wallets/{uid}/game/tank (under the wallet, but never inside the VSC balance itself) */
+function pushShop(){if(!shopLoaded||!shopRef)return;shopRef.set({coins:SHOP.coins,arm:SHOP.arm,col:SHOP.col,own:SHOP.own,gren:SHOP.gren,updated:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>toast('Could not save coins: '+e.message))}
 function saveShop(){updShop();pushShop()}
-function loadShop(uid){if(!fsdb)return;if(shopOff){shopOff();shopOff=null}shopLoaded=false;mig=false;const r=fsdb.collection('wallets').doc(uid);shopRef=r;
+function loadShop(uid){if(!fsdb)return;if(shopOff){shopOff();shopOff=null}shopLoaded=false;mig=false;const r=fsdb.collection('wallets').doc(uid).collection('game').doc('tank');shopRef=r;
 shopOff=r.onSnapshot(async snap=>{const v=snap.exists?snap.data():null;
-if(v&&v.tank){applyShop(v.coins,v.tank);shopLoaded=true;if(pendCoins){SHOP.coins+=pendCoins;pendCoins=0;pushShop()}updShop();return}
+if(v&&typeof v.coins==='number'){applyShop(v.coins,v);shopLoaded=true;if(pendCoins){SHOP.coins+=pendCoins;pendCoins=0;pushShop()}updShop();return}
 if(shopLoaded||mig)return;mig=true;
 let old=null;try{if(db){const l=(await db.ref('tankShop/'+uid).once('value')).val();if(l)old=l}}catch{}
 if(!old)old=ls.get('nxTankShop',null);
 const base=old&&typeof old==='object'?old:null;
-applyShop(v&&typeof v.coins==='number'?v.coins:(base?base.coins:0),base);
+applyShop(base?Math.min(3000,+base.coins||0):0,base);
 shopLoaded=true;mig=false;SHOP.coins+=pendCoins;pendCoins=0;pushShop();try{localStorage.removeItem('nxTankShop')}catch{}updShop()},e=>{toast('Could not load your coins: '+e.message)})}
 function saveStats(){ls.set('nxTankStats',STATS);$('sP').textContent=STATS.played;$('sW').textContent=STATS.wins;$('sL').textContent=STATS.losses;$('sD').textContent=STATS.draws;$('sK').textContent=STATS.kills}
 function recordOnce(id){const ids=ls.get('nxTankRec',{});if(id&&ids[id])return false;if(id){ids[id]=1;const k=Object.keys(ids);if(k.length>300)delete ids[k[0]];ls.set('nxTankRec',ids)}return true}
