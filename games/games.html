@@ -9,12 +9,64 @@
 :root{color-scheme:dark;--bg:#030817;--panel:#071329;--text:#f4f8ff;--muted:#a8c1e5;--cyan:#21efff;--purple:#bd42ff;--pink:#ff3dd7;--line:#203f78;--gold:#ffca48}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#153f89 0,transparent 43%),radial-gradient(ellipse at 100% 65%,#30104f55,transparent 35%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}
 header{position:sticky;top:0;z-index:10;background:#020817eF;backdrop-filter:blur(16px);border-bottom:1px solid #1d6cbb;padding:10px clamp(12px,3vw,36px);display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 28px #00d9ff17}.logo{font-size:clamp(19px,3vw,34px);font-weight:1000;letter-spacing:1px;color:#e9fbff;text-shadow:0 0 7px var(--cyan),0 0 20px #009dff;white-space:nowrap}.logo .star{color:var(--purple);font-size:1.25em}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--cyan);background:linear-gradient(135deg,#092b4a,#1b1550);color:var(--text);border-radius:12px;padding:9px 13px;text-decoration:none;display:inline-block;box-shadow:0 0 13px #00d9ff22}.btn:hover{box-shadow:0 0 18px #00d9ff77;transform:translateY(-1px)}
-main{max-width:1600px;margin:auto;padding:16px clamp(10px,2vw,30px) 45px}.hero{position:relative;isolation:isolate;overflow:hidden;text-align:center;padding:clamp(35px,6vw,82px) 14px 27px;margin:0 0 15px;border:1px solid #1e8eff;border-radius:18px;background:linear-gradient(90deg,#03091bd9,#03091b55,#03091bd9),url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1800&q=85') center 42%/cover;box-shadow:0 0 25px #00aaff30,inset 0 0 30px #3c35ff35}.hero:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#030817 0%,transparent 45%,#06102c33)}.hero h1{font-size:clamp(36px,7vw,82px);line-height:.96;margin:0;text-transform:uppercase;font-weight:1000;font-style:italic;letter-spacing:-1px;background:linear-gradient(#fff 10%,#9feaff 42%,#267cff 72%,#fff);color:transparent;background-clip:text;-webkit-background-clip:text;text-shadow:0 0 20px #00b7ff55;filter:drop-shadow(0 6px 0 #07102a)}.hero .hero-sub{font-size:clamp(20px,3.5vw,38px);font-weight:1000;font-style:italic;color:#ff4ce6;text-shadow:0 0 15px #d500ff;margin:2px 0 8px}.hero p{color:#32f4ff;font-weight:800;text-shadow:0 0 10px #00eaff;margin:8px 0}.panel{background:linear-gradient(145deg,#08172df0,#050b1df5);border:1px solid #244b83;border-radius:17px;padding:clamp(12px,1.7vw,20px);margin-bottom:17px;box-shadow:0 0 18px #0b85ff16,inset 0 0 22px #1e3a6a15}h2{font-size:clamp(17px,2vw,22px);margin:0 0 14px;color:#d9faff;text-shadow:0 0 12px #00cfff77}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:linear-gradient(140deg,#09182d,#080e20);border:1px solid #24517e;border-radius:12px;padding:13px;text-align:center}.stat strong{display:block;font-size:clamp(20px,2.5vw,29px);color:var(--cyan);text-shadow:0 0 12px #00d9ff7a}.stat span{font-size:12px;color:var(--muted)}.profile-line{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.muted{color:var(--muted)}
+main{max-width:1600px;margin:auto;padding:16px clamp(10px,2vw,30px) 45px}.hero{position:relative;isolation:isolate;overflow:hidden;text-align:center;padding:clamp(35px,6vw,82px) 14px 27px;margin:0 0 15px;border:1px solid #1e8eff;border-radius:18px;background:linear-gradient(90deg,#03091bd9,#03091b55,#03091bd9),radial-gradient(ellipse at 50% 0,#1b3f8f,#060d24 70%);box-shadow:0 0 25px #00aaff30,inset 0 0 30px #3c35ff35}.hero:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#030817 0%,transparent 45%,#06102c33)}.hero h1{font-size:clamp(36px,7vw,82px);line-height:.96;margin:0;text-transform:uppercase;font-weight:1000;font-style:italic;letter-spacing:-1px;background:linear-gradient(#fff 10%,#9feaff 42%,#267cff 72%,#fff);color:transparent;background-clip:text;-webkit-background-clip:text;text-shadow:0 0 20px #00b7ff55;filter:drop-shadow(0 6px 0 #07102a)}.hero .hero-sub{font-size:clamp(20px,3.5vw,38px);font-weight:1000;font-style:italic;color:#ff4ce6;text-shadow:0 0 15px #d500ff;margin:2px 0 8px}.hero p{color:#32f4ff;font-weight:800;text-shadow:0 0 10px #00eaff;margin:8px 0}.panel{background:linear-gradient(145deg,#08172df0,#050b1df5);border:1px solid #244b83;border-radius:17px;padding:clamp(12px,1.7vw,20px);margin-bottom:17px;box-shadow:0 0 18px #0b85ff16,inset 0 0 22px #1e3a6a15}h2{font-size:clamp(17px,2vw,22px);margin:0 0 14px;color:#d9faff;text-shadow:0 0 12px #00cfff77}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:linear-gradient(140deg,#09182d,#080e20);border:1px solid #24517e;border-radius:12px;padding:13px;text-align:center}.stat strong{display:block;font-size:clamp(20px,2.5vw,29px);color:var(--cyan);text-shadow:0 0 12px #00d9ff7a}.stat span{font-size:12px;color:var(--muted)}.profile-line{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.muted{color:var(--muted)}
 .searchbar{display:flex;gap:9px;margin-bottom:12px}input{min-width:0;width:100%;background:#030a19;color:var(--text);border:1px solid #28517d;border-radius:25px;padding:12px 16px;outline:none}input:focus{border-color:var(--cyan);box-shadow:0 0 12px #00cfff35}.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.filters button{border:1px solid #34477d;background:#070d20;color:var(--text);border-radius:24px;padding:8px 16px;transition:.2s}.filters button.active,.filters button:hover{background:linear-gradient(90deg,#00d9f4,#376dff);border-color:#4af5ff;color:#001329;font-weight:850;box-shadow:0 0 15px #00d9ff55}
-.games-section{margin:18px 0 24px}.games{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.game{color:inherit;text-decoration:none;min-width:0;position:relative;isolation:isolate;overflow:hidden;border:1px solid #21dfff;border-radius:15px;min-height:clamp(150px,14vw,205px);padding:12px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;transition:transform .22s,border-color .22s,box-shadow .22s;background:#080e22;box-shadow:0 0 8px #00d9ff2b}.game:before{content:"";position:absolute;inset:0;z-index:-2;background-image:var(--game-bg);background-position:center;background-size:cover;transition:transform .45s,filter .45s;filter:saturate(1.12) brightness(.66) contrast(1.08)}.game:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#02071648 0%,#03081755 30%,#030817e8 72%,#030817fa 100%)}.game:nth-child(4n+2),.game:nth-child(4n+3){border-color:#b344ff;box-shadow:0 0 8px #b344ff38}.game:hover{border-color:#fff;transform:translateY(-4px) scale(1.015);box-shadow:0 0 23px #00d9ff70,0 0 35px #a02fff35}.game:hover:before{transform:scale(1.1)}.game .emoji{font-size:clamp(25px,3vw,40px);filter:drop-shadow(0 3px 7px #000);margin-bottom:auto;align-self:flex-start}.game h3{color:#ffdf38;margin:22px 0 7px;font-size:clamp(13px,1.25vw,18px);font-weight:1000;text-align:center;text-transform:uppercase;letter-spacing:.2px;line-height:1.12;text-shadow:0 2px 4px #000,0 0 8px #000,0 0 15px #ffb80055;overflow-wrap:anywhere}.tag{font-size:9px;color:#c5fcff;border:1px solid #35e8ff88;border-radius:20px;padding:4px 7px;align-self:center;margin-bottom:8px;background:#061321d9;letter-spacing:.6px}.play{display:block;width:100%;margin-top:auto;border:1px solid #7cffff;border-radius:22px;background:linear-gradient(90deg,#00bfe7,#147cff,#a23cff);color:white;padding:8px;font-weight:900;text-shadow:0 1px 3px #002;font-size:13px;box-shadow:0 0 12px #00cfff6b}.play:hover{filter:brightness(1.18);box-shadow:0 0 20px #00d9ff9c}.game p{display:none}.card-loader{position:absolute;top:10px;right:10px;z-index:2;display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid #6cefff77;border-radius:20px;background:#020817d9;color:#c9fbff;font-size:10px;letter-spacing:.4px;box-shadow:0 0 12px #00d9ff24;transition:opacity .25s}.card-loader .spinner{width:12px;height:12px;border:2px solid #6cefff55;border-top-color:#ffe34b;border-right-color:#ff4de1;border-radius:50%;animation:cardSpin .7s linear infinite}.game.image-ready .card-loader{opacity:0;pointer-events:none}.game.image-failed .card-loader{color:#ffe28a}.game.image-failed .card-loader .spinner{animation:none;border-color:#ffe28a}@keyframes cardSpin{to{transform:rotate(360deg)}}.game:focus-visible{outline:2px solid #ffe34b;outline-offset:3px}
+.games-section{margin:18px 0 24px}.games{display:flex;flex-wrap:nowrap;gap:16px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding:8px 4px 18px;scrollbar-width:thin;scrollbar-color:#21efff55 transparent}.games::-webkit-scrollbar{height:8px}.games::-webkit-scrollbar-thumb{background:#21efff55;border-radius:8px}.row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}.row-head h2{margin:0}.row-head .btn{padding:7px 16px;font-size:20px;line-height:1}.game{color:inherit;text-decoration:none;flex:0 0 clamp(240px,23vw,340px);scroll-snap-align:start;position:relative;isolation:isolate;overflow:hidden;border:1px solid #21dfff;border-radius:18px;min-height:clamp(290px,27vw,400px);padding:16px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;transition:transform .3s cubic-bezier(.2,.7,.2,1),border-color .3s,box-shadow .3s;background:#080e22;box-shadow:0 0 8px #00d9ff2b}.game:before{content:"";position:absolute;inset:-12%;z-index:-2;animation:cardPan 16s ease-in-out infinite alternate;will-change:transform;background-image:var(--game-bg);background-position:center;background-size:cover;}.game:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#0000 0%,#0000 38%,#030817aa 72%,#030817e6 100%)}.game:nth-child(4n+2),.game:nth-child(4n+3){border-color:#b344ff;box-shadow:0 0 8px #b344ff38}.game:hover{border-color:#fff;transform:translateY(-4px) scale(1.015);box-shadow:0 0 23px #00d9ff70,0 0 35px #a02fff35}.game:hover:after{opacity:.82}.game .emoji{font-size:clamp(38px,4vw,60px);filter:drop-shadow(0 3px 7px #000);margin-bottom:auto;align-self:flex-start}.game h3{color:#ffdf38;margin:22px 0 9px;font-size:clamp(18px,1.7vw,25px);font-weight:1000;text-align:center;text-transform:uppercase;letter-spacing:.2px;line-height:1.12;text-shadow:0 2px 4px #000,0 0 8px #000,0 0 15px #ffb80055;overflow-wrap:anywhere}.tag{font-size:11px;color:#c5fcff;border:1px solid #35e8ff88;border-radius:20px;padding:4px 7px;align-self:center;margin-bottom:8px;background:#061321d9;letter-spacing:.6px}.play{display:block;width:100%;margin-top:auto;border:1px solid #7cffff;border-radius:22px;background:linear-gradient(90deg,#00bfe7,#147cff,#a23cff);color:white;padding:11px;font-weight:900;text-shadow:0 1px 3px #002;font-size:15px;text-align:center;box-shadow:0 0 12px #00cfff6b}.play:hover{filter:brightness(1.18);box-shadow:0 0 20px #00d9ff9c}.game p{display:none}.card-loader{position:absolute;top:10px;right:10px;z-index:2;display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid #6cefff77;border-radius:20px;background:#020817d9;color:#c9fbff;font-size:10px;letter-spacing:.4px;box-shadow:0 0 12px #00d9ff24;transition:opacity .25s}.card-loader .spinner{width:12px;height:12px;border:2px solid #6cefff55;border-top-color:#ffe34b;border-right-color:#ff4de1;border-radius:50%;animation:cardSpin .7s linear infinite}.game.image-ready .card-loader{opacity:0;pointer-events:none}.game.image-failed .card-loader{color:#ffe28a}.game.image-failed .card-loader .spinner{animation:none;border-color:#ffe28a}@keyframes cardSpin{to{transform:rotate(360deg)}}.game:focus-visible{outline:2px solid #ffe34b;outline-offset:3px}
 .columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.listrow{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #203d68}.listrow:last-child{border:0}#chatMessages{height:180px;overflow:auto;background:#030a19;border:1px solid #203d68;border-radius:10px;padding:10px;margin:12px 0}.message{padding:8px 10px;margin:6px 0;background:#0b2340;border:1px solid #1d4970;border-radius:9px;overflow-wrap:anywhere}.chatform{display:flex;gap:8px}footer{text-align:center;color:var(--muted);font-size:13px;padding:25px;border-top:1px solid #17385f;text-shadow:0 0 12px #00cfff}.footer-brand{color:var(--cyan);font-weight:900}dialog{width:min(500px,92vw);background:#0d1528;color:var(--text);border:1px solid var(--cyan);border-radius:18px;padding:22px}dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}#musicToggle{white-space:nowrap}#firebaseNotice{overflow-wrap:anywhere;margin-top:12px}.online-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#38ff9b;box-shadow:0 0 10px #38ff9b;margin-right:6px}
 body.light{color-scheme:light;--bg:#edf3ff;--text:#17213a;--muted:#52617b;--line:#ccd7ed;background:linear-gradient(#e5f2ff,#f6f3ff)}body.light header{background:#ffffffed}body.light .panel{background:#ffffffed}body.light .stat,body.light input,body.light #chatMessages{background:#f3f6ff;color:#17213a}body.light .filters button{background:#fff;color:#17213a}
-@media(max-width:1050px){.games{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:760px){.games{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.game{min-height:165px;padding:9px}.columns{grid-template-columns:1fr}.hero{border-radius:12px}}@media(max-width:520px){header{padding:10px}.logo{font-size:17px}.btn{padding:8px;font-size:12px}main{padding:10px 9px 30px}.games{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.game{min-height:170px;padding:9px}.game h3{font-size:13px}.stats{grid-template-columns:repeat(2,1fr)}.hero{padding:38px 6px 23px}.hero h1{font-size:39px}.hero .hero-sub{font-size:23px}.profile-line{align-items:flex-start}}
+@media(max-width:1050px){.game{flex-basis:clamp(230px,30vw,300px)}}@media(max-width:760px){.games{gap:12px}.game{flex-basis:46vw;min-height:280px;padding:13px}.columns{grid-template-columns:1fr}.hero{border-radius:12px}}@media(max-width:520px){header{padding:10px}.logo{font-size:17px}.btn{padding:8px;font-size:12px}main{padding:10px 9px 30px}.game{flex-basis:68vw;min-height:290px;padding:13px}.game h3{font-size:19px}.row-head .btn{display:none}.stats{grid-template-columns:repeat(2,1fr)}.hero{padding:38px 6px 23px}.hero h1{font-size:39px}.hero .hero-sub{font-size:23px}.profile-line{align-items:flex-start}}
+.group-title{font-size:clamp(20px,2.6vw,30px);margin:28px 0 2px;color:#ffe34b;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 14px #ffb80066;font-weight:1000}.group-sub{margin:0 0 8px;color:var(--muted);font-size:14px}.row-head h2 small{color:var(--muted);font-size:.65em;font-weight:600;margin-left:8px}.games-section>.row-block:first-child .row-head{margin-top:0}
+
+/* animated backgrounds (pure CSS) */
+@keyframes cardPan{0%{transform:scale(1.02) translate(-4%,-3%)}100%{transform:scale(1.14) translate(4%,3%)}}
+@keyframes gradShift{0%{background-position:0% 20%}100%{background-position:100% 80%}}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-9px) rotate(6deg)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes stars{from{background-position:0 0,40px 60px,90px 20px}to{background-position:-200px 400px,-160px 460px,-110px 420px}}
+@keyframes sweep{0%{transform:translateX(-130%) skewX(-20deg)}60%,100%{transform:translateX(330%) skewX(-20deg)}}
+.game:nth-child(3n+2):before{animation-delay:-5s;animation-direction:alternate-reverse}.game:nth-child(3n):before{animation-delay:-9s;animation-duration:20s}
+.game.grad:before{inset:0;background-size:320% 320%;animation:gradShift 9s ease-in-out infinite alternate}
+.game.grad:nth-child(even):before{animation-duration:12s;animation-direction:alternate-reverse}
+.game .emoji{animation:floaty 3.4s ease-in-out infinite}.game:nth-child(even) .emoji{animation-delay:-1.7s}
+.game .play{position:relative;overflow:hidden}.game .play:after{content:"";position:absolute;top:0;bottom:0;width:30%;background:linear-gradient(90deg,transparent,#ffffff66,transparent);animation:sweep 3.6s ease-in-out infinite}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.55;background-image:radial-gradient(1.6px 1.6px at 20px 30px,#fff,transparent),radial-gradient(1.2px 1.2px at 130px 80px,#9feaff,transparent),radial-gradient(1.8px 1.8px at 80px 150px,#e9b6ff,transparent);background-size:200px 200px,230px 230px,260px 260px;animation:stars 90s linear infinite}
+body.light:before{opacity:.15}
+.hero:before{content:"";position:absolute;inset:-60%;z-index:-1;background:conic-gradient(from 0deg,transparent 0,#21efff26 12%,transparent 30%,#bd42ff26 55%,transparent 75%);animation:spin 22s linear infinite}
+@media(prefers-reduced-motion:reduce){.game:before,.game .emoji,.game .play:after,body:before,.hero:before{animation:none!important}}
+
+/* per-card animated scenes: each row type has its own effect */
+.scene{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}.scene i{position:absolute;display:block}
+.fx-streaks .scene i{left:0;top:var(--y);width:45%;height:calc(var(--s)/4);border-radius:2px;background:linear-gradient(90deg,transparent,hsl(var(--h) 100% 75%));box-shadow:0 0 8px hsl(var(--h) 100% 65%);animation:streak var(--t) linear var(--d) infinite}
+@keyframes streak{from{transform:translateX(-120%)}to{transform:translateX(420%)}}
+.fx-sparks .scene i,.fx-embers .scene i{left:var(--x);bottom:-10px;width:var(--s);height:var(--s);border-radius:50%;background:hsl(var(--h) 100% 80%);box-shadow:0 0 10px hsl(var(--h) 100% 65%);animation:rise var(--t) linear var(--d) infinite}
+.fx-embers .scene i{background:#ffb347;box-shadow:0 0 10px #ff7a1a}
+@keyframes rise{0%{transform:translate(0,0) scale(.6);opacity:0}15%{opacity:1}100%{transform:translate(22px,-380px) scale(1.1);opacity:0}}
+.fx-blocks .scene i{left:var(--x);bottom:-30px;width:calc(var(--s)*3);height:calc(var(--s)*3);border-radius:5px;border:2px solid hsl(var(--h) 90% 72%);background:hsl(var(--h) 90% 60%/.25);animation:floatrot var(--t) linear var(--d) infinite}
+@keyframes floatrot{0%{transform:translateY(0) rotate(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-400px) rotate(calc(var(--r)*1deg));opacity:0}}
+.fx-balls .scene i{left:var(--x);bottom:0;width:calc(var(--s)*3);height:calc(var(--s)*3);border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,hsl(var(--h) 90% 60%));animation:bounce var(--t) cubic-bezier(.3,.6,.4,1) var(--d) infinite,drift calc(var(--t)*3) ease-in-out var(--d) infinite alternate}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-230px)}}@keyframes drift{from{margin-left:-28px}to{margin-left:28px}}
+.fx-duel .scene i{top:var(--y);width:calc(var(--s)*5);height:calc(var(--s)/2);border-radius:4px;opacity:0}
+.fx-duel .scene i:nth-child(odd){left:-30px;background:hsl(var(--h) 100% 70%);box-shadow:0 0 12px hsl(var(--h) 100% 60%);animation:fromL var(--t) ease-in var(--d) infinite}
+.fx-duel .scene i:nth-child(even){right:-30px;background:hsl(calc(var(--h) + 180) 100% 70%);box-shadow:0 0 12px hsl(calc(var(--h) + 180) 100% 60%);animation:fromR var(--t) ease-in var(--d) infinite}
+@keyframes fromL{0%{transform:translateX(0);opacity:0}20%{opacity:1}100%{transform:translateX(150px);opacity:0}}@keyframes fromR{0%{transform:translateX(0);opacity:0}20%{opacity:1}100%{transform:translateX(-150px);opacity:0}}
+.fx-orbs .scene i{left:var(--x);top:var(--y);width:calc(var(--s)*9);height:calc(var(--s)*9);border-radius:50%;background:hsl(var(--h) 90% 62%/.4);filter:blur(12px);animation:orb calc(var(--t)*3) ease-in-out var(--d) infinite}
+@keyframes orb{0%,100%{transform:translate(0,0)}25%{transform:translate(40px,-30px)}50%{transform:translate(0,-60px)}75%{transform:translate(-40px,-30px)}}
+.fx-dust .scene i{left:0;top:var(--y);width:var(--s);height:var(--s);border-radius:50%;background:#f1d9a6;opacity:.75;animation:dust calc(var(--t)*1.5) linear var(--d) infinite}
+@keyframes dust{from{transform:translate(-30px,0)}to{transform:translate(420px,-40px)}}
+@media(prefers-reduced-motion:reduce){.scene i{animation:none!important}}
+
+/* smoothness */
+html{-webkit-text-size-adjust:100%}body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.games-section.vs-wait{visibility:hidden}
+.game.bgon:before{opacity:1}.game:after{transition:opacity .3s}
+.game{contain:layout style;backface-visibility:hidden;-webkit-tap-highlight-color:transparent}
+.games{overscroll-behavior-x:contain;touch-action:pan-x pan-y;transform:translateZ(0)}
+@media(hover:hover){.games{cursor:grab}.games.drag{cursor:grabbing}}
+.games.drag{scroll-snap-type:none;scroll-behavior:auto;user-select:none}.game img,.game{-webkit-user-drag:none}
+
+.btn,.filters button,.play{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}.btn:active,.play:active{transform:scale(.96)}
+body:before{inset:-200px 0 0 0;background-size:200px 200px,200px 200px,200px 200px;background-position:0 0,70px 90px,130px 40px;animation:starsT 14s linear infinite;will-change:transform}
+@keyframes starsT{to{transform:translateY(200px)}}
 </style>
 </head>
 <body>
@@ -22,21 +74,114 @@ body.light{color-scheme:light;--bg:#edf3ff;--text:#17213a;--muted:#52617b;--line
 <main>
 <section class="hero"><h1>VITALSTAR</h1><div class="hero-sub">GAMES</div><p>Connect, compete and shine!</p></section>
 <section class="panel"><div class="profile-line"><h2>👤 My Game Profile</h2><span class="muted"><span class="online-dot"></span><span id="playerName">Player</span></span></div><div class="stats"><div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div><div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div><div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div><div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div></div><div class="profile-line" style="margin-top:12px"><div id="gameAuthControls" class="actions"></div></div><p id="firebaseNotice" class="muted" role="status">Log in with your VitalStar account before playing or saving game activity.</p></section>
-<section class="games-section"><div class="games" id="gamesGrid" aria-label="VitalStar games"></div><p class="muted" id="empty" hidden>No games available.</p></section>
-<div class="columns"><section class="panel"><h2>🏆 Leaderboard</h2><div id="leaderboard"><p class="muted">Log in to view the shared leaderboard.</p></div></section><section class="panel"><h2>💬 Game Chat</h2><p class="muted">Sign in to read and send community game chat messages.</p><div id="chatMessages" aria-live="polite"><div class="message">Log in to view and send game chat messages.</div></div><form class="chatform" id="chatForm"><input id="chatInput" maxlength="300" placeholder="Write a message..." aria-label="Chat message" required disabled><button class="btn" type="submit" disabled>Send</button></form></section></div>
-<section class="panel"><h2>🕹️ Game History</h2><div id="history"><p class="muted">Log in to see your saved game history.</p></div></section>
-</main>
-<footer><span class="footer-brand">✦ VITALSTAR</span>　·　 CONNECT, SHARE AND SHINE</footer>
-<audio id="backgroundMusic" src="./games-bg.mp3" loop preload="auto"></audio>
+<section class="games-section" id="gamesRows" aria-label="VitalStar games"></section><p class="muted" id="empty" hidden>No games available.</p>
+<audio id="backgroundMusic" src="./games-bg.mp3" loop preload="none"></audio>
 <script>
-/* Standalone card fallback: keeps the game grid visible even if Firebase cannot initialize. */
+/* Shared game catalogue + renderer. Works even if Firebase cannot initialize (cards become plain links). */
 (() => {
- const data=[
- ['Pong','🏓','pong.html','photo-1542751371-adc38448a05e'],['Rock Paper Scissors','✊','rock-paper-scissors.html','photo-1511512578047-dfb367046420'],['Car Race','🏎️','car-race.html','photo-1503376780353-7e6692767b70'],['Tic-Tac-Toe','❎','tic-tac-toe.html','photo-1611996575749-79a3a250f948'],['Mech Warriors','🤖','mech-warriors.html','photo-1593508512255-86ab42a8e620'],['Blade Masters','⚔️','blade-masters.html','photo-1518709268805-4e9042af9f23'],['Dragon Fury','🐉','dragon-fury.html','photo-1518709268805-4e9042af9f23'],['Sky Combat','✈️','sky-combat.html','photo-1474302770737-173ee21bab63'],['Neon Snake','🐍','neon-snake.html','photo-1519608487953-e999c86e7455'],['Brick Breaker','🧱','brick-breaker.html','photo-1550745165-9bc0b252726f'],['Galaxy Defender','🚀','galaxy-defender.html','photo-1446776811953-b23d57bd21aa'],['Dino Jump','🦖','dino-jump.html','photo-1511497584788-876760111969'],['Neon Air Hockey','🏒','neon-air-hockey.html','photo-1519861531473-9200262188bf'],['Memory Match','🧠','memory-match.html','photo-1511512578047-dfb367046420'],['Neon Maze','🌀','neon-maze.html','photo-1519608487953-e999c86e7455'],['Cyber Parkour','🏃','cyber-parkour.html','photo-1519608487953-e999c86e7455'],['Neon Reflex','⚡','neon-reflex.html','photo-1511512578047-dfb367046420'],['Bubble Bash','🫧','bubble-bash.html','photo-1534447677768-be436bb09401'],['Tower Defense','🗼','tower-defense.html','photo-1518709268805-4e9042af9f23'],['Zombie Survival','🧟','zombie-survival.html','photo-1509248961158-e54f6934749c']
+ const U=(id)=>id,slug=n=>n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ const C=(name,emoji,file,image,type)=>({name,emoji,file,image,type});
+ const N=(name,emoji,hue,players)=>({name,emoji,file:slug(name)+'.html',image:null,hue,players,type:'free'});
+ const M=(a)=>a.map(([n,e,h])=>N(n,e,h,'2-6 Players')),D=(a)=>a.map(([n,e,h])=>N(n,e,h,'2 Players'));
+ const rows=[
+  {title:'VitalStar Classics',fx:'sparks',items:[
+   {name:'Star Tank',emoji:'🪖',file:'star-tank.html',image:null,hue:30,type:'free',isNew:true,fx:'dust'},
+   C('Pong','🏓','pong.html','photo-1542751371-adc38448a05e','free'),C('Rock Paper Scissors','✊','rock-paper-scissors.html','photo-1511512578047-dfb367046420','free'),C('Car Race','🏎️','car-race.html','photo-1503376780353-7e6692767b70','free'),C('Tic-Tac-Toe','❎','tic-tac-toe.html','photo-1611996575749-79a3a250f948','free'),
+   C('Mech Warriors','🤖','mech-warriors.html','photo-1593508512255-86ab42a8e620','premium'),C('Blade Masters','⚔️','blade-masters.html','photo-1518709268805-4e9042af9f23','premium'),C('Dragon Fury','🐉','dragon-fury.html','photo-1518709268805-4e9042af9f23','premium'),C('Sky Combat','✈️','sky-combat.html','photo-1474302770737-173ee21bab63','premium'),
+   C('Neon Snake','🐍','neon-snake.html','photo-1519608487953-e999c86e7455','free'),C('Brick Breaker','🧱','brick-breaker.html','photo-1550745165-9bc0b252726f','free'),C('Galaxy Defender','🚀','galaxy-defender.html','photo-1446776811953-b23d57bd21aa','free'),C('Dino Jump','🦖','dino-jump.html','photo-1511497584788-876760111969','free'),
+   C('Neon Air Hockey','🏒','neon-air-hockey.html','photo-1519861531473-9200262188bf','free'),C('Memory Match','🧠','memory-match.html','photo-1511512578047-dfb367046420','free'),C('Neon Maze','🌀','neon-maze.html','photo-1519608487953-e999c86e7455','free'),C('Cyber Parkour','🏃','cyber-parkour.html','photo-1519608487953-e999c86e7455','premium'),
+   C('Neon Reflex','⚡','neon-reflex.html','photo-1511512578047-dfb367046420','free'),C('Bubble Bash','🫧','bubble-bash.html','photo-1534447677768-be436bb09401','free'),C('Tower Defense','🗼','tower-defense.html','photo-1518709268805-4e9042af9f23','premium'),C('Zombie Survival','🧟','zombie-survival.html','photo-1509248961158-e54f6934749c','premium')]},
+  {group:'Multiplayer',sub:'Play with 2 to 6 players',title:'Multiplayer Action',fx:'streaks',items:M([['Arena Blasters','🔫',8],['Laser Tag Rush','🔦',190],['Last Tank Standing','🛡️',95],['Ninja Showdown','🥷',265],['Space Dogfight','🛸',215]])},
+  {title:'Multiplayer Adventure',fx:'sparks',items:M([['Treasure Hunters','💰',42],['Jungle Quest','🌴',130],['Pirate Raiders','🏴‍☠️',205],['Lost Temple Run','🗿',28],['Ghost Mansion Escape','👻',280]])},
+  {title:'Multiplayer Puzzle',fx:'blocks',items:M([['Color Clash','🎨',320],['Word Duel Party','🔤',175],['Bomb Pass','💣',350],['Sudoku Showdown','🔢',235],['Pipe Panic','🔧',155]])},
+  {title:'Multiplayer Sports',fx:'balls',items:M([['Soccer Arena','⚽',120],['Basket Blitz','🏀',22],['Sumo Smash','🤼',340],['Dodgeball Frenzy','🎯',0],['Mini Golf Party','⛳',100]])},
+  {group:'Two-Player Duels',sub:'Head-to-head for exactly 2 players',title:'Double Action',fx:'duel',items:D([['Twin Tanks','🪖',60],['Katana Duel','🗡️',355],['Boxing Bots','🥊',210],['Gunslinger Duel','🤠',35],['Dogfight Duo','✈️',200]])},
+  {title:'Double Adventure',fx:'orbs',items:D([['Twin Explorers','🧭',145],['Castle Escape Co-op','🏰',255],['Dual Dungeon','🕯️',300],['Treasure Twins','🗝️',50],['Raft Rescue','🛶',185]])}
  ];
- const watchImage=(card,image)=>{card.classList.add('game-loading');const loader=document.createElement('span');loader.className='card-loader';loader.innerHTML='<span class="spinner"></span><span>LOADING ART</span>';card.appendChild(loader);const probe=new Image();probe.onload=()=>{card.classList.remove('game-loading');card.classList.add('image-ready')};probe.onerror=()=>{card.classList.remove('game-loading');card.classList.add('image-failed');loader.lastElementChild.textContent='ART UNAVAILABLE'};probe.src='https://images.unsplash.com/'+image+'?auto=format&fit=crop&w=900&q=80'};
- const draw=()=>{const grid=document.getElementById('gamesGrid');if(!grid||grid.children.length)return;data.forEach(([name,emoji,file,image])=>{const a=document.createElement('a');a.className='game';a.href=file;a.style.setProperty('--game-bg',`url("https://images.unsplash.com/${image}?auto=format&fit=crop&w=900&q=80")`);watchImage(a,image);const icon=document.createElement('div');icon.className='emoji';icon.textContent=emoji;const title=document.createElement('h3');title.textContent=name;const tag=document.createElement('span');tag.className='tag';tag.textContent='✦ VITALSTAR GAME';const play=document.createElement('span');play.className='play';play.textContent='▶ PLAY NOW';a.append(icon,title,tag,play);grid.appendChild(a)})};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',draw);else draw();
+ /* coded, animated SVG scenes: every game gets its own unique picture (seeded by its name) */
+ const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+ const hsh=str=>{let h=2166136261;for(const c of str)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0};
+ function scene(g,kind){
+  const W=400,H=520,r=rng(hsh(g.name)),h=g.hue==null?hsh(g.name)%360:g.hue,R=(a,b)=>a+r()*(b-a),f=n=>n.toFixed(0);
+  const c=(dh,sa,l,al)=>'hsla('+(((h+dh)%360)+360)%360+','+sa+'%,'+l+'%,'+(al==null?1:al)+')';
+  const an=(attr,vals,dur,extra)=>'<animate attributeName="'+attr+'" values="'+vals+'" dur="'+dur+'s" begin="-'+f(R(0,dur))+'s" repeatCount="indefinite" '+(extra||'')+'/>';
+  let d='<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+c(0,80,52)+'"/><stop offset="1" stop-color="'+c(35,80,20)+'"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="9"/></filter></defs><rect width="400" height="520" fill="url(#g)"/>';
+  d+='<text x="200" y="300" font-size="230" text-anchor="middle" opacity=".34">'+g.emoji+'<animateTransform attributeName="transform" type="translate" values="0 0;0 -16;0 0" dur="6s" repeatCount="indefinite"/></text>';
+  if(kind==='streaks'){
+   for(let i=0;i<12;i++){const hh=80+r()*220;d+='<rect x="'+f(i*34)+'" y="'+f(H-hh)+'" width="31" height="'+f(hh)+'" fill="'+c(0,45,10+r()*8)+'"/>';for(let k=0;k<3;k++)d+='<rect x="'+f(i*34+5+k*9)+'" y="'+f(H-hh+12+r()*hh*.7)+'" width="5" height="7" fill="'+c(40,95,70)+'">'+an('opacity','.1;.9;.1',R(1.5,4))+'</rect>'}
+   for(let i=0;i<8;i++){const y=R(20,330),l=R(90,200);d+='<rect y="'+f(y)+'" width="'+f(l)+'" height="'+f(R(2,5))+'" rx="2" fill="'+c(20,100,72)+'">'+an('x','-220;460',R(.9,2.6))+'</rect>'}
+  }else if(kind==='sparks'){
+   d+='<circle cx="300" cy="150" r="50" fill="'+c(40,95,66,.9)+'">'+an('r','48;56;48',5)+'</circle>';
+   for(let i=0;i<3;i++)d+='<ellipse cx="0" cy="'+f(R(60,220))+'" rx="'+f(R(50,90))+'" ry="'+f(R(14,26))+'" fill="#fff" opacity=".28"><animateTransform attributeName="transform" type="translate" values="-120 0;540 0" dur="'+f(R(26,50))+'s" begin="-'+f(R(0,30))+'s" repeatCount="indefinite"/></ellipse>';
+   for(let L=0;L<2;L++){let pts='0,520 ';const base=330+L*70;for(let x=0;x<=400;x+=40)pts+=x+','+f(base-R(0,L?70:130))+' ';d+='<polygon points="'+pts+'400,520" fill="'+c(L?20:-10,50,L?13:20)+'"/>'}
+   for(let i=0;i<10;i++){const x=R(10,390),y=R(300,480);d+='<circle cx="'+f(x)+'" cy="'+f(y)+'" r="2.5" fill="'+c(50,100,75)+'">'+an('cy',f(y)+';'+f(y-60)+';'+f(y),R(3,6))+an('opacity','0;1;0',R(3,6))+'</circle>'}
+  }else if(kind==='blocks'){
+   for(let i=0;i<5;i++)for(let j=0;j<7;j++)d+='<rect x="'+f(14+i*76)+'" y="'+f(10+j*74)+'" width="62" height="62" rx="12" fill="'+c(R(0,70),80,52,.4)+'" stroke="'+c(R(0,70),90,75,.5)+'" stroke-width="2">'+an('opacity','.15;.9;.15',R(2,5.5))+'</rect>';
+  }else if(kind==='balls'){
+   for(let i=0;i<9;i++)d+='<rect x="'+f(i*45)+'" y="0" width="45" height="520" fill="'+c(0,45,i%2?17:21)+'"/>';
+   d+='<rect x="20" y="40" width="360" height="440" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="3"/><circle cx="200" cy="260" r="60" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="3"/><line x1="20" y1="260" x2="380" y2="260" stroke="#fff" stroke-opacity=".3" stroke-width="3"/>';
+   for(let i=0;i<5;i++){const x=R(50,350),rad=R(14,26),top=R(120,300);d+='<circle cx="'+f(x)+'" r="'+f(rad)+'" fill="'+c(R(0,40),90,62)+'" stroke="#fff" stroke-opacity=".6" stroke-width="2"><animate attributeName="cy" values="450;'+f(top)+';450" keyTimes="0;.5;1" calcMode="spline" keySplines=".3 .6 .4 1;.6 0 .7 .4" dur="'+f(R(1.6,3))+'s" begin="-'+f(R(0,3))+'s" repeatCount="indefinite"/></circle>'}
+  }else if(kind==='duel'){
+   d+='<polygon points="0,0 235,0 165,520 0,520" fill="'+c(0,70,30,.75)+'"/><polygon points="235,0 400,0 400,520 165,520" fill="'+c(180,70,30,.75)+'"/><line x1="235" y1="0" x2="165" y2="520" stroke="#fff" stroke-opacity=".7" stroke-width="4"/>';
+   for(let i=0;i<7;i++){const y=R(40,470),l=R(28,60);d+='<rect y="'+f(y)+'" width="'+f(l)+'" height="5" rx="2" fill="'+c(0,100,75)+'">'+an('x','-60;170',R(.8,1.8))+'</rect><rect y="'+f(R(40,470))+'" width="'+f(l)+'" height="5" rx="2" fill="'+c(180,100,75)+'">'+an('x','430;230',R(.8,1.8))+'</rect>'}
+   d+='<circle cx="200" cy="260" r="26" fill="#fff" opacity=".0">'+an('opacity','0;.7;0',1.4)+an('r','10;60;10',1.4)+'</circle>';
+  }else if(kind==='orbs'){
+   for(let i=0;i<9;i++){const x=i*50+R(0,30);d+='<polygon points="'+f(x)+',0 '+f(x+34)+',0 '+f(x+17)+','+f(R(40,130))+'" fill="'+c(0,40,8+r()*8)+'"/>'}
+   for(let i=0;i<7;i++){const x=R(40,360),y=R(120,430),rad=R(22,52);d+='<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+f(rad)+'" fill="'+c(R(-20,40),95,62,.65)+'" filter="url(#b)">'+an('cx',f(x)+';'+f(x+R(-60,60))+';'+f(x),R(5,9))+an('cy',f(y)+';'+f(y-R(30,90))+';'+f(y),R(5,9))+'</circle>'}
+   d+='<polygon points="0,520 0,470 100,440 220,480 320,445 400,470 400,520" fill="'+c(0,40,6)+'"/>';
+  }else{ /* dust: desert scene */
+   d+='<circle cx="290" cy="150" r="58" fill="'+c(25,95,66,.9)+'"/><path d="M0 400 Q100 330 200 390 T400 370 V520 H0Z" fill="'+c(0,55,30)+'"/><path d="M0 460 Q120 400 240 450 T400 440 V520 H0Z" fill="'+c(5,50,20)+'"/>';
+   for(let i=0;i<16;i++){const y=R(280,460);d+='<circle cy="'+f(y)+'" r="'+f(R(1.5,4))+'" fill="#f1d9a6" opacity=".7">'+an('cx','-10;420',R(4,9))+'</circle>'}
+  }
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice">'+d+'</svg>';
+ }
+ const svgUrl=(g,kind)=>'data:image/svg+xml,'+encodeURIComponent(scene(g,kind));
+ const svgBg=(g,kind)=>'url("'+svgUrl(g,kind)+'")';
+ const bg=(g,kind)=>g.image?`url("https://images.unsplash.com/${g.image}?auto=format&fit=crop&w=900&q=80")`:svgBg(g,kind);
+ const tagText=g=>g.isNew?'★ NEW':g.players?'👥 '+g.players.toUpperCase():g.type==='premium'?'✦ PREMIUM':'● FREE';
+ const watch=(card,image,fb)=>{card.classList.add('game-loading');const loader=document.createElement('span');loader.className='card-loader';const sp=document.createElement('span');sp.className='spinner';const lb=document.createElement('span');lb.textContent='LOADING ART';loader.append(sp,lb);card.appendChild(loader);const probe=new Image();probe.onload=()=>{card.classList.remove('game-loading');card.classList.add('image-ready')};probe.onerror=()=>{card.classList.remove('game-loading');card.classList.add('image-failed');loader.remove();if(fb)card.style.setProperty('--game-bg',fb)};probe.src='https://images.unsplash.com/'+image+'?auto=format&fit=crop&w=900&q=80'};
+ /* render(root,onPlay): onPlay given -> cards are articles with a Play button; otherwise plain links */
+ function render(root,onPlay){
+  const frag=document.createDocumentFragment(),pre=new Set();
+  rows.forEach(r=>{
+   if(r.group){const h=document.createElement('h2');h.className='group-title';h.textContent=r.group;frag.appendChild(h);const p=document.createElement('p');p.className='group-sub';p.textContent=r.sub||'';frag.appendChild(p)}
+   const block=document.createElement('div');block.className='row-block';
+   const head=document.createElement('div');head.className='row-head';
+   const t=document.createElement('h2'),n=document.createElement('small');t.textContent=r.title;n.textContent=r.items.length+' games';t.appendChild(n);
+   const act=document.createElement('div');act.className='actions';
+   const prev=document.createElement('button'),next=document.createElement('button');
+   [[prev,'‹','Scroll left'],[next,'›','Scroll right']].forEach(([b,c,l])=>{b.className='btn';b.type='button';b.textContent=c;b.setAttribute('aria-label',l+' in '+r.title)});
+   act.append(prev,next);head.append(t,act);
+   const row=document.createElement('div');row.className='games';
+   const step=()=>Math.max(240,row.clientWidth*.8);
+   prev.onclick=()=>row.scrollBy({left:-step()});next.onclick=()=>row.scrollBy({left:step()});
+   r.items.forEach(g=>{
+    const card=document.createElement(onPlay?'article':'a');card.className='game';
+    if(!onPlay)card.href=g.file;
+    const u=svgUrl(g,g.fx||r.fx);pre.add(u);card.style.setProperty('--game-bg','url("'+u+'")');card.draggable=false;
+    const icon=document.createElement('div');icon.className='emoji';icon.textContent=g.emoji;
+    const title=document.createElement('h3');title.textContent=g.name;
+    const tag=document.createElement('span');tag.className='tag';tag.textContent=tagText(g);
+    let play;if(onPlay){play=document.createElement('button');play.type='button';play.addEventListener('click',()=>onPlay(g))}else play=document.createElement('span');
+    play.className='play';play.textContent='▶ PLAY NOW';
+    card.append(icon,title,tag,play);row.appendChild(card);
+   });
+   block.append(head,row);frag.appendChild(block);
+
+   /* mouse drag-to-scroll */
+   {let dn=null,mv=0;row.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button)return;dn={x:e.clientX,s:row.scrollLeft};mv=0});
+   row.addEventListener('pointermove',e=>{if(!dn)return;const dx=e.clientX-dn.x;if(!mv&&Math.abs(dx)>5){mv=1;row.classList.add('drag');try{row.setPointerCapture(e.pointerId)}catch(_){}}if(mv)row.scrollLeft=dn.s-dx});
+   const up=()=>{dn=null;if(mv)setTimeout(()=>{mv=0;row.classList.remove('drag')},60)};row.addEventListener('pointerup',up);row.addEventListener('pointercancel',up);
+   row.addEventListener('click',e=>{if(mv){e.preventDefault();e.stopPropagation()}},true)}
+  });
+  root.classList.add('vs-wait');root.replaceChildren(frag);
+  let shown=0;const show=()=>{if(shown)return;shown=1;root.classList.remove('vs-wait')};
+  Promise.all([...pre].map(u=>{const im=new Image();im.src=u;return im.decode?im.decode().catch(()=>{}):Promise.resolve()})).then(show);
+  setTimeout(show,2500);
+ }
+ window.VS={rows,render,scene};
+ const draw=()=>{const root=document.getElementById('gamesRows');if(root&&!root.children.length)render(root)};
+ draw();
 })();
 </script>
 <script type="module">
@@ -44,31 +189,10 @@ import { auth, db } from "../firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, doc, getDoc, setDoc, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const games = [
-{name:'Pong',emoji:'🏓',type:'free',desc:'Challenge friends in paddle battles.',file:'pong.html',image:'photo-1542751371-adc38448a05e'},
-{name:'Rock Paper Scissors',emoji:'✊',type:'free',desc:'Challenge friends to quick matches.',file:'rock-paper-scissors.html',image:'photo-1511512578047-dfb367046420'},
-{name:'Car Race',emoji:'🏎️',type:'free',desc:'Race rivals to the finish.',file:'car-race.html',image:'photo-1503376780353-7e6692767b70'},
-{name:'Tic-Tac-Toe',emoji:'❎',type:'free',desc:'Classic two-player strategy.',file:'tic-tac-toe.html',image:'photo-1611996575749-79a3a250f948'},
-{name:'Mech Warriors',emoji:'🤖',type:'premium',desc:'Battle with futuristic robots.',file:'mech-warriors.html',image:'photo-1593508512255-86ab42a8e620'},
-{name:'Blade Masters',emoji:'⚔️',type:'premium',desc:'Sword combat and duels.',file:'blade-masters.html',image:'photo-1518709268805-4e9042af9f23'},
-{name:'Dragon Fury',emoji:'🐉',type:'premium',desc:'Epic dragon battles.',file:'dragon-fury.html',image:'photo-1518709268805-4e9042af9f23'},
-{name:'Sky Combat',emoji:'✈️',type:'premium',desc:'Compete in aerial battles.',file:'sky-combat.html',image:'photo-1474302770737-173ee21bab63'},
-{name:'Neon Snake',emoji:'🐍',type:'free',desc:'Collect points and beat rivals.',file:'neon-snake.html',image:'photo-1519608487953-e999c86e7455'},
-{name:'Brick Breaker',emoji:'🧱',type:'free',desc:'Break blocks and compare scores.',file:'brick-breaker.html',image:'photo-1550745165-9bc0b252726f'},
-{name:'Galaxy Defender',emoji:'🚀',type:'free',desc:'Defend the galaxy together.',file:'galaxy-defender.html',image:'photo-1446776811953-b23d57bd21aa'},
-{name:'Dino Jump',emoji:'🦖',type:'free',desc:'Race through obstacle courses.',file:'dino-jump.html',image:'photo-1511497584788-876760111969'},
-{name:'Neon Air Hockey',emoji:'🏒',type:'free',desc:'Fast-paced paddle matches.',file:'neon-air-hockey.html',image:'photo-1519861531473-9200262188bf'},
-{name:'Memory Match',emoji:'🧠',type:'free',desc:'Compete to match the most pairs.',file:'memory-match.html',image:'photo-1511512578047-dfb367046420'},
-{name:'Neon Maze',emoji:'🌀',type:'free',desc:'Race to find the exit.',file:'neon-maze.html',image:'photo-1519608487953-e999c86e7455'},
-{name:'Cyber Parkour',emoji:'🏃',type:'premium',desc:'Race across futuristic rooftops.',file:'cyber-parkour.html',image:'photo-1519608487953-e999c86e7455'},
-{name:'Neon Reflex',emoji:'⚡',type:'free',desc:'Test reaction speed against friends.',file:'neon-reflex.html',image:'photo-1511512578047-dfb367046420'},
-{name:'Bubble Bash',emoji:'🫧',type:'free',desc:'Clear bubbles and compete for points.',file:'bubble-bash.html',image:'photo-1534447677768-be436bb09401'},
-{name:'Tower Defense',emoji:'🗼',type:'premium',desc:'Defend your base with teammates.',file:'tower-defense.html',image:'photo-1518709268805-4e9042af9f23'},
-{name:'Zombie Survival',emoji:'🧟',type:'premium',desc:'Survive waves with friends.',file:'zombie-survival.html',image:'photo-1509248961158-e54f6934749c'}
-];
+const games = window.VS.rows.flatMap(r=>r.items);
 const $ = id => document.getElementById(id);
-let filter='all', currentUser=null, playerName='Player', stats={played:0,wins:0,coins:0,best:0}, history=[];
-let stopChat=null, stopLeaderboard=null, saving=false;
+let filter='all', currentUser=null, playerName='Player', stats={played:0,wins:0,coins:0,best:0};
+let saving=false;
 function notice(message,error=false){$('firebaseNotice').textContent=message;$('firebaseNotice').style.color=error?'#ff8b9b':''}
 function setAuthUI(user){
  currentUser=user;
@@ -79,7 +203,6 @@ function setAuthUI(user){
  }else{
   const hint=document.createElement('span');hint.className='muted';hint.textContent='Sign in to VitalStar to play';controls.append(hint);
  }
- $('chatInput').disabled=!user;$('chatForm').querySelector('button').disabled=!user;
  renderGames();
 }
 function watchCardImage(card,image){
@@ -92,35 +215,18 @@ function watchCardImage(card,image){
  probe.onerror=()=>{card.classList.add('image-failed');card.classList.remove('game-loading');label.textContent='ART UNAVAILABLE';spinner.style.animation='none'};
  probe.src=`https://images.unsplash.com/${image}?auto=format&fit=crop&w=900&q=80`;
 }
-function renderGames(){
- const visible=games;
- $('gamesGrid').replaceChildren();
- visible.forEach(game=>{
-  const card=document.createElement('article');card.className='game';
-  card.style.setProperty('--game-bg',`url("https://images.unsplash.com/${game.image}?auto=format&fit=crop&w=900&q=80")`);
-  watchCardImage(card,game.image);
-  const emoji=document.createElement('div');emoji.className='emoji';emoji.textContent=game.emoji;
-  const title=document.createElement('h3');title.textContent=game.name;
-  const tag=document.createElement('span');tag.className='tag';tag.textContent=game.type==='premium'?'✦ PREMIUM':'● FREE';
-  const desc=document.createElement('p');desc.textContent=game.desc;
-  const button=document.createElement('button');button.className='play';button.type='button';button.textContent='▶ PLAY NOW';
-  button.addEventListener('click',()=>launchGame(game));
-  card.append(emoji,title,tag,desc,button);$('gamesGrid').appendChild(card);
- });
- $('empty').hidden=visible.length!==0;
-}
+function renderGames(){}
+$('gamesRows').addEventListener('click',e=>{const a=e.target.closest('a.game');if(!a)return;e.preventDefault();const g=games.find(x=>x.file===a.getAttribute('href'));if(g)launchGame(g)});
 async function loadProfile(user){
  try{
-  const [userSnap,statsSnap,settingsSnap,historySnap]=await Promise.all([
+  const [userSnap,statsSnap,settingsSnap]=await Promise.all([
    getDoc(doc(db,'users',user.uid)),getDoc(doc(db,'users',user.uid,'gameStats','summary')),
-   getDoc(doc(db,'users',user.uid,'gameProfile','settings')),
-   getDoc(doc(db,'users',user.uid,'gameHistoryMeta','recent'))
+   getDoc(doc(db,'users',user.uid,'gameProfile','settings'))
   ]);
   const u=userSnap.exists()?userSnap.data():{};
   playerName=String((settingsSnap.exists()&&settingsSnap.data().playerName)||u.fullName||u.username||user.displayName||user.email?.split('@')[0]||'Player').slice(0,30);
   if(statsSnap.exists())stats={played:Number(statsSnap.data().played)||0,wins:Number(statsSnap.data().wins)||0,coins:Number(statsSnap.data().coins)||0,best:Number(statsSnap.data().best)||0};
-  if(historySnap.exists()&&Array.isArray(historySnap.data().items))history=historySnap.data().items.slice(0,10);
-  updateProfile();renderHistory();await updateLeaderboard();listenChat();
+  updateProfile();
   notice('Signed in. Your profile and game activity are connected to Firebase.');
  }catch(e){notice('Signed in, but Firestore could not load. Check your Firestore rules: '+e.message,true)}
 }
@@ -128,66 +234,25 @@ async function launchGame(game){
  if(!auth.currentUser){location.href='../login.html';return}
  if(saving)return;saving=true;
  try{
-  const user=auth.currentUser, now=new Date().toLocaleString();
-  await addDoc(collection(db,'users',user.uid,'gameHistory'),{gameName:game.name,gameFile:game.file,uid:user.uid,playerName,openedAt:serverTimestamp(),status:'opened'});
+  const user=auth.currentUser;
   stats.played+=1;
   await setDoc(doc(db,'users',user.uid,'gameStats','summary'),{played:stats.played,wins:stats.wins,coins:stats.coins,best:stats.best,playerName,updatedAt:serverTimestamp()},{merge:true});
-  history.unshift({name:game.name,time:now});history=history.slice(0,10);
-  await setDoc(doc(db,'users',user.uid,'gameHistoryMeta','recent'),{items:history,updatedAt:serverTimestamp()},{merge:true});
-  await updateLeaderboard();updateProfile();renderHistory();
+  updateProfile();
   // Always navigate to the game's separate HTML page; this listing page never runs a game inside itself.
   location.href=new URL(game.file,location.href).href;
  }catch(e){notice('Game could not be opened because its activity was not saved. Check Firestore rules/network: '+e.message,true)}
  finally{saving=false}
 }
 function updateProfile(){$('playerName').textContent=currentUser?playerName:'Login required';$('gamesPlayed').textContent=stats.played;$('wins').textContent=stats.wins;$('coins').textContent=stats.coins;$('bestScore').textContent=stats.best}
-function renderHistory(){
- const root=$('history');root.replaceChildren();
- if(!history.length){const p=document.createElement('p');p.className='muted';p.textContent=currentUser?'No recent game launches yet.':'Log in to see your saved game history.';root.appendChild(p);return}
- history.forEach(item=>{const row=document.createElement('div');row.className='listrow';const name=document.createElement('span');name.textContent=item.name;const time=document.createElement('small');time.className='muted';time.textContent=item.time||'';row.append(name,time);root.appendChild(row)})
-}
-async function updateLeaderboard(){
- const user=auth.currentUser;if(!user)return;
- await setDoc(doc(db,'gameLeaderboard',user.uid),{uid:user.uid,playerName,gamesPlayed:stats.played,wins:stats.wins,bestScore:stats.best,updatedAt:serverTimestamp()},{merge:true});
- const q=query(collection(db,'gameLeaderboard'),orderBy('gamesPlayed','desc'),limit(10));
- if(stopLeaderboard)stopLeaderboard();
- stopLeaderboard=onSnapshot(q,snap=>{
-  const root=$('leaderboard');root.replaceChildren();
-  if(snap.empty){const p=document.createElement('p');p.className='muted';p.textContent='No player records yet.';root.appendChild(p);return}
-  snap.docs.forEach((d,i)=>{const data=d.data(),row=document.createElement('div');row.className='listrow';const name=document.createElement('span');name.textContent=(i+1)+'. '+String(data.playerName||'Player').slice(0,30);const score=document.createElement('strong');score.textContent=(Number(data.gamesPlayed)||0)+' games';row.append(name,score);root.appendChild(row)})
- },e=>notice('Leaderboard unavailable: '+e.message,true));
-}
-function listenChat(){
- if(stopChat)stopChat();
- const q=query(collection(db,'gameChat'),orderBy('createdAt','desc'),limit(30));
- stopChat=onSnapshot(q,snap=>{
-  const root=$('chatMessages');root.replaceChildren();const docs=snap.docs.slice().reverse();
-  if(!docs.length){const p=document.createElement('div');p.className='message';p.textContent='Welcome to VitalStar Games chat!';root.appendChild(p);return}
-  docs.forEach(d=>{const data=d.data(),bubble=document.createElement('div');bubble.className='message';const name=document.createElement('strong');name.textContent=String(data.playerName||'Player').slice(0,30)+': ';bubble.append(name,document.createTextNode(String(data.text||'').slice(0,300)));root.appendChild(bubble)});
-  root.scrollTop=root.scrollHeight;
- },e=>notice('Game chat unavailable: '+e.message,true));
-}
-
-$('chatForm').addEventListener('submit',async event=>{
- event.preventDefault();if(!auth.currentUser){location.href='../login.html';return}
- const input=$('chatInput'),text=input.value.trim();if(!text)return;
- const submit=$('chatForm').querySelector('button');submit.disabled=true;
- try{await addDoc(collection(db,'gameChat'),{uid:auth.currentUser.uid,playerName,text:text.slice(0,300),createdAt:serverTimestamp()});input.value=''}
- catch(e){notice('Message could not be sent. Check Firestore rules: '+e.message,true)}
- finally{submit.disabled=!auth.currentUser}
-});
 $('themeToggle').addEventListener('click',()=>{document.body.classList.toggle('light');$('themeToggle').textContent=document.body.classList.contains('light')?'☾ Theme':'☀ Theme'});
 const music=$('backgroundMusic'),musicToggle=$('musicToggle');let musicOn=true;music.volume=.25;
 musicToggle.addEventListener('click',async()=>{if(musicOn){music.pause();musicOn=false;musicToggle.textContent='♫ Music: Off'}else{try{await music.play();musicOn=true;musicToggle.textContent='♫ Music: On'}catch{musicToggle.textContent='Tap to play music'}}});
 document.addEventListener('pointerdown',()=>{if(musicOn&&music.paused)music.play().catch(()=>{})},{once:true});
-setAuthUI(null);updateProfile();renderHistory();
+setAuthUI(null);updateProfile();
 onAuthStateChanged(auth,async user=>{
  setAuthUI(user);
  if(!user){
-  stats={played:0,wins:0,coins:0,best:0};history=[];playerName='Player';updateProfile();renderHistory();
-  $('leaderboard').innerHTML='<p class="muted">Log in to view the shared leaderboard.</p>';
-  $('chatMessages').innerHTML='<div class="message">Log in to view and send game chat messages.</div>';
-  if(stopChat){stopChat();stopChat=null}if(stopLeaderboard){stopLeaderboard();stopLeaderboard=null}
+  stats={played:0,wins:0,coins:0,best:0};playerName='Player';updateProfile();
   notice('Log in with your VitalStar account before playing or saving game activity.');return
  }
  notice('Signed in. Loading your game profile…');await loadProfile(user);renderGames();
