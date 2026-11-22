@@ -152,7 +152,7 @@ input::placeholder{color:rgba(255,241,210,.4)}
     <div class="row"><span class="lbl">Landscape (host sets)</span><select id="rmap"></select></div>
     <div class="row"><span class="lbl">Match length (host sets)</span><select id="rdur"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
     <button class="go" id="ready">I'M READY</button>
-    <button class="b" id="copy">Copy room code</button><button class="b" id="lv2">Leave room</button>
+    <button class="b" id="lv2">Leave room</button>
     <p id="note" style="font-size:13px">Waiting for another player…</p>
     <p class="kick" style="margin-top:14px">ROOM CHAT</p><div class="rlog" id="lobLog"></div><form class="rform" id="lobForm"><input id="lobText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Room chat message"><button type="submit">SEND</button></form>
   </div>
@@ -190,6 +190,7 @@ input::placeholder{color:rgba(255,241,210,.4)}
 
 <div id="end" class="ov" hidden><div class="card" style="text-align:center"><p class="kick">MATCH OVER</p><h1 id="eT"></h1><div id="eL"></div><p id="eR" style="color:#ffd23a"></p><div class="rlog" id="endLog" style="height:110px;margin-top:10px"></div><form class="rform" id="endForm"><input id="endText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form><button class="go" id="again">PLAY AGAIN</button><button class="b" id="eLeave">Leave room</button></div></div>
 <div id="pauseOv" class="ov" hidden style="z-index:25"><div class="card" style="text-align:center"><p class="kick">PAUSED</p><h1 style="font-size:clamp(34px,10vw,50px)">PAUSED</h1><button class="go" id="resume">RESUME</button><button class="b" id="quit">Quit to menu</button></div></div>
+<div id="goPop" class="ov" hidden style="z-index:35;background:rgba(18,10,4,.88)" role="alertdialog" aria-modal="true" aria-labelledby="goT"><div class="card" style="text-align:center"><p class="kick">SCREEN</p><h1 id="goT" style="font-size:clamp(30px,9vw,44px)">LANDSCAPE VIEW</h1><p id="goTxt">This game plays in landscape. Tap OK to switch the screen to landscape view.</p><button class="go" id="goOk">OK</button></div></div>
 <div id="rotPop" class="ov" hidden style="z-index:30;background:rgba(18,10,4,.88)" role="alertdialog" aria-modal="true" aria-labelledby="rotT"><div class="card" style="text-align:center"><p class="kick">SCREEN</p><h1 id="rotT" style="font-size:clamp(30px,9vw,44px)">LANDSCAPE VIEW</h1><p>This game plays in landscape. Tap OK to switch the screen to landscape view.</p><button class="go" id="rotOk">OK</button></div></div>
 <div id="toast" class="panel" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -440,26 +441,26 @@ $('backC').onclick=()=>showCard('home');
 $('backJ').onclick=()=>{watchRooms(false);showCard('home')};
 async function enter(c,r){watchRooms(false);const ps=(await r.child('players').get()).val()||{},used=Object.values(ps).map(p=>p.ci),ci=[0,1,2,3].find(i=>!used.includes(i));
 await r.child('players/'+myId).set({name:myName,ci,col:myCol(),ar:SHOP.arm,ready:false,x:0,z:0,h:0,a:0,hp:100,k:0,d:0,dead:false});r.child('players/'+myId).onDisconnect().remove();
-ref=r;mode='online';me=mk(myId,myName,ci,myCol(),SHOP.arm);resetRoomChat();$('rc').textContent='ROOM';$('rcode').textContent='ROOM LOBBY · CODE '+c;
+ref=r;mode='online';me=mk(myId,myName,ci,myCol(),SHOP.arm);resetRoomChat();$('rc').textContent='ROOM';$('rcode').textContent='ROOM LOBBY';
 const l1=r.on('value',onRoom),l2=r.child('shots').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500)return;const o=P[v.o];if(o)o.rec=.6;missile(v.x,v.z,v.a,v.o)}),l4=r.child('grens').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500)return;spawnGren(v.o,v.x,v.z,v.a,v.p)}),l3=r.child('kills').on('child_added',s=>{const v=s.val();if(v&&v.k===myId&&now()-v.t<4000){me.kills++;say('KILL!');sfx('pick')}});
 const cq=r.child('chat').limitToLast(40),l5=cq.on('child_added',s=>addRoomMsg(s.val()));unsubs=[()=>cq.off('child_added',l5),()=>r.off('value',l1),()=>r.child('shots').off('child_added',l2),()=>r.child('kills').off('child_added',l3),()=>r.child('grens').off('child_added',l4)];showCard('lobby')}
-function onRoom(s){const d=s.val();if(!d){if(phase!=='home'){toast('Room closed.');exitRoom(false)}return}R_=d;buildWorld(d.map|0);$('rc').textContent=d.name||'ROOM';$('rcode').textContent='ROOM LOBBY · CODE '+(ref?ref.key:'')+(d.pw?' · 🔒':'');const ps=d.players||{};
+function onRoom(s){const d=s.val();if(!d){if(phase!=='home'){toast('Room closed.');exitRoom(false)}return}R_=d;buildWorld(d.map|0);$('rc').textContent=d.name||'ROOM';$('rcode').textContent='ROOM LOBBY'+(d.pw?' · 🔒 PRIVATE':'');const ps=d.players||{};
 if(!ps[myId]&&phase!=='home'){toast('You left the room.');exitRoom(false);return}
 for(const id in ps){if(id===myId)continue;const v=ps[id],o=P[id]||mk(id,v.name||'Player',v.ci||0,v.col,v.ar);if(!o.init){o.init=1;o.x=o.tx=v.x;o.z=o.tz=v.z}if(v.dead&&!o.dead)explode(o.x,o.z,true);Object.assign(o,{tx:v.x,tz:v.z,th:v.h,ta:v.a,hp:v.hp,dead:!!v.dead,kills:v.k||0,deaths:v.d||0,ready:!!v.ready});o.t.g.visible=!o.dead}
 for(const id in P)if(!ps[id])rmEnt(id);
 const ids=Object.keys(ps).sort(),host=ids[0]===myId;
 if(d.status==='waiting'){if(phase!=='lobby')toLobby();drawLobby(d,ids,host,ps);if(ids.length>1&&ids.every(i=>ps[i].ready))ref.transaction(c=>{if(c===null)return c;if(c.status!=='waiting')return;const q=c.players||{},k=Object.keys(q);if(k.length<2||!k.every(i=>q[i].ready))return;c.status='countdown';c.startAt=now()+5000;return c})}
-else if(d.status==='countdown'&&phase==='lobby')begin(d.startAt,d.duration,ids);
+else if(d.status==='live'&&phase==='lobby'){goReset();begin(d.go,d.duration,ids)}
+else if(d.status==='countdown'&&phase==='lobby')hostGo();
 else if(d.status==='finished'&&phase!=='over'&&phase!=='lobby'&&phase!=='home')finish()}
-function toLobby(){phase='lobby';openChat(false);hide('end');hide('hud');hide('bar');hide('zone');hide('orbit');hide('fire');setWake(false);show('menu');showCard('lobby');setReady(false)}
+function toLobby(){phase='lobby';openChat(false);goReset();hide('end');hide('hud');hide('bar');hide('zone');hide('orbit');hide('fire');setWake(false);show('menu');showCard('lobby');setReady(false)}
 function setReady(v){me.ready=v;$('ready').textContent=v?'CANCEL READY':"I'M READY"}
 function drawLobby(d,ids,host,ps){const t=$('tags');t.replaceChildren();ids.forEach(i=>{const e=document.createElement('div');e.className='tag'+(ps[i].ready?' on':'');const a=document.createElement('span');a.textContent=(ps[i].name||'Player')+(i===ids[0]?' (host)':'');a.style.color=hx(ps[i].col!=null?ps[i].col:TC[(ps[i].ci||0)%4]);const b=document.createElement('span');b.textContent=ps[i].ready?'READY':'waiting';e.append(a,b);t.append(e)});
-$('rdur').value=d.duration;$('rdur').disabled=!host;$('rmap').value=d.map|0;$('rmap').disabled=!host;$('note').textContent=ids.length<2?'Waiting for another player… share the code.':'Everyone must press Ready.'}
+$('rdur').value=d.duration;$('rdur').disabled=!host;$('rmap').value=d.map|0;$('rmap').disabled=!host;$('note').textContent=ids.length<2?'Waiting for another player…':'Everyone must press Ready.'}
 $('rdur').onchange=()=>ref&&ref.child('duration').set(+$('rdur').value);
-$('ready').onclick=()=>{audio();if(!ref)return;const r=ref,v=!me.ready,b=$('ready'),go=async()=>{setReady(v);b.classList.add('ld');b.disabled=true;try{await r.child('players/'+myId+'/ready').set(v)}catch(e){toast('Could not update ready: '+e.message)}finally{b.classList.remove('ld');b.disabled=false}};if(v)landFirst(go);else go()};
-$('copy').onclick=async()=>{try{await navigator.clipboard.writeText(ref.key);toast('Room code copied: '+ref.key)}catch{toast('Share this code: '+ref.key)}};
+$('ready').onclick=()=>{audio();if(!ref)return;const r=ref,v=!me.ready,b=$('ready'),go=async()=>{setReady(v);b.classList.add('ld');b.disabled=true;try{await r.child('players/'+myId+'/ready').set(v)}catch(e){toast('Could not update ready: '+e.message)}finally{b.classList.remove('ld');b.disabled=false}};go()};
 ['lv2','leave','eLeave'].forEach(i=>{$(i).onclick=withLoad($(i),()=>exitRoom(true))});
-async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];resetRoomChat();const r=ref;ref=null;R_=null;phase='home';mode='home';paused=false;hide('pauseOv');for(const id in P)rmEnt(id);me=null;sh.splice(0).forEach(s=>scene.remove(s.m));clearFx();grens.splice(0).forEach(g=>scene.remove(g.m));setWake(false);
+async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];goReset();resetRoomChat();const r=ref;ref=null;R_=null;phase='home';mode='home';paused=false;hide('pauseOv');for(const id in P)rmEnt(id);me=null;sh.splice(0).forEach(s=>scene.remove(s.m));clearFx();grens.splice(0).forEach(g=>scene.remove(g.m));setWake(false);
 hide('end');hide('hud');hide('bar');hide('zone');hide('orbit');hide('fire');show('menu');showCard('home');
 if(r&&rm){try{await r.child('players/'+myId).onDisconnect().cancel();await r.child('players/'+myId).remove();if(!(await r.child('players').get()).val())await r.remove()}catch{}}}
 /* ---------- match flow ---------- */
@@ -471,7 +472,7 @@ $('eT').textContent=res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED';const l
 const mult=mode==='bots'?({easy:.5,normal:1,hard:1.5,expert:2}[diff]||1):1,reward=Math.round(me.kills*mult)+(res==='win'?3:res==='draw'?2:1),rid=mode==='bots'?'ai-'+Date.now():'on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;
 if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win')STATS.wins++;else if(res==='loss')STATS.losses++;else STATS.draws++;SHOP.coins+=reward;saveShop();saveStats();$('eR').textContent='+'+reward+' coins';if(mode==='online')submitLeader(res,me.kills).catch(()=>{})}else $('eR').textContent='';
 sfx('pick');hide('hud');hide('zone');hide('orbit');hide('fire');hide('bar');setWake(false);show('end');if(ref&&Object.keys(P).sort()[0]===myId)ref.child('status').set('finished')}
-$('again').onclick=()=>mode==='bots'?landFirst(startBots):ref.transaction(c=>{if(!c||c.status!=='finished')return;c.status='waiting';c.startAt=null;for(const i in c.players)Object.assign(c.players[i],{ready:false,k:0,d:0,hp:100,dead:false});return c}).then(r=>{if(!r.committed)toast('Waiting for the match to close…')});
+$('again').onclick=()=>mode==='bots'?landFirst(startBots):ref.transaction(c=>{if(!c||c.status!=='finished')return;c.status='waiting';c.startAt=null;for(const i in c.players)Object.assign(c.players[i],{ready:false,inn:false,k:0,d:0,hp:100,dead:false});c.go=null;return c}).then(r=>{if(!r.committed)toast('Waiting for the match to close…')});
 {const ab=$('again'),f0=ab.onclick;ab.onclick=async()=>{if(ab.classList.contains('ld'))return;ab.classList.add('ld');try{await f0()}finally{ab.classList.remove('ld')}}}
 function say(t){const b=$('banner');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
 /* ---------- pause (vs AI only) ---------- */
@@ -584,6 +585,13 @@ $('chatForm').onsubmit=async e=>{e.preventDefault();const text=$('chatText').val
 function startChat(){if(!db)return;const r=db.ref('tankLobbyChat').limitToLast(40);r.on('child_added',s=>addChat(s.val()),e=>{$('chatHint').textContent='Chat unavailable: '+e.message});r.on('child_removed',s=>{const el=document.querySelector('[data-chat-id="'+CSS.escape(s.key)+'"]');if(el)el.remove()});$('chatHint').textContent='Public chat. Be kind.'}
 async function purgeChat(){if(!db||!connected)return;try{const cut=now()-CHAT_TTL,s=await db.ref('tankLobbyChat').orderByKey().limitToFirst(50).once('value'),up={};s.forEach(x=>{const t=Number(x.val()&&x.val().time);if(!t||t<=cut)up[x.key]=null});if(Object.keys(up).length)await db.ref('tankLobbyChat').update(up)}catch{}}
 if(db){loadLeader();startChat();setTimeout(purgeChat,4000);setInterval(()=>{const cut=now()-CHAT_TTL;document.querySelectorAll('#chatLog .msg[data-ts]').forEach(el=>{if(Number(el.dataset.ts)<=cut)el.remove()});purgeChat()},30000)}else $('chatHint').textContent='Chat needs a connection.';
+/* ---------- pre-match pop-up: after the lobby countdown, every device sees a full-screen pop-up; the match starts once everyone taps OK ---------- */
+let goBusy=false,goShown=false;
+function goReset(){goShown=false;$('goPop').hidden=true;$('goOk').hidden=false}
+function showGo(){if(goShown)return;goShown=true;openChat(false);$('goTxt').textContent='This game plays in landscape. Tap OK to switch the screen to landscape view.';$('goOk').hidden=false;$('goPop').hidden=false;$('goOk').focus()}
+function hostGo(){const d=R_;if(!d||!ref||d.status!=='countdown'||now()<d.startAt||goBusy)return;const ps=d.players||{},ids=Object.keys(ps).sort();if(ids[0]!==myId)return;if(!(ids.every(i=>ps[i].inn)||now()>d.startAt+20000))return;goBusy=true;ref.transaction(c=>{if(!c||c.status!=='countdown')return;c.status='live';c.go=now()+3000;return c}).catch(()=>{}).finally(()=>{goBusy=false})}
+$('goOk').onclick=async()=>{audio();lockLand();$('goTxt').textContent='Waiting for the other players…';$('goOk').hidden=true;try{await ref.child('players/'+myId+'/inn').set(true)}catch(e){toast('Could not continue: '+e.message);$('goOk').hidden=false}};
+setInterval(()=>{if(!R_||!me||phase!=='lobby'||R_.status!=='countdown')return;const left=Math.ceil((R_.startAt-now())/1000);if(left>0){$('note').textContent='Everyone is ready. Starting in '+left+'…';return}showGo();hostGo()},250);
 /* ---------- room chat: lobby, during the match, and after it ---------- */
 const rMsgs=new Set();let unread=0,chatOpen=false,lastRC=0;
 function rcLine(m){const el=document.createElement('div');el.className='msg';const b=document.createElement('b');b.textContent=String(m.name||'Player').slice(0,24)+' ';const t=document.createElement('span');t.textContent=String(m.text).slice(0,180);el.append(b,t);return el}
