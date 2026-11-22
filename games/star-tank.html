@@ -388,7 +388,7 @@ sh.push({m:g,fl,x,z,vx:Math.sin(a)*BS,vz:Math.cos(a)*BS,l:1.9,o,tr:0});
 if(!quiet){burst(x,2.4,z,1,'fire',0,3.6,.1,0);burst(x,2.4,z,4,'spark',14,.5,.35,3);burst(x,2.4,z,3,'hot',4,1.2,.3,2);burst(x,2.4,z,2,'smoke',2.5,1.6,1,1.5);flashLight(x,3.4,z,o===myId?3.5:2);const d=Math.hypot(x-tgt.x,z-tgt.z);sfx(o===myId?'shot':'eshot',clamp(1.1-d/110,.25,1))}}
 const sh=[];
 /* ---------- state ---------- */
-let mode='home',phase='home',ref=null,R_=null,unsubs=[],startT=0,endT=0,dur=120,lastN=-1,keys={},mouse=new THREE.Vector2(0,-.3),firing=false,touch=matchMedia('(pointer:coarse)').matches,stick={on:false,id:-1,ox:0,oy:0,x:0,y:0},th=0,vph=.66,vrad=33,lastSend=0,sbT=0,paused=false,pT=0;
+let mode='home',phase='home',ref=null,R_=null,unsubs=[],startT=0,endT=0,dur=120,lastN=-1,keys={},mouse=new THREE.Vector2(0,-.3),firing=false,TOUCHCAP=(matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0||'ontouchstart' in window),touch=TOUCHCAP,stick={on:false,id:-1,ox:0,oy:0,x:0,y:0},th=0,vph=.66,vrad=33,lastSend=0,sbT=0,paused=false,pT=0;
 const show=i=>$(i).hidden=false,hide=i=>$(i).hidden=true;
 const CARDS=['home','lobby','setC','shopC','socC','cCreate','cJoin','cPw'];function showCard(id){CARDS.forEach(c=>$(c).hidden=c!==id)}
 const gen=()=>Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
@@ -466,7 +466,7 @@ if(r&&rm){try{await r.child('players/'+myId).onDisconnect().cancel();await r.chi
 /* ---------- match flow ---------- */
 const SP=i=>{const a=i/4*TAU+.6;return[Math.cos(a)*62,Math.sin(a)*62]};
 function begin(sa,d,ids){dur=d;startT=sa;endT=sa+d*1000;phase='count';lastN=-1;crates.forEach(c=>c.taken=-1);clearFx();sh.splice(0).forEach(s=>scene.remove(s.m));ids.forEach((id,i)=>{const e=P[id];if(!e)return;const s=SP(i);Object.assign(e,{x:s[0],z:s[1],tx:s[0],tz:s[1],h:Math.atan2(-s[0],-s[1]),th:Math.atan2(-s[0],-s[1]),hp:100,dead:false,kills:0,deaths:0,rl:0,shield:0,rapid:0});e.aim=e.h;e.ta=e.h;e.t.g.visible=true});
-aimAng=null;aimV=null;gHold=false;hide('menu');hide('end');show('hud');show('bar');$('pauseBtn').hidden=mode!=='bots';$('chatBtn').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);if(touch){show('zone');show('orbit');show('fire')}audio();setWake(true)}
+aimAng=null;aimV=null;gHold=false;hide('menu');hide('end');show('hud');show('bar');if(TOUCHCAP)touch=true;$('pauseBtn').hidden=mode!=='bots';$('chatBtn').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);if(touch){show('zone');show('orbit');show('fire')}audio();setWake(true)}
 function finish(){if(phase==='over')return;phase='over';paused=false;hide('pauseOv');openChat(false);$('feed').replaceChildren();const arr=Object.values(P).sort((a,b)=>b.kills-a.kills),top=arr[0].kills,tied=arr.filter(p=>p.kills===top).length>1,mine=me.kills===top,res=mine?(tied?'draw':'win'):'loss';
 $('eT').textContent=res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED';const l=$('eL');l.replaceChildren();arr.forEach((p,i)=>{const e=document.createElement('div');e.className='tag';const a=document.createElement('span');a.textContent=(i+1)+'. '+p.name;const b=document.createElement('b');b.textContent=p.kills+' kills';e.append(a,b);l.append(e)});
 const mult=mode==='bots'?({easy:.5,normal:1,hard:1.5,expert:2}[diff]||1):1,reward=Math.round(me.kills*mult)+(res==='win'?3:res==='draw'?2:1),rid=mode==='bots'?'ai-'+Date.now():'on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;
@@ -481,8 +481,8 @@ else{paused=false;const d=now()-pT;startT+=d;endT+=d;for(const id in P)if(P[id].
 $('pauseBtn').onclick=()=>doPause(true);$('resume').onclick=()=>doPause(false);$('quit').onclick=()=>exitRoom(true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)doPause(true);else if(phase!=='home')setWake(true)});
 /* ---------- input ---------- */
-addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement&&document.activeElement.tagName))return;keys[e.code]=true;touch=false;if(e.code==='Space'){firing=true;if(phase==='play')e.preventDefault()}if(e.code==='KeyP'||e.code==='Escape')doPause(!paused)});addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='Space')firing=false});
-addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){touch=false;mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1)}});
+addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement&&document.activeElement.tagName))return;keys[e.code]=true;if(!TOUCHCAP)touch=false;if(e.code==='Space'){firing=true;if(phase==='play')e.preventDefault()}if(e.code==='KeyP'||e.code==='Escape')doPause(!paused)});addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='Space')firing=false});
+addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){if(!TOUCHCAP)touch=false;mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1)}});
 addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button===0&&!e.target.closest('button,input,select,.card,.chatbox'))firing=true});addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===0)firing=false});
 const zone=$('zone'),base=$('base'),knob=$('knob'),fb=$('fire');
 zone.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;touch=true;stick={on:true,id:e.pointerId,ox:e.clientX,oy:e.clientY,x:0,y:0};base.style.left=e.clientX+'px';base.style.top=e.clientY+'px';show('base');knob.style.transform='';try{zone.setPointerCapture(e.pointerId)}catch{}});
@@ -514,9 +514,9 @@ function hurt(by,d){if(me.shield>0){sfx('hit',.5);return}me.hp-=(d||DMG)*dmgMul(
 const BL={easy:{spd:.7,turn:1.6,rl:2.2,err:.22},normal:{spd:1,turn:2.4,rl:1.4,err:.12},hard:{spd:1.2,turn:3.4,rl:.9,err:.05},expert:{spd:1.3,turn:4.2,rl:.7,err:.03}};let diff='normal';
 function startBots(){audio();dur=+$('durA').value;diff=$('diff').value;ref=null;mode='bots';paused=false;for(const id in P)rmEnt(id);sh.splice(0).forEach(s=>scene.remove(s.m));
 buildWorld(+$('mapA').value);me=mk(myId,myName,0,myCol(),SHOP.arm);['Bot Alpha','Bot Beta','Bot Gamma'].forEach((n,i)=>{const b=mk('b'+i,n,i+1);b.bot=1;b.err=0;b.st=1;b.sw=0});begin(now()+4000,dur,Object.keys(P).sort())}
-function lockLand(){if(!touch)return;try{const so=screen.orientation,de=document.documentElement,lk=()=>{if(so&&so.lock)so.lock('landscape').catch(()=>{})};if(!document.fullscreenElement&&de.requestFullscreen)de.requestFullscreen().then(lk).catch(lk);else lk()}catch{}}
+function lockLand(){if(!TOUCHCAP)return;try{const so=screen.orientation,de=document.documentElement,lk=()=>{if(so&&so.lock)so.lock('landscape').catch(()=>{})};if(!document.fullscreenElement&&de.requestFullscreen)de.requestFullscreen().then(lk).catch(lk);else lk()}catch{}}
 let rotFn=null;
-function landFirst(fn){if(touch&&innerHeight>innerWidth){rotFn=fn;show('rotPop');$('rotOk').focus();return}lockLand();fn()}
+function landFirst(fn){if(TOUCHCAP&&innerHeight>innerWidth){rotFn=fn;show('rotPop');$('rotOk').focus();return}lockLand();fn()}
 $('rotOk').onclick=()=>{hide('rotPop');lockLand();const f=rotFn;rotFn=null;if(f)f()};
 $('bots').onclick=()=>landFirst(startBots);
 function hurtBot(q,by,d){q.hp-=d||DMG;if(q.hp>0)return;q.hp=0;q.dead=true;q.deaths++;q.resp=now()+3000;q.t.g.visible=false;explode(q.x,q.z,true);if(P[by])P[by].kills++;if(by===myId){say('KILL!');sfx('pick')}}
@@ -590,7 +590,8 @@ let goBusy=false,goShown=false;
 function goReset(){goShown=false;$('goPop').hidden=true;$('goOk').hidden=false}
 function showGo(){if(goShown)return;goShown=true;openChat(false);$('goTxt').textContent='This game plays in landscape. Tap OK to switch the screen to landscape view.';$('goOk').hidden=false;$('goPop').hidden=false;$('goOk').focus()}
 function hostGo(){const d=R_;if(!d||!ref||d.status!=='countdown'||now()<d.startAt||goBusy)return;const ps=d.players||{},ids=Object.keys(ps).sort();if(ids[0]!==myId)return;if(!(ids.every(i=>ps[i].inn)||now()>d.startAt+20000))return;goBusy=true;ref.transaction(c=>{if(!c||c.status!=='countdown')return;c.status='live';c.go=now()+3000;return c}).catch(()=>{}).finally(()=>{goBusy=false})}
-$('goOk').onclick=async()=>{audio();lockLand();$('goTxt').textContent='Waiting for the other players…';$('goOk').hidden=true;try{await ref.child('players/'+myId+'/inn').set(true)}catch(e){toast('Could not continue: '+e.message);$('goOk').hidden=false}};
+$('goOk').onclick=async()=>{audio();lockLand();if(TOUCHCAP){await new Promise(r=>setTimeout(r,600));if(innerHeight>innerWidth){$('goTxt').textContent='Your screen is still upright. Turn your phone sideways (switch off rotation lock if needed), then tap OK again.';return}}
+$('goTxt').textContent='Waiting for the other players…';$('goOk').hidden=true;try{await ref.child('players/'+myId+'/inn').set(true)}catch(e){toast('Could not continue: '+e.message);$('goOk').hidden=false}};
 setInterval(()=>{if(!R_||!me||phase!=='lobby'||R_.status!=='countdown')return;const left=Math.ceil((R_.startAt-now())/1000);if(left>0){$('note').textContent='Everyone is ready. Starting in '+left+'…';return}showGo();hostGo()},250);
 /* ---------- room chat: lobby, during the match, and after it ---------- */
 const rMsgs=new Set();let unread=0,chatOpen=false,lastRC=0;
