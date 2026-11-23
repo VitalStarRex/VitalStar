@@ -76,7 +76,9 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
 .stg b{display:block;font:800 19px system-ui,sans-serif}.stg span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
 .li{display:flex;justify-content:space-between;padding:7px 10px;margin:4px 0;font-size:14px;border-radius:8px;border:1px solid rgba(25,211,255,.2);background:rgba(0,0,0,.25)}
 .rlog{height:120px;overflow-y:auto;touch-action:pan-y;padding:8px;border-radius:8px;border:1px solid rgba(25,211,255,.25);background:rgba(0,0,0,.3);font-size:14px;text-align:left}
-.rlog .msg{margin:3px 0;overflow-wrap:anywhere}.rlog b{color:var(--cy)}
+.rlog .msg{margin:3px 0;overflow-wrap:anywhere}.rlog b{color:var(--cy)}.rlog time{opacity:.5;font-size:11px;margin-left:6px}
+.chatbox{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 58px);width:min(92vw,400px);padding:10px;z-index:9;background:linear-gradient(180deg,rgba(14,26,56,.96),rgba(6,10,26,.97));border:1px solid rgba(25,211,255,.35);border-top:3px solid var(--cy);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);touch-action:pan-y}
+.chatbox .seg{margin-bottom:6px}.chatbox .seg button{min-width:0;padding:6px}
 .rform{display:flex;gap:6px;margin-top:8px}.rform input{flex:1;min-width:0;width:auto}
 .rform button{padding:0 16px;border:0;border-radius:8px;background:linear-gradient(90deg,#19d3ff,#a855f7);color:#fff;font:800 14px system-ui,sans-serif;cursor:pointer}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:90vw}
@@ -88,7 +90,8 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
   <div class="panel st"><div class="big" id="i1">0</div><div id="i2" class="lbl"></div><div id="sb"></div></div>
 </div>
 <div id="bb" hidden><i></i></div><div id="ban"></div><div id="feed"></div>
-<div id="tbar" hidden><button id="pauseBtn" aria-label="Pause" hidden>II</button><button id="leave">LEAVE</button></div>
+<div id="tbar" hidden><button id="pauseBtn" aria-label="Pause" hidden>II</button><button id="chatBtn" hidden>CHAT</button><button id="leave">LEAVE</button></div>
+<div id="mChat" class="chatbox" hidden><div class="rlog" id="mLog" style="height:110px"></div><form class="rform" id="mForm"><input id="mText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form></div>
 <div id="zone" hidden></div><div id="orbit" hidden></div><div id="jb" hidden><div id="jk"></div></div>
 <button class="btn" id="bd" hidden>DASH</button><button class="btn" id="bf" hidden>FIRE</button><button class="btn" id="bs" hidden>OVER<br>DRIVE</button>
 <div id="rot" hidden>↻ Turn your phone sideways</div>
@@ -164,11 +167,15 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
     <p class="small">Best campaign score: <b id="sB">0</b></p>
     <p class="kick" style="margin-top:14px">ONLINE LEADERBOARD</p>
     <div id="lead"><div class="li"><span class="spin"></span>Loading…</div></div>
+    <p class="kick" style="margin-top:14px">LOBBY CHAT <span style="opacity:.6;letter-spacing:.05em">(messages vanish after 5 min)</span></p>
+    <div class="rlog" id="chatLog" style="height:150px"></div>
+    <form class="rform" id="chatForm"><input id="chatText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form>
+    <p id="chatHint" class="small" style="margin:6px 0 0"></p>
     <button class="b" data-back>Back</button>
   </div>
 </div>
 
-<div id="end" class="ov" hidden><div class="card" style="text-align:center"><p class="kick" id="eK">MISSION OVER</p><h1 id="eT"></h1><div id="eL"></div><p id="eR" style="color:var(--yl)"></p><button class="go" id="again">PLAY AGAIN</button><button class="b" id="eLeave">Main menu</button></div></div>
+<div id="end" class="ov" hidden><div class="card" style="text-align:center"><p class="kick" id="eK">MISSION OVER</p><h1 id="eT"></h1><div id="eL"></div><p id="eR" style="color:var(--yl)"></p><div id="endChat" hidden><div class="rlog" id="endLog" style="height:110px;margin-top:10px"></div><form class="rform" id="endForm"><input id="endText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form></div><button class="go" id="again">PLAY AGAIN</button><button class="b" id="eLeave">Main menu</button></div></div>
 <div id="pauseOv" class="ov" hidden style="z-index:25"><div class="card" style="text-align:center"><p class="kick">PAUSED</p><h1>PAUSED</h1><button class="go" id="resume">RESUME</button><button class="b" id="quit">Quit to menu</button></div></div>
 <div id="toast" class="panel" hidden></div>
 
@@ -187,9 +194,19 @@ const T=THREE,V=new T.Vector3();
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const ST=Object.assign({diff:1,land:'city',dens:.15,vol:.5,music:true,sens:1,fs:'m',snd:true},ls.get('vsMechSet',{}));
 const saveS=()=>ls.set('vsMechSet',ST);
-const STATS=Object.assign({played:0,wins:0,losses:0,draws:0,kills:0,best:0},ls.get('vsMechStats',{}));
+const STATS=Object.assign({played:0,wins:0,losses:0,draws:0,kills:0,best:0,ow:0},ls.get('vsMechStats',{}));
 function saveStats(){ls.set('vsMechStats',STATS);$('sP').textContent=STATS.played;$('sW').textContent=STATS.wins;$('sL').textContent=STATS.losses;$('sD').textContent=STATS.draws;$('sK').textContent=STATS.kills;$('sB').textContent=STATS.best}
 function recordOnce(id){const ids=ls.get('vsMechRec',{});if(ids[id])return false;ids[id]=1;const k=Object.keys(ids);if(k.length>300)delete ids[k[0]];ls.set('vsMechRec',ids);return true}
+
+/* shared profile (read by the VitalStar index): wallets/{uid}/game/profile */
+const WT=[0,25,55,100,150,210,280,360,450,550,660,780,910,1050,1200,1360,1530,1710,1900,2100];
+const ICONS=['🔰','🥉','🥈','🥇','🛡️','⚔️','🎖️','🏅','💥','🦅','🦂','🐍','🦁','🐺','🔥','⚡','💎','👑','☄️','🌟'];
+let xp=ls.get('vsMechXP',0),profRef=null,profOff=null,profLoaded=false,profPick='';
+const pLvl=()=>{let l=1;for(let i=1;i<WT.length;i++)if(STATS.ow>=WT[i])l=i+1;return l};
+const pIcon=()=>{const i=ICONS.indexOf(profPick);return i>=0&&i<pLvl()?profPick:ICONS[Math.min(pLvl(),ICONS.length)-1]};
+function pushProfile(){if(!profRef||!profLoaded)return;profRef.set({xp,wins:STATS.ow,stats:{ow:STATS.ow,played:STATS.played,wins:STATS.wins,losses:STATS.losses,draws:STATS.draws,kills:STATS.kills},level:pLvl(),icon:pIcon(),name:myName,updated:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{})}
+function loadProfile(uid){if(!fsdb)return;if(profOff){profOff();profOff=null}profLoaded=false;profRef=fsdb.collection('wallets').doc(uid).collection('game').doc('profile');
+profOff=profRef.onSnapshot(sn=>{const p=sn.exists?sn.data():null;profLoaded=true;if(p){if(typeof p.xp==='number'&&p.xp>xp)xp=p.xp;const s=p.stats||{};['played','wins','losses','draws','kills','ow'].forEach(k=>{const v=k==='ow'&&typeof s.ow!=='number'?p.wins:s[k];if(typeof v==='number'&&v>STATS[k])STATS[k]=Math.floor(v)});profPick=typeof p.iconPick==='string'?p.iconPick:'';ls.set('vsMechXP',xp);saveStats()}else nameReady.then(pushProfile)},()=>{})}
 const DF=()=>[{hp:.6,sp:.8,dmg:.6,n:.7},{hp:1,sp:1,dmg:1,n:1},{hp:1.5,sp:1.2,dmg:1.5,n:1.3}][ST.diff]||{hp:1,sp:1,dmg:1,n:1};
 /* ================= hangar: armor + paint, saved in Firestore wallets/{uid}/game/mech ================= */
 const COLS=[['cyan','Cyan',0x22ffff,0],['lime','Lime',0x9ad43a,3],['orange','Orange',0xe8742a,3],['violet','Violet',0xa855f7,4],['pink','Pink',0xff4fa8,5],['crimson','Crimson',0xd8323a,5],['sky','Sky',0x5aa0d8,5],['snow','Snow',0xe6ecef,6],['stealth','Stealth',0x4a5060,6],['gold','Gold',0xe6b830,10]];
@@ -218,7 +235,7 @@ if(!n&&fsdb){for(const c of ['users','profiles','userProfiles']){try{const s=awa
 let nameDone;const nameReady=new Promise(r=>{nameDone=r});
 function nameFin(){const a=$('autoName');a.classList.remove('sk');a.textContent=myName;nameDone()}
 $('autoName').classList.add('sk');$('autoName').textContent='Loading name';setTimeout(nameFin,5000);if(!auth)nameFin();
-if(auth)auth.onAuthStateChanged(u=>{if(u){loadShop(u.uid);syncName(u).catch(()=>{}).finally(nameFin)}else auth.signInAnonymously().catch(e=>{$('net').textContent='Sign-in failed: '+e.message;nameFin()})});
+if(auth)auth.onAuthStateChanged(u=>{if(u){loadShop(u.uid);loadProfile(u.uid);syncName(u).catch(()=>{}).finally(nameFin)}else auth.signInAnonymously().catch(e=>{$('net').textContent='Sign-in failed: '+e.message;nameFin()})});
 function toast(s){const t=$('toast');t.textContent=s;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>{t.hidden=true},3200)}
 function withLoad(b,fn){return async(...a)=>{if(b.classList.contains('ld'))return;b.classList.add('ld');b.disabled=true;try{return await fn(...a)}finally{b.classList.remove('ld');b.disabled=false}}}
 let wl=null;async function setWake(on){try{if(on){if(!wl&&navigator.wakeLock){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}else if(wl){const w=wl;wl=null;await w.release()}}catch(e){wl=null}}
@@ -336,11 +353,11 @@ orb.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||lk)return;tou
 orb.addEventListener('pointermove',e=>{if(!lk||lk.id!==e.pointerId)return;turnCam(e.clientX-lk.x,e.clientY-lk.y);lk.x=e.clientX;lk.y=e.clientY});
 const oEnd=e=>{if(lk&&lk.id===e.pointerId)lk=null};orb.addEventListener('pointerup',oEnd);orb.addEventListener('pointercancel',oEnd);
 let mOrb=false,mx0=0,my0=0;
-addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.target.closest('.card,.btn,button,input,select,#tbar'))return;if(e.button===0)fireH=true;if(e.button===2){mOrb=true;mx0=e.clientX;my0=e.clientY}});
+addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.target.closest('.card,.btn,button,input,select,#tbar,.chatbox'))return;if(e.button===0)fireH=true;if(e.button===2){mOrb=true;mx0=e.clientX;my0=e.clientY}});
 addEventListener('pointerup',e=>{if(e.pointerType!=='mouse')return;if(e.button===0)fireH=false;if(e.button===2)mOrb=false});
 addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&mOrb){turnCam(e.clientX-mx0,e.clientY-my0);mx0=e.clientX;my0=e.clientY}});
 addEventListener('contextmenu',e=>e.preventDefault());
-addEventListener('wheel',e=>{if(e.target.closest&&e.target.closest('.card'))return;camDist=clamp(camDist*(1+e.deltaY*.001),14,60)},{passive:true});
+addEventListener('wheel',e=>{if(e.target.closest&&e.target.closest('.card,.chatbox'))return;camDist=clamp(camDist*(1+e.deltaY*.001),14,60)},{passive:true});
 function hold(id,dn,up){const el=$(id);el.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();touch=true;try{el.setPointerCapture(e.pointerId)}catch(_){}dn()});['pointerup','pointercancel'].forEach(v=>el.addEventListener(v,()=>{if(up)up()}))}
 hold('bf',()=>{fireH=true},()=>{fireH=false});hold('bd',dash);hold('bs',overdrive);
 /* ================= actions ================= */
@@ -415,7 +432,7 @@ function endCampaign(win){if(!S||!S.run)return;S.run=0;phase='ending';const rid=
 if(win){sfx('win');slow=2;for(let i=0;i<12;i++)setTimeout(()=>{if(rid!==runId||!me)return;const q=me.o.position;burst(q.x+R(-8,8),R(6,14),q.z+R(-8,8),[0x22ffff,0xff44aa,0xffee66,0x44ff88][i%4],30,16);fx(q.x+R(-8,8),R(6,12),q.z+R(-8,8),0xffffff,5,.5)},i*250)}
 setTimeout(()=>{if(rid===runId)campEnd(win)},win?3500:1300)}
 function campEnd(win){phase='over';const reward=win?8:Math.max(0,S.wave-1),sc=S.sc,wv=S.wave,kl=S.k;
-if(recordOnce('camp-'+Date.now())){STATS.played++;STATS.kills+=kl;if(win)STATS.wins++;else STATS.losses++;if(sc>STATS.best)STATS.best=sc;addCoins(reward);saveStats()}
+if(recordOnce('camp-'+Date.now())){STATS.played++;STATS.kills+=kl;if(win)STATS.wins++;else STATS.losses++;if(sc>STATS.best)STATS.best=sc;xp+=10*kl+(win?50:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats()}
 endScreen(win?'CITY LIBERATED!':'MECH DESTROYED','MISSION OVER',['Score '+sc,'Wave '+wv+' of 4','Hostiles destroyed '+kl,'Best score '+STATS.best],reward?'+'+reward+(reward>1?' coins':' coin'):'No coins this time')}
 /* ================= online arena ================= */
 function mkRemote(id,v){const col=v.col!=null?v.col:0xff4455,m=mech(col,1,false,v.ar),o=m.root;dyn.add(o);const l=label(v.name||'Pilot',col);l.position.y=6.4;o.add(l);
@@ -475,7 +492,7 @@ if(phase==='play'&&me&&!me.dead&&Math.hypot(c.x-me.o.position.x,c.z-me.o.positio
 sendT-=dt;if(ref&&me&&phase!=='over'&&sendT<=0){sendT=.066;const p=me.o.position;ref.child('players/'+myId).update({x:+p.x.toFixed(2),z:+p.z.toFixed(2),h:+me.yaw.toFixed(2),a:+me.aim.toFixed(2),hp:Math.round(me.hp),k:me.kills,d:me.deaths,dead:!!me.dead}).catch(()=>{})}}
 function finishOnline(){if(phase==='over'||!me)return;phase='over';const arr=[me].concat(Object.values(RP)).sort((a,b)=>(b.kills-a.kills)||(a.deaths-b.deaths)),top=arr[0].kills,tied=arr.filter(p=>p.kills===top).length>1,mine=me.kills===top,res=mine?(tied?'draw':'win'):'loss';
 const reward=res==='win'?10+Math.floor(me.kills/3):res==='draw'?4:1,rid='on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;let rtxt='';
-if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win')STATS.wins++;else if(res==='loss')STATS.losses++;else STATS.draws++;addCoins(reward);saveStats();rtxt='+'+reward+(reward>1?' coins':' coin');submitLeader(res,me.kills).catch(()=>{})}
+if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win'){STATS.wins++;STATS.ow++}else if(res==='loss')STATS.losses++;else STATS.draws++;xp+=10*me.kills+(res==='win'?50:res==='draw'?20:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats();rtxt='+'+reward+(reward>1?' coins':' coin');submitLeader(res,me.kills).catch(()=>{})}
 if(ref)ref.child('status').transaction(c=>c==='live'?'finished':undefined).catch(()=>{});
 endScreen(res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED','MATCH OVER',arr.map((p,i)=>(i+1)+'. '+p.name+' — '+p.kills+' kills'),rtxt)}
 async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];clearRun();resetChat();const r=ref;ref=null;R_=null;phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false);
@@ -485,18 +502,33 @@ if(!ref)return;const r=await ref.transaction(c=>{if(!c||c.status!=='finished')re
 async function submitLeader(res,kills){if(!db)return;await db.ref('mechLeaderboard/'+myId).transaction(c=>{c=c||{id:myId,name:myName,wins:0,losses:0,draws:0,played:0,kills:0};c.name=myName;c.played=(c.played||0)+1;c.kills=(c.kills||0)+kills;const k=res==='win'?'wins':res==='loss'?'losses':'draws';c[k]=(c[k]||0)+1;c.updatedAt=firebase.database.ServerValue.TIMESTAMP;return c})}
 function loadLeader(){if(!db)return;db.ref('mechLeaderboard').orderByChild('wins').limitToLast(20).on('value',s=>{const a=[];s.forEach(x=>{a.push(x.val())});a.sort((p,q)=>(q.wins||0)-(p.wins||0)||(q.kills||0)-(p.kills||0));const r=$('lead');r.replaceChildren();if(!a.length){const e=document.createElement('div');e.className='li';e.textContent='No online results yet';r.append(e);return}a.slice(0,10).forEach((x,i)=>{const e=document.createElement('div');e.className='li';const n=document.createElement('span');n.textContent=(i+1)+'. '+String(x.name||'Pilot');const w=document.createElement('b');w.textContent=(x.wins||0)+' W · '+(x.kills||0)+' K';e.append(n,w);r.append(e)})},e=>{$('lead').textContent='Leaderboard unavailable: '+e.message})}
 loadLeader();
-/* room chat (lobby) */
-const rMsgs=new Set();let lastRC=0;
-function addRoomMsg(m){if(!m||typeof m.text!=='string'||!m.id||rMsgs.has(m.id))return;rMsgs.add(m.id);const L=$('lobLog'),el=document.createElement('div');el.className='msg';const b=document.createElement('b');b.textContent=String(m.name||'Pilot').slice(0,24)+' ';const t=document.createElement('span');t.textContent=String(m.text).slice(0,180);el.append(b,t);L.append(el);L.scrollTop=L.scrollHeight;while(L.children.length>60)L.firstChild.remove()}
-function resetChat(){rMsgs.clear();$('lobLog').replaceChildren()}
-$('lobForm').onsubmit=e=>{e.preventDefault();const inp=$('lobText'),text=inp.value.trim();if(!text)return;if(!ref||!connected)return toast('Chat needs a connection.');const n=Date.now();if(n-lastRC<1000)return toast('Slow down a little.');lastRC=n;const r=ref.child('chat').push();r.set({id:r.key,pid:myId,name:myName,text:text.slice(0,180),time:TS()}).catch(er=>toast('Chat send failed: '+er.message));inp.value=''};
+/* ---------- public lobby chat (Stats screen, messages vanish after 5 min) ---------- */
+const CHAT_TTL=300000;let lastChat=0;
+function addChat(m){if(!m||typeof m.text!=='string')return;const id=m.id||'',ts=Number(m.time);if(ts&&ts<=now()-CHAT_TTL)return;if(id&&document.querySelector('[data-chat-id="'+CSS.escape(id)+'"]'))return;const el=document.createElement('div');el.className='msg';if(id)el.dataset.chatId=id;if(ts)el.dataset.ts=String(ts);const b=document.createElement('b');b.textContent=(m.ic?m.ic+' ':'')+String(m.name||'Pilot').slice(0,24)+' ';const t=document.createElement('span');t.textContent=String(m.text).slice(0,180);const tm=document.createElement('time');tm.textContent=ts?new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';el.append(b,t,tm);const L=$('chatLog');L.append(el);L.scrollTop=L.scrollHeight;while(L.children.length>60)L.firstChild.remove()}
+$('chatForm').onsubmit=async e=>{e.preventDefault();const text=$('chatText').value.trim();if(!text)return;if(!db||!connected)return toast('Chat needs a connection.');const n=Date.now();if(n-lastChat<1800)return toast('Please wait before sending another message.');lastChat=n;try{const r=db.ref('mechLobbyChat').push();await r.set({id:r.key,playerId:myId,name:myName,ic:pIcon(),text:text.slice(0,180),time:TS()});$('chatText').value=''}catch(err){toast('Chat send failed: '+err.message)}};
+function startChat(){if(!db)return;const r=db.ref('mechLobbyChat').limitToLast(40);r.on('child_added',s=>addChat(s.val()),e=>{$('chatHint').textContent='Chat unavailable: '+e.message});r.on('child_removed',s=>{const el=document.querySelector('[data-chat-id="'+CSS.escape(s.key)+'"]');if(el)el.remove()});$('chatHint').textContent='Public chat. Be kind.'}
+async function purgeChat(){if(!db||!connected)return;try{const cut=now()-CHAT_TTL,s=await db.ref('mechLobbyChat').orderByKey().limitToFirst(50).once('value'),up={};s.forEach(x=>{const t=Number(x.val()&&x.val().time);if(!t||t<=cut)up[x.key]=null});if(Object.keys(up).length)await db.ref('mechLobbyChat').update(up)}catch(e){}}
+if(db){startChat();setTimeout(purgeChat,4000);setInterval(()=>{const cut=now()-CHAT_TTL;document.querySelectorAll('#chatLog .msg[data-ts]').forEach(el=>{if(Number(el.dataset.ts)<=cut)el.remove()});purgeChat()},30000)}else $('chatHint').textContent='Chat needs a connection.';
+/* ---------- room chat: lobby, during the match, and after it ---------- */
+const rMsgs=new Set();let unread=0,chatOpen=false,lastRC=0;
+function rcLine(m){const el=document.createElement('div');el.className='msg';const b=document.createElement('b');b.textContent=(m.ic?m.ic+' ':'')+String(m.name||'Pilot').slice(0,24)+' ';const t=document.createElement('span');t.textContent=String(m.text).slice(0,180);el.append(b,t);return el}
+function updChatBtn(){$('chatBtn').textContent=unread?'CHAT ('+unread+')':'CHAT'}
+function addRoomMsg(m){if(!m||typeof m.text!=='string'||!m.id||rMsgs.has(m.id))return;rMsgs.add(m.id);
+['lobLog','mLog','endLog'].forEach(i=>{const L=$(i);L.append(rcLine(m));L.scrollTop=L.scrollHeight;while(L.children.length>60)L.firstChild.remove()});
+if(phase==='count'||phase==='play'||phase==='ending'){if(chatOpen)return;if(m.pid!==myId){unread++;updChatBtn()}const f=$('feed'),e=rcLine(m);f.append(e);while(f.children.length>3)f.firstChild.remove();setTimeout(()=>e.remove(),7000)}}
+function openChat(on){chatOpen=on;$('mChat').hidden=!on;if(on){unread=0;updChatBtn();$('feed').replaceChildren();fireH=false;for(const k in keys)keys[k]=0;stick.on=false;hide('jb');const L=$('mLog');L.scrollTop=L.scrollHeight;$('mText').focus()}else $('mText').blur()}
+function resetChat(){rMsgs.clear();unread=0;['lobLog','mLog','endLog'].forEach(i=>$(i).replaceChildren());$('feed').replaceChildren();openChat(false);updChatBtn()}
+function sendRoom(inp){const text=inp.value.trim();if(!text)return;if(!ref||!connected)return toast('Chat needs a connection.');const n=Date.now();if(n-lastRC<1000)return toast('Slow down a little.');lastRC=n;const r=ref.child('chat').push();r.set({id:r.key,pid:myId,name:myName,ic:pIcon(),text:text.slice(0,180),time:TS()}).catch(er=>toast('Chat send failed: '+er.message));inp.value=''}
+$('chatBtn').onclick=()=>openChat(!chatOpen);
+{const q=document.createElement('div');q.className='seg';['GG','Nice!','Help!','👍','😂'].forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>sendRoom({value:t});q.append(b)});$('mChat').insertBefore(q,$('mLog'))}
+[['lobForm','lobText'],['mForm','mText'],['endForm','endText']].forEach(([f,t])=>$(f).onsubmit=e=>{e.preventDefault();sendRoom($(t))});
 /* ================= UI plumbing ================= */
 const CARDS=['home','cCamp','cCreate','cJoin','lobby','setC','shopC','socC'];
 function showCard(id){CARDS.forEach(c=>{$(c).hidden=c!==id});if(id!=='cJoin')watchRooms(false)}
 function lockLand(){if(!TOUCHCAP)return;try{const so=screen.orientation,de=document.documentElement,l=()=>{if(so&&so.lock)so.lock('landscape').catch(()=>{})};if(!document.fullscreenElement&&de.requestFullscreen)de.requestFullscreen().then(l).catch(l);else l()}catch(e){}}
-function uiPlay(){hide('menu');hide('end');hide('pauseOv');show('hud');show('tbar');$('pauseBtn').hidden=mode!=='camp';show('bf');show('bd');show('bs');if(TOUCHCAP){show('zone');show('orbit')}else{$('bf').hidden=$('bd').hidden=$('bs').hidden=true}showM&&(showM.root.visible=false);setWake(true);ambLast=''}
-function hideGameUI(){['hud','tbar','zone','orbit','jb','bf','bd','bs','bb','rot'].forEach(hide);$('feed').replaceChildren();if(showM)showM.root.visible=true}
-function endScreen(title,kick,lines,reward){hideGameUI();phase='over';$('eK').textContent=kick;$('eT').textContent=title;const l=$('eL');l.replaceChildren();lines.forEach(t=>{const e=document.createElement('div');e.className='tag';e.textContent=t;l.append(e)});$('eR').textContent=reward||'';if(showM)showM.root.visible=false;show('end');setWake(false)}
+function uiPlay(){hide('menu');hide('end');hide('pauseOv');show('hud');show('tbar');$('pauseBtn').hidden=mode!=='camp';$('chatBtn').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);show('bf');show('bd');show('bs');if(TOUCHCAP){show('zone');show('orbit')}else{$('bf').hidden=$('bd').hidden=$('bs').hidden=true}showM&&(showM.root.visible=false);setWake(true);ambLast=''}
+function hideGameUI(){openChat(false);['hud','tbar','zone','orbit','jb','bf','bd','bs','bb','rot'].forEach(hide);$('feed').replaceChildren();if(showM)showM.root.visible=true}
+function endScreen(title,kick,lines,reward){hideGameUI();phase='over';$('eK').textContent=kick;$('eT').textContent=title;const l=$('eL');l.replaceChildren();lines.forEach(t=>{const e=document.createElement('div');e.className='tag';e.textContent=t;l.append(e)});$('eR').textContent=reward||'';$('endChat').hidden=mode!=='online';if(showM)showM.root.visible=false;show('end');setWake(false)}
 function toMenu(){if(mode==='online'&&ref)return exitRoom(true);clearRun();phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false)}
 $('leave').onclick=withLoad($('leave'),()=>toMenu());$('eLeave').onclick=withLoad($('eLeave'),()=>toMenu());$('lv2').onclick=withLoad($('lv2'),()=>exitRoom(true));$('quit').onclick=withLoad($('quit'),()=>toMenu());
 function doPause(on){if(on===paused)return;if(on){if(mode!=='camp'||phase!=='play')return;paused=true;show('pauseOv');fireH=false;stick.on=false;hide('jb');try{ac&&ac.suspend()}catch(e){}}else{paused=false;hide('pauseOv');last=performance.now();try{ac&&ac.resume()}catch(e){}}}
