@@ -169,7 +169,7 @@ input::placeholder{color:rgba(255,241,210,.4)}
 
   <div class="card" id="shopC" hidden>
     <p class="kick">SHOP</p>
-    <p id="coinLine"></p>
+    <p id="coinLine"></p><p id="saveInd" hidden style="font-size:13px;opacity:.85;margin:4px 0"><span class="spin"></span>Saving…</p>
     <div class="seg"><button id="tArm" aria-pressed="true">Armor</button><button id="tCol" aria-pressed="false">Paint</button><button id="tGr" aria-pressed="false">Grenades</button></div>
     <p id="shopMsg" style="font-size:13px;min-height:1.3em;margin:6px 0 0"></p>
     <div id="shopList"></div>
@@ -180,7 +180,7 @@ input::placeholder{color:rgba(255,241,210,.4)}
     <p class="kick">YOUR STATS</p>
     <div class="stg"><div><b id="sP">0</b><span>Played</span></div><div><b id="sW">0</b><span>Wins</span></div><div><b id="sL">0</b><span>Losses</span></div><div><b id="sD">0</b><span>Draws</span></div><div><b id="sK">0</b><span>Kills</span></div></div>
     <p class="kick" style="margin-top:14px">LEADERBOARD</p>
-    <div id="lead"><div class="li">Loading…</div></div>
+    <div id="lead"><div class="li"><span class="spin"></span>Loading…</div></div>
     <p class="kick" style="margin-top:14px">LOBBY CHAT <span style="opacity:.6;letter-spacing:.05em">(messages vanish after 5 min)</span></p>
     <div id="chatLog"></div>
     <form id="chatForm"><input id="chatText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form>
@@ -216,10 +216,11 @@ const myCol=()=>(COLS.find(c=>c[0]===SHOP.col)||COLS[0])[2];
 const muted=()=>SET.snd==='0';
 let useArm=null;const armLv=()=>useArm==null?SHOP.arm:useArm;const dmgMul=()=>1-.03*armLv(),rlBase=()=>RL*(1-.02*armLv());
 let shopRef=null,shopOff=null,shopLoaded=false,pendCoins=0,mig=false;
-function updShop(){$('coinN').textContent=shopLoaded?SHOP.coins:'…';if(!$('shopC').hidden)renderShop()}
+function updShop(){const cn=$('coinN');cn.classList.toggle('sk',!shopLoaded);cn.textContent=shopLoaded?SHOP.coins:'Loading';if(!$('shopC').hidden)renderShop()}
 function applyShop(c,t){Object.assign(SHOP,{coins:Math.max(0,Math.floor(+c||0)),arm:clamp((+(t&&t.arm))|0,0,10),col:(t&&t.col)||'olive',gren:Math.max(0,Math.floor(+(t&&t.gren)||0)),own:Object.assign({olive:1},(t&&t.own)||{})})}
 /* coins, unlocked tanks, paint and grenades are saved in Firestore at wallets/{uid}/game/tank (under the wallet, but never inside the VSC balance itself) */
-function pushShop(){if(!shopLoaded||!shopRef)return;shopRef.set({coins:SHOP.coins,arm:SHOP.arm,col:SHOP.col,own:SHOP.own,gren:SHOP.gren,updated:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>toast('Could not save coins: '+e.message))}
+let saving=0;function updSave(){const e=$('saveInd');if(e)e.hidden=!saving;document.querySelectorAll('#shopList button').forEach(b=>b.classList.toggle('ld',saving>0))}
+function pushShop(){if(!shopLoaded||!shopRef)return;saving++;updSave();shopRef.set({coins:SHOP.coins,arm:SHOP.arm,col:SHOP.col,own:SHOP.own,gren:SHOP.gren,updated:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>toast('Could not save coins: '+e.message)).finally(()=>{saving--;updSave()})}
 function saveShop(){updShop();pushShop()}
 function loadShop(uid){if(!fsdb)return;if(shopOff){shopOff();shopOff=null}shopLoaded=false;mig=false;const r=fsdb.collection('wallets').doc(uid).collection('game').doc('tank');shopRef=r;
 shopOff=r.onSnapshot(async snap=>{const v=snap.exists?snap.data():null;
@@ -441,14 +442,14 @@ $('oSet').onclick=()=>showCard('setC');$('oShop').onclick=()=>{shopTab='arm';ren
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>showCard('home'));
 /* ---------- shop ---------- */
 let shopTab='arm';
-function renderShop(msg){if(!shopLoaded){$('coinLine').textContent='Loading your coins… (needs a connection)';$('shopMsg').textContent='';$('shopList').replaceChildren();return}$('coinLine').textContent='Coins: '+SHOP.coins+'. Coins are hard to earn: win online matches (the big payout) or beat the AI (1 coin per win).';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',shopTab==='arm');$('tCol').setAttribute('aria-pressed',shopTab==='col');$('tGr').setAttribute('aria-pressed',shopTab==='gr');const L=$('shopList');L.replaceChildren();
+function renderShop(msg){if(!shopLoaded){$('coinLine').replaceChildren(loadingEl('Loading your coins… (needs a connection)'));$('shopMsg').textContent='';$('shopList').replaceChildren();return}$('coinLine').textContent='Coins: '+SHOP.coins+'. Coins are hard to earn: win online matches (the big payout) or beat the AI (1 coin per win).';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',shopTab==='arm');$('tCol').setAttribute('aria-pressed',shopTab==='col');$('tGr').setAttribute('aria-pressed',shopTab==='gr');const L=$('shopList');L.replaceChildren();
 if(shopTab==='arm'){for(let n=0;n<=10;n++){const own=n<=SHOP.arm,cur=n===SHOP.arm,next=n===SHOP.arm+1,d=document.createElement('div');d.className='shr';d.style.opacity=own||next?1:.5;const s=document.createElement('span'),t=document.createElement('b');t.textContent=TN[n]+' (Lv '+n+')';const sm=document.createElement('small');sm.textContent=(n*3)+'% less damage · '+(n*2)+'% faster reload · bigger tank';s.append(t,document.createElement('br'),sm);
 const b=document.createElement('button');b.className='b';b.textContent=cur?'In use':own?'Owned':'Buy '+ARMC[n];if(next)b.style.borderColor='var(--accent)';
 b.onclick=()=>{if(own)return;if(!next)return renderShop('Buy '+TN[SHOP.arm+1]+' first.');if(SHOP.coins<ARMC[n])return renderShop('Insufficient coins. '+TN[n]+' costs '+ARMC[n]+'.');SHOP.coins-=ARMC[n];SHOP.arm=n;saveShop();sfx('pick');renderShop('Upgraded to '+TN[n]+'.')};d.append(s,b);L.append(d)}}
 else if(shopTab==='gr'){$('shopMsg').textContent='You have '+SHOP.gren+' grenades. '+GP+' coins each. Big blast: up to 70 damage near the centre, less at the edge. Hold G or the GRENADE button to pick the distance, release to throw.';
 [[1,'Buy 1'],[5,'Buy 5'],[0,'Buy max']].forEach(([q,l])=>{const n=q||Math.floor(SHOP.coins/GP),d=document.createElement('div');d.className='shr';const sp=document.createElement('b');sp.textContent=l+' ('+n*GP+' coins)';const b=document.createElement('button');b.className='b';b.textContent='Buy';b.onclick=()=>{if(n<1||SHOP.coins<n*GP)return renderShop('Insufficient coins. A grenade costs '+GP+'.');SHOP.coins-=n*GP;SHOP.gren+=n;saveShop();sfx('pick');renderShop()};d.append(sp,b);L.append(d)})}
 else{const g=document.createElement('div');g.className='pg';COLS.forEach(c=>{const own=SHOP.own[c[0]],eq=SHOP.col===c[0],b=document.createElement('button'),i=document.createElement('i');i.style.background=hx(c[2]);if(eq)i.style.outline='3px solid #fff1d2';b.append(i,document.createTextNode(eq?'ON':own?'✓':c[3]));
-b.onclick=()=>{if(own){SHOP.col=c[0]}else if(SHOP.coins>=c[3]){SHOP.coins-=c[3];SHOP.own[c[0]]=1;SHOP.col=c[0];sfx('pick')}else return renderShop('Insufficient coins. '+c[1]+' costs '+c[3]+'.');saveShop();renderShop()};g.append(b)});L.append(g)}}
+b.onclick=()=>{if(own){SHOP.col=c[0]}else if(SHOP.coins>=c[3]){SHOP.coins-=c[3];SHOP.own[c[0]]=1;SHOP.col=c[0];sfx('pick')}else return renderShop('Insufficient coins. '+c[1]+' costs '+c[3]+'.');saveShop();renderShop()};g.append(b)});L.append(g)}updSave()}
 $('tArm').onclick=()=>{shopTab='arm';renderShop()};$('tCol').onclick=()=>{shopTab='col';renderShop()};$('tGr').onclick=()=>{shopTab='gr';renderShop()};
 /* ---------- rooms ---------- */
 async function hashPw(s){s=String(s||'').trim();if(!s)return '';try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('nxTank|'+s));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}catch{let h=5381;for(const ch of 'nxTank|'+s)h=(h*33^ch.charCodeAt(0))>>>0;return 'h'+h.toString(16)}}
@@ -554,7 +555,7 @@ function lockLand(){if(!TOUCHCAP)return;try{const so=screen.orientation,de=docum
 let rotFn=null;
 function landFirst(fn){if(TOUCHCAP&&innerHeight>innerWidth){rotFn=fn;show('rotPop');$('rotOk').focus();return}lockLand();fn()}
 $('rotOk').onclick=()=>{hide('rotPop');lockLand();const f=rotFn;rotFn=null;if(f)f()};
-$('bots').onclick=()=>landFirst(startBots);
+$('bots').onclick=()=>{const b=$('bots');if(b.classList.contains('ld'))return;b.classList.add('ld');setTimeout(()=>{try{landFirst(startBots)}finally{b.classList.remove('ld')}},60)};
 function hurtBot(q,by,d){q.hp-=d||DMG;if(q.hp>0)return;q.hp=0;q.dead=true;q.deaths++;q.resp=now()+3000;q.t.g.visible=false;explode(q.x,q.z,true);if(P[by])P[by].kills++;if(by===myId){say('KILL!');sfx('pick')}}
 function botAI(b,dt){
 if(b.dead){if(now()>=b.resp){const s=SP(Math.floor(Math.random()*4));b.x=s[0];b.z=s[1];b.hp=100;b.dead=false;b.t.g.visible=true}return}
@@ -674,5 +675,45 @@ addEventListener('beforeunload',()=>{if(ref)ref.child('players/'+myId).remove()}
 ['pointerup','keydown'].forEach(ev=>addEventListener(ev,()=>{if(AC&&AC.state==='suspended'&&!paused)AC.resume().catch(()=>{})},{passive:true,capture:true}));
 applySet();saveShop();saveStats();
 requestAnimationFrame(frame);
+/* NEXORA WAR - PHASE 1 PATCH: lock-on reticle, distance, hit marker, damage direction, kill feed, 2s spawn protection.
+   PASTE THIS BLOCK right before the final line  })();  at the end of your <script>. Nothing else changes. */
+let protUntil=0,wasDead=false,started=false,lastFire=-1e4,hitT=-1e4,lockId=null;const dmgIn=[],T={};
+const oc=document.createElement('canvas');oc.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:3';document.body.append(oc);const ox=oc.getContext('2d');
+const kf=document.createElement('div');kf.style.cssText='position:fixed;right:max(14px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 170px);width:min(46vw,270px);z-index:4;pointer-events:none;display:flex;flex-direction:column;gap:4px;align-items:flex-end';document.body.append(kf);
+const v3=new THREE.Vector3(),proj=(x,y,z)=>{v3.set(x,y,z).project(cam);return v3.z>1?null:[(v3.x+1)/2*oc.width,(1-v3.y)/2*oc.height]};
+/* firing ends spawn protection */
+const fire0=fire;fire=function(){const will=me&&!me.dead&&me.rl<=0&&phase==='play';fire0();if(will){protUntil=0;lastFire=performance.now()}};
+/* protection blocks damage; remember where hits came from */
+const hurt0=hurt;hurt=function(by,d){if(now()<protUntil)return;const h=me.hp;hurt0(by,d);if(me.hp<h&&P[by]&&by!==myId)dmgIn.push({x:P[by].x,z:P[by].z,t:performance.now()})};
+function feedKill(v){let k=null;const pn=performance.now();for(const id in P){const s=T[id];if(P[id]!==v&&s&&pn-s.kt<2500)k=P[id]}
+const d=document.createElement('div');d.style.cssText='padding:5px 9px;border-radius:5px;background:rgba(26,17,10,.82);font-size:14px;white-space:nowrap';
+const sp=(t,c,b)=>{const s=document.createElement(b?'b':'span');s.textContent=t;if(c!=null)s.style.color=hx(c);return s};
+const sec=Math.max(0,Math.floor((now()-startT)/1000)),tm=sp(' '+Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'));tm.style.opacity='.55';tm.style.fontSize='11px';
+if(k)d.append(sp(k.name,k.col,1),sp(' \u{1F680} '),sp(v.name,v.col,1),tm);else d.append(sp(v.name,v.col,1),sp(' was destroyed'),tm);
+kf.append(d);while(kf.children.length>5)kf.firstChild.remove();setTimeout(()=>d.remove(),6000)}
+function track(){const tn=now(),pn=performance.now(),on=phase==='play'||phase==='count'||phase==='ending';kf.style.display=on?'':'none';if(!me||!on){wasDead=false;started=false;return}
+if(me.dead)wasDead=true;else if(wasDead){wasDead=false;protUntil=tn+2000}
+if(phase==='play'){if(!started){started=true;protUntil=tn+2000}}else started=false;
+if(tn<protUntil&&!me.dead){me.t.sm.visible=true;shM.opacity=.2+.14*Math.sin(pn/70)}else shM.opacity=.22;
+for(const id in P){const e=P[id],s=T[id]||(T[id]={hp:e.hp,k:e.kills,d:!!e.dead,kt:0});
+if(e.kills>s.k)s.kt=pn;s.k=e.kills;
+if(e!==me&&e.hp<s.hp-.5&&pn-lastFire<1500)hitT=pn;
+s.hp=e.hp;if(e.dead&&!s.d)setTimeout(()=>feedKill(e),700);s.d=!!e.dead}}
+function draw(){if(oc.width!==innerWidth||oc.height!==innerHeight){oc.width=innerWidth;oc.height=innerHeight}const W=oc.width,H=oc.height;ox.clearRect(0,0,W,H);if(!me||(phase!=='play'&&phase!=='count'))return;
+const pn=performance.now(),a=me.aim,sa=Math.sin(a),ca=Math.cos(a),cx=W/2,cy=H/2;
+if(!me.dead){let lk=null,ld=1e9;for(const id in P){const e=P[id];if(e===me||e.dead)continue;const dx=e.x-me.x,dz=e.z-me.z,d=Math.hypot(dx,dz);if(Math.abs(angDiff(Math.atan2(dx,dz),a))<Math.atan2(2.8,d)+.03&&d<ld){ld=d;lk=e}}
+if((lk?lk.id:null)!==lockId){lockId=lk?lk.id:null;if(lk)sfx('tick',.5)}
+const R=lk?ld:42,m=proj(me.x+sa*5,1.8,me.z+ca*5),p=proj(me.x+sa*R,1.5,me.z+ca*R);
+if(m&&p){const c=lk?'#d2554a':'#e6d9bc';ox.lineWidth=1.5;ox.strokeStyle=c;ox.globalAlpha=.3;ox.setLineDash([8,8]);ox.beginPath();ox.moveTo(m[0],m[1]);ox.lineTo(p[0],p[1]);ox.stroke();ox.setLineDash([]);ox.globalAlpha=1;
+ox.shadowColor='rgba(0,0,0,.7)';ox.shadowBlur=4;ox.globalAlpha=.7;ox.lineWidth=1.8;ox.beginPath();ox.arc(p[0],p[1],9,0,TAU);ox.moveTo(p[0]-15,p[1]);ox.lineTo(p[0]-6,p[1]);ox.moveTo(p[0]+6,p[1]);ox.lineTo(p[0]+15,p[1]);ox.moveTo(p[0],p[1]-15);ox.lineTo(p[0],p[1]-6);ox.moveTo(p[0],p[1]+6);ox.lineTo(p[0],p[1]+15);ox.stroke();ox.globalAlpha=1;
+const ht=pn-hitT;if(ht<260){ox.strokeStyle='rgba(255,255,255,'+(1-ht/260)+')';ox.lineWidth=3;ox.beginPath();for(const s of[[-1,-1],[1,-1],[-1,1],[1,1]]){ox.moveTo(p[0]+s[0]*8,p[1]+s[1]*8);ox.lineTo(p[0]+s[0]*(16+ht/20),p[1]+s[1]*(16+ht/20))}ox.stroke()}
+ox.shadowBlur=0}
+if(lk){const q=proj(lk.x,1.6,lk.z);if(q){const s=20;ox.globalAlpha=.6;ox.strokeStyle='#d2554a';ox.lineWidth=2;for(const sx of[-1,1])for(const sy of[-1,1]){ox.beginPath();ox.moveTo(q[0]+sx*s,q[1]+sy*(s-7));ox.lineTo(q[0]+sx*s,q[1]+sy*s);ox.lineTo(q[0]+sx*(s-7),q[1]+sy*s);ox.stroke()}
+ox.fillStyle='#d2554a';ox.font='700 12px Rajdhani,sans-serif';ox.textAlign='center';ox.fillText(Math.round(ld)+' m',q[0],q[1]+s+14);ox.globalAlpha=1}}}
+const f=Math.atan2(tgt.x-cam.position.x,tgt.z-cam.position.z),rad=Math.min(W,H)*.3;
+for(let i=dmgIn.length-1;i>=0;i--){const q=dmgIn[i],age=pn-q.t;if(age>1400){dmgIn.splice(i,1);continue}const rel=Math.atan2(q.x-me.x,q.z-me.z)-f,ang=Math.atan2(-Math.cos(rel),-Math.sin(rel));ox.strokeStyle='rgba(255,60,40,'+(1-age/1400)*.9+')';ox.lineWidth=12;ox.lineCap='round';ox.beginPath();ox.arc(cx,cy,rad,ang-.3,ang+.3);ox.stroke()}
+const left=protUntil-now();if(left>0&&!me.dead){ox.fillStyle='#7fd0ff';ox.font='700 18px Rajdhani,sans-serif';ox.textAlign='center';ox.fillText('SPAWN PROTECTION '+(left/1000).toFixed(1)+'s',cx,H*.36)}}
+const r0=rd.render.bind(rd);rd.render=function(s,c){track();r0(s,c);draw()};
+
 })();
 </script></body></html>
