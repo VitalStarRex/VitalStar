@@ -89,7 +89,7 @@ body:before{animation:none!important;will-change:auto}
 <header><div class="logo"><span class="star">✦</span> VITALSTAR</div><div class="actions"><button class="btn" id="musicToggle" type="button">♫ Music</button><button class="btn" id="themeToggle" type="button">☀ Theme</button></div></header>
 <main>
 <section class="hero"><h1>VITALSTAR</h1><div class="hero-sub">GAMES</div><p>Connect, compete and shine!</p></section>
-<section class="panel"><div class="profile-line"><h2>👤 My Game Profile</h2><span class="muted"><span class="online-dot"></span><span id="playerName">Player</span></span></div><div class="stats"><div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div><div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div><div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div><div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div></div><div class="profile-line" style="margin-top:12px"><div id="gameAuthControls" class="actions"></div></div><p id="firebaseNotice" class="muted" role="status">Log in with your VitalStar account before playing or saving game activity.</p></section>
+<section class="panel"><div class="profile-line"><h2>👤 My Game Profile</h2><span class="muted"><span class="online-dot"></span><span id="playerName">Player</span><span id="playerLevel" class="muted" style="margin-left:8px;font-weight:800" hidden></span></span></div><div class="stats"><div class="stat"><strong id="gamesPlayed">0</strong><span>Games played</span></div><div class="stat"><strong id="wins">0</strong><span>Wins recorded</span></div><div class="stat"><strong id="coins">0</strong><span>Virtual coins</span></div><div class="stat"><strong id="bestScore">0</strong><span>Best score</span></div></div><div class="profile-line" style="margin-top:12px"><div id="gameAuthControls" class="actions"></div></div><p id="firebaseNotice" class="muted" role="status">Log in with your VitalStar account before playing or saving game activity.</p></section>
 <section class="games-section" id="gamesRows" aria-label="VitalStar games"></section><p class="muted" id="empty" hidden>No games available.</p>
 <audio id="backgroundMusic" src="./games-bg.mp3" loop preload="none"></audio>
 <script>
@@ -239,13 +239,22 @@ function renderGames(){}
 $('gamesRows').addEventListener('click',e=>{const a=e.target.closest('a.game');if(!a)return;e.preventDefault();const g=games.find(x=>x.file===a.getAttribute('href'));if(g)launchGame(g)});
 async function loadProfile(user){
  try{
-  const [userSnap,statsSnap,settingsSnap]=await Promise.all([
+  const [userSnap,statsSnap,settingsSnap,walletSnap]=await Promise.all([
    getDoc(doc(db,'users',user.uid)),getDoc(doc(db,'users',user.uid,'gameStats','summary')),
-   getDoc(doc(db,'users',user.uid,'gameProfile','settings'))
+   getDoc(doc(db,'users',user.uid,'gameProfile','settings')),
+   getDoc(doc(db,'wallets',user.uid,'game','profile')).catch(()=>null)
   ]);
   const u=userSnap.exists()?userSnap.data():{};
   playerName=String((settingsSnap.exists()&&settingsSnap.data().playerName)||u.fullName||u.username||user.displayName||user.email?.split('@')[0]||'Player').slice(0,30);
   if(statsSnap.exists())stats={played:Number(statsSnap.data().played)||0,wins:Number(statsSnap.data().wins)||0,coins:Number(statsSnap.data().coins)||0,best:Number(statsSnap.data().best)||0};
+  if(walletSnap&&walletSnap.exists()){
+   const w=walletSnap.data(),ws=w.stats||{};
+   // Nexora Tank saves its shared profile (coins, level, icon, stats) in wallets/{uid}/game/profile
+   if(typeof w.coins==='number')stats.coins=Math.max(0,Math.floor(w.coins));
+   stats.played=Math.max(stats.played,Number(ws.played)||0);
+   stats.wins=Math.max(stats.wins,Number(ws.wins)||0);
+   profileExtra={level:Number(w.level)||1,icon:typeof w.icon==='string'?w.icon:'🔰',xp:Number(w.xp)||0};
+  }
   updateProfile();
   notice('Signed in. Your profile and game activity are connected to Firebase.');
  }catch(e){notice('Signed in, but Firestore could not load. Check your Firestore rules: '+e.message,true)}
@@ -263,7 +272,8 @@ async function launchGame(game){
  }catch(e){notice('Game could not be opened because its activity was not saved. Check Firestore rules/network: '+e.message,true)}
  finally{saving=false}
 }
-function updateProfile(){$('playerName').textContent=currentUser?playerName:'Login required';$('gamesPlayed').textContent=stats.played;$('wins').textContent=stats.wins;$('coins').textContent=stats.coins;$('bestScore').textContent=stats.best}
+let profileExtra=null;
+function updateProfile(){const lv=$('playerLevel');if(lv){if(currentUser&&profileExtra){lv.hidden=false;lv.textContent=profileExtra.icon+' Lv '+profileExtra.level;lv.title=profileExtra.xp+' XP'}else lv.hidden=true}$('playerName').textContent=currentUser?playerName:'Login required';$('gamesPlayed').textContent=stats.played;$('wins').textContent=stats.wins;$('coins').textContent=stats.coins;$('bestScore').textContent=stats.best}
 $('themeToggle').addEventListener('click',()=>{document.body.classList.toggle('light');$('themeToggle').textContent=document.body.classList.contains('light')?'☾ Theme':'☀ Theme'});
 const music=$('backgroundMusic'),musicToggle=$('musicToggle');let musicOn=true;music.volume=.25;
 musicToggle.addEventListener('click',async()=>{if(musicOn){music.pause();musicOn=false;musicToggle.textContent='♫ Music: Off'}else{try{await music.play();musicOn=true;musicToggle.textContent='♫ Music: On'}catch{musicToggle.textContent='Tap to play music'}}});
@@ -272,7 +282,7 @@ setAuthUI(null);updateProfile();
 onAuthStateChanged(auth,async user=>{
  setAuthUI(user);
  if(!user){
-  stats={played:0,wins:0,coins:0,best:0};playerName='Player';updateProfile();
+  stats={played:0,wins:0,coins:0,best:0};playerName='Player';profileExtra=null;updateProfile();
   notice('Log in with your VitalStar account before playing or saving game activity.');return
  }
  notice('Signed in. Loading your game profile…');await loadProfile(user);renderGames();
