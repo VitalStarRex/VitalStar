@@ -67,6 +67,22 @@ html{-webkit-text-size-adjust:100%}body{-webkit-font-smoothing:antialiased;text-
 .btn,.filters button,.play{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}.btn:active,.play:active{transform:scale(.96)}
 body:before{inset:-200px 0 0 0;background-size:200px 200px,200px 200px,200px 200px;background-position:0 0,70px 90px,130px 40px;animation:starsT 14s linear infinite;will-change:transform}
 @keyframes starsT{to{transform:translateY(200px)}}
+
+/* ---- performance: no always-on animations; motion only on hover ---- */
+header{backdrop-filter:none;-webkit-backdrop-filter:none;background:#020817}
+body:before{animation:none!important;will-change:auto}
+.hero:before{animation:none!important}
+.game:before,.game.grad:before{animation:none!important}
+.game .emoji,.game .play:after{animation:none!important}
+.scene i{animation:none!important;display:none}
+@media(hover:hover){
+ .game:hover:before{animation:cardPan 14s ease-in-out infinite alternate!important}
+ .game:hover .emoji{animation:floaty 3.4s ease-in-out infinite!important}
+ .game:hover .play:after{animation:sweep 3.6s ease-in-out infinite!important}
+}
+.games{transform:none;scroll-behavior:auto}
+.row-block{content-visibility:auto;contain-intrinsic-size:auto 440px}
+.game{will-change:auto}
 </style>
 </head>
 <body>
@@ -82,21 +98,25 @@ body:before{inset:-200px 0 0 0;background-size:200px 200px,200px 200px,200px 200
  const U=(id)=>id,slug=n=>n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
  const C=(name,emoji,file,image,type)=>({name,emoji,file,image,type});
  const N=(name,emoji,hue,players)=>({name,emoji,file:slug(name)+'.html',image:null,hue,players,type:'free'});
+ const P=(g)=>({...g,players:'2 Players'});
  const M=(a)=>a.map(([n,e,h])=>N(n,e,h,'2-6 Players')),D=(a)=>a.map(([n,e,h])=>N(n,e,h,'2 Players'));
  const rows=[
   {title:'VitalStar Classics',fx:'sparks',items:[
-   {name:'Star Tank',emoji:'🪖',file:'star-tank.html',image:null,hue:30,type:'free',isNew:true,fx:'dust'},
-   C('Pong','🏓','pong.html','photo-1542751371-adc38448a05e','free'),C('Rock Paper Scissors','✊','rock-paper-scissors.html','photo-1511512578047-dfb367046420','free'),C('Car Race','🏎️','car-race.html','photo-1503376780353-7e6692767b70','free'),C('Tic-Tac-Toe','❎','tic-tac-toe.html','photo-1611996575749-79a3a250f948','free'),
-   C('Mech Warriors','🤖','mech-warriors.html','photo-1593508512255-86ab42a8e620','premium'),C('Blade Masters','⚔️','blade-masters.html','photo-1518709268805-4e9042af9f23','premium'),C('Dragon Fury','🐉','dragon-fury.html','photo-1518709268805-4e9042af9f23','premium'),C('Sky Combat','✈️','sky-combat.html','photo-1474302770737-173ee21bab63','premium'),
-   C('Neon Snake','🐍','neon-snake.html','photo-1519608487953-e999c86e7455','free'),C('Brick Breaker','🧱','brick-breaker.html','photo-1550745165-9bc0b252726f','free'),C('Galaxy Defender','🚀','galaxy-defender.html','photo-1446776811953-b23d57bd21aa','free'),C('Dino Jump','🦖','dino-jump.html','photo-1511497584788-876760111969','free'),
-   C('Neon Air Hockey','🏒','neon-air-hockey.html','photo-1519861531473-9200262188bf','free'),C('Memory Match','🧠','memory-match.html','photo-1511512578047-dfb367046420','free'),C('Neon Maze','🌀','neon-maze.html','photo-1519608487953-e999c86e7455','free'),C('Cyber Parkour','🏃','cyber-parkour.html','photo-1519608487953-e999c86e7455','premium'),
-   C('Neon Reflex','⚡','neon-reflex.html','photo-1511512578047-dfb367046420','free'),C('Bubble Bash','🫧','bubble-bash.html','photo-1534447677768-be436bb09401','free'),C('Tower Defense','🗼','tower-defense.html','photo-1518709268805-4e9042af9f23','premium'),C('Zombie Survival','🧟','zombie-survival.html','photo-1509248961158-e54f6934749c','premium')]},
-  {group:'Multiplayer',sub:'Play with 2 to 6 players',title:'Multiplayer Action',fx:'streaks',items:M([['Arena Blasters','🔫',8],['Laser Tag Rush','🔦',190],['Last Tank Standing','🛡️',95],['Ninja Showdown','🥷',265],['Space Dogfight','🛸',215]])},
-  {title:'Multiplayer Adventure',fx:'sparks',items:M([['Treasure Hunters','💰',42],['Jungle Quest','🌴',130],['Pirate Raiders','🏴‍☠️',205],['Lost Temple Run','🗿',28],['Ghost Mansion Escape','👻',280]])},
+   {name:'Nexora Tank',emoji:'🪖',file:'star-tank.html',image:null,hue:30,type:'premium',fx:'dust'},
+   C('Mech Warriors','🤖','mech-warriors.html','photo-1593508512255-86ab42a8e620','premium'),C('Dragon Fury','🐉','dragon-fury.html','photo-1518709268805-4e9042af9f23','premium'),C('Galaxy Defender','🚀','galaxy-defender.html','photo-1446776811953-b23d57bd21aa','premium'),
+   {name:'Ninja Showdown',emoji:'🥷',file:'ninja-showdown.html',image:null,hue:265,players:'2-6 Players',type:'premium'},
+   {name:'Arena Blasters',emoji:'🔫',file:'arena-blasters.html',image:null,hue:8,players:'2-6 Players',type:'premium'},
+   {name:'Last Tank Standing',emoji:'🛡️',file:'last-tank-standing.html',image:null,hue:95,players:'2-6 Players',type:'premium'},
+   {name:'Treasure Hunters',emoji:'💰',file:'treasure-hunters.html',image:null,hue:42,players:'2-6 Players',type:'premium'}]},
+  {group:'Multiplayer',sub:'Play with 2 to 6 players',title:'Multiplayer Action',fx:'streaks',items:M([['Laser Tag Rush','🔦',190],['Space Dogfight','🛸',215]])},
+  {title:'Multiplayer Adventure',fx:'sparks',items:M([['Jungle Quest','🌴',130],['Pirate Raiders','🏴‍☠️',205],['Lost Temple Run','🗿',28],['Ghost Mansion Escape','👻',280]])},
   {title:'Multiplayer Puzzle',fx:'blocks',items:M([['Color Clash','🎨',320],['Word Duel Party','🔤',175],['Bomb Pass','💣',350],['Sudoku Showdown','🔢',235],['Pipe Panic','🔧',155]])},
   {title:'Multiplayer Sports',fx:'balls',items:M([['Soccer Arena','⚽',120],['Basket Blitz','🏀',22],['Sumo Smash','🤼',340],['Dodgeball Frenzy','🎯',0],['Mini Golf Party','⛳',100]])},
   {group:'Two-Player Duels',sub:'Head-to-head for exactly 2 players',title:'Double Action',fx:'duel',items:D([['Twin Tanks','🪖',60],['Katana Duel','🗡️',355],['Boxing Bots','🥊',210],['Gunslinger Duel','🤠',35],['Dogfight Duo','✈️',200]])},
-  {title:'Double Adventure',fx:'orbs',items:D([['Twin Explorers','🧭',145],['Castle Escape Co-op','🏰',255],['Dual Dungeon','🕯️',300],['Treasure Twins','🗝️',50],['Raft Rescue','🛶',185]])}
+  {title:'Double Adventure',fx:'orbs',items:D([['Twin Explorers','🧭',145],['Castle Escape Co-op','🏰',255],['Dual Dungeon','🕯️',300],['Treasure Twins','🗝️',50],['Raft Rescue','🛶',185]])},
+  {title:'Double Classics',fx:'duel',items:[
+   P(C('Pong','🏓','pong.html','photo-1542751371-adc38448a05e','free')),P(C('Rock Paper Scissors','✊','rock-paper-scissors.html','photo-1511512578047-dfb367046420','free')),P(C('Tic-Tac-Toe','❎','tic-tac-toe.html','photo-1611996575749-79a3a250f948','free')),P(C('Neon Air Hockey','🏒','neon-air-hockey.html','photo-1519861531473-9200262188bf','free')),
+   P(C('Car Race','🏎️','car-race.html','photo-1503376780353-7e6692767b70','premium')),P(C('Zombie Survival','🧟','zombie-survival.html','photo-1509248961158-e54f6934749c','premium')),P(C('Neon Maze','🌀','neon-maze.html','photo-1519608487953-e999c86e7455','premium'))]}
  ];
  /* coded, animated SVG scenes: every game gets its own unique picture (seeded by its name) */
  const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -135,10 +155,10 @@ body:before{inset:-200px 0 0 0;background-size:200px 200px,200px 200px,200px 200
   }
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice">'+d+'</svg>';
  }
- const svgUrl=(g,kind)=>'data:image/svg+xml,'+encodeURIComponent(scene(g,kind));
+ const svgUrl=(g,kind)=>'data:image/svg+xml,'+encodeURIComponent(scene(g,kind).replace(/<animate(?:Transform)?\b[^>]*\/>/g,''));
  const svgBg=(g,kind)=>'url("'+svgUrl(g,kind)+'")';
  const bg=(g,kind)=>g.image?`url("https://images.unsplash.com/${g.image}?auto=format&fit=crop&w=900&q=80")`:svgBg(g,kind);
- const tagText=g=>g.isNew?'★ NEW':g.players?'👥 '+g.players.toUpperCase():g.type==='premium'?'✦ PREMIUM':'● FREE';
+ const tagText=g=>g.isNew?'★ NEW':g.type==='premium'?'✦ PREMIUM':g.players?'👥 '+g.players.toUpperCase():'● FREE';
  const watch=(card,image,fb)=>{card.classList.add('game-loading');const loader=document.createElement('span');loader.className='card-loader';const sp=document.createElement('span');sp.className='spinner';const lb=document.createElement('span');lb.textContent='LOADING ART';loader.append(sp,lb);card.appendChild(loader);const probe=new Image();probe.onload=()=>{card.classList.remove('game-loading');card.classList.add('image-ready')};probe.onerror=()=>{card.classList.remove('game-loading');card.classList.add('image-failed');loader.remove();if(fb)card.style.setProperty('--game-bg',fb)};probe.src='https://images.unsplash.com/'+image+'?auto=format&fit=crop&w=900&q=80'};
  /* render(root,onPlay): onPlay given -> cards are articles with a Play button; otherwise plain links */
  function render(root,onPlay){
