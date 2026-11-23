@@ -104,7 +104,7 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
     <div class="g2"><button class="go" id="mCamp" style="font-size:16px">CAMPAIGN</button><button class="go alt" id="mOn" style="font-size:16px">ONLINE ARENA</button></div>
     <div class="g4"><button class="b" id="oShop">Shop</button><button class="b" id="oSoc">Stats</button><button class="b" id="oSet">Settings</button><button class="b" id="oSnd" aria-label="Sound">🔊</button></div>
     <div id="onPanel" hidden><p class="kick" style="margin-top:18px">ONLINE ARENA · 2 TO 4 PILOTS</p><div class="g2"><button class="go" id="mCreate" style="margin-top:0;font-size:15px">CREATE ROOM</button><button class="go" id="mJoin" style="margin-top:0;font-size:15px">JOIN ROOM</button></div></div>
-    <p class="small">Keyboard: WASD move · Space or click fire · Shift dash · E overdrive · Q/R or right-drag turn camera · scroll zoom. Touch: drag left side to move, drag right side to turn the camera. Aiming is manual: on desktop your mech aims at the mouse pointer, on touch it aims where the camera faces (drag the right side to aim). A pink laser and reticle show where your bullets will land.</p>
+    <p class="small">Keyboard: WASD move · Space or click fire · Shift dash · E overdrive · Q/R or right-drag turn camera · scroll zoom. Touch: drag left side to move, drag right side to turn the camera. Aiming is manual: on desktop your mech aims at the mouse pointer, on touch, hold FIRE and drag it to aim (drag the right side of the screen to turn the camera). A pink laser and reticle show where your bullets will land.</p>
     <p class="small" id="net">Connecting…</p>
   </div>
 
@@ -233,7 +233,7 @@ function pushShop(){if(!shopLoaded||!shopRef)return;saving++;updSave();shopRef.s
 function saveShop(){updShop();pushShop();pushProfile()}
 function loadShop(uid){if(!fsdb)return;if(shopOff){shopOff();shopOff=null}shopLoaded=false;shopRef=fsdb.collection('wallets').doc(uid).collection('game').doc('mech');
 shopOff=shopRef.onSnapshot(snap=>{const v=snap.exists?snap.data():null,keep=SHOP.coins;applyShop(v||{});if(baseP!=null)SHOP.coins=keep;shopLoaded=true;if(pendCoins&&baseP!=null){SHOP.coins+=pendCoins;pendCoins=0;saveShop()}updShop();if(phase==='idle'||phase==='lobby')makeShow()},e=>toast('Could not load your coins: '+e.message))}
-function addCoins(n){if(!n)return;if(shopLoaded&&baseP!=null){SHOP.coins+=n;saveShop()}else pendCoins+=n}
+function addCoins(n){if(!n)return;if(shopLoaded&&baseP!=null){for(let r=n;r>0;r-=50){SHOP.coins+=Math.min(50,r);saveShop()}}else pendCoins+=n}
 /* ================= firebase ================= */
 const CFG={apiKey:'AIzaSyDIePnptlh5c4q9RSPZJ8pYLAYNswNHgCs',authDomain:'mysocialapp-87ea4.firebaseapp.com',databaseURL:'https://mysocialapp-87ea4-default-rtdb.firebaseio.com',projectId:'mysocialapp-87ea4',storageBucket:'mysocialapp-87ea4.firebasestorage.app',messagingSenderId:'164883751409',appId:'1:164883751409:web:b7ccfcc42dfc06783fe450'};
 let db=null,auth=null,fsdb=null,connected=false,off=0;
@@ -378,17 +378,22 @@ addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){mouseX=e.clientX;
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('wheel',e=>{if(e.target.closest&&e.target.closest('.card,.chatbox'))return;camDist=clamp(camDist*(1+e.deltaY*.001),14,60)},{passive:true});
 function hold(id,dn,up){const el=$(id);el.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();touch=true;try{el.setPointerCapture(e.pointerId)}catch(_){}dn()});['pointerup','pointercancel'].forEach(v=>el.addEventListener(v,()=>{if(up)up()}))}
-hold('bf',()=>{fireH=true},()=>{fireH=false});hold('bd',dash);hold('bs',overdrive);
+/* FIRE button doubles as the aim stick: hold it to shoot, drag it to aim */
+const fs={on:false,id:-1,ox:0,oy:0,x:0,y:0},bfE=$('bf');
+bfE.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();touch=true;mouseOn=false;fs.on=true;fs.id=e.pointerId;fs.ox=e.clientX;fs.oy=e.clientY;fs.x=fs.y=0;try{bfE.setPointerCapture(e.pointerId)}catch(_){}fireH=true});
+bfE.addEventListener('pointermove',e=>{if(!fs.on||e.pointerId!==fs.id)return;let dx=e.clientX-fs.ox,dy=e.clientY-fs.oy;const d=Math.hypot(dx,dy);if(d>70){dx*=70/d;dy*=70/d}fs.x=dx/70;fs.y=dy/70;bfE.style.transform='translate('+dx*.5+'px,'+dy*.5+'px)'});
+const fEnd=e=>{if(e.pointerId!==fs.id)return;fs.on=false;fs.x=fs.y=0;fireH=false;bfE.style.transform=''};bfE.addEventListener('pointerup',fEnd);bfE.addEventListener('pointercancel',fEnd);
+hold('bd',dash);hold('bs',overdrive);
 /* ================= actions ================= */
-/* real bullet: brass casing + steel tip + glowing tracer streak, ~2x faster than before */
-const BSP=125,BLIFE=.55,AIMR=48;
-const bBody=new T.CylinderGeometry(.09,.09,.5,8).rotateX(Math.PI/2),bTip=new T.ConeGeometry(.09,.24,8).rotateX(Math.PI/2).translate(0,0,.37),bTrail=new T.BoxGeometry(.07,.07,2.6).translate(0,0,-1.55);
-const bBr=new T.MeshBasicMaterial({color:0xe0b050}),bTp=new T.MeshBasicMaterial({color:0xd5dae2}),trM={};
+/* real bullet: brass casing + steel tip + white-hot tracer streak, very fast */
+const BSP=210,BLIFE=.42,AIMR=48;
+const bBody=new T.CylinderGeometry(.13,.13,.8,10).rotateX(Math.PI/2),bTip=new T.ConeGeometry(.13,.4,10).rotateX(Math.PI/2).translate(0,0,.6),bTrail=new T.BoxGeometry(.1,.1,5).translate(0,0,-2.9),bCore=new T.BoxGeometry(.045,.045,5.4).translate(0,0,-2.7);
+const bBr=new T.MeshBasicMaterial({color:0xe0b050}),bTp=new T.MeshBasicMaterial({color:0xd5dae2}),bWh=new T.MeshBasicMaterial({color:0xffffff}),trM={};
 const trailM=c=>trM[c]||(trM[c]=new T.MeshBasicMaterial({color:c,transparent:true,opacity:.55,blending:T.AdditiveBlending,depthWrite:false}));
-function spawnBullet(x,y,z,a,o,col){const g=new T.Group();g.add(new T.Mesh(bBody,bBr),new T.Mesh(bTip,bTp),new T.Mesh(bTrail,trailM(col)));g.position.set(x,y,z);g.rotation.y=a;dyn.add(g);bl.push({m:g,vx:Math.sin(a)*BSP,vz:Math.cos(a)*BSP,l:BLIFE,o})}
+function spawnBullet(x,y,z,a,o,col){const g=new T.Group();g.add(new T.Mesh(bBody,bBr),new T.Mesh(bTip,bTp),new T.Mesh(bCore,bWh),new T.Mesh(bTrail,trailM(col)));g.position.set(x,y,z);g.rotation.y=a;dyn.add(g);bl.push({m:g,vx:Math.sin(a)*BSP,vz:Math.cos(a)*BSP,l:BLIFE,o})}
 function nearest(pp,range){let tg=null,bd=range;if(mode==='camp'){for(const e of S.e){const d=Math.hypot(e.o.position.x-pp.x,e.o.position.z-pp.z);if(d<bd){bd=d;tg=e.o.position}}}else{for(const id in RP){const q=RP[id];if(q.dead)continue;const d=Math.hypot(q.x-pp.x,q.z-pp.z);if(d<bd){bd=d;tg=q.o.position}}}return tg}
 function shootMe(){const p=me;p.side^=1;p.m.muzzles[p.side].getWorldPosition(V);const on=mode==='online',a=Math.atan2(p.o.position.x+Math.sin(p.aim)*(p.aimD||AIMR)-V.x,p.o.position.z+Math.cos(p.aim)*(p.aimD||AIMR)-V.z)+R(-.012,.012);p.fc=on?.26:.12;
-spawnBullet(V.x,V.y,V.z,a,myId,on?p.col:0xffee66);fx(V.x,V.y,V.z,0xffee88,.7,.08);sfx('shoot');shake=Math.max(shake,.05);
+spawnBullet(V.x,V.y,V.z,a,myId,on?p.col:0xffee66);fx(V.x,V.y,V.z,0xffee88,.9,.08);burst(V.x,V.y-.3,V.z,0xe0b050,1,3);sfx('shoot');shake=Math.max(shake,.05);
 if(on&&ref){const r=ref.child('shots').push({o:myId,x:+V.x.toFixed(1),z:+V.z.toFixed(1),a:+a.toFixed(3),t:TS()});setTimeout(()=>r.remove(),2500)}}
 function dash(){if(!me||me.dead||phase!=='play'||me.dcd>0)return;const p=me,m=mv();let x=m.x,z=m.z;if(!x&&!z){x=Math.sin(p.aim);z=Math.cos(p.aim)}const l=Math.hypot(x,z)||1;p.dx=x/l;p.dz=z/l;p.dash=.2;p.dcd=1.1;p.inv=Math.max(p.inv,.35);sfx('dash')}
 function overdrive(){if(!me||me.dead||phase!=='play'||me.en<100)return;me.en=0;sfx('over');const q=me.o.position;fx(q.x,1,q.z,0x22ffff,18,.7,1);fx(q.x,2,q.z,0x88ffff,6,.4);shake=Math.max(shake,1.2);me.inv=Math.max(me.inv,1);
@@ -408,8 +413,9 @@ for(const id in RP){const q=RP[id];if(q.dead)continue;const ax=pp.x-q.x,az=pp.z-
 pp.x=clamp(pp.x,-128,128);pp.z=clamp(pp.z,-128,128);
 const spd=Math.hypot(p.vx,p.vz);p.ph+=dt*spd*.55;if(spd>.5)p.yaw=lerpA(p.yaw,Math.atan2(p.vx,p.vz),dt*10);o.rotation.y=p.yaw;
 p.dcd-=dt;p.inv-=dt;o.visible=p.inv<=0||Math.floor(gT*20)%2===0;
-let ta=Math.atan2(-Math.sin(camYaw),-Math.cos(camYaw));
+let ta=p.aim;
 if(mouseOn){aimRay.setFromCamera(aimNdc.set(mouseX/innerWidth*2-1,-(mouseY/innerHeight)*2+1),cam);const hp=aimRay.ray.intersectPlane(aimPl,aimV);if(hp&&Math.hypot(hp.x-pp.x,hp.z-pp.z)>1.5)ta=Math.atan2(hp.x-pp.x,hp.z-pp.z)}
+if(!mouseOn&&fs.on&&Math.hypot(fs.x,fs.y)>.25){const cc=Math.cos(camYaw),ss=Math.sin(camYaw);ta=Math.atan2(cc*fs.x+ss*fs.y,cc*fs.y-ss*fs.x)}
 p.aim=lerpA(p.aim,ta,dt*22);
 {const ax=Math.sin(p.aim),az=Math.cos(p.aim);let d=AIMR;for(let k=4;k<AIMR;k+=1.5){AQ.x=pp.x+ax*k;AQ.z=pp.z+az*k;if(hitB(AQ)){d=Math.max(4,k-1.5);break}}p.aimD=d;
 p.aimL.visible=p.aimR.visible=true;p.aimL.position.set(pp.x+ax*d/2,2.3,pp.z+az*d/2);p.aimL.scale.z=d;p.aimL.rotation.y=p.aim;
@@ -461,9 +467,9 @@ if(S.run&&S.e.length===0){if(S.wave>=S.maxW)endCampaign(true);else{nextWave();p.
 function endCampaign(win){if(!S||!S.run)return;S.run=0;phase='ending';const rid=runId;
 if(win){sfx('win');slow=2;for(let i=0;i<12;i++)setTimeout(()=>{if(rid!==runId||!me)return;const q=me.o.position;burst(q.x+R(-8,8),R(6,14),q.z+R(-8,8),[0x22ffff,0xff44aa,0xffee66,0x44ff88][i%4],30,16);fx(q.x+R(-8,8),R(6,12),q.z+R(-8,8),0xffffff,5,.5)},i*250)}
 setTimeout(()=>{if(rid===runId)campEnd(win)},win?3500:1300)}
-function campEnd(win){phase='over';const reward=win?8:Math.max(0,S.wave-1),sc=S.sc,wv=S.wave,kl=S.k;
+function campEnd(win){phase='over';const reward=Math.floor(S.k/2),sc=S.sc,wv=S.wave,kl=S.k;
 if(recordOnce('camp-'+Date.now())){STATS.played++;STATS.kills+=kl;if(win)STATS.wins++;else STATS.losses++;if(sc>STATS.best)STATS.best=sc;xp+=10*kl+(win?50:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats()}
-endScreen(win?'CITY LIBERATED!':'MECH DESTROYED','MISSION OVER',['Score '+sc,'Wave '+wv+' of 4','Hostiles destroyed '+kl,'Best score '+STATS.best],reward?'+'+reward+(reward>1?' coins':' coin'):'No coins this time')}
+endScreen(win?'CITY LIBERATED!':'MECH DESTROYED','MISSION OVER',['Score '+sc,'Wave '+wv+' of 4','Hostiles destroyed '+kl,'Best score '+STATS.best],reward?'+'+reward+(reward>1?' coins':' coin')+' ('+kl+' kills)':'No coins this time ('+kl+' kills)')}
 /* ================= online arena ================= */
 function mkRemote(id,v){const col=v.col!=null?v.col:0xff4455,m=mech(col,1,false,v.ar),o=m.root;dyn.add(o);const l=label(v.name||'Pilot',col);l.position.y=6.4;o.add(l);
 const bar=new T.Group(),bg=new T.Mesh(barG,barBg),fg=new T.Mesh(barG,barFg);bg.renderOrder=10;fg.renderOrder=11;fg.position.z=.01;bar.add(bg,fg);dyn.add(bar);
@@ -523,8 +529,8 @@ for(const c of crates){const av=c.taken!==cyc&&tn>=startT;c.m.visible=av;if(!av)
 if(phase==='play'&&me&&!me.dead&&Math.hypot(c.x-me.o.position.x,c.z-me.o.position.z)<2.8){if(c.k==='h'){if(me.hp>=100)continue;me.hp=Math.min(100,me.hp+35);say('REPAIR')}else{me.en=Math.min(100,me.en+50);say('ENERGY')}c.taken=cyc;sfx('pick')}}
 sendT-=dt;if(ref&&me&&phase!=='over'&&sendT<=0){sendT=.066;const p=me.o.position;ref.child('players/'+myId).update({x:+p.x.toFixed(2),z:+p.z.toFixed(2),h:+me.yaw.toFixed(2),a:+me.aim.toFixed(2),hp:Math.round(me.hp),k:me.kills,d:me.deaths,dead:!!me.dead}).catch(()=>{})}}
 function finishOnline(){if(phase==='over'||!me)return;phase='over';const arr=[me].concat(Object.values(RP)).sort((a,b)=>(b.kills-a.kills)||(a.deaths-b.deaths)),top=arr[0].kills,tied=arr.filter(p=>p.kills===top).length>1,mine=me.kills===top,res=mine?(tied?'draw':'win'):'loss';
-const reward=res==='win'?10+Math.floor(me.kills/3):res==='draw'?4:1,rid='on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;let rtxt='';
-if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win'){STATS.wins++;STATS.ow++}else if(res==='loss')STATS.losses++;else STATS.draws++;xp+=10*me.kills+(res==='win'?50:res==='draw'?20:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats();rtxt='+'+reward+(reward>1?' coins':' coin');submitLeader(res,me.kills).catch(()=>{})}
+const reward=Math.floor(me.kills/2),rid='on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;let rtxt='';
+if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win'){STATS.wins++;STATS.ow++}else if(res==='loss')STATS.losses++;else STATS.draws++;xp+=10*me.kills+(res==='win'?50:res==='draw'?20:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats();rtxt=reward?'+'+reward+(reward>1?' coins':' coin')+' ('+me.kills+' kills)':'No coins this time ('+me.kills+' kills)';submitLeader(res,me.kills).catch(()=>{})}
 if(ref)ref.child('status').transaction(c=>c==='live'?'finished':undefined).catch(()=>{});
 endScreen(res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED','MATCH OVER',arr.map((p,i)=>(i+1)+'. '+p.name+' — '+p.kills+' kills'),rtxt)}
 async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];clearRun();resetChat();const r=ref;ref=null;R_=null;phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false);
@@ -583,7 +589,7 @@ $('start').onclick=()=>{const b=$('start');if(b.classList.contains('ld'))return;
 $('oSet').onclick=()=>showCard('setC');$('oShop').onclick=()=>{shopTab='arm';renderShop();showCard('shopC')};$('oSoc').onclick=()=>showCard('socC');
 document.querySelectorAll('[data-back]').forEach(b=>{b.onclick=()=>showCard('home')});
 function renderShop(msg){if(!shopLoaded){$('coinLine').replaceChildren(loadingEl('Loading your coins… (needs a connection)'));$('shopMsg').textContent='';$('shopList').replaceChildren();return}
-$('coinLine').textContent='Coins: '+SHOP.coins+'. Win online matches (the big payout) or finish campaign waves to earn more.';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',String(shopTab==='arm'));$('tCol').setAttribute('aria-pressed',String(shopTab==='col'));const L=$('shopList');L.replaceChildren();
+$('coinLine').textContent='Coins: '+SHOP.coins+'. You earn 1 coin for every 2 kills (5 kills = 2 coins, 10 = 5, 20 = 10), campaign or online.';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',String(shopTab==='arm'));$('tCol').setAttribute('aria-pressed',String(shopTab==='col'));const L=$('shopList');L.replaceChildren();
 if(shopTab==='arm'){for(let n=0;n<=10;n++){const own=n<=SHOP.arm,cur=n===SHOP.arm,next=n===SHOP.arm+1,d=document.createElement('div');d.className='shr';d.style.opacity=own||next?1:.5;const s=document.createElement('span'),t=document.createElement('b');t.textContent=TN[n]+' (Lv '+n+')';const sm=document.createElement('small');sm.textContent=(n*3)+'% less damage · extra armor parts';s.append(t,document.createElement('br'),sm);
 const b=document.createElement('button');b.className='b';b.textContent=cur?'In use':own?'Owned':'Buy '+ARMC[n];if(next)b.style.borderColor='var(--yl)';
 b.onclick=()=>{if(own)return;if(!next)return renderShop('Buy '+TN[SHOP.arm+1]+' first.');if(SHOP.coins<ARMC[n])return renderShop('Not enough coins. '+TN[n]+' costs '+ARMC[n]+'.');SHOP.coins-=ARMC[n];SHOP.arm=n;saveShop();sfx('pick');makeShow();renderShop('Upgraded to '+TN[n]+'.')};d.append(s,b);L.append(d)}}
