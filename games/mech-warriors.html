@@ -518,8 +518,8 @@ if(phase==='count'||phase==='play'||phase==='ending'||phase==='over'){for(const 
 
 if(v.dead&&!q.dead)explodeAt(q.x,q.z,false);if(q.dead&&!v.dead){q.x=q.tx;q.z=q.tz}q.hp=v.hp==null?100:v.hp;q.dead=!!v.dead;q.kills=v.k||0;q.deaths=v.d||0}}
 if(d.status==='waiting'){if(phase!=='lobby')toLobby();drawLobby(d,ids,ps);if(ids[0]===myId&&d.hostId!==myId&&(!d.hostId||!ps[d.hostId]))ref.child('hostId').set(myId).catch(()=>{});
-if(ids.length>1&&ids.every(i=>ps[i].ready))ref.transaction(c=>{if(c===null)return c;if(c.status!=='waiting')return;const q=c.players||{},k=Object.keys(q);if(k.length<2||!k.every(i=>q[i].ready))return;c.status='live';c.go=now()+4000;return c})}
-else if(d.status==='live'&&phase==='lobby')beginOnline(d,ids);
+if(ids.length>1&&ids.every(i=>ps[i].ready)&&hostOf(d,ids)===myId&&!onRoom.st){onRoom.st=1;ref.update({go:now()+4000,status:'live'}).catch(()=>{}).finally(()=>{onRoom.st=0})}}
+else if(d.status==='live'&&phase==='lobby'&&d.go)beginOnline(d,ids);
 else if(d.status==='finished'&&(phase==='count'||phase==='play'||phase==='ending'))finishOnline()}
 function toLobby(){phase='lobby';mode='online';clearRun();hideGameUI();hide('end');hide('pauseOv');makeShow();show('menu');showCard('lobby');setWake(false);if(R_)drawLobby(R_,Object.keys(R_.players||{}).sort(),R_.players||{})}
 function isReady(){return !!(R_&&R_.players&&R_.players[myId]&&R_.players[myId].ready)}
@@ -551,7 +551,7 @@ endScreen(res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED','MATCH OVER',arr.
 async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];clearRun();resetChat();const r=ref;ref=null;R_=null;phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false);
 if(r&&rm){try{await r.child('players/'+myId).onDisconnect().cancel();await r.child('pos/'+myId).onDisconnect().cancel();await r.child('pos/'+myId).remove();await r.child('players/'+myId).remove();if(!(await r.child('players').get()).val())await r.remove()}catch(e){}}}
 $('again').onclick=withLoad($('again'),async()=>{if(mode==='camp'){startCampaign();return}
-if(!ref)return;const r=await ref.transaction(c=>{if(!c||c.status!=='finished')return;c.status='waiting';c.go=null;for(const i in c.players)Object.assign(c.players[i],{ready:false,k:0,d:0,hp:100,dead:false});return c});if(!r.committed)toast('Waiting for the match to close…')});
+if(!ref)return;if(!R_||R_.status!=='finished'){toast('Waiting for the match to close…');return}const u={go:null};for(const i in (R_.players||{})){u['players/'+i+'/ready']=false;u['players/'+i+'/k']=0;u['players/'+i+'/d']=0;u['players/'+i+'/hp']=100;u['players/'+i+'/dead']=false}u.status='waiting';try{await ref.update(u)}catch(e){toast('Could not restart: '+e.message)}});
 async function submitLeader(res,kills){if(!db)return;await db.ref('mechLeaderboard/'+myId).transaction(c=>{c=c||{id:myId,name:myName,wins:0,losses:0,draws:0,played:0,kills:0};c.name=myName;c.played=(c.played||0)+1;c.kills=(c.kills||0)+kills;const k=res==='win'?'wins':res==='loss'?'losses':'draws';c[k]=(c[k]||0)+1;c.updatedAt=firebase.database.ServerValue.TIMESTAMP;return c})}
 function loadLeader(){if(!db)return;db.ref('mechLeaderboard').orderByChild('wins').limitToLast(20).on('value',s=>{const a=[];s.forEach(x=>{a.push(x.val())});a.sort((p,q)=>(q.wins||0)-(p.wins||0)||(q.kills||0)-(p.kills||0));const r=$('lead');r.replaceChildren();if(!a.length){const e=document.createElement('div');e.className='li';e.textContent='No online results yet';r.append(e);return}a.slice(0,10).forEach((x,i)=>{const e=document.createElement('div');e.className='li';const n=document.createElement('span');n.textContent=(i+1)+'. '+String(x.name||'Pilot');const w=document.createElement('b');w.textContent=(x.wins||0)+' W · '+(x.kills||0)+' K';e.append(n,w);r.append(e)})},e=>{$('lead').textContent='Leaderboard unavailable: '+e.message})}
 loadLeader();
