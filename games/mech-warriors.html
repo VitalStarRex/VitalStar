@@ -385,6 +385,9 @@ bfE.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();to
 bfE.addEventListener('pointermove',e=>{if(!fs.on||e.pointerId!==fs.id)return;let dx=e.clientX-fs.ox,dy=e.clientY-fs.oy;const d=Math.hypot(dx,dy);if(d>55){dx*=55/d;dy*=55/d}fs.x=dx/55;fs.y=dy/55;bfE.style.transform='translate('+dx*.5+'px,'+dy*.5+'px)'});
 const fEnd=e=>{if(e.pointerId!==fs.id)return;fs.on=false;fs.x=fs.y=0;fireH=false;bfE.style.transform=''};bfE.addEventListener('pointerup',fEnd);bfE.addEventListener('pointercancel',fEnd);
 hold('bd',dash);hold('bs',overdrive);
+/* FIX #2: drop every held input when the window loses focus or the tab is hidden, so a missed keyup/pointerup can't leave the mech walking or firing by itself */
+function releaseInputs(){for(const k in keys)keys[k]=0;fireH=false;mOrb=false;lk=null;stick.on=false;stick.x=stick.y=0;hide('jb');fs.on=false;fs.x=fs.y=0;bfE.style.transform=''}
+addEventListener('blur',releaseInputs);
 /* ================= actions ================= */
 /* real bullet: brass casing + steel tip + white-hot tracer streak, very fast */
 const BSP=440,BLIFE=.22,AIMR=48;
@@ -401,9 +404,10 @@ function dash(){if(!me||me.dead||phase!=='play'||me.dcd>0)return;const p=me,m=mv
 function overdrive(){if(!me||me.dead||phase!=='play'||me.en<100)return;me.en=0;sfx('over');const q=me.o.position;fx(q.x,1,q.z,0x22ffff,18,.7,1);fx(q.x,2,q.z,0x88ffff,6,.4);shake=Math.max(shake,1.2);me.inv=Math.max(me.inv,1);
 if(mode==='camp'){for(const e of eb)dyn.remove(e.m);eb.length=0;for(const e of S.e.slice())if(Math.hypot(e.o.position.x-q.x,e.o.position.z-q.z)<18)hit(e,10)}
 else if(ref){const r=ref.child('blasts').push({o:myId,x:+q.x.toFixed(1),z:+q.z.toFixed(1),t:TS()});setTimeout(()=>r.remove(),3000)}}
-function hurtMe(by,d){const p=me;if(!p||p.dead||p.inv>0||phase!=='play')return;const camp=mode==='camp';p.hp-=d*(camp?DF().dmg:1)*(1-.03*armLv());p.inv=camp?.5:0;shake=Math.max(shake,camp?.7:.35);hitF=1;sfx('hurt');burst(p.o.position.x,2,p.o.position.z,0xffffff,6,7);
-if(p.hp>0)return;p.hp=0;p.dead=true;p.deaths++;p.o.visible=false;const q=p.o.position;explodeAt(q.x,q.z,true);
-if(camp){endCampaign(false)}else{p.resp=now()+3000;say('DESTROYED');if(ref){const r=ref.child('kills').push({k:by,kn:(RP[by]&&RP[by].name)||'Pilot',v:myId,vn:myName,t:TS()});setTimeout(()=>r.remove(),5000)}}}
+/* FIX #3: returns true only when damage was really applied (false while invulnerable / dead), so callers can tell whether a hit landed */
+function hurtMe(by,d){const p=me;if(!p||p.dead||p.inv>0||phase!=='play')return false;const camp=mode==='camp';p.hp-=d*(camp?DF().dmg:1)*(1-.03*armLv());p.inv=camp?.5:0;shake=Math.max(shake,camp?.7:.35);hitF=1;sfx('hurt');burst(p.o.position.x,2,p.o.position.z,0xffffff,6,7);
+if(p.hp>0)return true;p.hp=0;p.dead=true;p.deaths++;p.o.visible=false;const q=p.o.position;explodeAt(q.x,q.z,true);
+if(camp){endCampaign(false)}else{p.resp=now()+3000;say('DESTROYED');if(ref){const r=ref.child('kills').push({k:by,kn:(RP[by]&&RP[by].name)||'Pilot',v:myId,vn:myName,t:TS()});setTimeout(()=>r.remove(),5000)}}return true}
 function respawn(){const p=me;let best=SPW[0],bd=-1;for(const s of SPW){let md=1e9;for(const id in RP){const q=RP[id];if(q.dead)continue;md=Math.min(md,Math.hypot(q.x-s[0],q.z-s[1]))}if(md>bd){bd=md;best=s}}
 placeMe(best[0],best[1]);p.hp=100;p.dead=false;p.inv=2;p.vx=p.vz=0;p.o.visible=true}
 /* ================= player update ================= */
@@ -462,7 +466,8 @@ q.x+=(dx/d*dir-dz/d*stf)*spd2*dt;q.z+=(dz/d*dir+dx/d*stf)*spd2*dt;coll(q,Math.mi
 if(e.type==='drone'){q.y=1.8+Math.sin(e.ph)*.4;e.o.rotation.y+=dt*4;e.rr.rotation.z+=dt*8}
 else{e.o.rotation.y=lerpA(e.o.rotation.y,ang,dt*5);const sw=Math.sin(e.ph)*.6*(dir?1:0);e.m.legs[0].rotation.x=sw;e.m.legs[1].rotation.x=-sw;
 e.cd-=dt;if(e.cd<=0){if(e.type==='gunner'){e.cd=1.2;const tt=d/15;eshoot(e,Math.atan2(dx+p.vx*tt,dz+p.vz*tt),15)}else if(e.type==='brute'){e.cd=2;for(let i=-1;i<=1;i++)eshoot(e,ang+i*.25,13)}else{e.cd=1.8;for(let i=0;i<14;i++)eshoot(e,i/14*6.28+gT,11);for(let i=-2;i<=2;i++)eshoot(e,ang+i*.12,18)}}}
-if(!p.dead&&d<e.r+1.3){if(e.type==='drone'){hurtMe('e',10);kill(e)}else{e.hc-=dt;if(e.hc<=0){e.hc=.8;hurtMe('e',e.type==='boss'?25:15)}}}}
+/* FIX #3: a ramming drone only dies (and pays out) if its hit actually landed; while you're invulnerable it just keeps chasing */
+if(!p.dead&&d<e.r+1.3){if(e.type==='drone'){if(hurtMe('e',10)&&S.run)kill(e)}else{e.hc-=dt;if(e.hc<=0){e.hc=.8;hurtMe('e',e.type==='boss'?25:15)}}}}
 for(let i=eb.length-1;i>=0;i--){const b=eb[i];b.m.position.x+=b.vx*dt;b.m.position.z+=b.vz*dt;b.l-=dt;if(hitB(b.m.position))b.l=0;if(b.l>0&&!p.dead&&Math.hypot(b.m.position.x-pp.x,b.m.position.z-pp.z)<1.4){b.l=0;hurtMe('e',8)}if(b.l<=0){dyn.remove(b.m);eb.splice(i,1)}}
 for(let i=S.pk.length-1;i>=0;i--){const k=S.pk[i];k.l-=dt;k.m.rotation.y+=dt*3;k.m.position.y=1+Math.sin(gT*4)*.3;if(!p.dead&&Math.hypot(k.m.position.x-pp.x,k.m.position.z-pp.z)<2){k.l=0;sfx('pick');p.hp=Math.min(100,p.hp+25);burst(k.m.position.x,1,k.m.position.z,0x44ff88,12,6)}if(k.l<=0){dyn.remove(k.m);S.pk.splice(i,1)}}
 if(S.run&&S.e.length===0){if(S.wave>=S.maxW)endCampaign(true);else{nextWave();p.hp=Math.min(100,p.hp+30)}}}
@@ -488,20 +493,24 @@ roomsL=roomsRef.on('value',s=>{box.replaceChildren();let n=0;s.forEach(c=>{const
 const b=document.createElement('button');b.className='b';b.style.cssText='display:flex;justify-content:space-between;gap:8px;text-align:left';const a=document.createElement('span');a.textContent=d.name||((ps[ids[0]].name||'Pilot')+"'s room");const q=document.createElement('span');q.textContent=ids.length+'/4 · '+Math.round((d.duration||120)/60)+' min';b.append(a,q);b.onclick=withLoad(b,()=>joinRoom(c.key));box.append(b)});
 if(!n){const p=document.createElement('p');p.className='small';p.textContent='No open rooms yet. Create one!';box.append(p)}},e=>{box.textContent='Could not load rooms: '+e.message})}
 function loadingEl(t){const p=document.createElement('p');p.className='small';const i=document.createElement('span');i.className='spin';p.append(i,document.createTextNode(t));return p}
+/* FIX #1: the room used to be watched with ONE listener on the whole room node, so onRoom() re-ran for every position / shot / chat write (~20x per second per pilot).
+   Now each small room field has its own listener; the fast-changing children (pos, shots, kills, hits, blasts, chat) no longer trigger it. */
+const RK=['status','go','duration','land','dens','name','hostId','created','players'],RC={},seenRC={};
 async function enter(c,r){watchRooms(false);
 await r.child('players/'+myId).set({name:myName,col:myCol(),ar:armLv(),ready:false,x:0,z:0,h:0,a:0,hp:100,k:0,d:0,dead:false});r.child('players/'+myId).onDisconnect().remove();r.child('pos/'+myId).onDisconnect().remove();
 ref=r;mode='online';resetChat();phase='lobby';
-const l1=r.on('value',onRoom),l2=r.child('shots').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500||(phase!=='play'&&phase!=='count'))return;const q=RP[v.o];spawnBullet(v.x,2.4,v.z,v.a,v.o,q?q.col:0xffee66)}),
+for(const k in RC)delete RC[k];for(const k in seenRC)delete seenRC[k];
+const rl=RK.map(k=>{const q=r.child(k),f=q.on('value',s=>{RC[k]=k==='players'?(s.val()||{}):s.val();seenRC[k]=1;if(RK.every(x=>seenRC[x]))onRoom()});return()=>q.off('value',f)}),
+l2=r.child('shots').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500||(phase!=='play'&&phase!=='count'))return;const q=RP[v.o];spawnBullet(v.x,2.4,v.z,v.a,v.o,q?q.col:0xffee66)}),
 l3=r.child('kills').on('child_added',s=>{const v=s.val();if(!v||now()-v.t>4000||phase==='lobby')return;feedKill(v);if(v.k===myId&&me&&!me.dead){me.kills++;me.en=Math.min(100,me.en+30);say('KILL!');sfx('pick')}}),
 l4=r.child('blasts').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500||phase!=='play')return;fx(v.x,1,v.z,0x22ffff,18,.7,1);fx(v.x,2,v.z,0x88ffff,6,.4);if(me&&!me.dead&&Math.hypot(me.o.position.x-v.x,me.o.position.z-v.z)<18)hurtMe(v.o,32)}),
 l6=r.child('hits').on('child_added',s=>{const v=s.val();if(!v||v.v!==myId||now()-v.t>3000||phase!=='play'||!me)return;hurtMe(v.o,ODMG)}),
 l7=r.child('pos').on('child_added',applyPos),l8=r.child('pos').on('child_changed',applyPos),
 cq=r.child('chat').limitToLast(40),l5=cq.on('child_added',s=>addRoomMsg(s.val()));
-unsubs=[()=>r.off('value',l1),()=>r.child('shots').off('child_added',l2),()=>r.child('kills').off('child_added',l3),()=>r.child('blasts').off('child_added',l4),()=>cq.off('child_added',l5),()=>r.child('hits').off('child_added',l6),()=>r.child('pos').off('child_added',l7),()=>r.child('pos').off('child_changed',l8)];toLobby()}
+unsubs=[...rl,()=>r.child('shots').off('child_added',l2),()=>r.child('kills').off('child_added',l3),()=>r.child('blasts').off('child_added',l4),()=>cq.off('child_added',l5),()=>r.child('hits').off('child_added',l6),()=>r.child('pos').off('child_added',l7),()=>r.child('pos').off('child_changed',l8)];toLobby()}
 function applyPos(s){const id=s.key,v=s.val();if(id===myId||!v)return;const q=RP[id];if(!q)return;if(!q.init){q.init=true;q.x=q.tx=v.x;q.z=q.tz=v.z}q.tx=v.x;q.tz=v.z;q.th=v.h||0;q.ta=v.a||0;q.vx=v.vx||0;q.vz=v.vz||0;q.st=v.t||0}
 function feedKill(v){const f=$('feed'),d=document.createElement('div');const a=document.createElement('b'),b=document.createElement('b');a.textContent=v.kn||'Pilot';b.textContent=v.vn||'Pilot';d.append(a,document.createTextNode(' 🚀 '),b);f.append(d);while(f.children.length>4)f.firstChild.remove();setTimeout(()=>d.remove(),6000)}
-function roomLite(s){if(!s.exists())return null;const o={};['status','go','duration','land','dens','name','hostId','created'].forEach(k=>{o[k]=s.child(k).val()});o.players=s.child('players').val()||{};return o}
-function onRoom(s){const d=roomLite(s);if(!d){if(phase!=='idle'){toast('Room closed.');exitRoom(false)}return}R_=d;const ps=d.players||{};
+function onRoom(){const d=RC.status==null?null:Object.assign({},RC);if(!d){if(phase!=='idle'){toast('Room closed.');exitRoom(false)}return}R_=d;const ps=d.players||{};
 if(!ps[myId]&&phase!=='idle'){toast('You left the room.');exitRoom(false);return}
 const ids=Object.keys(ps).sort();
 for(const id in RP)if(!ps[id]){toast(RP[id].name+' left');rmRemote(id)}
@@ -570,14 +579,16 @@ $('chatBtn').onclick=()=>openChat(!chatOpen);
 const CARDS=['home','cCamp','cCreate','cJoin','lobby','setC','shopC','socC'];
 function showCard(id){CARDS.forEach(c=>{$(c).hidden=c!==id});if(id!=='cJoin')watchRooms(false)}
 function lockLand(){if(!TOUCHCAP)return;try{const so=screen.orientation,de=document.documentElement,l=()=>{if(so&&so.lock)so.lock('landscape').catch(()=>{})};if(!document.fullscreenElement&&de.requestFullscreen)de.requestFullscreen().then(l).catch(l);else l()}catch(e){}}
-function uiPlay(){hide('menu');hide('end');hide('pauseOv');show('hud');$('c').style.cursor='crosshair';show('tbar');$('pauseBtn').hidden=mode!=='camp';$('chatBtn').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);show('bf');show('bd');show('bs');if(TOUCHCAP){show('zone');show('orbit')}else{$('bf').hidden=$('bd').hidden=$('bs').hidden=true}showM&&(showM.root.visible=false);setWake(true);ambLast=''}
+/* FIX #5: wipe the HUD text cache and the leftover online scoreboard whenever a run starts, so setT() can't skip a needed update */
+function resetHud(){for(const k in hudC)delete hudC[k];$('sb').replaceChildren()}
+function uiPlay(){hide('menu');hide('end');hide('pauseOv');resetHud();show('hud');$('c').style.cursor='crosshair';show('tbar');$('pauseBtn').hidden=mode!=='camp';$('chatBtn').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);show('bf');show('bd');show('bs');if(TOUCHCAP){show('zone');show('orbit')}else{$('bf').hidden=$('bd').hidden=$('bs').hidden=true}showM&&(showM.root.visible=false);setWake(true);ambLast=''}
 function hideGameUI(){openChat(false);$('c').style.cursor='';['hud','tbar','zone','orbit','jb','bf','bd','bs','bb','rot'].forEach(hide);$('feed').replaceChildren();if(showM)showM.root.visible=true}
 function endScreen(title,kick,lines,reward){hideGameUI();phase='over';$('eK').textContent=kick;$('eT').textContent=title;const l=$('eL');l.replaceChildren();lines.forEach(t=>{const e=document.createElement('div');e.className='tag';e.textContent=t;l.append(e)});$('eR').textContent=reward||'';$('endChat').hidden=mode!=='online';if(showM)showM.root.visible=false;show('end');setWake(false)}
 function toMenu(){if(mode==='online'&&ref)return exitRoom(true);clearRun();phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false)}
 $('leave').onclick=withLoad($('leave'),()=>toMenu());$('eLeave').onclick=withLoad($('eLeave'),()=>toMenu());$('lv2').onclick=withLoad($('lv2'),()=>exitRoom(true));$('quit').onclick=withLoad($('quit'),()=>toMenu());
 function doPause(on){if(on===paused)return;if(on){if(mode!=='camp'||phase!=='play')return;paused=true;show('pauseOv');fireH=false;stick.on=false;hide('jb');try{ac&&ac.suspend()}catch(e){}}else{paused=false;hide('pauseOv');last=performance.now();try{ac&&ac.resume()}catch(e){}}}
 $('pauseBtn').onclick=()=>doPause(true);$('resume').onclick=()=>doPause(false);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)doPause(true);else if(phase!=='idle')setWake(true)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseInputs();doPause(true)}else if(phase!=='idle')setWake(true)});
 function seg(id,key,opts,cb){const el=$(id);el.replaceChildren();opts.forEach(([l,v])=>{const b=document.createElement('button');b.type='button';b.textContent=l;b.setAttribute('aria-pressed',String(ST[key]===v));b.onclick=()=>{ST[key]=v;saveS();[...el.children].forEach(c=>c.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');if(cb)cb(v)};el.append(b)})}
 const prev=()=>{if(phase==='idle')buildCity(ST.land,ST.dens,7)};
 seg('s_diff','diff',[['Easy',0],['Normal',1],['Hard',2]]);seg('s_land','land',LANDS,prev);seg('s_land2','land',LANDS,prev);seg('s_dens','dens',[['Few',.15],['Some',.4],['Many',.7]],prev);seg('s_dens2','dens',[['Some',.4],['Many',.7]],prev);
