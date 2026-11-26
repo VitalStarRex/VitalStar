@@ -510,15 +510,15 @@ cq=r.child('chat').limitToLast(40),l5=cq.on('child_added',s=>addRoomMsg(s.val())
 unsubs=[...rl,()=>r.child('shots').off('child_added',l2),()=>r.child('kills').off('child_added',l3),()=>r.child('blasts').off('child_added',l4),()=>cq.off('child_added',l5),()=>r.child('hits').off('child_added',l6),()=>r.child('pos').off('child_added',l7),()=>r.child('pos').off('child_changed',l8)];toLobby()}
 function applyPos(s){const id=s.key,v=s.val();if(id===myId||!v)return;const q=RP[id];if(!q)return;if(!q.init){q.init=true;q.x=q.tx=v.x;q.z=q.tz=v.z}q.tx=v.x;q.tz=v.z;q.th=v.h||0;q.ta=v.a||0;q.vx=v.vx||0;q.vz=v.vz||0;q.st=v.t||0}
 function feedKill(v){const f=$('feed'),d=document.createElement('div');const a=document.createElement('b'),b=document.createElement('b');a.textContent=v.kn||'Pilot';b.textContent=v.vn||'Pilot';d.append(a,document.createTextNode(' 🚀 '),b);f.append(d);while(f.children.length>4)f.firstChild.remove();setTimeout(()=>d.remove(),6000)}
-function onRoom(){const d=RC.status==null?null:Object.assign({},RC);if(!d){if(phase!=='idle'){toast('Room closed.');exitRoom(false)}return}R_=d;const ps=d.players||{};
-if(!ps[myId]&&phase!=='idle'){toast('You left the room.');exitRoom(false);return}
+function onRoom(){const d=RC.status==null?null:Object.assign({},RC);if(!d){if(phase!=='idle'){toast('Room closed. (status missing)');exitRoom(false)}return}R_=d;const ps=d.players||{};
+if(!ps[myId]&&phase!=='idle'){toast('You left the room. (your entry missing, id '+myId.slice(0,6)+')');exitRoom(false);return}
 const ids=Object.keys(ps).sort();
 for(const id in RP)if(!ps[id]){toast(RP[id].name+' left');rmRemote(id)}
 if(phase==='count'||phase==='play'||phase==='ending'||phase==='over'){for(const id in ps){if(id===myId)continue;const v=ps[id];let q=RP[id];if(!q){if(phase==='over')continue;q=mkRemote(id,v)}
 
 if(v.dead&&!q.dead)explodeAt(q.x,q.z,false);if(q.dead&&!v.dead){q.x=q.tx;q.z=q.tz}q.hp=v.hp==null?100:v.hp;q.dead=!!v.dead;q.kills=v.k||0;q.deaths=v.d||0}}
-if(d.status==='waiting'){if(phase!=='lobby')toLobby();drawLobby(d,ids,ps);if(ids[0]===myId&&d.hostId!==myId&&(!d.hostId||!ps[d.hostId]))ref.child('hostId').set(myId).catch(()=>{});
-if(ids.length>1&&ids.every(i=>ps[i].ready)&&hostOf(d,ids)===myId&&!onRoom.st){onRoom.st=1;ref.update({go:now()+4000,status:'live'}).catch(()=>{}).finally(()=>{onRoom.st=0})}}
+if(d.status==='waiting'){if(phase!=='lobby'){console.warn('onRoom: status waiting while phase='+phase);if(phase==='count'||phase==='play')toast('DEBUG: room status reset to waiting');toLobby()}drawLobby(d,ids,ps);if(ids[0]===myId&&d.hostId!==myId&&(!d.hostId||!ps[d.hostId]))ref.child('hostId').set(myId).catch(()=>{});
+if(ids.length>1&&ids.every(i=>ps[i].ready)&&hostOf(d,ids)===myId&&!onRoom.st){onRoom.st=1;ref.update({go:now()+4000,status:'live'}).catch(e=>{console.error(e);toast('DEBUG start failed: '+e.message)}).finally(()=>{onRoom.st=0})}}
 else if(d.status==='live'&&phase==='lobby'&&d.go)beginOnline(d,ids);
 else if(d.status==='finished'&&(phase==='count'||phase==='play'||phase==='ending'))finishOnline()}
 function toLobby(){phase='lobby';mode='online';clearRun();hideGameUI();hide('end');hide('pauseOv');makeShow();show('menu');showCard('lobby');setWake(false);if(R_)drawLobby(R_,Object.keys(R_.players||{}).sort(),R_.players||{})}
@@ -530,7 +530,8 @@ const left=d.status==='live'?0:null;$('note').textContent=ids.length<2?'Waiting 
 const amHost=()=>!!(ref&&R_&&hostOf(R_,Object.keys(R_.players||{}).sort())===myId);
 $('rdur').onchange=()=>{if(!amHost()){if(R_)$('rdur').value=R_.duration;return toast('Only the host can change the room.')}ref.child('duration').set(+$('rdur').value).catch(e=>toast('Could not change: '+e.message))};$('rland').onchange=()=>{if(!amHost()){if(R_)$('rland').value=R_.land||'city';return toast('Only the host can change the room.')}ref.child('land').set($('rland').value).catch(e=>toast('Could not change: '+e.message))};
 $('ready').onclick=()=>{aInit();lockLand();if(!ref)return;const v=!isReady(),b=$('ready');b.classList.add('ld');b.disabled=true;ref.child('players/'+myId+'/ready').set(v).catch(e=>toast('Could not update ready: '+e.message)).finally(()=>{b.classList.remove('ld');b.disabled=false})};
-function beginOnline(d,ids){clearRun();mode='online';dur=d.duration||120;startT=d.go;endT=d.go+dur*1000;phase='count';lastN=-1;
+function beginOnline(d,ids){try{beginOnline2(d,ids)}catch(e){console.error(e);toast('DEBUG start error: '+(e&&e.message))}}
+function beginOnline2(d,ids){clearRun();mode='online';dur=d.duration||120;startT=d.go;endT=d.go+dur*1000;phase='count';lastN=-1;
 buildCity(d.land||'city',d.dens==null?.3:d.dens,hashStr(ref.key));createMe();camPit=.83;
 ids.forEach((id,i)=>{const s=SPW[i%4];if(id===myId)placeMe(s[0],s[1]);else{const q=mkRemote(id,d.players[id]);q.x=q.tx=s[0];q.z=q.tz=s[1];q.h=q.th=Math.atan2(-s[0],-s[1]);q.aim=q.ta=q.h}});
 CR.forEach(([x,z,k])=>{const m=new T.Mesh(new T.OctahedronGeometry(.9),bm(k==='h'?0x44ff88:0x33ccff));m.position.set(x,1.2,z);dyn.add(m);crates.push({x,z,k,m,taken:-1})});
