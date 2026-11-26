@@ -82,6 +82,7 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
 .rform{display:flex;gap:6px;margin-top:8px}.rform input{flex:1;min-width:0;width:auto}
 .rform button{padding:0 16px;border:0;border-radius:8px;background:linear-gradient(90deg,#19d3ff,#a855f7);color:#fff;font:800 14px system-ui,sans-serif;cursor:pointer}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:90vw}
+#emo{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:7;display:flex;gap:6px}#emo button{padding:6px 11px;border-radius:999px;border:1px solid rgba(25,211,255,.5);background:rgba(8,16,36,.85);color:var(--tx);font:800 14px system-ui,sans-serif}
 </style></head>
 <body>
 <canvas id="c"></canvas><div id="hit"></div>
@@ -94,7 +95,7 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
 <div id="mChat" class="chatbox" hidden><div class="rlog" id="mLog" style="height:110px"></div><form class="rform" id="mForm"><input id="mText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form></div>
 <div id="zone" hidden></div><div id="orbit" hidden></div><div id="jb" hidden><div id="jk"></div></div>
 <button class="btn" id="bd" hidden>DASH</button><button class="btn" id="bf" hidden>FIRE</button><button class="btn" id="bs" hidden>OVER<br>DRIVE</button>
-<div id="rot" hidden>↻ Turn your phone sideways</div>
+<div id="emo" hidden></div><div id="rot" hidden>↻ Turn your phone sideways</div>
 
 <div id="menu" class="ov">
   <div class="card" id="home">
@@ -136,8 +137,8 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
     <p class="kick">ROOM LOBBY</p><h1 id="rc" style="font-size:clamp(26px,8vw,38px);overflow-wrap:anywhere">ROOM</h1>
     <div id="tags"></div>
     <div class="row"><span class="lbl">Landscape (host sets)</span><select id="rland"></select></div>
-    <div class="row"><span class="lbl">Match length (host sets)</span><select id="rdur"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
-    <button class="go" id="ready">I'M READY</button><button class="b" id="lv2">Leave room</button>
+    <div class="row"><span class="lbl">Mode (host sets)</span><select id="rmode"><option value="ffa">Free for all</option><option value="tdm">Team deathmatch</option></select></div><div class="row"><span class="lbl">Match length (host sets)</span><select id="rdur"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></div>
+    <button class="go" id="ready">I'M READY</button><button class="b" id="lv2">Leave room</button><div class="g2"><button class="b" id="addBot" hidden>+ Add bot</button><button class="b" id="rmBot" hidden>- Remove bot</button></div>
     <p id="note" class="small">Waiting for another pilot…</p>
     <p class="kick" style="margin-top:12px">ROOM CHAT</p><div class="rlog" id="lobLog"></div>
     <form class="rform" id="lobForm"><input id="lobText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Room chat message"><button type="submit">SEND</button></form>
@@ -155,7 +156,7 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
   <div class="card" id="shopC" hidden>
     <p class="kick">HANGAR</p>
     <p id="coinLine"></p><p id="saveInd" hidden class="small"><span class="spin"></span>Saving…</p>
-    <div class="seg"><button id="tArm" aria-pressed="true">Armor</button><button id="tCol" aria-pressed="false">Paint</button></div>
+    <div class="seg"><button id="tArm" aria-pressed="true">Armor</button><button id="tCol" aria-pressed="false">Paint</button><button id="tGear" aria-pressed="false">Gear</button></div>
     <p id="shopMsg" class="small" style="min-height:1.3em"></p>
     <div id="shopList"></div>
     <button class="b" data-back>Back</button>
@@ -164,9 +165,9 @@ button.ld::after{content:"";display:inline-block;width:.8em;height:.8em;margin-l
   <div class="card" id="socC" hidden>
     <p class="kick">YOUR STATS</p>
     <div class="stg"><div><b id="sP">0</b><span>Played</span></div><div><b id="sW">0</b><span>Wins</span></div><div><b id="sL">0</b><span>Losses</span></div><div><b id="sD">0</b><span>Draws</span></div><div><b id="sK">0</b><span>Kills</span></div></div>
-    <p class="small">Best campaign score: <b id="sB">0</b></p>
+    <p class="small">Best campaign score: <b id="sB">0</b></p><p class="kick" style="margin-top:14px">DAILY MISSIONS</p><div id="dm"></div>
     <p class="kick" style="margin-top:14px">ONLINE LEADERBOARD</p>
-    <div id="lead"><div class="li"><span class="spin"></span>Loading…</div></div>
+    <div class="seg" id="lbTabs" style="margin-bottom:6px"></div><div id="lead"><div class="li"><span class="spin"></span>Loading…</div></div>
     <p class="kick" style="margin-top:14px">LOBBY CHAT <span style="opacity:.6;letter-spacing:.05em">(messages vanish after 5 min)</span></p>
     <div class="rlog" id="chatLog" style="height:150px"></div>
     <form class="rform" id="chatForm"><input id="chatText" maxlength="180" placeholder="Say something…" autocomplete="off" aria-label="Chat message"><button type="submit">SEND</button></form>
@@ -226,6 +227,8 @@ const ARMC=[0,50,100,150,220,300,400,520,650,800,1000],TN=['Rookie','Scout','Tro
 const SHOP={coins:0,arm:0,col:'cyan',own:{cyan:1}};
 const myCol=()=>(COLS.find(c=>c[0]===SHOP.col)||COLS[0])[2],armLv=()=>SHOP.arm;
 let shopRef=null,shopOff=null,shopLoaded=false,pendCoins=0,saving=0,shopTab='arm';
+const UPS=[['uf','Fire rate','-6% cooldown'],['ud','Damage (campaign)','+20% damage'],['uc','Dash cooldown','-8% cooldown']],UPC=[40,80,140,220,320],WPS=[['rifle','Rifle','Default',0],['shotgun','Shotgun','Campaign only: 5 pellets',150],['minigun','Minigun','Campaign only: rapid fire',250]],WD={rifle:1,shotgun:.8,minigun:.6};
+const upg=k=>(+SHOP.own[k])||0,wsel=()=>{const w=SHOP.own.w;return w&&(w==='rifle'||SHOP.own['w_'+w])?w:'rifle'};
 function updShop(){const cn=$('coinN');cn.classList.toggle('sk',!shopLoaded);cn.textContent=shopLoaded?SHOP.coins:'Loading';if(!$('shopC').hidden)renderShop()}
 function applyShop(v){Object.assign(SHOP,{coins:Math.max(0,Math.floor(+v.coins||0)),arm:clamp((+v.arm)|0,0,10),col:v.col||'cyan',own:Object.assign({cyan:1},v.own||{})})}
 function updSave(){$('saveInd').hidden=!saving;document.querySelectorAll('#shopList button').forEach(b=>b.classList.toggle('ld',saving>0))}
@@ -346,8 +349,8 @@ function updFx(dt){for(let i=pt.length-1;i>=0;i--){const q=pt[i];q.vy-=14*dt;q.m
 for(let i=fxl.length-1;i>=0;i--){const f=fxl[i];f.l-=dt;const t=1-f.l/f.mx;f.m.scale.setScalar(Math.max(.01,f.sz*Math.sqrt(t)));f.m.material.opacity=.9*Math.max(0,1-t);if(f.l<=0){dyn.remove(f.m);f.m.material.dispose();fxl.splice(i,1)}}}
 function explodeAt(x,z,big){burst(x,2,z,0xff8844,big?40:16,big?14:9);burst(x,2,z,0xffee88,big?20:8,10);fx(x,2,z,0xffaa44,big?9:4,.6);fx(x,.1,z,0x88ddff,big?15:6,.5,1);shake=Math.max(shake,big?1.2:.4);sfx('boom')}
 function say(t){const b=$('ban');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
-function createMe(){const m=mech(myCol(),1,false,armLv());dyn.add(m.root);pLight.color.setHex(myCol());pLight.intensity=1.4;
-me={id:myId,name:myName,col:myCol(),o:m.root,m,vx:0,vz:0,hp:100,yaw:0,aim:0,ph:0,fc:0,dash:0,dcd:0,inv:0,side:0,dx:0,dz:1,kills:0,deaths:0,en:0,dead:false,resp:0};
+function createMe(cc){cc=cc==null?myCol():cc;const m=mech(cc,1,false,armLv());dyn.add(m.root);pLight.color.setHex(cc);pLight.intensity=1.4;
+me={id:myId,name:myName,col:cc,team:0,o:m.root,m,vx:0,vz:0,hp:100,yaw:0,aim:0,ph:0,fc:0,dash:0,dcd:0,inv:0,side:0,dx:0,dz:1,kills:0,deaths:0,en:0,dead:false,resp:0};
 const al=new T.Mesh(new T.BoxGeometry(.06,.06,1),new T.MeshBasicMaterial({color:0xff3d9a,transparent:true,opacity:.4,depthWrite:false}));al.visible=false;
 const am=new T.MeshBasicMaterial({color:0xff3d9a,transparent:true,opacity:.95,side:2,depthTest:false}),rg=new T.Group();
 const r1=new T.Mesh(new T.RingGeometry(.8,1,32).rotateX(-Math.PI/2),am),r2=new T.Mesh(new T.CircleGeometry(.16,12).rotateX(-Math.PI/2),am);rg.add(r1,r2);
@@ -394,13 +397,13 @@ const BSP=440,BLIFE=.22,AIMR=48;
 const bBody=new T.CylinderGeometry(.13,.13,.8,10).rotateX(Math.PI/2),bTip=new T.ConeGeometry(.13,.4,10).rotateX(Math.PI/2).translate(0,0,.6),bTrail=new T.BoxGeometry(.1,.1,9).translate(0,0,-4.9),bCore=new T.BoxGeometry(.045,.045,9.4).translate(0,0,-4.7);
 const bBr=new T.MeshBasicMaterial({color:0xe0b050}),bTp=new T.MeshBasicMaterial({color:0xd5dae2}),bWh=new T.MeshBasicMaterial({color:0xffffff}),trM={};
 const trailM=c=>trM[c]||(trM[c]=new T.MeshBasicMaterial({color:c,transparent:true,opacity:.55,blending:T.AdditiveBlending,depthWrite:false}));
-function spawnBullet(x,y,z,a,o,col){const g=new T.Group();g.add(new T.Mesh(bBody,bBr),new T.Mesh(bTip,bTp),new T.Mesh(bCore,bWh),new T.Mesh(bTrail,trailM(col)));g.position.set(x,y,z);g.rotation.y=a;dyn.add(g);bl.push({m:g,vx:Math.sin(a)*BSP,vz:Math.cos(a)*BSP,l:BLIFE,o})}
+function spawnBullet(x,y,z,a,o,col,lf){const g=new T.Group();g.add(new T.Mesh(bBody,bBr),new T.Mesh(bTip,bTp),new T.Mesh(bCore,bWh),new T.Mesh(bTrail,trailM(col)));g.position.set(x,y,z);g.rotation.y=a;dyn.add(g);bl.push({m:g,vx:Math.sin(a)*BSP,vz:Math.cos(a)*BSP,l:lf||BLIFE,o})}
 function nearest(pp,range){let tg=null,bd=range;if(mode==='camp'){for(const e of S.e){const d=Math.hypot(e.o.position.x-pp.x,e.o.position.z-pp.z);if(d<bd){bd=d;tg=e.o.position}}}else{for(const id in RP){const q=RP[id];if(q.dead)continue;const d=Math.hypot(q.x-pp.x,q.z-pp.z);if(d<bd){bd=d;tg=q.o.position}}}return tg}
-function shootMe(){const p=me;p.side^=1;p.m.muzzles[p.side].getWorldPosition(V);const on=mode==='online',a=Math.atan2(p.o.position.x+Math.sin(p.aim)*(p.aimD||AIMR)-V.x,p.o.position.z+Math.cos(p.aim)*(p.aimD||AIMR)-V.z)+R(-.012,.012);p.fc=on?.26:.12;
-spawnBullet(V.x,V.y,V.z,a,myId,on?p.col:0xffee66);fx(V.x,V.y,V.z,0xffee88,.9,.08);burst(V.x,V.y-.3,V.z,0xe0b050,2,4);fx(V.x+Math.sin(a)*.6,V.y,V.z+Math.cos(a)*.6,0xfff2aa,1.4,.06);sfx('shoot');shake=Math.max(shake,.05);
+function shootMe(){const p=me;p.side^=1;p.m.muzzles[p.side].getWorldPosition(V);const on=mode==='online',a=Math.atan2(p.o.position.x+Math.sin(p.aim)*(p.aimD||AIMR)-V.x,p.o.position.z+Math.cos(p.aim)*(p.aimD||AIMR)-V.z)+R(-.012,.012);const wp=on?'rifle':wsel();p.fc=(on?.26:wp==='shotgun'?.5:wp==='minigun'?.06:.12)*(1-.06*upg('uf'));
+spawnBullet(V.x,V.y,V.z,a+(wp==='minigun'?R(-.05,.05):0),myId,on?p.col:0xffee66,wp==='shotgun'?.12:undefined);if(wp==='shotgun')for(let i=-2;i<=2;i++)if(i)spawnBullet(V.x,V.y,V.z,a+i*.07,myId,0xffee66,.12);fx(V.x,V.y,V.z,0xffee88,.9,.08);burst(V.x,V.y-.3,V.z,0xe0b050,2,4);fx(V.x+Math.sin(a)*.6,V.y,V.z+Math.cos(a)*.6,0xfff2aa,1.4,.06);sfx('shoot');shake=Math.max(shake,.05);
 if(on&&ref){const r=ref.child('shots').push({o:myId,x:+V.x.toFixed(1),z:+V.z.toFixed(1),a:+a.toFixed(3),t:TS()});setTimeout(()=>r.remove(),2500)}}
 function sendHit(id){if(!ref)return;const r=ref.child('hits').push({v:id,o:myId,t:TS()});r.catch(e=>{if(!sendHit.w){sendHit.w=1;toast('Hit not sent: '+e.message)}});setTimeout(()=>r.remove().catch(()=>{}),3000)}
-function dash(){if(!me||me.dead||phase!=='play'||me.dcd>0)return;const p=me,m=mv();let x=m.x,z=m.z;if(!x&&!z){x=Math.sin(p.aim);z=Math.cos(p.aim)}const l=Math.hypot(x,z)||1;p.dx=x/l;p.dz=z/l;p.dash=.2;p.dcd=1.1;p.inv=Math.max(p.inv,.35);sfx('dash')}
+function dash(){if(!me||me.dead||phase!=='play'||me.dcd>0)return;const p=me,m=mv();let x=m.x,z=m.z;if(!x&&!z){x=Math.sin(p.aim);z=Math.cos(p.aim)}const l=Math.hypot(x,z)||1;p.dx=x/l;p.dz=z/l;p.dash=.2;p.dcd=1.1*(1-.08*upg('uc'));p.inv=Math.max(p.inv,.35);sfx('dash')}
 function overdrive(){if(!me||me.dead||phase!=='play'||me.en<100)return;me.en=0;sfx('over');const q=me.o.position;fx(q.x,1,q.z,0x22ffff,18,.7,1);fx(q.x,2,q.z,0x88ffff,6,.4);shake=Math.max(shake,1.2);me.inv=Math.max(me.inv,1);
 if(mode==='camp'){for(const e of eb)dyn.remove(e.m);eb.length=0;for(const e of S.e.slice())if(Math.hypot(e.o.position.x-q.x,e.o.position.z-q.z)<18)hit(e,10)}
 else if(ref){const r=ref.child('blasts').push({o:myId,x:+q.x.toFixed(1),z:+q.z.toFixed(1),t:TS()});setTimeout(()=>r.remove(),3000)}}
@@ -432,56 +435,57 @@ pLight.position.set(pp.x,3,pp.z)}
 function updBullets(dt){for(let i=bl.length-1;i>=0;i--){const b=bl[i],p=b.m.position,n=Math.max(1,Math.ceil(Math.hypot(b.vx,b.vz)*dt/.9)),sx=b.vx*dt/n,sz=b.vz*dt/n;let dead=false;
 for(let k=0;k<n&&!dead;k++){p.x+=sx;p.z+=sz;
 if(hitB(p)){burst(p.x,p.y,p.z,0xffaa66,4,6);dead=true;break}
-if(mode==='camp'&&S&&b.o===myId){for(const e of S.e){if(Math.hypot(e.o.position.x-p.x,e.o.position.z-p.z)<e.r+.4){burst(p.x,p.y,p.z,0xffee88,3,6);hit(e,1);dead=true;break}}}
-else if(mode==='online'){for(const id in RP){const q=RP[id];if(id===b.o||q.dead)continue;if(Math.hypot(q.x-p.x,q.z-p.z)<2.8){burst(p.x,p.y,p.z,0xffee88,3,6);dead=true;if(b.o===myId&&phase==='play'&&me&&!me.dead)sendHit(id);break}}
-if(!dead&&b.o!==myId&&me&&!me.dead&&phase==='play'&&Math.hypot(me.o.position.x-p.x,me.o.position.z-p.z)<2){burst(p.x,p.y,p.z,0xffee88,3,6);dead=true}}}
+if(mode==='camp'&&S&&b.o===myId){for(const e of S.e){if(Math.hypot(e.o.position.x-p.x,e.o.position.z-p.z)<e.r+.4){burst(p.x,p.y,p.z,0xffee88,3,6);hit(e,(1+.2*upg('ud'))*(WD[wsel()]||1));dead=true;break}}}
+else if(mode==='online'){for(const id in RP){const q=RP[id];if(id===b.o||q.dead||(isTdm()&&q.team===me.team))continue;if(Math.hypot(q.x-p.x,q.z-p.z)<2.8){burst(p.x,p.y,p.z,0xffee88,3,6);dead=true;if(b.o===myId&&phase==='play'&&me&&!me.dead)sendHit(id);break}}
+if(!dead&&b.o!==myId&&me&&!me.dead&&phase==='play'&&Math.hypot(me.o.position.x-p.x,me.o.position.z-p.z)<2){burst(p.x,p.y,p.z,0xffee88,3,6);dead=true;const sh=RP[b.o];if(sh&&sh.bot&&!(isTdm()&&sh.team===me.team))hurtMe(b.o,ODMG)}}}
 b.l-=dt;if(b.l<=0)dead=true;
 if(dead){dyn.remove(b.m);bl.splice(i,1)}}}
 /* ================= campaign ================= */
 function startCampaign(){aInit();lockLand();clearRun();mode='camp';buildCity(ST.land,ST.dens,Math.floor(R(1,1e6)));createMe();placeMe(0,0);camYaw=0;camPit=.83;
 S={run:1,e:[],pk:[],sc:0,k:0,wave:0,maxW:4};phase='play';uiPlay();nextWave()}
 function nextWave(){S.wave++;const w=S.wave,fin=w===S.maxW;sfx('wave');say(fin?'FINAL WAVE: DESTROY THE WARLORD':'WAVE '+w+' OF '+S.maxW);
-for(let i=0,nn=Math.round((6+w*3)*DF().n);i<nn;i++){const r=Math.random();spawn(w>=3&&r<.25?'brute':r<(w>=2?.55:.15)?'gunner':'drone')}if(fin)spawn('boss')}
+for(let i=0,nn=Math.round((6+w*3)*DF().n);i<nn;i++){const r=Math.random();spawn(w>=3&&r<.25?'brute':r<(w>=2?.55:.15)?'gunner':'drone')}if(w>=2)for(let i=0;i<w-1;i++)spawn('sniper');if(w>=3)swarm(6);if(fin)spawn('boss')}
+function swarm(n){const q=spos();for(let i=0;i<n;i++){spawn('drone');const e=S.e[S.e.length-1];e.o.position.x=q.x+R(-4,4);e.o.position.z=q.z+R(-4,4);e.o.scale.setScalar(.7)}}
 function spos(){const p=me.o.position;let x=0,z=0;for(let k=0;k<30;k++){const l=(Math.floor(R(-5,5))+.5)*24,f=R(-120,120);if(Math.random()<.5){x=l;z=f}else{x=f;z=l}if(Math.hypot(x-p.x,z-p.z)>50)break}return{x,z}}
 function spawn(type){const w=S.wave;let o,d;
 if(type==='drone'){const g=new T.Group(),mt=new T.MeshStandardMaterial({color:0x331111,emissive:0xff2233,metalness:.8,roughness:.3});mt.userData.e=0xff2233;const m=new T.Mesh(new T.OctahedronGeometry(.8),mt);m.castShadow=true;g.add(m);const rr=new T.Mesh(new T.TorusGeometry(1.1,.07,6,20),new T.MeshBasicMaterial({color:0xff5566}));rr.rotation.x=1.57;g.add(rr);o=g;d={hp:1,r:1.3,sp:11+w,mats:[mt],rr}}
-else{const c={gunner:0xffaa33,brute:0xbb55ff,boss:0xff2299}[type],s={gunner:.8,brute:1.5,boss:3}[type],mm=mech(c,s,type==='boss');o=mm.root;
-d={m:mm,mats:mm.mats,r:{gunner:1.5,brute:2.6,boss:5}[type],hp:{gunner:3+(w>>2),brute:8+w,boss:45+w*5}[type],sp:{gunner:8,brute:7,boss:5.5}[type],cd:R(.5,2)}}
+else{const c={gunner:0xffaa33,sniper:0x33ffcc,brute:0xbb55ff,boss:0xff2299}[type],s={gunner:.8,sniper:.9,brute:1.5,boss:3}[type],mm=mech(c,s,type==='boss');o=mm.root;
+d={m:mm,mats:mm.mats,r:{gunner:1.5,sniper:1.6,brute:2.6,boss:5}[type],hp:{gunner:3+(w>>2),sniper:2+(w>>1),brute:8+w,boss:45+w*5}[type],sp:{gunner:8,sniper:6,brute:7,boss:5.5}[type],cd:R(.5,2)}}
 const DD=DF();d.hp=Math.max(1,Math.round(d.hp*DD.hp));d.sp*=DD.sp;const sp=spos();o.position.set(sp.x,type==='drone'?1.8:0,sp.z);dyn.add(o);
-const bw=type==='boss'?.8:.25,bc=new T.Mesh(new T.CylinderGeometry(bw,bw,70,6),new T.MeshBasicMaterial({color:{drone:0xff4455,gunner:0xffaa33,brute:0xbb55ff,boss:0xff2299}[type],transparent:true,opacity:.45,fog:false}));dyn.add(bc);
+const bw=type==='boss'?.8:.25,bc=new T.Mesh(new T.CylinderGeometry(bw,bw,70,6),new T.MeshBasicMaterial({color:{drone:0xff4455,gunner:0xffaa33,sniper:0x33ffcc,brute:0xbb55ff,boss:0xff2299}[type],transparent:true,opacity:.45,fog:false}));dyn.add(bc);
 S.e.push(Object.assign({o,bc,type,ph:R(0,6),fl:0,hc:0,sd:Math.random()<.5?1:-1,sw:R(1,3),dt2:R(1,3),db:0,mhp:d.hp},d))}
 function hit(e,n){e.hp-=n;e.fl=.08;e.mats.forEach(m=>m.emissive.setHex(0x888888));if(e.hp<=0)kill(e)}
 function kill(e){const i=S.e.indexOf(e);if(i<0)return;S.e.splice(i,1);dyn.remove(e.o);dyn.remove(e.bc);const p=e.o.position,b=e.type==='boss';
-S.sc+=b?500:e.type==='brute'?60:e.type==='gunner'?30:10;S.k++;me.en=Math.min(100,me.en+(b?60:e.type==='drone'?4:9));
+S.sc+=b?500:e.type==='brute'?60:e.type==='gunner'?30:e.type==='sniper'?40:10;S.k++;me.en=Math.min(100,me.en+(b?60:e.type==='drone'?4:9));
 burst(p.x,2,p.z,e.type==='drone'?0xff4455:0xffaa33,b?60:18,b?18:10);burst(p.x,2,p.z,0xffee88,8,8);fx(p.x,2,p.z,0xffaa44,b?9:3.5,.5);fx(p.x,.1,p.z,0xffdd88,b?14:5,.4,1);
 shake=Math.max(shake,b?1.6:.35);sfx('boom');if(b)slow=1.2;
 if(Math.random()<(e.type==='drone'?.06:.25)||b){const m=new T.Mesh(new T.OctahedronGeometry(.6),bm(0x44ff88));m.position.set(p.x,1,p.z);dyn.add(m);S.pk.push({m,l:12})}}
-function eshoot(e,a,sp){const m=new T.Mesh(ebg,bm(0xff55aa));m.position.set(e.o.position.x,2*(e.o.scale.x||1),e.o.position.z);dyn.add(m);eb.push({m,vx:Math.sin(a)*sp,vz:Math.cos(a)*sp,l:5})}
+function eshoot(e,a,sp,dm){const m=new T.Mesh(ebg,bm(0xff55aa));m.position.set(e.o.position.x,2*(e.o.scale.x||1),e.o.position.z);dyn.add(m);eb.push({m,vx:Math.sin(a)*sp,vz:Math.cos(a)*sp,l:5,dm:dm||8})}
 function updCamp(dt){const p=me,pp=p.o.position;if(!S.run)return;
 for(const e of S.e.slice()){const q=e.o.position;e.bc.position.set(q.x,30,q.z);e.ph+=dt*6;if(e.fl>0){e.fl-=dt;if(e.fl<=0)e.mats.forEach(m=>m.emissive.setHex(m.userData.e))}
 const dx=pp.x-q.x,dz=pp.z-q.z,d=Math.hypot(dx,dz)||1,ang=Math.atan2(dx,dz);
 e.sw-=dt;if(e.sw<=0){e.sw=R(1.5,3.5);e.sd=-e.sd}e.dt2-=dt;e.db-=dt;if(e.dt2<=0&&e.type==='gunner'){e.dt2=R(2,4);e.db=.25}
-const keep=e.type==='gunner'?13:0;const dir=d>keep+2?1:d<keep-2?-.5:0;const stf=e.type==='drone'?0:e.sd*.7,spd2=e.sp*(e.db>0?3:1);
+const keep=e.type==='gunner'?13:e.type==='sniper'?32:0;const dir=d>keep+2?1:d<keep-2?-.5:0;const stf=e.type==='drone'?0:e.sd*.7,spd2=e.sp*(e.db>0?3:1);
 q.x+=(dx/d*dir-dz/d*stf)*spd2*dt;q.z+=(dz/d*dir+dx/d*stf)*spd2*dt;coll(q,Math.min(e.r*.5,2.5));
 if(e.type==='drone'){q.y=1.8+Math.sin(e.ph)*.4;e.o.rotation.y+=dt*4;e.rr.rotation.z+=dt*8}
 else{e.o.rotation.y=lerpA(e.o.rotation.y,ang,dt*5);const sw=Math.sin(e.ph)*.6*(dir?1:0);e.m.legs[0].rotation.x=sw;e.m.legs[1].rotation.x=-sw;
-e.cd-=dt;if(e.cd<=0){if(e.type==='gunner'){e.cd=1.2;const tt=d/15;eshoot(e,Math.atan2(dx+p.vx*tt,dz+p.vz*tt),15)}else if(e.type==='brute'){e.cd=2;for(let i=-1;i<=1;i++)eshoot(e,ang+i*.25,13)}else{e.cd=1.8;for(let i=0;i<14;i++)eshoot(e,i/14*6.28+gT,11);for(let i=-2;i<=2;i++)eshoot(e,ang+i*.12,18)}}}
+e.cd-=dt;if(e.cd<=0){if(e.type==='gunner'){e.cd=1.2;const tt=d/15;eshoot(e,Math.atan2(dx+p.vx*tt,dz+p.vz*tt),15)}else if(e.type==='sniper'){e.cd=2.6;const tt=d/34;eshoot(e,Math.atan2(dx+p.vx*tt,dz+p.vz*tt),34,16)}else if(e.type==='brute'){e.cd=2;for(let i=-1;i<=1;i++)eshoot(e,ang+i*.25,13)}else{e.cd=1.8;for(let i=0;i<14;i++)eshoot(e,i/14*6.28+gT,11);for(let i=-2;i<=2;i++)eshoot(e,ang+i*.12,18)}}}
 /* FIX #3: a ramming drone only dies (and pays out) if its hit actually landed; while you're invulnerable it just keeps chasing */
 if(!p.dead&&d<e.r+1.3){if(e.type==='drone'){if(hurtMe('e',10)&&S.run)kill(e)}else{e.hc-=dt;if(e.hc<=0){e.hc=.8;hurtMe('e',e.type==='boss'?25:15)}}}}
-for(let i=eb.length-1;i>=0;i--){const b=eb[i];b.m.position.x+=b.vx*dt;b.m.position.z+=b.vz*dt;b.l-=dt;if(hitB(b.m.position))b.l=0;if(b.l>0&&!p.dead&&Math.hypot(b.m.position.x-pp.x,b.m.position.z-pp.z)<1.4){b.l=0;hurtMe('e',8)}if(b.l<=0){dyn.remove(b.m);eb.splice(i,1)}}
+for(let i=eb.length-1;i>=0;i--){const b=eb[i];b.m.position.x+=b.vx*dt;b.m.position.z+=b.vz*dt;b.l-=dt;if(hitB(b.m.position))b.l=0;if(b.l>0&&!p.dead&&Math.hypot(b.m.position.x-pp.x,b.m.position.z-pp.z)<1.4){b.l=0;hurtMe('e',b.dm||8)}if(b.l<=0){dyn.remove(b.m);eb.splice(i,1)}}
 for(let i=S.pk.length-1;i>=0;i--){const k=S.pk[i];k.l-=dt;k.m.rotation.y+=dt*3;k.m.position.y=1+Math.sin(gT*4)*.3;if(!p.dead&&Math.hypot(k.m.position.x-pp.x,k.m.position.z-pp.z)<2){k.l=0;sfx('pick');p.hp=Math.min(100,p.hp+25);burst(k.m.position.x,1,k.m.position.z,0x44ff88,12,6)}if(k.l<=0){dyn.remove(k.m);S.pk.splice(i,1)}}
 if(S.run&&S.e.length===0){if(S.wave>=S.maxW)endCampaign(true);else{nextWave();p.hp=Math.min(100,p.hp+30)}}}
 function endCampaign(win){if(!S||!S.run)return;S.run=0;phase='ending';const rid=runId;
 if(win){sfx('win');slow=2;for(let i=0;i<12;i++)setTimeout(()=>{if(rid!==runId||!me)return;const q=me.o.position;burst(q.x+R(-8,8),R(6,14),q.z+R(-8,8),[0x22ffff,0xff44aa,0xffee66,0x44ff88][i%4],30,16);fx(q.x+R(-8,8),R(6,12),q.z+R(-8,8),0xffffff,5,.5)},i*250)}
 setTimeout(()=>{if(rid===runId)campEnd(win)},win?3500:1300)}
 function campEnd(win){phase='over';const reward=Math.floor(S.k/2),sc=S.sc,wv=S.wave,kl=S.k;
-if(recordOnce('camp-'+Date.now())){STATS.played++;STATS.kills+=kl;if(win)STATS.wins++;else STATS.losses++;if(sc>STATS.best)STATS.best=sc;xp+=10*kl+(win?50:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats()}
+if(recordOnce('camp-'+Date.now())){STATS.played++;STATS.kills+=kl;if(win)STATS.wins++;else STATS.losses++;if(sc>STATS.best)STATS.best=sc;xp+=10*kl+(win?50:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats();missionTick(kl,win);submitBest(sc)}
 endScreen(win?'CITY LIBERATED!':'MECH DESTROYED','MISSION OVER',['Score '+sc,'Wave '+wv+' of 4','Hostiles destroyed '+kl,'Best score '+STATS.best],reward?'+'+reward+(reward>1?' coins':' coin')+' ('+kl+' kills)':'No coins this time ('+kl+' kills)')}
 /* ================= online arena ================= */
 function mkRemote(id,v){const col=v.col!=null?v.col:0xff4455,m=mech(col,1,false,v.ar),o=m.root;dyn.add(o);const l=label(v.name||'Pilot',col);l.position.y=6.4;o.add(l);
 const bar=new T.Group(),bg=new T.Mesh(barG,barBg),fg=new T.Mesh(barG,barFg);bg.renderOrder=10;fg.renderOrder=11;fg.position.z=.01;bar.add(bg,fg);dyn.add(bar);
 const bc=new T.Mesh(new T.CylinderGeometry(.25,.25,70,6),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.4,fog:false}));dyn.add(bc);
-return RP[id]={id,name:v.name||'Pilot',col,o,m,bar,fg,bc,x:0,z:0,tx:0,tz:0,px:0,pz:0,h:0,th:0,aim:0,ta:0,hp:100,dead:false,kills:0,deaths:0,ph:0,init:false}}
+return RP[id]={id,name:v.name||'Pilot',bot:!!v.bot,team:0,col,o,m,bar,fg,bc,x:0,z:0,tx:0,tz:0,px:0,pz:0,h:0,th:0,aim:0,ta:0,hp:100,dead:false,kills:0,deaths:0,ph:0,init:false}}
 function rmRemote(id){const q=RP[id];if(!q)return;dyn.remove(q.o);dyn.remove(q.bar);dyn.remove(q.bc);delete RP[id]}
 const gen=()=>Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
 async function createRoom(){aInit();lockLand();if(!db)return toast('Online needs a connection.');const nm=$('roomName').value.replace(/\s+/g,' ').trim().slice(0,24);if(!nm){$('roomName').focus();return toast('Enter a room name first.')}
@@ -495,16 +499,16 @@ if(!n){const p=document.createElement('p');p.className='small';p.textContent='No
 function loadingEl(t){const p=document.createElement('p');p.className='small';const i=document.createElement('span');i.className='spin';p.append(i,document.createTextNode(t));return p}
 /* FIX #1: the room used to be watched with ONE listener on the whole room node, so onRoom() re-ran for every position / shot / chat write (~20x per second per pilot).
    Now each small room field has its own listener; the fast-changing children (pos, shots, kills, hits, blasts, chat) no longer trigger it. */
-const RK=['status','go','duration','land','dens','name','hostId','created','players'],RC={},seenRC={};
+const RK=['status','go','duration','land','dens','name','hostId','created','players','tmode'],RC={},seenRC={};
 async function enter(c,r){watchRooms(false);
 await r.child('players/'+myId).set({name:myName,col:myCol(),ar:armLv(),ready:false,x:0,z:0,h:0,a:0,hp:100,k:0,d:0,dead:false});r.child('players/'+myId).onDisconnect().remove();r.child('pos/'+myId).onDisconnect().remove();
 ref=r;mode='online';resetChat();phase='lobby';
 for(const k in RC)delete RC[k];for(const k in seenRC)delete seenRC[k];
 const rl=RK.map(k=>{const q=r.child(k),f=q.on('value',s=>{RC[k]=k==='players'?(s.val()||{}):s.val();seenRC[k]=1;if(RK.every(x=>seenRC[x]))onRoom()});return()=>q.off('value',f)}),
 l2=r.child('shots').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500||(phase!=='play'&&phase!=='count'))return;const q=RP[v.o];spawnBullet(v.x,2.4,v.z,v.a,v.o,q?q.col:0xffee66)}),
-l3=r.child('kills').on('child_added',s=>{const v=s.val();if(!v||now()-v.t>4000||phase==='lobby')return;feedKill(v);if(v.k===myId&&me&&!me.dead){me.kills++;me.en=Math.min(100,me.en+30);say('KILL!');sfx('pick')}}),
-l4=r.child('blasts').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500||phase!=='play')return;fx(v.x,1,v.z,0x22ffff,18,.7,1);fx(v.x,2,v.z,0x88ffff,6,.4);if(me&&!me.dead&&Math.hypot(me.o.position.x-v.x,me.o.position.z-v.z)<18)hurtMe(v.o,32)}),
-l6=r.child('hits').on('child_added',s=>{const v=s.val();if(!v||v.v!==myId||now()-v.t>3000||phase!=='play'||!me)return;hurtMe(v.o,ODMG)}),
+l3=r.child('kills').on('child_added',s=>{const v=s.val();if(!v||now()-v.t>4000||phase==='lobby')return;feedKill(v);if(BOT[v.k])BOT[v.k].k++;if(v.k===myId&&me&&!me.dead){me.kills++;me.en=Math.min(100,me.en+30);say('KILL!');sfx('pick')}}),
+l4=r.child('blasts').on('child_added',s=>{const v=s.val();if(!v||v.o===myId||now()-v.t>1500||phase!=='play')return;fx(v.x,1,v.z,0x22ffff,18,.7,1);fx(v.x,2,v.z,0x88ffff,6,.4);if(me&&!me.dead&&Math.hypot(me.o.position.x-v.x,me.o.position.z-v.z)<18&&!(isTdm()&&RP[v.o]&&RP[v.o].team===me.team))hurtMe(v.o,32)}),
+l6=r.child('hits').on('child_added',s=>{const v=s.val();if(!v||now()-v.t>3000||phase!=='play'||!me)return;if(v.v!==myId){if(RP[v.v]&&RP[v.v].bot&&amHost())botHit(v);return}hurtMe(v.o,ODMG)}),
 l7=r.child('pos').on('child_added',applyPos),l8=r.child('pos').on('child_changed',applyPos),
 cq=r.child('chat').limitToLast(40),l5=cq.on('child_added',s=>addRoomMsg(s.val()));
 unsubs=[...rl,()=>r.child('shots').off('child_added',l2),()=>r.child('kills').off('child_added',l3),()=>r.child('blasts').off('child_added',l4),()=>cq.off('child_added',l5),()=>r.child('hits').off('child_added',l6),()=>r.child('pos').off('child_added',l7),()=>r.child('pos').off('child_changed',l8)];toLobby()}
@@ -525,18 +529,34 @@ function toLobby(){phase='lobby';mode='online';clearRun();hideGameUI();hide('end
 function isReady(){return !!(R_&&R_.players&&R_.players[myId]&&R_.players[myId].ready)}
 const hostOf=(d,ids)=>d&&d.hostId&&(d.players||{})[d.hostId]?d.hostId:ids[0];
 function drawLobby(d,ids,ps){$('rc').textContent=d.name||'ROOM';const t=$('tags');t.replaceChildren();ids.forEach(i=>{const e=document.createElement('div');e.className='tag'+(ps[i].ready?' on':'');const a=document.createElement('span');a.textContent=(ps[i].name||'Pilot')+(i===hostOf(d,ids)?' (host)':'');a.style.color=hx(ps[i].col!=null?ps[i].col:0xffffff);const b=document.createElement('span');b.textContent=ps[i].ready?'READY':'waiting';e.append(a,b);t.append(e)});
-const host=hostOf(d,ids)===myId;$('rdur').value=d.duration;$('rdur').disabled=!host;$('rland').value=d.land||'city';$('rland').disabled=!host;$('ready').textContent=isReady()?'CANCEL READY':"I'M READY";
+const host=hostOf(d,ids)===myId;$('rdur').value=d.duration;$('rdur').disabled=!host;$('rland').value=d.land||'city';$('rland').disabled=!host;$('rmode').value=d.tmode||'ffa';$('rmode').disabled=!host;$('addBot').hidden=!host||ids.length>=4;$('rmBot').hidden=!host||!ids.some(i=>ps[i].bot);$('ready').textContent=isReady()?'CANCEL READY':"I'M READY";
 const left=d.status==='live'?0:null;$('note').textContent=ids.length<2?'Waiting for another pilot…':'Everyone must press Ready.';buildCity(d.land||'city',d.dens==null?.3:d.dens,hashStr(ref?ref.key:'x'))}
 const amHost=()=>!!(ref&&R_&&hostOf(R_,Object.keys(R_.players||{}).sort())===myId);
+const BOT={},BCOL=[0xff8844,0x88ff44,0xdd66ff,0xffd24a],TCOL=[0x2f8fff,0xff4455];
+function isTdm(){return !!(R_&&R_.tmode==='tdm')}
+function botHit(v){const b=BOT[v.v],q=RP[v.v];if(!b||b.dead||!q)return;b.hp-=ODMG;if(b.hp>0)return;b.dead=true;b.d++;b.rs=now()+3000;const kn=v.o===myId?myName:((RP[v.o]&&RP[v.o].name)||'Pilot'),r=ref.child('kills').push({k:v.o,kn,v:v.v,vn:q.name,t:TS()});setTimeout(()=>r.remove().catch(()=>{}),5000)}
+function updBots(dt,tn){if(!ref||phase!=='play'||!amHost())return;const tdm=isTdm();
+for(const id in RP){const q=RP[id];if(!q.bot)continue;const b=BOT[id]||(BOT[id]={x:q.tx,z:q.tz,h:0,hp:100,dead:false,rs:0,cd:1.5,k:0,d:0,sd:1,sw:2,sg:'',st:0});
+if(b.dead){if(tn>=b.rs){const s=SPW[Math.floor(Math.random()*4)];b.x=s[0];b.z=s[1];b.hp=100;b.dead=false}}
+else{let tg=null,bd=1e9;const cand=(x,z,tm)=>{if(tdm&&tm===q.team)return;const d=Math.hypot(x-b.x,z-b.z);if(d<bd){bd=d;tg={x,z}}};
+if(me&&!me.dead)cand(me.o.position.x,me.o.position.z,me.team);for(const o in RP){const r=RP[o];if(o!==id&&!r.dead)cand(r.x,r.z,r.team)}
+let aim=b.h,mx=0,mz=0;if(tg){const dx=tg.x-b.x,dz=tg.z-b.z,d=bd||1;b.sw-=dt;if(b.sw<=0){b.sw=R(1,3);b.sd=-b.sd}const dir=d>18?1:d<10?-.6:0;mx=(dx/d*dir-dz/d*b.sd*.7)*14;mz=(dz/d*dir+dx/d*b.sd*.7)*14;aim=Math.atan2(dx,dz);
+b.cd-=dt;if(b.cd<=0&&d<46){b.cd=.6+Math.random()*.3;const a=aim+R(-.1,.1),r2=ref.child('shots').push({o:id,x:+(b.x+Math.sin(a)*2).toFixed(1),z:+(b.z+Math.cos(a)*2).toFixed(1),a:+a.toFixed(3),t:TS()});setTimeout(()=>r2.remove().catch(()=>{}),2500)}}
+const P={x:b.x+mx*dt,z:b.z+mz*dt};coll(P,1.2);b.x=clamp(P.x,-128,128);b.z=clamp(P.z,-128,128);if(mx||mz)b.h=lerpA(b.h,Math.atan2(mx,mz),dt*8);
+b.st-=dt;if(b.st<=0){b.st=.05;ref.child('pos/'+id).set({x:+b.x.toFixed(2),z:+b.z.toFixed(2),h:+b.h.toFixed(2),a:+aim.toFixed(2),vx:+mx.toFixed(1),vz:+mz.toFixed(1),t:TS()}).catch(()=>{})}}
+const sg=Math.round(b.hp)+'|'+b.k+'|'+b.d+'|'+(b.dead?1:0);if(sg!==b.sg){b.sg=sg;ref.child('players/'+id).update({hp:Math.round(b.hp),k:b.k,d:b.d,dead:b.dead}).catch(()=>{})}}}
+$('rmode').onchange=()=>{if(!amHost()){if(R_)$('rmode').value=R_.tmode||'ffa';return toast('Only the host can change the room.')}ref.child('tmode').set($('rmode').value).catch(e=>toast('Could not change: '+e.message))};
+$('addBot').onclick=()=>{if(!ref||!amHost())return;const ps=(R_&&R_.players)||{},ids=Object.keys(ps);if(ids.length>=4)return;const n=ids.filter(i=>ps[i].bot).length+1,id='bot'+Date.now().toString(36)+n;ref.child('players/'+id).set({name:'Bot '+n,col:BCOL[n%4],ar:0,ready:true,bot:1,x:0,z:0,h:0,a:0,hp:100,k:0,d:0,dead:false}).then(()=>{ref.child('players/'+id).onDisconnect().remove();ref.child('pos/'+id).onDisconnect().remove()}).catch(e=>toast('Could not add bot: '+e.message))};
+$('rmBot').onclick=()=>{if(!ref||!amHost())return;const ps=(R_&&R_.players)||{},id=Object.keys(ps).filter(i=>ps[i].bot).pop();if(!id)return;ref.child('players/'+id).remove().catch(e=>toast(e.message));ref.child('pos/'+id).remove().catch(()=>{})};
 $('rdur').onchange=()=>{if(!amHost()){if(R_)$('rdur').value=R_.duration;return toast('Only the host can change the room.')}ref.child('duration').set(+$('rdur').value).catch(e=>toast('Could not change: '+e.message))};$('rland').onchange=()=>{if(!amHost()){if(R_)$('rland').value=R_.land||'city';return toast('Only the host can change the room.')}ref.child('land').set($('rland').value).catch(e=>toast('Could not change: '+e.message))};
 $('ready').onclick=()=>{aInit();lockLand();if(!ref)return;const v=!isReady(),b=$('ready');b.classList.add('ld');b.disabled=true;ref.child('players/'+myId+'/ready').set(v).catch(e=>toast('Could not update ready: '+e.message)).finally(()=>{b.classList.remove('ld');b.disabled=false})};
 function beginOnline(d,ids){try{beginOnline2(d,ids)}catch(e){console.error(e);toast('DEBUG start error: '+(e&&e.message))}}
 function beginOnline2(d,ids){clearRun();mode='online';dur=d.duration||120;startT=d.go;endT=d.go+dur*1000;phase='count';lastN=-1;
-buildCity(d.land||'city',d.dens==null?.3:d.dens,hashStr(ref.key));createMe();camPit=.83;
-ids.forEach((id,i)=>{const s=SPW[i%4];if(id===myId)placeMe(s[0],s[1]);else{const q=mkRemote(id,d.players[id]);q.x=q.tx=s[0];q.z=q.tz=s[1];q.h=q.th=Math.atan2(-s[0],-s[1]);q.aim=q.ta=q.h}});
+buildCity(d.land||'city',d.dens==null?.3:d.dens,hashStr(ref.key));const tdm=isTdm();for(const k in BOT)delete BOT[k];const tm0=Math.max(0,ids.indexOf(myId))%2;createMe(tdm?TCOL[tm0]:undefined);me.team=tdm?tm0:0;camPit=.83;
+ids.forEach((id,i)=>{const s=SPW[tdm?(i%2)*2+((i>>1)%2):i%4];if(id===myId)placeMe(s[0],s[1]);else{const q=mkRemote(id,tdm?Object.assign({},d.players[id],{col:TCOL[i%2]}):d.players[id]);q.team=tdm?i%2:0;q.x=q.tx=s[0];q.z=q.tz=s[1];q.h=q.th=Math.atan2(-s[0],-s[1]);q.aim=q.ta=q.h}});
 CR.forEach(([x,z,k])=>{const m=new T.Mesh(new T.OctahedronGeometry(.9),bm(k==='h'?0x44ff88:0x33ccff));m.position.set(x,1.2,z);dyn.add(m);crates.push({x,z,k,m,taken:-1})});
 $('feed').replaceChildren();uiPlay();aInit()}
-function updOnline(dt,tn){
+function updOnline(dt,tn){updBots(dt,tn);
 for(const id in RP){const q=RP[id],k=Math.min(1,dt*16),ag=q.st?clamp((tn-q.st)/1000,0,.3):0,gx=q.tx+(q.vx||0)*ag,gz=q.tz+(q.vz||0)*ag;if(Math.hypot(gx-q.x,gz-q.z)>14){q.x=gx;q.z=gz}q.px=q.x;q.pz=q.z;q.x+=(gx-q.x)*k;q.z+=(gz-q.z)*k;q.h=lerpA(q.h,q.th,dt*12);q.aim=lerpA(q.aim,q.ta,dt*12);
 const o=q.o;o.position.set(q.x,0,q.z);o.rotation.y=q.h;q.m.up.rotation.y=wrap(q.aim-q.h);const sp=Math.hypot(q.x-q.px,q.z-q.pz)/Math.max(dt,.001);q.ph+=dt*sp*.55;const sw=Math.sin(q.ph)*.7*Math.min(1,sp/17);q.m.legs[0].rotation.x=sw;q.m.legs[1].rotation.x=-sw;
 o.visible=!q.dead;q.bar.visible=!q.dead;q.bc.visible=!q.dead;q.bar.position.set(q.x,5.4,q.z);q.bar.quaternion.copy(cam.quaternion);const f=clamp(q.hp/100,0,1);q.fg.scale.x=Math.max(.001,f);q.fg.position.x=-(1-f)*1.4;q.bc.position.set(q.x,30,q.z)}
@@ -544,17 +564,27 @@ const cyc=Math.floor((tn-startT)/CYC);
 for(const c of crates){const av=c.taken!==cyc&&tn>=startT;c.m.visible=av;if(!av)continue;c.m.rotation.y+=dt*2;c.m.position.y=1.2+Math.sin(gT*3+c.x)*.25;
 if(phase==='play'&&me&&!me.dead&&Math.hypot(c.x-me.o.position.x,c.z-me.o.position.z)<2.8){if(c.k==='h'){if(me.hp>=100)continue;me.hp=Math.min(100,me.hp+35);say('REPAIR')}else{me.en=Math.min(100,me.en+50);say('ENERGY')}c.taken=cyc;sfx('pick')}}
 sendT-=dt;if(ref&&me&&phase!=='over'&&sendT<=0){sendT=.05;const p=me.o.position,er=e=>{if(!updOnline.w){updOnline.w=1;toast('Cannot sync with other pilots: '+e.message)}};ref.child('pos/'+myId).set({x:+p.x.toFixed(2),z:+p.z.toFixed(2),h:+me.yaw.toFixed(2),a:+me.aim.toFixed(2),vx:+(me.dead?0:me.vx).toFixed(1),vz:+(me.dead?0:me.vz).toFixed(1),t:TS()}).catch(er);const sg=Math.round(me.hp)+'|'+me.kills+'|'+me.deaths+'|'+(me.dead?1:0);if(sg!==updOnline.sg){updOnline.sg=sg;ref.child('players/'+myId).update({hp:Math.round(me.hp),k:me.kills,d:me.deaths,dead:!!me.dead}).catch(er)}}}
-function finishOnline(){if(phase==='over'||!me)return;phase='over';const arr=[me].concat(Object.values(RP)).sort((a,b)=>(b.kills-a.kills)||(a.deaths-b.deaths)),top=arr[0].kills,tied=arr.filter(p=>p.kills===top).length>1,mine=me.kills===top,res=mine?(tied?'draw':'win'):'loss';
-const reward=Math.floor(me.kills/2),rid='on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;let rtxt='';
-if(recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win'){STATS.wins++;STATS.ow++}else if(res==='loss')STATS.losses++;else STATS.draws++;xp+=10*me.kills+(res==='win'?50:res==='draw'?20:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats();rtxt=reward?'+'+reward+(reward>1?' coins':' coin')+' ('+me.kills+' kills)':'No coins this time ('+me.kills+' kills)';submitLeader(res,me.kills).catch(()=>{})}
+function finishOnline(){if(phase==='over'||!me)return;phase='over';const arr=[me].concat(Object.values(RP)).sort((a,b)=>(b.kills-a.kills)||(a.deaths-b.deaths)),top=arr[0].kills,tied=arr.filter(p=>p.kills===top).length>1,mine=me.kills===top,res0=mine?(tied?'draw':'win'):'loss',tdm=isTdm(),ts=[0,0];arr.forEach(p=>{ts[p.team|0]+=p.kills});const res=tdm?(ts[0]===ts[1]?'draw':(ts[me.team|0]>ts[1-(me.team|0)]?'win':'loss')):res0,bg=Object.values(RP).some(q=>q.bot);
+const reward=Math.floor(me.kills/2),rid='on-'+(ref?ref.key:'')+'-'+startT+'-'+myId;let rtxt=bg?'Practice match with bots: no coins or stats':'';
+if(!bg&&recordOnce(rid)){STATS.played++;STATS.kills+=me.kills;if(res==='win'){STATS.wins++;STATS.ow++}else if(res==='loss')STATS.losses++;else STATS.draws++;xp+=10*me.kills+(res==='win'?50:res==='draw'?20:10);ls.set('vsMechXP',xp);pushProfile();addCoins(reward);saveStats();missionTick(me.kills,res==='win');rtxt=reward?'+'+reward+(reward>1?' coins':' coin')+' ('+me.kills+' kills)':'No coins this time ('+me.kills+' kills)';submitLeader(res,me.kills).catch(()=>{})}
 if(ref)ref.child('status').transaction(c=>c==='live'?'finished':undefined).catch(()=>{});
-endScreen(res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED','MATCH OVER',arr.map((p,i)=>(i+1)+'. '+p.name+' — '+p.kills+' kills'),rtxt)}
-async function exitRoom(rm){unsubs.forEach(f=>f());unsubs=[];clearRun();resetChat();const r=ref;ref=null;R_=null;phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false);
-if(r&&rm){try{await r.child('players/'+myId).onDisconnect().cancel();await r.child('pos/'+myId).onDisconnect().cancel();await r.child('pos/'+myId).remove();await r.child('players/'+myId).remove();if(!(await r.child('players').get()).val())await r.remove()}catch(e){}}}
+endScreen(res==='win'?'VICTORY':res==='draw'?'DRAW':'DEFEATED','MATCH OVER',(tdm?['Blue '+ts[0]+' – '+ts[1]+' Red']:[]).concat(arr.map((p,i)=>(i+1)+'. '+p.name+' — '+p.kills+' kills'+(tdm?(p.team?' (Red)':' (Blue)'):''))),rtxt)}
+async function exitRoom(rm){const botIds=(amHost()&&R_&&R_.players)?Object.keys(R_.players).filter(i=>R_.players[i].bot):[];unsubs.forEach(f=>f());unsubs=[];clearRun();resetChat();const r=ref;ref=null;R_=null;phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false);
+if(r&&rm){try{await r.child('players/'+myId).onDisconnect().cancel();await r.child('pos/'+myId).onDisconnect().cancel();await r.child('pos/'+myId).remove();await r.child('players/'+myId).remove();for(const i of botIds){await r.child('players/'+i).remove();await r.child('pos/'+i).remove()}if(!(await r.child('players').get()).val())await r.remove()}catch(e){}}}
 $('again').onclick=withLoad($('again'),async()=>{if(mode==='camp'){startCampaign();return}
-if(!ref)return;if(!R_||R_.status!=='finished'){toast('Waiting for the match to close…');return}const u={go:null};for(const i in (R_.players||{})){u['players/'+i+'/ready']=false;u['players/'+i+'/k']=0;u['players/'+i+'/d']=0;u['players/'+i+'/hp']=100;u['players/'+i+'/dead']=false}u.status='waiting';try{await ref.update(u)}catch(e){toast('Could not restart: '+e.message)}});
-async function submitLeader(res,kills){if(!db)return;await db.ref('mechLeaderboard/'+myId).transaction(c=>{c=c||{id:myId,name:myName,wins:0,losses:0,draws:0,played:0,kills:0};c.name=myName;c.played=(c.played||0)+1;c.kills=(c.kills||0)+kills;const k=res==='win'?'wins':res==='loss'?'losses':'draws';c[k]=(c[k]||0)+1;c.updatedAt=firebase.database.ServerValue.TIMESTAMP;return c})}
-function loadLeader(){if(!db)return;db.ref('mechLeaderboard').orderByChild('wins').limitToLast(20).on('value',s=>{const a=[];s.forEach(x=>{a.push(x.val())});a.sort((p,q)=>(q.wins||0)-(p.wins||0)||(q.kills||0)-(p.kills||0));const r=$('lead');r.replaceChildren();if(!a.length){const e=document.createElement('div');e.className='li';e.textContent='No online results yet';r.append(e);return}a.slice(0,10).forEach((x,i)=>{const e=document.createElement('div');e.className='li';const n=document.createElement('span');n.textContent=(i+1)+'. '+String(x.name||'Pilot');const w=document.createElement('b');w.textContent=(x.wins||0)+' W · '+(x.kills||0)+' K';e.append(n,w);r.append(e)})},e=>{$('lead').textContent='Leaderboard unavailable: '+e.message})}
+if(!ref)return;if(!R_||R_.status!=='finished'){toast('Waiting for the match to close…');return}const u={go:null};for(const i in (R_.players||{})){u['players/'+i+'/ready']=!!R_.players[i].bot;u['players/'+i+'/k']=0;u['players/'+i+'/d']=0;u['players/'+i+'/hp']=100;u['players/'+i+'/dead']=false}u.status='waiting';try{await ref.update(u)}catch(e){toast('Could not restart: '+e.message)}});
+async function submitLeader(res,kills){if(!db)return;await db.ref('mechLeaderboard/'+myId).transaction(c=>{c=c||{id:myId,name:myName,wins:0,losses:0,draws:0,played:0,kills:0};c.name=myName;c.played=(c.played||0)+1;c.kills=(c.kills||0)+kills;{const w=weekId();if(c.wkId!==w){c.wkId=w;c.wk=0}c.wk=(c.wk||0)+kills}const k=res==='win'?'wins':res==='loss'?'losses':'draws';c[k]=(c[k]||0)+1;c.updatedAt=firebase.database.ServerValue.TIMESTAMP;return c})}
+const weekId=()=>Math.floor(Date.now()/6048e5);let LBD=[],lbTab='w';
+const LBT=[['w','Wins',x=>x.wins||0,x=>(x.wins||0)+' W · '+(x.kills||0)+' K'],['k','Kills',x=>x.kills||0,x=>(x.kills||0)+' K'],['wk','This week',x=>x.wkId===weekId()?(x.wk||0):0,x=>(x.wk||0)+' K'],['b','Campaign',x=>x.best||0,x=>(x.best||0)+' pts']];
+function drawLeader(){const r=$('lead');r.replaceChildren();const t=LBT.find(z=>z[0]===lbTab)||LBT[0],a=LBD.filter(x=>t[2](x)>0).sort((p,q)=>t[2](q)-t[2](p)).slice(0,10);if(!a.length){const e=document.createElement('div');e.className='li';e.textContent='No results yet';r.append(e);return}a.forEach((x,i)=>{const e=document.createElement('div');e.className='li';const n=document.createElement('span');n.textContent=(i+1)+'. '+String(x.name||'Pilot');const w=document.createElement('b');w.textContent=t[3](x);e.append(n,w);r.append(e)})}
+{const bx=$('lbTabs');LBT.forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t[1];b.setAttribute('aria-pressed',String(t[0]===lbTab));b.onclick=()=>{lbTab=t[0];[...bx.children].forEach(c=>c.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');drawLeader()};bx.append(b)})}
+function loadLeader(){if(!db)return;db.ref('mechLeaderboard').orderByChild('wins').limitToLast(100).on('value',s=>{LBD=[];s.forEach(x=>{LBD.push(x.val())});drawLeader()},e=>{$('lead').textContent='Leaderboard unavailable: '+e.message})}
+async function submitBest(sc){if(!db||!sc)return;try{await db.ref('mechLeaderboard/'+myId).transaction(c=>{c=c||{id:myId,name:myName,wins:0,losses:0,draws:0,played:0,kills:0};if(sc<=(c.best||0))return;c.name=myName;c.best=sc;return c})}catch(e){}}
+/* ---------- daily missions ---------- */
+function getDaily(){const day=new Date().toDateString();let D=ls.get('vsMechDaily',null);if(!D||D.day!==day){const n=Math.floor(Date.now()/864e5);D={day,m:[{t:'k',n:15+(n%3)*5,g:0,r:10,done:0},{t:'p',n:2,g:0,r:6,done:0},{t:'w',n:1,g:0,r:8,done:0}]};ls.set('vsMechDaily',D)}return D}
+const MTX={k:n=>'Destroy '+n+' enemies',p:n=>'Finish '+n+' matches',w:n=>'Win '+n+' match'};
+function renderMissions(){const D=getDaily(),b=$('dm');b.replaceChildren();D.m.forEach(m=>{const e=document.createElement('div');e.className='tag'+(m.done?' on':'');const a=document.createElement('span');a.textContent=MTX[m.t](m.n);const c=document.createElement('span');c.textContent=m.done?'Done +'+m.r:m.g+'/'+m.n+' · '+m.r+' coins';e.append(a,c);b.append(e)})}
+function missionTick(kl,win){const D=getDaily();D.m.forEach(m=>{if(m.done)return;m.g+=m.t==='k'?kl:m.t==='p'?1:(win?1:0);if(m.g>=m.n){m.g=m.n;m.done=1;addCoins(m.r);toast('Mission complete: +'+m.r+' coins')}});ls.set('vsMechDaily',D);renderMissions()}
 loadLeader();
 /* ---------- public lobby chat (Stats screen, messages vanish after 5 min) ---------- */
 const CHAT_TTL=300000;let lastChat=0;
@@ -574,6 +604,7 @@ function openChat(on){chatOpen=on;$('mChat').hidden=!on;if(on){unread=0;updChatB
 function resetChat(){rMsgs.clear();unread=0;['lobLog','mLog','endLog'].forEach(i=>$(i).replaceChildren());$('feed').replaceChildren();openChat(false);updChatBtn()}
 function sendRoom(inp){const text=inp.value.trim();if(!text)return;if(!ref||!connected)return toast('Chat needs a connection.');const n=Date.now();if(n-lastRC<1000)return toast('Slow down a little.');lastRC=n;const r=ref.child('chat').push();r.set({id:r.key,pid:myId,name:myName,ic:pIcon(),text:text.slice(0,180),time:TS()}).catch(er=>toast('Chat send failed: '+er.message));inp.value=''}
 $('chatBtn').onclick=()=>openChat(!chatOpen);
+{const e=$('emo');['😂','👍','🔥','GG','😎'].forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onpointerdown=ev=>ev.stopPropagation();b.onclick=()=>sendRoom({value:t});e.append(b)})}
 {const q=document.createElement('div');q.className='seg';['GG','Nice!','Help!','👍','😂'].forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>sendRoom({value:t});q.append(b)});$('mChat').insertBefore(q,$('mLog'))}
 [['lobForm','lobText'],['mForm','mText'],['endForm','endText']].forEach(([f,t])=>$(f).onsubmit=e=>{e.preventDefault();sendRoom($(t))});
 /* ================= UI plumbing ================= */
@@ -582,8 +613,8 @@ function showCard(id){CARDS.forEach(c=>{$(c).hidden=c!==id});if(id!=='cJoin')wat
 function lockLand(){if(!TOUCHCAP)return;try{const so=screen.orientation,de=document.documentElement,l=()=>{if(so&&so.lock)so.lock('landscape').catch(()=>{})};if(!document.fullscreenElement&&de.requestFullscreen)de.requestFullscreen().then(l).catch(l);else l()}catch(e){}}
 /* FIX #5: wipe the HUD text cache and the leftover online scoreboard whenever a run starts, so setT() can't skip a needed update */
 function resetHud(){for(const k in hudC)delete hudC[k];$('sb').replaceChildren()}
-function uiPlay(){hide('menu');hide('end');hide('pauseOv');resetHud();show('hud');$('c').style.cursor='crosshair';show('tbar');$('pauseBtn').hidden=mode!=='camp';$('chatBtn').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);show('bf');show('bd');show('bs');if(TOUCHCAP){show('zone');show('orbit')}else{$('bf').hidden=$('bd').hidden=$('bs').hidden=true}showM&&(showM.root.visible=false);setWake(true);ambLast=''}
-function hideGameUI(){openChat(false);$('c').style.cursor='';['hud','tbar','zone','orbit','jb','bf','bd','bs','bb','rot'].forEach(hide);$('feed').replaceChildren();if(showM)showM.root.visible=true}
+function uiPlay(){hide('menu');hide('end');hide('pauseOv');resetHud();show('hud');$('c').style.cursor='crosshair';show('tbar');$('pauseBtn').hidden=mode!=='camp';$('chatBtn').hidden=mode!=='online';$('emo').hidden=mode!=='online';unread=0;updChatBtn();openChat(false);show('bf');show('bd');show('bs');if(TOUCHCAP){show('zone');show('orbit')}else{$('bf').hidden=$('bd').hidden=$('bs').hidden=true}showM&&(showM.root.visible=false);setWake(true);ambLast=''}
+function hideGameUI(){openChat(false);$('c').style.cursor='';['hud','tbar','zone','orbit','jb','bf','bd','bs','bb','rot','emo'].forEach(hide);$('feed').replaceChildren();if(showM)showM.root.visible=true}
 function endScreen(title,kick,lines,reward){hideGameUI();phase='over';$('eK').textContent=kick;$('eT').textContent=title;const l=$('eL');l.replaceChildren();lines.forEach(t=>{const e=document.createElement('div');e.className='tag';e.textContent=t;l.append(e)});$('eR').textContent=reward||'';$('endChat').hidden=mode!=='online';if(showM)showM.root.visible=false;show('end');setWake(false)}
 function toMenu(){if(mode==='online'&&ref)return exitRoom(true);clearRun();phase='idle';mode='home';paused=false;hide('pauseOv');hideGameUI();hide('end');makeShow();show('menu');showCard('home');setWake(false)}
 $('leave').onclick=withLoad($('leave'),()=>toMenu());$('eLeave').onclick=withLoad($('eLeave'),()=>toMenu());$('lv2').onclick=withLoad($('lv2'),()=>exitRoom(true));$('quit').onclick=withLoad($('quit'),()=>toMenu());
@@ -604,15 +635,19 @@ $('mOn').onclick=()=>{if(!db)return toast('Online needs a connection.');$('onPan
 $('mCreate').onclick=()=>{showCard('cCreate');prev()};$('mJoin').onclick=()=>{showCard('cJoin');watchRooms(true)};$('backJ').onclick=()=>showCard('home');
 $('create').onclick=withLoad($('create'),()=>createRoom());$('roomName').onkeydown=e=>{if(e.key==='Enter')$('create').click()};
 $('start').onclick=()=>{const b=$('start');if(b.classList.contains('ld'))return;b.classList.add('ld');setTimeout(()=>{try{startCampaign()}finally{b.classList.remove('ld')}},50)};
-$('oSet').onclick=()=>showCard('setC');$('oShop').onclick=()=>{shopTab='arm';renderShop();showCard('shopC')};$('oSoc').onclick=()=>showCard('socC');
+$('oSet').onclick=()=>showCard('setC');$('oShop').onclick=()=>{shopTab='arm';renderShop();showCard('shopC')};$('oSoc').onclick=()=>{renderMissions();showCard('socC')};
 document.querySelectorAll('[data-back]').forEach(b=>{b.onclick=()=>showCard('home')});
 function renderShop(msg){if(!shopLoaded){$('coinLine').replaceChildren(loadingEl('Loading your coins… (needs a connection)'));$('shopMsg').textContent='';$('shopList').replaceChildren();return}
-$('coinLine').textContent='Coins: '+SHOP.coins+'. You earn 1 coin for every 2 kills (5 kills = 2 coins, 10 = 5, 20 = 10), campaign or online.';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',String(shopTab==='arm'));$('tCol').setAttribute('aria-pressed',String(shopTab==='col'));const L=$('shopList');L.replaceChildren();
+$('coinLine').textContent='Coins: '+SHOP.coins+'. You earn 1 coin for every 2 kills (5 kills = 2 coins, 10 = 5, 20 = 10), campaign or online.';$('shopMsg').textContent=msg||'';$('tArm').setAttribute('aria-pressed',String(shopTab==='arm'));$('tCol').setAttribute('aria-pressed',String(shopTab==='col'));$('tGear').setAttribute('aria-pressed',String(shopTab==='gear'));const L=$('shopList');L.replaceChildren();
 if(shopTab==='arm'){for(let n=0;n<=10;n++){const own=n<=SHOP.arm,cur=n===SHOP.arm,next=n===SHOP.arm+1,d=document.createElement('div');d.className='shr';d.style.opacity=own||next?1:.5;const s=document.createElement('span'),t=document.createElement('b');t.textContent=TN[n]+' (Lv '+n+')';const sm=document.createElement('small');sm.textContent=(n*3)+'% less damage · extra armor parts';s.append(t,document.createElement('br'),sm);
 const b=document.createElement('button');b.className='b';b.textContent=cur?'In use':own?'Owned':'Buy '+ARMC[n];if(next)b.style.borderColor='var(--yl)';
 b.onclick=()=>{if(own)return;if(!next)return renderShop('Buy '+TN[SHOP.arm+1]+' first.');if(SHOP.coins<ARMC[n])return renderShop('Not enough coins. '+TN[n]+' costs '+ARMC[n]+'.');SHOP.coins-=ARMC[n];SHOP.arm=n;saveShop();sfx('pick');makeShow();renderShop('Upgraded to '+TN[n]+'.')};d.append(s,b);L.append(d)}}
-else{const g=document.createElement('div');g.className='pg';COLS.forEach(c=>{const own=SHOP.own[c[0]],eq=SHOP.col===c[0],b=document.createElement('button'),i=document.createElement('i');i.style.background=hx(c[2]);if(eq)i.style.outline='3px solid #fff';b.append(i,document.createTextNode(eq?'ON':own?'✓':c[3]));
+else if(shopTab==='gear'){renderGear(L)}else{const g=document.createElement('div');g.className='pg';COLS.forEach(c=>{const own=SHOP.own[c[0]],eq=SHOP.col===c[0],b=document.createElement('button'),i=document.createElement('i');i.style.background=hx(c[2]);if(eq)i.style.outline='3px solid #fff';b.append(i,document.createTextNode(eq?'ON':own?'✓':c[3]));
 b.onclick=()=>{if(own){SHOP.col=c[0]}else if(SHOP.coins>=c[3]){SHOP.coins-=c[3];SHOP.own[c[0]]=1;SHOP.col=c[0];sfx('pick')}else return renderShop('Not enough coins. '+c[1]+' costs '+c[3]+'.');saveShop();makeShow();renderShop()};g.append(b)});L.append(g)}updSave()}
+function renderGear(L){
+UPS.forEach(([k,t,sub])=>{const lv=upg(k),d=document.createElement('div');d.className='shr';const sp=document.createElement('span'),b1=document.createElement('b');b1.textContent=t+' (Lv '+lv+'/5)';const sm=document.createElement('small');sm.textContent=sub+' per level';sp.append(b1,document.createElement('br'),sm);const b=document.createElement('button');b.className='b';b.textContent=lv>=5?'MAX':'Buy '+UPC[lv];b.onclick=()=>{if(lv>=5)return;if(SHOP.coins<UPC[lv])return renderShop('Not enough coins. '+t+' costs '+UPC[lv]+'.');SHOP.coins-=UPC[lv];SHOP.own[k]=lv+1;saveShop();sfx('pick');renderShop(t+' upgraded.')};d.append(sp,b);L.append(d)});
+WPS.forEach(([k,t,sub,c])=>{const own=k==='rifle'||!!SHOP.own['w_'+k],cur=wsel()===k,d=document.createElement('div');d.className='shr';const sp=document.createElement('span'),b1=document.createElement('b');b1.textContent=t;const sm=document.createElement('small');sm.textContent=sub;sp.append(b1,document.createElement('br'),sm);const b=document.createElement('button');b.className='b';b.textContent=cur?'In use':own?'Equip':'Buy '+c;b.onclick=()=>{if(cur)return;if(!own){if(SHOP.coins<c)return renderShop('Not enough coins. '+t+' costs '+c+'.');SHOP.coins-=c;SHOP.own['w_'+k]=1}SHOP.own.w=k;saveShop();sfx('pick');renderShop(t+' equipped.')};d.append(sp,b);L.append(d)})}
+$('tGear').onclick=()=>{shopTab='gear';renderShop()};
 $('tArm').onclick=()=>{shopTab='arm';renderShop()};$('tCol').onclick=()=>{shopTab='col';renderShop()};
 /* ================= HUD + radar ================= */
 const rdc=$('rd').getContext('2d');
